@@ -30,8 +30,9 @@ namespace GX
 
 		state.cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
-		//hPlugin = GetModuleHandle(NULL);
+#ifdef _WINDOWS
 		hwndMain = (HWND)config->renderTarget;
+#endif
 
 		bool res = GL_LazyOpenSubsystem();
 		assert(res);
@@ -67,6 +68,7 @@ namespace GX
 		gxOpened = false;
 	}
 
+#ifdef _WINDOWS
     static int GL_SetPixelFormat(HDC hdc)
     {
         static PIXELFORMATDESCRIPTOR pfd = {
@@ -96,6 +98,7 @@ namespace GX
 
         return 1;
     }
+#endif
 
     bool GXCore::GL_LazyOpenSubsystem()
     {
@@ -107,6 +110,7 @@ namespace GX
         if (backend_started)
             return true;
 
+#ifdef _WINDOWS
         hdcgl = GetDC(hwndMain);
 
         if (hdcgl == NULL) return false;
@@ -125,6 +129,7 @@ namespace GX
         }
 
         wglMakeCurrent(hdcgl, hglrc);
+#endif
 
         //
         // change some GL drawing rules
@@ -159,8 +164,10 @@ namespace GX
 
         //if(frameReady) GL_EndFrame();
 
+#ifdef _WINDOWS
         wglMakeCurrent(NULL, NULL);
         wglDeleteContext(hglrc);
+#endif
 
         backend_started = false;
     }
@@ -170,7 +177,9 @@ namespace GX
     {
         if (frameReady) return;
 
+#ifdef _WINDOWS
         BeginPaint(hwndMain, &psFrame);
+#endif
         glDrawBuffer(GL_BACK);
 
         if (set_clear)
@@ -218,8 +227,10 @@ namespace GX
         }
 
         glFinish();
+#ifdef _WINDOWS
         SwapBuffers(hdcgl);
         EndPaint(hwndMain, &psFrame);
+#endif
 
         frameReady = 0;
         //Report(Channel::GP, "gfx frame: %d\n", frames);

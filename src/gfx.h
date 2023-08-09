@@ -89,7 +89,13 @@ namespace GX
 		size_t usevat;	// current VAT
 		Vertex* vtx; // current vertex to collect data
 
+		// Windows OpenGL stuff
+#ifdef _WINDOWS
 		HWND hwndMain;
+		HGLRC hglrc = 0;
+		HDC hdcgl = 0;
+		PAINTSTRUCT psFrame{};
+#endif
 
 		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
 		uint32_t clear_z = -1;
@@ -99,10 +105,6 @@ namespace GX
 		FILE* snap_file = nullptr;
 		uint32_t snap_w, snap_h;
 
-		HGLRC hglrc = 0;
-		HDC hdcgl = 0;
-
-		PAINTSTRUCT psFrame{};
 		int frameReady = 0;
 		bool backend_started = false;
 

@@ -78,19 +78,6 @@ BEGIN
     CONTROL         "GameCube DVD Images (ISO)",IDC_GMP_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,80,225,15
 END
 
-IDD_FONT_SETTINGS DIALOG 0, 0, 224, 130
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Configure Bootrom Font"
-FONT 8, "MS Sans Serif"
-BEGIN
-    PUSHBUTTON      "Cancel",IDCANCEL,177,108,40,15
-    GROUPBOX        "Select Bootrom Ansi Font",IDC_STATIC,7,5,210,41
-    COMBOBOX        IDC_FONT_ANSICOMBO,16,20,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "OK",IDOK,134,108,35,15
-    GROUPBOX        "Select Bootrom Sjis Font",IDC_STATIC,7,57,210,41
-    COMBOBOX        IDC_FONT_SJISCOMBO,17,73,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-END
-
 IDD_MEMCARD_SETTINGS DIALOGEX 0, 0, 250, 182
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Memcard Settings"
@@ -217,7 +204,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,198,43,50,15
     ICON            IDI_PUREI_ICON,IDC_STATIC,11,8,21,20
-    LTEXT           "pureikyubu - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2023, Dolwin team & contributors\nBuild version 1.0 (21:23:32 5 Mar 2020)",IDC_ABOUT_RELEASE,48,5,186,25
+    LTEXT           "pureikyubu - Nintendo GAMECUBE Emulator\nCopyright 2003-2023, Dolwin team & contributors\nBuild version 1.2",IDC_ABOUT_RELEASE,48,5,186,25
 END
 
 
@@ -413,7 +400,6 @@ BEGIN
             MENUITEM "Slot &A",                     ID_OPTIONS_MEMCARDS_SLOTA
             MENUITEM "Slot &B",                     ID_OPTIONS_MEMCARDS_SLOTB
         END
-        MENUITEM "Bootrom &Font...",            ID_OPTIONS_BOOTROMFONT
     END
     POPUP "&Help"
     BEGIN

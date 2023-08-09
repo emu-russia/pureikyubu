@@ -10,7 +10,7 @@
 
 static      TexEntry    tcache[MAX];
 static      unsigned    tptr;
-static      UINT        texlist[MAX+1];     // gl texture list (0 entry reserved)
+static      GLuint      texlist[MAX+1];     // gl texture list (0 entry reserved)
 static      uint8_t     tlut[1024 * 1024];  // temporary TLUT buffer
 
 TexEntry    *tID[8];                        // texture unit bindings
@@ -46,6 +46,7 @@ namespace GX
 
     void GXCore::DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height)
     {
+#ifdef _WINDOWS
         char    path[256];
         FILE* f;
         uint8_t      hdr[14 + 40];   // bmp header
@@ -90,6 +91,7 @@ namespace GX
         }
 
         fclose(f);
+#endif // _WINDOWS
     }
 
     void GXCore::GetTlutCol(Color* c, unsigned id, unsigned entry)
@@ -200,10 +202,10 @@ namespace GX
 
     void GXCore::LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
     {
-        BOOL doDump = FALSE;
+        bool doDump = false;
         Color* texbuf;
         int oldw, oldh;
-        DWORD w, h;
+        uint32_t w, h;
         unsigned n;
 
         // check cache entries for coincidence
@@ -236,16 +238,16 @@ namespace GX
         // new
         n = tptr;
         tcache[n].ramAddr = addr;
-        tcache[n].rawData = &mi.ram[addr & RAMMASK];
+        tcache[n].rawData = (uint8_t *)MIGetMemoryPointerForTX (addr);
         tcache[n].fmt = fmt;
 
         // aspect
         tcache[n].ds = tcache[n].dt = 1.0f;
-        _BitScanReverse(&w, width);
+        w = 31 - CNTLZ(width);
         if (width & ((1 << w) - 1)) w = 1 << (w + 1);
         else w = width;
         tcache[n].ds = (float)width / (float)w;
-        _BitScanReverse(&h, height);
+        h = 31 - CNTLZ(height);
         if (height & ((1 << h) - 1)) h = 1 << (h + 1);
         else h = height;
         tcache[n].dt = (float)height / (float)h;

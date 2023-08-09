@@ -45,15 +45,6 @@ void UIReflector();
 
 // UI configuration variables
 
-// Sections
-#define USER_UI "ui"
-#define USER_PADS "controllers"
-#define USER_LOADER		"loader"
-#define USER_CORE		"core"
-#define USER_HW			"hardware"
-#define USER_HLE		"hle"
-#define USER_MEMCARDS	"memcards"
-
 // UI section variables
 #define USER_DOLDEBUG "DOLDEBUG"			// enable debugger
 #define USER_FILTER "FILTER"				// file filter
@@ -71,26 +62,8 @@ void UIReflector();
 #define USER_SMALLICONS "SMALLICONS"			// show small icons, if 1
 #define USER_SORTVIEW "SORTVIEW"			// sort files in selector (1..6, see menu)
 
-// Hardware section variables
-#define USER_ANSI		"ANSI"			// bootrom ANSI font
-#define USER_SJIS		"SJIS"          // bootrom SJIS font
-#define USER_CONSOLE	"CONSOLE"       // console version (see YAGCD)
-#define USER_OS_REPORT	"OS_REPORT"     // 1: allow debugger output (by EXI)
-#define USER_BOOTROM	"BOOTROM"		// Bootrom
-#define USER_DSP_DROM	"DSP_DROM"      // DSP DROM
-#define USER_DSP_IROM	"DSP_IROM"		// DSP IROM
-
-// MC: Names of the keys used to store to configuration
-#define MemcardA_Connected_Key "MemcardA_Connected"
-#define MemcardB_Connected_Key "MemcardB_Connected"
-#define MemcardA_Filename_Key "MemcardA_Filename"
-#define MemcardB_Filename_Key "MemcardB_Filename"
-#define Memcard_SyncSave_Key "Memcard_SyncSave"
-
 
 /* UI file utilities API. */
-
-#ifdef _WINDOWS
 
 namespace UI
 {
@@ -104,19 +77,13 @@ namespace UI
 	};
 
 	/* Open/save a file dialog. */
-	const wchar_t* FileOpenDialog(HWND hwnd, FileType type);
-	const wchar_t* FileSaveDialog(HWND hwnd, FileType type);
+	const wchar_t* FileOpenDialog(FileType type);
+	const wchar_t* FileSaveDialog(FileType type);
 
 	std::wstring FileShortName(const std::wstring& filename, int lvl = 3);
 	std::wstring FileSmartSize(size_t size);
 	std::string FileSmartSizeA(size_t size);
 };
-
-
-void    FontConfigure(HWND hParent);
-
-#endif // _WINDOWS
-
 
 
 
@@ -429,8 +396,5 @@ struct UserWindow
 };
 
 extern UserWindow wnd;
-
-extern Debug::DspDebug* dspDebug;
-extern Debug::GekkoDebug* gekkoDebug;
 
 #endif // _WINDOWS

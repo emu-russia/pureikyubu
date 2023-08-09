@@ -34,4 +34,10 @@ void	MIClose();
 
 uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
 
-void* MIGetMemoryPointerForVertexArray(uint32_t phys_addr);
+// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
+
+void* MIGetMemoryPointerForCP(uint32_t phys_addr);
+
+void* MIGetMemoryPointerForTX(uint32_t phys_addr);
+
+void* MIGetMemoryPointerForVI(uint32_t phys_addr);

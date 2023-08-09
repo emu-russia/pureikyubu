@@ -19,8 +19,6 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
 #include "res/resource.h"
 #endif
 
@@ -38,6 +36,9 @@
 #define _strnicmp strncasecmp
 #define _wcsicmp wcscasecmp
 #endif
+
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 #include "../thirdparty/fmt/fmt/format.h"
 #include "../thirdparty/fmt/fmt/printf.h"

@@ -165,8 +165,9 @@ void UIReflector()
 namespace UI
 {
 	// Open file/directory dialog
-	const wchar_t* FileOpenDialog(HWND hwnd, FileType type)
+	const wchar_t* FileOpenDialog(FileType type)
 	{
+		HWND hwnd = wnd.hMainWindow;
 		static wchar_t tempBuf[0x1000] = { 0 };
 		OPENFILENAME ofn;
 		wchar_t szFileName[1024];
@@ -328,8 +329,9 @@ namespace UI
 	}
 
 	// Save file dialog
-	const wchar_t* FileSaveDialog(HWND hwnd, FileType type)
+	const wchar_t* FileSaveDialog(FileType type)
 	{
+		HWND hwnd = wnd.hMainWindow;
 		static wchar_t tempBuf[0x1000] = { 0 };
 		OPENFILENAME ofn;
 		wchar_t szFileName[1024];
@@ -549,236 +551,6 @@ namespace UI
 		return tempBuf;
 	}
 }
-
-
-
-// select ANSI/SJIS fonts dialog
-
-static HWND     parentWnd;
-static wchar_t    FontsDir[] = L".\\Data";      // font placeholder
-static wchar_t* FontAnsiList[256];              // list for combo box
-static wchar_t* FontSjisList[256];              // list for combo box
-static int      AnsiSelected, SjisSelected;     // current selected in combo
-static wchar_t    FontAnsiFile[MAX_PATH];         // copy of user variable
-static wchar_t    FontSjisFile[MAX_PATH];         // copy of user variables
-
-// ---------------------------------------------------------------------------
-
-static void FontSetAnsiFile(const TCHAR* filename)
-{
-	wcscpy_s(FontAnsiFile, _countof(FontAnsiFile) - 1, filename);
-	UI::Jdi->SetConfigString(USER_ANSI, Util::WstringToString(FontAnsiFile), USER_HW);
-}
-
-static void FontSetSjisFile(const TCHAR* filename)
-{
-	wcscpy_s(FontSjisFile, _countof(FontSjisFile) - 1, filename);
-	UI::Jdi->SetConfigString(USER_SJIS, Util::WstringToString(FontSjisFile), USER_HW);
-}
-
-static void AddFont(HWND hwndDlg, TCHAR* file)
-{
-	// split path
-	TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-	_wsplitpath_s(file,
-		drive, _countof(drive) - 1,
-		dir, _countof(dir) - 1,
-		name, _countof(name) - 1,
-		ext, _countof(ext) - 1);
-
-	// check font type
-	size_t size = Util::FileSize(file);
-	BOOL is_ansi = (size <= ANSI_SIZE);
-
-	if (is_ansi)
-	{   // Ansi type
-		size_t sizeInChars = (wcslen(file) + 1);
-		FontAnsiList[AnsiSelected] = (TCHAR*)malloc(sizeInChars * sizeof(TCHAR));
-		wcscpy_s(FontAnsiList[AnsiSelected++], sizeInChars, file);
-		//SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
-		SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
-	}
-	else
-	{   // Sjis type
-		size_t sizeInChars = (wcslen(file) + 1);
-		FontSjisList[SjisSelected] = (TCHAR*)malloc(sizeInChars * sizeof(TCHAR));
-		wcscpy_s(FontSjisList[SjisSelected++], sizeInChars, file);
-		//SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
-		SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
-	}
-}
-
-static void EnumFonts(HWND hwndDlg)
-{
-	TCHAR FontPath[MAX_PATH] = { 0 };
-	WIN32_FIND_DATA fd;
-	HANDLE hfff;
-	int i, Aselected = -1, Sselected = -1;
-
-	for (i = 0; i < 256; i++)
-	{
-		if (FontAnsiList[i])
-		{
-			free(FontAnsiList[i]);
-			FontAnsiList[i] = NULL;
-		}
-		if (FontSjisList[i])
-		{
-			free(FontSjisList[i]);
-			FontSjisList[i] = NULL;
-		}
-	}
-
-	AnsiSelected = 0;
-	SjisSelected = 0;
-
-	SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_RESETCONTENT, 0, 0);
-	SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_RESETCONTENT, 0, 0);
-
-	swprintf_s(FontPath, _countof(FontPath) - 1, L"%s\\*.szp", FontsDir);
-	hfff = FindFirstFile(FontPath, &fd);
-
-	if (hfff == INVALID_HANDLE_VALUE) return;
-	else
-	{
-		swprintf_s(FontPath, _countof(FontPath) - 1, L"%s\\%s", FontsDir, fd.cFileName);
-		AddFont(hwndDlg, FontPath);
-
-		if (!wcscmp(FontAnsiFile, FontPath))
-			Aselected = AnsiSelected;
-		if (!wcscmp(FontSjisFile, FontPath))
-			Sselected = SjisSelected;
-	}
-
-	while (FindNextFile(hfff, &fd))
-	{
-		swprintf_s(FontPath, _countof(FontPath) - 1, L"%s\\%s", FontsDir, fd.cFileName);
-		AddFont(hwndDlg, FontPath);
-
-		if (!wcscmp(FontAnsiFile, FontPath))
-			Aselected = AnsiSelected;
-		if (!wcscmp(FontSjisFile, FontPath))
-			Sselected = SjisSelected;
-	}
-
-	if (Aselected >= 0)
-	{
-		SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_SETCURSEL, Aselected - 1, 0);
-	}
-	else
-	{
-		SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_SETCURSEL, 0, 0);
-		AnsiSelected = -1;
-	}
-
-	if (Sselected >= 0)
-	{
-		SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_SETCURSEL, Sselected - 1, 0);
-	}
-	else
-	{
-		SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_SETCURSEL, 0, 0);
-		SjisSelected = -1;
-	}
-}
-
-static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(lParam);
-
-	int i;
-	switch (uMsg)
-	{
-		case WM_INITDIALOG:
-			CenterChildWindow(parentWnd, hwndDlg);
-			SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PUREI_ICON)));
-			EnumFonts(hwndDlg);
-			return TRUE;
-
-		case WM_CLOSE:
-			for (i = 0; i < 256; i++)
-			{
-				if (FontAnsiList[i])
-				{
-					free(FontAnsiList[i]);
-					FontAnsiList[i] = NULL;
-				}
-				if (FontSjisList[i])
-				{
-					free(FontSjisList[i]);
-					FontSjisList[i] = NULL;
-				}
-			}
-			EndDialog(hwndDlg, 0);
-			return TRUE;
-
-		case WM_COMMAND:
-			if (wParam == IDCANCEL)
-			{
-				for (i = 0; i < 256; i++)
-				{
-					if (FontAnsiList[i])
-					{
-						free(FontAnsiList[i]);
-						FontAnsiList[i] = NULL;
-					}
-					if (FontSjisList[i])
-					{
-						free(FontSjisList[i]);
-						FontSjisList[i] = NULL;
-					}
-				}
-				EndDialog(hwndDlg, 0);
-				return TRUE;
-			}
-			if (wParam == IDOK)
-			{
-
-				AnsiSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_GETCURSEL, 0, 0);
-				SjisSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_GETCURSEL, 0, 0);
-
-				if (wcscmp(FontAnsiList[AnsiSelected], FontAnsiFile) != 0)
-					FontSetAnsiFile(FontAnsiList[AnsiSelected]);
-
-				if (wcscmp(FontSjisList[SjisSelected], FontSjisFile) != 0)
-					FontSetSjisFile(FontSjisList[SjisSelected]);
-
-				for (i = 0; i < 256; i++)
-				{
-					if (FontAnsiList[i])
-					{
-						free(FontAnsiList[i]);
-						FontAnsiList[i] = NULL;
-					}
-					if (FontSjisList[i])
-					{
-						free(FontSjisList[i]);
-						FontSjisList[i] = NULL;
-					}
-				}
-				EndDialog(hwndDlg, 0);
-				return TRUE;
-			}
-			break;
-
-		default:
-			return FALSE;
-	}
-	return FALSE;
-}
-
-void FontConfigure(HWND hParent)
-{
-	FontSetAnsiFile(Util::StringToWstring(UI::Jdi->GetConfigString(USER_ANSI, USER_HW)).c_str());
-	FontSetSjisFile(Util::StringToWstring(UI::Jdi->GetConfigString(USER_SJIS, USER_HW)).c_str());
-
-	DialogBox(
-		GetModuleHandle(NULL),
-		MAKEINTRESOURCE(IDD_FONT_SETTINGS),
-		parentWnd = hParent,
-		FontSettingsProc);
-}
-
 
 
 // JDI Communication.
@@ -3406,9 +3178,9 @@ static void doubleclick()
 
 	UI::Jdi->Unload();
 	UI::Jdi->LoadFile(Util::WstringToString(path));
-	if (gekkoDebug)
+	if (Debug::gekkoDebug)
 	{
-		gekkoDebug->InvalidateAll();
+		Debug::gekkoDebug->InvalidateAll();
 	}
 	OnMainWindowOpened(path.c_str());
 	UI::Jdi->Run();
@@ -3837,7 +3609,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 				}
 				case IDC_ADDPATH:
 				{
-					path = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
+					path = UI::FileOpenDialog(UI::FileType::Directory);
 					if (!path.empty())
 					{
 						fix_path(path);
@@ -3904,7 +3676,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 			{
 				case IDC_CHOOSE_BOOTROM:
 				{
-					file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					file = UI::FileOpenDialog(UI::FileType::All);
 					if (!file.empty())
 					{
 						SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
@@ -3918,7 +3690,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 				}
 				case IDC_CHOOSE_DSPDROM:
 				{
-					file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					file = UI::FileOpenDialog(UI::FileType::All);
 					if (!file.empty())
 					{
 						SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
@@ -3932,7 +3704,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 				}
 				case IDC_CHOOSE_DSPIROM:
 				{
-					file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					file = UI::FileOpenDialog(UI::FileType::All);
 					if (!file.empty())
 					{
 						SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
@@ -4136,9 +3908,6 @@ void EditFileFilter(HWND hwnd)
 
 /* All important data is placed here */
 UserWindow wnd;
-
-Debug::DspDebug* dspDebug;
-Debug::GekkoDebug* gekkoDebug;
 
 /* ---------------------------------------------------------------------------  */
 /* Statusbar                                                                    */
@@ -4373,9 +4142,9 @@ void LoadRecentFile(int index)
 	std::wstring path = GetRecentEntry((RecentNum+1) - index);
 	UI::Jdi->Unload();
 	UI::Jdi->LoadFile(Util::WstringToString(path));
-	if (gekkoDebug)
+	if (Debug::gekkoDebug)
 	{
-		gekkoDebug->InvalidateAll();
+		Debug::gekkoDebug->InvalidateAll();
 	}
 	OnMainWindowOpened(path.c_str());
 	UI::Jdi->Run();
@@ -4485,7 +4254,7 @@ static void OnMainWindowCreate(HWND hwnd)
 	CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
 	if (UI::Jdi->GetConfigBool(USER_DOLDEBUG, USER_UI))
 	{
-		gekkoDebug = new Debug::GekkoDebug();
+		Debug::gekkoDebug = new Debug::GekkoDebug();
 		CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
 	}
 
@@ -4550,14 +4319,14 @@ static void OnMainWindowDestroy()
 	// disable drop operation
 	DragAcceptFiles(wnd.hMainWindow, FALSE);
 
-	if (gekkoDebug)
+	if (Debug::gekkoDebug)
 	{
-		delete gekkoDebug;
+		delete Debug::gekkoDebug;
 	}
 
-	if (dspDebug)
+	if (Debug::dspDebug)
 	{
-		delete dspDebug;
+		delete Debug::dspDebug;
 	}
 
 	UI::Jdi->ExecuteCommand("exit");
@@ -4793,15 +4562,15 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				/* Load DVD/executable (START) */
 				case ID_FILE_LOAD:
 				{
-					name = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					name = UI::FileOpenDialog(UI::FileType::All);
 					if (!name.empty())
 					{
 					loadFile:
 					
 						UI::Jdi->LoadFile(Util::WstringToString(name));
-						if (gekkoDebug)
+						if (Debug::gekkoDebug)
 						{
-							gekkoDebug->InvalidateAll();
+							Debug::gekkoDebug->InvalidateAll();
 						}
 						OnMainWindowOpened(name.c_str());
 						UI::Jdi->Run();
@@ -4835,13 +4604,13 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				{
 					UI::Jdi->LoadFile("Bootrom");
 					OnMainWindowOpened(L"Bootrom");
-					if (gekkoDebug == nullptr)
+					if (Debug::gekkoDebug == nullptr)
 					{
 						UI::Jdi->Run();
 					}
 					else
 					{
-						gekkoDebug->SetDisasmCursor(0xfff0'0100);
+						Debug::gekkoDebug->SetDisasmCursor(0xfff0'0100);
 					}
 					return 0;
 				}
@@ -4864,7 +4633,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				/* Set new current DVD image. */
 				case ID_FILE_CHANGEDVD:
 				{
-					name = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Dvd);
+					name = UI::FileOpenDialog(UI::FileType::Dvd);
 					if (!name.empty() && UI::Jdi->DvdCoverOpened() )
 					{
 						/* Bad */
@@ -5026,25 +4795,25 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				// Open/close system-wide debugger
 				case ID_DEBUG_CONSOLE:
 				{
-					if (dspDebug)
+					if (Debug::dspDebug)
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
-						delete dspDebug;
-						dspDebug = nullptr;
+						delete Debug::dspDebug;
+						Debug::dspDebug = nullptr;
 					}
 
-					if (gekkoDebug == nullptr)
+					if (Debug::gekkoDebug == nullptr)
 					{   // open
 						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
-						gekkoDebug = new Debug::GekkoDebug();
+						Debug::gekkoDebug = new Debug::GekkoDebug();
 						UI::Jdi->SetConfigBool(USER_DOLDEBUG, true, USER_UI);
 						SetStatusText(STATUS_ENUM::Progress, L"Debugger opened");
 					}
 					else
 					{   // close
 						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-						delete gekkoDebug;
-						gekkoDebug = nullptr;
+						delete Debug::gekkoDebug;
+						Debug::gekkoDebug = nullptr;
 						UI::Jdi->SetConfigBool(USER_DOLDEBUG, false, USER_UI);
 						SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
 					}
@@ -5053,24 +4822,24 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				// Open/close DSP Debug
 				case ID_DSP_DEBUG:
 				{
-					if (gekkoDebug)
+					if (Debug::gekkoDebug)
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-						delete gekkoDebug;
-						gekkoDebug = nullptr;
+						delete Debug::gekkoDebug;
+						Debug::gekkoDebug = nullptr;
 					}
 
-					if (dspDebug == nullptr)
+					if (Debug::dspDebug == nullptr)
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
-						dspDebug = new Debug::DspDebug();
+						Debug::dspDebug = new Debug::DspDebug();
 						SetStatusText(STATUS_ENUM::Progress, L"DSP Debugger opened");
 					}
 					else
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
-						delete dspDebug;
-						dspDebug = nullptr;
+						delete Debug::dspDebug;
+						Debug::dspDebug = nullptr;
 						SetStatusText(STATUS_ENUM::Progress, L"DSP Debugger closed");
 					}
 					return 0;
@@ -5078,7 +4847,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				// Mount Dolphin SDK as DVD
 				case ID_DEVELOPMENT_MOUNTSDK:
 				{
-					std::wstring dolphinSdkDir = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
+					std::wstring dolphinSdkDir = UI::FileOpenDialog(UI::FileType::Directory);
 					if (!dolphinSdkDir.empty())
 					{
 						UI::Jdi->DvdMountSDK(Util::WstringToString(dolphinSdkDir));
@@ -5112,11 +4881,6 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				case ID_OPTIONS_MEMCARDS_SLOTB:
 					MemcardConfigure(1, hwnd);
 					return 0;
-
-				// configure fonts
-				case ID_OPTIONS_BOOTROMFONT:
-					FontConfigure(hwnd);
-					break;
 
 				case ID_HELP_ABOUT:
 					AboutDialog(hwnd);
