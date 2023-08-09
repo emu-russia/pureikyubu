@@ -2143,35 +2143,23 @@ namespace GX
 			case CP_CMD_DRAW_QUAD | 6:
 			case CP_CMD_DRAW_QUAD | 7:
 			{
-				static   Vertex   quad[4];
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-					1---2       tri1: 0-1-2
-					|  /|       tri2: 0-2-3
-					| / |
-					|/  |
-					0---3
-															/*/
 
-				while(vtxnum > 0)
-				{
-					for(unsigned n=0; n<4; n++)
-					{
-						vtx = &quad[n];
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_QUAD, vtxnum);
+					while (vtxnum--) {
+
+						vtx = &v;
 						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(vtx);
 					}
-					if (!disableDraw)
-					{
-						GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
-						GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
-					}
-					vtxnum -= 4;
+					RAS_End();
 				}
 				break;
 			}
@@ -2186,34 +2174,23 @@ namespace GX
 			case CP_CMD_DRAW_TRIANGLE | 6:
 			case CP_CMD_DRAW_TRIANGLE | 7:
 			{
-				static   Vertex   tri[3];
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-					1---2       tri: 0-1-2
-					|  /
-					| /
-					|/
-					0  
-															/*/
 
-				while(vtxnum > 0)
-				{
-					for(unsigned n=0; n<3; n++)
-					{
-						vtx = &tri[n];
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_TRIANGLE, vtxnum);
+					while (vtxnum--) {
+
+						vtx = &v;
 						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(&v);
 					}
-					if (!disableDraw)
-					{
-						GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
-					}
-					vtxnum -= 3;
+					RAS_End();
 				}
 				break;
 			}
@@ -2228,50 +2205,23 @@ namespace GX
 			case CP_CMD_DRAW_STRIP | 6:
 			case CP_CMD_DRAW_STRIP | 7:
 			{
-				static   Vertex   tri[3];
-				unsigned c = 2, order[3] = { 0, 1, 2 }, tmp;
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-						1---3---5   tri1: 0-1-2
-					   /|  /|  /    tri2: 1-2-3
-					  / | / | /     tri3: 2-3-4
-					 /  |/  |/      tri4: 3-4-5
-					0---2---4       ...
-															/*/
-				if(vtxnum == 0) break;
-				assert(vtxnum >= 3);
 
-				vtx = &tri[0];
-				FifoWalk(vatnum, gxfifo);
-				vtx = &tri[1];
-				FifoWalk(vatnum, gxfifo);
-				vtxnum -= 2;
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_TRIANGLE_STRIP, vtxnum);
+					while (vtxnum--) {
 
-				while(vtxnum-- > 0)
-				{
-					vtx = &tri[c++];
-					FifoWalk(vatnum, gxfifo);
-					if(c > 2) c = 0;
-
-					if (!disableDraw)
-					{
-						GL_RenderTriangle(
-							&tri[order[0]],
-							&tri[order[1]],
-							&tri[order[2]]
-						);
+						vtx = &v;
+						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(vtx);
 					}
-
-					tmp      = order[0];
-					order[0] = order[1];
-					order[1] = order[2];
-					order[2] = tmp;
+					RAS_End();
 				}
 				break;
 			}
@@ -2286,50 +2236,23 @@ namespace GX
 			case CP_CMD_DRAW_FAN | 6:
 			case CP_CMD_DRAW_FAN | 7:
 			{
-				static   Vertex   tri[3];
-				unsigned c = 2, order[2] = { 1, 2 }, tmp;
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-					1---2---3   tri1: 0-1-2
-					|  /  _/    tri2: 0-2-3
-					| / _/      trin: 0-[n-1]-n
-					|/_/    
-					0/
-															/*/
-				if(vtxnum == 0) break;
-				assert(vtxnum >= 3);
 
-				vtx = &tri[0];
-				FifoWalk(vatnum, gxfifo);
-				vtx = &tri[1];
-				FifoWalk(vatnum, gxfifo);
-				vtxnum -= 2;
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_TRIANGLE_FAN, vtxnum);
+					while (vtxnum--) {
 
-				while(vtxnum-- > 0)
-				{
-					vtx = &tri[c];
-					FifoWalk(vatnum, gxfifo);
-					c = (c == 2) ? (c = 1) : (c = 2);
-
-					if (!disableDraw)
-					{
-						GL_RenderTriangle(
-							&tri[0],
-							&tri[order[0]],
-							&tri[order[1]]
-						);
+						vtx = &v;
+						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(vtx);
 					}
-
-					// order[0] <-> order[1]
-					tmp      = order[0];
-					order[0] = order[1];
-					order[1] = tmp;
+					RAS_End();
 				}
 				break;
 			}
@@ -2344,35 +2267,23 @@ namespace GX
 			case CP_CMD_DRAW_LINE | 6:
 			case CP_CMD_DRAW_LINE | 7:
 			{
-				static   Vertex   v[2];
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-						1   3   5
-					   /   /   / 
-					  /   /   / 
-					 /   /   /      
-					0   2   4       
-															/*/
-				if(vtxnum == 0) break;
 
-				while(vtxnum > 0)
-				{
-					vtx = &v[0];
-					FifoWalk(vatnum, gxfifo);
-					vtx = &v[1];
-					FifoWalk(vatnum, gxfifo);
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_LINE, vtxnum);
+					while (vtxnum--) {
 
-					if (!disableDraw)
-					{
-						GL_RenderLine(&v[0], &v[1]);
+						vtx = &v;
+						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(vtx);
 					}
-					vtxnum -= 2;
+					RAS_End();
 				}
 				break;
 			}
@@ -2387,46 +2298,23 @@ namespace GX
 			case CP_CMD_DRAW_LINESTRIP | 6:
 			case CP_CMD_DRAW_LINESTRIP | 7:
 			{
-				static   Vertex   v[2];
-				unsigned c = 1, order[2] = { 0, 1 }, tmp;
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-						1   3   5
-					   /|  /|  / 
-					  / | / | /  
-					 /  |/  |/   
-					0   2   4    
-															/*/
-				if(vtxnum == 0) break;
-				assert(vtxnum >= 2);
 
-				vtx = &v[0];
-				FifoWalk(vatnum, gxfifo);
-				vtxnum--;
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_LINE_STRIP, vtxnum);
+					while (vtxnum--) {
 
-				while(vtxnum-- > 0)
-				{
-					vtx = &v[c++];
-					FifoWalk(vatnum, gxfifo);
-					if(c > 1) c = 0;
-
-					if (!disableDraw)
-					{
-						GL_RenderLine(
-							&v[order[0]],
-							&v[order[1]]
-						);
+						vtx = &v;
+						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(vtx);
 					}
-
-					tmp      = order[0];
-					order[0] = order[1];
-					order[1] = tmp;
+					RAS_End();
 				}
 				break;
 			}
@@ -2441,30 +2329,23 @@ namespace GX
 			case CP_CMD_DRAW_POINT | 6:
 			case CP_CMD_DRAW_POINT | 7:
 			{
-				static  Vertex  p;
+				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
-				usevat = vatnum;
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
-															/*/
-					0---0       tri: 0-0-0 (1x1x1 tri)
-					|  /
-					| /
-					|/
-					0  
-															/*/
 
-				while(vtxnum-- > 0)
-				{
-					vtx = &p;
-					FifoWalk(vatnum, gxfifo);
-					if (!disableDraw)
-					{
-						GL_RenderPoint(vtx);
+				if (vtxnum != 0) {
+					RAS_Begin(RAS_POINT, vtxnum);
+					while (vtxnum--) {
+
+						vtx = &v;
+						FifoWalk(vatnum, gxfifo);
+						RAS_SendVertex(vtx);
 					}
+					RAS_End();
 				}
 				break;
 			}

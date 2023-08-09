@@ -86,7 +86,6 @@ namespace GX
 		bool logDrawCommands = false;
 		bool GpRegsLog = false;
 
-		size_t usevat;	// current VAT
 		Vertex* vtx; // current vertex to collect data
 
 		// Windows OpenGL stuff
@@ -177,10 +176,10 @@ namespace GX
 		TexGenOut tgout[8]{};
 		Color rasca[2]{};	// lighting stage output colors
 
-		void DoLights(const Vertex* v);
-		void DoTexGen(const Vertex* v);
+		void XF_DoLights(const Vertex* v);
+		void XF_DoTexGen(const Vertex* v);
 		void VECNormalize(float vec[3]);
-		void ApplyModelview(float* out, const float* in);
+		void XF_ApplyModelview(float* out, const float* in);
 		void NormalTransform(float* out, const float* in);
 		void GL_SetProjection(float* mtx);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
@@ -207,9 +206,13 @@ namespace GX
 
 #pragma region "Rasterizers"
 
-		void GL_RenderTriangle(const Vertex* v0, const Vertex* v1, const Vertex* v2);
-		void GL_RenderLine(const Vertex* v0, const Vertex* v1);
-		void GL_RenderPoint(const Vertex* v0);
+		RAS_Primitive last_prim{};
+		size_t ras_vtx_num{};
+		bool ras_use_texture = false;
+
+		void RAS_Begin(RAS_Primitive prim, size_t vtx_num);
+		void RAS_End();
+		void RAS_SendVertex(const Vertex* v);
 
 #pragma endregion "Rasterizers"
 

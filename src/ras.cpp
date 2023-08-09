@@ -4,106 +4,121 @@
 
 namespace GX
 {
-	void GXCore::GL_RenderTriangle(
-		const Vertex* v0,
-		const Vertex* v1,
-		const Vertex* v2)
+
+	void GXCore::RAS_Begin(RAS_Primitive prim, size_t vtx_num)
 	{
-		const Vertex* vn[3] = { v0, v1, v2 };
-		float mv[3][3];    // result vectors
+		switch (prim)
+		{
+			case RAS_QUAD:
+				ras_use_texture = true;
+				break;
+			case RAS_TRIANGLE:
+				ras_use_texture = true;
+				break;
+			case RAS_TRIANGLE_STRIP:
+				ras_use_texture = true;
+				break;
+			case RAS_TRIANGLE_FAN:
+				ras_use_texture = true;
+				break;
+			case RAS_LINE:
+				ras_use_texture = false;
+				break;
+			case RAS_LINE_STRIP:
+				ras_use_texture = false;
+				break;
+			case RAS_POINT:
+				ras_use_texture = false;
+				break;
+		}
 
-		// position transform
-		ApplyModelview(mv[0], v0->pos);
-		ApplyModelview(mv[1], v1->pos);
-		ApplyModelview(mv[2], v2->pos);
-
-#ifndef WIREFRAME
-		if (state.xf.numTex && tID[0])
+		// texture hack
+		if (ras_use_texture && state.xf.numTex && tID[0])
 		{
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, tID[0]->bind);
 		}
-#endif
 
-		// render triangle
-		glBegin(GL_TRIANGLES);
+		switch (prim)
 		{
-			for (int v = 0; v < 3; v++)
-			{
-#ifndef WIREFRAME
-				// color hack
-				if (state.xf.numColors)
-				{
-					DoLights(vn[v]);
-					glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, rasca[0].A);
-				}
-
-				// texture hack
-				if (state.xf.numTex && tID[0])
-				{
-					DoTexGen(vn[v]);
-					tgout[0].out[0] *= tID[0]->ds;
-					tgout[0].out[1] *= tID[0]->dt;
-					glTexCoord2fv(tgout[0].out);
-				}
-#endif
-
-#ifdef WIREFRAME
-				glColor3ub(0, 255, 255);
-#endif
-				glVertex3fv(mv[v]);
-			}
+			case RAS_QUAD:
+				glBegin(GL_QUADS);
+				break;
+			case RAS_TRIANGLE:
+				glBegin(GL_TRIANGLES);
+				break;
+			case RAS_TRIANGLE_STRIP:
+				glBegin(GL_TRIANGLE_STRIP);
+				break;
+			case RAS_TRIANGLE_FAN:
+				glBegin(GL_TRIANGLE_FAN);
+				break;
+			case RAS_LINE:
+				glBegin(GL_LINES);
+				break;
+			case RAS_LINE_STRIP:
+				glBegin(GL_LINE_STRIP);
+				break;
+			case RAS_POINT:
+				glBegin(GL_POINTS);
+				break;
 		}
-		glEnd();
 
-		tris++;
+		last_prim = prim;
+		ras_vtx_num = vtx_num;
 	}
 
-	void GXCore::GL_RenderLine(
-		const Vertex* v0,
-		const Vertex* v1)
+	void GXCore::RAS_End()
 	{
-		const Vertex* vn[2] = { v0, v1 };
-		float mv[2][3];    // result vectors
-
-		// position transform
-		ApplyModelview(&mv[0][0], v0->pos);
-		ApplyModelview(&mv[1][0], v1->pos);
-
-		// render line
-		//glEnable(GL_LINE_SMOOTH);
-		glBegin(GL_LINES);
+		switch (last_prim)
 		{
-			DoLights(vn[0]);
-			glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, 0);
-			glVertex3f(mv[0][0], mv[0][1], mv[0][2]);
-			DoLights(vn[1]);
-			glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, 0);
-			glVertex3f(mv[1][0], mv[1][1], mv[1][2]);
+			case RAS_QUAD:
+				tris += (ras_vtx_num / 4) / 2;
+				break;
+			case RAS_TRIANGLE:
+				tris += ras_vtx_num / 3;
+				break;
+			case RAS_TRIANGLE_STRIP:
+				tris += ras_vtx_num - 2;
+				break;
+			case RAS_TRIANGLE_FAN:
+				tris += ras_vtx_num - 2;
+				break;
+			case RAS_LINE:
+				lines += ras_vtx_num / 2;
+				break;
+			case RAS_LINE_STRIP:
+				lines += ras_vtx_num - 1;
+				break;
+			case RAS_POINT:
+				pts += ras_vtx_num;
+				break;
 		}
 		glEnd();
-		//glDisable(GL_LINE_SMOOTH);
-
-		lines++;
 	}
 
-	void GXCore::GL_RenderPoint(
-		const Vertex* v0)
+	void GXCore::RAS_SendVertex(const Vertex* v)
 	{
-		float mv[3];    // result vectors
+		float mv[3];
+		
+		XF_ApplyModelview(mv, v->pos);
 
-		// position transform
-		ApplyModelview(&mv[0], v0->pos);
-
-		// render triangle
-		glBegin(GL_POINTS);
+		// color hack
+		if (state.xf.numColors)
 		{
-			DoLights(v0);
-			glColor3ub(rasca[0].R, rasca[0].G, rasca[0].B);
-			glVertex3f(mv[0], mv[1], mv[2]);
+			XF_DoLights(v);
+			glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, rasca[0].A);
 		}
-		glEnd();
 
-		pts++;
+		// texture hack
+		if (ras_use_texture && state.xf.numTex && tID[0])
+		{
+			XF_DoTexGen(v);
+			tgout[0].out[0] *= tID[0]->ds;
+			tgout[0].out[1] *= tID[0]->dt;
+			glTexCoord2fv(tgout[0].out);
+		}
+
+		glVertex3fv(mv);
 	}
 }
