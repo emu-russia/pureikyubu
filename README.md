@@ -27,7 +27,7 @@ make
 ./pureikyubu pong.dol
 ```
 
-Requirements: CMake, pthread.
+Requirements: CMake, pthread, OpenGL.
 
 ## Progress
 
