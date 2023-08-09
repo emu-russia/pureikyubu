@@ -55,10 +55,10 @@ namespace Gekko
 	{
 		one_second = CPU_TIMER_CLOCK;
 		intFlag = false;
+		exception = false;
+		decreq = false;
+		RESERVE = false;
 		ops = 0;
-
-		// TODO: Make switchable
-		//EffectiveToPhysical = &GekkoCore::EffectiveToPhysicalNoMmu;
 
 		// BAT registers are scattered across the SPR address space. This is not very convenient, we will make it convenient.
 
@@ -99,7 +99,9 @@ namespace Gekko
 		dtlb.InvalidateAll();
 		itlb.InvalidateAll();
 		cache->Reset();
+		cache->Enable(false);
 		icache->Reset();
+		icache->Enable(false);
 	}
 
 	// Modify CPU counters
@@ -915,9 +917,11 @@ namespace Gekko
 		// TODO
 		// Dirty hack so far. The cache is required for bootrom to work correctly when loading an application using Apploader. If you start DVD with Bootrom HLE at once, the games work more stable without cache.
 		// We need to fix the cache.
+#if GEKKOCORE_CACHE_DISABLE_HACK
 		if (!emu.bootrom) {
 			enable = false;
 		}
+#endif
 
 		enabled = enable;
 

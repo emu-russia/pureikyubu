@@ -93,6 +93,10 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 #define GEKKOCORE_USE_TLB 1				// Use TLB for address translation
 #endif
 
+#ifndef GEKKOCORE_CACHE_DISABLE_HACK
+#define GEKKOCORE_CACHE_DISABLE_HACK 1		// Disable cache if running NOT from Bootrom
+#endif
+
 
 // Gekko architecture definitions (from datasheet).
 
