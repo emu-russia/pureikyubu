@@ -480,6 +480,7 @@ namespace Gekko
 		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 
 		void SetLogLevel(CacheLogLevel level) { log = level; }
+		uint8_t* GetCachePointer(uint32_t phys_addr) { return (phys_addr < cacheSize) ? &cacheData[phys_addr] : nullptr; }
 	};
 }
 
@@ -727,6 +728,8 @@ namespace Gekko
 		void DumpDTLB();
 		void DumpITLB();
 		void InvalidateTLBAll();
+
+		uint8_t* GetDataCachePointer(uint32_t phys_addr);
 
 #pragma endregion "Debug"
 

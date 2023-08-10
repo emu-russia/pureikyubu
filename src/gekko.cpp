@@ -598,6 +598,11 @@ namespace Gekko
 		PIReadWord(pa, reg);
 	}
 
+	uint8_t* GekkoCore::GetDataCachePointer(uint32_t phys_addr)
+	{
+		return cache->GetCachePointer(phys_addr);
+	}
+
 }
 
 

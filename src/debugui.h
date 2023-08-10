@@ -426,10 +426,26 @@ namespace Debug
 
 namespace Debug
 {
+	enum class MemoryViewMode
+	{
+		GekkoVirtual = 0,
+		GekkoDataCache,
+		MainMem,
+		DSP_ARAM,
+		DSP_DRAM,
+		DSP_DROM,
+		DSP_IRAM,
+		DSP_IROM,
+	};
 
 	class MemoryView : public CuiWindow
 	{
-		uint32_t cursor = 0x8000'0000;
+		MemoryViewMode mode = MemoryViewMode::GekkoVirtual;
+		uint32_t vm_cursor = 0x8000'0000;
+		uint32_t dcache_cursor = 0;
+		uint32_t mmem_cursor = 0;
+
+		void RotateView(bool forward);
 
 		std::string hexbyte(uint32_t addr);
 		char charbyte(uint32_t addr);
