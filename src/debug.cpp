@@ -15,12 +15,22 @@ namespace Debug
 
 		Msgs.AddReport(Channel::Error, true, buf);
 
+		bool any_debugger_present = false;
+
 		if (Debug::gekkoDebug != nullptr) {
 			Debug::gekkoDebug->InvalidateAll();
+			any_debugger_present = true;
 		}
 
 		if (Debug::dspDebug != nullptr) {
 			Debug::dspDebug->InvalidateAll();
+			any_debugger_present = true;
+		}
+
+		if (!any_debugger_present) {
+			UI::Report(
+				Util::StringToWstring(
+					std::string("The emulation is crashed. Details can be viewed in the debugger (Ctrl+D)\n\n" + std::string(buf))).c_str());
 		}
 	}
 

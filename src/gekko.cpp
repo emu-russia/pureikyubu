@@ -253,7 +253,8 @@ namespace Gekko
 			}
 
 			if (break_on_DSI) {
-				Halt("Gekko DSI Exception at %08X\n", regs.pc);
+				Halt("Gekko DSI Exception at %08X.%s\n", regs.pc, regs.spr[Gekko::SPR::SDR1] != 0 ? 
+					"\nThe sneaky game uses the vm library, to emulate virtual memory, which is not yet well implemented." : "");
 			}
 		}
 
