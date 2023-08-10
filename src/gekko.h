@@ -93,10 +93,6 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 #define GEKKOCORE_USE_TLB 1				// Use TLB for address translation
 #endif
 
-#ifndef GEKKOCORE_CACHE_DISABLE_HACK
-#define GEKKOCORE_CACHE_DISABLE_HACK 1		// Disable cache if running NOT from Bootrom
-#endif
-
 
 // Gekko architecture definitions (from datasheet).
 
@@ -337,9 +333,6 @@ enum class GEKKO_QUANT_TYPE
 #define BATBL(batu)     ((batu >> 2) & 0x7ff)
 #define BATBRPN(batl)   (batl >> 17)
 
-// Left until all lurking bugs are eliminated.
-#define DOLPHIN_OS_LOCKED_CACHE_ADDRESS 0xE000'0000
-
 // floating point register
 union FPREG
 {
@@ -487,6 +480,7 @@ namespace Gekko
 		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 
 		void SetLogLevel(CacheLogLevel level) { log = level; }
+		uint8_t* GetCachePointer(uint32_t phys_addr) { return (phys_addr < cacheSize) ? &cacheData[phys_addr] : nullptr; }
 	};
 }
 
@@ -604,6 +598,8 @@ namespace Gekko
 
 		bool break_on_exception = false;
 		bool trace_exceptions = false;
+		bool break_on_DSI = true;
+		bool break_on_ISI = true;
 
 		bool TestBreakpoints();
 		void TestReadBreakpoints(uint32_t accessAddress);
@@ -657,6 +653,8 @@ namespace Gekko
 
 		bool RESERVE = false;    // for lwarx/stwcx.
 		uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
+
+		bool trace_locked_dma_regs = false;			// Log mtspr operation for DMAU/DMAL registers
 
 	public:
 
@@ -732,6 +730,8 @@ namespace Gekko
 		void DumpDTLB();
 		void DumpITLB();
 		void InvalidateTLBAll();
+
+		uint8_t* GetDataCachePointer(uint32_t phys_addr);
 
 #pragma endregion "Debug"
 

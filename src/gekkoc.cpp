@@ -4282,12 +4282,16 @@ namespace Gekko
 			// Locked cache DMA
 
 			case SPR::DMAU:
-				Report(Channel::CPU, "DMAU: 0x%08X\n", core->regs.gpr[info.paramBits[1]]);
+				if (core->trace_locked_dma_regs) {
+					Report(Channel::CPU, "DMAU: 0x%08X\n", core->regs.gpr[info.paramBits[1]]);
+				}
 				break;
 			case SPR::DMAL:
 			{
 				core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
-				Report(Channel::CPU, "DMAL: 0x%08X\n", core->regs.spr[spr]);
+				if (core->trace_locked_dma_regs) {
+					Report(Channel::CPU, "DMAL: 0x%08X\n", core->regs.spr[spr]);
+				}
 				if (core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_T)
 				{
 					uint32_t maddr = core->regs.spr[SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
@@ -4403,9 +4407,14 @@ namespace Gekko
 		}
 		else
 		{
-			core->regs.spr[Gekko::SPR::DAR] = ea;
-			core->Exception(Exception::EXCEPTION_DSI);
-			return;
+			// TODO
+			// In Gekko manual it is written that when translation is enabled it is necessary to generate DSI if the address could not be translated.
+			// But games do dcbi 0xE0000000 BEFORE enabling LCEnable, which obviously shouldn't work, according to the manual.
+			// It's not clear what the fuck is going on here, but I'm going to disable DSI generation with this instruction for now until further investigation.
+
+			//core->regs.spr[Gekko::SPR::DAR] = ea;
+			//core->Exception(Exception::EXCEPTION_DSI);
+			//return;
 		}
 		core->regs.pc += 4;
 	}
@@ -4433,7 +4442,7 @@ namespace Gekko
 	{
 		int WIMG;
 
-		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI)
+		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI || core->cache->IsLockedEnable())
 		{
 			core->regs.pc += 4;
 			return;
@@ -4453,7 +4462,7 @@ namespace Gekko
 	{
 		int WIMG;
 
-		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI)
+		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI || core->cache->IsLockedEnable())
 		{
 			core->regs.pc += 4;
 			return;
@@ -4510,6 +4519,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
+			Report(Channel::CPU, "Locked cache is assigned to physical address: 0x%08X\n", pa);
 			core->cache->ZeroLocked(pa);
 		}
 		else
@@ -4585,6 +4595,7 @@ namespace Gekko
 			return;
 		}
 
+		Report(Channel::CPU, "mtsr: sr[%d] = 0x%08X, pc: 0x%08X\n", info.paramBits[0], core->regs.gpr[info.paramBits[1]], core->regs.pc);
 		core->regs.sr[info.paramBits[0]] = core->regs.gpr[info.paramBits[1]];
 		core->regs.pc += 4;
 	}
@@ -4599,6 +4610,7 @@ namespace Gekko
 			return;
 		}
 
+		Report(Channel::CPU, "mtsrin: sr[%d] = 0x%08X, pc: 0x%08X\n", core->regs.gpr[info.paramBits[1]] >> 28, core->regs.gpr[info.paramBits[0]], core->regs.pc);
 		core->regs.sr[core->regs.gpr[info.paramBits[1]] >> 28] = core->regs.gpr[info.paramBits[0]];
 		core->regs.pc += 4;
 	}

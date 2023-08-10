@@ -14,6 +14,14 @@ namespace Debug
 		va_end(arg);
 
 		Msgs.AddReport(Channel::Error, true, buf);
+
+		if (Debug::gekkoDebug != nullptr) {
+			Debug::gekkoDebug->InvalidateAll();
+		}
+
+		if (Debug::dspDebug != nullptr) {
+			Debug::dspDebug->InvalidateAll();
+		}
 	}
 
 	void Report(Channel chan, const char* text, ...)

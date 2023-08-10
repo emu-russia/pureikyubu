@@ -221,6 +221,10 @@ namespace Gekko
 				default:
 					break;
 			}
+
+			if (break_on_ISI) {
+				Halt("Gekko ISI Exception at %08X\n", regs.pc);
+			}
 		}
 		else if (code == Exception::EXCEPTION_DSI)
 		{
@@ -246,6 +250,10 @@ namespace Gekko
 
 				default:
 					break;
+			}
+
+			if (break_on_DSI) {
+				Halt("Gekko DSI Exception at %08X\n", regs.pc);
 			}
 		}
 
@@ -322,12 +330,6 @@ namespace Gekko
 			return;
 		}
 
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-		{
-			cache->ReadByte(pa, reg);
-			return;
-		}
-
 		PIReadByte(pa, reg);
 	}
 
@@ -368,12 +370,6 @@ namespace Gekko
 				return;
 		}
 
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-		{
-			cache->WriteByte(pa, data);
-			return;
-		}
-
 		PIWriteByte(pa, data);
 	}
 
@@ -394,12 +390,6 @@ namespace Gekko
 		}
 
 		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
-		{
-			cache->ReadHalf(pa, reg);
-			return;
-		}
-
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
 			cache->ReadHalf(pa, reg);
 			return;
@@ -445,12 +435,6 @@ namespace Gekko
 				return;
 		}
 
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-		{
-			cache->WriteHalf(pa, data);
-			return;
-		}
-
 		PIWriteHalf(pa, data);
 	}
 
@@ -471,12 +455,6 @@ namespace Gekko
 		}
 
 		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
-		{
-			cache->ReadWord(pa, reg);
-			return;
-		}
-
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
 			cache->ReadWord(pa, reg);
 			return;
@@ -522,12 +500,6 @@ namespace Gekko
 				return;
 		}
 
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-		{
-			cache->WriteWord(pa, data);
-			return;
-		}
-
 		PIWriteWord(pa, data);
 	}
 
@@ -548,12 +520,6 @@ namespace Gekko
 		}
 
 		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
-		{
-			cache->ReadDouble(pa, reg);
-			return;
-		}
-
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
 			cache->ReadDouble(pa, reg);
 			return;
@@ -601,12 +567,6 @@ namespace Gekko
 				return;
 		}
 
-		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-		{
-			cache->WriteDouble(pa, data);
-			return;
-		}
-
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
 		PIWriteDouble(pa, data);
@@ -636,6 +596,11 @@ namespace Gekko
 		}
 
 		PIReadWord(pa, reg);
+	}
+
+	uint8_t* GekkoCore::GetDataCachePointer(uint32_t phys_addr)
+	{
+		return cache->GetCachePointer(phys_addr);
 	}
 
 }
@@ -928,15 +893,6 @@ namespace Gekko
 
 	void Cache::Enable(bool enable)
 	{
-		// TODO
-		// Dirty hack so far. The cache is required for bootrom to work correctly when loading an application using Apploader. If you start DVD with Bootrom HLE at once, the games work more stable without cache.
-		// We need to fix the cache.
-#if GEKKOCORE_CACHE_DISABLE_HACK
-		if (!emu.bootrom) {
-			enable = false;
-		}
-#endif
-
 		enabled = enable;
 
 		if (log >= CacheLogLevel::Commands)
@@ -1069,9 +1025,12 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		CastIn(pa);
-		SetInvalid(pa, false);
-		SetDirty(pa, false);			// Valid & Not Dirty
+		if (!IsDirty(pa))
+		{
+			CastIn(pa);
+			SetInvalid(pa, false);
+			SetDirty(pa, false);			// Valid & Not Dirty
+		}
 
 		if (log >= CacheLogLevel::Commands)
 		{
@@ -1084,9 +1043,12 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		CastIn(pa);
-		SetInvalid(pa, false);
-		SetDirty(pa, true);				// Valid & Dirty
+		if (!IsDirty(pa))
+		{
+			CastIn(pa);
+			SetInvalid(pa, false);
+			SetDirty(pa, true);				// Valid & Dirty
+		}
 
 		if (log >= CacheLogLevel::Commands)
 		{

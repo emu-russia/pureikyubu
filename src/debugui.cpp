@@ -2729,10 +2729,38 @@ namespace Debug
 		}
 
 		char hint[0x100] = { 0, };
-		sprintf(hint, " phys:0x%08X stack:0x%08X sda1:0x%08X sda2:0x%08X", 
-			Jdi->VirtualToPhysicalDMmu(cursor), Jdi->GetGpr(1), Jdi->GetGpr(13), Jdi->GetGpr(2));
+		uint32_t cursor = 0;
 
-		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
+		switch (mode)
+		{
+			case MemoryViewMode::GekkoVirtual:
+			{
+				cursor = vm_cursor;
+				sprintf(hint, " Gekko virtual memory, addr:0x%08X", Jdi->VirtualToPhysicalDMmu(cursor));
+				Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
+			}
+			break;
+			case MemoryViewMode::GekkoDataCache: 
+				cursor = dcache_cursor;
+				sprintf(hint, " Gekko data cache, addr:0x%08X", cursor);
+				Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
+				break;
+			case MemoryViewMode::MainMem:
+				cursor = mmem_cursor;
+				sprintf(hint, " Main memory (1T-SRAM), addr:0x%08X", cursor);
+				Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
+				break;
+			case MemoryViewMode::DSP_ARAM: 
+				break;
+			case MemoryViewMode::DSP_DRAM:
+				break;
+			case MemoryViewMode::DSP_DROM:
+				break;
+			case MemoryViewMode::DSP_IRAM:
+				break;
+			case MemoryViewMode::DSP_IROM:
+				break;
+		}
 
 		// Hexview
 
@@ -2759,40 +2787,163 @@ namespace Debug
 
 	void MemoryView::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
+		uint32_t* cursor = nullptr;
+		uint32_t top = 0;
+		uint32_t bottom = 0;
+
+		switch (mode)
+		{
+			case MemoryViewMode::GekkoVirtual:
+				cursor = &vm_cursor;
+				top = 0x8000'0000;
+				bottom = 0x8000'0000 | RAMSIZE;
+				break;
+			case MemoryViewMode::GekkoDataCache: 
+				cursor = &dcache_cursor;
+				top = 0;
+				bottom = RAMSIZE;
+				break;
+			case MemoryViewMode::MainMem:
+				cursor = &mmem_cursor;
+				top = 0;
+				bottom = RAMSIZE;
+				break;
+			case MemoryViewMode::DSP_ARAM: 
+				break;
+			case MemoryViewMode::DSP_DRAM:
+				break;
+			case MemoryViewMode::DSP_DROM:
+				break;
+			case MemoryViewMode::DSP_IRAM:
+				break;
+			case MemoryViewMode::DSP_IROM:
+				break;
+		}
+
 		switch (Vkey)
 		{
 			case CuiVkey::Home:
-				cursor = 0x8000'0000;
+				if (cursor != nullptr)
+					*cursor = top;
 				break;
 			case CuiVkey::End:
-				cursor = (0x8000'0000 | RAMSIZE) - (uint32_t)((height - 1) * 16);
+				if (cursor != nullptr)
+					*cursor = bottom - (uint32_t)((height - 1) * 16);
 				break;
 			case CuiVkey::PageDown:
-				cursor += (uint32_t)((height - 1) * 16);
+				if (cursor != nullptr)
+					*cursor += (uint32_t)((height - 1) * 16);
 				break;
 			case CuiVkey::PageUp:
-				cursor -= (uint32_t)((height - 1) * 16);
+				if (cursor != nullptr)
+					*cursor -= (uint32_t)((height - 1) * 16);
 				break;
 			case CuiVkey::Up:
-				cursor -= 16;
+				if (cursor != nullptr)
+					*cursor -= 16;
 				break;
 			case CuiVkey::Down:
-				cursor += 16;
+				if (cursor != nullptr)
+					*cursor += 16;
+				break;
+			case CuiVkey::Left:
+				RotateView(false);
+				break;
+			case CuiVkey::Right:
+				RotateView(true);
 				break;
 		}
 
 		Invalidate();
 	}
 
+
+	void MemoryView::RotateView(bool forward)
+	{
+		if (forward)
+		{
+			switch (mode)
+			{
+				case MemoryViewMode::GekkoVirtual: mode = MemoryViewMode::GekkoDataCache; break;
+				case MemoryViewMode::GekkoDataCache: mode = MemoryViewMode::MainMem; break;
+				case MemoryViewMode::MainMem: mode = MemoryViewMode::DSP_ARAM; break;
+				case MemoryViewMode::DSP_ARAM: mode = MemoryViewMode::DSP_DRAM; break;
+				case MemoryViewMode::DSP_DRAM: mode = MemoryViewMode::DSP_DROM; break;
+				case MemoryViewMode::DSP_DROM: mode = MemoryViewMode::DSP_IRAM; break;
+				case MemoryViewMode::DSP_IRAM: mode = MemoryViewMode::DSP_IROM; break;
+				case MemoryViewMode::DSP_IROM: mode = MemoryViewMode::GekkoVirtual; break;
+			}
+		}
+		else
+		{
+			switch (mode)
+			{
+				case MemoryViewMode::GekkoVirtual: mode = MemoryViewMode::DSP_IROM; break;
+				case MemoryViewMode::GekkoDataCache: mode = MemoryViewMode::GekkoVirtual; break;
+				case MemoryViewMode::MainMem: mode = MemoryViewMode::GekkoDataCache; break;
+				case MemoryViewMode::DSP_ARAM: mode = MemoryViewMode::MainMem; break;
+				case MemoryViewMode::DSP_DRAM: mode = MemoryViewMode::DSP_ARAM; break;
+				case MemoryViewMode::DSP_DROM: mode = MemoryViewMode::DSP_DRAM; break;
+				case MemoryViewMode::DSP_IRAM: mode = MemoryViewMode::DSP_DROM; break;
+				case MemoryViewMode::DSP_IROM: mode = MemoryViewMode::DSP_IRAM; break;
+			}
+		}
+	}
+
 	void MemoryView::SetCursor(uint32_t address)
 	{
-		cursor = address;
+		switch (mode)
+		{
+			case MemoryViewMode::GekkoVirtual:
+				vm_cursor = address;
+				break;
+			case MemoryViewMode::GekkoDataCache: 
+				dcache_cursor = address;
+				break;
+			case MemoryViewMode::MainMem:
+				mmem_cursor = address;
+				break;
+			case MemoryViewMode::DSP_ARAM: 
+				break;
+			case MemoryViewMode::DSP_DRAM:
+				break;
+			case MemoryViewMode::DSP_DROM:
+				break;
+			case MemoryViewMode::DSP_IRAM:
+				break;
+			case MemoryViewMode::DSP_IROM:
+				break;
+		}
+
 		Invalidate();
 	}
 
 	std::string MemoryView::hexbyte(uint32_t addr)
 	{
-		uint8_t* ptr = (uint8_t *)Jdi->TranslateDMmu(addr);
+		uint8_t* ptr = nullptr;
+
+		switch (mode)
+		{
+			case MemoryViewMode::GekkoVirtual:
+				ptr = (uint8_t*)Jdi->TranslateDMmu(addr);
+				break;
+			case MemoryViewMode::GekkoDataCache: 
+				ptr = Core->GetDataCachePointer(addr);
+				break;
+			case MemoryViewMode::MainMem:
+				ptr = MITranslatePhysicalAddress(addr, 1);
+				break;
+			case MemoryViewMode::DSP_ARAM: 
+				break;
+			case MemoryViewMode::DSP_DRAM:
+				break;
+			case MemoryViewMode::DSP_DROM:
+				break;
+			case MemoryViewMode::DSP_IRAM:
+				break;
+			case MemoryViewMode::DSP_IROM:
+				break;
+		}
 
 		if (ptr)
 		{
@@ -2808,7 +2959,30 @@ namespace Debug
 
 	char MemoryView::charbyte(uint32_t addr)
 	{
-		char* ptr = (char*)Jdi->TranslateDMmu(addr);
+		uint8_t* ptr = nullptr;
+
+		switch (mode)
+		{
+			case MemoryViewMode::GekkoVirtual:
+				ptr = (uint8_t*)Jdi->TranslateDMmu(addr);
+				break;
+			case MemoryViewMode::GekkoDataCache: 
+				ptr = Core->GetDataCachePointer(addr);
+				break;
+			case MemoryViewMode::MainMem:
+				ptr = MITranslatePhysicalAddress(addr, 1);
+				break;
+			case MemoryViewMode::DSP_ARAM: 
+				break;
+			case MemoryViewMode::DSP_DRAM:
+				break;
+			case MemoryViewMode::DSP_DROM:
+				break;
+			case MemoryViewMode::DSP_IRAM:
+				break;
+			case MemoryViewMode::DSP_IROM:
+				break;
+		}
 
 		if (ptr)
 		{
