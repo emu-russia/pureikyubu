@@ -1025,9 +1025,12 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		CastIn(pa);
-		SetInvalid(pa, false);
-		SetDirty(pa, false);			// Valid & Not Dirty
+		if (!IsDirty(pa))
+		{
+			CastIn(pa);
+			SetInvalid(pa, false);
+			SetDirty(pa, false);			// Valid & Not Dirty
+		}
 
 		if (log >= CacheLogLevel::Commands)
 		{
@@ -1040,9 +1043,12 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		CastIn(pa);
-		SetInvalid(pa, false);
-		SetDirty(pa, true);				// Valid & Dirty
+		if (!IsDirty(pa))
+		{
+			CastIn(pa);
+			SetInvalid(pa, false);
+			SetDirty(pa, true);				// Valid & Dirty
+		}
 
 		if (log >= CacheLogLevel::Commands)
 		{

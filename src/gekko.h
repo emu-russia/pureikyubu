@@ -654,6 +654,8 @@ namespace Gekko
 		bool RESERVE = false;    // for lwarx/stwcx.
 		uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
 
+		bool trace_locked_dma_regs = false;			// Log mtspr operation for DMAU/DMAL registers
+
 	public:
 
 		Cache* cache;
