@@ -602,7 +602,10 @@ namespace Gekko
 		SpinLock breakPointsLock;
 		uint32_t oneShotBreakpoint = BadAddress;
 
-		void TestBreakpoints();
+		bool break_on_exception = false;
+		bool trace_exceptions = false;
+
+		bool TestBreakpoints();
 		void TestReadBreakpoints(uint32_t accessAddress);
 		void TestWriteBreakpoints(uint32_t accessAddress);
 

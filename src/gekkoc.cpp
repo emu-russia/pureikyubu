@@ -4282,12 +4282,12 @@ namespace Gekko
 			// Locked cache DMA
 
 			case SPR::DMAU:
-				//DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
+				Report(Channel::CPU, "DMAU: 0x%08X\n", core->regs.gpr[info.paramBits[1]]);
 				break;
 			case SPR::DMAL:
 			{
 				core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
-				//DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
+				Report(Channel::CPU, "DMAL: 0x%08X\n", core->regs.spr[spr]);
 				if (core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_T)
 				{
 					uint32_t maddr = core->regs.spr[SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
