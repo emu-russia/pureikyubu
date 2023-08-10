@@ -93,10 +93,6 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 #define GEKKOCORE_USE_TLB 1				// Use TLB for address translation
 #endif
 
-#ifndef GEKKOCORE_CACHE_DISABLE_HACK
-#define GEKKOCORE_CACHE_DISABLE_HACK 1		// Disable cache if running NOT from Bootrom
-#endif
-
 
 // Gekko architecture definitions (from datasheet).
 
@@ -336,9 +332,6 @@ enum class GEKKO_QUANT_TYPE
 #define BATBEPI(batu)   (batu >> 17)
 #define BATBL(batu)     ((batu >> 2) & 0x7ff)
 #define BATBRPN(batl)   (batl >> 17)
-
-// Left until all lurking bugs are eliminated.
-#define DOLPHIN_OS_LOCKED_CACHE_ADDRESS 0xE000'0000
 
 // floating point register
 union FPREG
@@ -604,6 +597,8 @@ namespace Gekko
 
 		bool break_on_exception = false;
 		bool trace_exceptions = false;
+		bool break_on_DSI = true;
+		bool break_on_ISI = true;
 
 		bool TestBreakpoints();
 		void TestReadBreakpoints(uint32_t accessAddress);
