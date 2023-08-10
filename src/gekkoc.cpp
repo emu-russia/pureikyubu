@@ -3278,16 +3278,16 @@ namespace Gekko
 
 		switch (type)
 		{
-		case GEKKO_QUANT_TYPE::U8: flt = (float)(uint8_t)data; break;
-		case GEKKO_QUANT_TYPE::U16: flt = (float)(uint16_t)data; break;
-		case GEKKO_QUANT_TYPE::S8:
-			if (data & 0x80) data |= 0xffffff00;
-			flt = (float)(int8_t)data; break;
-		case GEKKO_QUANT_TYPE::S16:
-			if (data & 0x8000) data |= 0xffff0000;
-			flt = (float)(int16_t)data; break;
-		case GEKKO_QUANT_TYPE::SINGLE_FLOAT:
-		default: flt = *((float*)&data); break;
+			case GEKKO_QUANT_TYPE::U8: flt = (float)(uint8_t)data; break;
+			case GEKKO_QUANT_TYPE::U16: flt = (float)(uint16_t)data; break;
+			case GEKKO_QUANT_TYPE::S8:
+				if (data & 0x80) data |= 0xffffff00;
+				flt = (float)(int8_t)data; break;
+			case GEKKO_QUANT_TYPE::S16:
+				if (data & 0x8000) data |= 0xffff0000;
+				flt = (float)(int16_t)data; break;
+			case GEKKO_QUANT_TYPE::SINGLE_FLOAT:
+			default: flt = *((float*)&data); break;
 		}
 
 		return flt * core->interp->ldScale[scale];
@@ -3302,24 +3302,24 @@ namespace Gekko
 
 		switch (type)
 		{
-		case GEKKO_QUANT_TYPE::U8:
-			if (data < 0) data = 0;
-			if (data > 255) data = 255;
-			uval = (uint8_t)(uint32_t)data; break;
-		case GEKKO_QUANT_TYPE::U16:
-			if (data < 0) data = 0;
-			if (data > 65535) data = 65535;
-			uval = (uint16_t)(uint32_t)data; break;
-		case GEKKO_QUANT_TYPE::S8:
-			if (data < -128) data = -128;
-			if (data > 127) data = 127;
-			uval = (int8_t)(uint8_t)(int32_t)(uint32_t)data; break;
-		case GEKKO_QUANT_TYPE::S16:
-			if (data < -32768) data = -32768;
-			if (data > 32767) data = 32767;
-			uval = (int16_t)(uint16_t)(int32_t)(uint32_t)data; break;
-		case GEKKO_QUANT_TYPE::SINGLE_FLOAT:
-		default: *((float*)&uval) = data; break;
+			case GEKKO_QUANT_TYPE::U8:
+				if (data < 0) data = 0;
+				if (data > 255) data = 255;
+				uval = (uint8_t)(uint32_t)data; break;
+			case GEKKO_QUANT_TYPE::U16:
+				if (data < 0) data = 0;
+				if (data > 65535) data = 65535;
+				uval = (uint16_t)(uint32_t)data; break;
+			case GEKKO_QUANT_TYPE::S8:
+				if (data < -128) data = -128;
+				if (data > 127) data = 127;
+				uval = (int8_t)(uint8_t)(int32_t)(uint32_t)data; break;
+			case GEKKO_QUANT_TYPE::S16:
+				if (data < -32768) data = -32768;
+				if (data > 32767) data = 32767;
+				uval = (int16_t)(uint16_t)(int32_t)(uint32_t)data; break;
+			case GEKKO_QUANT_TYPE::SINGLE_FLOAT:
+			default: *((float*)&uval) = data; break;
 		}
 
 		return uval;
@@ -4282,12 +4282,12 @@ namespace Gekko
 			// Locked cache DMA
 
 			case SPR::DMAU:
-				//DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
+				Report(Channel::CPU, "DMAU: 0x%08X\n", core->regs.gpr[info.paramBits[1]]);
 				break;
 			case SPR::DMAL:
 			{
 				core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
-				//DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
+				Report(Channel::CPU, "DMAL: 0x%08X\n", core->regs.spr[spr]);
 				if (core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_T)
 				{
 					uint32_t maddr = core->regs.spr[SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;

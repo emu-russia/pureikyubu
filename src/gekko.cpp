@@ -18,7 +18,9 @@ namespace Gekko
 
 		if (core->EnableTestBreakpoints)
 		{
-			core->TestBreakpoints();
+			if (core->TestBreakpoints()) {
+				return;
+			}
 		}
 
 		core->interp->ExecuteOpcode();
@@ -173,7 +175,15 @@ namespace Gekko
 
 	void GekkoCore::Exception(Gekko::Exception code)
 	{
-		//Halt("Gekko Exception: #%04X\n", (uint16_t)code);
+		if (break_on_exception)
+		{
+			Halt("Gekko Exception: #%04X\n", (uint16_t)code);
+		}
+
+		if (trace_exceptions)
+		{
+			Report(Channel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
+		}
 
 		if (exception)
 		{
@@ -769,12 +779,13 @@ namespace Gekko
 		EnableTestWriteBreakpoints = false;
 	}
 
-	void GekkoCore::TestBreakpoints()
+	bool GekkoCore::TestBreakpoints()
 	{
 		if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
 		{
+			Halt("One shot breakpoint at addr: 0x%08X\n", oneShotBreakpoint);
 			oneShotBreakpoint = BadAddress;
-			Halt("One shot breakpoint\n");
+			return true;
 		}
 
 		uint32_t addr = BadAddress;
@@ -793,7 +804,10 @@ namespace Gekko
 		if (addr != BadAddress)
 		{
 			Halt("Gekko suspended at addr: 0x%08X\n", addr);
+			return true;
 		}
+
+		return false;
 	}
 
 	void GekkoCore::TestReadBreakpoints(uint32_t accessAddress)
