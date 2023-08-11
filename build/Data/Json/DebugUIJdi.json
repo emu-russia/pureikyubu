@@ -7,7 +7,7 @@
   "can": {
 
     "d": {
-      "help": "Set memory address to view in debugger",
+      "help": "Set memory address to view in debugger.",
       "args": 1,
       "hints": "<address>",
       "usage": [
@@ -17,7 +17,7 @@
     },
 
     "u": {
-      "help": "Set memory address for viewing disassembled Gekko code",
+      "help": "Set memory address for viewing disassembled Gekko/DSP code.",
       "args": 1,
       "hints": "<address>",
       "usage": [

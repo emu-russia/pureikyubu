@@ -1,6 +1,6 @@
 /*
 
-# DebugConsole
+# DebugUI
 
 The entire debug console UI has moved here.
 
@@ -15,16 +15,6 @@ When the thread is stopped (Gekko TBR does not increase its value), all other em
 This does not apply to the debugger (and any other UI), which are architecturally located above the emulator core and work in their own threads.
 
 ## Architectural features
-
-Debug UI contains 2 instances:
-- System-wide debugger focused on GekkoCore (code rewritten on Cui.cpp)
-- DSP debugger (the code is based on the more convenient Cui.cpp from ground up)
-
-The Win32 Console API does not allow you to create more than one console per process, so you can only use one instance at a time.
-
-Debug UIs can be opened via the `Debug` menu.
-
-## Cui
 
 All Win32 code for interacting with the Console API is integrated into Cui.cpp.
 I'm not sure that someone would want to port the console debugger somewhere other than Windows (the Console API is very specific), but for convenience I brought all the code there.
@@ -226,122 +216,24 @@ namespace Debug
 	extern JdiClient* Jdi;
 }
 
-// Do not forget that DSP addressing is done with freaking 16-bit slots (`words`)
-
-namespace Debug
-{
-	class DspDebug;
-
-	class DspImem : public CuiWindow
-	{
-		friend DspDebug;
-
-		static const uint32_t IROM_START_ADDRESS = 0x8000;
-
-		uint32_t current = 0x8000;
-		uint32_t cursor = 0x8000;
-		size_t wordsOnScreen = 0;
-
-		bool AddressVisible(uint32_t address);
-
-		std::vector<std::pair<uint32_t, uint32_t>> browseHist;
-
-	public:
-		DspImem(CuiRect& rect, std::string name, Cui* parent);
-
-		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
-	};
-
-}
-
-// Visual DSP Debugger
-
-namespace Debug
-{
-	class DspDebug : public Cui
-	{
-		static const size_t width = 80;
-		static const size_t height = 60;
-
-		DspImem* imemWindow = nullptr;
-		CmdlineWindow* cmdline = nullptr;
-
-	public:
-		DspDebug();
-
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
-	};
-
-}
-
-// Do not forget that DSP addressing is done with freaking 16-bit slots (`words`)
 
 namespace Debug
 {
 
-	class DspDmem : public CuiWindow
+	enum class DisasmMode
 	{
-		static const uint32_t DROM_START_ADDRESS = 0x1000;
-
-		uint32_t current = 0;
-
-	public:
-		DspDmem(CuiRect& rect, std::string name, Cui* parent);
-
-		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		GekkoDisasm,
+		DSPDisasm,
 	};
 
-}
-
-
-namespace Debug
-{
-	// DSP registers
-
-	enum class DspReg
+	class Disasm : public CuiWindow
 	{
-		r0, r1, r2, r3,
-		m0, m1, m2, m3,
-		l0, l1, l2, l3,
-		pcs, pss, eas, lcs,
-		a2, b2, dpp, psr,
-		ps0, ps1, ps2, pc1,
-		x0, y0, x1, y1,
-		a0, b0, a1, b1
-	};
+		DisasmMode mode = DisasmMode::GekkoDisasm;
 
-	class DspRegs : public CuiWindow
-	{
-		// Used to highlight reg changes
-		uint16_t savedRegs[32] = { 0 };
-		uint16_t savedPsr = 0;
+		// Gekko Disasm
 
-		void DrawRegs();
-		void DrawStatusBits();
-
-		void PrintReg(int x, int y, DspReg n);
-		void PrintPsrBit(int x, int y, int n);
-
-		void Memorize();
-
-	public:
-		DspRegs(CuiRect& rect, std::string name, Cui* parent);
-
-		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
-	};
-
-}
-
-namespace Debug
-{
-
-	class GekkoDisasm : public CuiWindow
-	{
-		uint32_t address = 0x8000'0000;
-		uint32_t cursor = 0x8000'0000;
+		uint32_t gekko_address = 0x8000'0000;
+		uint32_t gekko_cursor = 0x8000'0000;
 
 		int disa_sub_h = 0;
 
@@ -349,16 +241,35 @@ namespace Debug
 
 		bool IsCursorVisible();
 		int DisasmLine(int line, uint32_t addr);
+		
+		// DSP IMEM Disasm
+
+		// Do not forget that DSP addressing is done with freaking 16-bit slots (`words`)
+		static const uint32_t IROM_START_ADDRESS = 0x8000;
+		uint32_t dsp_current = 0x8000;
+		uint32_t dsp_cursor = 0x8000;
+		size_t wordsOnScreen = 0;
+		std::vector<std::pair<uint32_t, uint32_t>> dspBrowseHist;
+
+		void DspImemOnDraw();
+		void DspImemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+
+		void RotateView(bool forward);
 
 	public:
-		GekkoDisasm(CuiRect& rect, std::string name, Cui* parent);
-		~GekkoDisasm();
+		Disasm(CuiRect& rect, std::string name, Cui* parent);
+		~Disasm();
 
 		virtual void OnDraw();
 		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 		uint32_t GetCursor();
 		void SetCursor(uint32_t address);
+
+		DisasmMode GetMode() { return mode; }
+		
+		bool DspAddressVisible(uint32_t address);
+		void DspEnsurePcVisible();
 	};
 
 }
@@ -370,7 +281,8 @@ namespace Debug
 		GPR = 0,
 		FPR,
 		PSR,
-		MMU
+		MMU,
+		DSP,
 	};
 
 #pragma pack(push, 1)
@@ -388,10 +300,25 @@ namespace Debug
 
 #pragma pack(pop)
 
+	// DSP registers
+
+	enum class DspReg
+	{
+		r0, r1, r2, r3,
+		m0, m1, m2, m3,
+		l0, l1, l2, l3,
+		pcs, pss, eas, lcs,
+		a2, b2, dpp, psr,
+		ps0, ps1, ps2, pc1,
+		x0, y0, x1, y1,
+		a0, b0, a1, b1
+	};
+
 	class DebugRegs : public CuiWindow
 	{
 		DebugRegmode mode = DebugRegmode::GPR;
 
+		// Used to highlight reg changes
 		uint32_t savedGpr[32] = { 0 };
 		Fpreg savedPs0[32] = { 0 };
 		Fpreg savedPs1[32] = { 0 };
@@ -413,6 +340,18 @@ namespace Debug
 		void describe_bat_reg(int x, int y, uint32_t up, uint32_t lo, bool instr);
 		std::string smart_size(size_t size);
 
+		// DSP Regs
+
+		uint16_t savedDspRegs[32] = { 0 };
+		uint16_t savedDspPsr = 0;
+
+		void ShowDspRegs();
+		void DspDrawRegs();
+		void DspDrawStatusBits();
+		void DspPrintReg(int x, int y, DspReg n);
+		void DspPrintPsrBit(int x, int y, int n);
+		void DspMemorize();
+
 	public:
 		DebugRegs(CuiRect& rect, std::string name, Cui* parent);
 		~DebugRegs();
@@ -431,11 +370,8 @@ namespace Debug
 		GekkoVirtual = 0,
 		GekkoDataCache,
 		MainMem,
-		DSP_ARAM,
-		DSP_DRAM,
-		DSP_DROM,
-		DSP_IRAM,
-		DSP_IROM,
+		DSP_ARAM,		// Without an extension that hooks to an external port (HSP). We don't know how to emulate HSP yet
+		DSP_DMEM,		// DRAM + DROM. The memory-mapped DSP registers are shown separately
 	};
 
 	class MemoryView : public CuiWindow
@@ -444,11 +380,19 @@ namespace Debug
 		uint32_t vm_cursor = 0x8000'0000;
 		uint32_t dcache_cursor = 0;
 		uint32_t mmem_cursor = 0;
+		uint32_t aram_cursor = 0;
 
 		void RotateView(bool forward);
 
 		std::string hexbyte(uint32_t addr);
 		char charbyte(uint32_t addr);
+
+		// Do not forget that DSP addressing is done with freaking 16-bit slots (`words`)
+		static const uint32_t DROM_START_ADDRESS = 0x1000;
+		uint32_t dmem_current = 0;
+
+		void DspDmemOnDraw();
+		void DspDmemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 	public:
 		MemoryView(CuiRect& rect, std::string name, Cui* parent);
@@ -469,7 +413,7 @@ namespace Debug
 namespace Debug
 {
 
-	class GekkoDebug : public Cui
+	class Debugger : public Cui
 	{
 		static const size_t width = 120;
 		static const size_t height = 80;
@@ -480,13 +424,13 @@ namespace Debug
 
 		DebugRegs* regs = nullptr;
 		MemoryView* memview = nullptr;
-		GekkoDisasm* disasm = nullptr;
+		Disasm* disasm = nullptr;
 		ReportWindow* msgs = nullptr;
 		CmdlineWindow* cmdline = nullptr;
 		StatusWindow* status = nullptr;
 
 	public:
-		GekkoDebug();
+		Debugger();
 
 		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
@@ -498,6 +442,5 @@ namespace Debug
 
 namespace Debug
 {
-	extern DspDebug* dspDebug;
-	extern GekkoDebug* gekkoDebug;
+	extern Debugger* debugger;
 }

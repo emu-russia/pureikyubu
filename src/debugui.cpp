@@ -1,12 +1,8 @@
 #include "pch.h"
 
-// TODO: Integrate DSP Debug into a common debugger. Historically, DSP Debug was done on Cui, but then the old debugger was moved to Cui as well
-// But I couldn't get my hands on combining them. So now you have to switch between two consoles.
-
 namespace Debug
 {
-	DspDebug* dspDebug;
-	GekkoDebug* gekkoDebug;
+	Debugger* debugger;
 }
 
 namespace Debug
@@ -286,7 +282,6 @@ namespace Debug
 }
 
 // Command line. All commands go to Jdi->
-// It can be used both by the system debugger and as part of the DSP Debugger.
 
 namespace Debug
 {
@@ -1187,595 +1182,12 @@ namespace Debug
 
 }
 
-// Visual DSP Debugger
-
-namespace Debug
-{
-	DspDebug::DspDebug() :
-		Cui("DSP Debug", width, height)
-	{
-		// Create an interface for communicating with the emulator core, if it has not been created yet.
-
-		if (!Jdi)
-		{
-			Jdi = new JdiClient;
-		}
-
-		CuiRect rect;
-
-		rect.left = 0;
-		rect.top = 0;
-		rect.right = 79;
-		rect.bottom = 8;
-		AddWindow(new DspRegs(rect, "DspRegs", this));
-
-		rect.left = 0;
-		rect.top = 9;
-		rect.right = 79;
-		rect.bottom = 17;
-		AddWindow(new DspDmem(rect, "DspDmem", this));
-
-		rect.left = 0;
-		rect.top = 18;
-		rect.right = 79;
-		rect.bottom = 49;
-		imemWindow = new DspImem(rect, "DspImem", this);
-		AddWindow(imemWindow);
-
-		rect.left = 0;
-		rect.top = 50;
-		rect.right = 79;
-		rect.bottom = height - 2;
-		AddWindow(new ReportWindow(rect, "ReportWindow", this));
-
-		rect.left = 0;
-		rect.top = height - 1;
-		rect.right = 79;
-		rect.bottom = height - 1;
-		cmdline = new CmdlineWindow(rect, "Cmdline", this);
-		AddWindow(cmdline);
-
-		SetWindowFocus("DspImem");
-	}
-
-	void DspDebug::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
-	{
-		uint32_t targetAddress = 0;
-
-		if ((Vkey == CuiVkey::Backspace || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
-		{
-			SetWindowFocus("Cmdline");
-			InvalidateAll();
-			return;
-		}
-
-		switch (Vkey)
-		{
-			case CuiVkey::F1:
-				SetWindowFocus("DspRegs");
-				InvalidateAll();
-				break;
-			case CuiVkey::F2:
-				SetWindowFocus("DspDmem");
-				InvalidateAll();
-				break;
-			case CuiVkey::F3:
-				SetWindowFocus("DspImem");
-				InvalidateAll();
-				break;
-			case CuiVkey::F4:
-				SetWindowFocus("ReportWindow");
-				InvalidateAll();
-				break;
-
-			case CuiVkey::F5:
-				// Suspend/Run both cores
-				if (Jdi->DspIsRunning())
-				{
-					Jdi->DspSuspend();
-					Jdi->GekkoSuspend();
-				}
-				else
-				{
-					Jdi->DspRun();
-					Jdi->GekkoRun();
-				}
-				break;
-
-			case CuiVkey::F10:
-				// Step Over
-				if (!Jdi->DspIsRunning())
-				{
-					if (Jdi->DspIsCall(Jdi->DspGetPc(), targetAddress))
-					{
-						Jdi->DspAddOneShotBreakpoint(Jdi->DspGetPc() + 2);
-						Jdi->DspRun();
-					}
-					else
-					{
-						Jdi->DspStep();
-						if (!imemWindow->AddressVisible(Jdi->DspGetPc()))
-						{
-							imemWindow->current = imemWindow->cursor = Jdi->DspGetPc();
-						}
-					}
-				}
-				break;
-
-			case CuiVkey::F11:
-				// Step Into
-				Jdi->DspStep();
-				if (!imemWindow->AddressVisible(Jdi->DspGetPc()))
-				{
-					imemWindow->current = imemWindow->cursor = Jdi->DspGetPc();
-				}
-				break;
-		}
-
-		InvalidateAll();
-	}
-
-}
-
-namespace Debug
-{
-
-	DspDmem::DspDmem(CuiRect& rect, std::string name, Cui* parent) :
-		CuiWindow(rect, name, parent)
-	{
-	}
-
-	void DspDmem::OnDraw()
-	{
-		Fill(CuiColor::Black, CuiColor::Normal, ' ');
-		FillLine(CuiColor::Cyan, CuiColor::Black, 0, ' ');
-		Print(CuiColor::Cyan, CuiColor::Black, 1, 0, "F2 - DMEM");
-
-		if (active)
-		{
-			Print(CuiColor::Cyan, CuiColor::White, 0, 0, "*");
-		}
-
-		// If GameCube is not powered on
-
-		if (!Jdi->IsLoaded())
-		{
-			return;
-		}
-
-		// Do not forget that DSP addressing is done in 16-bit words.
-
-		size_t lines = height - 1;
-		uint32_t addr = current;
-		int y = 1;
-
-		while (lines--)
-		{
-			char text[0x100];
-
-			uint16_t* ptr = (uint16_t*) Jdi->DspTranslateDMem(addr);
-			if (!ptr)
-			{
-				addr += 8;
-				y++;
-				continue;
-			}
-
-			// Address
-
-			sprintf(text, "%04X: ", addr);
-			Print(CuiColor::Black, CuiColor::Normal, 0, y, text);
-
-			// Raw Words
-
-			int x = 6;
-
-			for (size_t i = 0; i < 8; i++)
-			{
-				uint16_t word = _BYTESWAP_UINT16(ptr[i]);
-				sprintf(text, "%04X ", word);
-				Print(CuiColor::Black, CuiColor::Normal, x, y, text);
-				x += 5;
-			}
-
-			addr += 8;
-			y++;
-		}
-	}
-
-	void DspDmem::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
-	{
-		size_t lines = height - 1;
-
-		if (!Jdi->IsLoaded())
-		{
-			return;
-		}
-
-		switch (Vkey)
-		{
-			case CuiVkey::Up:
-				if (current >= 8)
-					current -= 8;
-				break;
-
-			case CuiVkey::Down:
-				current += 8;
-				if (current > 0x3000)
-					current = 0x3000;
-				break;
-
-			case CuiVkey::PageUp:
-				if (current < lines * 8)
-					current = 0;
-				else
-					current -= (uint32_t)(lines * 8);
-				break;
-
-			case CuiVkey::PageDown:
-				current += (uint32_t)(lines * 8);
-				if (current > 0x3000)
-					current = 0x3000;
-				break;
-
-			case CuiVkey::Home:
-				current = 0;
-				break;
-
-			case CuiVkey::End:
-				current = DROM_START_ADDRESS;
-				break;
-		}
-
-		Invalidate();
-	}
-
-}
-
-namespace Debug
-{
-
-	DspImem::DspImem(CuiRect& rect, std::string name, Cui* parent) :
-		CuiWindow(rect, name, parent)
-	{
-	}
-
-	void DspImem::OnDraw()
-	{
-		Fill(CuiColor::Black, CuiColor::Normal, ' ');
-		FillLine(CuiColor::Cyan, CuiColor::Black, 0, ' ');
-		Print(CuiColor::Cyan, CuiColor::Black, 1, 0, "F3 - IMEM");
-
-		if (active)
-		{
-			Print(CuiColor::Cyan, CuiColor::White, 0, 0, "*");
-		}
-
-		// If GameCube is not powered on
-
-		if (!Jdi->IsLoaded())
-		{
-			return;
-		}
-
-		// Show Dsp disassembly
-
-		size_t lines = height - 1;
-		uint32_t addr = current;
-		int y = 1;
-
-		// Do not forget that DSP addressing is done in 16-bit words.
-
-		wordsOnScreen = 0;
-
-		while (lines--)
-		{
-			size_t instrSizeInWords = 0;
-			bool flowControl = false;
-
-			std::string text = Jdi->DspDisasm(addr, instrSizeInWords, flowControl);
-
-			if (text.empty())
-			{
-				addr++;
-				y++;
-				continue;
-			}
-
-			CuiColor backColor = CuiColor::Black;
-
-			int bgcur = (addr == cursor) ? ((int)CuiColor::Blue) : (0);
-			int bgbp = (Jdi->DspTestBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
-			int bg = (addr == Jdi->DspGetPc()) ? ((int)CuiColor::DarkBlue) : (0);
-			bg = bg ^ bgcur ^ bgbp;
-
-			backColor = (CuiColor)bg;
-
-			FillLine(backColor, CuiColor::Normal, y, ' ');
-			Print(backColor, flowControl ? CuiColor::Green : CuiColor::Normal, 0, y, text);
-
-			addr += (uint32_t)instrSizeInWords;
-			wordsOnScreen += instrSizeInWords;
-			y++;
-		}
-	}
-
-	void DspImem::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
-	{
-		uint32_t targetAddress = 0;
-
-		if (!Jdi->IsLoaded())
-		{
-			return;
-		}
-
-		switch (Vkey)
-		{
-			case CuiVkey::Up:
-				if (AddressVisible(cursor))
-				{
-					if (cursor > 0)
-						cursor--;
-				}
-				else
-				{
-					cursor = (uint32_t)(current - wordsOnScreen);
-				}
-				if (!AddressVisible(cursor))
-				{
-					if (current < (height - 1))
-						current = 0;
-					else
-						current -= (uint32_t)(height - 1);
-				}
-				break;
-
-			case CuiVkey::Down:
-				if (AddressVisible(cursor))
-					cursor++;
-				else
-					cursor = current;
-				if (!AddressVisible(cursor))
-				{
-					current = cursor;
-				}
-				break;
-
-			case CuiVkey::PageUp:
-				if (current < (height - 1))
-					current = 0;
-				else
-					current -= (uint32_t)(height - 1);
-				break;
-
-			case CuiVkey::PageDown:
-				current += (uint32_t)(wordsOnScreen ? wordsOnScreen : height - 1);
-				if (current >= 0x8A00)
-					current = 0x8A00;
-				break;
-
-			case CuiVkey::Home:
-				if (ctrl)
-				{
-					current = cursor = 0;
-				}
-				else
-				{
-					current = cursor = Jdi->DspGetPc();
-				}
-				break;
-
-			case CuiVkey::End:
-				current = IROM_START_ADDRESS;
-				break;
-
-			case CuiVkey::F9:
-				if (AddressVisible(cursor))
-				{
-					Jdi->DspToggleBreakpoint(cursor);
-				}
-				break;
-
-			case CuiVkey::Enter:
-				if (Jdi->DspIsCallOrJump(cursor, targetAddress))
-				{
-					std::pair<uint32_t, uint32_t> last(current, cursor);
-					browseHist.push_back(last);
-					current = cursor = targetAddress;
-				}
-				break;
-
-			case CuiVkey::Escape:
-				if (browseHist.size() > 0)
-				{
-					std::pair<uint32_t, uint32_t> last = browseHist.back();
-					current = last.first;
-					cursor = last.second;
-					browseHist.pop_back();
-				}
-				break;
-		}
-
-		Invalidate();
-	}
-
-	bool DspImem::AddressVisible(uint32_t address)
-	{
-		if (!wordsOnScreen)
-			return false;
-
-		return (current <= address && address < (current + wordsOnScreen));
-	}
-
-}
-
-namespace Debug
-{
-	static const char* RegNames[] = {
-		"r0", "r1", "r2", "r3",
-		"m0", "m1", "m2", "m3",
-		"l0", "l1", "l2", "l3",
-		"pcs", "pss", "eas", "lcs",
-		"a2", "b2", "dpp", "psr",
-		"ps0", "ps1", "ps2", "pc1",
-		"x0", "y0", "x1", "y1",
-		"a0", "b0", "a1", "b1"
-	};
-
-	static const char* PsrBitNames[] = {
-		"c", "v", "z", "n", "e", "u", "tb", "sv",
-		"te0", "te1", "te2", "te3", "et", "im", "xl", "dp",
-	};
-
-	DspRegs::DspRegs(CuiRect& rect, std::string name, Cui* parent) :
-		CuiWindow(rect, name, parent)
-	{
-		Memorize();
-	}
-
-	void DspRegs::OnDraw()
-	{
-		FillLine(CuiColor::Cyan, CuiColor::Black, 0, ' ');
-		Print(CuiColor::Cyan, CuiColor::Black, 1, 0, "F1 - Regs");
-
-		if (active)
-		{
-			Print(CuiColor::Cyan, CuiColor::White, 0, 0, "*");
-		}
-
-		// If GameCube is not powered on
-
-		if (!Jdi->IsLoaded())
-		{
-			return;
-		}
-
-		// DSP Run State
-
-		if (Jdi->DspIsRunning())
-		{
-			Print(CuiColor::Cyan, CuiColor::Lime, 73, 0, "Running");
-		}
-		else
-		{
-			Print(CuiColor::Cyan, CuiColor::Red, 70, 0, "Suspended");
-		}
-
-		// Registers with changes
-
-		DrawRegs();
-
-		// 40-bit regs overview
-
-		Print(CuiColor::Black, CuiColor::Normal, 48, 1, "a: %02X_%04X_%04X",
-			(uint8_t)Jdi->DspGetReg((size_t)DspReg::a2),
-			Jdi->DspGetReg((size_t)DspReg::a1),
-			Jdi->DspGetReg((size_t)DspReg::a0));
-		Print(CuiColor::Black, CuiColor::Normal, 48, 2, "b: %02X_%04X_%04X",
-			(uint8_t)Jdi->DspGetReg((size_t)DspReg::b2),
-			Jdi->DspGetReg((size_t)DspReg::b1),
-			Jdi->DspGetReg((size_t)DspReg::b0));
-
-		Print(CuiColor::Black, CuiColor::Normal, 48, 3, "x: %04X_%04X",
-			Jdi->DspGetReg((size_t)DspReg::x1),
-			Jdi->DspGetReg((size_t)DspReg::x0));
-		Print(CuiColor::Black, CuiColor::Normal, 48, 4, "y: %04X_%04X",
-			Jdi->DspGetReg((size_t)DspReg::y1),
-			Jdi->DspGetReg((size_t)DspReg::y0));
-
-		uint64_t bitsPacked = Jdi->DspPackProd();
-		Print(CuiColor::Black, CuiColor::Normal, 48, 5, "p: %02X_%04X_%04X",
-			(uint8_t)(bitsPacked >> 32),
-			(uint16_t)(bitsPacked >> 16),
-			(uint16_t)bitsPacked);
-
-		// Program Counter
-
-		Print(CuiColor::Black, CuiColor::Normal, 48, 7, "pc: %04X", Jdi->DspGetPc());
-
-		// Status as individual bits
-
-		DrawStatusBits();
-
-		Memorize();
-	}
-
-	void DspRegs::DrawRegs()
-	{
-		for (int i = 0; i < 8; i++)
-		{
-			PrintReg(0, i + 1, (DspReg)i);
-		}
-
-		for (int i = 0; i < 8; i++)
-		{
-			PrintReg(12, i + 1, (DspReg)(8 + i));
-		}
-
-		for (int i = 0; i < 8; i++)
-		{
-			PrintReg(24, i + 1, (DspReg)(16 + i));
-		}
-
-		for (int i = 0; i < 8; i++)
-		{
-			PrintReg(36, i + 1, (DspReg)(24 + i));
-		}
-	}
-
-	void DspRegs::DrawStatusBits()
-	{
-		for (int i = 0; i < 8; i++)
-		{
-			PrintPsrBit(66, i + 1, i);
-		}
-
-		for (int i = 0; i < 8; i++)
-		{
-			PrintPsrBit(73, i + 1, 8 + i);
-		}
-	}
-
-	void DspRegs::PrintReg(int x, int y, DspReg n)
-	{
-		uint16_t value = Jdi->DspGetReg((size_t)n);
-		bool same = savedRegs[(size_t)n] == value;
-
-		Print( !same ? CuiColor::Lime : CuiColor::Normal,
-			x, y, "%-3s: %04X", RegNames[(size_t)n], value);
-	}
-
-	void DspRegs::PrintPsrBit(int x, int y, int n)
-	{
-		uint16_t mask = (1 << n);
-		uint16_t psr = Jdi->DspGetPsr();
-		bool same = (savedPsr & mask) == (psr & mask);
-
-		Print( !same ? CuiColor::Lime : CuiColor::Normal,
-			x, y, "%-3s: %i", PsrBitNames[n], (psr & mask) ? 1 : 0);
-	}
-
-	void DspRegs::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
-	{
-		Invalidate();
-	}
-
-	void DspRegs::Memorize()
-	{
-		for (size_t i = 0; i < 32; i++)
-		{
-			savedRegs[i] = Jdi->DspGetReg(i);
-		}
-		savedPsr = Jdi->DspGetPsr();
-	}
-
-}
 
 // System-wide debugger
 
 namespace Debug
 {
-	GekkoDebug::GekkoDebug()
+	Debugger::Debugger()
 		: Cui ("Debug Console", width, height)
 	{
 		CuiRect rect;
@@ -1787,7 +1199,7 @@ namespace Debug
 			Jdi = new JdiClient;
 		}
 
-		// Gekko registers
+		// Registers
 
 		rect.left = 0;
 		rect.top = 0;
@@ -1798,7 +1210,7 @@ namespace Debug
 
 		AddWindow(regs);
 
-		// Flipper main memory hexview
+		// Memory hexview
 
 		rect.left = 0;
 		rect.top = regsHeight;
@@ -1809,14 +1221,14 @@ namespace Debug
 
 		AddWindow(memview);
 
-		// Gekko disasm
+		// Gekko/DSP disasm
 
 		rect.left = 0;
 		rect.top = regsHeight + memViewHeight;
 		rect.right = width;
 		rect.bottom = regsHeight + memViewHeight + disaHeight - 1;
 
-		disasm = new GekkoDisasm(rect, "GekkoDisasm", this);
+		disasm = new Disasm(rect, "Disasm", this);
 
 		AddWindow(disasm);
 
@@ -1856,7 +1268,7 @@ namespace Debug
 		SetWindowFocus("Cmdline");
 	}
 
-	void GekkoDebug::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Debugger::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		if ((Vkey == CuiVkey::Backspace || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
 		{
@@ -1879,7 +1291,7 @@ namespace Debug
 				break;
 
 			case CuiVkey::F3:
-				SetWindowFocus("GekkoDisasm");
+				SetWindowFocus("Disasm");
 				InvalidateAll();
 				break;
 
@@ -1890,54 +1302,113 @@ namespace Debug
 				break;
 
 			case CuiVkey::F5:
-				// Continue/break Gekko execution
-				if (Jdi->IsLoaded())
-				{
-					if (Jdi->IsRunning())
+				if (disasm->GetMode() == DisasmMode::GekkoDisasm) {
+					// Continue/break Gekko execution
+					if (Jdi->IsLoaded())
 					{
+						if (Jdi->IsRunning())
+						{
+							Jdi->GekkoSuspend();
+							disasm->SetCursor(Jdi->GetPc());
+						}
+						else
+						{
+							Jdi->GekkoRun();
+						}
+						InvalidateAll();
+					}
+				}
+				else if (disasm->GetMode() == DisasmMode::DSPDisasm) {
+					// Suspend/Run both cores
+					if (Jdi->DspIsRunning())
+					{
+						Jdi->DspSuspend();
 						Jdi->GekkoSuspend();
-						disasm->SetCursor(Jdi->GetPc());
 					}
 					else
 					{
+						Jdi->DspRun();
 						Jdi->GekkoRun();
 					}
-					InvalidateAll();
 				}
 				break;
 
 			case CuiVkey::F9:
-				// Toggle Breakpoint
-				Jdi->GekkoToggleBreakpoint(disasm->GetCursor());
-				disasm->Invalidate();
+				if (disasm->GetMode() == DisasmMode::GekkoDisasm) {
+					// Toggle Gekko Breakpoint
+					Jdi->GekkoToggleBreakpoint(disasm->GetCursor());
+					disasm->Invalidate();
+				}
+				else if (disasm->GetMode() == DisasmMode::DSPDisasm) {
+					// Toggle DSP Breakpoint
+					// TODO
+				}
 				break;
 
 			case CuiVkey::F10:
-				// Step Over
-				if (Jdi->IsLoaded() && !Jdi->IsRunning())
-				{
-					Jdi->GekkoAddOneShotBreakpoint(Jdi->GetPc() + 4);
-					Jdi->GekkoRun();
-					InvalidateAll();
+				if (disasm->GetMode() == DisasmMode::GekkoDisasm) {
+					// Step Over Gekko
+					if (Jdi->IsLoaded() && !Jdi->IsRunning())
+					{
+						Jdi->GekkoAddOneShotBreakpoint(Jdi->GetPc() + 4);
+						Jdi->GekkoRun();
+						InvalidateAll();
+					}
+				}
+				else if (disasm->GetMode() == DisasmMode::DSPDisasm) {
+					// Step Over DSPCore
+					if (Jdi->IsLoaded() && !Jdi->DspIsRunning())
+					{
+						uint32_t targetAddress = 0;
+						if (Jdi->DspIsCall(Jdi->DspGetPc(), targetAddress))
+						{
+							Jdi->DspAddOneShotBreakpoint(Jdi->DspGetPc() + 2);
+							Jdi->DspRun();
+						}
+						else
+						{
+							Jdi->DspStep();
+							if (!disasm->DspAddressVisible(Jdi->DspGetPc()))
+							{
+								disasm->DspEnsurePcVisible();
+							}
+						}
+						InvalidateAll();
+					}
 				}
 				break;
 
 			case CuiVkey::F11:
-				// Step Into
-				if (Jdi->IsLoaded() && !Jdi->IsRunning())
-				{
-					Jdi->GekkoStep();
-					disasm->SetCursor(Jdi->GetPc());
-					InvalidateAll();
+				if (disasm->GetMode() == DisasmMode::GekkoDisasm) {
+					// Step Into Gekko
+					if (Jdi->IsLoaded() && !Jdi->IsRunning())
+					{
+						Jdi->GekkoStep();
+						disasm->SetCursor(Jdi->GetPc());
+						InvalidateAll();
+					}
+				}
+				else if (disasm->GetMode() == DisasmMode::DSPDisasm) {
+					// Step Into DSPCore
+					if (Jdi->IsLoaded() && !Jdi->IsRunning()) {
+						Jdi->DspStep();
+						if (!disasm->DspAddressVisible(Jdi->DspGetPc()))
+						{
+							disasm->DspEnsurePcVisible();
+						}
+						InvalidateAll();
+					}
 				}
 				break;
 
 			case CuiVkey::F12:
-				// Skip instruction
-				if (Jdi->IsLoaded() && !Jdi->IsRunning())
-				{
-					Jdi->GekkoSkipInstruction();
-					InvalidateAll();
+				if (disasm->GetMode() == DisasmMode::GekkoDisasm) {
+					// Skip Gekko instruction
+					if (Jdi->IsLoaded() && !Jdi->IsRunning())
+					{
+						Jdi->GekkoSkipInstruction();
+						InvalidateAll();
+					}
 				}
 				break;
 
@@ -1965,7 +1436,7 @@ namespace Debug
 	/// Set current address to view memory. Used by "d" command.
 	/// </summary>
 	/// <param name="virtualAddress"></param>
-	void GekkoDebug::SetMemoryCursor(uint32_t virtualAddress)
+	void Debugger::SetMemoryCursor(uint32_t virtualAddress)
 	{
 		memview->SetCursor(virtualAddress);
 	}
@@ -1974,7 +1445,7 @@ namespace Debug
 	/// Set the current address to view the disassembled Gekko code. Used by "u" command.
 	/// </summary>
 	/// <param name="virtualAddress"></param>
-	void GekkoDebug::SetDisasmCursor(uint32_t virtualAddress)
+	void Debugger::SetDisasmCursor(uint32_t virtualAddress)
 	{
 		disasm->SetCursor(virtualAddress);
 	}
@@ -1986,7 +1457,7 @@ namespace Debug
 namespace Debug
 {
 
-	GekkoDisasm::GekkoDisasm(CuiRect& rect, std::string name, Cui* parent)
+	Disasm::Disasm(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
 		uint32_t main = Jdi->AddressByName("main");
@@ -2000,11 +1471,11 @@ namespace Debug
 		}
 	}
 
-	GekkoDisasm::~GekkoDisasm()
+	Disasm::~Disasm()
 	{
 	}
 
-	void GekkoDisasm::OnDraw()
+	void Disasm::OnDraw()
 	{
 		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
 		std::string head = "[ ] F3";
@@ -2015,14 +1486,25 @@ namespace Debug
 		}
 
 		char hint[0x100] = { 0, };
-		sprintf(hint, " cursor:0x%08X phys:0x%08X pc:0x%08X", 
-			cursor, Jdi->VirtualToPhysicalIMmu(cursor), Jdi->GetPc());
+
+		if (mode == DisasmMode::GekkoDisasm) {
+			sprintf(hint, " Gekko disasm, cursor:0x%08X phys:0x%08X pc:0x%08X",
+				gekko_cursor, Jdi->VirtualToPhysicalIMmu(gekko_cursor), Jdi->GetPc());
+		}
+		else if (mode == DisasmMode::DSPDisasm) {
+			sprintf(hint, " DSP disasm, cursor:0x%08X", dsp_cursor);
+		}
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
 
+		if (mode == DisasmMode::DSPDisasm) {
+			DspImemOnDraw();
+			return;
+		}
+
 		// Code
 
-		uint32_t addr = address & ~3;
+		uint32_t addr = gekko_address & ~3;
 		disa_sub_h = 0;
 
 		for (int line = 1; line < height; line++, addr += 4)
@@ -2033,9 +1515,14 @@ namespace Debug
 		}
 	}
 
-	void GekkoDisasm::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Disasm::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t targetAddress = 0;
+
+		if (mode == DisasmMode::DSPDisasm) {
+			DspImemOnKeyPress(Ascii, Vkey, shift, ctrl);
+			return;
+		}
 
 		switch (Vkey)
 		{
@@ -2047,63 +1534,63 @@ namespace Debug
 				break;
 
 			case CuiVkey::Up:
-				if (cursor < address)
+				if (gekko_cursor < gekko_address)
 				{
-					cursor = address;
+					gekko_cursor = gekko_address;
 					break;
 				}
-				if (cursor >= (address + (uint32_t)(4 * height) - 4))
+				if (gekko_cursor >= (gekko_address + (uint32_t)(4 * height) - 4))
 				{
-					cursor = address + (uint32_t)(4 * height) - 8;
+					gekko_cursor = gekko_address + (uint32_t)(4 * height) - 8;
 					break;
 				}
-				cursor -= 4;
-				if (cursor < address)
+				gekko_cursor -= 4;
+				if (gekko_cursor < gekko_address)
 				{
-					address -= 4;
+					gekko_address -= 4;
 				}
 				break;
 
 			case CuiVkey::Down:
-				if (cursor < address)
+				if (gekko_cursor < gekko_address)
 				{
-					cursor = address;
+					gekko_cursor = gekko_address;
 					break;
 				}
-				if (cursor >= (address + 4 * (uint32_t)(height - disa_sub_h) - 4))
+				if (gekko_cursor >= (gekko_address + 4 * (uint32_t)(height - disa_sub_h) - 4))
 				{
-					cursor = address + 4 * (uint32_t)(height - disa_sub_h) - 8;
+					gekko_cursor = gekko_address + 4 * (uint32_t)(height - disa_sub_h) - 8;
 					break;
 				}
-				cursor += 4;
-				if (cursor >= (address + ((uint32_t)(height - disa_sub_h) - 1) * 4))
+				gekko_cursor += 4;
+				if (gekko_cursor >= (gekko_address + ((uint32_t)(height - disa_sub_h) - 1) * 4))
 				{
-					address += 4;
+					gekko_address += 4;
 				}
 				break;
 
 			case CuiVkey::PageUp:
-				address -= (uint32_t)(4 * height - 4);
+				gekko_address -= (uint32_t)(4 * height - 4);
 				if (!IsCursorVisible())
 				{
-					cursor = address;
+					gekko_cursor = gekko_address;
 				}
 				break;
 
 			case CuiVkey::PageDown:
-				address += (uint32_t)(4 * (height - disa_sub_h) - 4);
+				gekko_address += (uint32_t)(4 * (height - disa_sub_h) - 4);
 				if (!IsCursorVisible())
 				{
-					cursor = address + ((uint32_t)(height - disa_sub_h) - 2) * 4;
+					gekko_cursor = gekko_address + ((uint32_t)(height - disa_sub_h) - 2) * 4;
 				}
 				break;
 
 			case CuiVkey::Enter:
-				if (Jdi->GekkoIsBranch(cursor, targetAddress))
+				if (Jdi->GekkoIsBranch(gekko_cursor, targetAddress))
 				{
-					std::pair<uint32_t, uint32_t> last(address, cursor);
+					std::pair<uint32_t, uint32_t> last(gekko_address, gekko_cursor);
 					browseHist.push_back(last);
-					address = cursor = targetAddress;
+					gekko_address = gekko_cursor = targetAddress;
 				}
 				break;
 
@@ -2111,43 +1598,62 @@ namespace Debug
 				if (browseHist.size() > 0)
 				{
 					std::pair<uint32_t, uint32_t> last = browseHist.back();
-					address = last.first;
-					cursor = last.second;
+					gekko_address = last.first;
+					gekko_cursor = last.second;
 					browseHist.pop_back();
 				}
+				break;
+
+			case CuiVkey::Left:
+				RotateView(false);
+				break;
+			case CuiVkey::Right:
+				RotateView(true);
 				break;
 		}
 
 		Invalidate();
 	}
 
-	uint32_t GekkoDisasm::GetCursor()
+	uint32_t Disasm::GetCursor()
 	{
-		return cursor;
+		if (mode == DisasmMode::GekkoDisasm) {
+			return gekko_cursor;
+		}
+		else if (mode == DisasmMode::DSPDisasm) {
+			return dsp_cursor;
+		}
+		return 0;
 	}
 
-	void GekkoDisasm::SetCursor(uint32_t addr)
+	void Disasm::SetCursor(uint32_t addr)
 	{
-		cursor = addr & ~3;
-		address = cursor - (uint32_t)(height - 1) / 2 * 4;
+		if (mode == DisasmMode::GekkoDisasm) {
+			gekko_cursor = addr & ~3;
+			gekko_address = gekko_cursor - (uint32_t)(height - 1) / 2 * 4;
+		}
+		else if (mode == DisasmMode::DSPDisasm) {
+			dsp_cursor = addr;
+			dsp_current = dsp_cursor - (uint32_t)(height - 1) / 2;
+		}
 		Invalidate();
 	}
 
-	bool GekkoDisasm::IsCursorVisible()
+	bool Disasm::IsCursorVisible()
 	{
 		uint32_t limit;
-		limit = address + (uint32_t)((height - 1) * 4);
-		return ((cursor < limit) && (cursor >= address));
+		limit = gekko_address + (uint32_t)((height - 1) * 4);
+		return ((gekko_cursor < limit) && (gekko_cursor >= gekko_address));
 	}
 
-	int GekkoDisasm::DisasmLine(int line, uint32_t addr)
+	int Disasm::DisasmLine(int line, uint32_t addr)
 	{
 		CuiColor bgpc, bgcur, bgbp;
 		CuiColor bg;
 		std::string symbol;
 		int addend = 1;
 
-		bgcur = (addr == cursor) ? (CuiColor::Gray) : (CuiColor::Black);
+		bgcur = (addr == gekko_cursor) ? (CuiColor::Gray) : (CuiColor::Black);
 		bgbp = (Jdi->GekkoTestBreakpoint(addr)) ? (CuiColor::Red) : (CuiColor::Black);
 		bgpc = (addr == Jdi->GetPc()) ? (CuiColor::DarkBlue) : (CuiColor::Black);
 		bg = (CuiColor)((int)bgpc ^ (int)bgcur ^ (int)bgbp);
@@ -2232,9 +1738,193 @@ namespace Debug
 		return addend;
 	}
 
+	void Disasm::RotateView(bool forward)
+	{
+		if (forward)
+		{
+			switch (mode)
+			{
+				case DisasmMode::GekkoDisasm: mode = DisasmMode::DSPDisasm; break;
+				case DisasmMode::DSPDisasm: mode = DisasmMode::GekkoDisasm; break;
+			}
+		}
+		else
+		{
+			switch (mode)
+			{
+				case DisasmMode::GekkoDisasm: mode = DisasmMode::DSPDisasm; break;
+				case DisasmMode::DSPDisasm: mode = DisasmMode::GekkoDisasm; break;
+			}
+		}
+	}
+
+	void Disasm::DspEnsurePcVisible()
+	{
+		dsp_current = dsp_cursor = Jdi->DspGetPc();
+	}
+
+	bool Disasm::DspAddressVisible(uint32_t address)
+	{
+		if (!wordsOnScreen)
+			return false;
+
+		return (dsp_current <= address && address < (dsp_current + wordsOnScreen));
+	}
+
+	void Disasm::DspImemOnDraw()
+	{
+		// If GameCube is not powered on
+
+		if (!Jdi->IsLoaded())
+		{
+			return;
+		}
+
+		// Show Dsp disassembly
+
+		size_t lines = height - 1;
+		uint32_t addr = dsp_current;
+		int y = 1;
+
+		// Do not forget that DSP addressing is done in 16-bit words.
+
+		wordsOnScreen = 0;
+
+		while (lines--)
+		{
+			size_t instrSizeInWords = 0;
+			bool flowControl = false;
+
+			std::string text = Jdi->DspDisasm(addr, instrSizeInWords, flowControl);
+
+			if (text.empty())
+			{
+				addr++;
+				y++;
+				continue;
+			}
+
+			CuiColor backColor = CuiColor::Black;
+
+			int bgcur = (addr == dsp_cursor) ? ((int)CuiColor::Blue) : (0);
+			int bgbp = (Jdi->DspTestBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
+			int bg = (addr == Jdi->DspGetPc()) ? ((int)CuiColor::DarkBlue) : (0);
+			bg = bg ^ bgcur ^ bgbp;
+
+			backColor = (CuiColor)bg;
+
+			FillLine(backColor, CuiColor::Normal, y, ' ');
+			Print(backColor, flowControl ? CuiColor::Green : CuiColor::Normal, 0, y, text);
+
+			addr += (uint32_t)instrSizeInWords;
+			wordsOnScreen += instrSizeInWords;
+			y++;
+		}
+	}
+
+	void Disasm::DspImemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	{
+		uint32_t targetAddress = 0;
+
+		switch (Vkey)
+		{
+			case CuiVkey::Up:
+				if (DspAddressVisible(dsp_cursor))
+				{
+					if (dsp_cursor > 0)
+						dsp_cursor--;
+				}
+				else
+				{
+					dsp_cursor = (uint32_t)(dsp_current - wordsOnScreen);
+				}
+				if (!DspAddressVisible(dsp_cursor))
+				{
+					if (dsp_current < (height - 1))
+						dsp_current = 0;
+					else
+						dsp_current -= (uint32_t)(height - 1);
+				}
+				break;
+
+			case CuiVkey::Down:
+				if (DspAddressVisible(dsp_cursor))
+					dsp_cursor++;
+				else
+					dsp_cursor = dsp_current;
+				if (!DspAddressVisible(dsp_cursor))
+				{
+					dsp_current = dsp_cursor;
+				}
+				break;
+
+			case CuiVkey::PageUp:
+				if (dsp_current < (height - 1))
+					dsp_current = 0;
+				else
+					dsp_current -= (uint32_t)(height - 1);
+				break;
+
+			case CuiVkey::PageDown:
+				dsp_current += (uint32_t)(wordsOnScreen ? wordsOnScreen : height - 1);
+				if (dsp_current >= 0x8A00)
+					dsp_current = 0x8A00;
+				break;
+
+			case CuiVkey::Home:
+				if (ctrl)
+				{
+					dsp_current = dsp_cursor = 0;
+				}
+				else
+				{
+					dsp_current = dsp_cursor = Jdi->DspGetPc();
+				}
+				break;
+
+			case CuiVkey::End:
+				dsp_current = IROM_START_ADDRESS;
+				break;
+
+			case CuiVkey::F9:
+				if (DspAddressVisible(dsp_cursor))
+				{
+					Jdi->DspToggleBreakpoint(dsp_cursor);
+				}
+				break;
+
+			case CuiVkey::Enter:
+				if (Jdi->DspIsCallOrJump(dsp_cursor, targetAddress))
+				{
+					std::pair<uint32_t, uint32_t> last(dsp_current, dsp_cursor);
+					dspBrowseHist.push_back(last);
+					dsp_current = dsp_cursor = targetAddress;
+				}
+				break;
+
+			case CuiVkey::Escape:
+				if (dspBrowseHist.size() > 0)
+				{
+					std::pair<uint32_t, uint32_t> last = dspBrowseHist.back();
+					dsp_current = last.first;
+					dsp_cursor = last.second;
+					dspBrowseHist.pop_back();
+				}
+				break;
+
+			case CuiVkey::Left:
+				RotateView(false);
+				break;
+			case CuiVkey::Right:
+				RotateView(true);
+				break;
+		}
+
+		Invalidate();
+	}
 }
 
-// View Gekko registers. Register values are obtained through Jdi->
+// View registers
 
 namespace Debug
 {
@@ -2243,6 +1933,22 @@ namespace Debug
 		"r8" , "r9" , "r10", "r11", "r12", "sd1", "r14", "r15",
 		"r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
 		"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
+	};
+
+	static const char* DspRegNames[] = {
+		"r0", "r1", "r2", "r3",
+		"m0", "m1", "m2", "m3",
+		"l0", "l1", "l2", "l3",
+		"pcs", "pss", "eas", "lcs",
+		"a2", "b2", "dpp", "psr",
+		"ps0", "ps1", "ps2", "pc1",
+		"x0", "y0", "x1", "y1",
+		"a0", "b0", "a1", "b1"
+	};
+
+	static const char* DspPsrBitNames[] = {
+		"c", "v", "z", "n", "e", "u", "tb", "sv",
+		"te0", "te1", "te2", "te3", "et", "im", "xl", "dp",
 	};
 
 	DebugRegs::DebugRegs(CuiRect& rect, std::string name, Cui* parent)
@@ -2286,6 +1992,7 @@ namespace Debug
 			case DebugRegmode::FPR: modeText = "Gekko FPR"; break;
 			case DebugRegmode::PSR: modeText = "Gekko PSR"; break;
 			case DebugRegmode::MMU: modeText = "Gekko MMU"; break;
+			case DebugRegmode::DSP: modeText = "DSP Regs"; break;
 		}
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, modeText);
@@ -2296,6 +2003,7 @@ namespace Debug
 			case DebugRegmode::FPR: ShowFprs(); break;
 			case DebugRegmode::PSR: ShowPairedSingle(); break;
 			case DebugRegmode::MMU: ShowMmu(); break;
+			case DebugRegmode::DSP: ShowDspRegs(); break;
 		}
 	}
 
@@ -2534,17 +2242,19 @@ namespace Debug
 				case DebugRegmode::GPR: mode = DebugRegmode::FPR; break;
 				case DebugRegmode::FPR: mode = DebugRegmode::PSR; break;
 				case DebugRegmode::PSR: mode = DebugRegmode::MMU; break;
-				case DebugRegmode::MMU: mode = DebugRegmode::GPR; break;
+				case DebugRegmode::MMU: mode = DebugRegmode::DSP; break;
+				case DebugRegmode::DSP: mode = DebugRegmode::GPR; break;
 			}
 		}
 		else
 		{
 			switch (mode)
 			{
-				case DebugRegmode::GPR: mode = DebugRegmode::MMU; break;
+				case DebugRegmode::GPR: mode = DebugRegmode::DSP; break;
 				case DebugRegmode::FPR: mode = DebugRegmode::GPR; break;
 				case DebugRegmode::PSR: mode = DebugRegmode::FPR; break;
 				case DebugRegmode::MMU: mode = DebugRegmode::PSR; break;
+				case DebugRegmode::DSP: mode = DebugRegmode::MMU; break;
 			}
 		}
 	}
@@ -2701,10 +2411,107 @@ namespace Debug
 		return tempBuf;
 	}
 
+	void DebugRegs::ShowDspRegs()
+	{
+		// If GameCube is not powered on
+
+		if (!Jdi->IsLoaded())
+		{
+			return;
+		}
+
+		// Registers with changes
+
+		DspDrawRegs();
+
+		// 40-bit regs overview
+
+		Print(CuiColor::Black, CuiColor::Normal, 24, 1, "a: %02X_%04X_%04X",
+			(uint8_t)Jdi->DspGetReg((size_t)DspReg::a2),
+			Jdi->DspGetReg((size_t)DspReg::a1),
+			Jdi->DspGetReg((size_t)DspReg::a0));
+		Print(CuiColor::Black, CuiColor::Normal, 24, 2, "b: %02X_%04X_%04X",
+			(uint8_t)Jdi->DspGetReg((size_t)DspReg::b2),
+			Jdi->DspGetReg((size_t)DspReg::b1),
+			Jdi->DspGetReg((size_t)DspReg::b0));
+
+		Print(CuiColor::Black, CuiColor::Normal, 24, 3, "x: %04X_%04X",
+			Jdi->DspGetReg((size_t)DspReg::x1),
+			Jdi->DspGetReg((size_t)DspReg::x0));
+		Print(CuiColor::Black, CuiColor::Normal, 24, 4, "y: %04X_%04X",
+			Jdi->DspGetReg((size_t)DspReg::y1),
+			Jdi->DspGetReg((size_t)DspReg::y0));
+
+		uint64_t bitsPacked = Jdi->DspPackProd();
+		Print(CuiColor::Black, CuiColor::Normal, 24, 5, "p: %02X_%04X_%04X",
+			(uint8_t)(bitsPacked >> 32),
+			(uint16_t)(bitsPacked >> 16),
+			(uint16_t)bitsPacked);
+
+		// Program Counter
+
+		Print(CuiColor::Black, CuiColor::Normal, 24, 7, "pc: %04X", Jdi->DspGetPc());
+
+		// Status as individual bits
+
+		DspDrawStatusBits();
+
+		DspMemorize();
+	}
+
+	void DebugRegs::DspDrawRegs()
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			DspPrintReg(0, i + 1, (DspReg)(0 + i));
+		}
+
+		for (int i = 0; i < 16; i++)
+		{
+			DspPrintReg(12, i + 1, (DspReg)(16 + i));
+		}
+	}
+
+	void DebugRegs::DspDrawStatusBits()
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			DspPrintPsrBit(42, i + 1, i);
+		}
+	}
+
+	void DebugRegs::DspPrintReg(int x, int y, DspReg n)
+	{
+		uint16_t value = Jdi->DspGetReg((size_t)n);
+		bool same = savedDspRegs[(size_t)n] == value;
+
+		Print( !same ? CuiColor::Lime : CuiColor::Normal,
+			x, y, "%-3s: %04X", DspRegNames[(size_t)n], value);
+	}
+
+	void DebugRegs::DspPrintPsrBit(int x, int y, int n)
+	{
+		uint16_t mask = (1 << n);
+		uint16_t psr = Jdi->DspGetPsr();
+		bool same = (savedDspPsr & mask) == (psr & mask);
+
+		Print( !same ? CuiColor::Lime : CuiColor::Normal,
+			x, y, "%-3s: %i", DspPsrBitNames[n], (psr & mask) ? 1 : 0);
+	}
+
+	void DebugRegs::DspMemorize()
+	{
+		for (size_t i = 0; i < 32; i++)
+		{
+			savedDspRegs[i] = Jdi->DspGetReg(i);
+		}
+		savedDspPsr = Jdi->DspGetPsr();
+	}
+
 }
 
 
-// View 1T-SRAM memory, by Gekko virtual addresses. If the virtual address is translated to the physical address of Main memory, then show bytes, otherwise show `?`
+// Generic memory viewer (HexBox)
 
 namespace Debug
 {
@@ -2750,22 +2557,28 @@ namespace Debug
 				sprintf(hint, " Main memory (1T-SRAM), addr:0x%08X", cursor);
 				Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
 				break;
-			case MemoryViewMode::DSP_ARAM: 
+			case MemoryViewMode::DSP_ARAM:
+				cursor = aram_cursor;
+				sprintf(hint, " ARAM, addr:0x%08X", cursor);
+				Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
 				break;
-			case MemoryViewMode::DSP_DRAM:
+			case MemoryViewMode::DSP_DMEM:
+				cursor = dmem_current;
+				sprintf(hint, " DMEM, addr:0x%08X", cursor);
+				Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
 				break;
-			case MemoryViewMode::DSP_DROM:
-				break;
-			case MemoryViewMode::DSP_IRAM:
-				break;
-			case MemoryViewMode::DSP_IROM:
-				break;
+		}
+
+		if (mode == MemoryViewMode::DSP_DMEM) {
+			DspDmemOnDraw();
+			return;
 		}
 
 		// Hexview
 
 		for (int row = 0; row < height - 1; row++)
 		{
+			FillLine(CuiColor::Black, CuiColor::Normal, row + 1, ' ');
 			Print(CuiColor::Normal, 0, row + 1, "%08X", cursor + row * 16);
 
 			for (int col = 0; col < 8; col++)
@@ -2791,6 +2604,11 @@ namespace Debug
 		uint32_t top = 0;
 		uint32_t bottom = 0;
 
+		if (mode == MemoryViewMode::DSP_DMEM) {
+			DspDmemOnKeyPress(Ascii, Vkey, shift, ctrl);
+			return;
+		}
+
 		switch (mode)
 		{
 			case MemoryViewMode::GekkoVirtual:
@@ -2809,14 +2627,9 @@ namespace Debug
 				bottom = RAMSIZE;
 				break;
 			case MemoryViewMode::DSP_ARAM: 
-				break;
-			case MemoryViewMode::DSP_DRAM:
-				break;
-			case MemoryViewMode::DSP_DROM:
-				break;
-			case MemoryViewMode::DSP_IRAM:
-				break;
-			case MemoryViewMode::DSP_IROM:
+				cursor = &aram_cursor;
+				top = 0;
+				bottom = ARAMSIZE;
 				break;
 		}
 
@@ -2867,25 +2680,19 @@ namespace Debug
 				case MemoryViewMode::GekkoVirtual: mode = MemoryViewMode::GekkoDataCache; break;
 				case MemoryViewMode::GekkoDataCache: mode = MemoryViewMode::MainMem; break;
 				case MemoryViewMode::MainMem: mode = MemoryViewMode::DSP_ARAM; break;
-				case MemoryViewMode::DSP_ARAM: mode = MemoryViewMode::DSP_DRAM; break;
-				case MemoryViewMode::DSP_DRAM: mode = MemoryViewMode::DSP_DROM; break;
-				case MemoryViewMode::DSP_DROM: mode = MemoryViewMode::DSP_IRAM; break;
-				case MemoryViewMode::DSP_IRAM: mode = MemoryViewMode::DSP_IROM; break;
-				case MemoryViewMode::DSP_IROM: mode = MemoryViewMode::GekkoVirtual; break;
+				case MemoryViewMode::DSP_ARAM: mode = MemoryViewMode::DSP_DMEM; break;
+				case MemoryViewMode::DSP_DMEM: mode = MemoryViewMode::GekkoVirtual; break;
 			}
 		}
 		else
 		{
 			switch (mode)
 			{
-				case MemoryViewMode::GekkoVirtual: mode = MemoryViewMode::DSP_IROM; break;
+				case MemoryViewMode::GekkoVirtual: mode = MemoryViewMode::DSP_DMEM; break;
 				case MemoryViewMode::GekkoDataCache: mode = MemoryViewMode::GekkoVirtual; break;
 				case MemoryViewMode::MainMem: mode = MemoryViewMode::GekkoDataCache; break;
 				case MemoryViewMode::DSP_ARAM: mode = MemoryViewMode::MainMem; break;
-				case MemoryViewMode::DSP_DRAM: mode = MemoryViewMode::DSP_ARAM; break;
-				case MemoryViewMode::DSP_DROM: mode = MemoryViewMode::DSP_DRAM; break;
-				case MemoryViewMode::DSP_IRAM: mode = MemoryViewMode::DSP_DROM; break;
-				case MemoryViewMode::DSP_IROM: mode = MemoryViewMode::DSP_IRAM; break;
+				case MemoryViewMode::DSP_DMEM: mode = MemoryViewMode::DSP_ARAM; break;
 			}
 		}
 	}
@@ -2904,14 +2711,10 @@ namespace Debug
 				mmem_cursor = address;
 				break;
 			case MemoryViewMode::DSP_ARAM: 
+				aram_cursor = address;
 				break;
-			case MemoryViewMode::DSP_DRAM:
-				break;
-			case MemoryViewMode::DSP_DROM:
-				break;
-			case MemoryViewMode::DSP_IRAM:
-				break;
-			case MemoryViewMode::DSP_IROM:
+			case MemoryViewMode::DSP_DMEM:
+				dmem_current = address;
 				break;
 		}
 
@@ -2934,14 +2737,7 @@ namespace Debug
 				ptr = MITranslatePhysicalAddress(addr, 1);
 				break;
 			case MemoryViewMode::DSP_ARAM: 
-				break;
-			case MemoryViewMode::DSP_DRAM:
-				break;
-			case MemoryViewMode::DSP_DROM:
-				break;
-			case MemoryViewMode::DSP_IRAM:
-				break;
-			case MemoryViewMode::DSP_IROM:
+				ptr = Jdi->IsLoaded() ? &ARAM[addr] : nullptr;
 				break;
 		}
 
@@ -2973,14 +2769,7 @@ namespace Debug
 				ptr = MITranslatePhysicalAddress(addr, 1);
 				break;
 			case MemoryViewMode::DSP_ARAM: 
-				break;
-			case MemoryViewMode::DSP_DRAM:
-				break;
-			case MemoryViewMode::DSP_DROM:
-				break;
-			case MemoryViewMode::DSP_IRAM:
-				break;
-			case MemoryViewMode::DSP_IROM:
+				ptr = Jdi->IsLoaded() ? &ARAM[addr] : nullptr;
 				break;
 		}
 
@@ -2996,6 +2785,108 @@ namespace Debug
 		}
 	}
 
+	// The memory view integrated from DSP Debug is a bit different from the usual hexbyte / charbyte view
+
+	void MemoryView::DspDmemOnDraw()
+	{
+		// If GameCube is not powered on
+
+		if (!Jdi->IsLoaded())
+		{
+			return;
+		}
+
+		// Do not forget that DSP addressing is done in 16-bit words.
+
+		size_t lines = height - 1;
+		uint32_t addr = dmem_current;
+		int y = 1;
+
+		while (lines--)
+		{
+			char text[0x100];
+
+			uint16_t* ptr = (uint16_t*) Jdi->DspTranslateDMem(addr);
+			if (!ptr)
+			{
+				addr += 8;
+				y++;
+				continue;
+			}
+
+			FillLine(CuiColor::Black, CuiColor::Normal, y, ' ');
+
+			// Address
+
+			sprintf(text, "%04X: ", addr);
+			Print(CuiColor::Black, CuiColor::Normal, 0, y, text);
+
+			// Raw Words
+
+			int x = 6;
+
+			for (size_t i = 0; i < 8; i++)
+			{
+				uint16_t word = _BYTESWAP_UINT16(ptr[i]);
+				sprintf(text, "%04X ", word);
+				Print(CuiColor::Black, CuiColor::Normal, x, y, text);
+				x += 5;
+			}
+
+			addr += 8;
+			y++;
+		}
+	}
+
+	void MemoryView::DspDmemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	{
+		size_t lines = height - 1;
+
+		switch (Vkey)
+		{
+			case CuiVkey::Up:
+				if (dmem_current >= 8)
+					dmem_current -= 8;
+				break;
+
+			case CuiVkey::Down:
+				dmem_current += 8;
+				if (dmem_current > 0x3000)
+					dmem_current = 0x3000;
+				break;
+
+			case CuiVkey::PageUp:
+				if (dmem_current < lines * 8)
+					dmem_current = 0;
+				else
+					dmem_current -= (uint32_t)(lines * 8);
+				break;
+
+			case CuiVkey::PageDown:
+				dmem_current += (uint32_t)(lines * 8);
+				if (dmem_current > 0x3000)
+					dmem_current = 0x3000;
+				break;
+
+			case CuiVkey::Home:
+				dmem_current = 0;
+				break;
+
+			case CuiVkey::End:
+				dmem_current = DROM_START_ADDRESS;
+				break;
+
+			case CuiVkey::Left:
+				RotateView(false);
+				break;
+			case CuiVkey::Right:
+				RotateView(true);
+				break;
+		}
+
+		Invalidate();
+	}
+
 }
 
 
@@ -3003,18 +2894,18 @@ namespace Debug
 {
 	Json::Value* CmdShowMemory(std::vector<std::string>& args)
 	{
-		if (gekkoDebug)
+		if (debugger)
 		{
-			gekkoDebug->SetMemoryCursor(strtoul(args[1].c_str(), nullptr, 0));
+			debugger->SetMemoryCursor(strtoul(args[1].c_str(), nullptr, 0));
 		}
 		return nullptr;
 	}
 
 	Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
 	{
-		if (gekkoDebug)
+		if (debugger)
 		{
-			gekkoDebug->SetDisasmCursor(strtoul(args[1].c_str(), nullptr, 0));
+			debugger->SetDisasmCursor(strtoul(args[1].c_str(), nullptr, 0));
 		}
 		return nullptr;
 	}
