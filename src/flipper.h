@@ -2,20 +2,17 @@
 
 # GCN Hardware
 
-This component emulates everything inside the ASIC Flipper, *except* the graphics system (GX) and DSP.
+This component emulates everything inside the ASIC Flipper, *except* the graphics system (GFX) and DSP.
 
 ![Flipper_Block_Diagram](https://github.com/ogamespec/dolwin-docs/blob/master/HW/Flipper_ASIC_Block_Diagram.png?raw=true)
 
 A short tour into the Flipper stuff, without shocking details:
-- AI: Audio Mixer
-- CP: Command Processor for GX FIFO
-- EXI: SPI-like Macronix interface
-- MI(MEM): Memory Interface
 - PI: Processor Interface (interrupts, etc.)
-- SI: Serial Interface (goes to GameCube controllers connectors)
+- MI(MEM): Memory Interface (1T-SRAM)
+- IO subsystem, which includes: AI (Audio Mixer), EXI (SPI-like Macronix interface), SI (Serial Interface, goes to GameCube controllers connectors), DI (DVD Interface)
 - VI: Video output
-
-Somehow also emulation of memory cards (Memcards) got here. For now, let it stay here, then we'll move it somewhere, if the emulation of more accessories and peripherals appears.
+- DSP: It contains interface with PI, 3 DMA engines (ARAM, AI, DSP Mem), accelerator+interface for working with ARAM and DSPCore itself (computational module+IMEM/DMEM)
+- GFX Engine
 
 ## Real revisions of Flipper
 
