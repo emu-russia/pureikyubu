@@ -189,7 +189,8 @@ static void DIDduToHostCallback(uint8_t data)
 			if (DILEN)
 			{
 				uint32_t dimar = DIMAR & DI_DIMAR_MASK;
-				PIWriteBurst(dimar, di.dmaFifo);
+				uint8_t* memptr = (uint8_t *)MIGetMemoryPointerForIO(dimar);
+				memcpy(memptr, di.dmaFifo, 32);
 				DIMAR += 32;
 				DILEN -= 32;
 			}
@@ -340,7 +341,7 @@ static void read_immbuf(uint32_t addr, uint32_t* reg) { *reg = _BYTESWAP_UINT32(
 static void write_immbuf(uint32_t addr, uint32_t data) { *(uint32_t*)di.immbuf = _BYTESWAP_UINT32(data); }
 
 // register is read only.
-// currently, bit 0 is used for ROM scramble disable (which ROM?), bits 1-7 are reserved
+// currently, bit 0 is used for BootROM scramble disable ("chicken bit"), bits 1-7 are reserved
 // used in EXISync->__OSGetDIConfig call, return 0 and forget.
 static void read_cfg(uint32_t addr, uint32_t* reg) { *reg = 0; }
 

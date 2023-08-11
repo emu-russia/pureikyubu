@@ -41,43 +41,43 @@ static void SICommand(int chan, uint8_t* ptr)
 	switch (cmd)
 	{
 		// get device type and status
-	case 0x00:
-	{
-		// 0 : use sub-type
-		// 2 : n64 mouse
-		// 5 : n64 controller
-		// 9 : default gc controller
-		ptr[0] = 9;
-		ptr[1] = 0;     // sub-type
-		ptr[2] = 0;     // always 0 ?
-		break;
-	}
+		case 0x00:
+		{
+			// 0 : use sub-type
+			// 2 : n64 mouse
+			// 5 : n64 controller
+			// 9 : default gc controller
+			ptr[0] = 9;
+			ptr[1] = 0;     // sub-type
+			ptr[2] = 0;     // always 0 ?
+			break;
+		}
 
-	// HACK : use it for first time
-	case 0x40:
-	case 0x42:
-		return;
+		// HACK : use it for first time
+		case 0x40:
+		case 0x42:
+			return;
 
 		// unknown, freeloader uses it, when booting
 		// case 0x40:
 
 		// read origins
-	case 0x41:
-		ptr[0] = 0x41;
-		ptr[1] = 0;
-		ptr[2] = ptr[3] = ptr[4] = ptr[5] = 0x80;
-		ptr[6] = ptr[7] = 0x1f;
-		break;
+		case 0x41:
+			ptr[0] = 0x41;
+			ptr[1] = 0;
+			ptr[2] = ptr[3] = ptr[4] = ptr[5] = 0x80;
+			ptr[6] = ptr[7] = 0x1f;
+			break;
 
 		// calibrate
 		//case 0x42:
 
-	default:
-	{
-		Debug::Halt(
-			"Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
-			chan, cmd, SI_COMCSR_OUTLEN(SI_COMCSR_REG), SI_COMCSR_INLEN(SI_COMCSR_REG));
-	}
+		default:
+		{
+			Debug::Halt(
+				"Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
+				chan, cmd, SI_COMCSR_OUTLEN(SI_COMCSR_REG), SI_COMCSR_INLEN(SI_COMCSR_REG));
+		}
 	}
 }
 
@@ -557,9 +557,9 @@ void SIOpen()
 	// these values are actually written when IPL boots
 	// meaning is unknown (some pad command) and no need to be known
 	si.out[0] =
-		si.out[1] =
-		si.out[2] =
-		si.out[3] = 0x00400300; // continue polling ?
+	si.out[1] =
+	si.out[2] =
+	si.out[3] = 0x00400300; // continue polling ?
 
 	// enable polling (for homebrewn), IPL enabling it
 	SI_POLL_REG |= (SI_POLL_EN0 | SI_POLL_EN1 | SI_POLL_EN2 | SI_POLL_EN3);

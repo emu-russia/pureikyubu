@@ -13,7 +13,7 @@ static void no_read(uint32_t addr, uint32_t* reg) { *reg = 0; }
 
 static void MEM_WriteMarrStart(uint32_t addr, uint32_t data)
 {
-	switch ((addr & 0xFF) >> 2)
+	switch ((addr & 0xFF) >> 1)
 	{
 		case MEM_MARR0_START_ID: mi.marr_start[0] = data; break;
 		case MEM_MARR1_START_ID: mi.marr_start[1] = data; break;
@@ -25,7 +25,7 @@ static void MEM_WriteMarrStart(uint32_t addr, uint32_t data)
 
 static void MEM_ReadMarrStart(uint32_t addr, uint32_t* reg)
 {
-	switch ((addr & 0xFF) >> 2)
+	switch ((addr & 0xFF) >> 1)
 	{
 		case MEM_MARR0_START_ID: *reg = mi.marr_start[0]; break;
 		case MEM_MARR1_START_ID: *reg = mi.marr_start[1]; break;
@@ -37,7 +37,7 @@ static void MEM_ReadMarrStart(uint32_t addr, uint32_t* reg)
 
 static void MEM_WriteMarrEnd(uint32_t addr, uint32_t data)
 {
-	switch ((addr & 0xFF) >> 2)
+	switch ((addr & 0xFF) >> 1)
 	{
 		case MEM_MARR0_END_ID: mi.marr_end[0] = data; break;
 		case MEM_MARR1_END_ID: mi.marr_end[1] = data; break;
@@ -49,7 +49,7 @@ static void MEM_WriteMarrEnd(uint32_t addr, uint32_t data)
 
 static void MEM_ReadMarrEnd(uint32_t addr, uint32_t* reg)
 {
-	switch ((addr & 0xFF) >> 2)
+	switch ((addr & 0xFF) >> 1)
 	{
 		case MEM_MARR0_END_ID: *reg = mi.marr_end[0]; break;
 		case MEM_MARR1_END_ID: *reg = mi.marr_end[1]; break;
@@ -104,7 +104,7 @@ static void MEM_WriteIntClear(uint32_t addr, uint32_t data)
 
 static void MEM_WriteCounter(uint32_t addr, uint32_t data)
 {
-	switch ((addr & 0xFF) >> 2)
+	switch ((addr & 0xFF) >> 1)
 	{
 		case MEM_CP_COUNTERH_ID: mi.cp_counter.hi = data; break;
 		case MEM_CP_COUNTERL_ID: mi.cp_counter.lo = data; break;
@@ -129,7 +129,7 @@ static void MEM_WriteCounter(uint32_t addr, uint32_t data)
 
 static void MEM_ReadCounter(uint32_t addr, uint32_t* reg)
 {
-	switch ((addr & 0xFF) >> 2)
+	switch ((addr & 0xFF) >> 1)
 	{
 		case MEM_CP_COUNTERH_ID: *reg = mi.cp_counter.hi; break;
 		case MEM_CP_COUNTERL_ID: *reg = mi.cp_counter.lo; break;
@@ -169,34 +169,6 @@ void MIOpen(HWConfig* config)
 		PISetTrap(16, 0x0C004000 | ofs, no_read, no_write);
 	}
 
-	MEM_INT_ENABLE_ID,				// MI interrupt enable
-	MEM_INT_STATUS_ID,				// MI interrupt status
-	MEM_INT_CLR_ID,					// Clear pending MI interrupt
-	MEM_INT_ADDRL_ID,				// Interrupted Mem address
-	MEM_INT_ADDRH_ID,
-	MEM_REFRESH_ID,					// Cycles between refresh
-	MEM_CONFIG_ID,
-	MEM_LATENCY_ID,					// Mem latency cycles (3-6)
-	MEM_RDTORD_ID,					// Idle cycles
-	MEM_RDTOWR_ID,
-	MEM_WRTORD_ID,
-	MEM_CP_COUNTERH_ID,
-	MEM_CP_COUNTERL_ID,
-	MEM_TC_COUNTERH_ID,
-	MEM_TC_COUNTERL_ID,
-	MEM_PI_READ_COUNTERH_ID,
-	MEM_PI_READ_COUNTERL_ID,
-	MEM_PI_WRITE_COUNTERH_ID,
-	MEM_PI_WRITE_COUNTERL_ID,
-	MEM_DSP_COUNTERH_ID,
-	MEM_DSP_COUNTERL_ID,
-	MEM_IO_COUNTERH_ID,
-	MEM_IO_COUNTERL_ID,
-	MEM_VI_COUNTERH_ID,
-	MEM_VI_COUNTERL_ID,
-	MEM_PE_COUNTERH_ID,
-	MEM_PE_COUNTERL_ID,
-
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR0_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR1_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR2_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
@@ -212,6 +184,25 @@ void MIOpen(HWConfig* config)
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_INT_ENABLE_ID), MEM_ReadIntEnable, MEM_WriteIntEnable);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_INT_STATUS_ID), MEM_ReadIntStatus, nullptr);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_INT_CLR_ID), nullptr, MEM_WriteIntClear);
+
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR0_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
+
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_CP_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_CP_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_TC_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_TC_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_READ_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_READ_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_WRITE_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_WRITE_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_DSP_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_DSP_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_IO_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_IO_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_VI_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_VI_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PE_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PE_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
 
 	LoadBootrom(config);
 }
@@ -275,6 +266,16 @@ void* MIGetMemoryPointerForTX(uint32_t phys_addr)
 void* MIGetMemoryPointerForVI(uint32_t phys_addr)
 {
 	mi.vi_counter.cnt++;
+	if (phys_addr >= mi.ramSize) return nullptr;
+	else return &mi.ram[phys_addr & RAMMASK];
+}
+
+/// <summary>
+/// Used by various IO devices (AI, EXI, SI, DI) for DMA.
+/// </summary>
+void* MIGetMemoryPointerForIO(uint32_t phys_addr)
+{
+	mi.io_counter.cnt++;
 	if (phys_addr >= mi.ramSize) return nullptr;
 	else return &mi.ram[phys_addr & RAMMASK];
 }

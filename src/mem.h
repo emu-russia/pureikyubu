@@ -152,3 +152,5 @@ void* MIGetMemoryPointerForCP(uint32_t phys_addr);
 void* MIGetMemoryPointerForTX(uint32_t phys_addr);
 
 void* MIGetMemoryPointerForVI(uint32_t phys_addr);
+
+void* MIGetMemoryPointerForIO(uint32_t phys_addr);
