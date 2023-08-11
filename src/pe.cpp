@@ -12,10 +12,10 @@ namespace GX
 	{
 		switch (id)
 		{
-			case PEMappedRegister::PE_SR_ID:
+			case PEMappedRegister::PE_PI_INTRCTRL_ID:
 				return state.peregs.sr;
 
-			case PEMappedRegister::PE_TOKEN_ID:
+			case PEMappedRegister::PE_PI_TOKEN_ID:
 				return state.peregs.token;
 
 			default:
@@ -27,7 +27,7 @@ namespace GX
 	{
 		switch (id)
 		{
-			case PEMappedRegister::PE_SR_ID:
+			case PEMappedRegister::PE_PI_INTRCTRL_ID:
 
 				// clear interrupts
 				if (state.peregs.sr & PE_SR_DONE)
@@ -47,6 +47,9 @@ namespace GX
 				if (value & PE_SR_TOKENMSK) state.peregs.sr |= PE_SR_TOKENMSK;
 				else state.peregs.sr &= ~PE_SR_TOKENMSK;
 
+				break;
+
+			default:
 				break;
 		}
 	}
@@ -210,13 +213,26 @@ void PEOpen()
 	Report(Channel::CP, "Pixel Engine (for GX)\n");
 
 	// Pixel Engine
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_ZMODE_ID), PERegRead, PERegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_CMODE0_ID), PERegRead, PERegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_CMODE1_ID), PERegRead, PERegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_AMODE0_ID), PERegRead, PERegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_AMODE1_ID), PERegRead, PERegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_SR_ID), PERegRead, PERegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_TOKEN_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_ZMODE_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_CMODE0_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_CMODE1_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_ALPHA_THRES_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_CONTROL_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_INTRCTRL_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_TOKEN_ID), PERegRead, PERegWrite);
+
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_0L_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_0H_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_1L_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_1H_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_2L_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_2H_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_3L_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_3H_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_4L_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_4H_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_5L_ID), PERegRead, PERegWrite);
+	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_PI_PERF_COUNTER_5H_ID), PERegRead, PERegWrite);
 }
 
 void PEClose()
