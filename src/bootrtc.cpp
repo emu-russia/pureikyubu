@@ -652,3 +652,76 @@ bool IsBootromPALRevision()
 	}
 	return false;
 }
+
+// Load and descramble bootrom.
+// This implementation makes working with Bootrom easier, since we do not need to monitor cache transactions ("bursts") from the processor.
+
+void LoadBootrom(HWConfig* config)
+{
+	mi.BootromPresent = false;
+	mi.bootromSize = BOOTROM_SIZE;
+
+	// Load bootrom image
+
+	if (wcslen(config->BootromFilename) == 0)
+	{
+		Report(Channel::MI, "Bootrom not loaded (not specified)\n");
+		return;
+	}
+
+	auto bootrom = Util::FileLoad(config->BootromFilename);
+	if (bootrom.empty())
+	{
+		Report(Channel::MI, "Cannot load Bootrom: %s\n", Util::WstringToString(config->BootromFilename).c_str());
+		return;
+	}
+
+	mi.bootrom = new uint8_t[mi.bootromSize];
+
+	if (bootrom.size() != mi.bootromSize)
+	{
+		delete[] mi.bootrom;
+		mi.bootrom = nullptr;
+		return;
+	}
+
+	memcpy(mi.bootrom, bootrom.data(), bootrom.size());
+
+	// Determine size of encrypted data (find first empty cache burst line)
+
+	const size_t strideSize = 0x20;
+	uint8_t zeroStride[strideSize] = { 0 };
+
+	size_t beginOffset = 0x100;
+	size_t endOffset = mi.bootromSize - strideSize;
+	size_t offset = beginOffset;
+
+	while (offset < endOffset)
+	{
+		if (!memcmp(&mi.bootrom[offset], zeroStride, sizeof(zeroStride)))
+		{
+			break;
+		}
+
+		offset += strideSize;
+	}
+
+	if (offset == endOffset)
+	{
+		// Empty cacheline not found, something wrong with the image
+
+		delete[] mi.bootrom;
+		mi.bootrom = nullptr;
+		return;
+	}
+
+	// Descramble
+
+	IPLDescrambler(&mi.bootrom[beginOffset], (offset - beginOffset));
+	mi.BootromPresent = true;
+
+	// Show version
+
+	Report(Channel::MI, "Loaded and descrambled valid Bootrom\n");
+	Report(Channel::Norm, "%s\n", (char*)mi.bootrom);
+}

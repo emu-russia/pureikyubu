@@ -7,17 +7,33 @@ namespace GX
 
 	enum class PEMappedRegister
 	{
-		PE_POKE_ZMODE_ID = 0,		// Cpu2Efb Z mode
-		PE_POKE_CMODE0_ID,			// Cpu2Efb Color mode 0
-		PE_POKE_CMODE1_ID,			// Cpu2Efb Color mode 1
-		PE_POKE_AMODE0_ID,			// Cpu2Efb Alpha mode 0
-		PE_POKE_AMODE1_ID,			// Cpu2Efb Alpha mode 1
-		PE_SR_ID,					// Status register
-		PE_UNK6_ID,
-		PE_TOKEN_ID,				// Last token value
+		PE_PI_ZMODE_ID = 0,			// Cpu2Efb Z mode
+		PE_PI_CMODE0_ID,			// Cpu2Efb Color mode 0
+		PE_PI_CMODE1_ID,			// Cpu2Efb Color mode 1
+		PE_PI_ALPHA_THRES_ID,		// Cpu2Efb Alpha mode 0
+		PE_PI_CONTROL_ID,
+		PE_PI_INTRCTRL_ID,
+		PE_PI_INTRSTAT_ID,
+		PE_PI_TOKEN_ID,				// Last token value
+		PE_PI_XBOUND0_ID,
+		PE_PI_XBOUND1_ID,
+		PE_PI_YBOUND0_ID,
+		PE_PI_YBOUND1_ID,
+		PE_PI_PERF_COUNTER_0L_ID,	// 0x18
+		PE_PI_PERF_COUNTER_0H_ID,	// 0x1a
+		PE_PI_PERF_COUNTER_1L_ID,	// 0x20
+		PE_PI_PERF_COUNTER_1H_ID,	// 0x22
+		PE_PI_PERF_COUNTER_2L_ID,	// 0x24
+		PE_PI_PERF_COUNTER_2H_ID,	// 0x26
+		PE_PI_PERF_COUNTER_3L_ID,	// 0x28
+		PE_PI_PERF_COUNTER_3H_ID,	// 0x2a
+		PE_PI_PERF_COUNTER_4L_ID,	// 0x2c
+		PE_PI_PERF_COUNTER_4H_ID,	// 0x30
+		PE_PI_PERF_COUNTER_5L_ID,	// 0x32
+		PE_PI_PERF_COUNTER_5H_ID,	// 0x34
 	};
 
-	// PE status register
+	// PE intrctrl register
 	#define PE_SR_DONE      (1 << 0)
 	#define PE_SR_TOKEN     (1 << 1)
 	#define PE_SR_DONEMSK   (1 << 2)

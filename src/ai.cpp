@@ -185,7 +185,7 @@ namespace Flipper
 		}
 		else
 		{
-			ai.Mixer->PushBytes(AxChannel::AudioDma, &mi.ram[ai.currentDmaAddr & RAMMASK], bytes);
+			ai.Mixer->PushBytes(AxChannel::AudioDma, (uint8_t *)MIGetMemoryPointerForIO(ai.currentDmaAddr), bytes);
 			ai.currentDmaAddr += bytes;
 			ai.dcnt--;
 		}
@@ -527,7 +527,7 @@ namespace Flipper
 
 	void AIOpen(HWConfig* config)
 	{
-		Report(Channel::AI, "Audio interface (DMA, DVD Streaming and DSP)\n");
+		Report(Channel::AI, "Audio interface (DSP AI/DVD Audio mixer)\n");
 
 		// clear regs
 		memset(&ai, 0, sizeof(AIControl));
