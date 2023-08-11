@@ -42,3 +42,5 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer);
 /// Checks that the bootstrap (if present) is of PAL revision. This is determined by the "PAL" substring in the first unencoded 0x100 bytes with copyright.
 /// </summary>
 bool IsBootromPALRevision();
+
+void LoadBootrom(HWConfig* config);
