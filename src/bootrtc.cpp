@@ -39,12 +39,13 @@ void SRAMSave(SRAM* s)
 // bootrom is updating time-base registers, using RTC value
 //
 
-#define MAGIC_VALUE 0x386d4380  // seconds between 1970 and 2000
-
 // use to get updated RTC
+// While emulating always 0 (as if the user took out the CR2032 battery).
+// The SRAM settings store the counterBias, which is set by the user via the IPL calendar menu.
+// Technically, you could update counterBias with the number of emulated seconds when you stop the emulation, but that will do for now.
 void RTCUpdate()
 {
-	exi.rtcVal = 0;//(uint32_t)time(NULL) - MAGIC_VALUE;
+	exi.rtcVal = 0;
 }
 
 //

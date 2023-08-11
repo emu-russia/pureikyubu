@@ -4606,6 +4606,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 					else
 					{
 						Debug::debugger->SetDisasmCursor(0xfff0'0100);
+						UI::Jdi->ExecuteCommand("echo \"Bootrom is started in Suspended state for debugging purposes. Press F5 to continue.\"");
 					}
 					return 0;
 				}
