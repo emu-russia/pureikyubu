@@ -356,12 +356,8 @@ BEGIN
     POPUP "&Debug"
     BEGIN
         MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
-        MENUITEM SEPARATOR
         MENUITEM "&Find Symbols",               ID_CREATE_MAP, CHECKED, GRAYED
-        MENUITEM SEPARATOR
         MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
-        MENUITEM "DSP Debug",                   ID_DSP_DEBUG
-        MENUITEM SEPARATOR
         MENUITEM "Mount DolphinSDK as DVD...",  ID_DEVELOPMENT_MOUNTSDK
     END
     POPUP "&Options"

@@ -17,13 +17,8 @@ namespace Debug
 
 		bool any_debugger_present = false;
 
-		if (Debug::gekkoDebug != nullptr) {
-			Debug::gekkoDebug->InvalidateAll();
-			any_debugger_present = true;
-		}
-
-		if (Debug::dspDebug != nullptr) {
-			Debug::dspDebug->InvalidateAll();
+		if (Debug::debugger != nullptr) {
+			Debug::debugger->InvalidateAll();
 			any_debugger_present = true;
 		}
 
