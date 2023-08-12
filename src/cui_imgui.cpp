@@ -3,6 +3,11 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 
+// TODO: Get the size of the widest glyph and use it to set the window size
+// TODO: F5 not working x_x
+// TODO: All the @ # * and stuff (input).
+
+
 namespace Debug
 {
 
@@ -10,6 +15,10 @@ namespace Debug
 	static SDL_Renderer* renderer;
 	static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	static bool ShowImguiDemo = false;
+	static int cursor_blink_counter = 0;
+	static const int cui_thread_delay = 10;		// ms
+	static int char_width = 8;
+	static int char_height = 8;
 
 #pragma region "Cui"
 
@@ -25,7 +34,7 @@ namespace Debug
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
 		// TODO: Get the size of the widest glyph and use it to set the window size
 
@@ -80,56 +89,122 @@ namespace Debug
 		delete[] frontBuf;
 	}
 
-	static ImVec4 AttributeToImguiColor(uint16_t attr)
+	static ImU32 CuiColorToImguiColor(CuiColor color)
 	{
-		// https://github.com/ocornut/imgui/issues/1566
-
-		CuiColor front_color = (CuiColor)(attr & 0xf);
-		const float noi = 0.7f;		// no intensity bit
-		const float yei = 1.0f;		// yes intensity bit
-
-		switch (front_color)
+		switch (color)
 		{
-			case CuiColor::Black: return ImVec4(0, 0, 0, 1.0f);
-			case CuiColor::DarkBlue: return ImVec4(0, 0, noi, 1.0f);
-			case CuiColor::Green: return ImVec4(0, noi, 0, 1.0f);
-			case CuiColor::Cyan: return ImVec4(0, noi, noi, 1.0f);
-			case CuiColor::Red: return ImVec4(noi, 0, 0, 1.0f);
-			case CuiColor::Purple: return ImVec4(noi, 0, noi, 1.0f);
-			case CuiColor::Brown: return ImVec4(noi, noi, 0, 1.0f);
-			case CuiColor::Normal: return ImVec4(noi, noi, noi, 1.0f);
+			case CuiColor::Black: return 0x000000ff;
+			case CuiColor::DarkBlue: return 0x0000aaff;
+			case CuiColor::Green: return 0x00aa00ff;
+			case CuiColor::Cyan: return 0x00aaaaff;
+			case CuiColor::Red: return 0xaa0000ff;
+			case CuiColor::Purple: return 0xaa00aaff;
+			case CuiColor::Brown: return 0xaa5500ff;
+			case CuiColor::Normal: return 0xaaaaaaff;
 
-			case CuiColor::Gray: return ImVec4(0, 0, 0, 1.0f);
-			case CuiColor::Blue: return ImVec4(0, 0, yei, 1.0f);
-			case CuiColor::Lime: return ImVec4(0, yei, 0, 1.0f);
-			case CuiColor::BrightCyan: return ImVec4(0, yei, yei, 1.0f);
-			case CuiColor::BrightRed: return ImVec4(yei, 0, 0, 1.0f);
-			case CuiColor::BrightPurple: return ImVec4(yei, 0, yei, 1.0f);
-			case CuiColor::Yellow: return ImVec4(yei, yei, 0, 1.0f);
-			case CuiColor::White: return ImVec4(yei, yei, yei, 1.0f);
+			case CuiColor::Gray: return 0x555555ff;
+			case CuiColor::Blue: return 0x5555ffff;
+			case CuiColor::Lime: return 0x55ff55ff;
+			case CuiColor::BrightCyan: return 0x55ffffff;
+			case CuiColor::BrightRed: return 0xff5555ff;
+			case CuiColor::BrightPurple: return 0xff55ffff;
+			case CuiColor::Yellow: return 0xffff55ff;
+			case CuiColor::White: return 0xffffffff;
 
-			default: return ImVec4(0, 0, 0, 1.0f);
+			default: return 0xff000000;
 		}
+	}
+
+	static bool SdlEventToCuiKeypress(SDL_Event& event, char& Ascii, CuiVkey& Vkey, bool& shift, bool& ctrl)
+	{
+		if (event.type == SDL_KEYDOWN) {
+
+			shift = (event.key.keysym.mod & KMOD_LSHIFT) || (event.key.keysym.mod & KMOD_RSHIFT);
+			ctrl = (event.key.keysym.mod & KMOD_LCTRL) || (event.key.keysym.mod & KMOD_RCTRL);
+
+			if (event.key.keysym.sym >= ' ' && event.key.keysym.sym < 127) {
+
+				// TODO: All the @ # * and stuff.
+
+				Ascii = event.key.keysym.sym;
+				if (shift)
+					Ascii = toupper(Ascii);
+			}
+
+			else switch (event.key.keysym.scancode)
+			{
+				case SDL_Scancode::SDL_SCANCODE_UP: Vkey = CuiVkey::Up; break;
+				case SDL_Scancode::SDL_SCANCODE_DOWN: Vkey = CuiVkey::Down; break;
+				case SDL_Scancode::SDL_SCANCODE_LEFT: Vkey = CuiVkey::Left; break;
+				case SDL_Scancode::SDL_SCANCODE_RIGHT: Vkey = CuiVkey::Right; break;
+				case SDL_Scancode::SDL_SCANCODE_PAGEUP: Vkey = CuiVkey::PageUp; break;
+				case SDL_Scancode::SDL_SCANCODE_PAGEDOWN: Vkey = CuiVkey::PageDown; break;
+				case SDL_Scancode::SDL_SCANCODE_HOME: Vkey = CuiVkey::Home; break;
+				case SDL_Scancode::SDL_SCANCODE_END: Vkey = CuiVkey::End; break;
+				case SDL_Scancode::SDL_SCANCODE_ESCAPE: Vkey = CuiVkey::Escape; break;
+				case SDL_Scancode::SDL_SCANCODE_RETURN: Vkey = CuiVkey::Enter; break;
+				case SDL_Scancode::SDL_SCANCODE_BACKSPACE: Vkey = CuiVkey::Backspace; break;
+				case SDL_Scancode::SDL_SCANCODE_DELETE: Vkey = CuiVkey::Delete; break;
+
+				case SDL_Scancode::SDL_SCANCODE_F1: Vkey = CuiVkey::F1; break;
+				case SDL_Scancode::SDL_SCANCODE_F2: Vkey = CuiVkey::F2; break;
+				case SDL_Scancode::SDL_SCANCODE_F3: Vkey = CuiVkey::F3; break;
+				case SDL_Scancode::SDL_SCANCODE_F4: Vkey = CuiVkey::F4; break;
+				case SDL_Scancode::SDL_SCANCODE_F5: Vkey = CuiVkey::F5; break;
+				case SDL_Scancode::SDL_SCANCODE_F6: Vkey = CuiVkey::F6; break;
+				case SDL_Scancode::SDL_SCANCODE_F7: Vkey = CuiVkey::F7; break;
+				case SDL_Scancode::SDL_SCANCODE_F8: Vkey = CuiVkey::F8; break;
+				case SDL_Scancode::SDL_SCANCODE_F9: Vkey = CuiVkey::F9; break;
+				case SDL_Scancode::SDL_SCANCODE_F10: Vkey = CuiVkey::F10; break;
+				case SDL_Scancode::SDL_SCANCODE_F11: Vkey = CuiVkey::F11; break;
+				case SDL_Scancode::SDL_SCANCODE_F12: Vkey = CuiVkey::F12; break;
+
+				default:
+					return false;
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 	void Cui::CuiThreadProc(void* Parameter)
 	{
 		Cui* cui = (Cui*)Parameter;
 
-		Thread::Sleep(10);
+		Thread::Sleep(cui_thread_delay);
 
 		// Pass key event
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 
-			ImGui_ImplSDL2_ProcessEvent(&event);
-			//if (event.type == SDL_QUIT)
-			//    run_dbg_thread = false;
-			//if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
-			//	run_dbg_thread = false;
+			if (event.type != SDL_KEYDOWN) {
+				ImGui_ImplSDL2_ProcessEvent(&event);
+			}
 
-			// TODO: OnKeyPress
+			// OnKeyPress
+
+			char ascii;
+			CuiVkey cui_vk;
+			bool shiftPressed;
+			bool ctrlPressed;
+
+			if (SdlEventToCuiKeypress(event, ascii, cui_vk, shiftPressed, ctrlPressed)) {
+
+				cui->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
+
+				for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
+				{
+					CuiWindow* wnd = *it;
+
+					if (wnd->active)
+					{
+						wnd->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
+					}
+				}
+			}
 		}
 
 		// Start the Dear ImGui frame
@@ -165,6 +240,14 @@ namespace Debug
 				return;
 			}
 
+			ImVec2 char_size = ImGui::CalcTextSize("A");
+			char_width = (int)char_size.x;
+			char_height = (int)char_size.y;
+
+			ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+			// Draw cui windows
+
 			if (ImGui::BeginChild("frontBuf", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
 			{
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0)); // Tighten spacing
@@ -173,9 +256,31 @@ namespace Debug
 				{
 					for (size_t x = 0; x < cui->conWidth; x++)
 					{
+						// Draw cursor
+						if (cui->cursor_visible && x == cui->cursor_x && y == cui->cursor_y) {
+							
+							ImVec2 p0 = ImGui::GetCursorScreenPos();
+							p0.x += x * char_width;
+							ImVec2 p1 = ImVec2(p0.x, p0.y - char_height);
+							draw_list->AddLine(p0, p1, 0x80ffffff, 2.0f);
+						}
+
 						CHAR_INFO* char_info = &cui->frontBuf[cui->conWidth * y + x];
 
-						ImVec4 color = AttributeToImguiColor(char_info->Attributes);
+						// Background color
+						CuiColor bk_color = (CuiColor)((char_info->Attributes >> 4) & 0xf);
+						if (bk_color != CuiColor::Black) {
+
+							ImVec2 p0 = ImGui::GetCursorScreenPos();
+							p0.x += x * char_width;
+							ImVec2 p1 = ImVec2(p0.x + char_width, p0.y - char_height);
+
+							ImU32 fill_color = _BYTESWAP_UINT32(CuiColorToImguiColor(bk_color));
+							draw_list->AddRectFilled(p0, p1, fill_color);
+						}
+
+						ImVec4 color = ImGui::ColorConvertU32ToFloat4(
+							_BYTESWAP_UINT32( CuiColorToImguiColor((CuiColor)(char_info->Attributes & 0xf)) ) );
 						ImGui::SameLine();
 						ImGui::TextColored(color, "%c", char_info->Char.AsciiChar);
 					}
@@ -186,8 +291,6 @@ namespace Debug
 				ImGui::PopStyleVar();
 			}
 			ImGui::EndChild();
-
-			// TODO: Draw cursor
 
 			// Auto-focus on window apparition
 			ImGui::SetItemDefaultFocus();

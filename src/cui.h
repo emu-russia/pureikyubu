@@ -137,7 +137,7 @@ namespace Debug
 
 		int cursor_x = 0;
 		int cursor_y = 0;
-		bool cursor_visible = false;
+		bool cursor_visible = true;
 
 		Thread* cuiThread = nullptr;
 		static void CuiThreadProc(void* Parameter);
