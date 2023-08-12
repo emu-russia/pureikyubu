@@ -21,13 +21,15 @@ The Linux build does not yet have support for graphics, sound and a full Debug U
 # Choose a suitable folder to store a clone of the repository, cd there and then
 git clone https://github.com/emu-russia/pureikyubu.git 
 cd pureikyubu
+git submodule init
+git submodule update
 cd build
 cmake ..
 make
 ./pureikyubu pong.dol
 ```
 
-Requirements: CMake, pthread, OpenGL.
+Requirements: CMake, pthread, OpenGL, imgui, SDL2.
 
 ## Progress
 
