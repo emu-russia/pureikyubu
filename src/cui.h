@@ -144,6 +144,8 @@ namespace Debug
 
 		void BlitWindow(CuiWindow* wnd);
 
+		CHAR_INFO* frontBuf = nullptr;
+
 	public:
 		Cui(std::string title, size_t width, size_t height);
 		virtual ~Cui();

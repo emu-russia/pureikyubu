@@ -9,6 +9,7 @@ namespace Debug
 	static SDL_Window* window;
 	static SDL_Renderer* renderer;
 	static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	static bool ShowImguiDemo = false;
 
 #pragma region "Cui"
 
@@ -17,21 +18,30 @@ namespace Debug
 		conWidth = width;
 		conHeight = height;
 
-		// Create window with SDL_Renderer graphics context
-		SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-		window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
-		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_SOFTWARE);
-		if (renderer == nullptr)
-		{
-			SDL_Log("Error creating SDL_Renderer!");
-			return;
-		}
+		frontBuf = new CHAR_INFO[width * height];
+		memset(frontBuf, 0, sizeof(CHAR_INFO) * width * height);
 
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
+		// TODO: Get the size of the widest glyph and use it to set the window size
+
+		//ImVec2 char_size = ImGui::CalcTextSize("X");
+		int window_width = 1024;// char_size.x* conWidth;
+		int window_height = 500;// char_size.y* conHeight;
+
+		// Create window with SDL_Renderer graphics context
+		SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+		window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, window_flags);
+		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_SOFTWARE);
+		if (renderer == nullptr)
+		{
+			SDL_Log("Error creating SDL_Renderer!");
+			return;
+		}
 
 		// Setup Dear ImGui style
 		//ImGui::StyleColorsClassic();
@@ -56,12 +66,49 @@ namespace Debug
 
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);
+		
+		renderer = nullptr;
+		window = nullptr;
 
 		while (!windows.empty())
 		{
 			CuiWindow* wnd = windows.back();
 			windows.pop_back();
 			delete wnd;
+		}
+
+		delete[] frontBuf;
+	}
+
+	static ImVec4 AttributeToImguiColor(uint16_t attr)
+	{
+		// https://github.com/ocornut/imgui/issues/1566
+
+		CuiColor front_color = (CuiColor)(attr & 0xf);
+		const float noi = 0.7f;		// no intensity bit
+		const float yei = 1.0f;		// yes intensity bit
+
+		switch (front_color)
+		{
+			case CuiColor::Black: return ImVec4(0, 0, 0, 1.0f);
+			case CuiColor::DarkBlue: return ImVec4(0, 0, noi, 1.0f);
+			case CuiColor::Green: return ImVec4(0, noi, 0, 1.0f);
+			case CuiColor::Cyan: return ImVec4(0, noi, noi, 1.0f);
+			case CuiColor::Red: return ImVec4(noi, 0, 0, 1.0f);
+			case CuiColor::Purple: return ImVec4(noi, 0, noi, 1.0f);
+			case CuiColor::Brown: return ImVec4(noi, noi, 0, 1.0f);
+			case CuiColor::Normal: return ImVec4(noi, noi, noi, 1.0f);
+
+			case CuiColor::Gray: return ImVec4(0, 0, 0, 1.0f);
+			case CuiColor::Blue: return ImVec4(0, 0, yei, 1.0f);
+			case CuiColor::Lime: return ImVec4(0, yei, 0, 1.0f);
+			case CuiColor::BrightCyan: return ImVec4(0, yei, yei, 1.0f);
+			case CuiColor::BrightRed: return ImVec4(yei, 0, 0, 1.0f);
+			case CuiColor::BrightPurple: return ImVec4(yei, 0, yei, 1.0f);
+			case CuiColor::Yellow: return ImVec4(yei, yei, 0, 1.0f);
+			case CuiColor::White: return ImVec4(yei, yei, yei, 1.0f);
+
+			default: return ImVec4(0, 0, 0, 1.0f);
 		}
 	}
 
@@ -81,6 +128,8 @@ namespace Debug
 			//    run_dbg_thread = false;
 			//if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
 			//	run_dbg_thread = false;
+
+			// TODO: OnKeyPress
 		}
 
 		// Start the Dear ImGui frame
@@ -102,11 +151,55 @@ namespace Debug
 			}
 		}
 
-		// TODO: Draw cursor
+		// Draw frontBuf
 
-		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-		//if (show_demo_window)
-		ImGui::ShowDemoWindow(nullptr);
+		if (!ShowImguiDemo)
+		{
+			const ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
+
+			if (!ImGui::Begin("title", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
+			{
+				ImGui::End();
+				return;
+			}
+
+			if (ImGui::BeginChild("frontBuf", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0)); // Tighten spacing
+
+				for (size_t y = 0; y < cui->conHeight; y++)
+				{
+					for (size_t x = 0; x < cui->conWidth; x++)
+					{
+						CHAR_INFO* char_info = &cui->frontBuf[cui->conWidth * y + x];
+
+						ImVec4 color = AttributeToImguiColor(char_info->Attributes);
+						ImGui::SameLine();
+						ImGui::TextColored(color, "%c", char_info->Char.AsciiChar);
+					}
+					if (y != cui->conHeight - 1)
+						ImGui::Text("\n");
+				}
+
+				ImGui::PopStyleVar();
+			}
+			ImGui::EndChild();
+
+			// TODO: Draw cursor
+
+			// Auto-focus on window apparition
+			ImGui::SetItemDefaultFocus();
+			ImGui::End();
+		}
+		else
+		{
+
+			// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+			//if (show_demo_window)
+			ImGui::ShowDemoWindow(nullptr);
+		}
 
 		// Rendering
 		ImGui::Render();
@@ -149,7 +242,21 @@ namespace Debug
 
 	void Cui::BlitWindow(CuiWindow* wnd)
 	{
-		// TODO
+		for (size_t y = 0; y < wnd->height; y++)
+		{
+			size_t con_y = wnd->wndRect.top + y;
+			if (con_y >= conHeight)
+				break;
+
+			for (size_t x = 0; x < wnd->width; x++)
+			{
+				size_t con_x = wnd->wndRect.left + x;
+				if (con_x >= conWidth)
+					continue;
+
+				frontBuf[conWidth * con_y + con_x] = wnd->backBuf[wnd->width * y + x];
+			}
+		}
 	}
 
 	void Cui::InvalidateAll()
