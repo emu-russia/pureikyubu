@@ -1,4 +1,4 @@
-// Cui using Win32 Console API
+// Cui using imgui
 #include "pch.h"
 
 namespace Debug
@@ -10,35 +10,6 @@ namespace Debug
 	{
 		conWidth = width;
 		conHeight = height;
-
-		AllocConsole();
-
-		StdInput = GetStdHandle(STD_INPUT_HANDLE);
-		assert(StdInput != INVALID_HANDLE_VALUE);
-		StdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		assert(StdOutput != INVALID_HANDLE_VALUE);
-
-		// Disable mouse input
-		DWORD flags;
-		GetConsoleMode(StdInput, &flags);
-		flags &= ~ENABLE_MOUSE_INPUT;
-		SetConsoleMode(StdInput, flags);
-
-		// Resize console
-		COORD coord;
-		SMALL_RECT rect;
-
-		rect.Top = rect.Left = 0;
-		rect.Right = (SHORT)width - 1;
-		rect.Bottom = (SHORT)height - 1;
-
-		coord.X = (SHORT)width;
-		coord.Y = (SHORT)height;
-
-		SetConsoleWindowInfo(StdOutput, TRUE, &rect);
-		SetConsoleScreenBufferSize(StdOutput, coord);
-
-		SetConsoleTitleA(title.c_str());
 
 		cuiThread = EMUCreateThread(CuiThreadProc, false, this, "CuiThread");
 	}
@@ -53,56 +24,10 @@ namespace Debug
 			windows.pop_back();
 			delete wnd;
 		}
-
-		// Don't touch console handles, they can be used by Visual Studio or by other parasites.
-
-		FreeConsole();
-
-		// Required for Win32 internals to stabilize after closing Cui
-		Sleep(100);
-	}
-
-	/// <summary>
-	/// Convert Windows VK to abstract Cui VK, to improve code portability.
-	/// </summary>
-	static CuiVkey WindowVKToCuiVkey(WORD vk)
-	{
-		switch (vk)
-		{
-			case VK_UP: return CuiVkey::Up;
-			case VK_DOWN: return CuiVkey::Down;
-			case VK_LEFT: return CuiVkey::Left;
-			case VK_RIGHT: return CuiVkey::Right;
-			case VK_PRIOR: return CuiVkey::PageUp;
-			case VK_NEXT: return CuiVkey::PageDown;
-			case VK_HOME: return CuiVkey::Home;
-			case VK_END: return CuiVkey::End;
-			case VK_ESCAPE: return CuiVkey::Escape;
-			case VK_RETURN: return CuiVkey::Enter;
-			case VK_BACK: return CuiVkey::Backspace;
-			case VK_DELETE: return CuiVkey::Delete;
-			case VK_F1: return CuiVkey::F1;
-			case VK_F2: return CuiVkey::F2;
-			case VK_F3: return CuiVkey::F3;
-			case VK_F4: return CuiVkey::F4;
-			case VK_F5: return CuiVkey::F5;
-			case VK_F6: return CuiVkey::F6;
-			case VK_F7: return CuiVkey::F7;
-			case VK_F8: return CuiVkey::F8;
-			case VK_F9: return CuiVkey::F9;
-			case VK_F10: return CuiVkey::F10;
-			case VK_F11: return CuiVkey::F11;
-			case VK_F12: return CuiVkey::F12;
-			default: break;
-		}
-		return CuiVkey::Unknown;
 	}
 
 	void Cui::CuiThreadProc(void* Parameter)
 	{
-		INPUT_RECORD record;
-		DWORD count;
-
 		Cui* cui = (Cui*)Parameter;
 
 		Thread::Sleep(10);
@@ -123,35 +48,7 @@ namespace Debug
 
 		// Pass key event
 
-		PeekConsoleInput(cui->StdInput, &record, 1, &count);
-		if (!count)
-			return;
-
-		ReadConsoleInput(cui->StdInput, &record, 1, &count);
-		if (!count)
-			return;
-
-		if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown)
-		{
-			char ascii = record.Event.KeyEvent.uChar.AsciiChar;
-			int vcode = record.Event.KeyEvent.wVirtualKeyCode;
-			int ctrl = record.Event.KeyEvent.dwControlKeyState;
-			bool shiftPressed = (ctrl & SHIFT_PRESSED) != 0;
-			bool ctrlPressed = (ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
-
-			CuiVkey cui_vk = WindowVKToCuiVkey(vcode);
-			cui->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
-
-			for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
-			{
-				CuiWindow* wnd = *it;
-
-				if (wnd->active)
-				{
-					wnd->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
-				}
-			}
-		}
+		// TODO
 	}
 
 	void Cui::AddWindow(CuiWindow* wnd)
@@ -174,41 +71,17 @@ namespace Debug
 
 	void Cui::ShowCursor(bool show)
 	{
-		CONSOLE_CURSOR_INFO info = { 0 };
-
-		info.bVisible = show;
-		info.dwSize = 1;
-
-		SetConsoleCursorInfo(StdOutput, &info);
+		// TODO
 	}
 
 	void Cui::SetCursor(int x, int y)
 	{
-		COORD pos;
-
-		pos.X = x;
-		pos.Y = y;
-
-		SetConsoleCursorPosition(StdOutput, pos);
+		// TODO
 	}
 
 	void Cui::BlitWindow(CuiWindow* wnd)
 	{
-		COORD sz;
-		sz.X = (SHORT)wnd->width;
-		sz.Y = (SHORT)wnd->height;
-
-		COORD pos;
-		pos.X = 0;
-		pos.Y = 0;
-
-		SMALL_RECT rgn;
-		rgn.Left = (SHORT)wnd->wndRect.left;
-		rgn.Top = (SHORT)wnd->wndRect.top;
-		rgn.Right = (SHORT)wnd->wndRect.right;
-		rgn.Bottom = (SHORT)wnd->wndRect.bottom;
-
-		WriteConsoleOutput(StdOutput, wnd->backBuf, sz, pos, &rgn);
+		// TODO
 	}
 
 	void Cui::InvalidateAll()
