@@ -430,7 +430,7 @@ namespace Debug
 		va_list arg;
 
 		va_start(arg, fmt);
-		vsprintf_s(buf, sizeof(buf) - 1, fmt, arg);
+		vsprintf(buf, fmt, arg);
 		va_end(arg);
 
 		std::string text = buf;
@@ -443,7 +443,7 @@ namespace Debug
 		va_list arg;
 
 		va_start(arg, fmt);
-		vsprintf_s(buf, sizeof(buf) - 1, fmt, arg);
+		vsprintf(buf, fmt, arg);
 		va_end(arg);
 
 		std::string text = buf;
