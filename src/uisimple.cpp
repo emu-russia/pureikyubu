@@ -318,57 +318,6 @@ void UIReflector()
 	JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
 }
 
-// A simple example of a debugger that just prints debug messages. Works in its own thread. 
-
-Thread* debugger;
-
-void DebugThreadProc(void* param)
-{
-	static size_t mipsIterCounter = 1;
-	std::list<std::pair<int, std::string>> queue;
-
-	UI::SimpleJdi.QueryDebugMessages(queue);
-
-	if (!queue.empty())
-	{
-		for (auto it = queue.begin(); it != queue.end(); ++it)
-		{
-			std::string channelName = UI::SimpleJdi.DebugChannelToString(it->first);
-
-			if (channelName.size() != 0)
-			{
-				printf("%s: ", channelName.c_str());
-			}
-
-			printf("%s", it->second.c_str());
-		}
-
-		queue.clear();
-		fflush(stdout);
-	}
-
-	Thread::Sleep(100);
-
-	// Output Gekko mips every second
-
-	mipsIterCounter++;
-	if (mipsIterCounter == 10)
-	{
-		mipsIterCounter = 1;
-		printf("Gekko mips: %f\n", (float)UI::SimpleJdi.GetResetGekkoMipsCounter() / 1000000.f);
-	}
-}
-
-void DebugStart()
-{
-	debugger = EMUCreateThread(DebugThreadProc, false, nullptr, "DebugThread");
-}
-
-void DebugStop()
-{
-	EMUJoinThread(debugger);
-}
-
 int main(int argc, char** argv)
 {
 	// Check parameters
@@ -393,7 +342,7 @@ int main(int argc, char** argv)
 
 	UI::SimpleJdi.LoadFile(argv[1]);
 	UI::SimpleJdi.Run();
-	DebugStart();
+	Debug::debugger = new Debug::Debugger();
 
 	// Wait key press..
 
@@ -409,7 +358,7 @@ int main(int argc, char** argv)
 
 	UI::SimpleJdi.Unload();
 	JdiRemoveNode(UI_JDI_JSON);
-	DebugStop();
+	delete Debug::debugger;
 
 	printf("\nThank you for flying pureikyubu airlines!\n");
 	return 0;

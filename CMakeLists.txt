@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 project (pureikyubu)
 
 # Choose an X86/X64 build
@@ -10,6 +10,11 @@ else ()
   set(X86 ON)
   set(X64 OFF)
 endif ()
+
+find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+find_package (Threads)
+find_package(OpenGL REQUIRED)
 
 add_definitions (-D_LINUX)
 add_definitions (-DCMAKE_BUILD_TYPE=Debug)
@@ -26,7 +31,7 @@ add_executable (pureikyubu
 	src/bootrtc.cpp
 	src/config.cpp
 	src/cp.cpp
-	src/cuinull.cpp
+	src/cui_imgui.cpp
 	src/debug.cpp
 	src/debugui.cpp
 	src/di.cpp
@@ -68,11 +73,16 @@ add_executable (pureikyubu
 	src/vi.cpp
 	src/xf.cpp
 	src/xfbnull.cpp
+
+	thirdparty/imgui/imgui.cpp
+	thirdparty/imgui/imgui_demo.cpp
+	thirdparty/imgui/imgui_draw.cpp
+	thirdparty/imgui/backends/imgui_impl_sdl2.cpp
+	thirdparty/imgui/backends/imgui_impl_sdlrenderer2.cpp
+	thirdparty/imgui/imgui_tables.cpp
+	thirdparty/imgui/imgui_widgets.cpp
 )
 
-target_link_libraries (pureikyubu LINK_PUBLIC fmt)
-find_package (Threads)
-find_package(OpenGL REQUIRED)
-include_directories( ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} )
+include_directories( thirdparty/imgui ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} )
 
-target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} fmt SDL2 )
