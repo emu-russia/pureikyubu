@@ -174,6 +174,9 @@
     <ProjectReference Include="..\thirdparty\fmt\Scripts\VS2022\fmt.vcxproj">
       <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\thirdparty\SDL2\VisualC\SDL\SDL.vcxproj">
+      <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
