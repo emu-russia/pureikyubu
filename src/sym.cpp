@@ -336,19 +336,59 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
 // load raw format map-file
 static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 {
-	/* Open the map file. */
-	auto file = std::ifstream( Util::WstringToString(mapname).c_str());
-	if (!file.is_open())
+	int i;
+	size_t size = Util::FileSize(mapname);
+
+	std::vector<uint8_t> mapbuf = Util::FileLoad(mapname);
+
+	// remove all garbage, like tabs
+	for (i = 0; i < size; i++)
 	{
-		throw std::exception();
+		if (mapbuf[i] < ' ') mapbuf[i] = '\n';
 	}
 
-	/* Read all the symbols with their addresses. */
-	auto address = 0U;
-	auto symbol = std::string();
-	while (file >> std::hex >> address >> symbol)
+	uint8_t* ptr = mapbuf.data();
+	while (*ptr)
 	{
-		SYMAddNew(address, symbol.c_str());
+		// some maps has really *huge* symbols
+		char line[0x1000]{};
+		line[i = 0] = 0;
+
+		// cut string
+		while (*ptr == '\n') ptr++;
+		if (!*ptr) break;
+		while (*ptr != '\n') line[i++] = *ptr++;
+		line[i++] = 0;
+
+		// remove comments
+		char* p = line;
+		while (*p)
+		{
+			if (p[0] == '/' && p[1] == '/')
+			{
+				*p = 0;
+				break;
+			}
+			p++;
+		}
+
+		// remove spaces at the end
+		p = &line[strlen(line) - 1];
+		while (*p <= ' ') p--;
+		if (*p) p[1] = 0;
+
+		// remove spaces at the beginning
+		p = line;
+		while (*p <= ' ' && *p) p++;
+
+		// empty string ?
+		if (!*p) continue;
+
+		// add symbol
+		char* name;
+		uint32_t addr = strtoul(p, &name, 16);
+		while (*name <= ' ') name++;
+		SYMAddNew(addr, name);
 	}
 
 	Report(Channel::HLE, "RAW format map loaded: %s\n\n", Util::WstringToString(mapname).c_str());
@@ -789,7 +829,8 @@ static void SaveMAP2(const wchar_t *mapname)
 
 	// find new map entries to append file
 	mapName = (char *)mapname;
-	appendStarted = itemsUpdated = 0;
+	appendStarted = 0;
+	itemsUpdated = 0;
 	SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
 	if ( itemsUpdated == 0 ) Report (Channel::HLE, "Nothing to update\n");
 
