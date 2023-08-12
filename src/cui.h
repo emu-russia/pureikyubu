@@ -1,6 +1,4 @@
-// Universal code for interacting with the Win32 console.
-
-// Well, if you manage to port this code to other OS, then you can use the debug console there too.
+// Universal code for interacting with the debug console.
 
 #pragma once
 
@@ -66,6 +64,16 @@ namespace Debug
 		F12,
 	};
 
+#ifndef _WINDOWS
+	struct CHAR_INFO {
+		union {
+			wchar_t UnicodeChar;
+			char   AsciiChar;
+		} Char;
+		uint16_t Attributes;
+};
+#endif
+
 	class Cui;
 
 	class CuiWindow
@@ -74,10 +82,8 @@ namespace Debug
 
 		std::string wndName;
 
-#ifdef _WINDOWS
 		// This is where the contents of the window are stored. The region data is displayed by the wndRect coordinates.
 		CHAR_INFO* backBuf = nullptr;
-#endif
 
 		// Window layout in CUI.
 		CuiRect wndRect{};
@@ -129,10 +135,16 @@ namespace Debug
 		size_t conWidth = 0;
 		size_t conHeight = 0;
 
+		int cursor_x = 0;
+		int cursor_y = 0;
+		bool cursor_visible = true;
+
 		Thread* cuiThread = nullptr;
 		static void CuiThreadProc(void* Parameter);
 
 		void BlitWindow(CuiWindow* wnd);
+
+		CHAR_INFO* frontBuf = nullptr;
 
 	public:
 		Cui(std::string title, size_t width, size_t height);

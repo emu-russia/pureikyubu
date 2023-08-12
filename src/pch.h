@@ -40,6 +40,14 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+#define SDL_MAIN_HANDLED
+#ifdef _WIN32
+#include "SDL.h"
+#else
+#include <SDL2/SDL.h>
+#endif
+#include "imgui.h"
+
 #include "../thirdparty/fmt/fmt/format.h"
 #include "../thirdparty/fmt/fmt/printf.h"
 

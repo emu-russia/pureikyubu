@@ -338,6 +338,8 @@ static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 {
 	int i;
 	size_t size = Util::FileSize(mapname);
+	if (!size)
+		return MAP_FORMAT::BAD;
 
 	std::vector<uint8_t> mapbuf = Util::FileLoad(mapname);
 
