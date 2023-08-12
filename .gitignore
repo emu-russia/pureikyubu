@@ -53,3 +53,5 @@ dolwin-rnd
 
 build/smp-onetri.*
 temp
+
+build/imgui.ini

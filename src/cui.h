@@ -135,6 +135,10 @@ namespace Debug
 		size_t conWidth = 0;
 		size_t conHeight = 0;
 
+		int cursor_x = 0;
+		int cursor_y = 0;
+		bool cursor_visible = false;
+
 		Thread* cuiThread = nullptr;
 		static void CuiThreadProc(void* Parameter);
 

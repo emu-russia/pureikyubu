@@ -176,6 +176,7 @@ namespace Debug
 	{
 		CONSOLE_CURSOR_INFO info = { 0 };
 
+		cursor_visible = show;
 		info.bVisible = show;
 		info.dwSize = 1;
 
@@ -185,6 +186,9 @@ namespace Debug
 	void Cui::SetCursor(int x, int y)
 	{
 		COORD pos;
+
+		cursor_x = x;
+		cursor_y = y;
 
 		pos.X = x;
 		pos.Y = y;
