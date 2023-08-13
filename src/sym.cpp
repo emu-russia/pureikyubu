@@ -342,6 +342,7 @@ static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 		return MAP_FORMAT::BAD;
 
 	std::vector<uint8_t> mapbuf = Util::FileLoad(mapname);
+	mapbuf.push_back(0);
 
 	// remove all garbage, like tabs
 	for (i = 0; i < size; i++)

@@ -98,6 +98,7 @@ void EMUOpen(const std::wstring& filename)
 	Flipper::HW = new Flipper::Flipper(hwconfig);
 	delete hwconfig;
 
+	CallJdi("script autoexec.cmd");
 	LoadFile(filename);   // Gekko PC will be set here
 	HLEOpen();
 
