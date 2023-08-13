@@ -337,6 +337,7 @@ namespace Debug
 			Report(Channel::Norm, "Cannot open script file!\n");
 			return nullptr;
 		}
+		sbuf.push_back(0);
 
 		/* Remove all garbage, like tabs. */
 		for (i = 0; i < sbuf.size(); i++)
@@ -375,6 +376,9 @@ namespace Debug
 				}
 				p++;
 			}
+
+			// empty string ?
+			if (strlen(line) == 0) continue;
 
 			// remove spaces at the end
 			p = &line[strlen(line) - 1];

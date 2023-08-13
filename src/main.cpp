@@ -98,8 +98,8 @@ void EMUOpen(const std::wstring& filename)
 	Flipper::HW = new Flipper::Flipper(hwconfig);
 	delete hwconfig;
 
-	LoadFile(filename);   // Gekko PC will be set here
 	CallJdi("script autoexec.cmd");
+	LoadFile(filename);   // Gekko PC will be set here
 	HLEOpen();
 
 	Debug::g_PerfCounters->ResetAllCounters();
