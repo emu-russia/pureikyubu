@@ -8,11 +8,11 @@ SIControl si;
 // so all ERROR bits/status in SI regs are not used in emulator.
 
 // polling intervals are also not critical. all controllers are polled
-// before VI blank (in VI.cpp)
+// before VI blank (in vi.cpp)
 
 // SI_EXILK is not used (same as EXI clock timing, because of instant EXI transfers)
 
-// SI.cpp polling schematics :
+// si.cpp polling schematics :
 /*/
 	 -----
 	| OUT |

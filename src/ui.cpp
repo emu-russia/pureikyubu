@@ -2120,7 +2120,7 @@ Interesting to track :
 namespace UI
 {
 
-	// Global instance of the utility, which is controlled in the UserWindow.cpp module
+	// Global instance of the utility, which is controlled in the ui.cpp module
 	PerfMetrics* g_perfMetrics = nullptr;
 
 
@@ -2336,7 +2336,7 @@ static void load_path()
 	}
 }
 
-/* Called after loading of new file (see Emulator\Loader.cpp). */
+/* Called after loading of new file */
 bool AddSelectorPath(const std::wstring& fullPath)
 {
 	auto path = std::wstring(fullPath);
