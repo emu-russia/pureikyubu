@@ -27,34 +27,6 @@ namespace DSP
 		JDI::Hub.RemoveNode(DSP_JDI_JSON);
 	}
 
-	bool Dsp16::LoadIrom(std::vector<uint8_t>& iromImage)
-	{
-		if (iromImage.empty() || iromImage.size() != IROM_SIZE)
-		{
-			return false;
-		}
-		else
-		{
-			memcpy(irom, iromImage.data(), IROM_SIZE);
-		}
-
-		return true;
-	}
-
-	bool Dsp16::LoadDrom(std::vector<uint8_t>& dromImage)
-	{
-		if (dromImage.empty() || dromImage.size() != DROM_SIZE)
-		{
-			return false;
-		}
-		else
-		{
-			memcpy(drom, dromImage.data(), DROM_SIZE);
-		}
-
-		return true;
-	}
-
 	void Dsp16::DspThreadProc(void* Parameter)
 	{
 		Dsp16* dsp = (Dsp16*)Parameter;
@@ -116,50 +88,6 @@ namespace DSP
 
 #pragma region "Memory Engine"
 
-	uint8_t* Dsp16::TranslateIMem(DspAddress addr)
-	{
-		if (addr < (IRAM_SIZE / 2))
-		{
-			return &iram[addr << 1];
-		}
-		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + (IROM_SIZE / 2)))
-		{
-			return &irom[(addr - IROM_START_ADDRESS) << 1];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	uint8_t* Dsp16::TranslateDMem(DspAddress addr)
-	{
-		if (addr < (DRAM_SIZE / 2))
-		{
-			return &dram[addr << 1];
-		}
-		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + (DROM_SIZE / 2)))
-		{
-			return &drom[(addr - DROM_START_ADDRESS) << 1];
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
-	uint16_t Dsp16::ReadIMem(DspAddress addr)
-	{
-		uint8_t* ptr = TranslateIMem(addr);
-
-		if (ptr)
-		{
-			return _BYTESWAP_UINT16(*(uint16_t*)ptr);
-		}
-
-		return 0;
-	}
-
 	uint16_t Dsp16::ReadDMem(DspAddress addr)
 	{
 		if (core->TestWatch(addr))
@@ -167,7 +95,7 @@ namespace DSP
 			Report(Channel::DSP, "ReadDMem 0x%04X, pc: 0x%04X\n", addr, core->regs.pc);
 		}
 
-		if (addr >= IFX_START_ADDRESS)
+		if (addr >= core->IFX_START_ADDRESS)
 		{
 			switch (addr)
 			{
@@ -231,7 +159,7 @@ namespace DSP
 			return 0;
 		}
 
-		uint8_t* ptr = TranslateDMem(addr);
+		uint8_t* ptr = core->TranslateDMem(addr);
 
 		if (ptr)
 		{
@@ -256,7 +184,7 @@ namespace DSP
 			Report(Channel::DSP, "WriteDMem 0x%04X = 0x%04X, pc: 0x%04X\n", addr, value, core->regs.pc);
 		}
 
-		if (addr >= IFX_START_ADDRESS)
+		if (addr >= core->IFX_START_ADDRESS)
 		{
 			switch (addr)
 			{
@@ -471,9 +399,9 @@ namespace DSP
 			return;
 		}
 
-		if (addr < (DRAM_SIZE / 2))
+		if (addr < (core->DRAM_SIZE / 2))
 		{
-			uint8_t* ptr = TranslateDMem(addr);
+			uint8_t* ptr = core->TranslateDMem(addr);
 
 			if (ptr)
 			{
@@ -742,11 +670,11 @@ namespace DSP
 
 		if (DmaRegs.control.Imem)
 		{
-			ptr = TranslateIMem(DmaRegs.dspAddr);
+			ptr = core->TranslateIMem(DmaRegs.dspAddr);
 		}
 		else
 		{
-			ptr = TranslateDMem(DmaRegs.dspAddr);
+			ptr = core->TranslateDMem(DmaRegs.dspAddr);
 		}
 
 		if (ptr == nullptr)
@@ -795,7 +723,7 @@ namespace DSP
 
 	void Dsp16::SpecialAramImemDma(uint8_t* ptr, size_t byteCount)
 	{
-		memcpy(iram, ptr, byteCount);
+		memcpy(core->iram, ptr, byteCount);
 
 		if (logDspDma)
 		{

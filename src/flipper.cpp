@@ -53,7 +53,7 @@ namespace Flipper
 
 		auto iromImage = Util::FileLoad(config->DspIromFilename);
 
-		if (DSP->LoadIrom(iromImage))
+		if (DSP->core->LoadIrom(iromImage))
 		{
 			Report(Channel::DSP, "Loaded DSP IROM: %s\n", Util::WstringToString(config->DspIromFilename).c_str());
 		}
@@ -66,7 +66,7 @@ namespace Flipper
 
 		auto dromImage = Util::FileLoad(config->DspDromFilename);
 
-		if (DSP->LoadDrom(dromImage))
+		if (DSP->core->LoadDrom(dromImage))
 		{
 			Report(Channel::DSP, "Loaded DSP DROM: %s\n", Util::WstringToString(config->DspDromFilename).c_str());
 		}

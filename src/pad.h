@@ -31,11 +31,11 @@ enum
 	VKEY_FOR_MAX
 };
 
-typedef struct
+struct PADCONF
 {
 	bool    plugged;
 	int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
-} PADCONF;
+};
 
 // PAD (input) interface
 // (padnum = 0...3)

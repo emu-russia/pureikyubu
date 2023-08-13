@@ -253,20 +253,6 @@ namespace DSP
 		friend DspInterpreter;
 		friend DspUnitTest::DspUnitTest;
 
-		static const size_t IRAM_SIZE = (8 * 1024);
-		static const size_t IROM_SIZE = (8 * 1024);
-		static const size_t DRAM_SIZE = (8 * 1024);
-		static const size_t DROM_SIZE = (4 * 1024);
-
-		static const size_t IROM_START_ADDRESS = 0x8000;
-		static const size_t DROM_START_ADDRESS = 0x1000;
-		static const size_t IFX_START_ADDRESS = 0xFF00;		// Internal dsp "hardware"
-
-		uint8_t iram[IRAM_SIZE] = { 0 };
-		uint8_t irom[IROM_SIZE] = { 0 };
-		uint8_t dram[DRAM_SIZE] = { 0 };
-		uint8_t drom[DROM_SIZE] = { 0 };
-
 		Thread* dspThread = nullptr;
 		static void DspThreadProc(void* Parameter);
 		uint64_t savedGekkoTicks = 0;
@@ -308,18 +294,12 @@ namespace DSP
 		Dsp16();
 		~Dsp16();
 
-		bool LoadIrom(std::vector<uint8_t>& iromImage);
-		bool LoadDrom(std::vector<uint8_t>& dromImage);
-
 		void Run();
 		bool IsRunning() { return dspThread->IsRunning(); }
 		void Suspend();
 
 		// Memory engine
 
-		uint8_t* TranslateIMem(DspAddress addr);
-		uint8_t* TranslateDMem(DspAddress addr);
-		uint16_t ReadIMem(DspAddress addr);
 		uint16_t ReadDMem(DspAddress addr);
 		void WriteDMem(DspAddress addr, uint16_t value);
 

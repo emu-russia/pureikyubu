@@ -102,7 +102,7 @@ namespace DSP
 
 		while (bytes != 0)
 		{
-			uint8_t* ptr = Flipper::DSP->TranslateDMem(dsp_addr);
+			uint8_t* ptr = Flipper::DSP->core->TranslateDMem(dsp_addr);
 			if (ptr == nullptr)
 			{
 				Report(Channel::DSP, "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
@@ -141,7 +141,7 @@ namespace DSP
 
 		while (bytes != 0)
 		{
-			uint8_t* ptr = Flipper::DSP->TranslateIMem(dsp_addr);
+			uint8_t* ptr = Flipper::DSP->core->TranslateIMem(dsp_addr);
 			if (ptr == nullptr)
 			{
 				Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
@@ -199,7 +199,7 @@ namespace DSP
 
 			DSP::DspAddress pcAddr = Flipper::DSP->core->regs.pc;
 
-			uint8_t* imemPtr = Flipper::DSP->TranslateIMem(pcAddr);
+			uint8_t* imemPtr = Flipper::DSP->core->TranslateIMem(pcAddr);
 			if (imemPtr == nullptr)
 			{
 				Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
@@ -327,7 +327,7 @@ namespace DSP
 
 		while (instrCount--)
 		{
-			uint8_t* imemPtr = Flipper::DSP->TranslateIMem(addr);
+			uint8_t* imemPtr = Flipper::DSP->core->TranslateIMem(addr);
 			if (imemPtr == nullptr)
 			{
 				Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
@@ -569,7 +569,7 @@ namespace DSP
 	{
 		DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
 
-		uint8_t* ptr = Flipper::DSP->TranslateDMem(addr);
+		uint8_t* ptr = Flipper::DSP->core->TranslateDMem(addr);
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -583,7 +583,7 @@ namespace DSP
 	{
 		DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
 
-		uint8_t* ptr = Flipper::DSP->TranslateIMem(addr);
+		uint8_t* ptr = Flipper::DSP->core->TranslateIMem(addr);
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -629,7 +629,7 @@ namespace DSP
 
 		targetAddress = 0;
 
-		uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
+		uint8_t* ptr = (uint8_t*)Flipper::DSP->core->TranslateIMem(address);
 		if (!ptr)
 		{
 			return false;
@@ -672,7 +672,7 @@ namespace DSP
 
 		targetAddress = 0;
 
-		uint8_t* ptr = Flipper::DSP->TranslateIMem(address);
+		uint8_t* ptr = Flipper::DSP->core->TranslateIMem(address);
 		if (!ptr)
 		{
 			return false;
@@ -723,7 +723,7 @@ namespace DSP
 
 		std::string text = "";
 
-		uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
+		uint8_t* ptr = (uint8_t*)Flipper::DSP->core->TranslateIMem(address);
 		if (ptr)
 		{
 			DSP::Decoder::Decode(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);

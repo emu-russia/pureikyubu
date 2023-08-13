@@ -323,7 +323,7 @@ namespace DSP
 						regs.eas->clear();
 						regs.lcs->clear();
 
-						regs.pc = Flipper::DSPGetResetModifier() ? dsp->IROM_START_ADDRESS : 0;		// IROM start / 0
+						regs.pc = Flipper::DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
 					}
 					else
 					{
@@ -451,6 +451,78 @@ namespace DSP
 		regs.pc = pc;
 	}
 
+	bool DspCore::LoadIrom(std::vector<uint8_t>& iromImage)
+	{
+		if (iromImage.empty() || iromImage.size() != IROM_SIZE)
+		{
+			return false;
+		}
+		else
+		{
+			memcpy(irom, iromImage.data(), IROM_SIZE);
+		}
+
+		return true;
+	}
+
+	bool DspCore::LoadDrom(std::vector<uint8_t>& dromImage)
+	{
+		if (dromImage.empty() || dromImage.size() != DROM_SIZE)
+		{
+			return false;
+		}
+		else
+		{
+			memcpy(drom, dromImage.data(), DROM_SIZE);
+		}
+
+		return true;
+	}
+
+	uint8_t* DspCore::TranslateIMem(DspAddress addr)
+	{
+		if (addr < (IRAM_SIZE / 2))
+		{
+			return &iram[addr << 1];
+		}
+		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + (IROM_SIZE / 2)))
+		{
+			return &irom[(addr - IROM_START_ADDRESS) << 1];
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	uint8_t* DspCore::TranslateDMem(DspAddress addr)
+	{
+		if (addr < (DRAM_SIZE / 2))
+		{
+			return &dram[addr << 1];
+		}
+		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + (DROM_SIZE / 2)))
+		{
+			return &drom[(addr - DROM_START_ADDRESS) << 1];
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	uint16_t DspCore::ReadIMem(DspAddress addr)
+	{
+		uint8_t* ptr = TranslateIMem(addr);
+
+		if (ptr)
+		{
+			return _BYTESWAP_UINT16(*(uint16_t*)ptr);
+		}
+
+		return 0;
+	}
+
 	void DspCore::HardReset()
 	{
 		Report(Channel::DSP, "DspCore::HardReset\n");
@@ -497,7 +569,7 @@ namespace DSP
 		intr.pendingSomething = false;
 
 		// Hard Reset always from IROM start
-		regs.pc = dsp->IROM_START_ADDRESS;
+		regs.pc = IROM_START_ADDRESS;
 		Report(Channel::DSP, "Hard Reset pc = 0x%04X\n", regs.pc);
 
 		dsp->ResetIfx();
@@ -1388,7 +1460,7 @@ namespace DSP
 
 		DspAddress imemAddr = core->regs.pc;
 
-		uint8_t* imemPtr = core->dsp->TranslateIMem(imemAddr);
+		uint8_t* imemPtr = core->TranslateIMem(imemAddr);
 		if (imemPtr == nullptr)
 		{
 			Halt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
@@ -2785,7 +2857,7 @@ namespace DSP
 	void DspInterpreter::pld()
 	{
 		int r = (int)info.params[1];
-		core->MoveToReg((int)info.params[0], core->dsp->ReadIMem(core->regs.r[r]) );
+		core->MoveToReg((int)info.params[0], core->ReadIMem(core->regs.r[r]) );
 		AdvanceAddress(r, info.params[2]);
 	}
 
