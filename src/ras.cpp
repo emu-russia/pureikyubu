@@ -109,15 +109,14 @@ namespace GX
 		
 		XF_ApplyModelview(mv, v->pos);
 
-		// color hack
-		if (state.xf.numColors)
+		if (state.xf.numColors != 0)
 		{
 			XF_DoLights(v);
 			if (ras_wireframe) {
 				glColor3ub(0, 255, 255);
 			}
 			else {
-				glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, rasca[0].A);
+				glColor4ub(colora[0].R, colora[0].G, colora[0].B, colora[0].A);
 			}
 		}
 

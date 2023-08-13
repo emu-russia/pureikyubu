@@ -174,7 +174,7 @@ namespace GX
 #pragma region "Transform Unit (Old)"
 
 		TexGenOut tgout[8]{};
-		Color rasca[2]{};	// lighting stage output colors
+		Color colora[2]{};	// lighting stage output colors (COLOR0A0 / COLOR1A1)
 
 		void XF_DoLights(const Vertex* v);
 		void XF_DoTexGen(const Vertex* v);
