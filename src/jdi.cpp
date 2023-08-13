@@ -320,7 +320,7 @@ namespace JDI
 		return value;
 	}
 
-	// Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
+	// Check whether the command is implemented using JDI.
 	bool JdiHub::CommandExists(const std::string& cmd)
 	{
 		bool exists = false;

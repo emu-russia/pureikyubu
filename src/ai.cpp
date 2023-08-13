@@ -442,7 +442,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 
 	// AI DMA and DVD Audio are played uncompetitively from different streams.
-	// All work on Sample Rate Conversion and sound mixing for convenience is done in Mixer (AX.cpp).
+	// All work on Sample Rate Conversion and sound mixing for convenience is done in Mixer (audio.cpp).
 
 	static uint16_t AdjustVolume(uint16_t sampleValue, int volume)
 	{

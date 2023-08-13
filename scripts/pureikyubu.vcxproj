@@ -80,6 +80,7 @@
     <ClInclude Include="..\src\tev.h" />
     <ClInclude Include="..\src\tx.h" />
     <ClInclude Include="..\src\ui.h" />
+    <ClInclude Include="..\src\uijdi.h" />
     <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\vi.h" />
     <ClInclude Include="..\src\xf.h" />
@@ -97,19 +98,19 @@
     <ClCompile Include="..\src\bootrtc.cpp" />
     <ClCompile Include="..\src\config.cpp" />
     <ClCompile Include="..\src\cp.cpp" />
-    <ClCompile Include="..\src\cui.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\src\cui.cpp" />
     <ClCompile Include="..\src\cuinull.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\cui_imgui.cpp" />
+    <ClCompile Include="..\src\cui_imgui.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\debug.cpp" />
     <ClCompile Include="..\src\debugui.cpp" />
     <ClCompile Include="..\src\di.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="..\src\tev.cpp" />
     <ClCompile Include="..\src\tx.cpp" />
     <ClCompile Include="..\src\ui.cpp" />
+    <ClCompile Include="..\src\uijdi.cpp" />
     <ClCompile Include="..\src\uisimple.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

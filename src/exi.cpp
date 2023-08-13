@@ -16,8 +16,8 @@
 	RTC  : 32-bit counter of seconds, since current millenium
 	AD16 : This is most likely a debugging device called `Barnacle`.
 
-	memcard should be in another module (see MC.cpp)
-	broad band adapter should be in another module (see BBA.cpp)
+	memcard should be in another module (see memcard.cpp)
+	broad band adapter should be in another module (see bba.cpp)
 
 	EXI Device Map of dedicated MX Chip :
 	-------------------------------------

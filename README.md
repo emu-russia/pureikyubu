@@ -29,7 +29,7 @@ make
 ./pureikyubu pong.dol
 ```
 
-Requirements: CMake, pthread, OpenGL, imgui, SDL2.
+Requirements: CMake, pthread, OpenGL, imgui, SDL2. If cmake says that some components cannot be built, you should look for solutions on the Internet (`apt get install xxx`) as usual.
 
 ## Progress
 

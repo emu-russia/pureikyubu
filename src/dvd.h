@@ -14,7 +14,7 @@ This component is designed to emulate the DDU controller. DduCore provides a hos
 
 That is, DduCore honestly tries to process transactions via DDU Bus, various control signals (BRK, RST), as well as emulation of the DVD Audio stream.
 
-On the host side (/HW/DI.cpp), the DI part is implemented, which is responsible for transmitting a 12-byte DDU command and processing following transactions via the DDU Bus (in the Immediate buffer or Main Memory via DMA).
+On the host side (di.cpp), the DI part is implemented, which is responsible for transmitting a 12-byte DDU command and processing following transactions via the DDU Bus (in the Immediate buffer or Main Memory via DMA).
 
 If you are going to understand DduCore, just imagine that the DduCore API is just signals from the DDU connector (P9).
 

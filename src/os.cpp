@@ -889,7 +889,7 @@ void OSSaveContext(void)
 }
 
 // OSLoadContext return is patched as RFI (not usual BLR)
-// see Symbols.cpp, SYMSetHighlevel, line 97
+// see sym.cpp, SYMSetHighlevel, line 97
 void OSLoadContext(void)
 {
 	OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
