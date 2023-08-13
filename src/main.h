@@ -18,13 +18,13 @@ Thread* EMUCreateThread(ThreadProc threadProc, bool suspended, void* context, co
 void EMUJoinThread(Thread* thread);
 
 // all important data is placed here
-typedef struct Emulator
+struct Emulator
 {
 	bool    init;
 	bool    loaded;         // file loaded
 	std::wstring lastLoaded;
 	bool	bootrom;		// The emulator is running in Bootrom runtime mode
-} Emulator;
+};
 
 extern  Emulator emu;
 
