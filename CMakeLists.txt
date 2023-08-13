@@ -15,6 +15,7 @@ find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
 find_package (Threads)
 find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
 
 add_definitions (-D_LINUX)
 add_definitions (-DCMAKE_BUILD_TYPE=Debug)
@@ -84,6 +85,6 @@ add_executable (pureikyubu
 	thirdparty/imgui/imgui_widgets.cpp
 )
 
-include_directories( thirdparty/imgui ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} )
+include_directories( thirdparty/imgui ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
 
-target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} fmt SDL2 )
+target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} fmt SDL2 GLEW)
