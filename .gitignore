@@ -51,7 +51,9 @@ build/pureikyubu
 
 dolwin-rnd
 
-build/smp-onetri.*
+build/*.elf
+build/*.map
+build/*.cmd
 temp
 
 build/imgui.ini

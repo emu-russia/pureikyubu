@@ -99,6 +99,7 @@ void EMUOpen(const std::wstring& filename)
 	delete hwconfig;
 
 	LoadFile(filename);   // Gekko PC will be set here
+	CallJdi("script autoexec.cmd");
 	HLEOpen();
 
 	Debug::g_PerfCounters->ResetAllCounters();
