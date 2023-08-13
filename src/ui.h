@@ -348,9 +348,8 @@ void    EditFileFilter(HWND hwnd);
 
 #ifdef _WINDOWS
 
-/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin   */
-/* should take care about proper window style itself !!                     */
-constexpr int WIN_STYLE = WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
+/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL */
+constexpr int WIN_STYLE = WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
 
 /* Status bar parts enumerator */
 enum class STATUS_ENUM
