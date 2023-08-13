@@ -109,13 +109,27 @@ namespace GX
 		
 		XF_ApplyModelview(mv, v->pos);
 
+		// The color is transferred via Uniforms
+
 		if (state.xf.numColors != 0)
 		{
 			XF_DoLights(v);
+
 			if (ras_wireframe) {
 				glColor3ub(0, 255, 255);
 			}
 			else {
+
+				if (state.xf.numColors >= 1) {
+					//glUniform4i(color0, colora[0].R, colora[0].G, colora[0].B, colora[0].A);
+					//glUniform4f(color0, 1.0f, 1.0f, 0.0f, 1.0f);
+					//glUniform1f(color0, 2.0f);
+				}
+				if (state.xf.numColors >= 2) {
+					//auto color1 = glGetUniformLocation(shader_prog, "color1");
+					//glUniform4i(color1, colora[1].R, colora[1].G, colora[1].B, colora[1].A);
+				}
+
 				glColor4ub(colora[0].R, colora[0].G, colora[0].B, colora[0].A);
 			}
 		}

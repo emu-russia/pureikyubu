@@ -61,6 +61,8 @@ namespace GX
 			state.cp_thread = nullptr;
 		}
 
+		PE_DisposeShader();
+
 		GL_CloseSubsystem();
 
 		TexFree();
@@ -149,6 +151,18 @@ namespace GX
 #ifdef WIREFRAME
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
+
+		GLenum err = glewInit();
+		if (GLEW_OK != err)
+		{
+			/* Problem: glewInit failed, something is seriously wrong. */
+			Report(Channel::GP, "Error: %s\n", glewGetErrorString(err));
+			return false;
+		}
+
+		// WIP
+		//std::string source = PE_GenShader();
+		//PE_UploadShader(source.c_str());
 
 		// clear performance counters
 		frames = tris = pts = lines = 0;

@@ -286,6 +286,13 @@ namespace GX
 		uint32_t EfbPeek(uint32_t addr);
 		void EfbPoke(uint32_t addr, uint32_t value);
 
+		GLuint shader_prog;
+		GLuint frag_shader;
+
+		std::string PE_GenShader();
+		void PE_UploadShader(const char* source);
+		void PE_DisposeShader();
+
 #pragma endregion "Pixel Engine"
 
 	};
