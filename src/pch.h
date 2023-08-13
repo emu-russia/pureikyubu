@@ -113,6 +113,7 @@ namespace Flipper
 
 #include "config.h"
 #include "main.h"
+#include "uijdi.h"
 #include "ui.h"
 
 #define _TB(s)

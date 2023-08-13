@@ -80,6 +80,7 @@
     <ClInclude Include="..\src\tev.h" />
     <ClInclude Include="..\src\tx.h" />
     <ClInclude Include="..\src\ui.h" />
+    <ClInclude Include="..\src\uijdi.h" />
     <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\vi.h" />
     <ClInclude Include="..\src\xf.h" />
@@ -159,6 +160,7 @@
     <ClCompile Include="..\src\tev.cpp" />
     <ClCompile Include="..\src\tx.cpp" />
     <ClCompile Include="..\src\ui.cpp" />
+    <ClCompile Include="..\src\uijdi.cpp" />
     <ClCompile Include="..\src\uisimple.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

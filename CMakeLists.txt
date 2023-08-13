@@ -68,6 +68,7 @@ add_executable (pureikyubu
 	src/sym.cpp
 	src/tev.cpp
 	src/tx.cpp
+	src/uijdi.cpp
 	src/uisimple.cpp
 	src/utils.cpp
 	src/vi.cpp

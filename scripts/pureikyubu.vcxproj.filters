@@ -205,6 +205,9 @@
     <ClInclude Include="..\src\su.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\uijdi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ai.cpp">
@@ -389,6 +392,9 @@
     </ClCompile>
     <ClCompile Include="..\thirdparty\imgui\backends\imgui_impl_sdlrenderer2.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\uijdi.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
