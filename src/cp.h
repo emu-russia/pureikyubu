@@ -472,15 +472,15 @@ namespace GX
 	// current vertex data
 	struct Vertex
 	{
-		uint8_t PosMatIdx;
-		uint8_t Tex0MatIdx;
-		uint8_t Tex1MatIdx;
-		uint8_t Tex2MatIdx;
-		uint8_t Tex3MatIdx;
-		uint8_t Tex4MatIdx;
-		uint8_t Tex5MatIdx;
-		uint8_t Tex6MatIdx;
-		uint8_t Tex7MatIdx;
+		uint32_t PosMatIdx;
+		uint32_t Tex0MatIdx;
+		uint32_t Tex1MatIdx;
+		uint32_t Tex2MatIdx;
+		uint32_t Tex3MatIdx;
+		uint32_t Tex4MatIdx;
+		uint32_t Tex5MatIdx;
+		uint32_t Tex6MatIdx;
+		uint32_t Tex7MatIdx;
 		float Position[3];		// x, y, z
 		float Normal[3];		// x, y, z, normalized to [0, 1]
 		float Binormal[3];
