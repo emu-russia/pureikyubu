@@ -37,10 +37,6 @@ namespace GX
 		bool res = GL_LazyOpenSubsystem();
 		assert(res);
 
-		// vertex programs extension
-		//SetupVertexShaders();
-		//ReloadVertexShaders();
-
 		// reset pipeline
 		frame_done = true;
 
@@ -60,8 +56,6 @@ namespace GX
 			EMUJoinThread(state.cp_thread);
 			state.cp_thread = nullptr;
 		}
-
-		PE_DisposeShader();
 
 		GL_CloseSubsystem();
 
@@ -154,8 +148,11 @@ namespace GX
 		}
 
 		// WIP
-		//std::string source = PE_GenShader();
-		//PE_UploadShader(source.c_str());
+		auto vert_shader_source = Util::FileLoad("Data/gfx.vert");
+		vert_shader_source.push_back(0);
+		auto frag_shader_source = Util::FileLoad("Data/gfx.frag");
+		frag_shader_source.push_back(0);
+		//UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
 
 		// clear performance counters
 		frames = tris = pts = lines = 0;
@@ -170,6 +167,8 @@ namespace GX
 			return;
 
 		//if(frameReady) GL_EndFrame();
+
+		DisposeShaders();
 
 #ifdef _WINDOWS
 		wglMakeCurrent(NULL, NULL);
@@ -251,5 +250,69 @@ namespace GX
 	{
 		GL_EndFrame();
 		frame_done = true;
+	}
+
+	void GXCore::UploadShaders(const char* vert_source, const char* frag_source)
+	{
+		char infoLog[0x1000]{};
+		int success;
+
+		// Perform magic spells to compile the frag shader program
+
+		vert_shader = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vert_shader, 1, &vert_source, nullptr);
+		glCompileShader(vert_shader);
+
+		glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(vert_shader, sizeof(infoLog), nullptr, infoLog);
+			Report(Channel::GP, "VERTEX SHADER COMPILE ERROR: %s\n", infoLog);
+			Halt("Halted.\n");
+		};
+
+		// Perform magic spells to compile the frag shader program
+
+		frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(frag_shader, 1, &frag_source, nullptr);
+		glCompileShader(frag_shader);
+
+		glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(frag_shader, sizeof(infoLog), nullptr, infoLog);
+			Report(Channel::GP, "FRAGMENT SHADER COMPILE ERROR: %s\n", infoLog);
+			Halt("Halted.\n");
+		};
+
+		// Perform magic spells to "link" shader programs and further use them instead of a fixed pipeline
+
+		shader_prog = glCreateProgram();
+		glAttachShader(shader_prog, vert_shader);
+		glAttachShader(shader_prog, frag_shader);
+		glLinkProgram(shader_prog);
+
+		glGetProgramiv(shader_prog, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			glGetProgramInfoLog(shader_prog, sizeof(infoLog), nullptr, infoLog);
+			Report(Channel::GP, "SHADER LINK ERROR: %s\n", infoLog);
+			Halt("Halted.\n");
+		}
+
+		glDeleteShader(vert_shader);
+		glDeleteShader(frag_shader);
+
+		glUseProgram(shader_prog);
+
+		Report(Channel::GP, "Shader program is uploaded to GPU\n");
+	}
+
+	void GXCore::DisposeShaders()
+	{
+		// TODO: Is that enough?
+
+		//glUseProgram(0);
+		//glDeleteProgram(shader_prog);
 	}
 }

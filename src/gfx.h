@@ -86,8 +86,6 @@ namespace GX
 		bool logDrawCommands = false;
 		bool GpRegsLog = false;
 
-		Vertex* vtx; // current vertex to collect data
-
 		// Windows OpenGL stuff
 #ifdef _WINDOWS
 		HWND hwndMain;
@@ -132,6 +130,13 @@ namespace GX
 		// Debug
 		void DumpPIFIFO();
 		void DumpCPFIFO();
+		
+		GLuint vert_shader;
+		GLuint frag_shader;
+		GLuint shader_prog;
+
+		void UploadShaders(const char* vert_source, const char* frag_source);
+		void DisposeShaders();
 
 #pragma region "Interface to Flipper"
 
@@ -163,7 +168,7 @@ namespace GX
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
 		Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
-		void FifoWalk(unsigned vatnum, FifoProcessor* gxfifo);
+		void FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo);
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
 		void CPAbortFifo();
@@ -285,13 +290,6 @@ namespace GX
 		void PeWriteReg(PEMappedRegister id, uint16_t value);
 		uint32_t EfbPeek(uint32_t addr);
 		void EfbPoke(uint32_t addr, uint32_t value);
-
-		GLuint shader_prog;
-		GLuint frag_shader;
-
-		std::string PE_GenShader();
-		void PE_UploadShader(const char* source);
-		void PE_DisposeShader();
 
 #pragma endregion "Pixel Engine"
 

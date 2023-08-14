@@ -302,13 +302,13 @@ namespace GX
 // TODO: Old implementation, will be redone nicely.
 
 // current vertex data
-typedef struct _Vertex
+struct Vertex
 {
 	float       pos[3];         // x, y, z
 	float       nrm[9];         // x, y, z, normalized to [0, 1]
 	Color       col[2];         // 2 color / alpha (RGBA)
-	float       tcoord[8][4];   // s, t for eight tex units, last two for texgen
-} Vertex;
+	float       tcoord[8][2];   // s, t for eight tex units
+};
 
 typedef struct
 {

@@ -1708,7 +1708,7 @@ namespace GX
 	}
 
 	// collect vertex data
-	void GXCore::FifoWalk(unsigned vatnum, FifoProcessor* gxfifo)
+	void GXCore::FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
 		state.xf.posidx = state.xf.matIdxA.PosNrmMatIdx;
@@ -2145,7 +2145,7 @@ namespace GX
 			case CP_CMD_DRAW_QUAD | 6:
 			case CP_CMD_DRAW_QUAD | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2157,9 +2157,8 @@ namespace GX
 					RAS_Begin(RAS_QUAD, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
@@ -2176,7 +2175,7 @@ namespace GX
 			case CP_CMD_DRAW_TRIANGLE | 6:
 			case CP_CMD_DRAW_TRIANGLE | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2188,9 +2187,8 @@ namespace GX
 					RAS_Begin(RAS_TRIANGLE, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(&v);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
@@ -2207,7 +2205,7 @@ namespace GX
 			case CP_CMD_DRAW_STRIP | 6:
 			case CP_CMD_DRAW_STRIP | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2219,9 +2217,8 @@ namespace GX
 					RAS_Begin(RAS_TRIANGLE_STRIP, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
@@ -2238,7 +2235,7 @@ namespace GX
 			case CP_CMD_DRAW_FAN | 6:
 			case CP_CMD_DRAW_FAN | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2250,9 +2247,8 @@ namespace GX
 					RAS_Begin(RAS_TRIANGLE_FAN, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
@@ -2269,7 +2265,7 @@ namespace GX
 			case CP_CMD_DRAW_LINE | 6:
 			case CP_CMD_DRAW_LINE | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2281,9 +2277,8 @@ namespace GX
 					RAS_Begin(RAS_LINE, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
@@ -2300,7 +2295,7 @@ namespace GX
 			case CP_CMD_DRAW_LINESTRIP | 6:
 			case CP_CMD_DRAW_LINESTRIP | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2312,9 +2307,8 @@ namespace GX
 					RAS_Begin(RAS_LINE_STRIP, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
@@ -2331,7 +2325,7 @@ namespace GX
 			case CP_CMD_DRAW_POINT | 6:
 			case CP_CMD_DRAW_POINT | 7:
 			{
-				static   Vertex   v;
+				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2343,9 +2337,8 @@ namespace GX
 					RAS_Begin(RAS_POINT, vtxnum);
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
 				}
