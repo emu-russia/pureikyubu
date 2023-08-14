@@ -1711,68 +1711,68 @@ namespace GX
 	void GXCore::FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
-		xf.posidx = xf.matIdxA.PosNrmMatIdx;
-		xf.texidx[0] = xf.matIdxA.Tex0MatIdx;
-		xf.texidx[1] = xf.matIdxA.Tex1MatIdx;
-		xf.texidx[2] = xf.matIdxA.Tex2MatIdx;
-		xf.texidx[3] = xf.matIdxA.Tex3MatIdx;
-		xf.texidx[4] = xf.matIdxB.Tex4MatIdx;
-		xf.texidx[5] = xf.matIdxB.Tex5MatIdx;
-		xf.texidx[6] = xf.matIdxB.Tex6MatIdx;
-		xf.texidx[7] = xf.matIdxB.Tex7MatIdx;
+		vtx->PosMatIdx = xf.matIdxA.PosNrmMatIdx;
+		vtx->Tex0MatIdx = xf.matIdxA.Tex0MatIdx;
+		vtx->Tex1MatIdx = xf.matIdxA.Tex1MatIdx;
+		vtx->Tex2MatIdx = xf.matIdxA.Tex2MatIdx;
+		vtx->Tex3MatIdx = xf.matIdxA.Tex3MatIdx;
+		vtx->Tex4MatIdx = xf.matIdxB.Tex4MatIdx;
+		vtx->Tex5MatIdx = xf.matIdxB.Tex5MatIdx;
+		vtx->Tex6MatIdx = xf.matIdxB.Tex6MatIdx;
+		vtx->Tex7MatIdx = xf.matIdxB.Tex7MatIdx;
 
 		// Matrix Index
 
 		if (cp.vcdLo.PosNrmMatIdx)
 		{
-			xf.posidx = gxfifo->Read8();
+			vtx->PosMatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex0MatIdx)
 		{
-			xf.texidx[0] = gxfifo->Read8();
+			vtx->Tex0MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex1MatIdx)
 		{
-			xf.texidx[1] = gxfifo->Read8();
+			vtx->Tex1MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex2MatIdx)
 		{
-			xf.texidx[2] = gxfifo->Read8();
+			vtx->Tex2MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex3MatIdx)
 		{
-			xf.texidx[3] = gxfifo->Read8();
+			vtx->Tex3MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex4MatIdx)
 		{
-			xf.texidx[4] = gxfifo->Read8();
+			vtx->Tex4MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex5MatIdx)
 		{
-			xf.texidx[5] = gxfifo->Read8();
+			vtx->Tex5MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex6MatIdx)
 		{
-			xf.texidx[6] = gxfifo->Read8();
+			vtx->Tex6MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex7MatIdx)
 		{
-			xf.texidx[7] = gxfifo->Read8();
+			vtx->Tex7MatIdx = gxfifo->Read8();
 		}
 
 		// Position
 
-		vtx->pos[0] = vtx->pos[1] = vtx->pos[2] = 1.0f;
+		vtx->Position[0] = vtx->Position[1] = vtx->Position[2] = 1.0f;
 
-		FetchComp(vtx->pos,
+		FetchComp(vtx->Position,
 			cp.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
 			cp.vcdLo.Position,
 			cp.vatA[vatnum].posfmt,
@@ -1782,9 +1782,9 @@ namespace GX
 
 		// Normal
 
-		vtx->nrm[0] = vtx->nrm[1] = vtx->nrm[2] = 1.0f;
-		vtx->nrm[3] = vtx->nrm[4] = vtx->nrm[5] = 1.0f;
-		vtx->nrm[6] = vtx->nrm[7] = vtx->nrm[8] = 1.0f;
+		vtx->Normal[0] = vtx->Normal[1] = vtx->Normal[2] = 1.0f;
+		vtx->Binormal[3] = vtx->Binormal[4] = vtx->Binormal[5] = 1.0f;
+		vtx->Tangent[6] = vtx->Tangent[7] = vtx->Tangent[8] = 1.0f;
 
 		int nrmshft = 0;
 
@@ -1800,7 +1800,7 @@ namespace GX
 				break;
 		}
 
-		FetchNorm(vtx->nrm,
+		FetchNorm(vtx->Normal,
 			cp.vatA[vatnum].nrmcnt == VCNT_NRM_NBT ? 9 : 3,
 			cp.vcdLo.Normal,
 			cp.vatA[vatnum].nrmfmt,
@@ -1811,17 +1811,17 @@ namespace GX
 
 		// Color0 
 
-		vtx->col[0] = FetchColor(cp.vcdLo.Color0, cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
+		vtx->Color[0] = FetchColor(cp.vcdLo.Color0, cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
 
 		// Color1
 
-		vtx->col[1] = FetchColor(cp.vcdLo.Color1, cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
+		vtx->Color[1] = FetchColor(cp.vcdLo.Color1, cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
 
 		// TexNCoord
 
-		vtx->tcoord[0][0] = vtx->tcoord[0][1] = 1.0f;
+		vtx->TexCoord[0][0] = vtx->TexCoord[0][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[0],
+		FetchComp(vtx->TexCoord[0],
 			cp.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex0Coord,
 			cp.vatA[vatnum].tex0fmt,
@@ -1829,9 +1829,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex0Coord);
 
-		vtx->tcoord[1][0] = vtx->tcoord[1][1] = 1.0f;
+		vtx->TexCoord[1][0] = vtx->TexCoord[1][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[1],
+		FetchComp(vtx->TexCoord[1],
 			cp.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex1Coord,
 			cp.vatB[vatnum].tex1fmt,
@@ -1839,9 +1839,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex1Coord);
 
-		vtx->tcoord[2][0] = vtx->tcoord[2][1] = 1.0f;
+		vtx->TexCoord[2][0] = vtx->TexCoord[2][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[2],
+		FetchComp(vtx->TexCoord[2],
 			cp.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex2Coord,
 			cp.vatB[vatnum].tex2fmt,
@@ -1849,9 +1849,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex2Coord);
 
-		vtx->tcoord[3][0] = vtx->tcoord[3][1] = 1.0f;
+		vtx->TexCoord[3][0] = vtx->TexCoord[3][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[3],
+		FetchComp(vtx->TexCoord[3],
 			cp.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex3Coord,
 			cp.vatB[vatnum].tex3fmt,
@@ -1859,9 +1859,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex3Coord);
 
-		vtx->tcoord[4][0] = vtx->tcoord[4][1] = 1.0f;
+		vtx->TexCoord[4][0] = vtx->TexCoord[4][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[4],
+		FetchComp(vtx->TexCoord[4],
 			cp.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex4Coord,
 			cp.vatB[vatnum].tex4fmt,
@@ -1869,9 +1869,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex4Coord);
 
-		vtx->tcoord[5][0] = vtx->tcoord[5][1] = 1.0f;
+		vtx->TexCoord[5][0] = vtx->TexCoord[5][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[5],
+		FetchComp(vtx->TexCoord[5],
 			cp.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex5Coord,
 			cp.vatC[vatnum].tex5fmt,
@@ -1879,9 +1879,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex5Coord);
 
-		vtx->tcoord[6][0] = vtx->tcoord[6][1] = 1.0f;
+		vtx->TexCoord[6][0] = vtx->TexCoord[6][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[6],
+		FetchComp(vtx->TexCoord[6],
 			cp.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex6Coord,
 			cp.vatC[vatnum].tex6fmt,
@@ -1889,9 +1889,9 @@ namespace GX
 			gxfifo,
 			ArrayId::Tex6Coord);
 
-		vtx->tcoord[7][0] = vtx->tcoord[7][1] = 1.0f;
+		vtx->TexCoord[7][0] = vtx->TexCoord[7][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[7],
+		FetchComp(vtx->TexCoord[7],
 			cp.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
 			cp.vcdHi.Tex7Coord,
 			cp.vatC[vatnum].tex7fmt,
@@ -2355,4 +2355,77 @@ namespace GX
 			}
 		}
 	}
+
+	void GXCore::InitVBO()
+	{
+		vertex_data = new Vertex[vbo_size];
+		memset(vertex_data, 0, sizeof(Vertex) * vbo_size);
+
+		vbo = 0;
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		glVertexAttribPointer(VTX_POSMATIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_POSMATIDX);
+
+		glVertexAttribPointer(VTX_TEX0MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX0MTXIDX);
+		glVertexAttribPointer(VTX_TEX1MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX1MTXIDX);
+		glVertexAttribPointer(VTX_TEX2MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX2MTXIDX);
+		glVertexAttribPointer(VTX_TEX3MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX3MTXIDX);
+		glVertexAttribPointer(VTX_TEX4MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX4MTXIDX);
+		glVertexAttribPointer(VTX_TEX5MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX5MTXIDX);
+		glVertexAttribPointer(VTX_TEX6MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX6MTXIDX);
+		glVertexAttribPointer(VTX_TEX7MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEX7MTXIDX);
+
+		glVertexAttribPointer(VTX_POS, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_POS);
+
+		glVertexAttribPointer(VTX_NRM, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_NRM);
+		glVertexAttribPointer(VTX_BINRM, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_BINRM);
+		glVertexAttribPointer(VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TANGENT);
+
+		glVertexAttribPointer(VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_COLOR0);
+		glVertexAttribPointer(VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_COLOR1);
+
+		glVertexAttribPointer(VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD0);
+		glVertexAttribPointer(VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD1);
+		glVertexAttribPointer(VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD2);
+		glVertexAttribPointer(VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD3);
+		glVertexAttribPointer(VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD4);
+		glVertexAttribPointer(VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD5);
+		glVertexAttribPointer(VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD6);
+		glVertexAttribPointer(VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(VTX_TEXCOORD7);
+	}
+
+	void GXCore::DisposeVBO()
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		if (vertex_data != nullptr) {
+			delete[] vertex_data;
+			vertex_data = nullptr;
+		}
+	}
+
 }

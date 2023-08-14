@@ -113,12 +113,3 @@ namespace GX
 
 void PEOpen();
 void PEClose();
-
-
-
-// color type
-union Color
-{
-	struct { uint8_t     A, B, G, R; };
-	uint32_t     RGBA;
-};

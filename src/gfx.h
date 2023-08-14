@@ -139,6 +139,10 @@ namespace GX
 		size_t xfLoads;
 		size_t bpLoads;
 
+		GLuint vbo;
+		size_t vbo_size = 0x10000;		// Maximum number of vertices that can be used in Draw primitive parameters
+		Vertex* vertex_data = nullptr;
+
 		void GXWriteFifo(uint8_t dataPtr[32]);
 		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
 		std::string AttrToString(VertexAttr attr);
@@ -152,6 +156,8 @@ namespace GX
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
 		void CPAbortFifo();
+		void InitVBO();
+		void DisposeVBO();
 
 #pragma endregion "Command Processor"
 
@@ -166,8 +172,8 @@ namespace GX
 		void XF_DoLights(const Vertex* v);
 		void XF_DoTexGen(const Vertex* v);
 		void VECNormalize(float vec[3]);
-		void XF_ApplyModelview(float* out, const float* in);
-		void NormalTransform(float* out, const float* in);
+		void XF_ApplyModelview(const Vertex* v, float* out, const float* in);
+		void NormalTransform(const Vertex* v, float* out, const float* in);
 		void GL_SetProjection(float* mtx);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
 		void loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo);
@@ -218,6 +224,15 @@ namespace GX
 		TexImage3 teximg3[8];		// 0x94-0x97, 0xB4-0xB7
 		SetTlut settlut[8];			// 0x98-0x9B, 0xB8-0xBB
 		bool texvalid[4][8];
+
+		#define GFX_MAX_TEXTURES 32
+
+		TexEntry* tID[8];
+		Color rgbabuf[1024 * 1024];
+		TexEntry tcache[GFX_MAX_TEXTURES];
+		unsigned tptr;
+		GLuint texlist[GFX_MAX_TEXTURES + 1];     // gl texture list (0 entry reserved)
+		uint8_t tlut[1024 * 1024];  // temporary TLUT buffer
 
 		void TexInit();
 		void TexFree();

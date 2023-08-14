@@ -107,7 +107,7 @@ namespace GX
 	{
 		float mv[3];
 		
-		XF_ApplyModelview(mv, v->pos);
+		XF_ApplyModelview(v, mv, v->Position);
 
 		// The color is transferred via Uniforms
 

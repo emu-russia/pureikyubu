@@ -150,6 +150,8 @@ namespace GX
 		frag_shader_source.push_back(0);
 		//UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
 
+		InitVBO();
+
 		// clear performance counters
 		frames = tris = pts = lines = 0;
 
@@ -164,7 +166,9 @@ namespace GX
 
 		//if(frameReady) GL_EndFrame();
 
-		DisposeShaders();
+		DisposeVBO();
+
+		//DisposeShaders();
 
 #ifdef _WINDOWS
 		wglMakeCurrent(NULL, NULL);
@@ -307,8 +311,7 @@ namespace GX
 	void GXCore::DisposeShaders()
 	{
 		// TODO: Is that enough?
-
-		//glUseProgram(0);
-		//glDeleteProgram(shader_prog);
+		glUseProgram(0);
+		glDeleteProgram(shader_prog);
 	}
 }

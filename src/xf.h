@@ -288,7 +288,6 @@ namespace GX
 		TexGenParam tex[8];			// 0x1040-0x1047
 		DualGenParam dualTex[8];		// 0x1050-0x1057
 
-		unsigned posidx, texidx[8];		// pos index, tex index
 		bool colmask[8][2];				// light color mask
 		bool amask[8][2];				// light alpha mask
 	};
@@ -300,15 +299,6 @@ namespace GX
 
 
 // TODO: Old implementation, will be redone nicely.
-
-// current vertex data
-struct Vertex
-{
-	float       pos[3];         // x, y, z
-	float       nrm[9];         // x, y, z, normalized to [0, 1]
-	Color       col[2];         // 2 color / alpha (RGBA)
-	float       tcoord[8][2];   // s, t for eight tex units
-};
 
 typedef struct
 {

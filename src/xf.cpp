@@ -19,9 +19,9 @@ namespace GX
 	}
 
 	// perform position transform
-	void GXCore::XF_ApplyModelview(float* out, const float* in)
+	void GXCore::XF_ApplyModelview(const Vertex* v, float* out, const float* in)
 	{
-		float* mx = &xf.mvTexMtx[xf.posidx * 4];
+		float* mx = &xf.mvTexMtx[v->PosMatIdx * 4];
 
 		out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
 		out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
@@ -30,9 +30,9 @@ namespace GX
 
 	// perform normal transform
 	// matrix must be the inverse transpose of the modelview matrix
-	void GXCore::NormalTransform(float* out, const float* in)
+	void GXCore::NormalTransform(const Vertex* v, float* out, const float* in)
 	{
-		float* mx = &xf.nrmMtx[xf.posidx * 3];
+		float* mx = &xf.nrmMtx[v->PosMatIdx * 3];
 
 		out[0] = in[0];
 		out[1] = in[1];
@@ -66,7 +66,7 @@ namespace GX
 		float illum[3];
 
 		// TODO: Second time? :/
-		XF_ApplyModelview(vpos, v->pos);
+		XF_ApplyModelview(v, vpos, v->Position);
 
 		for (size_t ncol = 0; ncol < xf.numColors; ncol++) {
 
@@ -77,9 +77,9 @@ namespace GX
 			//
 
 			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->col[ncol].R / 255.0f;
-			col[1] = (float)v->col[ncol].G / 255.0f;
-			col[2] = (float)v->col[ncol].B / 255.0f;
+			col[0] = (float)v->Color[ncol].R / 255.0f;
+			col[1] = (float)v->Color[ncol].G / 255.0f;
+			col[2] = (float)v->Color[ncol].B / 255.0f;
 
 			// select material color
 			if (xf.colorControl[ncol].MatSrc == 0)
@@ -150,7 +150,7 @@ namespace GX
 								VECNormalize(dir);
 
 								// normal transformation
-								NormalTransform(vnrm, v->nrm);
+								NormalTransform(v, vnrm, v->Normal);
 
 								// dot product of normal and light
 								dp = vnrm[0] * dir[0] +
@@ -222,7 +222,7 @@ namespace GX
 			//
 
 			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->col[ncol].A / 255.0f;
+			col[0] = (float)v->Color[ncol].A / 255.0f;
 
 			// select material color
 			if (xf.alphaControl[ncol].MatSrc == 0)
@@ -281,7 +281,7 @@ namespace GX
 								VECNormalize(dir);
 
 								// normal transformation
-								NormalTransform(vnrm, v->nrm);
+								NormalTransform(v, vnrm, v->Normal);
 
 								// dot product of normal and light
 								dp = vnrm[0] * dir[0] +
@@ -338,13 +338,13 @@ namespace GX
 	void GXCore::XF_DoTexGen(const Vertex* v)
 	{
 		float   in[4], q;
-		float* mx;
+		float* mx = nullptr;
 
 		if (xf.numTex == 0)
 		{
-			mx = &xf.mvTexMtx[xf.texidx[0] * 4];
-			in[0] = v->tcoord[0][0];
-			in[1] = v->tcoord[0][1];
+			mx = &xf.mvTexMtx[v->Tex0MatIdx * 4];
+			in[0] = v->TexCoord[0][0];
+			in[1] = v->TexCoord[0][1];
 			in[2] = 1.0f;
 			in[3] = 1.0f;
 		}
@@ -358,27 +358,27 @@ namespace GX
 				{
 					case XF_TEXGEN_INROW_POSMTX:
 					{
-						in[0] = v->pos[0];
-						in[1] = v->pos[1];
-						in[2] = v->pos[2];
+						in[0] = v->Position[0];
+						in[1] = v->Position[1];
+						in[2] = v->Position[2];
 						in[3] = 1.0f;
 					}
 					break;
 
 					case XF_TEXGEN_INROW_NORMAL:
 					{
-						in[0] = v->nrm[0];
-						in[1] = v->nrm[1];
-						in[2] = v->nrm[2];
+						in[0] = v->Normal[0];
+						in[1] = v->Normal[1];
+						in[2] = v->Normal[2];
 						in[3] = 1.0f;
 					}
 					break;
 
 					case XF_TEXGEN_INROW_TEX0:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[0] * 4];
-						in[0] = v->tcoord[0][0];
-						in[1] = v->tcoord[0][1];
+						mx = &xf.mvTexMtx[v->Tex0MatIdx * 4];
+						in[0] = v->TexCoord[0][0];
+						in[1] = v->TexCoord[0][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -386,9 +386,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX1:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[1] * 4];
-						in[0] = v->tcoord[1][0];
-						in[1] = v->tcoord[1][1];
+						mx = &xf.mvTexMtx[v->Tex1MatIdx * 4];
+						in[0] = v->TexCoord[1][0];
+						in[1] = v->TexCoord[1][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -396,9 +396,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX2:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[2] * 4];
-						in[0] = v->tcoord[2][0];
-						in[1] = v->tcoord[2][1];
+						mx = &xf.mvTexMtx[v->Tex2MatIdx * 4];
+						in[0] = v->TexCoord[2][0];
+						in[1] = v->TexCoord[2][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -406,9 +406,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX3:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[3] * 4];
-						in[0] = v->tcoord[3][0];
-						in[1] = v->tcoord[3][1];
+						mx = &xf.mvTexMtx[v->Tex3MatIdx * 4];
+						in[0] = v->TexCoord[3][0];
+						in[1] = v->TexCoord[3][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -416,9 +416,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX4:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[4] * 4];
-						in[0] = v->tcoord[4][0];
-						in[1] = v->tcoord[4][1];
+						mx = &xf.mvTexMtx[v->Tex4MatIdx * 4];
+						in[0] = v->TexCoord[4][0];
+						in[1] = v->TexCoord[4][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -426,9 +426,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX5:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[5] * 4];
-						in[0] = v->tcoord[5][0];
-						in[1] = v->tcoord[5][1];
+						mx = &xf.mvTexMtx[v->Tex5MatIdx * 4];
+						in[0] = v->TexCoord[5][0];
+						in[1] = v->TexCoord[5][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -436,9 +436,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX6:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[6] * 4];
-						in[0] = v->tcoord[6][0];
-						in[1] = v->tcoord[6][1];
+						mx = &xf.mvTexMtx[v->Tex6MatIdx * 4];
+						in[0] = v->TexCoord[6][0];
+						in[1] = v->TexCoord[6][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -446,16 +446,14 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX7:
 					{
-						mx = &xf.mvTexMtx[xf.texidx[7] * 4];
-						in[0] = v->tcoord[7][0];
-						in[1] = v->tcoord[7][1];
+						mx = &xf.mvTexMtx[v->Tex7MatIdx * 4];
+						in[0] = v->TexCoord[7][0];
+						in[1] = v->TexCoord[7][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
 					break;
 				}
-
-				mx = &xf.mvTexMtx[xf.texidx[n] * 4];
 
 				// st or stq ?
 				if (xf.tex[n].projection)
@@ -542,21 +540,12 @@ namespace GX
 			case XF_MATINDEX_A_ID:
 			{
 				xf.matIdxA.bits = gxfifo->Read32();
-				xf.posidx = xf.matIdxA.PosNrmMatIdx;
-				xf.texidx[0] = xf.matIdxA.Tex0MatIdx;
-				xf.texidx[1] = xf.matIdxA.Tex1MatIdx;
-				xf.texidx[2] = xf.matIdxA.Tex2MatIdx;
-				xf.texidx[3] = xf.matIdxA.Tex3MatIdx;
 			}
 			return;
 
 			case XF_MATINDEX_B_ID:
 			{
 				xf.matIdxB.bits = gxfifo->Read32();
-				xf.texidx[4] = xf.matIdxB.Tex4MatIdx;
-				xf.texidx[5] = xf.matIdxB.Tex5MatIdx;
-				xf.texidx[6] = xf.matIdxB.Tex6MatIdx;
-				xf.texidx[7] = xf.matIdxB.Tex7MatIdx;
 			}
 			return;
 
