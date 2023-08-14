@@ -151,8 +151,6 @@ namespace GX
 		frag_shader_source.push_back(0);
 		UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
 
-		BindShadersWithVBO();
-
 		// clear performance counters
 		frames = tris = pts = lines = 0;
 
@@ -291,6 +289,9 @@ namespace GX
 		shader_prog = glCreateProgram();
 		glAttachShader(shader_prog, vert_shader);
 		glAttachShader(shader_prog, frag_shader);
+		
+		BindShadersWithVBO();
+		
 		glLinkProgram(shader_prog);
 
 		glGetProgramiv(shader_prog, GL_LINK_STATUS, &success);

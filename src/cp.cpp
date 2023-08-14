@@ -2380,56 +2380,56 @@ namespace GX
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-		glVertexAttribPointer(VTX_POSMATIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_POSMATIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, PosMatIdx)) );
 		glEnableVertexAttribArray(VTX_POSMATIDX);
 
-		glVertexAttribPointer(VTX_TEX0MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX0MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex0MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX0MTXIDX);
-		glVertexAttribPointer(VTX_TEX1MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX1MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex1MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX1MTXIDX);
-		glVertexAttribPointer(VTX_TEX2MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX2MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex2MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX2MTXIDX);
-		glVertexAttribPointer(VTX_TEX3MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX3MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex3MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX3MTXIDX);
-		glVertexAttribPointer(VTX_TEX4MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX4MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex4MatIdx)));
 		glEnableVertexAttribArray(VTX_TEX4MTXIDX);
-		glVertexAttribPointer(VTX_TEX5MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX5MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex5MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX5MTXIDX);
-		glVertexAttribPointer(VTX_TEX6MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX6MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex6MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX6MTXIDX);
-		glVertexAttribPointer(VTX_TEX7MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEX7MTXIDX, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex7MatIdx)) );
 		glEnableVertexAttribArray(VTX_TEX7MTXIDX);
 
-		glVertexAttribPointer(VTX_POS, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_POS, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Position)) );
 		glEnableVertexAttribArray(VTX_POS);
 
-		glVertexAttribPointer(VTX_NRM, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_NRM, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Normal)) );
 		glEnableVertexAttribArray(VTX_NRM);
-		glVertexAttribPointer(VTX_BINRM, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_BINRM, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Binormal)) );
 		glEnableVertexAttribArray(VTX_BINRM);
-		glVertexAttribPointer(VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tangent)) );
 		glEnableVertexAttribArray(VTX_TANGENT);
 
-		glVertexAttribPointer(VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Color[0])));
 		glEnableVertexAttribArray(VTX_COLOR0);
-		glVertexAttribPointer(VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Color[1])));
 		glEnableVertexAttribArray(VTX_COLOR1);
 
-		glVertexAttribPointer(VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[0])));
 		glEnableVertexAttribArray(VTX_TEXCOORD0);
-		glVertexAttribPointer(VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[1])) );
 		glEnableVertexAttribArray(VTX_TEXCOORD1);
-		glVertexAttribPointer(VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[2])) );
 		glEnableVertexAttribArray(VTX_TEXCOORD2);
-		glVertexAttribPointer(VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[3])) );
 		glEnableVertexAttribArray(VTX_TEXCOORD3);
-		glVertexAttribPointer(VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[4])) );
 		glEnableVertexAttribArray(VTX_TEXCOORD4);
-		glVertexAttribPointer(VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[5])) );
 		glEnableVertexAttribArray(VTX_TEXCOORD5);
-		glVertexAttribPointer(VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[6])) );
 		glEnableVertexAttribArray(VTX_TEXCOORD6);
-		glVertexAttribPointer(VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[7])));
 		glEnableVertexAttribArray(VTX_TEXCOORD7);
 	}
 
