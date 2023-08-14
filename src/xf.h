@@ -292,6 +292,19 @@ namespace GX
 		bool amask[8][2];				// light alpha mask
 	};
 
+	// current vertex data
+	struct Vertex
+	{
+		float Position[3];		// x, y, z
+		float Normal[3];		// x, y, z, normalized to [0, 1]
+		float Binormal[3];
+		float Tangent[3];
+		Color Color[2];			// 2 color / alpha (RGBA)
+		float TexCoord[8][2];	// s, t for eight tex units
+		MatrixIndex0 matIdx0;	// pos mtx index, tex mtx idx 0-3
+		MatrixIndex1 matIdx1;	// tex mtx idx 4-7
+	};
+
 #pragma pack(pop)
 
 }

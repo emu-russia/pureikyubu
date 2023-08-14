@@ -1028,15 +1028,6 @@ namespace GX
 	{
 		switch (attr)
 		{
-			case VertexAttr::VTX_POSMATIDX:     return "Position Matrix Index";
-			case VertexAttr::VTX_TEX0MTXIDX:    return "Texture Coordinate 0 Matrix Index";
-			case VertexAttr::VTX_TEX1MTXIDX:    return "Texture Coordinate 1 Matrix Index";
-			case VertexAttr::VTX_TEX2MTXIDX:    return "Texture Coordinate 2 Matrix Index";
-			case VertexAttr::VTX_TEX3MTXIDX:    return "Texture Coordinate 3 Matrix Index";
-			case VertexAttr::VTX_TEX4MTXIDX:    return "Texture Coordinate 4 Matrix Index";
-			case VertexAttr::VTX_TEX5MTXIDX:    return "Texture Coordinate 5 Matrix Index";
-			case VertexAttr::VTX_TEX6MTXIDX:    return "Texture Coordinate 6 Matrix Index";
-			case VertexAttr::VTX_TEX7MTXIDX:    return "Texture Coordinate 7 Matrix Index";
 			case VertexAttr::VTX_POS:           return "Position";
 			case VertexAttr::VTX_NRM:           return "Normal";
 			case VertexAttr::VTX_BINRM:         return "Binormal";
@@ -1051,6 +1042,8 @@ namespace GX
 			case VertexAttr::VTX_TEXCOORD5:     return "Texture Coordinate 5";
 			case VertexAttr::VTX_TEXCOORD6:     return "Texture Coordinate 6";
 			case VertexAttr::VTX_TEXCOORD7:		return "Texture Coordinate 7";
+			case VertexAttr::VTX_MATIDX0:		return "Matrix Index 0";
+			case VertexAttr::VTX_MATIDX1:		return "Matrix Index 1";
 			case VertexAttr::VTX_MAX_ATTR:		return "MAX attr";
 		}
 		return "Unknown attribute";
@@ -1713,61 +1706,61 @@ namespace GX
 	void GXCore::FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
-		vtx->PosMatIdx = xf.matIdxA.PosNrmMatIdx;
-		vtx->Tex0MatIdx = xf.matIdxA.Tex0MatIdx;
-		vtx->Tex1MatIdx = xf.matIdxA.Tex1MatIdx;
-		vtx->Tex2MatIdx = xf.matIdxA.Tex2MatIdx;
-		vtx->Tex3MatIdx = xf.matIdxA.Tex3MatIdx;
-		vtx->Tex4MatIdx = xf.matIdxB.Tex4MatIdx;
-		vtx->Tex5MatIdx = xf.matIdxB.Tex5MatIdx;
-		vtx->Tex6MatIdx = xf.matIdxB.Tex6MatIdx;
-		vtx->Tex7MatIdx = xf.matIdxB.Tex7MatIdx;
+		vtx->matIdx0.PosNrmMatIdx = xf.matIdxA.PosNrmMatIdx;
+		vtx->matIdx0.Tex0MatIdx = xf.matIdxA.Tex0MatIdx;
+		vtx->matIdx0.Tex1MatIdx = xf.matIdxA.Tex1MatIdx;
+		vtx->matIdx0.Tex2MatIdx = xf.matIdxA.Tex2MatIdx;
+		vtx->matIdx0.Tex3MatIdx = xf.matIdxA.Tex3MatIdx;
+		vtx->matIdx1.Tex4MatIdx = xf.matIdxB.Tex4MatIdx;
+		vtx->matIdx1.Tex5MatIdx = xf.matIdxB.Tex5MatIdx;
+		vtx->matIdx1.Tex6MatIdx = xf.matIdxB.Tex6MatIdx;
+		vtx->matIdx1.Tex7MatIdx = xf.matIdxB.Tex7MatIdx;
 
 		// Matrix Index
 
 		if (cp.vcdLo.PosNrmMatIdx)
 		{
-			vtx->PosMatIdx = gxfifo->Read8();
+			vtx->matIdx0.PosNrmMatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex0MatIdx)
 		{
-			vtx->Tex0MatIdx = gxfifo->Read8();
+			vtx->matIdx0.Tex0MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex1MatIdx)
 		{
-			vtx->Tex1MatIdx = gxfifo->Read8();
+			vtx->matIdx0.Tex1MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex2MatIdx)
 		{
-			vtx->Tex2MatIdx = gxfifo->Read8();
+			vtx->matIdx0.Tex2MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex3MatIdx)
 		{
-			vtx->Tex3MatIdx = gxfifo->Read8();
+			vtx->matIdx0.Tex3MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex4MatIdx)
 		{
-			vtx->Tex4MatIdx = gxfifo->Read8();
+			vtx->matIdx1.Tex4MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex5MatIdx)
 		{
-			vtx->Tex5MatIdx = gxfifo->Read8();
+			vtx->matIdx1.Tex5MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex6MatIdx)
 		{
-			vtx->Tex6MatIdx = gxfifo->Read8();
+			vtx->matIdx1.Tex6MatIdx = gxfifo->Read8();
 		}
 
 		if (cp.vcdLo.Tex7MatIdx)
 		{
-			vtx->Tex7MatIdx = gxfifo->Read8();
+			vtx->matIdx1.Tex7MatIdx = gxfifo->Read8();
 		}
 
 		// Position
@@ -1966,6 +1959,8 @@ namespace GX
 
 	void GXCore::GxCommand(FifoProcessor* gxfifo)
 	{
+		GLenum gl_error;
+
 		if(frame_done)
 		{
 			GL_OpenSubsystem();
@@ -2185,7 +2180,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_QUADS, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
+					}
 					tris += (vtxnum / 4) / 2;
 				}
 				break;
@@ -2212,7 +2212,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_TRIANGLES, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_TRIANGLE: %x\n", gl_error);
+					}
 					tris += vtxnum / 3;
 				}
 				break;
@@ -2239,7 +2244,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_TRIANGLE_STRIP, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_STRIP: %x\n", gl_error);
+					}
 					tris += vtxnum - 2;
 				}
 				break;
@@ -2266,7 +2276,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_TRIANGLE_FAN, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_FAN: %x\n", gl_error);
+					}
 					tris += vtxnum - 2;
 				}
 				break;
@@ -2293,7 +2308,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_LINES, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_LINE: %x\n", gl_error);
+					}
 					lines += vtxnum / 2;
 				}
 				break;
@@ -2320,7 +2340,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_LINE_STRIP, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_LINESTRIP: %x\n", gl_error);
+					}
 					lines += vtxnum - 1;
 				}
 				break;
@@ -2347,7 +2372,12 @@ namespace GX
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 					glDrawArrays(GL_POINTS, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_POINT: %x\n", gl_error);
+					}
 					pts += vtxnum;
 				}
 				break;

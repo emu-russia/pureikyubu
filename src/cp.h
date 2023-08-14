@@ -207,16 +207,7 @@ namespace GX
 
 	enum VertexAttr : size_t
 	{
-		VTX_POSMATIDX = 0,      // Position/Normal Matrix Index
-		VTX_TEX0MTXIDX,         // Texture Coordinate 0 Matrix Index
-		VTX_TEX1MTXIDX,         // Texture Coordinate 1 Matrix Index
-		VTX_TEX2MTXIDX,         // Texture Coordinate 2 Matrix Index
-		VTX_TEX3MTXIDX,         // Texture Coordinate 3 Matrix Index
-		VTX_TEX4MTXIDX,         // Texture Coordinate 4 Matrix Index
-		VTX_TEX5MTXIDX,         // Texture Coordinate 5 Matrix Index
-		VTX_TEX6MTXIDX,         // Texture Coordinate 6 Matrix Index
-		VTX_TEX7MTXIDX,         // Texture Coordinate 7 Matrix Index
-		VTX_POS,                // Position
+		VTX_POS = 0,            // Position
 		VTX_NRM,                // Normal
 		VTX_BINRM,				// Binormal
 		VTX_TANGENT,			// Tangent
@@ -230,6 +221,8 @@ namespace GX
 		VTX_TEXCOORD5,          // Texture Coordinate 5
 		VTX_TEXCOORD6,          // Texture Coordinate 6
 		VTX_TEXCOORD7,          // Texture Coordinate 7
+		VTX_MATIDX0,			// Matrix indicies 0
+		VTX_MATIDX1,			// Matrix indicies 1
 		VTX_MAX_ATTR
 	};
 
@@ -467,26 +460,6 @@ namespace GX
 	{
 		struct { uint8_t A, B, G, R; };
 		uint32_t     RGBA;
-	};
-
-	// current vertex data
-	struct Vertex
-	{
-		uint32_t PosMatIdx;
-		uint32_t Tex0MatIdx;
-		uint32_t Tex1MatIdx;
-		uint32_t Tex2MatIdx;
-		uint32_t Tex3MatIdx;
-		uint32_t Tex4MatIdx;
-		uint32_t Tex5MatIdx;
-		uint32_t Tex6MatIdx;
-		uint32_t Tex7MatIdx;
-		float Position[3];		// x, y, z
-		float Normal[3];		// x, y, z, normalized to [0, 1]
-		float Binormal[3];
-		float Tangent[3];
-		Color Color[2];			// 2 color / alpha (RGBA)
-		float TexCoord[8][2];	// s, t for eight tex units
 	};
 
 	struct CPState

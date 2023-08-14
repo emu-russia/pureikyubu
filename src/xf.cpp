@@ -21,7 +21,7 @@ namespace GX
 	// perform position transform
 	void GXCore::XF_ApplyModelview(const Vertex* v, float* out, const float* in)
 	{
-		float* mx = &xf.mvTexMtx[v->PosMatIdx * 4];
+		float* mx = &xf.mvTexMtx[v->matIdx0.PosNrmMatIdx * 4];
 
 		out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
 		out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
@@ -32,7 +32,7 @@ namespace GX
 	// matrix must be the inverse transpose of the modelview matrix
 	void GXCore::NormalTransform(const Vertex* v, float* out, const float* in)
 	{
-		float* mx = &xf.nrmMtx[v->PosMatIdx * 3];
+		float* mx = &xf.nrmMtx[v->matIdx0.PosNrmMatIdx * 3];
 
 		out[0] = in[0];
 		out[1] = in[1];
@@ -342,7 +342,7 @@ namespace GX
 
 		if (xf.numTex == 0)
 		{
-			mx = &xf.mvTexMtx[v->Tex0MatIdx * 4];
+			mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
 			in[0] = v->TexCoord[0][0];
 			in[1] = v->TexCoord[0][1];
 			in[2] = 1.0f;
@@ -376,7 +376,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX0:
 					{
-						mx = &xf.mvTexMtx[v->Tex0MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
 						in[0] = v->TexCoord[0][0];
 						in[1] = v->TexCoord[0][1];
 						in[2] = 1.0f;
@@ -386,7 +386,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX1:
 					{
-						mx = &xf.mvTexMtx[v->Tex1MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex1MatIdx * 4];
 						in[0] = v->TexCoord[1][0];
 						in[1] = v->TexCoord[1][1];
 						in[2] = 1.0f;
@@ -396,7 +396,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX2:
 					{
-						mx = &xf.mvTexMtx[v->Tex2MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex2MatIdx * 4];
 						in[0] = v->TexCoord[2][0];
 						in[1] = v->TexCoord[2][1];
 						in[2] = 1.0f;
@@ -406,7 +406,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX3:
 					{
-						mx = &xf.mvTexMtx[v->Tex3MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex3MatIdx * 4];
 						in[0] = v->TexCoord[3][0];
 						in[1] = v->TexCoord[3][1];
 						in[2] = 1.0f;
@@ -416,7 +416,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX4:
 					{
-						mx = &xf.mvTexMtx[v->Tex4MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex4MatIdx * 4];
 						in[0] = v->TexCoord[4][0];
 						in[1] = v->TexCoord[4][1];
 						in[2] = 1.0f;
@@ -426,7 +426,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX5:
 					{
-						mx = &xf.mvTexMtx[v->Tex5MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex5MatIdx * 4];
 						in[0] = v->TexCoord[5][0];
 						in[1] = v->TexCoord[5][1];
 						in[2] = 1.0f;
@@ -436,7 +436,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX6:
 					{
-						mx = &xf.mvTexMtx[v->Tex6MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex6MatIdx * 4];
 						in[0] = v->TexCoord[6][0];
 						in[1] = v->TexCoord[6][1];
 						in[2] = 1.0f;
@@ -446,7 +446,7 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX7:
 					{
-						mx = &xf.mvTexMtx[v->Tex7MatIdx * 4];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex7MatIdx * 4];
 						in[0] = v->TexCoord[7][0];
 						in[1] = v->TexCoord[7][1];
 						in[2] = 1.0f;

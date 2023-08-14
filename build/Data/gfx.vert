@@ -3,15 +3,6 @@
 
 // Define the input attributes of the vertex passed through the VBO
 
-in uint in_PosMatIdx;
-in uint in_Tex0MatIdx;
-in uint in_Tex1MatIdx;
-in uint in_Tex2MatIdx;
-in uint in_Tex3MatIdx;
-in uint in_Tex4MatIdx;
-in uint in_Tex5MatIdx;
-in uint in_Tex6MatIdx;
-in uint in_Tex7MatIdx;
 in vec3 in_Position;
 in vec3 in_Normal;
 in vec3 in_Binormal;
@@ -26,6 +17,8 @@ in vec2 in_TexCoord4;
 in vec2 in_TexCoord5;
 in vec2 in_TexCoord6;
 in vec2 in_TexCoord7;
+in uint MatrixIndex0;
+in uint MatrixIndex1;
 
 // Define uniforms to be updated when the XF registers of the block are updated
 
@@ -41,5 +34,5 @@ uniform struct Light
 
 void main(void) 
 {
-    gl_Position = vec4(in_Position, 1.0);
+    gl_Position = vec4(in_Position.x, in_Position.y, 1.0, 1.0);
 }
