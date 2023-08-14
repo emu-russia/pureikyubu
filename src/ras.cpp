@@ -49,13 +49,13 @@ namespace GX
 				break;
 			case RAS_TRIANGLE_STRIP:
 				if (ras_wireframe) {
-					glPolygonMode(GL_FRONT, GL_LINE);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				}
 				glBegin(GL_TRIANGLE_STRIP);
 				break;
 			case RAS_TRIANGLE_FAN:
 				if (ras_wireframe) {
-					glPolygonMode(GL_FRONT, GL_LINE);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				}
 				glBegin(GL_TRIANGLE_FAN);
 				break;

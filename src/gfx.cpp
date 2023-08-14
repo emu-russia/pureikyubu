@@ -145,13 +145,6 @@ namespace GX
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_SCISSOR_TEST);
 
-		// set wireframe mode
-		//glEnable(GL_CULL_FACE);
-		//glCullFace(GL_BACK);
-#ifdef WIREFRAME
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-#endif
-
 		GLenum err = glewInit();
 		if (GLEW_OK != err)
 		{
