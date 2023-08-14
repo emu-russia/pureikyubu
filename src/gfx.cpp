@@ -143,14 +143,15 @@ namespace GX
 			return false;
 		}
 
-		// WIP
+		InitVBO();
+
 		auto vert_shader_source = Util::FileLoad("Data/gfx.vert");
 		vert_shader_source.push_back(0);
 		auto frag_shader_source = Util::FileLoad("Data/gfx.frag");
 		frag_shader_source.push_back(0);
-		//UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
+		UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
 
-		InitVBO();
+		BindShadersWithVBO();
 
 		// clear performance counters
 		frames = tris = pts = lines = 0;
@@ -168,7 +169,7 @@ namespace GX
 
 		DisposeVBO();
 
-		//DisposeShaders();
+		DisposeShaders();
 
 #ifdef _WINDOWS
 		wglMakeCurrent(NULL, NULL);
@@ -314,4 +315,37 @@ namespace GX
 		glUseProgram(0);
 		glDeleteProgram(shader_prog);
 	}
+
+	void GXCore::BindShadersWithVBO()
+	{
+		glBindAttribLocation(shader_prog, VTX_POSMATIDX, "in_PosMatIdx");
+
+		glBindAttribLocation(shader_prog, VTX_TEX0MTXIDX, "in_Tex0MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX1MTXIDX, "in_Tex1MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX2MTXIDX, "in_Tex2MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX3MTXIDX, "in_Tex3MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX4MTXIDX, "in_Tex4MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX5MTXIDX, "in_Tex5MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX6MTXIDX, "in_Tex6MatIdx");
+		glBindAttribLocation(shader_prog, VTX_TEX7MTXIDX, "in_Tex7MatIdx");
+
+		glBindAttribLocation(shader_prog, VTX_POS, "in_Position");
+
+		glBindAttribLocation(shader_prog, VTX_NRM, "in_Normal");
+		glBindAttribLocation(shader_prog, VTX_BINRM, "in_Binormal");
+		glBindAttribLocation(shader_prog, VTX_TANGENT, "in_Tangent");
+
+		glBindAttribLocation(shader_prog, VTX_COLOR0, "in_Color0");
+		glBindAttribLocation(shader_prog, VTX_COLOR1, "in_Color1");
+
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD0, "in_TexCoord0");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD1, "in_TexCoord1");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD2, "in_TexCoord2");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD3, "in_TexCoord3");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD4, "in_TexCoord4");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD5, "in_TexCoord5");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD6, "in_TexCoord6");
+		glBindAttribLocation(shader_prog, VTX_TEXCOORD7, "in_TexCoord7");
+	}
+
 }

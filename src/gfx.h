@@ -98,6 +98,7 @@ namespace GX
 
 		void UploadShaders(const char* vert_source, const char* frag_source);
 		void DisposeShaders();
+		void BindShadersWithVBO();
 
 		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
 

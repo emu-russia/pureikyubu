@@ -1038,7 +1038,9 @@ namespace GX
 			case VertexAttr::VTX_TEX6MTXIDX:    return "Texture Coordinate 6 Matrix Index";
 			case VertexAttr::VTX_TEX7MTXIDX:    return "Texture Coordinate 7 Matrix Index";
 			case VertexAttr::VTX_POS:           return "Position";
-			case VertexAttr::VTX_NRM:           return "Normal or Normal/Binormal/Tangent";
+			case VertexAttr::VTX_NRM:           return "Normal";
+			case VertexAttr::VTX_BINRM:         return "Binormal";
+			case VertexAttr::VTX_TANGENT:       return "Tangent";
 			case VertexAttr::VTX_COLOR0:        return "Color 0";
 			case VertexAttr::VTX_COLOR1:        return "Color 1";
 			case VertexAttr::VTX_TEXCOORD0:     return "Texture Coordinate 0";
@@ -2145,7 +2147,6 @@ namespace GX
 			case CP_CMD_DRAW_QUAD | 6:
 			case CP_CMD_DRAW_QUAD | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2154,13 +2155,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_QUAD, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_QUADS, 0, vtxnum);
+					tris += (vtxnum / 4) / 2;
 				}
 				break;
 			}
@@ -2175,7 +2175,6 @@ namespace GX
 			case CP_CMD_DRAW_TRIANGLE | 6:
 			case CP_CMD_DRAW_TRIANGLE | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2184,13 +2183,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_TRIANGLE, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLES, 0, vtxnum);
+					tris += vtxnum / 3;
 				}
 				break;
 			}
@@ -2205,7 +2203,6 @@ namespace GX
 			case CP_CMD_DRAW_STRIP | 6:
 			case CP_CMD_DRAW_STRIP | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2214,13 +2211,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_TRIANGLE_STRIP, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLE_STRIP, 0, vtxnum);
+					tris += vtxnum - 2;
 				}
 				break;
 			}
@@ -2235,7 +2231,6 @@ namespace GX
 			case CP_CMD_DRAW_FAN | 6:
 			case CP_CMD_DRAW_FAN | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2244,13 +2239,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_TRIANGLE_FAN, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLE_FAN, 0, vtxnum);
+					tris += vtxnum - 2;
 				}
 				break;
 			}
@@ -2265,7 +2259,6 @@ namespace GX
 			case CP_CMD_DRAW_LINE | 6:
 			case CP_CMD_DRAW_LINE | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2274,13 +2267,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_LINE, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_LINES, 0, vtxnum);
+					lines += vtxnum / 2;
 				}
 				break;
 			}
@@ -2295,7 +2287,6 @@ namespace GX
 			case CP_CMD_DRAW_LINESTRIP | 6:
 			case CP_CMD_DRAW_LINESTRIP | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2304,13 +2295,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_LINE_STRIP, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_LINE_STRIP, 0, vtxnum);
+					lines += vtxnum - 1;
 				}
 				break;
 			}
@@ -2325,7 +2315,6 @@ namespace GX
 			case CP_CMD_DRAW_POINT | 6:
 			case CP_CMD_DRAW_POINT | 7:
 			{
-				Vertex vtx;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2334,13 +2323,12 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
-					RAS_Begin(RAS_POINT, vtxnum);
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
-					RAS_End();
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_POINTS, 0, vtxnum);
+					pts += vtxnum;
 				}
 				break;
 			}
