@@ -1785,8 +1785,8 @@ namespace GX
 		// Normal
 
 		vtx->Normal[0] = vtx->Normal[1] = vtx->Normal[2] = 1.0f;
-		vtx->Binormal[3] = vtx->Binormal[4] = vtx->Binormal[5] = 1.0f;
-		vtx->Tangent[6] = vtx->Tangent[7] = vtx->Tangent[8] = 1.0f;
+		vtx->Binormal[0] = vtx->Binormal[1] = vtx->Binormal[2] = 1.0f;
+		vtx->Tangent[0] = vtx->Tangent[1] = vtx->Tangent[2] = 1.0f;
 
 		int nrmshft = 0;
 
@@ -1900,6 +1900,33 @@ namespace GX
 			cp.vatA[vatnum].bytedeq ? cp.vatC[vatnum].tex7shft : 0,
 			gxfifo,
 			ArrayId::Tex7Coord);
+
+
+		// HACK for first time
+
+		Vertex* v = vtx;
+		float mv[3];
+		XF_ApplyModelview(v, mv, v->Position);
+		v->Position[0] = mv[0];
+		v->Position[1] = mv[1];
+		v->Position[2] = mv[2];
+
+		if (xf.numColors != 0)
+		{
+			XF_DoLights(v);
+			v->Color[0] = colora[0];
+			v->Color[1] = colora[1];
+		}
+
+		if (ras_use_texture && xf.numTex && tID[0])
+		{
+			XF_DoTexGen(v);
+			tgout[0].out[0] *= tID[0]->ds;
+			tgout[0].out[1] *= tID[0]->dt;
+			v->TexCoord[0][0] = tgout[0].out[0];
+			v->TexCoord[0][1] = tgout[0].out[1];
+		}
+
 	}
 
 	void GXCore::GxBadFifo(uint8_t command)

@@ -29,7 +29,7 @@ in vec2 in_TexCoord7;
 
 // Define uniforms to be updated when the XF registers of the block are updated
 
-struct Light
+uniform struct Light
 {
     uvec3 reserved;
     uvec4 rgba;
