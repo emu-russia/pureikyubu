@@ -143,13 +143,15 @@ namespace GX
 			return false;
 		}
 
-		InitVBO();
-
 		auto vert_shader_source = Util::FileLoad("Data/gfx.vert");
 		vert_shader_source.push_back(0);
 		auto frag_shader_source = Util::FileLoad("Data/gfx.frag");
 		frag_shader_source.push_back(0);
 		UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
+
+		InitVBO();
+
+		//BindShadersWithVBO();
 
 		// clear performance counters
 		frames = tris = pts = lines = 0;
@@ -256,7 +258,7 @@ namespace GX
 		char infoLog[0x1000]{};
 		int success;
 
-		// Perform magic spells to compile the frag shader program
+		// Perform magic spells to compile the vertex shader program
 
 		vert_shader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vert_shader, 1, &vert_source, nullptr);
@@ -289,9 +291,6 @@ namespace GX
 		shader_prog = glCreateProgram();
 		glAttachShader(shader_prog, vert_shader);
 		glAttachShader(shader_prog, frag_shader);
-		
-		BindShadersWithVBO();
-		
 		glLinkProgram(shader_prog);
 
 		glGetProgramiv(shader_prog, GL_LINK_STATUS, &success);
@@ -349,4 +348,111 @@ namespace GX
 		glBindAttribLocation(shader_prog, VTX_TEXCOORD7, "in_TexCoord7");
 	}
 
+	void GXCore::InitVBO()
+	{
+		GLint attrpos;
+
+		vertex_data = new Vertex[vbo_size];
+		memset(vertex_data, 0, sizeof(Vertex) * vbo_size);
+
+		vao = 0;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		vbo = 0;
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, vbo_size * sizeof(Vertex), vertex_data, GL_DYNAMIC_DRAW);
+
+		attrpos = glGetAttribLocation(shader_prog, "in_PosMatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, PosMatIdx)));
+		glEnableVertexAttribArray(attrpos);
+
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex0MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex0MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex1MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex1MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex2MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex2MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex3MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex3MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex4MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex4MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex5MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex5MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex6MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex6MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tex7MatIdx");
+		glVertexAttribPointer(attrpos, 1, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tex7MatIdx)));
+		glEnableVertexAttribArray(attrpos);
+
+		attrpos = glGetAttribLocation(shader_prog, "in_Position");
+		glVertexAttribPointer(attrpos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Position)));
+		glEnableVertexAttribArray(attrpos);
+
+		attrpos = glGetAttribLocation(shader_prog, "in_Normal");
+		glVertexAttribPointer(attrpos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Normal)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Binormal");
+		glVertexAttribPointer(attrpos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Binormal)));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Tangent");
+		glVertexAttribPointer(attrpos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Tangent)));
+		glEnableVertexAttribArray(attrpos);
+
+		attrpos = glGetAttribLocation(shader_prog, "in_Color0");
+		glVertexAttribPointer(attrpos, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Color[0])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_Color1");
+		glVertexAttribPointer(attrpos, 4, GL_UNSIGNED_BYTE, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, Color[1])));
+		glEnableVertexAttribArray(attrpos);
+
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord0");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[0])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord1");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[1])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord2");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[2])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord3");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[3])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord4");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[4])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord5");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[5])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord6");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[6])));
+		glEnableVertexAttribArray(attrpos);
+		attrpos = glGetAttribLocation(shader_prog, "in_TexCoord7");
+		glVertexAttribPointer(attrpos, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(offsetof(Vertex, TexCoord[7])));
+		glEnableVertexAttribArray(attrpos);
+	}
+
+	void GXCore::DisposeVBO()
+	{
+		glBindVertexArray(0);
+		glDeleteVertexArrays(1, &vao);
+		vao = 0;
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDeleteBuffers(1, &vbo);
+		vbo = 0;
+
+		if (vertex_data != nullptr) {
+			delete[] vertex_data;
+			vertex_data = nullptr;
+		}
+	}
 }

@@ -98,6 +98,8 @@ namespace GX
 
 		void UploadShaders(const char* vert_source, const char* frag_source);
 		void DisposeShaders();
+		void InitVBO();
+		void DisposeVBO();
 		void BindShadersWithVBO();
 
 		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
@@ -140,6 +142,7 @@ namespace GX
 		size_t xfLoads;
 		size_t bpLoads;
 
+		GLuint vao;
 		GLuint vbo;
 		size_t vbo_size = 0x10000;		// Maximum number of vertices that can be used in Draw primitive parameters
 		Vertex* vertex_data = nullptr;
@@ -157,8 +160,6 @@ namespace GX
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
 		void CPAbortFifo();
-		void InitVBO();
-		void DisposeVBO();
 
 #pragma endregion "Command Processor"
 
