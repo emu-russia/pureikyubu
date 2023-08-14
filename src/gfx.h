@@ -2,7 +2,7 @@
 
 /*
 
-Very limited Flipper GFXEngine emulation. Basic OpenGL is used as a backend.
+Very limited Flipper GFXEngine emulation. Basic OpenGL 1.2 is used as a backend.
 
 This code is out-of-phase because the graphical subsystem has been substantially redesigned. So there is now a mixture of new developments and old code.
 
@@ -30,41 +30,8 @@ What's not supported:
 
 namespace GX
 {
-
-	// Defines the state of the entire graphics system
-	struct State
-	{
-		PERegs peregs;
-		CPHostRegs cpregs;		// Mapped command processor registers
-		CPState cp;
-		XFState xf;
-
-		// PI FIFO
-		volatile uint32_t    pi_cp_base;
-		volatile uint32_t    pi_cp_top;
-		volatile uint32_t    pi_cp_wrptr;          // also WRAP bit
-
-		// Command Processor
-		Thread* cp_thread;     // CP FIFO thread
-		size_t	tickPerFifo;
-		int64_t	updateTbrValue;
-
-		// Stats
-		size_t cpLoads;
-		size_t xfLoads;
-		size_t bpLoads;
-	};
-
-}
-
-
-namespace GX
-{
-
 	class GXCore
 	{
-		State state;
-
 		// TODO: Refactoring hacks
 		void DONE_INT();
 		void TOKEN_INT();
@@ -94,10 +61,6 @@ namespace GX
 		PAINTSTRUCT psFrame{};
 #endif
 
-		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
-		uint32_t clear_z = -1;
-		bool set_clear = false;
-
 		bool make_shot = false;
 		FILE* snap_file = nullptr;
 		uint32_t snap_w, snap_h;
@@ -110,8 +73,6 @@ namespace GX
 
 		// perfomance counters
 		size_t frames = 0, tris = 0, pts = 0, lines = 0;
-
-		Vertex tri[3]{};		// triangle to be rendered
 
 	public:
 		GXCore();
@@ -138,7 +99,14 @@ namespace GX
 		void UploadShaders(const char* vert_source, const char* frag_source);
 		void DisposeShaders();
 
+		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
+
 #pragma region "Interface to Flipper"
+
+		// PI FIFO
+		volatile uint32_t pi_cp_base;
+		volatile uint32_t pi_cp_top;
+		volatile uint32_t pi_cp_wrptr;          // also WRAP bit
 
 		// CP Registers
 		uint16_t CpReadReg(CPMappedRegister id);
@@ -159,6 +127,18 @@ namespace GX
 
 #pragma region "Command Processor"
 
+		CPHostRegs cpregs;		// Mapped command processor registers
+		CPState cp;				// Internal registers (for setting VCD/VAT, etc.)
+
+		Thread* cp_thread;     // CP FIFO thread
+		size_t	tickPerFifo;
+		int64_t	updateTbrValue;
+
+		// Stats
+		size_t cpLoads;
+		size_t xfLoads;
+		size_t bpLoads;
+
 		void GXWriteFifo(uint8_t dataPtr[32]);
 		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
 		std::string AttrToString(VertexAttr attr);
@@ -176,7 +156,9 @@ namespace GX
 #pragma endregion "Command Processor"
 
 
-#pragma region "Transform Unit (Old)"
+#pragma region "Transform Unit"
+
+		XFState xf;
 
 		TexGenOut tgout[8]{};
 		Color colora[2]{};	// lighting stage output colors (COLOR0A0 / COLOR1A1)
@@ -190,7 +172,7 @@ namespace GX
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
 		void loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo);
 
-#pragma endregion "Transform Unit (Old)"
+#pragma endregion "Transform Unit"
 
 
 #pragma region "Setup Unit"
@@ -224,7 +206,7 @@ namespace GX
 #pragma endregion "Rasterizers"
 
 
-#pragma region "Texture Engine (Old)"
+#pragma region "Texture Engine"
 
 		LoadTlut0 loadtlut0;		// 0x64
 		LoadTlut1 loadtlut1;		// 0x65
@@ -245,7 +227,7 @@ namespace GX
 		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
 		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
 
-#pragma endregion "Texture Engine (Old)"
+#pragma endregion "Texture Engine"
 
 
 #pragma region "TEV"
@@ -272,6 +254,12 @@ namespace GX
 
 
 #pragma region "Pixel Engine"
+
+		PERegs peregs;
+
+		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
+		uint32_t clear_z = -1;
+		bool set_clear = false;
 
 		Color copyClearRGBA;
 		uint32_t copyClearZ;

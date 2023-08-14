@@ -6,8 +6,6 @@ namespace GX
 {
 	GXCore::GXCore()
 	{
-		memset(&state, 0, sizeof(state));
-
 		fifo = new FifoProcessor(this);
 	}
 
@@ -21,14 +19,12 @@ namespace GX
 		if (gxOpened)
 			return;
 
-		memset(&state, 0, sizeof(state));
-
-		state.tickPerFifo = 100;
-		state.updateTbrValue = Core->GetTicks() + state.tickPerFifo;
+		tickPerFifo = 100;
+		updateTbrValue = Core->GetTicks() + tickPerFifo;
 
 		fifo->Reset();
 
-		state.cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
+		cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
 #ifdef _WINDOWS
 		hwndMain = (HWND)config->renderTarget;
@@ -51,10 +47,10 @@ namespace GX
 		if (!gxOpened)
 			return;
 
-		if (state.cp_thread)
+		if (cp_thread)
 		{
-			EMUJoinThread(state.cp_thread);
-			state.cp_thread = nullptr;
+			EMUJoinThread(cp_thread);
+			cp_thread = nullptr;
 		}
 
 		GL_CloseSubsystem();
@@ -242,7 +238,7 @@ namespace GX
 		//Report(Channel::GP, "gfx frame: %d\n", frames);
 		frames++;
 		tris = pts = lines = 0;
-		state.cpLoads = state.bpLoads = state.xfLoads = 0;
+		cpLoads = bpLoads = xfLoads = 0;
 	}
 
 	// rendering complete, swap buffers, sync to vretrace

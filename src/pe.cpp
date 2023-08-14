@@ -13,10 +13,10 @@ namespace GX
 		switch (id)
 		{
 			case PEMappedRegister::PE_PI_INTRCTRL_ID:
-				return state.peregs.sr;
+				return peregs.sr;
 
 			case PEMappedRegister::PE_PI_TOKEN_ID:
-				return state.peregs.token;
+				return peregs.token;
 
 			default:
 				return 0;
@@ -30,22 +30,22 @@ namespace GX
 			case PEMappedRegister::PE_PI_INTRCTRL_ID:
 
 				// clear interrupts
-				if (state.peregs.sr & PE_SR_DONE)
+				if (peregs.sr & PE_SR_DONE)
 				{
-					state.peregs.sr &= ~PE_SR_DONE;
+					peregs.sr &= ~PE_SR_DONE;
 					PIClearInt(PI_INTERRUPT_PE_FINISH);
 				}
-				if (state.peregs.sr & PE_SR_TOKEN)
+				if (peregs.sr & PE_SR_TOKEN)
 				{
-					state.peregs.sr &= ~PE_SR_TOKEN;
+					peregs.sr &= ~PE_SR_TOKEN;
 					PIClearInt(PI_INTERRUPT_PE_TOKEN);
 				}
 
 				// set mask bits
-				if (value & PE_SR_DONEMSK) state.peregs.sr |= PE_SR_DONEMSK;
-				else state.peregs.sr &= ~PE_SR_DONEMSK;
-				if (value & PE_SR_TOKENMSK) state.peregs.sr |= PE_SR_TOKENMSK;
-				else state.peregs.sr &= ~PE_SR_TOKENMSK;
+				if (value & PE_SR_DONEMSK) peregs.sr |= PE_SR_DONEMSK;
+				else peregs.sr &= ~PE_SR_DONEMSK;
+				if (value & PE_SR_TOKENMSK) peregs.sr |= PE_SR_TOKENMSK;
+				else peregs.sr &= ~PE_SR_TOKENMSK;
 
 				break;
 
