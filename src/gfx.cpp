@@ -331,6 +331,11 @@ namespace GX
 
 	void GXCore::DisposeShaders()
 	{
+		glFinish();
+
+		// TODO: For some reason, it's falling down.
+		return;
+
 		// TODO: Is that enough?
 		glUseProgram(0);
 		glDeleteProgram(shader_prog);
@@ -396,6 +401,8 @@ namespace GX
 		vbo = 0;
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		// TODO: Map/Unmap VBO
 		//glBufferData(GL_ARRAY_BUFFER, vbo_size * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
 
 		gl_error = glGetError();
@@ -461,6 +468,11 @@ namespace GX
 
 	void GXCore::DisposeVBO()
 	{
+		glFinish();
+
+		// TODO: For some reason, it's falling down.
+		return;
+
 		glBindVertexArray(0);
 		glDeleteVertexArrays(1, &vao);
 		vao = 0;

@@ -22,15 +22,38 @@ in uint MatrixIndex1;
 
 // Define uniforms to be updated when the XF registers of the block are updated
 
+uniform float matrix_mem[0x100];            // 0x0000-0x00ff (IndexA)
+uniform float norm_matrix_mem[96];          // 0x0400-0x045f  (IndexB)
+uniform float dual_tex_matrix_mem[0x100];   // 0x0500-0x05ff  (IndexC)
+
 uniform struct Light
 {
-    uvec3 reserved;
     uvec4 rgba;
     vec3 a;
     vec3 k;
     vec3 lpx;
     vec3 dhx;
-} ligth[8];
+} ligth_mem[8];                 // 0x0600-0x067f  (IndexD)
+
+uniform uint clip_disable;      // 0x1005
+uniform uint vtx_spec;          // 0x1008
+uniform uint num_colors;        // 0x1009
+uniform uvec4 ambient[2];       // 0x100a, 0x100b
+uniform uvec4 material[2];      // 0x100c, 0x100d
+uniform uint color_control[2];      // 0x100e, 0x100f
+uniform uint alpha_control[2];      // 0x1010, 0x1011
+uniform uint dual_tex_tran;             // 0x1012
+// matIdxA?
+// matIdxB?
+uniform float viewport_scale[3];    // 0x101a-0x101c
+uniform float viewport_offset[3];   // 0x101d-0x101f
+uniform float projection_param[6];      // 0x1020-0x1025
+uniform uint projection_ortho;          // 0x1026
+uniform uint num_tex;               // 0x103f
+uniform uint texgen_param[8];       // 0x1040-0x1047
+uniform uint dual_texgen_param[8];  // 0x1050-0x1057
+
+// bitfieldExtract
 
 void main(void) 
 {
