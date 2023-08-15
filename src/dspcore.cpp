@@ -341,6 +341,7 @@ namespace DSP
 				else
 				{
 					intr.pendingDelay[i]--;
+					break;
 				}
 			}
 		}
@@ -580,6 +581,12 @@ namespace DSP
 	void DspCore::Update()
 	{
 		uint64_t ticks = Core->GetTicks();
+
+		if (delay_mailbox_reasons) {
+			Thread::Sleep(1);
+			delay_mailbox_reasons = false;
+			return;
+		}
 
 		if (ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{
