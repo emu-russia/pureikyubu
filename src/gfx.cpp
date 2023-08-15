@@ -137,6 +137,7 @@ namespace GX
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_SCISSOR_TEST);
 
+#if GFX_BLACKJACK_AND_SHADERS
 		glewExperimental = GL_TRUE;
 		GLenum err = glewInit();
 		if (GLEW_OK != err)
@@ -153,6 +154,7 @@ namespace GX
 		UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
 
 		InitVBO();
+#endif
 
 		// clear performance counters
 		frames = tris = pts = lines = 0;
@@ -172,9 +174,10 @@ namespace GX
 
 		//if(frameReady) GL_EndFrame();
 
+#if GFX_BLACKJACK_AND_SHADERS
 		DisposeShaders();
-
 		DisposeVBO();
+#endif
 
 #ifdef _WINDOWS
 		wglMakeCurrent(NULL, NULL);

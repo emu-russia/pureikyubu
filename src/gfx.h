@@ -28,6 +28,8 @@ What's not supported:
 #include "tev.h"
 #include "tx.h"
 
+#define GFX_BLACKJACK_AND_SHADERS 0
+
 namespace GX
 {
 	class GXCore
@@ -171,6 +173,8 @@ namespace GX
 		TexGenOut tgout[8]{};
 		Color colora[2]{};	// lighting stage output colors (COLOR0A0 / COLOR1A1)
 
+		bool XF_LightColorEnabled(int chan, int light);
+		bool XF_LightAlphaEnabled(int chan, int light);
 		void XF_DoLights(const Vertex* v);
 		void XF_DoTexGen(const Vertex* v);
 		void VECNormalize(float vec[3]);
@@ -202,9 +206,6 @@ namespace GX
 #pragma region "Rasterizers"
 
 		bool ras_wireframe = false;			// Enable wireframe drawing of primitives (DEBUG)
-
-		RAS_Primitive last_prim{};
-		size_t ras_vtx_num{};
 		bool ras_use_texture = false;
 
 		void RAS_Begin(RAS_Primitive prim, size_t vtx_num);

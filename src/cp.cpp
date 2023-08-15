@@ -1893,33 +1893,6 @@ namespace GX
 			cp.vatA[vatnum].bytedeq ? cp.vatC[vatnum].tex7shft : 0,
 			gxfifo,
 			ArrayId::Tex7Coord);
-
-
-		// HACK for first time
-
-		Vertex* v = vtx;
-		float mv[3];
-		XF_ApplyModelview(v, mv, v->Position);
-		v->Position[0] = mv[0];
-		v->Position[1] = mv[1];
-		v->Position[2] = mv[2];
-
-		if (xf.numColors != 0)
-		{
-			XF_DoLights(v);
-			v->Color[0] = colora[0];
-			v->Color[1] = colora[1];
-		}
-
-		if (ras_use_texture && xf.numTex && tID[0])
-		{
-			XF_DoTexGen(v);
-			tgout[0].out[0] *= tID[0]->ds;
-			tgout[0].out[1] *= tID[0]->dt;
-			v->TexCoord[0][0] = tgout[0].out[0];
-			v->TexCoord[0][1] = tgout[0].out[1];
-		}
-
 	}
 
 	void GXCore::GxBadFifo(uint8_t command)
@@ -2177,6 +2150,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += (vtxnum / 4) / 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2186,7 +2162,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
 					}
-					tris += (vtxnum / 4) / 2;
+#else
+					RAS_Begin(RAS_QUAD, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2209,6 +2194,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += vtxnum / 3;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2218,7 +2206,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_TRIANGLE: %x\n", gl_error);
 					}
-					tris += vtxnum / 3;
+#else
+					RAS_Begin(RAS_TRIANGLE, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2241,6 +2238,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += vtxnum - 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2250,7 +2250,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_STRIP: %x\n", gl_error);
 					}
-					tris += vtxnum - 2;
+#else
+					RAS_Begin(RAS_TRIANGLE_STRIP, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2273,6 +2282,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += vtxnum - 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2282,7 +2294,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_FAN: %x\n", gl_error);
 					}
-					tris += vtxnum - 2;
+#else
+					RAS_Begin(RAS_TRIANGLE_FAN, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2305,6 +2326,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					lines += vtxnum / 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2314,7 +2338,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_LINE: %x\n", gl_error);
 					}
-					lines += vtxnum / 2;
+#else
+					RAS_Begin(RAS_LINE, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2337,6 +2370,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					lines += vtxnum - 1;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2346,7 +2382,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_LINESTRIP: %x\n", gl_error);
 					}
-					lines += vtxnum - 1;
+#else
+					RAS_Begin(RAS_LINE_STRIP, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2369,6 +2414,9 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					pts += vtxnum;
+
+#if GFX_BLACKJACK_AND_SHADERS
 					for (unsigned i = 0; i < vtxnum; i++) {
 						FifoWalk(vatnum, &vertex_data[i], gxfifo);
 					}
@@ -2378,7 +2426,16 @@ namespace GX
 					if (gl_error != GL_NO_ERROR) {
 						Halt("GL Error CP_CMD_DRAW_POINT: %x\n", gl_error);
 					}
-					pts += vtxnum;
+#else
+					RAS_Begin(RAS_POINT, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
 				}
 				break;
 			}

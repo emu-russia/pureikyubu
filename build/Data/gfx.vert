@@ -35,7 +35,6 @@ uniform struct Light
     vec3 dhx;
 } ligth_mem[8];                 // 0x0600-0x067f  (IndexD)
 
-uniform uint clip_disable;      // 0x1005
 uniform uint vtx_spec;          // 0x1008
 uniform uint num_colors;        // 0x1009
 uniform uvec4 ambient[2];       // 0x100a, 0x100b

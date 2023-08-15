@@ -69,37 +69,10 @@ namespace GX
 				glBegin(GL_POINTS);
 				break;
 		}
-
-		last_prim = prim;
-		ras_vtx_num = vtx_num;
 	}
 
 	void GXCore::RAS_End()
 	{
-		switch (last_prim)
-		{
-			case RAS_QUAD:
-				tris += (ras_vtx_num / 4) / 2;
-				break;
-			case RAS_TRIANGLE:
-				tris += ras_vtx_num / 3;
-				break;
-			case RAS_TRIANGLE_STRIP:
-				tris += ras_vtx_num - 2;
-				break;
-			case RAS_TRIANGLE_FAN:
-				tris += ras_vtx_num - 2;
-				break;
-			case RAS_LINE:
-				lines += ras_vtx_num / 2;
-				break;
-			case RAS_LINE_STRIP:
-				lines += ras_vtx_num - 1;
-				break;
-			case RAS_POINT:
-				pts += ras_vtx_num;
-				break;
-		}
 		glEnd();
 	}
 
@@ -119,17 +92,6 @@ namespace GX
 				glColor3ub(0, 255, 255);
 			}
 			else {
-
-				if (xf.numColors >= 1) {
-					//glUniform4i(color0, colora[0].R, colora[0].G, colora[0].B, colora[0].A);
-					//glUniform4f(color0, 1.0f, 1.0f, 0.0f, 1.0f);
-					//glUniform1f(color0, 2.0f);
-				}
-				if (xf.numColors >= 2) {
-					//auto color1 = glGetUniformLocation(shader_prog, "color1");
-					//glUniform4i(color1, colora[1].R, colora[1].G, colora[1].B, colora[1].A);
-				}
-
 				glColor4ub(colora[0].R, colora[0].G, colora[0].B, colora[0].A);
 			}
 		}

@@ -270,7 +270,12 @@ namespace GX
 
 		// Other registers
 
+		uint32_t error;					// 0x1000
+		uint32_t diagnostics;			// 0x1001
+		uint32_t state[2];				// 0x1002, 0x1003
+		uint32_t clock;					// 0x1004
 		ClipDisable clipDisable;		// 0x1005
+		uint32_t perf[2];				// 0x1006, 0x1007
 		InVertexSpec vtxSpec;			// 0x1008
 		uint32_t numColors;			// 0x1009. Specifies the number of colors to output: 0: No xform colors active, 1: Xform supplies 1 color (host supplied or computed), 2: Xform supplies 2 colors (host supplied or computed)
 		Color ambient[2];		// 0x100a, 0x100b. 32b: RGBA (8b/comp) Ambient color0/1 specifications
@@ -284,12 +289,9 @@ namespace GX
 		float viewportOffset[3];			// 0x101d-0x101f. Viewport offset X,Y,Z
 		float projectionParam[6];	// 0x1020-0x1025
 		bool projectOrtho;		// 0x1026. If set selects orthographic otherwise non-orthographic
-		uint32_t numTex;			// 0x103f. Number of active textures
+		uint32_t numTex;			// 0x103f. Number of active texgens
 		TexGenParam tex[8];			// 0x1040-0x1047
 		DualGenParam dualTex[8];		// 0x1050-0x1057
-
-		bool colmask[8][2];				// light color mask
-		bool amask[8][2];				// light alpha mask
 	};
 
 	// current vertex data

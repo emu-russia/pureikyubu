@@ -7,6 +7,37 @@ using namespace Debug;
 
 namespace GX
 {
+	bool GXCore::XF_LightColorEnabled(int chan, int light)
+	{
+		switch (chan)
+		{
+			case 0: return xf.colorControl[chan].Light0;
+			case 1: return xf.colorControl[chan].Light1;
+			case 2: return xf.colorControl[chan].Light2;
+			case 3: return xf.colorControl[chan].Light3;
+			case 4: return xf.colorControl[chan].Light4;
+			case 5: return xf.colorControl[chan].Light5;
+			case 6: return xf.colorControl[chan].Light6;
+			case 7: return xf.colorControl[chan].Light7;
+			default: return false;
+		}
+	}
+
+	bool GXCore::XF_LightAlphaEnabled(int chan, int light)
+	{
+		switch (chan)
+		{
+			case 0: return xf.alphaControl[chan].Light0;
+			case 1: return xf.alphaControl[chan].Light1;
+			case 2: return xf.alphaControl[chan].Light2;
+			case 3: return xf.alphaControl[chan].Light3;
+			case 4: return xf.alphaControl[chan].Light4;
+			case 5: return xf.alphaControl[chan].Light5;
+			case 6: return xf.alphaControl[chan].Light6;
+			case 7: return xf.alphaControl[chan].Light7;
+			default: return false;
+		}
+	}
 
 	// normalize (clamp vector to 1.0 length)
 	void GXCore::VECNormalize(float vec[3])
@@ -68,7 +99,7 @@ namespace GX
 		// TODO: Second time? :/
 		XF_ApplyModelview(v, vpos, v->Position);
 
-		for (size_t ncol = 0; ncol < xf.numColors; ncol++) {
+		for (int ncol = 0; ncol < xf.numColors; ncol++) {
 
 			// -------------------------------------------------------------------
 
@@ -120,7 +151,7 @@ namespace GX
 				for (n = 0; n < 8; n++)
 				{
 					// check light mask
-					if (xf.colmask[n][ncol])
+					if (XF_LightColorEnabled(ncol, n))
 					{
 						// light color
 						col[0] = (float)xf.light[n].rgba.R / 255.0f;
@@ -255,7 +286,7 @@ namespace GX
 				for (n = 0; n < 8; n++)
 				{
 					// check light mask
-					if (xf.amask[n][ncol])
+					if (XF_LightAlphaEnabled(ncol, n))
 					{
 						// light color
 						col[0] = (float)xf.light[n].rgba.A / 255.0f;
@@ -533,21 +564,43 @@ namespace GX
 		}
 		else switch (startIdx)
 		{
+			case XF_ERROR_ID:
+				xf.error = gxfifo->Read32();
+				break;
+			case XF_DIAGNOSTICS_ID:
+				xf.diagnostics = gxfifo->Read32();
+				break;
+			case XF_STATE0_ID:
+				xf.state[0] = gxfifo->Read32();
+				break;
+			case XF_STATE1_ID:
+				xf.state[1] = gxfifo->Read32();
+				break;
+			case XF_CLOCK_ID:
+				xf.clock = gxfifo->Read32();
+				break;
+			case XF_CLIP_DISABLE_ID:
+				// TODO: How does this affect Culling in the Setup Unit?
+				xf.clipDisable.bits = gxfifo->Read32();
+				break;
+			case XF_PERF0_ID:
+				xf.perf[0] = gxfifo->Read32();
+				break;
+			case XF_PERF1_ID:
+				xf.perf[1] = gxfifo->Read32();
+				break;
+
 			//
 			// set matrix index
 			//
 
 			case XF_MATINDEX_A_ID:
-			{
 				xf.matIdxA.bits = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			case XF_MATINDEX_B_ID:
-			{
 				xf.matIdxB.bits = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			//
 			// load projection matrix
@@ -722,68 +775,20 @@ namespace GX
 			//
 
 			case XF_COLOR0CNTL_ID:
-			{
 				xf.colorControl[0].bits = gxfifo->Read32();
-
-				// change light mask
-				xf.colmask[0][0] = (xf.colorControl[0].Light0) ? (true) : (false);
-				xf.colmask[1][0] = (xf.colorControl[0].Light1) ? (true) : (false);
-				xf.colmask[2][0] = (xf.colorControl[0].Light2) ? (true) : (false);
-				xf.colmask[3][0] = (xf.colorControl[0].Light3) ? (true) : (false);
-				xf.colmask[4][0] = (xf.colorControl[0].Light4) ? (true) : (false);
-				xf.colmask[5][0] = (xf.colorControl[0].Light5) ? (true) : (false);
-				xf.colmask[6][0] = (xf.colorControl[0].Light6) ? (true) : (false);
-				xf.colmask[7][0] = (xf.colorControl[0].Light7) ? (true) : (false);
-			}
-			return;
+				break;
 
 			case XF_COLOR1CNTL_ID:
-			{
 				xf.colorControl[1].bits = gxfifo->Read32();
-
-				// change light mask
-				xf.colmask[0][1] = (xf.colorControl[1].Light0) ? (true) : (false);
-				xf.colmask[1][1] = (xf.colorControl[1].Light1) ? (true) : (false);
-				xf.colmask[2][1] = (xf.colorControl[1].Light2) ? (true) : (false);
-				xf.colmask[3][1] = (xf.colorControl[1].Light3) ? (true) : (false);
-				xf.colmask[4][1] = (xf.colorControl[1].Light4) ? (true) : (false);
-				xf.colmask[5][1] = (xf.colorControl[1].Light5) ? (true) : (false);
-				xf.colmask[6][1] = (xf.colorControl[1].Light6) ? (true) : (false);
-				xf.colmask[7][1] = (xf.colorControl[1].Light7) ? (true) : (false);
-			}
-			return;
+				break;
 
 			case XF_ALPHA0CNTL_ID:
-			{
 				xf.alphaControl[0].bits = gxfifo->Read32();
-
-				// change light mask
-				xf.amask[0][0] = (xf.alphaControl[0].Light0) ? (true) : (false);
-				xf.amask[1][0] = (xf.alphaControl[0].Light1) ? (true) : (false);
-				xf.amask[2][0] = (xf.alphaControl[0].Light2) ? (true) : (false);
-				xf.amask[3][0] = (xf.alphaControl[0].Light3) ? (true) : (false);
-				xf.amask[4][0] = (xf.alphaControl[0].Light4) ? (true) : (false);
-				xf.amask[5][0] = (xf.alphaControl[0].Light5) ? (true) : (false);
-				xf.amask[6][0] = (xf.alphaControl[0].Light6) ? (true) : (false);
-				xf.amask[7][0] = (xf.alphaControl[0].Light7) ? (true) : (false);
-			}
-			return;
+				break;
 
 			case XF_ALPHA1CNTL_ID:
-			{
 				xf.alphaControl[1].bits = gxfifo->Read32();
-
-				// change light mask
-				xf.amask[0][1] = (xf.alphaControl[1].Light0) ? (true) : (false);
-				xf.amask[1][1] = (xf.alphaControl[1].Light1) ? (true) : (false);
-				xf.amask[2][1] = (xf.alphaControl[1].Light2) ? (true) : (false);
-				xf.amask[3][1] = (xf.alphaControl[1].Light3) ? (true) : (false);
-				xf.amask[4][1] = (xf.alphaControl[1].Light4) ? (true) : (false);
-				xf.amask[5][1] = (xf.alphaControl[1].Light5) ? (true) : (false);
-				xf.amask[6][1] = (xf.alphaControl[1].Light6) ? (true) : (false);
-				xf.amask[7][1] = (xf.alphaControl[1].Light7) ? (true) : (false);
-			}
-			return;
+				break;
 
 			//
 			// set dualtex enable / disable
@@ -833,20 +838,16 @@ namespace GX
 			//
 
 			case XF_NUMCOLS_ID:
-			{
 				xf.numColors = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			//
 			// set number of texgens
 			//
 
 			case XF_NUMTEX_ID:
-			{
 				xf.numTex = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			// 
 			// set texgen configuration
