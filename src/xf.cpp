@@ -486,6 +486,11 @@ namespace GX
 					break;
 				}
 
+				// Hmmm :/
+				if (mx == nullptr) {
+					mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
+				}
+
 				// st or stq ?
 				if (xf.tex[n].projection)
 				{
