@@ -1,6 +1,8 @@
 // DI - Flipper Disk Interface
 #include "pch.h"
 
+using namespace Debug;
+
 // DI state (registers and other data)
 DIControl di;
 
@@ -273,6 +275,17 @@ static void write_cr(uint32_t addr, uint32_t data)
 	if (DICR & DI_CR_TSTART)
 	{
 		// Issue command
+
+		if (di.log) {
+
+			Report(Channel::DI, "cmdbuf: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+				di.cmdbuf[0], di.cmdbuf[1], di.cmdbuf[2], di.cmdbuf[3], 
+				di.cmdbuf[4], di.cmdbuf[5], di.cmdbuf[6], di.cmdbuf[7], 
+				di.cmdbuf[8], di.cmdbuf[9], di.cmdbuf[10], di.cmdbuf[11] );
+			Report(Channel::DI, "immbuf: %02X %02X %02X %02X\n",
+				di.immbuf[0], di.immbuf[1], di.immbuf[2], di.immbuf[3] );
+			Report(Channel::DI, "mar: 0x%08X, len: 0x%08X\n", DIMAR, DILEN);
+		}
 
 		di.hostToDduByteCounter = 0;
 		DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
