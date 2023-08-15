@@ -270,7 +270,12 @@ namespace GX
 
 		// Other registers
 
+		uint32_t error;					// 0x1000
+		uint32_t diagnostics;			// 0x1001
+		uint32_t state[2];				// 0x1002, 0x1003
+		uint32_t clock;					// 0x1004
 		ClipDisable clipDisable;		// 0x1005
+		uint32_t perf[2];				// 0x1006, 0x1007
 		InVertexSpec vtxSpec;			// 0x1008
 		uint32_t numColors;			// 0x1009. Specifies the number of colors to output: 0: No xform colors active, 1: Xform supplies 1 color (host supplied or computed), 2: Xform supplies 2 colors (host supplied or computed)
 		Color ambient[2];		// 0x100a, 0x100b. 32b: RGBA (8b/comp) Ambient color0/1 specifications
@@ -284,13 +289,22 @@ namespace GX
 		float viewportOffset[3];			// 0x101d-0x101f. Viewport offset X,Y,Z
 		float projectionParam[6];	// 0x1020-0x1025
 		bool projectOrtho;		// 0x1026. If set selects orthographic otherwise non-orthographic
-		uint32_t numTex;			// 0x103f. Number of active textures
+		uint32_t numTex;			// 0x103f. Number of active texgens
 		TexGenParam tex[8];			// 0x1040-0x1047
 		DualGenParam dualTex[8];		// 0x1050-0x1057
+	};
 
-		unsigned posidx, texidx[8];		// pos index, tex index
-		bool colmask[8][2];				// light color mask
-		bool amask[8][2];				// light alpha mask
+	// current vertex data
+	struct Vertex
+	{
+		float Position[3];		// x, y, z
+		float Normal[3];		// x, y, z, normalized to [0, 1]
+		float Binormal[3];
+		float Tangent[3];
+		Color Color[2];			// 2 color / alpha (RGBA)
+		float TexCoord[8][2];	// s, t for eight tex units
+		MatrixIndex0 matIdx0;	// pos mtx index, tex mtx idx 0-3
+		MatrixIndex1 matIdx1;	// tex mtx idx 4-7
 	};
 
 #pragma pack(pop)
@@ -300,15 +314,6 @@ namespace GX
 
 
 // TODO: Old implementation, will be redone nicely.
-
-// current vertex data
-typedef struct _Vertex
-{
-	float       pos[3];         // x, y, z
-	float       nrm[9];         // x, y, z, normalized to [0, 1]
-	Color       col[2];         // 2 color / alpha (RGBA)
-	float       tcoord[8][4];   // s, t for eight tex units, last two for texgen
-} Vertex;
 
 typedef struct
 {

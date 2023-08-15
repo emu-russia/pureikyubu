@@ -7,6 +7,37 @@ using namespace Debug;
 
 namespace GX
 {
+	bool GXCore::XF_LightColorEnabled(int chan, int light)
+	{
+		switch (chan)
+		{
+			case 0: return xf.colorControl[chan].Light0;
+			case 1: return xf.colorControl[chan].Light1;
+			case 2: return xf.colorControl[chan].Light2;
+			case 3: return xf.colorControl[chan].Light3;
+			case 4: return xf.colorControl[chan].Light4;
+			case 5: return xf.colorControl[chan].Light5;
+			case 6: return xf.colorControl[chan].Light6;
+			case 7: return xf.colorControl[chan].Light7;
+			default: return false;
+		}
+	}
+
+	bool GXCore::XF_LightAlphaEnabled(int chan, int light)
+	{
+		switch (chan)
+		{
+			case 0: return xf.alphaControl[chan].Light0;
+			case 1: return xf.alphaControl[chan].Light1;
+			case 2: return xf.alphaControl[chan].Light2;
+			case 3: return xf.alphaControl[chan].Light3;
+			case 4: return xf.alphaControl[chan].Light4;
+			case 5: return xf.alphaControl[chan].Light5;
+			case 6: return xf.alphaControl[chan].Light6;
+			case 7: return xf.alphaControl[chan].Light7;
+			default: return false;
+		}
+	}
 
 	// normalize (clamp vector to 1.0 length)
 	void GXCore::VECNormalize(float vec[3])
@@ -19,9 +50,9 @@ namespace GX
 	}
 
 	// perform position transform
-	void GXCore::XF_ApplyModelview(float* out, const float* in)
+	void GXCore::XF_ApplyModelview(const Vertex* v, float* out, const float* in)
 	{
-		float* mx = &state.xf.mvTexMtx[state.xf.posidx * 4];
+		float* mx = &xf.mvTexMtx[v->matIdx0.PosNrmMatIdx * 4];
 
 		out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
 		out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
@@ -30,9 +61,9 @@ namespace GX
 
 	// perform normal transform
 	// matrix must be the inverse transpose of the modelview matrix
-	void GXCore::NormalTransform(float* out, const float* in)
+	void GXCore::NormalTransform(const Vertex* v, float* out, const float* in)
 	{
-		float* mx = &state.xf.nrmMtx[state.xf.posidx * 3];
+		float* mx = &xf.nrmMtx[v->matIdx0.PosNrmMatIdx * 3];
 
 		out[0] = in[0];
 		out[1] = in[1];
@@ -66,9 +97,9 @@ namespace GX
 		float illum[3];
 
 		// TODO: Second time? :/
-		XF_ApplyModelview(vpos, v->pos);
+		XF_ApplyModelview(v, vpos, v->Position);
 
-		for (size_t ncol = 0; ncol < state.xf.numColors; ncol++) {
+		for (int ncol = 0; ncol < xf.numColors; ncol++) {
 
 			// -------------------------------------------------------------------
 
@@ -77,16 +108,16 @@ namespace GX
 			//
 
 			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->col[ncol].R / 255.0f;
-			col[1] = (float)v->col[ncol].G / 255.0f;
-			col[2] = (float)v->col[ncol].B / 255.0f;
+			col[0] = (float)v->Color[ncol].R / 255.0f;
+			col[1] = (float)v->Color[ncol].G / 255.0f;
+			col[2] = (float)v->Color[ncol].B / 255.0f;
 
 			// select material color
-			if (state.xf.colorControl[ncol].MatSrc == 0)
+			if (xf.colorControl[ncol].MatSrc == 0)
 			{
-				mat[0] = (float)state.xf.material[ncol].R / 255.0f;
-				mat[1] = (float)state.xf.material[ncol].G / 255.0f;
-				mat[2] = (float)state.xf.material[ncol].B / 255.0f;
+				mat[0] = (float)xf.material[ncol].R / 255.0f;
+				mat[1] = (float)xf.material[ncol].G / 255.0f;
+				mat[2] = (float)xf.material[ncol].B / 255.0f;
 			}
 			else
 			{
@@ -96,16 +127,16 @@ namespace GX
 			}
 
 			// calculate light function
-			if (state.xf.colorControl[ncol].LightFunc)
+			if (xf.colorControl[ncol].LightFunc)
 			{
 				int n;
 
 				// select ambient color
-				if (state.xf.colorControl[ncol].AmbSrc == 0)
+				if (xf.colorControl[ncol].AmbSrc == 0)
 				{
-					amb[0] = (float)state.xf.ambient[ncol].R / 255.0f;
-					amb[1] = (float)state.xf.ambient[ncol].G / 255.0f;
-					amb[2] = (float)state.xf.ambient[ncol].B / 255.0f;
+					amb[0] = (float)xf.ambient[ncol].R / 255.0f;
+					amb[1] = (float)xf.ambient[ncol].G / 255.0f;
+					amb[2] = (float)xf.ambient[ncol].B / 255.0f;
 				}
 				else
 				{
@@ -120,15 +151,15 @@ namespace GX
 				for (n = 0; n < 8; n++)
 				{
 					// check light mask
-					if (state.xf.colmask[n][ncol])
+					if (XF_LightColorEnabled(ncol, n))
 					{
 						// light color
-						col[0] = (float)state.xf.light[n].rgba.R / 255.0f;
-						col[1] = (float)state.xf.light[n].rgba.G / 255.0f;
-						col[2] = (float)state.xf.light[n].rgba.B / 255.0f;
+						col[0] = (float)xf.light[n].rgba.R / 255.0f;
+						col[1] = (float)xf.light[n].rgba.G / 255.0f;
+						col[2] = (float)xf.light[n].rgba.B / 255.0f;
 
 						// calculate diffuse lighting
-						switch (state.xf.colorControl[ncol].DiffuseAtten)
+						switch (xf.colorControl[ncol].DiffuseAtten)
 						{
 							case 0:         // identity
 								illum[0] += col[0];
@@ -142,15 +173,15 @@ namespace GX
 								float dp, dir[3];
 
 								// light direction vector
-								dir[0] = state.xf.light[n].lpx[0] - vpos[0];
-								dir[1] = state.xf.light[n].lpx[1] - vpos[1];
-								dir[2] = state.xf.light[n].lpx[2] - vpos[2];
+								dir[0] = xf.light[n].lpx[0] - vpos[0];
+								dir[1] = xf.light[n].lpx[1] - vpos[1];
+								dir[2] = xf.light[n].lpx[2] - vpos[2];
 
 								// normalize light direction vector
 								VECNormalize(dir);
 
 								// normal transformation
-								NormalTransform(vnrm, v->nrm);
+								NormalTransform(v, vnrm, v->Normal);
 
 								// dot product of normal and light
 								dp = vnrm[0] * dir[0] +
@@ -158,7 +189,7 @@ namespace GX
 									vnrm[2] * dir[2];
 
 								// clamp dot product
-								if (state.xf.colorControl[ncol].DiffuseAtten == 2)
+								if (xf.colorControl[ncol].DiffuseAtten == 2)
 								{
 									CLAMP0(dp);
 								}
@@ -222,12 +253,12 @@ namespace GX
 			//
 
 			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->col[ncol].A / 255.0f;
+			col[0] = (float)v->Color[ncol].A / 255.0f;
 
 			// select material color
-			if (state.xf.alphaControl[ncol].MatSrc == 0)
+			if (xf.alphaControl[ncol].MatSrc == 0)
 			{
-				mat[0] = (float)state.xf.material[ncol].A / 255.0f;
+				mat[0] = (float)xf.material[ncol].A / 255.0f;
 			}
 			else
 			{
@@ -235,14 +266,14 @@ namespace GX
 			}
 
 			// calculate light function
-			if (state.xf.alphaControl[ncol].LightFunc)
+			if (xf.alphaControl[ncol].LightFunc)
 			{
 				int n;
 
 				// select ambient color
-				if (state.xf.alphaControl[ncol].AmbSrc == 0)
+				if (xf.alphaControl[ncol].AmbSrc == 0)
 				{
-					amb[0] = (float)state.xf.ambient[ncol].A / 255.0f;
+					amb[0] = (float)xf.ambient[ncol].A / 255.0f;
 				}
 				else
 				{
@@ -255,13 +286,13 @@ namespace GX
 				for (n = 0; n < 8; n++)
 				{
 					// check light mask
-					if (state.xf.amask[n][ncol])
+					if (XF_LightAlphaEnabled(ncol, n))
 					{
 						// light color
-						col[0] = (float)state.xf.light[n].rgba.A / 255.0f;
+						col[0] = (float)xf.light[n].rgba.A / 255.0f;
 
 						// calculate diffuse lighting
-						switch (state.xf.alphaControl[ncol].DiffuseAtten)
+						switch (xf.alphaControl[ncol].DiffuseAtten)
 						{
 							case 0:         // identity
 								illum[0] += col[0];
@@ -273,15 +304,15 @@ namespace GX
 								float dp, dir[3];
 
 								// light direction vector
-								dir[0] = state.xf.light[n].lpx[0] - vpos[0];
-								dir[1] = state.xf.light[n].lpx[1] - vpos[1];
-								dir[2] = state.xf.light[n].lpx[2] - vpos[2];
+								dir[0] = xf.light[n].lpx[0] - vpos[0];
+								dir[1] = xf.light[n].lpx[1] - vpos[1];
+								dir[2] = xf.light[n].lpx[2] - vpos[2];
 
 								// normalize light direction vector
 								VECNormalize(dir);
 
 								// normal transformation
-								NormalTransform(vnrm, v->nrm);
+								NormalTransform(v, vnrm, v->Normal);
 
 								// dot product of normal and light
 								dp = vnrm[0] * dir[0] +
@@ -289,7 +320,7 @@ namespace GX
 									vnrm[2] * dir[2];
 
 								// clamp dot product
-								if (state.xf.alphaControl[ncol].DiffuseAtten == 2)
+								if (xf.alphaControl[ncol].DiffuseAtten == 2)
 								{
 									CLAMP0(dp);
 								}
@@ -338,47 +369,47 @@ namespace GX
 	void GXCore::XF_DoTexGen(const Vertex* v)
 	{
 		float   in[4], q;
-		float* mx;
+		float* mx = nullptr;
 
-		if (state.xf.numTex == 0)
+		if (xf.numTex == 0)
 		{
-			mx = &state.xf.mvTexMtx[state.xf.texidx[0] * 4];
-			in[0] = v->tcoord[0][0];
-			in[1] = v->tcoord[0][1];
+			mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
+			in[0] = v->TexCoord[0][0];
+			in[1] = v->TexCoord[0][1];
 			in[2] = 1.0f;
 			in[3] = 1.0f;
 		}
 
-		for (unsigned n = 0; n < state.xf.numTex; n++)
+		for (unsigned n = 0; n < xf.numTex; n++)
 		{
-			if (state.xf.tex[n].type == 0)
+			if (xf.tex[n].type == 0)
 			{
 				// select inrow
-				switch (state.xf.tex[n].src_row)
+				switch (xf.tex[n].src_row)
 				{
 					case XF_TEXGEN_INROW_POSMTX:
 					{
-						in[0] = v->pos[0];
-						in[1] = v->pos[1];
-						in[2] = v->pos[2];
+						in[0] = v->Position[0];
+						in[1] = v->Position[1];
+						in[2] = v->Position[2];
 						in[3] = 1.0f;
 					}
 					break;
 
 					case XF_TEXGEN_INROW_NORMAL:
 					{
-						in[0] = v->nrm[0];
-						in[1] = v->nrm[1];
-						in[2] = v->nrm[2];
+						in[0] = v->Normal[0];
+						in[1] = v->Normal[1];
+						in[2] = v->Normal[2];
 						in[3] = 1.0f;
 					}
 					break;
 
 					case XF_TEXGEN_INROW_TEX0:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[0] * 4];
-						in[0] = v->tcoord[0][0];
-						in[1] = v->tcoord[0][1];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
+						in[0] = v->TexCoord[0][0];
+						in[1] = v->TexCoord[0][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -386,9 +417,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX1:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[1] * 4];
-						in[0] = v->tcoord[1][0];
-						in[1] = v->tcoord[1][1];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex1MatIdx * 4];
+						in[0] = v->TexCoord[1][0];
+						in[1] = v->TexCoord[1][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -396,9 +427,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX2:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[2] * 4];
-						in[0] = v->tcoord[2][0];
-						in[1] = v->tcoord[2][1];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex2MatIdx * 4];
+						in[0] = v->TexCoord[2][0];
+						in[1] = v->TexCoord[2][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -406,9 +437,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX3:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[3] * 4];
-						in[0] = v->tcoord[3][0];
-						in[1] = v->tcoord[3][1];
+						mx = &xf.mvTexMtx[v->matIdx0.Tex3MatIdx * 4];
+						in[0] = v->TexCoord[3][0];
+						in[1] = v->TexCoord[3][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -416,9 +447,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX4:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[4] * 4];
-						in[0] = v->tcoord[4][0];
-						in[1] = v->tcoord[4][1];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex4MatIdx * 4];
+						in[0] = v->TexCoord[4][0];
+						in[1] = v->TexCoord[4][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -426,9 +457,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX5:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[5] * 4];
-						in[0] = v->tcoord[5][0];
-						in[1] = v->tcoord[5][1];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex5MatIdx * 4];
+						in[0] = v->TexCoord[5][0];
+						in[1] = v->TexCoord[5][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -436,9 +467,9 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX6:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[6] * 4];
-						in[0] = v->tcoord[6][0];
-						in[1] = v->tcoord[6][1];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex6MatIdx * 4];
+						in[0] = v->TexCoord[6][0];
+						in[1] = v->TexCoord[6][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
@@ -446,19 +477,17 @@ namespace GX
 
 					case XF_TEXGEN_INROW_TEX7:
 					{
-						mx = &state.xf.mvTexMtx[state.xf.texidx[7] * 4];
-						in[0] = v->tcoord[7][0];
-						in[1] = v->tcoord[7][1];
+						mx = &xf.mvTexMtx[v->matIdx1.Tex7MatIdx * 4];
+						in[0] = v->TexCoord[7][0];
+						in[1] = v->TexCoord[7][1];
 						in[2] = 1.0f;
 						in[3] = 1.0f;
 					}
 					break;
 				}
 
-				mx = &state.xf.mvTexMtx[state.xf.texidx[n] * 4];
-
 				// st or stq ?
-				if (state.xf.tex[n].projection)
+				if (xf.tex[n].projection)
 				{
 					tgout[n].out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
 					tgout[n].out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
@@ -502,7 +531,7 @@ namespace GX
 	// reg size = 32 bit
 	void GXCore::loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo)
 	{
-		state.xfLoads += (uint32_t)amount;
+		xfLoads += (uint32_t)amount;
 
 		if (GpRegsLog)
 		{
@@ -514,7 +543,7 @@ namespace GX
 		{
 			for (size_t i = 0; i < amount; i++)
 			{
-				state.xf.mvTexMtx[(startIdx - XF_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
+				xf.mvTexMtx[(startIdx - XF_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
 			}
 		}
 		// load normal matrix
@@ -522,7 +551,7 @@ namespace GX
 		{
 			for (size_t i = 0; i < amount; i++)
 			{
-				state.xf.nrmMtx[(startIdx - XF_NORMAL_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
+				xf.nrmMtx[(startIdx - XF_NORMAL_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
 			}
 		}
 		// load post-trans matrix
@@ -530,35 +559,48 @@ namespace GX
 		{
 			for (size_t i = 0; i < amount; i++)
 			{
-				state.xf.dualTexMtx[(startIdx - XF_DUALTEX_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
+				xf.dualTexMtx[(startIdx - XF_DUALTEX_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
 			}
 		}
 		else switch (startIdx)
 		{
+			case XF_ERROR_ID:
+				xf.error = gxfifo->Read32();
+				break;
+			case XF_DIAGNOSTICS_ID:
+				xf.diagnostics = gxfifo->Read32();
+				break;
+			case XF_STATE0_ID:
+				xf.state[0] = gxfifo->Read32();
+				break;
+			case XF_STATE1_ID:
+				xf.state[1] = gxfifo->Read32();
+				break;
+			case XF_CLOCK_ID:
+				xf.clock = gxfifo->Read32();
+				break;
+			case XF_CLIP_DISABLE_ID:
+				// TODO: How does this affect Culling in the Setup Unit?
+				xf.clipDisable.bits = gxfifo->Read32();
+				break;
+			case XF_PERF0_ID:
+				xf.perf[0] = gxfifo->Read32();
+				break;
+			case XF_PERF1_ID:
+				xf.perf[1] = gxfifo->Read32();
+				break;
+
 			//
 			// set matrix index
 			//
 
 			case XF_MATINDEX_A_ID:
-			{
-				state.xf.matIdxA.bits = gxfifo->Read32();
-				state.xf.posidx = state.xf.matIdxA.PosNrmMatIdx;
-				state.xf.texidx[0] = state.xf.matIdxA.Tex0MatIdx;
-				state.xf.texidx[1] = state.xf.matIdxA.Tex1MatIdx;
-				state.xf.texidx[2] = state.xf.matIdxA.Tex2MatIdx;
-				state.xf.texidx[3] = state.xf.matIdxA.Tex3MatIdx;
-			}
-			return;
+				xf.matIdxA.bits = gxfifo->Read32();
+				break;
 
 			case XF_MATINDEX_B_ID:
-			{
-				state.xf.matIdxB.bits = gxfifo->Read32();
-				state.xf.texidx[4] = state.xf.matIdxB.Tex4MatIdx;
-				state.xf.texidx[5] = state.xf.matIdxB.Tex5MatIdx;
-				state.xf.texidx[6] = state.xf.matIdxB.Tex6MatIdx;
-				state.xf.texidx[7] = state.xf.matIdxB.Tex7MatIdx;
-			}
-			return;
+				xf.matIdxB.bits = gxfifo->Read32();
+				break;
 
 			//
 			// load projection matrix
@@ -632,24 +674,24 @@ namespace GX
 				// read coefficients
 				//
 
-				state.xf.viewportScale[0] = gxfifo->ReadFloat();   // w / 2
-				state.xf.viewportScale[1] = gxfifo->ReadFloat();   // -h / 2
-				state.xf.viewportScale[2] = gxfifo->ReadFloat();   // ZMAX * (zfar - znear)
+				xf.viewportScale[0] = gxfifo->ReadFloat();   // w / 2
+				xf.viewportScale[1] = gxfifo->ReadFloat();   // -h / 2
+				xf.viewportScale[2] = gxfifo->ReadFloat();   // ZMAX * (zfar - znear)
 
-				state.xf.viewportOffset[0] = gxfifo->ReadFloat();    // x + w/2 + 342
-				state.xf.viewportOffset[1] = gxfifo->ReadFloat();    // y + h/2 + 342
-				state.xf.viewportOffset[2] = gxfifo->ReadFloat();    // ZMAX * zfar
+				xf.viewportOffset[0] = gxfifo->ReadFloat();    // x + w/2 + 342
+				xf.viewportOffset[1] = gxfifo->ReadFloat();    // y + h/2 + 342
+				xf.viewportOffset[2] = gxfifo->ReadFloat();    // ZMAX * zfar
 
 				//
 				// convert them to human usable form
 				//
 
-				w = state.xf.viewportScale[0] * 2;
-				h = -state.xf.viewportScale[1] * 2;
-				x = state.xf.viewportOffset[0] - state.xf.viewportScale[0] - 342;
-				y = state.xf.viewportOffset[1] + state.xf.viewportScale[1] - 342;
-				zf = state.xf.viewportOffset[2] / 16777215.0f;
-				zn = -((state.xf.viewportScale[2] / 16777215.0f) - zf);
+				w = xf.viewportScale[0] * 2;
+				h = -xf.viewportScale[1] * 2;
+				x = xf.viewportOffset[0] - xf.viewportScale[0] - 342;
+				y = xf.viewportOffset[1] + xf.viewportScale[1] - 342;
+				zf = xf.viewportOffset[2] / 16777215.0f;
+				zn = -((xf.viewportScale[2] / 16777215.0f) - zf);
 
 				//GFXError("viewport (%.2f, %.2f)-(%.2f, %.2f), %f, %f", x, y, w, h, zn, zf);
 				GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
@@ -671,32 +713,32 @@ namespace GX
 			{
 				unsigned lnum = (startIdx >> 4) & 7;
 
-				state.xf.light[lnum].Reserved[0] = gxfifo->Read32();
-				state.xf.light[lnum].Reserved[1] = gxfifo->Read32();
-				state.xf.light[lnum].Reserved[2] = gxfifo->Read32();
-				state.xf.light[lnum].rgba.RGBA = gxfifo->Read32();
+				xf.light[lnum].Reserved[0] = gxfifo->Read32();
+				xf.light[lnum].Reserved[1] = gxfifo->Read32();
+				xf.light[lnum].Reserved[2] = gxfifo->Read32();
+				xf.light[lnum].rgba.RGBA = gxfifo->Read32();
 
-				state.xf.light[lnum].a[0] = gxfifo->ReadFloat();
-				state.xf.light[lnum].a[1] = gxfifo->ReadFloat();
-				state.xf.light[lnum].a[2] = gxfifo->ReadFloat();
+				xf.light[lnum].a[0] = gxfifo->ReadFloat();
+				xf.light[lnum].a[1] = gxfifo->ReadFloat();
+				xf.light[lnum].a[2] = gxfifo->ReadFloat();
 
-				state.xf.light[lnum].k[0] = gxfifo->ReadFloat();
-				state.xf.light[lnum].k[1] = gxfifo->ReadFloat();
-				state.xf.light[lnum].k[2] = gxfifo->ReadFloat();
+				xf.light[lnum].k[0] = gxfifo->ReadFloat();
+				xf.light[lnum].k[1] = gxfifo->ReadFloat();
+				xf.light[lnum].k[2] = gxfifo->ReadFloat();
 
-				state.xf.light[lnum].lpx[0] = gxfifo->ReadFloat();
-				state.xf.light[lnum].lpx[1] = gxfifo->ReadFloat();
-				state.xf.light[lnum].lpx[2] = gxfifo->ReadFloat();
+				xf.light[lnum].lpx[0] = gxfifo->ReadFloat();
+				xf.light[lnum].lpx[1] = gxfifo->ReadFloat();
+				xf.light[lnum].lpx[2] = gxfifo->ReadFloat();
 
-				state.xf.light[lnum].dhx[0] = gxfifo->ReadFloat();
-				state.xf.light[lnum].dhx[1] = gxfifo->ReadFloat();
-				state.xf.light[lnum].dhx[2] = gxfifo->ReadFloat();
+				xf.light[lnum].dhx[0] = gxfifo->ReadFloat();
+				xf.light[lnum].dhx[1] = gxfifo->ReadFloat();
+				xf.light[lnum].dhx[2] = gxfifo->ReadFloat();
 			}
 			return;
 
 			case XF_INVTXSPEC_ID:
 			{
-				state.xf.vtxSpec.bits = gxfifo->Read32();
+				xf.vtxSpec.bits = gxfifo->Read32();
 			}
 			return;
 
@@ -706,25 +748,25 @@ namespace GX
 
 			case XF_AMBIENT0_ID:
 			{
-				state.xf.ambient[0].RGBA = gxfifo->Read32();
+				xf.ambient[0].RGBA = gxfifo->Read32();
 			}
 			return;
 
 			case XF_AMBIENT1_ID:
 			{
-				state.xf.ambient[1].RGBA = gxfifo->Read32();
+				xf.ambient[1].RGBA = gxfifo->Read32();
 			}
 			return;
 
 			case XF_MATERIAL0_ID:
 			{
-				state.xf.material[0].RGBA = gxfifo->Read32();
+				xf.material[0].RGBA = gxfifo->Read32();
 			}
 			return;
 
 			case XF_MATERIAL1_ID:
 			{
-				state.xf.material[1].RGBA = gxfifo->Read32();
+				xf.material[1].RGBA = gxfifo->Read32();
 			}
 			return;
 
@@ -733,68 +775,20 @@ namespace GX
 			//
 
 			case XF_COLOR0CNTL_ID:
-			{
-				state.xf.colorControl[0].bits = gxfifo->Read32();
-
-				// change light mask
-				state.xf.colmask[0][0] = (state.xf.colorControl[0].Light0) ? (true) : (false);
-				state.xf.colmask[1][0] = (state.xf.colorControl[0].Light1) ? (true) : (false);
-				state.xf.colmask[2][0] = (state.xf.colorControl[0].Light2) ? (true) : (false);
-				state.xf.colmask[3][0] = (state.xf.colorControl[0].Light3) ? (true) : (false);
-				state.xf.colmask[4][0] = (state.xf.colorControl[0].Light4) ? (true) : (false);
-				state.xf.colmask[5][0] = (state.xf.colorControl[0].Light5) ? (true) : (false);
-				state.xf.colmask[6][0] = (state.xf.colorControl[0].Light6) ? (true) : (false);
-				state.xf.colmask[7][0] = (state.xf.colorControl[0].Light7) ? (true) : (false);
-			}
-			return;
+				xf.colorControl[0].bits = gxfifo->Read32();
+				break;
 
 			case XF_COLOR1CNTL_ID:
-			{
-				state.xf.colorControl[1].bits = gxfifo->Read32();
-
-				// change light mask
-				state.xf.colmask[0][1] = (state.xf.colorControl[1].Light0) ? (true) : (false);
-				state.xf.colmask[1][1] = (state.xf.colorControl[1].Light1) ? (true) : (false);
-				state.xf.colmask[2][1] = (state.xf.colorControl[1].Light2) ? (true) : (false);
-				state.xf.colmask[3][1] = (state.xf.colorControl[1].Light3) ? (true) : (false);
-				state.xf.colmask[4][1] = (state.xf.colorControl[1].Light4) ? (true) : (false);
-				state.xf.colmask[5][1] = (state.xf.colorControl[1].Light5) ? (true) : (false);
-				state.xf.colmask[6][1] = (state.xf.colorControl[1].Light6) ? (true) : (false);
-				state.xf.colmask[7][1] = (state.xf.colorControl[1].Light7) ? (true) : (false);
-			}
-			return;
+				xf.colorControl[1].bits = gxfifo->Read32();
+				break;
 
 			case XF_ALPHA0CNTL_ID:
-			{
-				state.xf.alphaControl[0].bits = gxfifo->Read32();
-
-				// change light mask
-				state.xf.amask[0][0] = (state.xf.alphaControl[0].Light0) ? (true) : (false);
-				state.xf.amask[1][0] = (state.xf.alphaControl[0].Light1) ? (true) : (false);
-				state.xf.amask[2][0] = (state.xf.alphaControl[0].Light2) ? (true) : (false);
-				state.xf.amask[3][0] = (state.xf.alphaControl[0].Light3) ? (true) : (false);
-				state.xf.amask[4][0] = (state.xf.alphaControl[0].Light4) ? (true) : (false);
-				state.xf.amask[5][0] = (state.xf.alphaControl[0].Light5) ? (true) : (false);
-				state.xf.amask[6][0] = (state.xf.alphaControl[0].Light6) ? (true) : (false);
-				state.xf.amask[7][0] = (state.xf.alphaControl[0].Light7) ? (true) : (false);
-			}
-			return;
+				xf.alphaControl[0].bits = gxfifo->Read32();
+				break;
 
 			case XF_ALPHA1CNTL_ID:
-			{
-				state.xf.alphaControl[1].bits = gxfifo->Read32();
-
-				// change light mask
-				state.xf.amask[0][1] = (state.xf.alphaControl[1].Light0) ? (true) : (false);
-				state.xf.amask[1][1] = (state.xf.alphaControl[1].Light1) ? (true) : (false);
-				state.xf.amask[2][1] = (state.xf.alphaControl[1].Light2) ? (true) : (false);
-				state.xf.amask[3][1] = (state.xf.alphaControl[1].Light3) ? (true) : (false);
-				state.xf.amask[4][1] = (state.xf.alphaControl[1].Light4) ? (true) : (false);
-				state.xf.amask[5][1] = (state.xf.alphaControl[1].Light5) ? (true) : (false);
-				state.xf.amask[6][1] = (state.xf.alphaControl[1].Light6) ? (true) : (false);
-				state.xf.amask[7][1] = (state.xf.alphaControl[1].Light7) ? (true) : (false);
-			}
-			return;
+				xf.alphaControl[1].bits = gxfifo->Read32();
+				break;
 
 			//
 			// set dualtex enable / disable
@@ -802,7 +796,7 @@ namespace GX
 
 			case XF_DUALTEX_ID:
 			{
-				state.xf.dualTexTran = gxfifo->Read32();
+				xf.dualTexTran = gxfifo->Read32();
 				//GFXError("dual texgen : %s", (regData[0]) ? ("on") : ("off"));
 			}
 			return;
@@ -844,20 +838,16 @@ namespace GX
 			//
 
 			case XF_NUMCOLS_ID:
-			{
-				state.xf.numColors = gxfifo->Read32();
-			}
-			return;
+				xf.numColors = gxfifo->Read32();
+				break;
 
 			//
 			// set number of texgens
 			//
 
 			case XF_NUMTEX_ID:
-			{
-				state.xf.numTex = gxfifo->Read32();
-			}
-			return;
+				xf.numTex = gxfifo->Read32();
+				break;
 
 			// 
 			// set texgen configuration
@@ -894,7 +884,7 @@ namespace GX
 					"", "", ""
 				};
 
-				state.xf.tex[num].bits = gxfifo->Read32();
+				xf.tex[num].bits = gxfifo->Read32();
 
 				/*/
 				GFXError(

@@ -104,9 +104,9 @@ namespace GX
 
 	void GXCore::CP_BREAK()
 	{
-		if (state.cpregs.cr & CP_CR_BPINTEN && (state.cpregs.sr & CP_SR_BPINT) == 0)
+		if (cpregs.cr & CP_CR_BPINTEN && (cpregs.sr & CP_SR_BPINT) == 0)
 		{
-			state.cpregs.sr |= CP_SR_BPINT;
+			cpregs.sr |= CP_SR_BPINT;
 			PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "BREAK\n");
 		}
@@ -114,9 +114,9 @@ namespace GX
 
 	void GXCore::CP_OVF()
 	{
-		if (state.cpregs.cr & CP_CR_OVFEN && (state.cpregs.sr & CP_SR_OVF) == 0)
+		if (cpregs.cr & CP_CR_OVFEN && (cpregs.sr & CP_SR_OVF) == 0)
 		{
-			state.cpregs.sr |= CP_SR_OVF;
+			cpregs.sr |= CP_SR_OVF;
 			PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "OVF\n");
 		}
@@ -124,9 +124,9 @@ namespace GX
 
 	void GXCore::CP_UVF()
 	{
-		if (state.cpregs.cr & CP_CR_UVFEN && (state.cpregs.sr & CP_SR_UVF) == 0)
+		if (cpregs.cr & CP_CR_UVFEN && (cpregs.sr & CP_SR_UVF) == 0)
 		{
-			state.cpregs.sr |= CP_SR_UVF;
+			cpregs.sr |= CP_SR_UVF;
 			PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "UVF\n");
 		}
@@ -147,58 +147,58 @@ namespace GX
 		GXCore* gx = (GXCore*)Param;
 
 		int64_t ticks = Core->GetTicks();
-		if (ticks < gx->state.updateTbrValue)
+		if (ticks < gx->updateTbrValue)
 		{
 			return;
 		}
-		gx->state.updateTbrValue = ticks + gx->state.tickPerFifo;
+		gx->updateTbrValue = ticks + gx->tickPerFifo;
 
 		// Calculate count
-		if (gx->state.cpregs.wrptr >= gx->state.cpregs.rdptr)
+		if (gx->cpregs.wrptr >= gx->cpregs.rdptr)
 		{
-			gx->state.cpregs.cnt = gx->state.cpregs.wrptr - gx->state.cpregs.rdptr;
+			gx->cpregs.cnt = gx->cpregs.wrptr - gx->cpregs.rdptr;
 		}
 		else
 		{
-			gx->state.cpregs.cnt = (gx->state.cpregs.top - gx->state.cpregs.rdptr) + (gx->state.cpregs.wrptr - gx->state.cpregs.base);
+			gx->cpregs.cnt = (gx->cpregs.top - gx->cpregs.rdptr) + (gx->cpregs.wrptr - gx->cpregs.base);
 		}
 
 		// Watermarks logic. Active only in linked-mode.
-		if (gx->state.cpregs.cnt > gx->state.cpregs.himark && (gx->state.cpregs.cr & CP_CR_WPINC))
+		if (gx->cpregs.cnt > gx->cpregs.himark && (gx->cpregs.cr & CP_CR_WPINC))
 		{
 			gx->CP_OVF();
 		}
-		if (gx->state.cpregs.cnt < gx->state.cpregs.lomark && (gx->state.cpregs.cr & CP_CR_WPINC))
+		if (gx->cpregs.cnt < gx->cpregs.lomark && (gx->cpregs.cr & CP_CR_WPINC))
 		{
 			gx->CP_UVF();
 		}
 
 		// Breakpoint
-		if ((gx->state.cpregs.rdptr & ~0x1f) == (gx->state.cpregs.bpptr & ~0x1f) && (gx->state.cpregs.cr & CP_CR_BPEN))
+		if ((gx->cpregs.rdptr & ~0x1f) == (gx->cpregs.bpptr & ~0x1f) && (gx->cpregs.cr & CP_CR_BPEN))
 		{
 			gx->CP_BREAK();
 		}
 
 		// Advance read pointer.
-		if (gx->state.cpregs.cnt != 0 && gx->state.cpregs.cr & CP_CR_RDEN && (gx->state.cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+		if (gx->cpregs.cnt != 0 && gx->cpregs.cr & CP_CR_RDEN && (gx->cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
 		{
-			gx->state.cpregs.sr &= ~CP_SR_RD_IDLE;
+			gx->cpregs.sr &= ~CP_SR_RD_IDLE;
 
-			gx->state.cpregs.sr &= ~CP_SR_CMD_IDLE;
+			gx->cpregs.sr &= ~CP_SR_CMD_IDLE;
 
-			gx->GXWriteFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+			gx->GXWriteFifo(&mi.ram[gx->cpregs.rdptr & RAMMASK]);
 
-			gx->state.cpregs.sr |= CP_SR_CMD_IDLE;
+			gx->cpregs.sr |= CP_SR_CMD_IDLE;
 
-			gx->state.cpregs.rdptr += 32;
-			if (gx->state.cpregs.rdptr == gx->state.cpregs.top)
+			gx->cpregs.rdptr += 32;
+			if (gx->cpregs.rdptr == gx->cpregs.top)
 			{
-				gx->state.cpregs.rdptr = gx->state.cpregs.base;
+				gx->cpregs.rdptr = gx->cpregs.base;
 			}
 		}
 		else
 		{
-			gx->state.cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			gx->cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 		}
 	}
 
@@ -206,18 +206,18 @@ namespace GX
 
 	void GXCore::DONE_INT()
 	{
-		if (state.peregs.sr & PE_SR_DONEMSK)
+		if (peregs.sr & PE_SR_DONEMSK)
 		{
-			state.peregs.sr |= PE_SR_DONE;
+			peregs.sr |= PE_SR_DONE;
 			PIAssertInt(PI_INTERRUPT_PE_FINISH);
 		}
 	}
 
 	void GXCore::TOKEN_INT()
 	{
-		if (state.peregs.sr & PE_SR_TOKENMSK)
+		if (peregs.sr & PE_SR_TOKENMSK)
 		{
-			state.peregs.sr |= PE_SR_TOKEN;
+			peregs.sr |= PE_SR_TOKEN;
 			PIAssertInt(PI_INTERRUPT_PE_TOKEN);
 		}
 	}
@@ -229,7 +229,7 @@ namespace GX
 
 	void GXCore::CPDrawTokenCallback(uint16_t tokenValue)
 	{
-		state.peregs.token = tokenValue;
+		peregs.token = tokenValue;
 		TOKEN_INT();
 	}
 
@@ -244,9 +244,9 @@ namespace GX
 		switch (id)
 		{
 			case CPMappedRegister::CP_STATUS_ID:
-				return state.cpregs.sr;
+				return cpregs.sr;
 			case CPMappedRegister::CP_ENABLE_ID:
-				return state.cpregs.cr;
+				return cpregs.cr;
 			case CPMappedRegister::CP_CLR_ID:
 				return 0;
 			case CPMappedRegister::CP_MEMPERF_SEL_ID:
@@ -254,37 +254,37 @@ namespace GX
 			case CPMappedRegister::CP_STM_LOW_ID:
 				return 0;
 			case CPMappedRegister::CP_FIFO_BASEL_ID:
-				return state.cpregs.basel & 0xffe0;
+				return cpregs.basel & 0xffe0;
 			case CPMappedRegister::CP_FIFO_BASEH_ID:
-				return state.cpregs.baseh;
+				return cpregs.baseh;
 			case CPMappedRegister::CP_FIFO_TOPL_ID:
-				return state.cpregs.topl & 0xffe0;
+				return cpregs.topl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_TOPH_ID:
-				return state.cpregs.toph;
+				return cpregs.toph;
 			case CPMappedRegister::CP_FIFO_HICNTL_ID:
-				return state.cpregs.himarkl & 0xffe0;
+				return cpregs.himarkl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_HICNTH_ID:
-				return state.cpregs.himarkh;
+				return cpregs.himarkh;
 			case CPMappedRegister::CP_FIFO_LOCNTL_ID:
-				return state.cpregs.lomarkl & 0xffe0;
+				return cpregs.lomarkl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_LOCNTH_ID:
-				return state.cpregs.lomarkh;
+				return cpregs.lomarkh;
 			case CPMappedRegister::CP_FIFO_COUNTL_ID:
-				return state.cpregs.cntl & 0xffe0;
+				return cpregs.cntl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_COUNTH_ID:
-				return state.cpregs.cnth;
+				return cpregs.cnth;
 			case CPMappedRegister::CP_FIFO_WPTRL_ID:
-				return state.cpregs.wrptrl & 0xffe0;
+				return cpregs.wrptrl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_WPTRH_ID:
-				return state.cpregs.wrptrh;
+				return cpregs.wrptrh;
 			case CPMappedRegister::CP_FIFO_RPTRL_ID:
-				return state.cpregs.rdptrl & 0xffe0;
+				return cpregs.rdptrl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_RPTRH_ID:
-				return state.cpregs.rdptrh;
+				return cpregs.rdptrh;
 			case CPMappedRegister::CP_FIFO_BRKL_ID:
-				return state.cpregs.bpptrl & 0xffe0;
+				return cpregs.bpptrl & 0xffe0;
 			case CPMappedRegister::CP_FIFO_BRKH_ID:
-				return state.cpregs.bpptrh;
+				return cpregs.bpptrh;
 			case CPMappedRegister::CP_COUNTER0L_ID:
 				return 0;
 			case CPMappedRegister::CP_COUNTER0H_ID:
@@ -335,15 +335,15 @@ namespace GX
 			case CPMappedRegister::CP_STATUS_ID:
 				break;
 			case CPMappedRegister::CP_ENABLE_ID:
-				state.cpregs.cr = (uint16_t)value;
+				cpregs.cr = (uint16_t)value;
 
 				// clear breakpoint
 				if ((value & CP_CR_BPINTEN) == 0)
 				{
-					state.cpregs.sr &= ~CP_SR_BPINT;
+					cpregs.sr &= ~CP_SR_BPINT;
 				}
 
-				if ((state.cpregs.sr & CP_SR_BPINT) == 0 && (state.cpregs.sr & CP_SR_OVF) == 0 && (state.cpregs.sr & CP_SR_UVF) == 0)
+				if ((cpregs.sr & CP_SR_BPINT) == 0 && (cpregs.sr & CP_SR_OVF) == 0 && (cpregs.sr & CP_SR_UVF) == 0)
 				{
 					PIClearInt(PI_INTERRUPT_CP);
 				}
@@ -352,14 +352,14 @@ namespace GX
 				// clear watermark conditions
 				if (value & CP_CLR_OVFCLR)
 				{
-					state.cpregs.sr &= ~CP_SR_OVF;
+					cpregs.sr &= ~CP_SR_OVF;
 				}
 				if (value & CP_CLR_UVFCLR)
 				{
-					state.cpregs.sr &= ~CP_SR_UVF;
+					cpregs.sr &= ~CP_SR_UVF;
 				}
 
-				if ((state.cpregs.sr & CP_SR_BPINT) == 0 && (state.cpregs.sr & CP_SR_OVF) == 0 && (state.cpregs.sr & CP_SR_UVF) == 0)
+				if ((cpregs.sr & CP_SR_BPINT) == 0 && (cpregs.sr & CP_SR_OVF) == 0 && (cpregs.sr & CP_SR_UVF) == 0)
 				{
 					PIClearInt(PI_INTERRUPT_CP);
 				}
@@ -369,52 +369,52 @@ namespace GX
 			case CPMappedRegister::CP_STM_LOW_ID:
 				break;
 			case CPMappedRegister::CP_FIFO_BASEL_ID:
-				state.cpregs.basel = value & 0xffe0;
+				cpregs.basel = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_BASEH_ID:
-				state.cpregs.baseh = value;
+				cpregs.baseh = value;
 				break;
 			case CPMappedRegister::CP_FIFO_TOPL_ID:
-				state.cpregs.topl = value & 0xffe0;
+				cpregs.topl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_TOPH_ID:
-				state.cpregs.toph = value;
+				cpregs.toph = value;
 				break;
 			case CPMappedRegister::CP_FIFO_HICNTL_ID:
-				state.cpregs.himarkl = value & 0xffe0;
+				cpregs.himarkl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_HICNTH_ID:
-				state.cpregs.himarkh = value;
+				cpregs.himarkh = value;
 				break;
 			case CPMappedRegister::CP_FIFO_LOCNTL_ID:
-				state.cpregs.lomarkl = value & 0xffe0;
+				cpregs.lomarkl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_LOCNTH_ID:
-				state.cpregs.lomarkh = value;
+				cpregs.lomarkh = value;
 				break;
 			case CPMappedRegister::CP_FIFO_COUNTL_ID:
-				state.cpregs.cntl = value & 0xffe0;
+				cpregs.cntl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_COUNTH_ID:
-				state.cpregs.cnth = value;
+				cpregs.cnth = value;
 				break;
 			case CPMappedRegister::CP_FIFO_WPTRL_ID:
-				state.cpregs.wrptrl = value & 0xffe0;
+				cpregs.wrptrl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_WPTRH_ID:
-				state.cpregs.wrptrh = value;
+				cpregs.wrptrh = value;
 				break;
 			case CPMappedRegister::CP_FIFO_RPTRL_ID:
-				state.cpregs.rdptrl = value & 0xffe0;
+				cpregs.rdptrl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_RPTRH_ID:
-				state.cpregs.rdptrh = value;
+				cpregs.rdptrh = value;
 				break;
 			case CPMappedRegister::CP_FIFO_BRKL_ID:
-				state.cpregs.bpptrl = value & 0xffe0;
+				cpregs.bpptrl = value & 0xffe0;
 				break;
 			case CPMappedRegister::CP_FIFO_BRKH_ID:
-				state.cpregs.bpptrh = value;
+				cpregs.bpptrh = value;
 				break;
 			case CPMappedRegister::CP_COUNTER0L_ID:
 				break;
@@ -462,11 +462,11 @@ namespace GX
 		switch (id)
 		{
 			case PI_CPMappedRegister::PI_CPBAS_ID:
-				return state.pi_cp_base & ~0x1f;
+				return pi_cp_base & ~0x1f;
 			case PI_CPMappedRegister::PI_CPTOP_ID:
-				return state.pi_cp_top & ~0x1f;
+				return pi_cp_top & ~0x1f;
 			case PI_CPMappedRegister::PI_CPWRT_ID:
-				return state.pi_cp_wrptr & ~0x1f;
+				return pi_cp_wrptr & ~0x1f;
 			case PI_CPMappedRegister::PI_CPABT_ID:
 				Report(Channel::GP, "PI CP Abort read not implemented!\n");
 				return 0;
@@ -480,13 +480,13 @@ namespace GX
 		switch (id)
 		{
 			case PI_CPMappedRegister::PI_CPBAS_ID:
-				state.pi_cp_base = value & ~0x1f;
+				pi_cp_base = value & ~0x1f;
 				break;
 			case PI_CPMappedRegister::PI_CPTOP_ID:
-				state.pi_cp_top = value & ~0x1f;
+				pi_cp_top = value & ~0x1f;
 				break;
 			case PI_CPMappedRegister::PI_CPWRT_ID:
-				state.pi_cp_wrptr = value & ~0x1f;
+				pi_cp_wrptr = value & ~0x1f;
 				break;
 			case PI_CPMappedRegister::PI_CPABT_ID:
 				if ((value & 1) != 0) {
@@ -502,26 +502,26 @@ namespace GX
 	{
 		// PI FIFO
 
-		state.pi_cp_wrptr &= ~PI_CPWRT_WRAP;
+		pi_cp_wrptr &= ~PI_CPWRT_WRAP;
 
-		PIWriteBurst(state.pi_cp_wrptr & RAMMASK, data);
-		state.pi_cp_wrptr += 32;
+		PIWriteBurst(pi_cp_wrptr & RAMMASK, data);
+		pi_cp_wrptr += 32;
 
-		if (state.pi_cp_wrptr == state.pi_cp_top)
+		if (pi_cp_wrptr == pi_cp_top)
 		{
-			state.pi_cp_wrptr = state.pi_cp_base;
-			state.pi_cp_wrptr |= PI_CPWRT_WRAP;
+			pi_cp_wrptr = pi_cp_base;
+			pi_cp_wrptr |= PI_CPWRT_WRAP;
 		}
 
 		// CP FIFO
 
-		if (state.cpregs.cr & CP_CR_WPINC)
+		if (cpregs.cr & CP_CR_WPINC)
 		{
-			state.cpregs.wrptr += 32;
+			cpregs.wrptr += 32;
 
-			if (state.cpregs.wrptr == state.cpregs.top)
+			if (cpregs.wrptr == cpregs.top)
 			{
-				state.cpregs.wrptr = state.cpregs.base;
+				cpregs.wrptr = cpregs.base;
 			}
 
 			// All other work is done by CommandProcessor thread.
@@ -532,39 +532,39 @@ namespace GX
 	void GXCore::DumpPIFIFO()
 	{
 		Report(Channel::Norm, "PI fifo configuration\n");
-		Report(Channel::Norm, "   base :0x%08X\n", state.pi_cp_base);
-		Report(Channel::Norm, "   top  :0x%08X\n", state.pi_cp_top);
-		Report(Channel::Norm, "   wrptr:0x%08X\n", state.pi_cp_wrptr);
-		Report(Channel::Norm, "   wrap :%i\n", (state.pi_cp_wrptr & PI_CPWRT_WRAP) ? (1) : (0));
+		Report(Channel::Norm, "   base :0x%08X\n", pi_cp_base);
+		Report(Channel::Norm, "   top  :0x%08X\n", pi_cp_top);
+		Report(Channel::Norm, "   wrptr:0x%08X\n", pi_cp_wrptr);
+		Report(Channel::Norm, "   wrap :%i\n", (pi_cp_wrptr & PI_CPWRT_WRAP) ? (1) : (0));
 	}
 
 	// show CP fifo configuration
 	void GXCore::DumpCPFIFO()
 	{
 		// fifo modes
-		char* md = (state.cpregs.cr & CP_CR_WPINC) ? ((char*)"immediate ") : ((char*)"multi-");
-		char bp = (state.cpregs.cr & CP_CR_BPEN) ? ('B') : ('b');    // breakpoint
-		char lw = (state.cpregs.cr & CP_CR_UVFEN) ? ('U') : ('u');    // low-wmark
-		char hw = (state.cpregs.cr & CP_CR_OVFEN) ? ('O') : ('o');    // high-wmark
+		char* md = (cpregs.cr & CP_CR_WPINC) ? ((char*)"immediate ") : ((char*)"multi-");
+		char bp = (cpregs.cr & CP_CR_BPEN) ? ('B') : ('b');    // breakpoint
+		char lw = (cpregs.cr & CP_CR_UVFEN) ? ('U') : ('u');    // low-wmark
+		char hw = (cpregs.cr & CP_CR_OVFEN) ? ('O') : ('o');    // high-wmark
 
 		Report(Channel::Norm, "CP %sfifo configuration:%c%c%c\n", md, bp, lw, hw);
-		Report(Channel::Norm, " status :0x%08X\n", state.cpregs.sr);
-		Report(Channel::Norm, " enable :0x%08X\n", state.cpregs.cr);
-		Report(Channel::Norm, "   base :0x%08X\n", state.cpregs.base);
-		Report(Channel::Norm, "   top  :0x%08X\n", state.cpregs.top);
-		Report(Channel::Norm, "   low  :0x%08X\n", state.cpregs.lomark);
-		Report(Channel::Norm, "   high :0x%08X\n", state.cpregs.himark);
-		Report(Channel::Norm, "   cnt  :0x%08X\n", state.cpregs.cnt);
-		Report(Channel::Norm, "   wrptr:0x%08X\n", state.cpregs.wrptr);
-		Report(Channel::Norm, "   rdptr:0x%08X\n", state.cpregs.rdptr);
-		Report(Channel::Norm, "   break:0x%08X\n", state.cpregs.bpptr);
+		Report(Channel::Norm, " status :0x%08X\n", cpregs.sr);
+		Report(Channel::Norm, " enable :0x%08X\n", cpregs.cr);
+		Report(Channel::Norm, "   base :0x%08X\n", cpregs.base);
+		Report(Channel::Norm, "   top  :0x%08X\n", cpregs.top);
+		Report(Channel::Norm, "   low  :0x%08X\n", cpregs.lomark);
+		Report(Channel::Norm, "   high :0x%08X\n", cpregs.himark);
+		Report(Channel::Norm, "   cnt  :0x%08X\n", cpregs.cnt);
+		Report(Channel::Norm, "   wrptr:0x%08X\n", cpregs.wrptr);
+		Report(Channel::Norm, "   rdptr:0x%08X\n", cpregs.rdptr);
+		Report(Channel::Norm, "   break:0x%08X\n", cpregs.bpptr);
 	}
 
 	// index range = 00..FF
 	// reg size = 32 bit
 	void GXCore::loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo)
 	{
-		state.cpLoads++;
+		cpLoads++;
 
 		if (GpRegsLog)
 		{
@@ -575,26 +575,26 @@ namespace GX
 		{
 			case CP_MATINDEX_A_ID:
 			{
-				state.cp.matIndexA.bits = value;
+				cp.matIndexA.bits = value;
 			}
 			return;
 
 			case CP_MATINDEX_B_ID:
 			{
-				state.cp.matIndexB.bits = value;
+				cp.matIndexB.bits = value;
 			}
 			return;
 
 			case CP_VCD_LO_ID:
 			{
-				state.cp.vcdLo.bits = value;
+				cp.vcdLo.bits = value;
 				FifoReconfigure(gxfifo);
 			}
 			return;
 
 			case CP_VCD_HI_ID:
 			{
-				state.cp.vcdHi.bits = value;
+				cp.vcdHi.bits = value;
 				FifoReconfigure(gxfifo);
 			}
 			return;
@@ -608,7 +608,7 @@ namespace GX
 			case CP_VAT_A_ID | 6:
 			case CP_VAT_A_ID | 7:
 			{
-				state.cp.vatA[index & 7].bits = value;
+				cp.vatA[index & 7].bits = value;
 				FifoReconfigure(gxfifo);
 			}
 			return;
@@ -622,7 +622,7 @@ namespace GX
 			case CP_VAT_B_ID | 6:
 			case CP_VAT_B_ID | 7:
 			{
-				state.cp.vatB[index & 7].bits = value;
+				cp.vatB[index & 7].bits = value;
 				FifoReconfigure(gxfifo);
 			}
 			return;
@@ -636,7 +636,7 @@ namespace GX
 			case CP_VAT_C_ID | 6:
 			case CP_VAT_C_ID | 7:
 			{
-				state.cp.vatC[index & 7].bits = value;
+				cp.vatC[index & 7].bits = value;
 				FifoReconfigure(gxfifo);
 			}
 			return;
@@ -658,7 +658,7 @@ namespace GX
 			case CP_ARRAY_BASE_ID | 0xe:
 			case CP_ARRAY_BASE_ID | 0xf:
 			{
-				state.cp.arrayBase[index & 0xf].bits = value;
+				cp.arrayBase[index & 0xf].bits = value;
 			}
 			return;
 
@@ -679,7 +679,7 @@ namespace GX
 			case CP_ARRAY_STRIDE_ID | 0xe:
 			case CP_ARRAY_STRIDE_ID | 0xf:
 			{
-				state.cp.arrayStride[index & 0xf].bits = value & 0xFF;
+				cp.arrayStride[index & 0xf].bits = value & 0xFF;
 			}
 			return;
 
@@ -1028,17 +1028,10 @@ namespace GX
 	{
 		switch (attr)
 		{
-			case VertexAttr::VTX_POSMATIDX:     return "Position Matrix Index";
-			case VertexAttr::VTX_TEX0MTXIDX:    return "Texture Coordinate 0 Matrix Index";
-			case VertexAttr::VTX_TEX1MTXIDX:    return "Texture Coordinate 1 Matrix Index";
-			case VertexAttr::VTX_TEX2MTXIDX:    return "Texture Coordinate 2 Matrix Index";
-			case VertexAttr::VTX_TEX3MTXIDX:    return "Texture Coordinate 3 Matrix Index";
-			case VertexAttr::VTX_TEX4MTXIDX:    return "Texture Coordinate 4 Matrix Index";
-			case VertexAttr::VTX_TEX5MTXIDX:    return "Texture Coordinate 5 Matrix Index";
-			case VertexAttr::VTX_TEX6MTXIDX:    return "Texture Coordinate 6 Matrix Index";
-			case VertexAttr::VTX_TEX7MTXIDX:    return "Texture Coordinate 7 Matrix Index";
 			case VertexAttr::VTX_POS:           return "Position";
-			case VertexAttr::VTX_NRM:           return "Normal or Normal/Binormal/Tangent";
+			case VertexAttr::VTX_NRM:           return "Normal";
+			case VertexAttr::VTX_BINRM:         return "Binormal";
+			case VertexAttr::VTX_TANGENT:       return "Tangent";
 			case VertexAttr::VTX_COLOR0:        return "Color 0";
 			case VertexAttr::VTX_COLOR1:        return "Color 1";
 			case VertexAttr::VTX_TEXCOORD0:     return "Texture Coordinate 0";
@@ -1049,6 +1042,8 @@ namespace GX
 			case VertexAttr::VTX_TEXCOORD5:     return "Texture Coordinate 5";
 			case VertexAttr::VTX_TEXCOORD6:     return "Texture Coordinate 6";
 			case VertexAttr::VTX_TEXCOORD7:		return "Texture Coordinate 7";
+			case VertexAttr::VTX_MATIDX0:		return "Matrix Index 0";
+			case VertexAttr::VTX_MATIDX1:		return "Matrix Index 1";
 			case VertexAttr::VTX_MAX_ATTR:		return "MAX attr";
 		}
 		return "Unknown attribute";
@@ -1064,22 +1059,22 @@ namespace GX
 		static int fmtsz[] = { 1, 1, 2, 2, 4 };
 		static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
 
-		if (state.cp.vcdLo.PosNrmMatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex0MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex1MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex2MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex3MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex4MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex5MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex6MatIdx) vtxsize++;
-		if (state.cp.vcdLo.Tex7MatIdx) vtxsize++;
+		if (cp.vcdLo.PosNrmMatIdx) vtxsize++;
+		if (cp.vcdLo.Tex0MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex1MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex2MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex3MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex4MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex5MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex6MatIdx) vtxsize++;
+		if (cp.vcdLo.Tex7MatIdx) vtxsize++;
 
 		// Position
 
-		switch (state.cp.vcdLo.Position)
+		switch (cp.vcdLo.Position)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatA[v].posfmt] * cntp[state.cp.vatA[v].poscnt];
+				vtxsize += fmtsz[cp.vatA[v].posfmt] * cntp[cp.vatA[v].poscnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1091,27 +1086,27 @@ namespace GX
 
 		// Normal
 
-		switch (state.cp.vcdLo.Normal)
+		switch (cp.vcdLo.Normal)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatA[v].nrmfmt] * cntn[state.cp.vatA[v].nrmcnt];
+				vtxsize += fmtsz[cp.vatA[v].nrmfmt] * cntn[cp.vatA[v].nrmcnt];
 				break;
 			case VCD_INDEX8:
-				if (state.cp.vatA[v].nrmidx3) vtxsize += 3;
+				if (cp.vatA[v].nrmidx3) vtxsize += 3;
 				else vtxsize += 1;
 				break;
 			case VCD_INDEX16:
-				if (state.cp.vatA[v].nrmidx3) vtxsize += 2 * 3;
+				if (cp.vatA[v].nrmidx3) vtxsize += 2 * 3;
 				else vtxsize += 2;
 				break;
 		}
 
 		// Colors
 
-		switch (state.cp.vcdLo.Color0)
+		switch (cp.vcdLo.Color0)
 		{
 			case VCD_DIRECT:
-				vtxsize += cfmtsz[state.cp.vatA[v].col0fmt];
+				vtxsize += cfmtsz[cp.vatA[v].col0fmt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1121,10 +1116,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdLo.Color1)
+		switch (cp.vcdLo.Color1)
 		{
 			case VCD_DIRECT:
-				vtxsize += cfmtsz[state.cp.vatA[v].col1fmt];
+				vtxsize += cfmtsz[cp.vatA[v].col1fmt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1136,10 +1131,10 @@ namespace GX
 
 		// TexCoords
 
-		switch (state.cp.vcdHi.Tex0Coord)
+		switch (cp.vcdHi.Tex0Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatA[v].tex0fmt] * cntt[state.cp.vatA[v].tex0cnt];
+				vtxsize += fmtsz[cp.vatA[v].tex0fmt] * cntt[cp.vatA[v].tex0cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1149,10 +1144,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex1Coord)
+		switch (cp.vcdHi.Tex1Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatB[v].tex1fmt] * cntt[state.cp.vatB[v].tex1cnt];
+				vtxsize += fmtsz[cp.vatB[v].tex1fmt] * cntt[cp.vatB[v].tex1cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1162,10 +1157,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex2Coord)
+		switch (cp.vcdHi.Tex2Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatB[v].tex2fmt] * cntt[state.cp.vatB[v].tex2cnt];
+				vtxsize += fmtsz[cp.vatB[v].tex2fmt] * cntt[cp.vatB[v].tex2cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1175,10 +1170,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex3Coord)
+		switch (cp.vcdHi.Tex3Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatB[v].tex3fmt] * cntt[state.cp.vatB[v].tex3cnt];
+				vtxsize += fmtsz[cp.vatB[v].tex3fmt] * cntt[cp.vatB[v].tex3cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1188,10 +1183,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex4Coord)
+		switch (cp.vcdHi.Tex4Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatB[v].tex4fmt] * cntt[state.cp.vatB[v].tex4cnt];
+				vtxsize += fmtsz[cp.vatB[v].tex4fmt] * cntt[cp.vatB[v].tex4cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1201,10 +1196,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex5Coord)
+		switch (cp.vcdHi.Tex5Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatC[v].tex5fmt] * cntt[state.cp.vatC[v].tex5cnt];
+				vtxsize += fmtsz[cp.vatC[v].tex5fmt] * cntt[cp.vatC[v].tex5cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1214,10 +1209,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex6Coord)
+		switch (cp.vcdHi.Tex6Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatC[v].tex6fmt] * cntt[state.cp.vatC[v].tex6cnt];
+				vtxsize += fmtsz[cp.vatC[v].tex6fmt] * cntt[cp.vatC[v].tex6cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1227,10 +1222,10 @@ namespace GX
 				break;
 		}
 
-		switch (state.cp.vcdHi.Tex7Coord)
+		switch (cp.vcdHi.Tex7Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[state.cp.vatC[v].tex7fmt] * cntt[state.cp.vatC[v].tex7cnt];
+				vtxsize += fmtsz[cp.vatC[v].tex7fmt] * cntt[cp.vatC[v].tex7cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1253,8 +1248,8 @@ namespace GX
 
 	void * GXCore::GetArrayPtr(ArrayId arrayId, int idx, int compSize)
 	{
-		uint32_t address = state.cp.arrayBase[(size_t)arrayId].Base + 
-			(uint32_t)idx * state.cp.arrayStride[(size_t)arrayId].Stride;
+		uint32_t address = cp.arrayBase[(size_t)arrayId].Base + 
+			(uint32_t)idx * cp.arrayStride[(size_t)arrayId].Stride;
 		return MIGetMemoryPointerForCP(address);
 	}
 
@@ -1708,87 +1703,87 @@ namespace GX
 	}
 
 	// collect vertex data
-	void GXCore::FifoWalk(unsigned vatnum, FifoProcessor* gxfifo)
+	void GXCore::FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
-		state.xf.posidx = state.xf.matIdxA.PosNrmMatIdx;
-		state.xf.texidx[0] = state.xf.matIdxA.Tex0MatIdx;
-		state.xf.texidx[1] = state.xf.matIdxA.Tex1MatIdx;
-		state.xf.texidx[2] = state.xf.matIdxA.Tex2MatIdx;
-		state.xf.texidx[3] = state.xf.matIdxA.Tex3MatIdx;
-		state.xf.texidx[4] = state.xf.matIdxB.Tex4MatIdx;
-		state.xf.texidx[5] = state.xf.matIdxB.Tex5MatIdx;
-		state.xf.texidx[6] = state.xf.matIdxB.Tex6MatIdx;
-		state.xf.texidx[7] = state.xf.matIdxB.Tex7MatIdx;
+		vtx->matIdx0.PosNrmMatIdx = xf.matIdxA.PosNrmMatIdx;
+		vtx->matIdx0.Tex0MatIdx = xf.matIdxA.Tex0MatIdx;
+		vtx->matIdx0.Tex1MatIdx = xf.matIdxA.Tex1MatIdx;
+		vtx->matIdx0.Tex2MatIdx = xf.matIdxA.Tex2MatIdx;
+		vtx->matIdx0.Tex3MatIdx = xf.matIdxA.Tex3MatIdx;
+		vtx->matIdx1.Tex4MatIdx = xf.matIdxB.Tex4MatIdx;
+		vtx->matIdx1.Tex5MatIdx = xf.matIdxB.Tex5MatIdx;
+		vtx->matIdx1.Tex6MatIdx = xf.matIdxB.Tex6MatIdx;
+		vtx->matIdx1.Tex7MatIdx = xf.matIdxB.Tex7MatIdx;
 
 		// Matrix Index
 
-		if (state.cp.vcdLo.PosNrmMatIdx)
+		if (cp.vcdLo.PosNrmMatIdx)
 		{
-			state.xf.posidx = gxfifo->Read8();
+			vtx->matIdx0.PosNrmMatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex0MatIdx)
+		if (cp.vcdLo.Tex0MatIdx)
 		{
-			state.xf.texidx[0] = gxfifo->Read8();
+			vtx->matIdx0.Tex0MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex1MatIdx)
+		if (cp.vcdLo.Tex1MatIdx)
 		{
-			state.xf.texidx[1] = gxfifo->Read8();
+			vtx->matIdx0.Tex1MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex2MatIdx)
+		if (cp.vcdLo.Tex2MatIdx)
 		{
-			state.xf.texidx[2] = gxfifo->Read8();
+			vtx->matIdx0.Tex2MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex3MatIdx)
+		if (cp.vcdLo.Tex3MatIdx)
 		{
-			state.xf.texidx[3] = gxfifo->Read8();
+			vtx->matIdx0.Tex3MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex4MatIdx)
+		if (cp.vcdLo.Tex4MatIdx)
 		{
-			state.xf.texidx[4] = gxfifo->Read8();
+			vtx->matIdx1.Tex4MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex5MatIdx)
+		if (cp.vcdLo.Tex5MatIdx)
 		{
-			state.xf.texidx[5] = gxfifo->Read8();
+			vtx->matIdx1.Tex5MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex6MatIdx)
+		if (cp.vcdLo.Tex6MatIdx)
 		{
-			state.xf.texidx[6] = gxfifo->Read8();
+			vtx->matIdx1.Tex6MatIdx = gxfifo->Read8();
 		}
 
-		if (state.cp.vcdLo.Tex7MatIdx)
+		if (cp.vcdLo.Tex7MatIdx)
 		{
-			state.xf.texidx[7] = gxfifo->Read8();
+			vtx->matIdx1.Tex7MatIdx = gxfifo->Read8();
 		}
 
 		// Position
 
-		vtx->pos[0] = vtx->pos[1] = vtx->pos[2] = 1.0f;
+		vtx->Position[0] = vtx->Position[1] = vtx->Position[2] = 1.0f;
 
-		FetchComp(vtx->pos,
-			state.cp.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
-			state.cp.vcdLo.Position,
-			state.cp.vatA[vatnum].posfmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatA[vatnum].posshft : 0,
+		FetchComp(vtx->Position,
+			cp.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
+			cp.vcdLo.Position,
+			cp.vatA[vatnum].posfmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatA[vatnum].posshft : 0,
 			gxfifo,
 			ArrayId::Pos);
 
 		// Normal
 
-		vtx->nrm[0] = vtx->nrm[1] = vtx->nrm[2] = 1.0f;
-		vtx->nrm[3] = vtx->nrm[4] = vtx->nrm[5] = 1.0f;
-		vtx->nrm[6] = vtx->nrm[7] = vtx->nrm[8] = 1.0f;
+		vtx->Normal[0] = vtx->Normal[1] = vtx->Normal[2] = 1.0f;
+		vtx->Binormal[0] = vtx->Binormal[1] = vtx->Binormal[2] = 1.0f;
+		vtx->Tangent[0] = vtx->Tangent[1] = vtx->Tangent[2] = 1.0f;
 
 		int nrmshft = 0;
 
-		switch (state.cp.vatA[vatnum].nrmfmt)
+		switch (cp.vatA[vatnum].nrmfmt)
 		{
 			case VFMT_U8:
 			case VFMT_S8:
@@ -1800,102 +1795,102 @@ namespace GX
 				break;
 		}
 
-		FetchNorm(vtx->nrm,
-			state.cp.vatA[vatnum].nrmcnt == VCNT_NRM_NBT ? 9 : 3,
-			state.cp.vcdLo.Normal,
-			state.cp.vatA[vatnum].nrmfmt,
+		FetchNorm(vtx->Normal,
+			cp.vatA[vatnum].nrmcnt == VCNT_NRM_NBT ? 9 : 3,
+			cp.vcdLo.Normal,
+			cp.vatA[vatnum].nrmfmt,
 			nrmshft,
 			gxfifo,
 			ArrayId::Nrm,
-			state.cp.vatA[vatnum].nrmidx3 ? true : false);
+			cp.vatA[vatnum].nrmidx3 ? true : false);
 
 		// Color0 
 
-		vtx->col[0] = FetchColor(state.cp.vcdLo.Color0, state.cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
+		vtx->Color[0] = FetchColor(cp.vcdLo.Color0, cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
 
 		// Color1
 
-		vtx->col[1] = FetchColor(state.cp.vcdLo.Color1, state.cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
+		vtx->Color[1] = FetchColor(cp.vcdLo.Color1, cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
 
 		// TexNCoord
 
-		vtx->tcoord[0][0] = vtx->tcoord[0][1] = 1.0f;
+		vtx->TexCoord[0][0] = vtx->TexCoord[0][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[0],
-			state.cp.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex0Coord,
-			state.cp.vatA[vatnum].tex0fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatA[vatnum].tex0shft : 0,
+		FetchComp(vtx->TexCoord[0],
+			cp.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex0Coord,
+			cp.vatA[vatnum].tex0fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatA[vatnum].tex0shft : 0,
 			gxfifo,
 			ArrayId::Tex0Coord);
 
-		vtx->tcoord[1][0] = vtx->tcoord[1][1] = 1.0f;
+		vtx->TexCoord[1][0] = vtx->TexCoord[1][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[1],
-			state.cp.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex1Coord,
-			state.cp.vatB[vatnum].tex1fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatB[vatnum].tex1shft : 0,
+		FetchComp(vtx->TexCoord[1],
+			cp.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex1Coord,
+			cp.vatB[vatnum].tex1fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatB[vatnum].tex1shft : 0,
 			gxfifo,
 			ArrayId::Tex1Coord);
 
-		vtx->tcoord[2][0] = vtx->tcoord[2][1] = 1.0f;
+		vtx->TexCoord[2][0] = vtx->TexCoord[2][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[2],
-			state.cp.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex2Coord,
-			state.cp.vatB[vatnum].tex2fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatB[vatnum].tex2shft : 0,
+		FetchComp(vtx->TexCoord[2],
+			cp.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex2Coord,
+			cp.vatB[vatnum].tex2fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatB[vatnum].tex2shft : 0,
 			gxfifo,
 			ArrayId::Tex2Coord);
 
-		vtx->tcoord[3][0] = vtx->tcoord[3][1] = 1.0f;
+		vtx->TexCoord[3][0] = vtx->TexCoord[3][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[3],
-			state.cp.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex3Coord,
-			state.cp.vatB[vatnum].tex3fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatB[vatnum].tex3shft : 0,
+		FetchComp(vtx->TexCoord[3],
+			cp.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex3Coord,
+			cp.vatB[vatnum].tex3fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatB[vatnum].tex3shft : 0,
 			gxfifo,
 			ArrayId::Tex3Coord);
 
-		vtx->tcoord[4][0] = vtx->tcoord[4][1] = 1.0f;
+		vtx->TexCoord[4][0] = vtx->TexCoord[4][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[4],
-			state.cp.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex4Coord,
-			state.cp.vatB[vatnum].tex4fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex4shft : 0,
+		FetchComp(vtx->TexCoord[4],
+			cp.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex4Coord,
+			cp.vatB[vatnum].tex4fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatC[vatnum].tex4shft : 0,
 			gxfifo,
 			ArrayId::Tex4Coord);
 
-		vtx->tcoord[5][0] = vtx->tcoord[5][1] = 1.0f;
+		vtx->TexCoord[5][0] = vtx->TexCoord[5][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[5],
-			state.cp.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex5Coord,
-			state.cp.vatC[vatnum].tex5fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex5shft : 0,
+		FetchComp(vtx->TexCoord[5],
+			cp.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex5Coord,
+			cp.vatC[vatnum].tex5fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatC[vatnum].tex5shft : 0,
 			gxfifo,
 			ArrayId::Tex5Coord);
 
-		vtx->tcoord[6][0] = vtx->tcoord[6][1] = 1.0f;
+		vtx->TexCoord[6][0] = vtx->TexCoord[6][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[6],
-			state.cp.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex6Coord,
-			state.cp.vatC[vatnum].tex6fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex6shft : 0,
+		FetchComp(vtx->TexCoord[6],
+			cp.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex6Coord,
+			cp.vatC[vatnum].tex6fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatC[vatnum].tex6shft : 0,
 			gxfifo,
 			ArrayId::Tex6Coord);
 
-		vtx->tcoord[7][0] = vtx->tcoord[7][1] = 1.0f;
+		vtx->TexCoord[7][0] = vtx->TexCoord[7][1] = 1.0f;
 
-		FetchComp(vtx->tcoord[7],
-			state.cp.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
-			state.cp.vcdHi.Tex7Coord,
-			state.cp.vatC[vatnum].tex7fmt,
-			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex7shft : 0,
+		FetchComp(vtx->TexCoord[7],
+			cp.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
+			cp.vcdHi.Tex7Coord,
+			cp.vatC[vatnum].tex7fmt,
+			cp.vatA[vatnum].bytedeq ? cp.vatC[vatnum].tex7shft : 0,
 			gxfifo,
 			ArrayId::Tex7Coord);
 	}
@@ -1919,24 +1914,26 @@ namespace GX
 			"col0:%i\n"
 			"col1:%i\n",
 			command,
-			state.cp.vcdLo.PosNrmMatIdx,
-			state.cp.vcdLo.Tex0MatIdx, state.cp.vcdHi.Tex0Coord,
-			state.cp.vcdLo.Tex1MatIdx, state.cp.vcdHi.Tex1Coord,
-			state.cp.vcdLo.Tex2MatIdx, state.cp.vcdHi.Tex2Coord,
-			state.cp.vcdLo.Tex3MatIdx, state.cp.vcdHi.Tex3Coord,
-			state.cp.vcdLo.Tex4MatIdx, state.cp.vcdHi.Tex4Coord,
-			state.cp.vcdLo.Tex5MatIdx, state.cp.vcdHi.Tex5Coord,
-			state.cp.vcdLo.Tex6MatIdx, state.cp.vcdHi.Tex6Coord,
-			state.cp.vcdLo.Tex7MatIdx, state.cp.vcdHi.Tex7Coord,
-			state.cp.vcdLo.Position,
-			state.cp.vcdLo.Normal,
-			state.cp.vcdLo.Color0,
-			state.cp.vcdLo.Color1
+			cp.vcdLo.PosNrmMatIdx,
+			cp.vcdLo.Tex0MatIdx, cp.vcdHi.Tex0Coord,
+			cp.vcdLo.Tex1MatIdx, cp.vcdHi.Tex1Coord,
+			cp.vcdLo.Tex2MatIdx, cp.vcdHi.Tex2Coord,
+			cp.vcdLo.Tex3MatIdx, cp.vcdHi.Tex3Coord,
+			cp.vcdLo.Tex4MatIdx, cp.vcdHi.Tex4Coord,
+			cp.vcdLo.Tex5MatIdx, cp.vcdHi.Tex5Coord,
+			cp.vcdLo.Tex6MatIdx, cp.vcdHi.Tex6Coord,
+			cp.vcdLo.Tex7MatIdx, cp.vcdHi.Tex7Coord,
+			cp.vcdLo.Position,
+			cp.vcdLo.Normal,
+			cp.vcdLo.Color0,
+			cp.vcdLo.Color1
 		);
 	}
 
 	void GXCore::GxCommand(FifoProcessor* gxfifo)
 	{
+		GLenum gl_error;
+
 		if(frame_done)
 		{
 			GL_OpenSubsystem();
@@ -2145,7 +2142,6 @@ namespace GX
 			case CP_CMD_DRAW_QUAD | 6:
 			case CP_CMD_DRAW_QUAD | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2154,14 +2150,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += (vtxnum / 4) / 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_QUADS, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_QUAD, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2176,7 +2186,6 @@ namespace GX
 			case CP_CMD_DRAW_TRIANGLE | 6:
 			case CP_CMD_DRAW_TRIANGLE | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2185,14 +2194,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += vtxnum / 3;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLES, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_TRIANGLE: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_TRIANGLE, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(&v);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2207,7 +2230,6 @@ namespace GX
 			case CP_CMD_DRAW_STRIP | 6:
 			case CP_CMD_DRAW_STRIP | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2216,14 +2238,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += vtxnum - 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLE_STRIP, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_STRIP: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_TRIANGLE_STRIP, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2238,7 +2274,6 @@ namespace GX
 			case CP_CMD_DRAW_FAN | 6:
 			case CP_CMD_DRAW_FAN | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2247,14 +2282,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					tris += vtxnum - 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_TRIANGLE_FAN, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_FAN: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_TRIANGLE_FAN, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2269,7 +2318,6 @@ namespace GX
 			case CP_CMD_DRAW_LINE | 6:
 			case CP_CMD_DRAW_LINE | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2278,14 +2326,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					lines += vtxnum / 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_LINES, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_LINE: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_LINE, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2300,7 +2362,6 @@ namespace GX
 			case CP_CMD_DRAW_LINESTRIP | 6:
 			case CP_CMD_DRAW_LINESTRIP | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2309,14 +2370,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					lines += vtxnum - 1;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_LINE_STRIP, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_LINESTRIP: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_LINE_STRIP, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2331,7 +2406,6 @@ namespace GX
 			case CP_CMD_DRAW_POINT | 6:
 			case CP_CMD_DRAW_POINT | 7:
 			{
-				static   Vertex   v;
 				unsigned vatnum = cmd & 7;
 				unsigned vtxnum = gxfifo->Read16();
 				if (logDrawCommands)
@@ -2340,14 +2414,28 @@ namespace GX
 				}
 
 				if (vtxnum != 0) {
+					pts += vtxnum;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_POINTS, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_POINT: %x\n", gl_error);
+					}
+#else
 					RAS_Begin(RAS_POINT, vtxnum);
+					Vertex vtx;
 					while (vtxnum--) {
 
-						vtx = &v;
-						FifoWalk(vatnum, gxfifo);
-						RAS_SendVertex(vtx);
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
 					}
 					RAS_End();
+#endif
 				}
 				break;
 			}
@@ -2362,4 +2450,5 @@ namespace GX
 			}
 		}
 	}
+
 }

@@ -205,19 +205,12 @@ namespace GX
 	// Vertex attributes.
 	// Specifies the sequence of attributes in the raw vertex data. Which of the attributes are present is selected by the VCD settings.
 
-	enum class VertexAttr
+	enum VertexAttr : size_t
 	{
-		VTX_POSMATIDX = 0,      // Position/Normal Matrix Index
-		VTX_TEX0MTXIDX,         // Texture Coordinate 0 Matrix Index
-		VTX_TEX1MTXIDX,         // Texture Coordinate 1 Matrix Index
-		VTX_TEX2MTXIDX,         // Texture Coordinate 2 Matrix Index
-		VTX_TEX3MTXIDX,         // Texture Coordinate 3 Matrix Index
-		VTX_TEX4MTXIDX,         // Texture Coordinate 4 Matrix Index
-		VTX_TEX5MTXIDX,         // Texture Coordinate 5 Matrix Index
-		VTX_TEX6MTXIDX,         // Texture Coordinate 6 Matrix Index
-		VTX_TEX7MTXIDX,         // Texture Coordinate 7 Matrix Index
-		VTX_POS,                // Position
-		VTX_NRM,                // Normal or Normal/Binormal/Tangent
+		VTX_POS = 0,            // Position
+		VTX_NRM,                // Normal
+		VTX_BINRM,				// Binormal
+		VTX_TANGENT,			// Tangent
 		VTX_COLOR0,             // Color 0
 		VTX_COLOR1,             // Color 1
 		VTX_TEXCOORD0,          // Texture Coordinate 0
@@ -228,6 +221,8 @@ namespace GX
 		VTX_TEXCOORD5,          // Texture Coordinate 5
 		VTX_TEXCOORD6,          // Texture Coordinate 6
 		VTX_TEXCOORD7,          // Texture Coordinate 7
+		VTX_MATIDX0,			// Matrix indicies 0
+		VTX_MATIDX1,			// Matrix indicies 1
 		VTX_MAX_ATTR
 	};
 
@@ -458,6 +453,13 @@ namespace GX
 		IndexRegD,
 
 		Max,
+	};
+
+	// color type
+	union Color
+	{
+		struct { uint8_t A, B, G, R; };
+		uint32_t     RGBA;
 	};
 
 	struct CPState

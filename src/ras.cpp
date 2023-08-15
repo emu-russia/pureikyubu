@@ -33,7 +33,7 @@ namespace GX
 		}
 
 		// texture hack
-		if (ras_use_texture && state.xf.numTex && tID[0])
+		if (ras_use_texture && xf.numTex && tID[0])
 		{
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, tID[0]->bind);
@@ -49,13 +49,13 @@ namespace GX
 				break;
 			case RAS_TRIANGLE_STRIP:
 				if (ras_wireframe) {
-					glPolygonMode(GL_FRONT, GL_LINE);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				}
 				glBegin(GL_TRIANGLE_STRIP);
 				break;
 			case RAS_TRIANGLE_FAN:
 				if (ras_wireframe) {
-					glPolygonMode(GL_FRONT, GL_LINE);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				}
 				glBegin(GL_TRIANGLE_FAN);
 				break;
@@ -69,37 +69,10 @@ namespace GX
 				glBegin(GL_POINTS);
 				break;
 		}
-
-		last_prim = prim;
-		ras_vtx_num = vtx_num;
 	}
 
 	void GXCore::RAS_End()
 	{
-		switch (last_prim)
-		{
-			case RAS_QUAD:
-				tris += (ras_vtx_num / 4) / 2;
-				break;
-			case RAS_TRIANGLE:
-				tris += ras_vtx_num / 3;
-				break;
-			case RAS_TRIANGLE_STRIP:
-				tris += ras_vtx_num - 2;
-				break;
-			case RAS_TRIANGLE_FAN:
-				tris += ras_vtx_num - 2;
-				break;
-			case RAS_LINE:
-				lines += ras_vtx_num / 2;
-				break;
-			case RAS_LINE_STRIP:
-				lines += ras_vtx_num - 1;
-				break;
-			case RAS_POINT:
-				pts += ras_vtx_num;
-				break;
-		}
 		glEnd();
 	}
 
@@ -107,11 +80,14 @@ namespace GX
 	{
 		float mv[3];
 		
-		XF_ApplyModelview(mv, v->pos);
+		XF_ApplyModelview(v, mv, v->Position);
 
-		if (state.xf.numColors != 0)
+		// The color is transferred via Uniforms
+
+		if (xf.numColors != 0)
 		{
 			XF_DoLights(v);
+
 			if (ras_wireframe) {
 				glColor3ub(0, 255, 255);
 			}
@@ -121,7 +97,7 @@ namespace GX
 		}
 
 		// texture hack
-		if (ras_use_texture && state.xf.numTex && tID[0])
+		if (ras_use_texture && xf.numTex && tID[0])
 		{
 			XF_DoTexGen(v);
 			tgout[0].out[0] *= tID[0]->ds;

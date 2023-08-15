@@ -65,7 +65,7 @@ namespace GX
 	// reg size = 24 bit (value is already masked)
 	void GXCore::loadBPReg(size_t index, uint32_t value)
 	{
-		state.bpLoads++;
+		bpLoads++;
 
 		if (GpRegsLog)
 		{

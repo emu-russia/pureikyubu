@@ -181,37 +181,30 @@ namespace GX
 		uint32_t     bits;
 	};
 
+
+	// TODO: Old implementation, will be redone nicely.
+
+	// texture entry
+	struct TexEntry
+	{
+		uint32_t  ramAddr;
+		uint8_t* rawData;
+		Color* rgbaData;      // allocated
+		int fmt, tfmt;
+		int w, h, dw, dh;
+		float ds, dt;
+		uint32_t bind;
+	};
+
+	struct S3TC_TEX
+	{
+		unsigned    t : 2;
+	};
+
+	struct S3TC_BLK
+	{
+		uint16_t     rgb0;       // color 2
+		uint16_t     rgb1;       // color 1
+		uint8_t      row[4];
+	};
 }
-
-
-
-// TODO: Old implementation, will be redone nicely.
-
-// texture entry
-struct TexEntry
-{
-	uint32_t  ramAddr;
-	uint8_t* rawData;
-	Color* rgbaData;      // allocated
-	int fmt, tfmt;
-	int w, h, dw, dh;
-	float ds, dt;
-	uint32_t bind;
-};
-
-struct S3TC_TEX
-{
-	unsigned    t : 2;
-};
-
-struct S3TC_BLK
-{
-	uint16_t     rgb0;       // color 2
-	uint16_t     rgb1;       // color 1
-	uint8_t      row[4];
-};
-
-
-// interface to application
-
-extern  TexEntry* tID[8];

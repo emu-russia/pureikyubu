@@ -237,7 +237,7 @@ namespace GX
 			unsigned ntex : 4;			// Num texcoords
 			unsigned ncol : 3;			// Num colors
 			unsigned unused1 : 1;
-			unsigned flat_end : 1;		// Flat shading
+			unsigned flat_en : 1;		// Flat shading
 			unsigned ms_en : 1;			// Multisampling
 			unsigned ntev : 4;			// Num TEV stages
 			unsigned reject_en : 2;		// Culling (front/back)

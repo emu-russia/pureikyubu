@@ -16,6 +16,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{5afa140c-4797-4cd5-83f6-c284c88c0bdb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GLEW">
+      <UniqueIdentifier>{5c45d6df-040f-474c-b297-285a4d8b35ad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\src\res\GCN.ico">
@@ -395,6 +398,9 @@
     </ClCompile>
     <ClCompile Include="..\src\uijdi.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\glew-2.2.0\src\glew.c">
+      <Filter>GLEW</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

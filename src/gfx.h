@@ -2,7 +2,7 @@
 
 /*
 
-Very limited Flipper GFXEngine emulation. Basic OpenGL is used as a backend.
+Very limited Flipper GFXEngine emulation. Basic OpenGL 1.2 is used as a backend.
 
 This code is out-of-phase because the graphical subsystem has been substantially redesigned. So there is now a mixture of new developments and old code.
 
@@ -28,43 +28,12 @@ What's not supported:
 #include "tev.h"
 #include "tx.h"
 
-namespace GX
-{
-
-	// Defines the state of the entire graphics system
-	struct State
-	{
-		PERegs peregs;
-		CPHostRegs cpregs;		// Mapped command processor registers
-		CPState cp;
-		XFState xf;
-
-		// PI FIFO
-		volatile uint32_t    pi_cp_base;
-		volatile uint32_t    pi_cp_top;
-		volatile uint32_t    pi_cp_wrptr;          // also WRAP bit
-
-		// Command Processor
-		Thread* cp_thread;     // CP FIFO thread
-		size_t	tickPerFifo;
-		int64_t	updateTbrValue;
-
-		// Stats
-		size_t cpLoads;
-		size_t xfLoads;
-		size_t bpLoads;
-	};
-
-}
-
+#define GFX_BLACKJACK_AND_SHADERS 0
 
 namespace GX
 {
-
 	class GXCore
 	{
-		State state;
-
 		// TODO: Refactoring hacks
 		void DONE_INT();
 		void TOKEN_INT();
@@ -86,8 +55,6 @@ namespace GX
 		bool logDrawCommands = false;
 		bool GpRegsLog = false;
 
-		Vertex* vtx; // current vertex to collect data
-
 		// Windows OpenGL stuff
 #ifdef _WINDOWS
 		HWND hwndMain;
@@ -95,10 +62,6 @@ namespace GX
 		HDC hdcgl = 0;
 		PAINTSTRUCT psFrame{};
 #endif
-
-		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
-		uint32_t clear_z = -1;
-		bool set_clear = false;
 
 		bool make_shot = false;
 		FILE* snap_file = nullptr;
@@ -112,8 +75,6 @@ namespace GX
 
 		// perfomance counters
 		size_t frames = 0, tris = 0, pts = 0, lines = 0;
-
-		Vertex tri[3]{};		// triangle to be rendered
 
 	public:
 		GXCore();
@@ -132,8 +93,25 @@ namespace GX
 		// Debug
 		void DumpPIFIFO();
 		void DumpCPFIFO();
+		
+		GLuint vert_shader;
+		GLuint frag_shader;
+		GLuint shader_prog;
+
+		void UploadShaders(const char* vert_source, const char* frag_source);
+		void DisposeShaders();
+		void InitVBO();
+		void DisposeVBO();
+		void BindShadersWithVBO();
+
+		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
 
 #pragma region "Interface to Flipper"
+
+		// PI FIFO
+		volatile uint32_t pi_cp_base;
+		volatile uint32_t pi_cp_top;
+		volatile uint32_t pi_cp_wrptr;          // also WRAP bit
 
 		// CP Registers
 		uint16_t CpReadReg(CPMappedRegister id);
@@ -154,6 +132,23 @@ namespace GX
 
 #pragma region "Command Processor"
 
+		CPHostRegs cpregs;		// Mapped command processor registers
+		CPState cp;				// Internal registers (for setting VCD/VAT, etc.)
+
+		Thread* cp_thread;     // CP FIFO thread
+		size_t	tickPerFifo;
+		int64_t	updateTbrValue;
+
+		// Stats
+		size_t cpLoads;
+		size_t xfLoads;
+		size_t bpLoads;
+
+		GLuint vao;
+		GLuint vbo;
+		size_t vbo_size = 0x10000;		// Maximum number of vertices that can be used in Draw primitive parameters
+		Vertex* vertex_data = nullptr;
+
 		void GXWriteFifo(uint8_t dataPtr[32]);
 		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
 		std::string AttrToString(VertexAttr attr);
@@ -163,7 +158,7 @@ namespace GX
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
 		Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
-		void FifoWalk(unsigned vatnum, FifoProcessor* gxfifo);
+		void FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo);
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
 		void CPAbortFifo();
@@ -171,21 +166,25 @@ namespace GX
 #pragma endregion "Command Processor"
 
 
-#pragma region "Transform Unit (Old)"
+#pragma region "Transform Unit"
+
+		XFState xf;
 
 		TexGenOut tgout[8]{};
 		Color colora[2]{};	// lighting stage output colors (COLOR0A0 / COLOR1A1)
 
+		bool XF_LightColorEnabled(int chan, int light);
+		bool XF_LightAlphaEnabled(int chan, int light);
 		void XF_DoLights(const Vertex* v);
 		void XF_DoTexGen(const Vertex* v);
 		void VECNormalize(float vec[3]);
-		void XF_ApplyModelview(float* out, const float* in);
-		void NormalTransform(float* out, const float* in);
+		void XF_ApplyModelview(const Vertex* v, float* out, const float* in);
+		void NormalTransform(const Vertex* v, float* out, const float* in);
 		void GL_SetProjection(float* mtx);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
 		void loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo);
 
-#pragma endregion "Transform Unit (Old)"
+#pragma endregion "Transform Unit"
 
 
 #pragma region "Setup Unit"
@@ -207,9 +206,6 @@ namespace GX
 #pragma region "Rasterizers"
 
 		bool ras_wireframe = false;			// Enable wireframe drawing of primitives (DEBUG)
-
-		RAS_Primitive last_prim{};
-		size_t ras_vtx_num{};
 		bool ras_use_texture = false;
 
 		void RAS_Begin(RAS_Primitive prim, size_t vtx_num);
@@ -219,7 +215,7 @@ namespace GX
 #pragma endregion "Rasterizers"
 
 
-#pragma region "Texture Engine (Old)"
+#pragma region "Texture Engine"
 
 		LoadTlut0 loadtlut0;		// 0x64
 		LoadTlut1 loadtlut1;		// 0x65
@@ -232,6 +228,15 @@ namespace GX
 		SetTlut settlut[8];			// 0x98-0x9B, 0xB8-0xBB
 		bool texvalid[4][8];
 
+		#define GFX_MAX_TEXTURES 32
+
+		TexEntry* tID[8];
+		Color rgbabuf[1024 * 1024];
+		TexEntry tcache[GFX_MAX_TEXTURES];
+		unsigned tptr;
+		GLuint texlist[GFX_MAX_TEXTURES + 1];     // gl texture list (0 entry reserved)
+		uint8_t tlut[1024 * 1024];  // temporary TLUT buffer
+
 		void TexInit();
 		void TexFree();
 		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
@@ -240,7 +245,7 @@ namespace GX
 		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
 		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
 
-#pragma endregion "Texture Engine (Old)"
+#pragma endregion "Texture Engine"
 
 
 #pragma region "TEV"
@@ -267,6 +272,12 @@ namespace GX
 
 
 #pragma region "Pixel Engine"
+
+		PERegs peregs;
+
+		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
+		uint32_t clear_z = -1;
+		bool set_clear = false;
 
 		Color copyClearRGBA;
 		uint32_t copyClearZ;

@@ -1,21 +1,7 @@
 // Flipper Texture Engine + TMEM
 #include "pch.h"
 
-#define MAX 32
 #define TEXMODE     GL_MODULATE
-
-//
-// local and external data
-//
-
-static      TexEntry    tcache[MAX];
-static      unsigned    tptr;
-static      GLuint      texlist[MAX+1];     // gl texture list (0 entry reserved)
-static      uint8_t     tlut[1024 * 1024];  // temporary TLUT buffer
-
-TexEntry    *tID[8];                        // texture unit bindings
-
-Color       rgbabuf[1024 * 1024];
 
 namespace GX
 {
@@ -25,8 +11,8 @@ namespace GX
 		memset(tcache, 0, sizeof(tcache));
 		tptr = 1;
 
-		glGenTextures(MAX, texlist);
-		for (unsigned n = 1; n < MAX; n++)
+		glGenTextures(GFX_MAX_TEXTURES, texlist);
+		for (unsigned n = 1; n < GFX_MAX_TEXTURES; n++)
 		{
 			tcache[n].bind = n;
 		}
@@ -34,7 +20,7 @@ namespace GX
 
 	void GXCore::TexFree()
 	{
-		for (unsigned n = 0; n < MAX; n++)
+		for (unsigned n = 0; n < GFX_MAX_TEXTURES; n++)
 		{
 			//if(tcache[n].rgbaData)
 			//{
