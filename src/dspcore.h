@@ -426,6 +426,13 @@ namespace DSP
 		int64_t instructionCounter = 0;
 		bool resetInstructionCounter = false;
 
+		/// <summary>
+		/// In a real Flipper 2 writes to CPU->DSP Mailbox cannot be interrupted in the middle by a read from the DSP side.
+		/// If this happens - Deadlock can happen.
+		/// We solve this problem by artificially delaying the DspCore execution thread.
+		/// </summary>
+		bool delay_mailbox_reasons = false;
+
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
