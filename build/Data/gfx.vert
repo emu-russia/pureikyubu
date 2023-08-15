@@ -20,7 +20,7 @@ in vec2 in_TexCoord7;
 in uint MatrixIndex0;
 in uint MatrixIndex1;
 
-// Define uniforms to be updated when the XF registers of the block are updated
+// Define uniforms to be updated when registers of the XF block are updated
 
 uniform float matrix_mem[0x100];            // 0x0000-0x00ff (IndexA)
 uniform float norm_matrix_mem[96];          // 0x0400-0x045f  (IndexB)
