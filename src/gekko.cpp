@@ -1200,7 +1200,9 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
 		{
-			Report(Channel::CPU, "Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
+			if (complain_unaligned) {
+				Report(Channel::CPU, "Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
+			}
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
 
@@ -1244,7 +1246,9 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
 		{
-			Report(Channel::CPU, "Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
+			if (complain_unaligned) {
+				Report(Channel::CPU, "Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
+			}
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
 
@@ -1293,7 +1297,9 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
 		{
-			Report(Channel::CPU, "Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
+			if (complain_unaligned) {
+				Report(Channel::CPU, "Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
+			}
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
 
@@ -1337,7 +1343,9 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
 		{
-			Report(Channel::CPU, "Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
+			if (complain_unaligned) {
+				Report(Channel::CPU, "Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
+			}
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
 
@@ -1386,7 +1394,9 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
 		{
-			Report(Channel::CPU, "Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
+			if (complain_unaligned) {
+				Report(Channel::CPU, "Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
+			}
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
 
@@ -1430,7 +1440,9 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
 		{
-			Report(Channel::CPU, "Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
+			if (complain_unaligned) {
+				Report(Channel::CPU, "Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
+			}
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
 
