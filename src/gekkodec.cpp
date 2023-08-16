@@ -1663,8 +1663,8 @@ namespace Gekko
 
 	void Decoder::SrSFast(uint32_t instr, DecoderInfo* info)
 	{
-		info->paramBits[0] = DIS_RD;
-		info->paramBits[1] = DIS_RA & 0xF;
+		info->paramBits[0] = DIS_RA & 0xF;
+		info->paramBits[1] = DIS_RS;
 	}
 
 	void Decoder::FrRegOffsetWi(uint32_t instr, DecoderInfo* info)

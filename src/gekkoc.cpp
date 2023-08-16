@@ -4219,7 +4219,7 @@ namespace Gekko
 				bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
 				bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
-				Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+				Report(Channel::CPU, "SDR1 <- %08X (IR:%i DR:%i pc:%08X)\n",
 					core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 
 				core->dtlb.InvalidateAll();

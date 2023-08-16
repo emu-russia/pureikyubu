@@ -730,6 +730,21 @@ namespace Debug
 		uint32_t ea = strtoul(args[1].c_str(), nullptr, 0);
 		Core->WriteWord(ea, 0x6000'0000);
 
+		// Refresh physical memory (MEM) storage
+		int wimg;
+		uint32_t pa = Core->EffectiveToPhysical(ea, Gekko::MmuAccess::Read , wimg);
+		if (pa != Gekko::BadAddress) {
+			PIWriteWord(pa, 0x6000'0000);
+		}
+
+		// You also need to invalidate the Gekko instruction cache
+		Core->icache->Invalidate(pa);
+
+		// Refresh the debugger contents
+		if (debugger != nullptr) {
+			debugger->InvalidateAll();
+		}
+
 		return nullptr;
 	}
 
