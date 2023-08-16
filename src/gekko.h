@@ -440,6 +440,8 @@ namespace Gekko
 		uint32_t LockedCacheAddr = 0;
 		bool lcenabled = false;
 
+		bool complain_unaligned = false;
+
 		GekkoCore* core;
 
 	public:

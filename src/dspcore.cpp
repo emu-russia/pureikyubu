@@ -583,7 +583,7 @@ namespace DSP
 		uint64_t ticks = Core->GetTicks();
 
 		if (delay_mailbox_reasons) {
-			Thread::Sleep(1);
+			//Thread::Sleep(1);
 			delay_mailbox_reasons = false;
 			return;
 		}
