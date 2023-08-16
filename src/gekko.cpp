@@ -969,7 +969,7 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		if (IsDirty(pa))
+		if (IsDirty(pa) && !IsInvalid(pa))
 		{
 			CastOut(pa);
 			SetDirty(pa, false);
@@ -1009,7 +1009,7 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		if (IsDirty(pa))
+		if (IsDirty(pa) && !IsInvalid(pa))
 		{
 			CastOut(pa);
 			SetDirty(pa, false);

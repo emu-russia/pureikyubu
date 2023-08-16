@@ -63,7 +63,7 @@
     },
 
     "CacheLog": {
-      "help": "Set cache operations log mode",
+      "help": "Set cache operations log mode (0: none, 1: cache commands, 2: all)",
       "args": 1,
       "usage": [
         "Syntax: CacheLog <0|1|2>",
