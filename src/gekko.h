@@ -600,7 +600,7 @@ namespace Gekko
 
 		bool break_on_exception = false;
 		bool trace_exceptions = false;
-		bool break_on_DSI = true;
+		bool break_on_DSI = false;
 		bool break_on_ISI = true;
 
 		bool TestBreakpoints();
