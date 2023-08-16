@@ -360,7 +360,7 @@ static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 		// cut string
 		while (*ptr == '\n') ptr++;
 		if (!*ptr) break;
-		while (*ptr != '\n') line[i++] = *ptr++;
+		while (*ptr != '\n' && *ptr) line[i++] = *ptr++;
 		line[i++] = 0;
 
 		// remove comments
