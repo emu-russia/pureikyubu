@@ -78,6 +78,10 @@ static void DITransferComplete()
 		PIAssertInt(PI_INTERRUPT_DI);
 	}
 
+	if (di.log) {
+		Report(Channel::DI, "TransferComplete\n");
+	}
+
 	DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
 }
 
@@ -129,7 +133,8 @@ static uint8_t DIHostToDduCallbackData()
 			if (DILEN)
 			{
 				uint32_t dimar = DIMAR & DI_DIMAR_MASK;
-				PIReadBurst(dimar, di.dmaFifo);
+				uint8_t* ptr = (uint8_t *)MIGetMemoryPointerForIO(dimar);
+				memcpy(ptr, di.dmaFifo, 32);
 				DIMAR += 32;
 				DILEN -= 32;
 			}
