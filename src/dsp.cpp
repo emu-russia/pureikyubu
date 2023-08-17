@@ -751,7 +751,7 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
 		}
 
-		core->delay_mailbox_reasons = true;
+		core->delay_mailbox_reasons = 4;
 
 		CpuToDspMailbox[0] = value & 0x7FFF;
 		CpuToDspLock[0].Unlock();
@@ -766,7 +766,7 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
 		}
 
-		core->delay_mailbox_reasons = true;
+		core->delay_mailbox_reasons = 4;
 
 		CpuToDspMailbox[1] = value;
 		CpuToDspMailbox[0] |= 0x8000;

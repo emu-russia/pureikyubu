@@ -431,7 +431,7 @@ namespace DSP
 		/// If this happens - Deadlock can happen.
 		/// We solve this problem by artificially delaying the DspCore execution thread.
 		/// </summary>
-		bool delay_mailbox_reasons = false;
+		int delay_mailbox_reasons = 0;
 
 	public:
 
