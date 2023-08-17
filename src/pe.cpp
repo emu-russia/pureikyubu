@@ -67,35 +67,6 @@ namespace GX
 		Report(Channel::GP, "EfbPoke, address: 0x%08X, value: 0x%08X\n", addr, value);
 	}
 
-	// set clear rules
-	void GXCore::GL_SetClear(Color clr, uint32_t z)
-	{
-		cr = clr.R;
-		cg = clr.G;
-		cb = clr.B;
-		ca = clr.A;
-		clear_z = z;
-		set_clear = true;
-
-		/*/
-			if(set_clear)
-			{
-				glClearColor(
-					(float)(cr / 255.0f),
-					(float)(cg / 255.0f),
-					(float)(cb / 255.0f),
-					(float)(ca / 255.0f)
-				);
-
-				glClearDepth((double)(clear_z / 16777215.0));
-
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-				set_clear = FALSE;
-			}
-		/*/
-	}
-
 	// sel:0 - file, sel:1 - memory
 	void GXCore::GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height)
 	{

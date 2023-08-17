@@ -49,6 +49,8 @@ namespace GX
 		bool gxOpened = false;
 		bool frame_done = true;
 		bool disableDraw = false;
+		bool frameReady = false;
+		bool backend_started = false;
 
 		// logging
 		bool logOpcode = false;
@@ -67,14 +69,8 @@ namespace GX
 		FILE* snap_file = nullptr;
 		uint32_t snap_w, snap_h;
 
-		int frameReady = 0;
-		bool backend_started = false;
-
 		// optionable
 		uint32_t scr_w = 640, scr_h = 480;
-
-		// perfomance counters
-		size_t frames = 0, tris = 0, pts = 0, lines = 0;
 
 	public:
 		GXCore();
@@ -89,6 +85,8 @@ namespace GX
 		void GL_BeginFrame();
 		void GL_EndFrame();
 		void GPFrameDone();
+
+		void ResizeRenderTarget(size_t width, size_t height);
 
 		// Debug
 		void DumpPIFIFO();
@@ -128,6 +126,14 @@ namespace GX
 		void CPDrawTokenCallback(uint16_t tokenValue);
 
 #pragma endregion "Interface to Flipper"
+
+
+#pragma region "Gfx Common"
+
+		GenMode genmode;
+		GenMsloc msloc[4];
+
+#pragma endregion "Gfx Common"
 
 
 #pragma region "Command Processor"
@@ -189,7 +195,6 @@ namespace GX
 
 #pragma region "Setup Unit"
 
-		GenMode genmode;	// TODO: SU?
 		SU_SCIS0 scis0;		// 0x20
 		SU_SCIS1 scis1;		// 0x21
 		SU_TS0 ssize[8];	// 0x3n
@@ -204,6 +209,9 @@ namespace GX
 
 
 #pragma region "Rasterizers"
+
+		// perfomance counters
+		size_t tris = 0, pts = 0, lines = 0;
 
 		bool ras_wireframe = false;			// Enable wireframe drawing of primitives (DEBUG)
 		bool ras_use_texture = false;
@@ -273,20 +281,36 @@ namespace GX
 
 #pragma region "Pixel Engine"
 
-		PERegs peregs;
+		size_t frames = 0;
 
-		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
-		uint32_t clear_z = -1;
-		bool set_clear = false;
+		PERegs peregs;		// PE PI regs
 
-		Color copyClearRGBA;
-		uint32_t copyClearZ;
-		uint16_t tokint;
 		PE_ZMODE zmode;		// 0x40
-		ColMode0 cmode0;	// 0x41
-		ColMode1 cmode1;	// 0x42
+		PE_CMODE0 cmode0;	// 0x41
+		PE_CMODE1 cmode1;	// 0x42
+		PE_CONTROL pe_control;	// 0x43
+		PE_FIELD_MASK pe_field_mask; // 0x44
+		PE_FINISH pe_finish;	// 0x45
+		PE_REFRESH pe_refresh; // 0x46
+		PE_TOKEN pe_token; // 0x47
+		PE_TOKEN_INT pe_token_int; // 0x48
+		PE_COPY_SRC_ADDR pe_copy_src_addr;	// 0x49
+		PE_COPY_SRC_SIZE pe_copy_src_size;	// 0x4a
+		PE_COPY_DST_BASE pe_copy_dst_base[2];	// 0x4b, 0x4c
+		PE_COPY_DST_STRIDE pe_copy_dst_stride;	// 0x4d
+		PE_COPY_SCALE pe_copy_scale;	// 0x4e
+		PE_COPY_CLEAR_AR pe_copy_clear_ar;	// 0x4F
+		PE_COPY_CLEAR_GB pe_copy_clear_gb;	// 0x50
+		PE_COPY_CLEAR_Z pe_copy_clear_z;	// 0x51
+		PE_COPY_CMD pe_copy_cmd;	// 0x52
+		PE_VFILTER_0 pe_vfilter_0;	// 0x53
+		PE_VFILTER_1 pe_vfilter_1;	// 0x54
+		PE_XBOUND pe_xbound;	// 0x55
+		PE_YBOUND pe_ybound;	// 0x56
+		PE_PERFMODE pe_perfmode;	// 0x57
+        PE_CHICKEN pe_chicken;  // 0x58
+        PE_QUAD_OFFSET pe_quad_offset;  // 0x59
 
-		void GL_SetClear(Color clr, uint32_t z);
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
 		void GL_MakeSnapshot(char* path);
 		void GL_SaveBitmap(uint8_t* buf);

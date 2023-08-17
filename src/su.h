@@ -10,10 +10,10 @@ namespace GX
 	{
 		// "Gen" registers are shared between all GFX blocks and have global purpose
 		GEN_MODE_ID = 0x00,
-		GEN_MSLOC0 = 0x01,
-		GEN_MSLOC1 = 0x02,
-		GEN_MSLOC2 = 0x03,
-		GEN_MSLOC3 = 0x04,
+		GEN_MSLOC0_ID = 0x01,
+		GEN_MSLOC1_ID = 0x02,
+		GEN_MSLOC2_ID = 0x03,
+		GEN_MSLOC3_ID = 0x04,
 
 		// Bump mapping Unit
 		BUMP_MATRIX_A0_ID = 0x6,

@@ -83,12 +83,22 @@ void VideoOutRefresh()
 {
 	if (gdi_init)
 	{
-		BitBlt(
+		//BitBlt(
+		//	hdcMainWnd,
+		//	0, 0,
+		//	gdi_width, gdi_height,
+		//	hdcWndComp,
+		//	0, 0,
+		//	SRCCOPY
+		//);
+
+		StretchBlt (
 			hdcMainWnd,
 			0, 0,
 			gdi_width, gdi_height,
 			hdcWndComp,
 			0, 0,
+			640, 480,
 			SRCCOPY
 		);
 	}
