@@ -307,10 +307,8 @@ namespace GX
 			return;
 
 			case PE_CMODE1_ID:
-			{
 				cmode1.bits = value;
-			}
-			return;
+				break;
 
 			// draw done
 			case PE_FINISH_ID:
@@ -322,41 +320,35 @@ namespace GX
 
 			case PE_TOKEN_ID:
 			{
-				if ((uint16_t)value == tokint)
+				pe_token.bits = value;
+				if (pe_token.token == pe_token_int.token)
 				{
 					GPFrameDone();
-					CPDrawToken(tokint);
+					CPDrawToken(pe_token.token);
 				}
 			}
 			break;
 
 			// token
 			case PE_TOKEN_INT_ID:
-				tokint = (uint16_t)value;
+				pe_token_int.bits = value;
 				break;
 
 
 
+
+
 			case PE_COPY_CLEAR_AR_ID:
-			{
-				copyClearRGBA.A = (uint8_t)(value >> 8);
-				copyClearRGBA.R = (uint8_t)(value);
-				return;
-			}
+				pe_copy_clear_ar.bits = value;
+				break;
 
 			case PE_COPY_CLEAR_GB_ID:
-			{
-				copyClearRGBA.G = (uint8_t)(value >> 8);
-				copyClearRGBA.B = (uint8_t)(value);
-			}
-			return;
+				pe_copy_clear_gb.bits = value;
+				break;
 
 			case PE_COPY_CLEAR_Z_ID:
-			{
-				copyClearZ = value & 0xffffff;
-				GL_SetClear(copyClearRGBA, copyClearZ);
-			}
-			return;
+				pe_copy_clear_z.bits = value;
+				break;
 
 			//
 			// SetImage0. texture image width, height, format

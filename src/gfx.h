@@ -283,11 +283,30 @@ namespace GX
 		PERegs peregs;		// PE PI regs
 
 		PE_ZMODE zmode;		// 0x40
-		ColMode0 cmode0;	// 0x41
-		ColMode1 cmode1;	// 0x42
-		uint16_t tokint;	// 0x48
-		Color copyClearRGBA;	// 0x4F, 0x50
-		uint32_t copyClearZ;	// 0x51
+		PE_CMODE0 cmode0;	// 0x41
+		PE_CMODE1 cmode1;	// 0x42
+		PE_CONTROL pe_control;	// 0x43
+		PE_FIELD_MASK pe_field_mask; // 0x44
+		PE_FINISH pe_finish;	// 0x45
+		PE_REFRESH pe_refresh; // 0x46
+		PE_TOKEN pe_token; // 0x47
+		PE_TOKEN_INT pe_token_int; // 0x48
+		PE_COPY_SRC_ADDR pe_copy_src_addr;	// 0x49
+		PE_COPY_SRC_SIZE pe_copy_src_size;	// 0x4a
+		PE_COPY_DST_BASE pe_copy_dst_base[2];	// 0x4b, 0x4c
+		PE_COPY_DST_STRIDE pe_copy_dst_stride;	// 0x4d
+		PE_COPY_SCALE pe_copy_scale;	// 0x4e
+		PE_COPY_CLEAR_AR pe_copy_clear_ar;	// 0x4F
+		PE_COPY_CLEAR_GB pe_copy_clear_gb;	// 0x50
+		PE_COPY_CLEAR_Z pe_copy_clear_z;	// 0x51
+		PE_COPY_CMD pe_copy_cmd;	// 0x52
+		PE_VFILTER_0 pe_vfilter_0;	// 0x53
+		PE_VFILTER_1 pe_vfilter_1;	// 0x54
+		PE_XBOUND pe_xbound;	// 0x55
+		PE_YBOUND pe_ybound;	// 0x56
+		PE_PERFMODE pe_perfmode;	// 0x57
+        PE_CHICKEN pe_chicken;  // 0x58
+        PE_QUAD_OFFSET pe_quad_offset;  // 0x59
 
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
 		void GL_MakeSnapshot(char* path);

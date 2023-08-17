@@ -39,6 +39,8 @@ namespace GX
 	#define PE_SR_DONEMSK   (1 << 2)
 	#define PE_SR_TOKENMSK  (1 << 3)
 
+	// The register definitions for PE PI are slightly different from command stream PE registers because PE PI registers are 16-bit
+
 	// PE registers mapped to CPU
 	struct PERegs
 	{
@@ -46,49 +48,352 @@ namespace GX
 		uint16_t     token;      // last token
 	};
 
+    // PE register definitions that come through the command stream.
+
 	// 0x40
 	union PE_ZMODE
 	{
 		struct
 		{
-			unsigned    enable : 1;
-			unsigned    func : 3;
-			unsigned    mask : 1;
+			unsigned enable : 1;
+			unsigned func : 3;
+			unsigned mask : 1;
+			unsigned unused : 19;
+			unsigned rid : 8;
 		};
-		uint32_t     bits;
+		uint32_t bits;
 	};
 
 	// 0x41
-	union ColMode0
+	union PE_CMODE0
 	{
 		struct
 		{
-			unsigned    blend_en : 1;
-			unsigned    logop_en : 1;
-			unsigned    dither_en : 1;
-			unsigned    col_mask : 1;
-			unsigned    alpha_mask : 1;
-			unsigned    dfactor : 3;
-			unsigned    sfactor : 3;
-			unsigned    blebdop : 1;
-			unsigned    logop : 12;
+			unsigned blend_en : 1;
+			unsigned logop_en : 1;
+			unsigned dither_en : 1;
+			unsigned col_mask : 1;
+			unsigned alpha_mask : 1;
+			unsigned dfactor : 3;
+			unsigned sfactor : 3;
+			unsigned blendop : 1;
+			unsigned logop : 12;
+			unsigned unused : 8;
+			unsigned rid : 8;
 		};
-		uint32_t     bits;
+		uint32_t bits;
 	};
 
 	// 0x42
-	union ColMode1
+	union PE_CMODE1
 	{
 		struct
 		{
-			unsigned    const_alpha_en : 1;
-			unsigned    rsrv : 7;
-			unsigned    const_alpha : 8;
-			unsigned    rid : 16;
+			unsigned const_alpha : 8;
+			unsigned const_alpha_en : 1;
+			unsigned yuv : 2;
+			unsigned unused : 13;
+			unsigned rid : 8;
 		};
-		uint32_t     bits;
+		uint32_t bits;
 	};
 
+    // 0x43
+    union PE_CONTROL
+    {
+        struct
+        {
+            unsigned pixtype : 3;
+            unsigned zcmode : 3;
+            unsigned ztop : 1;
+            unsigned unused : 17;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x44
+    union PE_FIELD_MASK
+    {
+        struct
+        {
+            unsigned even : 1;
+            unsigned odd : 1;
+            unsigned unused : 22;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x45
+    union PE_FINISH
+    {
+        struct
+        {
+            unsigned dst : 2;
+            unsigned unused : 22;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x46
+    union PE_REFRESH
+    {
+        struct
+        {
+            unsigned interval : 9;
+            unsigned enable : 1;
+            unsigned unused : 14;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x47
+    union PE_TOKEN
+    {
+        struct
+        {
+            unsigned token : 16;
+            unsigned unused : 8;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x48
+    union PE_TOKEN_INT
+    {
+        struct
+        {
+            unsigned token : 16;
+            unsigned unused : 8;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x49
+    union PE_COPY_SRC_ADDR
+    {
+        struct
+        {
+            unsigned x : 10;
+            unsigned y : 10;
+            unsigned unused : 4;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x4a
+    union PE_COPY_SRC_SIZE
+    {
+        struct
+        {
+            unsigned x : 10;
+            unsigned y : 10;
+            unsigned unused : 4;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x4b, 0x4c
+    union PE_COPY_DST_BASE
+    {
+        struct
+        {
+            unsigned base : 21;
+            unsigned unused : 3;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x4d
+    union PE_COPY_DST_STRIDE
+    {
+        struct
+        {
+            unsigned stride : 10;
+            unsigned unused : 14;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x4e
+    union PE_COPY_SCALE
+    {
+        struct
+        {
+            unsigned scale : 9;
+            unsigned unused : 15;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x4F
+    union PE_COPY_CLEAR_AR
+    {
+        struct
+        {
+            unsigned red : 8;
+            unsigned alpha : 8;
+            unsigned unused : 8;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x50
+    union PE_COPY_CLEAR_GB
+    {
+        struct
+        {
+            unsigned blue : 8;
+            unsigned green : 8;
+            unsigned unused : 8;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x51
+    union PE_COPY_CLEAR_Z
+    {
+        struct
+        {
+            unsigned value : 24;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x52
+    union PE_COPY_CMD
+    {
+        struct
+        {
+            unsigned clamp_top : 1;
+            unsigned clamp_bottom : 1;
+            unsigned unused1 : 1;
+            unsigned tex_format_h : 1;
+            unsigned tex_format : 3;
+            unsigned gamma : 2;
+            unsigned mip_map_filter : 1;
+            unsigned vert_scale : 1;
+            unsigned clear : 1;
+            unsigned interlaced : 2;
+            unsigned opcode : 1;
+            unsigned ccv : 2;
+            unsigned unused2 : 7;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x53
+    union PE_VFILTER_0
+    {
+        struct
+        {
+            unsigned coeff0 : 6;
+            unsigned coeff1 : 6;
+            unsigned coeff2 : 6;
+            unsigned coeff3 : 6;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x54
+    union PE_VFILTER_1
+    {
+        struct
+        {
+            unsigned coeff4 : 6;
+            unsigned coeff5 : 6;
+            unsigned coeff6 : 6;
+            unsigned unused : 6;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x55
+    union PE_XBOUND
+    {
+        struct
+        {
+            unsigned left : 10;
+            unsigned right : 10;
+            unsigned unused : 4;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x56
+    union PE_YBOUND
+    {
+        struct
+        {
+            unsigned top : 10;
+            unsigned bottom : 10;
+            unsigned unused : 4;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x57
+    union PE_PERFMODE
+    {
+        struct
+        {
+            unsigned conter0 : 2;
+            unsigned conter1 : 2;
+            unsigned conter2 : 2;
+            unsigned conter3 : 2;
+            unsigned conter4 : 2;
+            unsigned conter5 : 2;
+            unsigned unused : 12;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x58
+    union PE_CHICKEN
+    {
+        struct
+        {
+            unsigned piwr : 1;
+            unsigned tx_copy_fmt : 1;
+            unsigned tx_copy_ccv : 1;
+            unsigned blendop : 1;
+            unsigned unused : 20;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
+
+    // 0x59
+    union PE_QUAD_OFFSET
+    {
+        struct
+        {
+            unsigned x : 10;
+            unsigned y : 10;
+            unsigned pad : 4;
+            unsigned rid : 8;
+        };
+        uint32_t bits;
+    };
 }
 
 void PEOpen();
