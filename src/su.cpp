@@ -74,31 +74,6 @@ namespace GX
 
 		switch (index)
 		{
-			// draw done
-			case PE_FINISH_ID:
-			{
-				GPFrameDone();
-				CPDrawDone();
-			}
-			return;
-
-			// token
-			case PE_TOKEN_INT_ID:
-			{
-				tokint = (uint16_t)value;
-			}
-			return;
-
-			case PE_TOKEN_ID:
-			{
-				if ((uint16_t)value == tokint)
-				{
-					GPFrameDone();
-					CPDrawToken(tokint);
-				}
-			}
-			return;
-
 			//
 			// gen mode
 			//
@@ -109,6 +84,21 @@ namespace GX
 				GL_SetCullMode(genmode.reject_en);
 			}
 			return;
+
+			// I don't see any use for MSLOC yet, I added it to avoid spamming with warnings
+
+			case GEN_MSLOC0_ID:
+				msloc[0].bits = value;
+				break;
+			case GEN_MSLOC1_ID:
+				msloc[1].bits = value;
+				break;
+			case GEN_MSLOC2_ID:
+				msloc[2].bits = value;
+				break;
+			case GEN_MSLOC3_ID:
+				msloc[3].bits = value;
+				break;
 
 			//
 			// set scissor box
@@ -146,9 +136,206 @@ namespace GX
 			}
 			return;
 
-			//
-			// set copy clear color/z
-			//
+			// Pixel Engine block
+
+			case PE_ZMODE_ID:
+			{
+				static const char* zf[] = {
+					"NEVER",
+					"LESS",
+					"EQUAL",
+					"LEQUAL",
+					"GREATER",
+					"NEQUAL",
+					"GEQUAL",
+					"ALWAYS"
+				};
+
+				static uint32_t glzf[] = {
+					GL_NEVER,
+					GL_LESS,
+					GL_EQUAL,
+					GL_LEQUAL,
+					GL_GREATER,
+					GL_NOTEQUAL,
+					GL_GEQUAL,
+					GL_ALWAYS
+				};
+
+				zmode.bits = value;
+
+				/*/
+				GFXError(
+					"z mode:\n"
+					"compare: %s\n"
+					"func: %s\n"
+					"update: %s",
+					(bpRegs.zmode.enable) ? ("yes") : ("no"),
+					zf[bpRegs.zmode.func],
+					(bpRegs.zmode.mask) ? ("yes") : ("no")
+				);
+				/*/
+
+				if (zmode.enable)
+				{
+					glEnable(GL_DEPTH_TEST);
+					glDepthFunc(glzf[zmode.func]);
+					glDepthMask(zmode.mask);
+				}
+				else glDisable(GL_DEPTH_TEST);
+			}
+			return;
+
+			// set blending rules
+			case PE_CMODE0_ID:
+			{
+				cmode0.bits = value;
+
+				static const char* logicop[] = {
+					"clear",
+					"and",
+					"revand",
+					"copy",
+					"invand",
+					"nop",
+					"xor",
+					"or",
+					"nor",
+					"eqv",
+					"inv",
+					"revor",
+					"invcopy",
+					"invor",
+					"nand",
+					"set"
+				};
+
+				static const char* sfactor[] = {
+					"zero",
+					"one",
+					"srcclr",
+					"invsrcclr",
+					"srcalpha",
+					"invsrcalpha",
+					"dstalpha",
+					"invdstalpha"
+				};
+
+				static const char* dfactor[] = {
+					"zero",
+					"one",
+					"dstclr",
+					"invdstclr",
+					"srcalpha",
+					"invsrcalpha",
+					"dstalpha",
+					"invdstalpha"
+				};
+
+				/*/
+				GFXError(
+					"blend rules\n\n"
+					"blend:%s, logic:%s\n"
+					"logic op : %s\n"
+					"sfactor : %s\n"
+					"dfactor : %s\n",
+					(bpRegs.cmode0.blend_en) ? ("on") : ("off"),
+					(bpRegs.cmode0.logop_en) ? ("on") : ("off"),
+					logicop[bpRegs.cmode0.logop],
+					sfactor[bpRegs.cmode0.sfactor],
+					dfactor[bpRegs.cmode0.dfactor]
+				);
+				/*/
+
+				static uint32_t glsf[] = {
+					GL_ZERO,
+					GL_ONE,
+					GL_SRC_COLOR,
+					GL_ONE_MINUS_SRC_COLOR,
+					GL_SRC_ALPHA,
+					GL_ONE_MINUS_SRC_ALPHA,
+					GL_DST_ALPHA,
+					GL_ONE_MINUS_DST_ALPHA
+				};
+
+				static uint32_t gldf[] = {
+					GL_ZERO,
+					GL_ONE,
+					GL_DST_COLOR,
+					GL_ONE_MINUS_DST_COLOR,
+					GL_SRC_ALPHA,
+					GL_ONE_MINUS_SRC_ALPHA,
+					GL_DST_ALPHA,
+					GL_ONE_MINUS_DST_ALPHA
+				};
+
+				// blend hack
+				if (cmode0.blend_en)
+				{
+					glEnable(GL_BLEND);
+					glBlendFunc(glsf[cmode0.sfactor], gldf[cmode0.dfactor]);
+				}
+				else glDisable(GL_BLEND);
+
+				static uint32_t logop[] = {
+					GL_CLEAR,
+					GL_AND,
+					GL_AND_REVERSE,
+					GL_COPY,
+					GL_AND_INVERTED,
+					GL_NOOP,
+					GL_XOR,
+					GL_OR,
+					GL_NOR,
+					GL_EQUIV,
+					GL_INVERT,
+					GL_OR_REVERSE,
+					GL_COPY_INVERTED,
+					GL_OR_INVERTED,
+					GL_NAND,
+					GL_SET
+				};
+
+				// logic operations
+				if (cmode0.logop_en)
+				{
+					glEnable(GL_COLOR_LOGIC_OP);
+					glLogicOp(logop[cmode0.logop]);
+				}
+				else glDisable(GL_COLOR_LOGIC_OP);
+			}
+			return;
+
+			case PE_CMODE1_ID:
+			{
+				cmode1.bits = value;
+			}
+			return;
+
+			// draw done
+			case PE_FINISH_ID:
+			{
+				GPFrameDone();
+				CPDrawDone();
+			}
+			break;
+
+			case PE_TOKEN_ID:
+			{
+				if ((uint16_t)value == tokint)
+				{
+					GPFrameDone();
+					CPDrawToken(tokint);
+				}
+			}
+			break;
+
+			// token
+			case PE_TOKEN_INT_ID:
+				tokint = (uint16_t)value;
+				break;
+
+
 
 			case PE_COPY_CLEAR_AR_ID:
 			{
@@ -356,183 +543,6 @@ namespace GX
 			case TX_SETMODE0_I0_ID:
 			{
 				texmode0[0].bits = value;
-			}
-			return;
-
-			//
-			// set blending rules
-			//
-
-			case PE_CMODE0_ID:
-			{
-				cmode0.bits = value;
-
-				static const char* logicop[] = {
-					"clear",
-					"and",
-					"revand",
-					"copy",
-					"invand",
-					"nop",
-					"xor",
-					"or",
-					"nor",
-					"eqv",
-					"inv",
-					"revor",
-					"invcopy",
-					"invor",
-					"nand",
-					"set"
-				};
-
-				static const char* sfactor[] = {
-					"zero",
-					"one",
-					"srcclr",
-					"invsrcclr",
-					"srcalpha",
-					"invsrcalpha",
-					"dstalpha",
-					"invdstalpha"
-				};
-
-				static const char* dfactor[] = {
-					"zero",
-					"one",
-					"dstclr",
-					"invdstclr",
-					"srcalpha",
-					"invsrcalpha",
-					"dstalpha",
-					"invdstalpha"
-				};
-
-				/*/
-				GFXError(
-					"blend rules\n\n"
-					"blend:%s, logic:%s\n"
-					"logic op : %s\n"
-					"sfactor : %s\n"
-					"dfactor : %s\n",
-					(bpRegs.cmode0.blend_en) ? ("on") : ("off"),
-					(bpRegs.cmode0.logop_en) ? ("on") : ("off"),
-					logicop[bpRegs.cmode0.logop],
-					sfactor[bpRegs.cmode0.sfactor],
-					dfactor[bpRegs.cmode0.dfactor]
-				);
-				/*/
-
-				static uint32_t glsf[] = {
-					GL_ZERO,
-					GL_ONE,
-					GL_SRC_COLOR,
-					GL_ONE_MINUS_SRC_COLOR,
-					GL_SRC_ALPHA,
-					GL_ONE_MINUS_SRC_ALPHA,
-					GL_DST_ALPHA,
-					GL_ONE_MINUS_DST_ALPHA
-				};
-
-				static uint32_t gldf[] = {
-					GL_ZERO,
-					GL_ONE,
-					GL_DST_COLOR,
-					GL_ONE_MINUS_DST_COLOR,
-					GL_SRC_ALPHA,
-					GL_ONE_MINUS_SRC_ALPHA,
-					GL_DST_ALPHA,
-					GL_ONE_MINUS_DST_ALPHA
-				};
-
-				// blend hack
-				if (cmode0.blend_en)
-				{
-					glEnable(GL_BLEND);
-					glBlendFunc(glsf[cmode0.sfactor], gldf[cmode0.dfactor]);
-				}
-				else glDisable(GL_BLEND);
-
-				static uint32_t logop[] = {
-					GL_CLEAR,
-					GL_AND,
-					GL_AND_REVERSE,
-					GL_COPY,
-					GL_AND_INVERTED,
-					GL_NOOP,
-					GL_XOR,
-					GL_OR,
-					GL_NOR,
-					GL_EQUIV,
-					GL_INVERT,
-					GL_OR_REVERSE,
-					GL_COPY_INVERTED,
-					GL_OR_INVERTED,
-					GL_NAND,
-					GL_SET
-				};
-
-				// logic operations
-				if (cmode0.logop_en)
-				{
-					glEnable(GL_COLOR_LOGIC_OP);
-					glLogicOp(logop[cmode0.logop]);
-				}
-				else glDisable(GL_COLOR_LOGIC_OP);
-			}
-			return;
-
-			case PE_CMODE1_ID:
-			{
-				cmode1.bits = value;
-			}
-			return;
-
-			case PE_ZMODE_ID:
-			{
-				static const char* zf[] = {
-					"NEVER",
-					"LESS",
-					"EQUAL",
-					"LEQUAL",
-					"GREATER",
-					"NEQUAL",
-					"GEQUAL",
-					"ALWAYS"
-				};
-
-				static uint32_t glzf[] = {
-					GL_NEVER,
-					GL_LESS,
-					GL_EQUAL,
-					GL_LEQUAL,
-					GL_GREATER,
-					GL_NOTEQUAL,
-					GL_GEQUAL,
-					GL_ALWAYS
-				};
-
-				zmode.bits = value;
-
-				/*/
-				GFXError(
-					"z mode:\n"
-					"compare: %s\n"
-					"func: %s\n"
-					"update: %s",
-					(bpRegs.zmode.enable) ? ("yes") : ("no"),
-					zf[bpRegs.zmode.func],
-					(bpRegs.zmode.mask) ? ("yes") : ("no")
-				);
-				/*/
-
-				if (zmode.enable)
-				{
-					glEnable(GL_DEPTH_TEST);
-					glDepthFunc(glzf[zmode.func]);
-					glDepthMask(zmode.mask);
-				}
-				else glDisable(GL_DEPTH_TEST);
 			}
 			return;
 

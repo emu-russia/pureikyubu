@@ -130,6 +130,14 @@ namespace GX
 #pragma endregion "Interface to Flipper"
 
 
+#pragma region "Gfx Common"
+
+		GenMode genmode;
+		GenMsloc msloc[4];
+
+#pragma endregion "Gfx Common"
+
+
 #pragma region "Command Processor"
 
 		CPHostRegs cpregs;		// Mapped command processor registers
@@ -189,7 +197,6 @@ namespace GX
 
 #pragma region "Setup Unit"
 
-		GenMode genmode;	// TODO: SU?
 		SU_SCIS0 scis0;		// 0x20
 		SU_SCIS1 scis1;		// 0x21
 		SU_TS0 ssize[8];	// 0x3n
@@ -273,20 +280,15 @@ namespace GX
 
 #pragma region "Pixel Engine"
 
-		PERegs peregs;
+		PERegs peregs;		// PE PI regs
 
-		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
-		uint32_t clear_z = -1;
-		bool set_clear = false;
-
-		Color copyClearRGBA;
-		uint32_t copyClearZ;
-		uint16_t tokint;
 		PE_ZMODE zmode;		// 0x40
 		ColMode0 cmode0;	// 0x41
 		ColMode1 cmode1;	// 0x42
+		uint16_t tokint;	// 0x48
+		Color copyClearRGBA;	// 0x4F, 0x50
+		uint32_t copyClearZ;	// 0x51
 
-		void GL_SetClear(Color clr, uint32_t z);
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
 		void GL_MakeSnapshot(char* path);
 		void GL_SaveBitmap(uint8_t* buf);

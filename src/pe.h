@@ -46,26 +46,6 @@ namespace GX
 		uint16_t     token;      // last token
 	};
 
-	// Fog type
-
-	// Blend mode
-
-	// Blend factor
-
-	// Compare
-
-	// Logic Op
-
-	// Pixel format
-
-	// Z format
-
-	// Projection type
-
-	// Tex Op
-
-	// Alpha read mode
-
 	// 0x40
 	union PE_ZMODE
 	{

@@ -197,19 +197,14 @@ namespace GX
 #endif
 		glDrawBuffer(GL_BACK);
 
-		if (set_clear)
-		{
-			glClearColor(
-				(float)(cr / 255.0f),
-				(float)(cg / 255.0f),
-				(float)(cb / 255.0f),
-				(float)(ca / 255.0f)
-			);
+		glClearColor(
+			(float)(copyClearRGBA.R / 255.0f),
+			(float)(copyClearRGBA.G / 255.0f),
+			(float)(copyClearRGBA.B / 255.0f),
+			(float)(copyClearRGBA.A / 255.0f)
+		);
 
-			glClearDepth((double)(clear_z / 16777215.0));
-
-			set_clear = false;
-		}
+		glClearDepth((double)(copyClearZ / 16777215.0));
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		frameReady = 1;
