@@ -308,8 +308,8 @@ namespace GX
 		PE_XBOUND pe_xbound;	// 0x55
 		PE_YBOUND pe_ybound;	// 0x56
 		PE_PERFMODE pe_perfmode;	// 0x57
-        PE_CHICKEN pe_chicken;  // 0x58
-        PE_QUAD_OFFSET pe_quad_offset;  // 0x59
+		PE_CHICKEN pe_chicken;  // 0x58
+		PE_QUAD_OFFSET pe_quad_offset;  // 0x59
 
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
 		void GL_MakeSnapshot(char* path);
