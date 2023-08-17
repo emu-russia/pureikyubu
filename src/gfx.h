@@ -49,6 +49,8 @@ namespace GX
 		bool gxOpened = false;
 		bool frame_done = true;
 		bool disableDraw = false;
+		bool frameReady = false;
+		bool backend_started = false;
 
 		// logging
 		bool logOpcode = false;
@@ -67,14 +69,8 @@ namespace GX
 		FILE* snap_file = nullptr;
 		uint32_t snap_w, snap_h;
 
-		int frameReady = 0;
-		bool backend_started = false;
-
 		// optionable
 		uint32_t scr_w = 640, scr_h = 480;
-
-		// perfomance counters
-		size_t frames = 0, tris = 0, pts = 0, lines = 0;
 
 	public:
 		GXCore();
@@ -89,6 +85,8 @@ namespace GX
 		void GL_BeginFrame();
 		void GL_EndFrame();
 		void GPFrameDone();
+
+		void ResizeRenderTarget(size_t width, size_t height);
 
 		// Debug
 		void DumpPIFIFO();
@@ -212,6 +210,9 @@ namespace GX
 
 #pragma region "Rasterizers"
 
+		// perfomance counters
+		size_t tris = 0, pts = 0, lines = 0;
+
 		bool ras_wireframe = false;			// Enable wireframe drawing of primitives (DEBUG)
 		bool ras_use_texture = false;
 
@@ -279,6 +280,8 @@ namespace GX
 
 
 #pragma region "Pixel Engine"
+
+		size_t frames = 0;
 
 		PERegs peregs;		// PE PI regs
 

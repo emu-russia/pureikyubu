@@ -526,10 +526,10 @@ namespace GX
 	void GXCore::GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
 	{
 		//h += 32;
-#ifndef NO_VIEWPORT
+//#ifndef NO_VIEWPORT
 		glViewport(x, scr_h - (h + y), w, h);
 		glDepthRange(znear, zfar);
-#endif
+//#endif
 	}
 
 	// index range = 0000..FFFF

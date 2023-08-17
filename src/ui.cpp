@@ -4607,6 +4607,12 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				);
 			}
 
+			// Resize xfb renderer
+			VideoOutResize(LOWORD(lParam), HIWORD(lParam));
+
+			// Resize gfx renderer
+			Flipper::Gx->ResizeRenderTarget(LOWORD(lParam), HIWORD(lParam));
+
 			return 0;
 		}
 

@@ -1,5 +1,7 @@
 #include "pch.h"
 
+// There are still some parts of old sources with attempts to "abstract" the backend. It is absolutely hopeless, just use core OpenGL and don't worry about it.
+
 using namespace Debug;
 
 namespace GX
@@ -207,7 +209,7 @@ namespace GX
 		glClearDepth((double)(pe_copy_clear_z.value / 16777215.0));
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		frameReady = 1;
+		frameReady = true;
 	}
 
 	// done rendering (call when frame is ready)
@@ -244,7 +246,7 @@ namespace GX
 		EndPaint(hwndMain, &psFrame);
 #endif
 
-		frameReady = 0;
+		frameReady = false;
 		//Report(Channel::GP, "gfx frame: %d\n", frames);
 		frames++;
 		tris = pts = lines = 0;
@@ -256,6 +258,15 @@ namespace GX
 	{
 		GL_EndFrame();
 		frame_done = true;
+	}
+
+	void GXCore::ResizeRenderTarget(size_t width, size_t height)
+	{
+		if (backend_started) {
+			scr_w = width;
+			scr_h = height;
+			glViewport(0, 0, width, height);
+		}
 	}
 
 	void GXCore::UploadShaders(const char* vert_source, const char* frag_source)
