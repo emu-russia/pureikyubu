@@ -3,10 +3,6 @@
 
 using namespace Debug;
 
-// IMPORTANT : EXE loading base must be 0x00400000, for correct HLE.
-// MSVC : Project/Settings/Link/Output/Base Address
-// CW : Edit/** Win32 x86 Settings/Linker/x86 COFF/Base address
-
 // all important variables are here
 SYMControl sym;                 // default workspace
 static SYMControl *work = &sym; // current workspace (in use)
@@ -752,12 +748,12 @@ void MAPFinish()
 
 
 
-// MAP saver is moved to stand-alone module, because MAP saving operation
-// is not easy, like you may think. We should watch for MAP file formats
+// MAP saver. 
+// MAP saving operation is not easy, like you may think. We should watch for MAP file formats
 // and try to append symbols into alredy present MAP.
 
 
-#define DEFAULT_MAP L"Data\\default.map"
+#define DEFAULT_MAP L"./Data/default.map"
 //#define HEX "0x"
 #define HEX
 
