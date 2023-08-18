@@ -162,7 +162,7 @@ namespace GX
 					GL_ALWAYS
 				};
 
-				zmode.bits = value;
+				pe.zmode.bits = value;
 
 				/*/
 				GFXError(
@@ -176,11 +176,11 @@ namespace GX
 				);
 				/*/
 
-				if (zmode.enable)
+				if (pe.zmode.enable)
 				{
 					glEnable(GL_DEPTH_TEST);
-					glDepthFunc(glzf[zmode.func]);
-					glDepthMask(zmode.mask);
+					glDepthFunc(glzf[pe.zmode.func]);
+					glDepthMask(pe.zmode.mask);
 				}
 				else glDisable(GL_DEPTH_TEST);
 			}
@@ -189,7 +189,7 @@ namespace GX
 			// set blending rules
 			case PE_CMODE0_ID:
 			{
-				cmode0.bits = value;
+				pe.cmode0.bits = value;
 
 				static const char* logicop[] = {
 					"clear",
@@ -270,10 +270,10 @@ namespace GX
 				};
 
 				// blend hack
-				if (cmode0.blend_en)
+				if (pe.cmode0.blend_en)
 				{
 					glEnable(GL_BLEND);
-					glBlendFunc(glsf[cmode0.sfactor], gldf[cmode0.dfactor]);
+					glBlendFunc(glsf[pe.cmode0.sfactor], gldf[pe.cmode0.dfactor]);
 				}
 				else glDisable(GL_BLEND);
 
@@ -297,41 +297,49 @@ namespace GX
 				};
 
 				// logic operations
-				if (cmode0.logop_en)
+				if (pe.cmode0.logop_en)
 				{
 					glEnable(GL_COLOR_LOGIC_OP);
-					glLogicOp(logop[cmode0.logop]);
+					glLogicOp(logop[pe.cmode0.logop]);
 				}
 				else glDisable(GL_COLOR_LOGIC_OP);
 			}
 			return;
 
 			case PE_CMODE1_ID:
-				cmode1.bits = value;
+				pe.cmode1.bits = value;
 				break;
 
 			// draw done
 			case PE_FINISH_ID:
 			{
 				GPFrameDone();
-				CPDrawDone();
+
+				pe_done_num++;
+				if (pe_done_num == 1)
+				{
+					vi.xfb = false;     // disable VI output
+				}
+				DONE_INT();
 			}
 			break;
 
 			case PE_TOKEN_ID:
 			{
-				pe_token.bits = value;
-				if (pe_token.token == pe_token_int.token)
+				pe.token.bits = value;
+				if (pe.token.token == pe.token_int.token)
 				{
 					GPFrameDone();
-					CPDrawToken(pe_token.token);
+
+					vi.xfb = false;     // disable VI output
+					TOKEN_INT();
 				}
 			}
 			break;
 
 			// token
 			case PE_TOKEN_INT_ID:
-				pe_token_int.bits = value;
+				pe.token_int.bits = value;
 				break;
 
 
@@ -339,15 +347,15 @@ namespace GX
 
 
 			case PE_COPY_CLEAR_AR_ID:
-				pe_copy_clear_ar.bits = value;
+				pe.copy_clear_ar.bits = value;
 				break;
 
 			case PE_COPY_CLEAR_GB_ID:
-				pe_copy_clear_gb.bits = value;
+				pe.copy_clear_gb.bits = value;
 				break;
 
 			case PE_COPY_CLEAR_Z_ID:
-				pe_copy_clear_z.bits = value;
+				pe.copy_clear_z.bits = value;
 				break;
 
 			//
@@ -572,69 +580,69 @@ namespace GX
 
 #pragma region "TEV bypass"
 
-			case TEV_COLOR_ENV_0_ID: tev_color_env[0].bits = value; break;
-			case TEV_ALPHA_ENV_0_ID: tev_alpha_env[0].bits = value; break;
-			case TEV_COLOR_ENV_1_ID: tev_color_env[1].bits = value; break;
-			case TEV_ALPHA_ENV_1_ID: tev_alpha_env[1].bits = value; break;
-			case TEV_COLOR_ENV_2_ID: tev_color_env[2].bits = value; break;
-			case TEV_ALPHA_ENV_2_ID: tev_alpha_env[2].bits = value; break;
-			case TEV_COLOR_ENV_3_ID: tev_color_env[3].bits = value; break;
-			case TEV_ALPHA_ENV_3_ID: tev_alpha_env[3].bits = value; break;
-			case TEV_COLOR_ENV_4_ID: tev_color_env[4].bits = value; break;
-			case TEV_ALPHA_ENV_4_ID: tev_alpha_env[4].bits = value; break;
-			case TEV_COLOR_ENV_5_ID: tev_color_env[5].bits = value; break;
-			case TEV_ALPHA_ENV_5_ID: tev_alpha_env[5].bits = value; break;
-			case TEV_COLOR_ENV_6_ID: tev_color_env[6].bits = value; break;
-			case TEV_ALPHA_ENV_6_ID: tev_alpha_env[6].bits = value; break;
-			case TEV_COLOR_ENV_7_ID: tev_color_env[7].bits = value; break;
-			case TEV_ALPHA_ENV_7_ID: tev_alpha_env[7].bits = value; break;
-			case TEV_COLOR_ENV_8_ID: tev_color_env[8].bits = value; break;
-			case TEV_ALPHA_ENV_8_ID: tev_alpha_env[8].bits = value; break;
-			case TEV_COLOR_ENV_9_ID: tev_color_env[9].bits = value; break;
-			case TEV_ALPHA_ENV_9_ID: tev_alpha_env[9].bits = value; break;
-			case TEV_COLOR_ENV_A_ID: tev_color_env[0xa].bits = value; break;
-			case TEV_ALPHA_ENV_A_ID: tev_alpha_env[0xa].bits = value; break;
-			case TEV_COLOR_ENV_B_ID: tev_color_env[0xb].bits = value; break;
-			case TEV_ALPHA_ENV_B_ID: tev_alpha_env[0xb].bits = value; break;
-			case TEV_COLOR_ENV_C_ID: tev_color_env[0xc].bits = value; break;
-			case TEV_ALPHA_ENV_C_ID: tev_alpha_env[0xc].bits = value; break;
-			case TEV_COLOR_ENV_D_ID: tev_color_env[0xd].bits = value; break;
-			case TEV_ALPHA_ENV_D_ID: tev_alpha_env[0xd].bits = value; break;
-			case TEV_COLOR_ENV_E_ID: tev_color_env[0xe].bits = value; break;
-			case TEV_ALPHA_ENV_E_ID: tev_alpha_env[0xe].bits = value; break;
-			case TEV_COLOR_ENV_F_ID: tev_color_env[0xf].bits = value; break;
-			case TEV_ALPHA_ENV_F_ID: tev_alpha_env[0xf].bits = value; break;
+			case TEV_COLOR_ENV_0_ID: tev.color_env[0].bits = value; break;
+			case TEV_ALPHA_ENV_0_ID: tev.alpha_env[0].bits = value; break;
+			case TEV_COLOR_ENV_1_ID: tev.color_env[1].bits = value; break;
+			case TEV_ALPHA_ENV_1_ID: tev.alpha_env[1].bits = value; break;
+			case TEV_COLOR_ENV_2_ID: tev.color_env[2].bits = value; break;
+			case TEV_ALPHA_ENV_2_ID: tev.alpha_env[2].bits = value; break;
+			case TEV_COLOR_ENV_3_ID: tev.color_env[3].bits = value; break;
+			case TEV_ALPHA_ENV_3_ID: tev.alpha_env[3].bits = value; break;
+			case TEV_COLOR_ENV_4_ID: tev.color_env[4].bits = value; break;
+			case TEV_ALPHA_ENV_4_ID: tev.alpha_env[4].bits = value; break;
+			case TEV_COLOR_ENV_5_ID: tev.color_env[5].bits = value; break;
+			case TEV_ALPHA_ENV_5_ID: tev.alpha_env[5].bits = value; break;
+			case TEV_COLOR_ENV_6_ID: tev.color_env[6].bits = value; break;
+			case TEV_ALPHA_ENV_6_ID: tev.alpha_env[6].bits = value; break;
+			case TEV_COLOR_ENV_7_ID: tev.color_env[7].bits = value; break;
+			case TEV_ALPHA_ENV_7_ID: tev.alpha_env[7].bits = value; break;
+			case TEV_COLOR_ENV_8_ID: tev.color_env[8].bits = value; break;
+			case TEV_ALPHA_ENV_8_ID: tev.alpha_env[8].bits = value; break;
+			case TEV_COLOR_ENV_9_ID: tev.color_env[9].bits = value; break;
+			case TEV_ALPHA_ENV_9_ID: tev.alpha_env[9].bits = value; break;
+			case TEV_COLOR_ENV_A_ID: tev.color_env[0xa].bits = value; break;
+			case TEV_ALPHA_ENV_A_ID: tev.alpha_env[0xa].bits = value; break;
+			case TEV_COLOR_ENV_B_ID: tev.color_env[0xb].bits = value; break;
+			case TEV_ALPHA_ENV_B_ID: tev.alpha_env[0xb].bits = value; break;
+			case TEV_COLOR_ENV_C_ID: tev.color_env[0xc].bits = value; break;
+			case TEV_ALPHA_ENV_C_ID: tev.alpha_env[0xc].bits = value; break;
+			case TEV_COLOR_ENV_D_ID: tev.color_env[0xd].bits = value; break;
+			case TEV_ALPHA_ENV_D_ID: tev.alpha_env[0xd].bits = value; break;
+			case TEV_COLOR_ENV_E_ID: tev.color_env[0xe].bits = value; break;
+			case TEV_ALPHA_ENV_E_ID: tev.alpha_env[0xe].bits = value; break;
+			case TEV_COLOR_ENV_F_ID: tev.color_env[0xf].bits = value; break;
+			case TEV_ALPHA_ENV_F_ID: tev.alpha_env[0xf].bits = value; break;
 
-			case TEV_REGISTERL_0_ID: tev_regl[0].bits = value; break;
-			case TEV_REGISTERH_0_ID: tev_regh[0].bits = value; break;
-			case TEV_REGISTERL_1_ID: tev_regl[1].bits = value; break;
-			case TEV_REGISTERH_1_ID: tev_regh[1].bits = value; break;
-			case TEV_REGISTERL_2_ID: tev_regl[2].bits = value; break;
-			case TEV_REGISTERH_2_ID: tev_regh[2].bits = value; break;
-			case TEV_REGISTERL_3_ID: tev_regl[3].bits = value; break;
-			case TEV_REGISTERH_3_ID: tev_regh[3].bits = value; break;
-			case TEV_RANGE_ADJ_C_ID: tev_rangeadj_control.bits = value; break;
-			case TEV_RANGE_ADJ_0_ID: tev_range_adj[0].bits = value; break;
-			case TEV_RANGE_ADJ_1_ID: tev_range_adj[1].bits = value; break;
-			case TEV_RANGE_ADJ_2_ID: tev_range_adj[2].bits = value; break;
-			case TEV_RANGE_ADJ_3_ID: tev_range_adj[3].bits = value; break;
-			case TEV_RANGE_ADJ_4_ID: tev_range_adj[4].bits = value; break;
-			case TEV_FOG_PARAM_0_ID: tev_fog_param0.bits = value; break;
-			case TEV_FOG_PARAM_1_ID: tev_fog_param1.bits = value; break;
-			case TEV_FOG_PARAM_2_ID: tev_fog_param2.bits = value; break;
-			case TEV_FOG_PARAM_3_ID: tev_fog_param3.bits = value; break;
-			case TEV_FOG_COLOR_ID: tev_fog_color.bits = value; break;
-			case TEV_ALPHAFUNC_ID: tev_alpha_func.bits = value; break;
-			case TEV_Z_ENV_0_ID: tev_zenv0.bits = value; break;
-			case TEV_Z_ENV_1_ID: tev_zenv1.bits = value; break;
-			case TEV_KSEL_0_ID: tev_ksel[0].bits = value; break;
-			case TEV_KSEL_1_ID: tev_ksel[1].bits = value; break;
-			case TEV_KSEL_2_ID: tev_ksel[2].bits = value; break;
-			case TEV_KSEL_3_ID: tev_ksel[3].bits = value; break;
-			case TEV_KSEL_4_ID: tev_ksel[4].bits = value; break;
-			case TEV_KSEL_5_ID: tev_ksel[5].bits = value; break;
-			case TEV_KSEL_6_ID: tev_ksel[6].bits = value; break;
-			case TEV_KSEL_7_ID: tev_ksel[7].bits = value; break;
+			case TEV_REGISTERL_0_ID: tev.regl[0].bits = value; break;
+			case TEV_REGISTERH_0_ID: tev.regh[0].bits = value; break;
+			case TEV_REGISTERL_1_ID: tev.regl[1].bits = value; break;
+			case TEV_REGISTERH_1_ID: tev.regh[1].bits = value; break;
+			case TEV_REGISTERL_2_ID: tev.regl[2].bits = value; break;
+			case TEV_REGISTERH_2_ID: tev.regh[2].bits = value; break;
+			case TEV_REGISTERL_3_ID: tev.regl[3].bits = value; break;
+			case TEV_REGISTERH_3_ID: tev.regh[3].bits = value; break;
+			case TEV_RANGE_ADJ_C_ID: tev.rangeadj_control.bits = value; break;
+			case TEV_RANGE_ADJ_0_ID: tev.range_adj[0].bits = value; break;
+			case TEV_RANGE_ADJ_1_ID: tev.range_adj[1].bits = value; break;
+			case TEV_RANGE_ADJ_2_ID: tev.range_adj[2].bits = value; break;
+			case TEV_RANGE_ADJ_3_ID: tev.range_adj[3].bits = value; break;
+			case TEV_RANGE_ADJ_4_ID: tev.range_adj[4].bits = value; break;
+			case TEV_FOG_PARAM_0_ID: tev.fog_param0.bits = value; break;
+			case TEV_FOG_PARAM_1_ID: tev.fog_param1.bits = value; break;
+			case TEV_FOG_PARAM_2_ID: tev.fog_param2.bits = value; break;
+			case TEV_FOG_PARAM_3_ID: tev.fog_param3.bits = value; break;
+			case TEV_FOG_COLOR_ID: tev.fog_color.bits = value; break;
+			case TEV_ALPHAFUNC_ID: tev.alpha_func.bits = value; break;
+			case TEV_Z_ENV_0_ID: tev.zenv0.bits = value; break;
+			case TEV_Z_ENV_1_ID: tev.zenv1.bits = value; break;
+			case TEV_KSEL_0_ID: tev.ksel[0].bits = value; break;
+			case TEV_KSEL_1_ID: tev.ksel[1].bits = value; break;
+			case TEV_KSEL_2_ID: tev.ksel[2].bits = value; break;
+			case TEV_KSEL_3_ID: tev.ksel[3].bits = value; break;
+			case TEV_KSEL_4_ID: tev.ksel[4].bits = value; break;
+			case TEV_KSEL_5_ID: tev.ksel[5].bits = value; break;
+			case TEV_KSEL_6_ID: tev.ksel[6].bits = value; break;
+			case TEV_KSEL_7_ID: tev.ksel[7].bits = value; break;
 
 #pragma endregion "TEV bypass"
 
