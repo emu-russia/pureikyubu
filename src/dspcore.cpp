@@ -1,11 +1,11 @@
+// Low-level DSP core
 #include "pch.h"
-
-// The module handles ALU / multiplier operations and flag setting, as well as other auxiliary operations.
 
 using namespace Debug;
 
 namespace DSP
 {
+	// The part handles ALU / multiplier operations and flag setting, as well as other auxiliary operations.
 
 	int64_t DspCore::SignExtend16(int16_t a)
 	{
@@ -260,7 +260,6 @@ namespace DSP
 
 }
 
-// Low-level DSP core
 
 
 namespace DSP
