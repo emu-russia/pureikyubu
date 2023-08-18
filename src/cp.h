@@ -534,8 +534,5 @@ namespace GX
 
 }
 
-void CPDrawDone();
-void CPDrawToken(uint16_t tokenValue);
-
 void CPOpen();
 void CPClose();

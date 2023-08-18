@@ -608,12 +608,16 @@ namespace GX
 				break;
 
 			//
-			// load projection matrix
+			// load projection matrix (TODO: unaligned writes)
 			//
 
 			case XF_PROJECTION_A_ID:
 			{
 				float pMatrix[7];
+
+				if (amount != 7) {
+					Halt("Partial loading of the projection matrix is not implemented\n");
+				}
 
 				pMatrix[0] = gxfifo->ReadFloat();
 				pMatrix[1] = gxfifo->ReadFloat();
@@ -668,12 +672,16 @@ namespace GX
 			return;
 
 			//
-			// load viewport configuration
+			// load viewport configuration (TODO: unaligned writes)
 			// 
 
 			case XF_VIEWPORT_SCALE_X_ID:
 			{
 				float w, h, x, y, zf, zn;
+
+				if (amount != 6) {
+					Halt("Partial loading of the viewport settings is not implemented\n");
+				}
 
 				//
 				// read coefficients
@@ -704,7 +712,7 @@ namespace GX
 			return;
 
 			//
-			// load light object (unaligned writes not supported)
+			// load light object (TODO: unaligned writes not supported)
 			//
 
 			case XF_LIGHT0_ID:
@@ -717,6 +725,10 @@ namespace GX
 			case XF_LIGHT7_ID:
 			{
 				unsigned lnum = (startIdx >> 4) & 7;
+
+				if (amount != 16) {
+					Halt("Partial loading of the light object memory is not implemented\n");
+				}
 
 				xf.light[lnum].Reserved[0] = gxfifo->Read32();
 				xf.light[lnum].Reserved[1] = gxfifo->Read32();
@@ -752,28 +764,20 @@ namespace GX
 			//
 
 			case XF_AMBIENT0_ID:
-			{
 				xf.ambient[0].RGBA = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			case XF_AMBIENT1_ID:
-			{
 				xf.ambient[1].RGBA = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			case XF_MATERIAL0_ID:
-			{
 				xf.material[0].RGBA = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			case XF_MATERIAL1_ID:
-			{
 				xf.material[1].RGBA = gxfifo->Read32();
-			}
-			return;
+				break;
 
 			//
 			// channel control registers
@@ -890,25 +894,6 @@ namespace GX
 				};
 
 				xf.tex[num].bits = gxfifo->Read32();
-
-				/*/
-				GFXError(
-					"texgen %i set\n"
-					"prj : %s\n"
-					"in form : %s\n"
-					"type : %s\n"
-					"src row : %s\n"
-					"emboss src : %i\n"
-					"emboss lnum : %i\n",
-					num,
-					prj[xfRegs.texgen[num].pojection & 1],
-					inf[xfRegs.texgen[num].in_form & 1],
-					type[xfRegs.texgen[num].type & 3],
-					srcrow[xfRegs.texgen[num].src_row & 0xf],
-					xfRegs.texgen[num].emboss_src,
-					xfRegs.texgen[num].emboss_light
-				);
-				/*/
 			}
 			return;
 

@@ -1,11 +1,11 @@
+// Low-level DSP core
 #include "pch.h"
-
-// The module handles ALU / multiplier operations and flag setting, as well as other auxiliary operations.
 
 using namespace Debug;
 
 namespace DSP
 {
+	// The part handles ALU / multiplier operations and flag setting, as well as other auxiliary operations.
 
 	int64_t DspCore::SignExtend16(int16_t a)
 	{
@@ -260,7 +260,6 @@ namespace DSP
 
 }
 
-// Low-level DSP core
 
 
 namespace DSP
@@ -582,9 +581,11 @@ namespace DSP
 	{
 		uint64_t ticks = Core->GetTicks();
 
-		if (delay_mailbox_reasons) {
-			//Thread::Sleep(1);
-			delay_mailbox_reasons = false;
+		// We need to suspend DspCore execution for a while until the CPU writes all data to Mailbox registers.
+		// In reality 2 writes from Gekko side fly quickly through Flipper's guts and DSPCore does not have time to wedge in the middle. In the emulator it is necessary to do more carefully.
+
+		if (delay_mailbox_reasons > 0) {
+			delay_mailbox_reasons--;
 			return;
 		}
 

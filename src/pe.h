@@ -45,7 +45,6 @@ namespace GX
 	struct PERegs
 	{
 		uint16_t     sr;         // status register
-		uint16_t     token;      // last token
 	};
 
     // PE register definitions that come through the command stream.
@@ -393,6 +392,35 @@ namespace GX
             unsigned rid : 8;
         };
         uint32_t bits;
+    };
+
+    struct PEState
+    {
+        PE_ZMODE zmode;		// 0x40
+        PE_CMODE0 cmode0;	// 0x41
+        PE_CMODE1 cmode1;	// 0x42
+        PE_CONTROL control;	// 0x43
+        PE_FIELD_MASK field_mask; // 0x44
+        PE_FINISH finish;	// 0x45
+        PE_REFRESH refresh; // 0x46
+        PE_TOKEN token; // 0x47
+        PE_TOKEN_INT token_int; // 0x48
+        PE_COPY_SRC_ADDR copy_src_addr;	// 0x49
+        PE_COPY_SRC_SIZE copy_src_size;	// 0x4a
+        PE_COPY_DST_BASE copy_dst_base[2];	// 0x4b, 0x4c
+        PE_COPY_DST_STRIDE copy_dst_stride;	// 0x4d
+        PE_COPY_SCALE copy_scale;	// 0x4e
+        PE_COPY_CLEAR_AR copy_clear_ar;	// 0x4F
+        PE_COPY_CLEAR_GB copy_clear_gb;	// 0x50
+        PE_COPY_CLEAR_Z copy_clear_z;	// 0x51
+        PE_COPY_CMD copy_cmd;	// 0x52
+        PE_VFILTER_0 vfilter_0;	// 0x53
+        PE_VFILTER_1 vfilter_1;	// 0x54
+        PE_XBOUND xbound;	// 0x55
+        PE_YBOUND ybound;	// 0x56
+        PE_PERFMODE perfmode;	// 0x57
+        PE_CHICKEN chicken;  // 0x58
+        PE_QUAD_OFFSET quad_offset;  // 0x59
     };
 }
 

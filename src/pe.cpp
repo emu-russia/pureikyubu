@@ -16,7 +16,7 @@ namespace GX
 				return peregs.sr;
 
 			case PEMappedRegister::PE_PI_TOKEN_ID:
-				return peregs.token;
+				return pe.token.token;
 
 			default:
 				return 0;

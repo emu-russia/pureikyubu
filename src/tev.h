@@ -112,6 +112,7 @@ namespace GX
 		uint32_t bits;
 	};
 
+	// 0xE9...0xED
 	union TEV_RangeAdj
 	{
 		struct
@@ -241,5 +242,24 @@ namespace GX
 			unsigned rid : 8;
 		};
 		uint32_t bits;
+	};
+
+	struct TEVState
+	{
+		TEV_ColorEnv color_env[16]{};		// 0xC0..0xDF
+		TEV_AlphaEnv alpha_env[16]{};		// 0xC0..0xDF
+		TEV_RegisterL regl[4]{};		// 0xE0
+		TEV_RegisterH regh[4]{};		// 0xE0
+		TEV_RangeAdj_Contol rangeadj_control{};	// 0xE8
+		TEV_RangeAdj range_adj[5]{};	// 0xE9...0xED
+		TEV_FogParam0 fog_param0{};		// 0xEE
+		TEV_FogParam1 fog_param1{};		// 0xEF
+		TEV_FogParam2 fog_param2{};		// 0xF0
+		TEV_FogParam3 fog_param3{};		// 0xF1
+		TEV_FogColor fog_color{};		// 0xF2
+		TEV_AlphaFunc alpha_func{};		// 0xF3
+		TEV_ZEnv0 zenv0{};		// 0xF4
+		TEV_ZEnv1 zenv1{};		// 0xF5
+		TEV_KSel ksel[8]{};		// 0xF6..0xFD
 	};
 }

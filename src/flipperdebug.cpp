@@ -97,6 +97,10 @@ namespace Flipper
 
 	static Json::Value* cmd_nextvi(std::vector<std::string>& args)
 	{
+		if (!JDI::Hub.ExecuteFastBool("IsLoaded")) {
+			return nullptr;
+		}
+
 		PIBreakOnNextInt(PI_INTERRUPT_VI);
 		Core->Run();
 		return nullptr;
@@ -104,6 +108,10 @@ namespace Flipper
 
 	static Json::Value* cmd_nextpe(std::vector<std::string>& args)
 	{
+		if (!JDI::Hub.ExecuteFastBool("IsLoaded")) {
+			return nullptr;
+		}
+
 		PIBreakOnNextInt(PI_INTERRUPT_PE_FINISH | PI_INTERRUPT_PE_TOKEN);
 		Core->Run();
 		return nullptr;

@@ -5,26 +5,6 @@
 
 using namespace Debug;
 
-size_t pe_done_num;   // number of drawdone (PE_FINISH) events
-
-void CPDrawDone()
-{
-	pe_done_num++;
-	if (pe_done_num == 1)
-	{
-		vi.xfb = false;     // disable VI output
-	}
-
-	Flipper::Gx->CPDrawDoneCallback();
-}
-
-void CPDrawToken(uint16_t tokenValue)
-{
-	vi.xfb = false;     // disable VI output
-
-	Flipper::Gx->CPDrawTokenCallback(tokenValue);
-}
-
 //
 // Stubs
 //
@@ -44,8 +24,6 @@ static void CPRegWrite(uint32_t addr, uint32_t data)
 void CPOpen()
 {
 	Report(Channel::CP, "Command processor (for GX)\n");
-
-	pe_done_num = 0;
 
 	// Command Processor
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_STATUS_ID), CPRegRead, CPRegWrite);
@@ -220,17 +198,6 @@ namespace GX
 			peregs.sr |= PE_SR_TOKEN;
 			PIAssertInt(PI_INTERRUPT_PE_TOKEN);
 		}
-	}
-
-	void GXCore::CPDrawDoneCallback()
-	{
-		DONE_INT();
-	}
-
-	void GXCore::CPDrawTokenCallback(uint16_t tokenValue)
-	{
-		peregs.token = tokenValue;
-		TOKEN_INT();
 	}
 
 	void GXCore::CPAbortFifo()

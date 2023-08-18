@@ -200,13 +200,13 @@ namespace GX
 		glDrawBuffer(GL_BACK);
 
 		glClearColor(
-			(float)(pe_copy_clear_ar.red / 255.0f),
-			(float)(pe_copy_clear_gb.green / 255.0f),
-			(float)(pe_copy_clear_gb.blue / 255.0f),
-			(float)(pe_copy_clear_ar.alpha / 255.0f)
+			(float)(pe.copy_clear_ar.red / 255.0f),
+			(float)(pe.copy_clear_gb.green / 255.0f),
+			(float)(pe.copy_clear_gb.blue / 255.0f),
+			(float)(pe.copy_clear_ar.alpha / 255.0f)
 		);
 
-		glClearDepth((double)(pe_copy_clear_z.value / 16777215.0));
+		glClearDepth((double)(pe.copy_clear_z.value / 16777215.0));
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		frameReady = true;
@@ -263,9 +263,9 @@ namespace GX
 	void GXCore::ResizeRenderTarget(size_t width, size_t height)
 	{
 		if (backend_started) {
-			scr_w = width;
-			scr_h = height;
-			glViewport(0, 0, width, height);
+			scr_w = (uint32_t)width;
+			scr_h = (uint32_t)height;
+			glViewport(0, 0, scr_w, scr_h);
 		}
 	}
 
