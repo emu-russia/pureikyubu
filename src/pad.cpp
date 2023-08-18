@@ -111,14 +111,17 @@ void PADClose()
 // ---------------------------------------------------------------------------
 // process input
 
+// TODO: The problem with stick sticking to the right in Bootrom is in this location
+
 #define THRESOLD    87
+#define STICK_INITIAL	-128
 
 static void pad_reset_chan(PADState* state)
 {
 	memset(state, 0, sizeof(PADState));
 
-	state->stickX = state->stickY = -128;
-	state->substickX = state->substickY = -128;
+	state->stickX = state->stickY = STICK_INITIAL;
+	state->substickX = state->substickY = STICK_INITIAL;
 }
 
 // collect keyboard buttons in PADState
@@ -210,7 +213,7 @@ bool PADReadButtons(long padnum, PADState* state)
 		if (pad[padnum].vkeys[VKEY_FOR_CXLEFT] != -1)
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXLEFT]) & 0x80000000) state->substickX += -THRESOLD;
 	}
-	else return 0;
+	else return false;
 
 	state->button = button;
 
