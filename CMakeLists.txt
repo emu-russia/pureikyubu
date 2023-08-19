@@ -32,7 +32,7 @@ add_executable (pureikyubu
 	src/bootrtc.cpp
 	src/config.cpp
 	src/cp.cpp
-	src/cui_imgui.cpp
+	src/cuisdl.cpp
 	src/debug.cpp
 	src/debugui.cpp
 	src/di.cpp

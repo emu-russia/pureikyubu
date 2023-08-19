@@ -372,7 +372,7 @@
     <ClCompile Include="..\src\cuinull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cui_imgui.cpp">
+    <ClCompile Include="..\src\cuisdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\imgui\imgui.cpp">
