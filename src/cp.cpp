@@ -1773,11 +1773,11 @@ namespace GX
 
 		// Color0 
 
-		vtx->Color[0] = FetchColor(cp.vcdLo.Color0, cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
+		vtx->Col[0] = FetchColor(cp.vcdLo.Color0, cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
 
 		// Color1
 
-		vtx->Color[1] = FetchColor(cp.vcdLo.Color1, cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
+		vtx->Col[1] = FetchColor(cp.vcdLo.Color1, cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
 
 		// TexNCoord
 

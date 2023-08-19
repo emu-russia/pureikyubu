@@ -436,9 +436,9 @@ namespace GX
 		glVertexAttribPointer(VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Tangent)));
 
 		glEnableVertexAttribArray(VTX_COLOR0);
-		glVertexAttribPointer(VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Color[0])));
+		glVertexAttribPointer(VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[0])));
 		glEnableVertexAttribArray(VTX_COLOR1);
-		glVertexAttribPointer(VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Color[1])));
+		glVertexAttribPointer(VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[1])));
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL InitVBO after glVertexAttribPointer VTX_COLOR1 Error: %x\n", gl_error);

@@ -108,9 +108,9 @@ namespace GX
 			//
 
 			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->Color[ncol].R / 255.0f;
-			col[1] = (float)v->Color[ncol].G / 255.0f;
-			col[2] = (float)v->Color[ncol].B / 255.0f;
+			col[0] = (float)v->Col[ncol].R / 255.0f;
+			col[1] = (float)v->Col[ncol].G / 255.0f;
+			col[2] = (float)v->Col[ncol].B / 255.0f;
 
 			// select material color
 			if (xf.colorControl[ncol].MatSrc == 0)
@@ -253,7 +253,7 @@ namespace GX
 			//
 
 			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->Color[ncol].A / 255.0f;
+			col[0] = (float)v->Col[ncol].A / 255.0f;
 
 			// select material color
 			if (xf.alphaControl[ncol].MatSrc == 0)
