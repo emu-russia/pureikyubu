@@ -159,8 +159,14 @@
     <ClCompile Include="..\src\sym.cpp" />
     <ClCompile Include="..\src\tev.cpp" />
     <ClCompile Include="..\src\tx.cpp" />
-    <ClCompile Include="..\src\ui.cpp" />
+    <ClCompile Include="..\src\ui.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\uijdi.cpp" />
+    <ClCompile Include="..\src\uisdl.cpp" />
     <ClCompile Include="..\src\uisimple.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

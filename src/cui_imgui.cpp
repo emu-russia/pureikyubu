@@ -1,7 +1,5 @@
 // Cui using imgui
 #include "pch.h"
-#include "backends/imgui_impl_sdl2.h"
-#include "backends/imgui_impl_sdlrenderer2.h"
 
 // TODO: Get the size of the widest glyph and use it to set the window size
 // TODO: F5 not working x_x

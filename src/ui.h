@@ -89,6 +89,7 @@ namespace UI
 
 // version info
 #define APPNAME L"プレイキューブ"
+#define APPNAME_A "pureikyubu"
 #define APPDESC L"Nintendo GameCube Emulator"
 
 namespace UI

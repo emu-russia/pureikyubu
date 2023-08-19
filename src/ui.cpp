@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "res/sjis.h"
 
 // About dialog
 
@@ -659,7 +658,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
 
 	// Start the emulator and user interface
-	// (emulator will be initialized during main window creation).
 	CreateMainWindow(hInstance);
 
 	// Main loop
@@ -2476,7 +2474,7 @@ static void reset_columns()
 	lvcol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
 	// add new columns
-#define ADDCOL(align, width, text, id)                          \
+	#define ADDCOL(align, width, text, id)                          \
 	{                                                               \
 		lvcol.fmt = LVCFMT_##align;                                 \
 		lvcol.cx  = width;                                          \

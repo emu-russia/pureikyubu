@@ -402,5 +402,8 @@
     <ClCompile Include="..\thirdparty\glew-2.2.0\src\glew.c">
       <Filter>GLEW</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\uisdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
