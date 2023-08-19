@@ -3,6 +3,7 @@
 #ifdef _WINDOWS
 #include <SDL_syswm.h>
 #endif
+#include "../thirdparty/imgui-filebrowser/imfilebrowser.h"
 
 static bool ui_active = false;
 static bool show_demo_window = true;
