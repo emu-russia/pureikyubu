@@ -71,8 +71,8 @@ add_executable (pureikyubu
 	src/tx.cpp
 	src/uijdi.cpp
 	# If you don't need UI at all, you can use the simple version instead uisdl
-	#src/uisimple.cpp
-	src/uisdl.cpp
+	src/uisimple.cpp
+	#src/uisdl.cpp
 	src/utils.cpp
 	src/vi.cpp
 	src/xf.cpp

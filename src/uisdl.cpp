@@ -312,9 +312,6 @@ namespace UI
 
 
 
-
-
-
 // emulation has started - do proper actions
 void OnMainWindowOpened(const wchar_t* currentFileName)
 {

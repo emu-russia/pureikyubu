@@ -32,10 +32,6 @@ After switching to cross-platform, it is obvious to completely switch to Unicode
 
 #pragma once
 
-#ifdef _WINDOWS
-void    AboutDialog(HWND hwndParent);
-#endif
-
 // The UI needs to implement a small number of methods that are used in the emulator core.
 
 #define UI_JDI_JSON "./Data/Json/UIJdi.json"
@@ -98,19 +94,6 @@ namespace UI
 	void Error(const wchar_t* title, const wchar_t* fmt, ...);
 	void Report(const wchar_t* fmt, ...);
 }
-
-#ifdef _WINDOWS
-
-/*
- * Calls the memcard settings dialog
- */
-void MemcardConfigure(int num, HWND hParent);
-
-
-
-void PADConfigure(long padnum, HWND hwndParent);
-
-#endif // _WINDOWS
 
 
 
@@ -179,8 +162,8 @@ struct UserFile
 	size_t          size;       /* File size                            */
 	std::wstring    id;         /* GameID = DiskID + banner checksum    */
 	std::wstring    name;       /* File path and name                   */
-	wchar_t   title[MAX_TITLE];       // alternate file name
-	wchar_t   comment[MAX_COMMENT];   // some notes
+	wchar_t			title[MAX_TITLE];       // alternate file name
+	wchar_t			comment[MAX_COMMENT];   // some notes
 	int             icon[2];    /* Banner/icon + same but highlighted   */
 };
 
@@ -203,65 +186,6 @@ enum class SELECTOR_SORT
 	Comment,
 };
 
-#ifdef _WINDOWS
-
-/* Selector API */
-void CreateSelector();
-void CloseSelector();
-void SetSelectorIconSize(bool smallIcon);
-bool AddSelectorPath(const std::wstring& fullPath);            // FALSE, if path duplicated
-void ResizeSelector(int width, int height);
-void UpdateSelector();
-int  SelectorGetSelected();
-void SelectorSetSelected(size_t item);
-void SelectorSetSelected(const std::wstring& filename);
-void SortSelector(SELECTOR_SORT sortBy);
-void DrawSelectorItem(LPDRAWITEMSTRUCT item);
-void NotifySelector(LPNMHDR pnmh);
-void ScrollSelector(int letter);
-uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars);
-
-// all important data is placed here
-class UserSelector
-{
-public:
-	bool        active;             // 1, if enabled (under control of UserWindow)
-	bool        opened;             // 1, if visible
-	bool        smallIcons;         // show small icons
-	SELECTOR_SORT   sortBy;         // sort rule (one of SELECTOR_SORT_*)
-	int         width;              // selector width
-	int         height;             // selector height
-
-	HWND        hSelectorWindow;    // selector window handler
-	HMENU       hFileMenu;          // popup file menu
-
-	// path list, where to search files.
-	std::vector<std::wstring> paths;
-
-	// file filter
-	uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
-
-	// list of found files
-	std::vector<std::unique_ptr<UserFile>> files;
-
-	std::atomic<bool> updateInProgress;
-
-};
-
-extern  UserSelector usel;
-
-#endif // _WINDOWS
-
-
-// TODO: Make settings as a generalized unified version of PropertyGrid, so as not to suffer from scattered controls and tabs.
-
-#ifdef _WINDOWS
-
-void    ResetAllSettings();
-void    OpenSettingsDialog(HWND hParent, HINSTANCE hInst);
-void    EditFileFilter(HWND hwnd);
-
-#endif // _WINDOWS
 
 
 /* Status bar parts enumerator */
@@ -282,38 +206,5 @@ void StepProgress();
 void StopProgress();
 
 
-#ifdef _WINDOWS
-
-/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL */
-constexpr int WIN_STYLE = WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
-
-/* Recent files menu */
-void UpdateRecentMenu(HWND hwnd);
-void AddRecentFile(const std::wstring& path);
-void LoadRecentFile(int index);
-
-/* Window controls API */
 void OnMainWindowOpened(const wchar_t* currentFileName);
 void OnMainWindowClosed();
-HWND CreateMainWindow(HINSTANCE hInst);
-void ResizeMainWindow(int width, int height);
-
-/* Utilities */
-void SetAlwaysOnTop(HWND hwnd, BOOL state);
-void SetMenuItemText(HMENU hmenu, UINT id, const std::wstring& text);
-void CenterChildWindow(HWND hParent, HWND hChild);
-
-/* All important data is placed here */
-struct UserWindow
-{
-	bool    ontop;                  // main window is on top ?
-	HWND    hMainWindow;            // main window
-	HWND    hStatusWindow;          // statusbar window
-	HWND    hProgress;              // progress bar
-	HMENU   hMainMenu;              // main menu
-	std::wstring  cwd;              // current working directory
-};
-
-extern UserWindow wnd;
-
-#endif // _WINDOWS
