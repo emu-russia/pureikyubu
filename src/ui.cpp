@@ -3664,11 +3664,11 @@ void SetStatusText(STATUS_ENUM sbPart, const std::wstring & text, bool post)
 
 	if(post)
 	{
-		PostMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)(sbPart), (LPARAM)text.data());
+		PostMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)((int)sbPart + 1), (LPARAM)text.data());
 	}
 	else
 	{
-		SendMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)(sbPart), (LPARAM)text.data());
+		SendMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)((int)sbPart + 1), (LPARAM)text.data());
 	}
 }
 
@@ -3679,7 +3679,7 @@ std::wstring GetStatusText(STATUS_ENUM sbPart)
 
 	if (wnd.hStatusWindow == NULL) return L"";
 
-	SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)(sbPart), (LPARAM)sbText.data());
+	SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)((int)sbPart + 1), (LPARAM)sbText.data());
 	return sbText;
 }
 

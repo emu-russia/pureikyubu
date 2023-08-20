@@ -264,18 +264,14 @@ void    EditFileFilter(HWND hwnd);
 #endif // _WINDOWS
 
 
-#ifdef _WINDOWS
-
-/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL */
-constexpr int WIN_STYLE = WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
-
 /* Status bar parts enumerator */
 enum class STATUS_ENUM
 {
-	Progress = 1,       // Current emu state / Gekko/DSP performance counters
+	Progress = 0,       // Current emu state / Gekko/DSP performance counters
 	VIs,                // VI / second
 	PEs,                // PE DrawDone / second
 	SystemTime,         // OS System Time
+	StatusMax,
 };
 
 void SetStatusText(STATUS_ENUM sbPart, const std::wstring& text, bool post = false);
@@ -284,6 +280,12 @@ std::wstring GetStatusText(STATUS_ENUM sbPart);
 void StartProgress(int range, int delta);
 void StepProgress();
 void StopProgress();
+
+
+#ifdef _WINDOWS
+
+/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL */
+constexpr int WIN_STYLE = WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
 
 /* Recent files menu */
 void UpdateRecentMenu(HWND hwnd);
