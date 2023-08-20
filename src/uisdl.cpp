@@ -8,7 +8,7 @@
 #include <locale>
 
 static bool ui_active = false;
-static bool show_demo_window = true;
+static bool show_demo_window = false;
 static SDL_Window* window;
 static SDL_Window* render_target;
 static SDL_Renderer* renderer;
@@ -105,7 +105,10 @@ static Json::Value* CmdUIReport(std::vector<std::string>& args)
 
 static Json::Value* CmdGetRenderTarget(std::vector<std::string>& args)
 {
-	// Return main window as RenderTarget
+	// Return RenderTarget SDL window
+
+	if (!render_target)
+		return nullptr;
 
 	// For the first time, this is a hack to check
 #ifdef _WINDOWS
@@ -311,6 +314,21 @@ namespace UI
 }
 
 
+static void CreateRenderTarget()
+{
+	// Create RenderTarget (for xfb / gfx)
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL);
+	render_target = SDL_CreateWindow("Gfx Output", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);
+}
+
+static void DestroyRenderTarget()
+{
+	if (render_target != nullptr) {
+		SDL_DestroyWindow(render_target);
+		render_target = nullptr;
+	}
+}
+
 
 // emulation has started - do proper actions
 void OnMainWindowOpened(const wchar_t* currentFileName)
@@ -441,6 +459,7 @@ void OnMainWindowClosed()
 	auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi->GetVersion()));
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
 	SDL_SetWindowTitle(window, utf8_conv.to_bytes(win_name).c_str());
+	ResetStatusBar();
 }
 
 static void ui_main_menu()
@@ -459,10 +478,12 @@ static void ui_main_menu()
 				UI::Jdi->Stop();
 				Thread::Sleep(100);
 				UI::Jdi->Unload();
+				DestroyRenderTarget();
 				OnMainWindowClosed();
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Run Bootrom", NULL)) {		// Load bootrom
+				CreateRenderTarget();
 				UI::Jdi->LoadFile("Bootrom");
 				OnMainWindowOpened(L"Bootrom");
 				if (Debug::debugger == nullptr)
@@ -684,6 +705,7 @@ static int ui_main()
 				case FileReaction::OpenFile_LoadFile:
 					if (!name.empty())
 					{
+						CreateRenderTarget();
 						UI::Jdi->LoadFile(name);
 						if (Debug::debugger)
 						{
