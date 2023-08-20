@@ -1,4 +1,4 @@
-// Portable UI based on SDL+imgui
+// Portable UI based on SDL2+imgui
 #include "pch.h"
 #ifdef _WINDOWS
 #include <SDL_syswm.h>
@@ -14,9 +14,14 @@ static SDL_Window* render_target;
 static SDL_Renderer* renderer;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static bool debugger_enabled_check = false;
+static bool draw_error_box = false;
+static bool draw_message_box = false;
+static std::string error_text;
+static std::string message_text;
 static ImGui::FileBrowser fileOpenDialog(ImGuiFileBrowserFlags_CloseOnEsc);
 static ImGui::FileBrowser fileSaveDialog(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_EnterNewFilename);
 static ImGui::FileBrowser chooseDirectoryDialog(ImGuiFileBrowserFlags_SelectDirectory);
+static bool draw_about_box = false;
 
 enum class FileReaction
 {
@@ -65,6 +70,83 @@ static uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
 	return unicodeText;
 }
 
+static void ui_draw_error_box(bool* enabled)
+{
+	ImGui::OpenPopup("Error");
+	if (ImGui::BeginPopupModal("Error", enabled, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text(error_text.c_str());
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(120, 0))) { 
+			*enabled = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::EndPopup();
+	}
+}
+
+static void ui_draw_message_box(bool* enabled)
+{
+	ImGui::OpenPopup("Report");
+	if (ImGui::BeginPopupModal("Report", enabled, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text(message_text.c_str());
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(120, 0))) {
+			*enabled = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::EndPopup();
+	}
+}
+
+static void ui_draw_about_box(bool* enabled)
+{
+	ImGui::OpenPopup("About");
+	if (ImGui::BeginPopupModal("About", enabled, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+#ifdef _DEBUG
+		auto version = L"Debug";
+#else
+		auto version = L"Release";
+#endif
+
+#if _M_X64
+		auto platform = L"x64";
+#else
+		auto platform = L"x86";
+#endif
+
+		auto jitc = UI::Jdi->JitcEnabled() ? L"JITC" : L"";
+
+		std::string dateStamp = __DATE__;
+		std::string timeStamp = __TIME__;
+
+		auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} {:s} ({:s} {:s})\n",
+			Util::StringToWstring(APPNAME_A), APPDESC,
+			L"Copyright 2003-2023 Dolwin team, emu-russia",
+			L"Build version",
+			Util::StringToWstring(UI::Jdi->GetVersion()),
+			version, platform, jitc,
+			Util::StringToWstring(dateStamp),
+			Util::StringToWstring(timeStamp));
+
+		ImGui::Text(Util::WstringToString(buffer).c_str());
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(120, 0))) {
+			*enabled = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::EndPopup();
+	}
+}
+
 static Json::Value* CmdUIError(std::vector<std::string>& args)
 {
 	std::string text = "";
@@ -79,7 +161,8 @@ static Json::Value* CmdUIError(std::vector<std::string>& args)
 		text += args[i] + " ";
 	}
 
-	//UI::Error(L"Error", L"%s", Util::StringToWstring(text).c_str());
+	error_text = text;
+	draw_error_box = true;
 
 	return nullptr;
 }
@@ -98,7 +181,8 @@ static Json::Value* CmdUIReport(std::vector<std::string>& args)
 		text += args[i] + " ";
 	}
 
-	//UI::Report(L"%s", Util::StringToWstring(text).c_str());
+	message_text = text;
+	draw_message_box = true;
 
 	return nullptr;
 }
@@ -503,7 +587,9 @@ static void ui_main_menu()
 				ImGui::EndMenu();
 			}
 			ImGui::Separator();
-			ImGui::MenuItem("Refresh View", NULL);
+			if (ImGui::MenuItem("Refresh View", NULL)) {
+				UI::Jdi->ExecuteCommand("UIReport \"Not implemented\"");
+			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Exit", NULL)) {
 				ui_active = false;
@@ -558,7 +644,9 @@ static void ui_main_menu()
 
 		if (ImGui::BeginMenu("Help"))
 		{
-			ImGui::MenuItem("About...", NULL);
+			if (ImGui::MenuItem("About...", NULL)) {
+				draw_about_box = true;
+			}
 			ImGui::EndMenu();
 		}
 
@@ -730,6 +818,18 @@ static int ui_main()
 		if (chooseDirectoryDialog.HasSelected())
 		{
 			chooseDirectoryDialog.ClearSelected();
+		}
+
+		if (draw_message_box) {
+			ui_draw_message_box(&draw_message_box);
+		}
+
+		if (draw_error_box) {
+			ui_draw_error_box(&draw_error_box);
+		}
+
+		if (draw_about_box) {
+			ui_draw_about_box(&draw_about_box);
 		}
 
 		// Rendering
