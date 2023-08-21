@@ -35,6 +35,7 @@
 #define _stricmp strcasecmp
 #define _strnicmp strncasecmp
 #define _wcsicmp wcscasecmp
+#define _countof(a) (sizeof(a)/sizeof(*(a)))
 #endif
 
 #define GLEW_STATIC

@@ -202,7 +202,7 @@ static Json::Value* CmdGetRenderTarget(std::vector<std::string>& args)
 	return value;
 }
 
-static void UIReflector()
+void UIReflector()
 {
 	JdiAddCmd("UIError", CmdUIError);
 	JdiAddCmd("UIReport", CmdUIReport);
@@ -408,7 +408,6 @@ static void DestroyRenderTarget()
 void OnMainWindowOpened(const wchar_t* currentFileName)
 {
 	std::wstring newTitle, gameTitle;
-	wchar_t drive[_MAX_DRIVE + 1] = { 0, }, dir[_MAX_DIR] = { 0, }, name[_MAX_PATH] = { 0, }, ext[_MAX_EXT] = { 0, };
 	bool dvd = false;
 	bool bootrom = !wcscmp(currentFileName, L"Bootrom");
 
@@ -432,12 +431,6 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		{
 			dvd = true;
 		}
-
-		_wsplitpath_s(currentFileName,
-			drive, _countof(drive) - 1,
-			dir, _countof(dir) - 1,
-			name, _countof(name) - 1,
-			ext, _countof(ext) - 1);
 	}
 
 	// set new title for main window
@@ -492,12 +485,6 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 			}
 		}
 
-		// Update recent files list and add selector path
-
-		wchar_t fullPath[MAX_PATH];
-
-		swprintf_s(fullPath, _countof(fullPath) - 1, L"%s%s", drive, dir);
-
 		gameTitle = longTitle;
 		newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
 	}
@@ -509,7 +496,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		}
 		else
 		{
-			gameTitle = fmt::format(L"{:s} demo", name);
+			gameTitle = fmt::format(L"{:s} demo", currentFileName);
 		}
 
 		newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);

@@ -30,8 +30,12 @@ What's not supported:
 
 #define GFX_BLACKJACK_AND_SHADERS 0			// 1: Use modern OpenGL (VBO + Shaders). Under development, do not enable
 
+// 1: Use SDL_Window as a render target; the appropriate SDL API calls are invoked to service it
 #ifdef _LINUX
-#define GFX_USE_SDL_WINDOW 1		// 1: Use SDL_Window as a render target; the appropriate SDL API calls are invoked to service it
+#define GFX_USE_SDL_WINDOW 1
+#endif
+#ifdef _WINDOWS
+#define GFX_USE_SDL_WINDOW 0
 #endif
 
 namespace GX
@@ -128,9 +132,6 @@ namespace GX
 
 		// Streaming FIFO (32-byte burst-only)
 		void FifoWriteBurst(uint8_t data[32]);
-
-		void CPDrawDoneCallback();
-		void CPDrawTokenCallback(uint16_t tokenValue);
 
 #pragma endregion "Interface to Flipper"
 

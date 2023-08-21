@@ -22,6 +22,7 @@ add_definitions (-DCMAKE_BUILD_TYPE=Debug)
 
 # ../GekkoCore/Gekko.h:196:66: warning: `fastcall` attribute ignored [-Wattributes]
 add_compile_options(-Wno-attributes)
+add_compile_options(-lstdc++fs)
 
 # ThirdParty
 add_subdirectory (thirdparty/fmt/Scripts)
@@ -71,12 +72,12 @@ add_executable (pureikyubu
 	src/tx.cpp
 	src/uijdi.cpp
 	# If you don't need UI at all, you can use the simple version instead uisdl
-	src/uisimple.cpp
-	#src/uisdl.cpp
+	#src/uisimple.cpp
+	src/uisdl.cpp
 	src/utils.cpp
 	src/vi.cpp
 	src/xf.cpp
-	src/xfbnull.cpp
+	src/xfbsdl.cpp
 
 	thirdparty/imgui/imgui.cpp
 	thirdparty/imgui/imgui_demo.cpp
@@ -86,6 +87,8 @@ add_executable (pureikyubu
 	thirdparty/imgui/imgui_tables.cpp
 	thirdparty/imgui/imgui_widgets.cpp
 )
+
+target_compile_features(pureikyubu PRIVATE cxx_std_17)
 
 include_directories( thirdparty/imgui ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
 
