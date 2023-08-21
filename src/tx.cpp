@@ -80,6 +80,25 @@ namespace GX
 #endif // _WINDOWS
 	}
 
+	void GXCore::tryLoadTex(int id)
+	{
+		if (texvalid[0][id] && texvalid[3][id])
+		{
+			texvalid[0][id] =
+				texvalid[3][id] = false;
+
+#ifndef WIREFRAME
+			LoadTexture(
+				teximg3[id].base << 5,
+				id,
+				teximg0[id].fmt,
+				teximg0[id].width + 1,
+				teximg0[id].height + 1
+			);
+#endif
+		}
+	}
+
 	void GXCore::GetTlutCol(Color* c, unsigned id, unsigned entry)
 	{
 		uint16_t* tptr = (uint16_t*)(&tlut[(settlut[id].tmem << 9) + 2 * entry]);

@@ -180,8 +180,6 @@ namespace GX
 		}
 	}
 
-	// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
-
 	void GXCore::DONE_INT()
 	{
 		if (peregs.sr & PE_SR_DONEMSK)

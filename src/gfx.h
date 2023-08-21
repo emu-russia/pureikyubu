@@ -42,10 +42,8 @@ namespace GX
 {
 	class GXCore
 	{
-		// TODO: Refactoring hacks
 		void DONE_INT();
 		void TOKEN_INT();
-
 		void CP_BREAK();
 		void CP_OVF();
 		void CP_UVF();
@@ -210,7 +208,6 @@ namespace GX
 
 		void GL_SetScissor(int x, int y, int w, int h);
 		void GL_SetCullMode(int mode);
-		void tryLoadTex(int id);
 		void loadBPReg(size_t index, uint32_t value);
 
 #pragma endregion "Setup Unit"
@@ -256,6 +253,7 @@ namespace GX
 		void TexInit();
 		void TexFree();
 		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
+		void tryLoadTex(int id);
 		void GetTlutCol(Color* c, unsigned id, unsigned entry);
 		void RebindTexture(unsigned id);
 		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);

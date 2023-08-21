@@ -42,25 +42,6 @@ namespace GX
 		}
 	}
 
-	void GXCore::tryLoadTex(int id)
-	{
-		if (texvalid[0][id] && texvalid[3][id])
-		{
-			texvalid[0][id] =
-			texvalid[3][id] = false;
-
-#ifndef WIREFRAME
-			LoadTexture(
-				teximg3[id].base << 5,
-				id,
-				teximg0[id].fmt,
-				teximg0[id].width + 1,
-				teximg0[id].height + 1
-			);
-#endif
-		}
-	}
-
 	// index range = 00..FF
 	// reg size = 24 bit (value is already masked)
 	void GXCore::loadBPReg(size_t index, uint32_t value)
@@ -309,6 +290,8 @@ namespace GX
 			case PE_CMODE1_ID:
 				pe.cmode1.bits = value;
 				break;
+
+			// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
 
 			// draw done
 			case PE_FINISH_ID:
