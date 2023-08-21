@@ -18,7 +18,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
 add_definitions (-D_LINUX)
-add_definitions (-DCMAKE_BUILD_TYPE=Debug)
+#add_definitions (-DCMAKE_BUILD_TYPE=Debug)
 
 # ../GekkoCore/Gekko.h:196:66: warning: `fastcall` attribute ignored [-Wattributes]
 add_compile_options(-Wno-attributes)

@@ -436,7 +436,6 @@ namespace Debug
 
 		void SetMemoryCursor(uint32_t virtualAddress);
 		void SetDisasmCursor(uint32_t virtualAddress);
-
 	};
 }
 

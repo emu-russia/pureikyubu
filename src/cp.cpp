@@ -180,8 +180,6 @@ namespace GX
 		}
 	}
 
-	// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
-
 	void GXCore::DONE_INT()
 	{
 		if (peregs.sr & PE_SR_DONEMSK)
@@ -2131,6 +2129,50 @@ namespace GX
 					}
 #else
 					RAS_Begin(RAS_QUAD, vtxnum);
+					Vertex vtx;
+					while (vtxnum--) {
+
+						FifoWalk(vatnum, &vtx, gxfifo);
+						RAS_SendVertex(&vtx);
+					}
+					RAS_End();
+#endif
+				}
+				break;
+			}
+
+			// 0x88
+			case CP_CMD_DRAW_QUAD_STRIP | 0:
+			case CP_CMD_DRAW_QUAD_STRIP | 1:
+			case CP_CMD_DRAW_QUAD_STRIP | 2:
+			case CP_CMD_DRAW_QUAD_STRIP | 3:
+			case CP_CMD_DRAW_QUAD_STRIP | 4:
+			case CP_CMD_DRAW_QUAD_STRIP | 5:
+			case CP_CMD_DRAW_QUAD_STRIP | 6:
+			case CP_CMD_DRAW_QUAD_STRIP | 7:
+			{
+				unsigned vatnum = cmd & 7;
+				unsigned vtxnum = gxfifo->Read16();
+				if (logDrawCommands)
+				{
+					Report(Channel::GP, "CP_CMD_DRAW_QUAD_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+				}
+
+				if (vtxnum != 0) {
+					tris += (vtxnum / 2 - 1) / 2;
+
+#if GFX_BLACKJACK_AND_SHADERS
+					for (unsigned i = 0; i < vtxnum; i++) {
+						FifoWalk(vatnum, &vertex_data[i], gxfifo);
+					}
+					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
+					glDrawArrays(GL_QUAD_STRIP, 0, vtxnum);
+					gl_error = glGetError();
+					if (gl_error != GL_NO_ERROR) {
+						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
+					}
+#else
+					RAS_Begin(RAS_QUAD_STRIP, vtxnum);
 					Vertex vtx;
 					while (vtxnum--) {
 
