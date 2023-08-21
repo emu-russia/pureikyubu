@@ -224,6 +224,10 @@ namespace Debug
 		}
 	}
 
+	void Cui::DrawInternal()
+	{
+	}
+
 #pragma endregion "Cui"
 
 
