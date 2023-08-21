@@ -22,6 +22,7 @@ static ImGui::FileBrowser fileOpenDialog(ImGuiFileBrowserFlags_CloseOnEsc);
 static ImGui::FileBrowser fileSaveDialog(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_EnterNewFilename);
 static ImGui::FileBrowser chooseDirectoryDialog(ImGuiFileBrowserFlags_SelectDirectory);
 static bool draw_about_box = false;
+static bool ui_insert_dvd_menu_item_enabled = false;
 
 enum class FileReaction
 {
@@ -33,6 +34,7 @@ enum class FileReaction
 	OpenFile_IROM,
 	OpenFile_MemcardA,
 	OpenFile_MemcardB,
+	ChooseFile_DVDImage,
 };
 static FileReaction file_reaction = FileReaction::None;
 
@@ -194,22 +196,10 @@ static Json::Value* CmdGetRenderTarget(std::vector<std::string>& args)
 	if (!render_target)
 		return nullptr;
 
-	// For the first time, this is a hack to check
-#ifdef _WINDOWS
-	SDL_SysWMinfo wmInfo;
-	SDL_VERSION(&wmInfo.version);
-	SDL_GetWindowWMInfo(render_target, &wmInfo);
-	HWND hwnd = wmInfo.info.win.window;
-
 	Json::Value* value = new Json::Value();
 	value->type = Json::ValueType::Int;
-	value->value.AsInt = (uint64_t)hwnd;
+	value->value.AsInt = (uint64_t)render_target;
 	return value;
-#endif
-
-	// TODO
-
-	return nullptr;
 }
 
 static void UIReflector()
@@ -401,7 +391,7 @@ namespace UI
 static void CreateRenderTarget()
 {
 	// Create RenderTarget (for xfb / gfx)
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL);
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 	render_target = SDL_CreateWindow("Gfx Output", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);
 }
 
@@ -582,8 +572,23 @@ static void ui_main_menu()
 			}
 			if (ImGui::BeginMenu("Swap Disk"))
 			{
-				ImGui::MenuItem("Open Cover", NULL);
-				ImGui::MenuItem("Change DVD...", NULL);
+				if (ImGui::MenuItem(UI::Jdi->DvdCoverOpened() ? "Close Cover" : "Open Cover", NULL)) {
+
+					if (UI::Jdi->DvdCoverOpened()) {
+						UI::Jdi->DvdCloseCover();
+						ui_insert_dvd_menu_item_enabled = false;
+					}
+					else {
+						UI::Jdi->DvdOpenCover();
+						ui_insert_dvd_menu_item_enabled = true;
+					}
+				}
+				if (ImGui::MenuItem("Change DVD...", NULL)) {
+					if (ui_insert_dvd_menu_item_enabled) {
+						file_reaction = FileReaction::ChooseFile_DVDImage;
+						fileOpenDialog.Open();
+					}
+				}
 				ImGui::EndMenu();
 			}
 			ImGui::Separator();
@@ -801,6 +806,18 @@ static int ui_main()
 						}
 						OnMainWindowOpened(Util::StringToWstring(name).c_str());
 						UI::Jdi->Run();
+					}
+					break;
+
+				case FileReaction::ChooseFile_DVDImage:
+					if (!name.empty() && UI::Jdi->DvdCoverOpened())
+					{
+						// Bad?
+						if (!UI::Jdi->DvdMount(name)) {
+							break;
+						}
+						// Close lid
+						UI::Jdi->DvdCloseCover();
 					}
 					break;
 			}

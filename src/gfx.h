@@ -28,7 +28,11 @@ What's not supported:
 #include "tev.h"
 #include "tx.h"
 
-#define GFX_BLACKJACK_AND_SHADERS 0
+#define GFX_BLACKJACK_AND_SHADERS 0			// 1: Use modern OpenGL (VBO + Shaders). Under development, do not enable
+
+#ifdef _LINUX
+#define GFX_USE_SDL_WINDOW 1		// 1: Use SDL_Window as a render target; the appropriate SDL API calls are invoked to service it
+#endif
 
 namespace GX
 {
@@ -57,8 +61,11 @@ namespace GX
 		bool logDrawCommands = false;
 		bool GpRegsLog = false;
 
+#if GFX_USE_SDL_WINDOW
+		SDL_Window* render_window = nullptr;
+		SDL_GLContext context{};
+#else
 		// Windows OpenGL stuff
-#ifdef _WINDOWS
 		HWND hwndMain;
 		HGLRC hglrc = 0;
 		HDC hdcgl = 0;
