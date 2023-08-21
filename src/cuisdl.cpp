@@ -134,16 +134,6 @@ namespace Debug
 
 		// Draw frontBuf
 
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(viewport->WorkPos);
-		ImGui::SetNextWindowSize(viewport->WorkSize);
-
-		if (!ImGui::Begin("title", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings))
-		{
-			ImGui::End();
-			return;
-		}
-
 		ImVec2 char_size = ImGui::CalcTextSize("A");
 		char_width = (int)char_size.x;
 		char_height = (int)char_size.y;
