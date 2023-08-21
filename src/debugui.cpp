@@ -1449,7 +1449,6 @@ namespace Debug
 	{
 		disasm->SetCursor(virtualAddress);
 	}
-
 }
 
 // Disassembling code by Gekko virtual addresses. If the instruction is in Main mem, we disassemble and print, otherwise skip.
