@@ -10,6 +10,7 @@ namespace GX
 	enum RAS_Primitive : size_t
 	{
 		RAS_QUAD = 0,
+		RAS_QUAD_STRIP,
 		RAS_TRIANGLE,
 		RAS_TRIANGLE_STRIP,
 		RAS_TRIANGLE_FAN,

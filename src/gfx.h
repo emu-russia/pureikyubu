@@ -35,7 +35,7 @@ What's not supported:
 #define GFX_USE_SDL_WINDOW 1
 #endif
 #ifdef _WINDOWS
-#define GFX_USE_SDL_WINDOW 0
+#define GFX_USE_SDL_WINDOW 1
 #endif
 
 namespace GX

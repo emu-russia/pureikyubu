@@ -17,23 +17,24 @@ namespace GX
 
 	enum CPCommand : uint8_t
 	{
-		CP_CMD_NOP = 0x00,					// 00000000
-		CP_CMD_VCACHE_INVD = 0x48,			// 01001xxx
-		CP_CMD_CALL_DL = 0x40,				// 01000xxx
-		CP_CMD_LOAD_BPREG = 0x60,			// 0110,SUattr(3:0), Address[7:0], 24 bits data
-		CP_CMD_LOAD_CPREG = 0x08,			// 00001xxx, Address[7:0], 32 bits data
-		CP_CMD_LOAD_XFREG = 0x10,			// 00010xxx
-		CP_CMD_LOAD_INDXA = 0x20,			// 00100xxx
-		CP_CMD_LOAD_INDXB = 0x28,			// 00101xxx
-		CP_CMD_LOAD_INDXC = 0x30,			// 00110xxx
-		CP_CMD_LOAD_INDXD = 0x38,			// 00111xxx
-		CP_CMD_DRAW_QUAD = 0x80,			// 10000,vat(2:0)
-		CP_CMD_DRAW_TRIANGLE = 0x90,		// 10010,vat(2:0)
-		CP_CMD_DRAW_STRIP = 0x98,			// 10011,vat(2:0)
-		CP_CMD_DRAW_FAN = 0xA0,				// 10100,vat(2:0)
-		CP_CMD_DRAW_LINE = 0xA8,			// 10101,vat(2:0)
-		CP_CMD_DRAW_LINESTRIP = 0xB0,		// 10110,vat(2:0)
-		CP_CMD_DRAW_POINT = 0xB8,			// 10111,vat(2:0)
+		CP_CMD_NOP = 0x00,					// 00000 xxx
+		CP_CMD_LOAD_CPREG = 0x08,			// 00001 xxx, Address[7:0], 32 bits data
+		CP_CMD_LOAD_XFREG = 0x10,			// 00010 xxx
+		CP_CMD_LOAD_INDXA = 0x20,			// 00100 xxx
+		CP_CMD_LOAD_INDXB = 0x28,			// 00101 xxx
+		CP_CMD_LOAD_INDXC = 0x30,			// 00110 xxx
+		CP_CMD_LOAD_INDXD = 0x38,			// 00111 xxx
+		CP_CMD_CALL_DL = 0x40,				// 01000 xxx
+		CP_CMD_VCACHE_INVD = 0x48,			// 01001 xxx
+		CP_CMD_LOAD_BPREG = 0x60,			// 0110x xxx, Address[7:0], 24 bits data
+		CP_CMD_DRAW_QUAD = 0x80,			// 10000 vat(2:0)
+		CP_CMD_DRAW_QUAD_STRIP = 0x88,		// 10001 vat(2:0)
+		CP_CMD_DRAW_TRIANGLE = 0x90,		// 10010 vat(2:0)
+		CP_CMD_DRAW_STRIP = 0x98,			// 10011 vat(2:0)
+		CP_CMD_DRAW_FAN = 0xA0,				// 10100 vat(2:0)
+		CP_CMD_DRAW_LINE = 0xA8,			// 10101 vat(2:0)
+		CP_CMD_DRAW_LINESTRIP = 0xB0,		// 10110 vat(2:0)
+		CP_CMD_DRAW_POINT = 0xB8,			// 10111 vat(2:0)
 	};
 
 	// CP Registers (from CPU side). 16-bit access

@@ -12,6 +12,9 @@ namespace GX
 			case RAS_QUAD:
 				ras_use_texture = true;
 				break;
+			case RAS_QUAD_STRIP:
+				ras_use_texture = true;
+				break;
 			case RAS_TRIANGLE:
 				ras_use_texture = true;
 				break;
@@ -43,6 +46,9 @@ namespace GX
 		{
 			case RAS_QUAD:
 				glBegin(ras_wireframe ? GL_LINE_LOOP : GL_QUADS);
+				break;
+			case RAS_QUAD_STRIP:
+				glBegin(ras_wireframe ? GL_LINE_LOOP : GL_QUAD_STRIP);
 				break;
 			case RAS_TRIANGLE:
 				glBegin(ras_wireframe ? GL_LINE_LOOP : GL_TRIANGLES);
