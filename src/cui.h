@@ -168,6 +168,6 @@ namespace Debug
 		/// If CUI rendering is integrated into UI rendering, use this call to update the CUI.
 		/// A typical example is imgui. You can't create two Renderers (even if it is Soft SDL2 backend. Why - it's not clear, but whatever).
 		/// </summary>
-		virtual void DrawInternal() {}
+		virtual void DrawInternal();
 	};
 }
