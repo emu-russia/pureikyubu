@@ -575,6 +575,3 @@ struct DVDBanner2
 		uint8_t  comment[128];
 	} comments[6];
 };
-
-// banner API
-std::vector<uint8_t> DVDLoadBanner(const wchar_t* dvdFile);
