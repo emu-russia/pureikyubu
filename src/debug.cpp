@@ -22,15 +22,11 @@ namespace Debug
 			any_debugger_present = true;
 		}
 
-		// TODO: Jdi it
-
-#ifdef _WINDOWS
 		if (!any_debugger_present) {
-			UI::Report(
-				Util::StringToWstring(
-					std::string("The emulation is crashed. Details can be viewed in the debugger (Ctrl+D)\n\n" + std::string(buf))).c_str());
+
+			Jdi->ExecuteCommand(
+				std::string("UIReport \"The emulation is crashed. Details can be viewed in the debugger (Ctrl+D)\n\n" + std::string(buf) + "\"").c_str());
 		}
-#endif
 	}
 
 	void Report(Channel chan, const char* text, ...)

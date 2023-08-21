@@ -35,6 +35,7 @@
 #define _stricmp strcasecmp
 #define _strnicmp strncasecmp
 #define _wcsicmp wcscasecmp
+#define _countof(a) (sizeof(a)/sizeof(*(a)))
 #endif
 
 #define GLEW_STATIC
@@ -118,6 +119,9 @@ namespace Flipper
 #include "main.h"
 #include "uijdi.h"
 #include "ui.h"
+#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_sdlrenderer2.h"
+#include "res/sjis.h"
 
 #define _TB(s)
 #define _TE()

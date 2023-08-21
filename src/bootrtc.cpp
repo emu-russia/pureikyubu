@@ -150,8 +150,8 @@ void MXTransfer()
 							exi.regs[0].len
 						);
 					}
-					if (exi.log) Report(Channel::EXI, "ansi font copy to %08X (%i)\n",
-						exi.regs[0].madr | 0x80000000, exi.regs[0].len);
+					if (exi.log) Report(Channel::EXI, "ansi font copy %08X->%08X (%i)\n",
+						ofs, exi.regs[0].madr, exi.regs[0].len);
 					return;
 				}
 				if ((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
@@ -173,8 +173,8 @@ void MXTransfer()
 							exi.regs[0].len
 						);
 					}
-					if (exi.log) Report(Channel::EXI, "sjis font copy to %08X (%i)\n",
-						exi.regs[0].madr | 0x80000000, exi.regs[0].len);
+					if (exi.log) Report(Channel::EXI, "sjis font copy %08X->%08X (%i)\n",
+						ofs, exi.regs[0].madr, exi.regs[0].len);
 					return;
 				}
 
@@ -188,7 +188,7 @@ void MXTransfer()
 						exi.regs[0].len
 					);
 					if (exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
-						exi.regs[0].madr | 0x80000000, exi.regs[0].len);
+						exi.regs[0].madr, exi.regs[0].len);
 					return;
 				}
 

@@ -76,12 +76,15 @@
 
 #pragma pack(push, 1)
 
-struct RGB
+union RGB
 {
-	uint8_t Blue;
-	uint8_t Green;
-	uint8_t Red;
-	uint8_t Reserved;
+	struct {
+		uint8_t Blue;
+		uint8_t Green;
+		uint8_t Red;
+		uint8_t Reserved;
+	};
+	uint32_t raw;
 };
 
 #pragma pack(pop)

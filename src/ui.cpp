@@ -1,5 +1,55 @@
 #include "pch.h"
-#include "res/sjis.h"
+
+void    AboutDialog(HWND hwndParent);
+
+/*
+ * Calls the memcard settings dialog
+ */
+void MemcardConfigure(int num, HWND hParent);
+
+void PADConfigure(long padnum, HWND hwndParent);
+
+
+// TODO: Make settings as a generalized unified version of PropertyGrid, so as not to suffer from scattered controls and tabs.
+
+void    OpenSettingsDialog(HWND hParent, HINSTANCE hInst);
+void    EditFileFilter(HWND hwnd);
+
+
+/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL */
+constexpr int WIN_STYLE = WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
+
+
+/* Recent files menu */
+void UpdateRecentMenu(HWND hwnd);
+void AddRecentFile(const std::wstring& path);
+void LoadRecentFile(int index);
+
+/* Window controls API */
+HWND CreateMainWindow(HINSTANCE hInst);
+void ResizeMainWindow(int width, int height);
+
+/* Utilities */
+void SetAlwaysOnTop(HWND hwnd, BOOL state);
+void SetMenuItemText(HMENU hmenu, UINT id, const std::wstring& text);
+void CenterChildWindow(HWND hParent, HWND hChild);
+
+/* All important data is placed here */
+struct UserWindow
+{
+	bool    ontop;                  // main window is on top ?
+	HWND    hMainWindow;            // main window
+	HWND    hStatusWindow;          // statusbar window
+	HWND    hProgress;              // progress bar
+	HMENU   hMainMenu;              // main menu
+	std::wstring  cwd;              // current working directory
+};
+
+/* All important data is placed here */
+UserWindow wnd;
+
+
+
 
 // About dialog
 
@@ -659,7 +709,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
 
 	// Start the emulator and user interface
-	// (emulator will be initialized during main window creation).
 	CreateMainWindow(hInstance);
 
 	// Main loop
@@ -1966,6 +2015,50 @@ namespace UI
 
 // Refactoring this code is bad idea :)
 
+/* Selector API */
+void CreateSelector();
+void CloseSelector();
+void SetSelectorIconSize(bool smallIcon);
+bool AddSelectorPath(const std::wstring& fullPath);            // FALSE, if path duplicated
+void ResizeSelector(int width, int height);
+void UpdateSelector();
+int  SelectorGetSelected();
+void SelectorSetSelected(size_t item);
+void SelectorSetSelected(const std::wstring& filename);
+void SortSelector(SELECTOR_SORT sortBy);
+void DrawSelectorItem(LPDRAWITEMSTRUCT item);
+void NotifySelector(LPNMHDR pnmh);
+void ScrollSelector(int letter);
+uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars);
+
+// all important data is placed here
+class UserSelector
+{
+public:
+	bool        active;             // 1, if enabled (under control of UserWindow)
+	bool        opened;             // 1, if visible
+	bool        smallIcons;         // show small icons
+	SELECTOR_SORT   sortBy;         // sort rule (one of SELECTOR_SORT_*)
+	int         width;              // selector width
+	int         height;             // selector height
+
+	HWND        hSelectorWindow;    // selector window handler
+	HMENU       hFileMenu;          // popup file menu
+
+	// path list, where to search files.
+	std::vector<std::wstring> paths;
+
+	// file filter
+	uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
+
+	// list of found files
+	std::vector<std::unique_ptr<UserFile>> files;
+
+	std::atomic<bool> updateInProgress;
+
+};
+
+
 /* All important data is placed here */
 UserSelector usel;
 
@@ -2476,7 +2569,7 @@ static void reset_columns()
 	lvcol.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
 	// add new columns
-#define ADDCOL(align, width, text, id)                          \
+	#define ADDCOL(align, width, text, id)                          \
 	{                                                               \
 		lvcol.fmt = LVCFMT_##align;                                 \
 		lvcol.cx  = width;                                          \
@@ -3615,9 +3708,6 @@ void EditFileFilter(HWND hwnd)
 /* statusbar is used to show current emulator state and performance.        */
 /* last note : DO NOT USE WINDOWS API CODE IN OTHER SUB-SYSTEMS!!           */
 
-/* All important data is placed here */
-UserWindow wnd;
-
 /* ---------------------------------------------------------------------------  */
 /* Statusbar                                                                    */
 
@@ -3666,11 +3756,11 @@ void SetStatusText(STATUS_ENUM sbPart, const std::wstring & text, bool post)
 
 	if(post)
 	{
-		PostMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)(sbPart), (LPARAM)text.data());
+		PostMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)((int)sbPart + 1), (LPARAM)text.data());
 	}
 	else
 	{
-		SendMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)(sbPart), (LPARAM)text.data());
+		SendMessage(wnd.hStatusWindow, SB_SETTEXT, (WPARAM)((int)sbPart + 1), (LPARAM)text.data());
 	}
 }
 
@@ -3681,7 +3771,7 @@ std::wstring GetStatusText(STATUS_ENUM sbPart)
 
 	if (wnd.hStatusWindow == NULL) return L"";
 
-	SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)(sbPart), (LPARAM)sbText.data());
+	SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)((int)sbPart + 1), (LPARAM)sbText.data());
 	return sbText;
 }
 

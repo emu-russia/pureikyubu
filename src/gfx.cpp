@@ -28,7 +28,9 @@ namespace GX
 
 		cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
-#ifdef _WINDOWS
+#if GFX_USE_SDL_WINDOW
+		render_window = (SDL_Window*)config->renderTarget;
+#else
 		hwndMain = (HWND)config->renderTarget;
 #endif
 
@@ -104,7 +106,9 @@ namespace GX
 		if (backend_started)
 			return true;
 
-#ifdef _WINDOWS
+#if GFX_USE_SDL_WINDOW
+		context = SDL_GL_CreateContext(render_window);
+#else
 		hdcgl = GetDC(hwndMain);
 
 		if (hdcgl == NULL) return false;
@@ -181,7 +185,9 @@ namespace GX
 		DisposeVBO();
 #endif
 
-#ifdef _WINDOWS
+#if GFX_USE_SDL_WINDOW
+		SDL_GL_DeleteContext(context);
+#else
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hglrc);
 #endif
@@ -194,7 +200,7 @@ namespace GX
 	{
 		if (frameReady) return;
 
-#ifdef _WINDOWS
+#if !GFX_USE_SDL_WINDOW
 		BeginPaint(hwndMain, &psFrame);
 #endif
 		glDrawBuffer(GL_BACK);
@@ -241,7 +247,10 @@ namespace GX
 		}
 
 		glFinish();
-#ifdef _WINDOWS
+
+#if GFX_USE_SDL_WINDOW
+		SDL_GL_SwapWindow(render_window);
+#else
 		SwapBuffers(hdcgl);
 		EndPaint(hwndMain, &psFrame);
 #endif

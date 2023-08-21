@@ -5,3 +5,6 @@
 	path = thirdparty/SDL2
 	url = https://github.com/libsdl-org/SDL.git
 	branch = SDL2
+[submodule "thirdparty/imgui-filebrowser"]
+	path = thirdparty/imgui-filebrowser
+	url = https://github.com/AirGuanZ/imgui-filebrowser.git

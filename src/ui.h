@@ -1,11 +1,5 @@
 ﻿/*
 
-Old interface from Dolwin 0.10.
-
-Used simply to give the user some kind of interface.
-
-No longer evolving, left until a replacement for a more modern UI appears.
-
 ## Technical features
 
 At the heart of the interface is the "Selector" - a custom ListView with a list of executable files (DOL/ELF) and disk images (GCM).
@@ -20,21 +14,9 @@ When there is actual support for USB controllers, it will probably be redesigned
 
 In short, the current controller settings are strongly tied to the PadSimpleWin32 backend, which is not very good, but for now it is as it is.
 
-## The situation with strings
-
-There is now a miniature hell of using strings.
-
-Historically, Dolwin only supported Ansi (`std::string`). During the code refresh process, all strings were translated to TCHAR. Who does not know - this is such a mutant that depends on the `_UNICODE` macro: if the macro is defined, all TCHARs are Unicode strings, otherwise Ansi.
-
-After switching to cross-platform, it is obvious to completely switch to Unicode (`std::wstring`). But this will be done only by preliminary refactoring (separation of the UI from the emulator core).
-
 */
 
 #pragma once
-
-#ifdef _WINDOWS
-void    AboutDialog(HWND hwndParent);
-#endif
 
 // The UI needs to implement a small number of methods that are used in the emulator core.
 
@@ -89,6 +71,7 @@ namespace UI
 
 // version info
 #define APPNAME L"プレイキューブ"
+#define APPNAME_A "pureikyubu"
 #define APPDESC L"Nintendo GameCube Emulator"
 
 namespace UI
@@ -97,19 +80,6 @@ namespace UI
 	void Error(const wchar_t* title, const wchar_t* fmt, ...);
 	void Report(const wchar_t* fmt, ...);
 }
-
-#ifdef _WINDOWS
-
-/*
- * Calls the memcard settings dialog
- */
-void MemcardConfigure(int num, HWND hParent);
-
-
-
-void PADConfigure(long padnum, HWND hwndParent);
-
-#endif // _WINDOWS
 
 
 
@@ -178,8 +148,8 @@ struct UserFile
 	size_t          size;       /* File size                            */
 	std::wstring    id;         /* GameID = DiskID + banner checksum    */
 	std::wstring    name;       /* File path and name                   */
-	wchar_t   title[MAX_TITLE];       // alternate file name
-	wchar_t   comment[MAX_COMMENT];   // some notes
+	wchar_t			title[MAX_TITLE];       // alternate file name
+	wchar_t			comment[MAX_COMMENT];   // some notes
 	int             icon[2];    /* Banner/icon + same but highlighted   */
 };
 
@@ -202,79 +172,16 @@ enum class SELECTOR_SORT
 	Comment,
 };
 
-#ifdef _WINDOWS
 
-/* Selector API */
-void CreateSelector();
-void CloseSelector();
-void SetSelectorIconSize(bool smallIcon);
-bool AddSelectorPath(const std::wstring& fullPath);            // FALSE, if path duplicated
-void ResizeSelector(int width, int height);
-void UpdateSelector();
-int  SelectorGetSelected();
-void SelectorSetSelected(size_t item);
-void SelectorSetSelected(const std::wstring& filename);
-void SortSelector(SELECTOR_SORT sortBy);
-void DrawSelectorItem(LPDRAWITEMSTRUCT item);
-void NotifySelector(LPNMHDR pnmh);
-void ScrollSelector(int letter);
-uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars);
-
-// all important data is placed here
-class UserSelector
-{
-public:
-	bool        active;             // 1, if enabled (under control of UserWindow)
-	bool        opened;             // 1, if visible
-	bool        smallIcons;         // show small icons
-	SELECTOR_SORT   sortBy;         // sort rule (one of SELECTOR_SORT_*)
-	int         width;              // selector width
-	int         height;             // selector height
-
-	HWND        hSelectorWindow;    // selector window handler
-	HMENU       hFileMenu;          // popup file menu
-
-	// path list, where to search files.
-	std::vector<std::wstring> paths;
-
-	// file filter
-	uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
-
-	// list of found files
-	std::vector<std::unique_ptr<UserFile>> files;
-
-	std::atomic<bool> updateInProgress;
-
-};
-
-extern  UserSelector usel;
-
-#endif // _WINDOWS
-
-
-// TODO: Make settings as a generalized unified version of PropertyGrid, so as not to suffer from scattered controls and tabs.
-
-#ifdef _WINDOWS
-
-void    ResetAllSettings();
-void    OpenSettingsDialog(HWND hParent, HINSTANCE hInst);
-void    EditFileFilter(HWND hwnd);
-
-#endif // _WINDOWS
-
-
-#ifdef _WINDOWS
-
-/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL */
-constexpr int WIN_STYLE = WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
 
 /* Status bar parts enumerator */
 enum class STATUS_ENUM
 {
-	Progress = 1,       // Current emu state / Gekko/DSP performance counters
+	Progress = 0,       // Current emu state / Gekko/DSP performance counters
 	VIs,                // VI / second
 	PEs,                // PE DrawDone / second
 	SystemTime,         // OS System Time
+	StatusMax,
 };
 
 void SetStatusText(STATUS_ENUM sbPart, const std::wstring& text, bool post = false);
@@ -284,33 +191,6 @@ void StartProgress(int range, int delta);
 void StepProgress();
 void StopProgress();
 
-/* Recent files menu */
-void UpdateRecentMenu(HWND hwnd);
-void AddRecentFile(const std::wstring& path);
-void LoadRecentFile(int index);
 
-/* Window controls API */
 void OnMainWindowOpened(const wchar_t* currentFileName);
 void OnMainWindowClosed();
-HWND CreateMainWindow(HINSTANCE hInst);
-void ResizeMainWindow(int width, int height);
-
-/* Utilities */
-void SetAlwaysOnTop(HWND hwnd, BOOL state);
-void SetMenuItemText(HMENU hmenu, UINT id, const std::wstring& text);
-void CenterChildWindow(HWND hParent, HWND hChild);
-
-/* All important data is placed here */
-struct UserWindow
-{
-	bool    ontop;                  // main window is on top ?
-	HWND    hMainWindow;            // main window
-	HWND    hStatusWindow;          // statusbar window
-	HWND    hProgress;              // progress bar
-	HMENU   hMainMenu;              // main menu
-	std::wstring  cwd;              // current working directory
-};
-
-extern UserWindow wnd;
-
-#endif // _WINDOWS

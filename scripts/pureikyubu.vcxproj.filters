@@ -372,7 +372,7 @@
     <ClCompile Include="..\src\cuinull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cui_imgui.cpp">
+    <ClCompile Include="..\src\cuisdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\imgui\imgui.cpp">
@@ -401,6 +401,12 @@
     </ClCompile>
     <ClCompile Include="..\thirdparty\glew-2.2.0\src\glew.c">
       <Filter>GLEW</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\uisdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\xfbsdl.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
