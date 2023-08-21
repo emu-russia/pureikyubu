@@ -74,3 +74,6 @@ namespace UI
 
 	extern JdiClient* Jdi;
 }
+
+// banner API
+std::vector<uint8_t> DVDLoadBanner(const wchar_t* dvdFile);
