@@ -859,6 +859,14 @@ namespace GX
 			case CPCommand::CP_CMD_DRAW_QUAD | 5:
 			case CPCommand::CP_CMD_DRAW_QUAD | 6:
 			case CPCommand::CP_CMD_DRAW_QUAD | 7:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 0:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 1:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 2:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 3:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 4:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 5:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 6:
+			case CPCommand::CP_CMD_DRAW_QUAD_STRIP | 7:
 			case CPCommand::CP_CMD_DRAW_TRIANGLE | 0:
 			case CPCommand::CP_CMD_DRAW_TRIANGLE | 1:
 			case CPCommand::CP_CMD_DRAW_TRIANGLE | 2:
@@ -917,7 +925,7 @@ namespace GX
 
 			default:
 			{
-				Report(Channel::GP, "GX: Unsupported opcode: 0x%02X\n", cmd);
+				Halt("GFX: Unsupported opcode: 0x%02X (%s, readPtr: 0x%x)\n", cmd, allocated ? "Call DL" : "Stream", readPtr);
 				break;
 			}
 		}
@@ -1945,8 +1953,8 @@ namespace GX
 			case CP_CMD_CALL_DL | 6:
 			case CP_CMD_CALL_DL | 7:
 			{
-				uint32_t physAddress = gxfifo->Read32() & RAMMASK;
-				uint8_t* fifoPtr = &mi.ram[physAddress];
+				uint32_t physAddress = gxfifo->Read32() & ~0x1f;
+				uint8_t* fifoPtr = (uint8_t *)MIGetMemoryPointerForCP(physAddress);
 				size_t size = gxfifo->Read32() & ~0x1f;
 
 				if (logDrawCommands)

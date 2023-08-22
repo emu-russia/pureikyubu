@@ -769,12 +769,12 @@ static int ui_main()
 		ImGui::NewFrame();
 
 		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+		ui_main_window();
 
 		if (Debug::debugger != nullptr) {
 			Debug::debugger->DrawInternal();
 		}
 
-		ui_main_window();
 		if (show_demo_window) {
 			ImGui::ShowDemoWindow(&show_demo_window);
 		}
