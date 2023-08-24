@@ -111,14 +111,16 @@ void PADClose()
 // ---------------------------------------------------------------------------
 // process input
 
-// TODO: The problem with stick sticking to the right in Bootrom is in this location
-
-#define THRESOLD    87
-#define STICK_INITIAL	-128
+#define THRESOLD    127
+#define STICK_INITIAL	0
 
 static void pad_reset_chan(PADState* state)
 {
 	memset(state, 0, sizeof(PADState));
+
+	// The analog control values can range from -127 to +127.
+	// The pad.a library further filters them by setting the lower cap to 15 and the upper cap to 87 for stick and 74 for cstick.
+	// But these are purely programmatic fiddles that don't concern us.
 
 	state->stickX = state->stickY = STICK_INITIAL;
 	state->substickX = state->substickY = STICK_INITIAL;
