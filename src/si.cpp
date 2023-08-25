@@ -188,9 +188,9 @@ static void si_inh0(uint32_t addr, uint32_t* reg)          // high
 	SI_SR_REG &= ~SI_SR_RDST0;
 	if ((SI_SR_REG &
 		(SI_SR_RDST0 |
-			SI_SR_RDST1 |
-			SI_SR_RDST2 |
-			SI_SR_RDST3)) == 0)
+		 SI_SR_RDST1 |
+		 SI_SR_RDST2 |
+		 SI_SR_RDST3)) == 0)
 	{
 		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
 		SIClearInterrupt();
@@ -227,9 +227,9 @@ static void si_inh1(uint32_t addr, uint32_t* reg)          // high
 	SI_SR_REG &= ~SI_SR_RDST1;
 	if ((SI_SR_REG &
 		(SI_SR_RDST0 |
-			SI_SR_RDST1 |
-			SI_SR_RDST2 |
-			SI_SR_RDST3)) == 0)
+		 SI_SR_RDST1 |
+		 SI_SR_RDST2 |
+		 SI_SR_RDST3)) == 0)
 	{
 		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
 		SIClearInterrupt();
@@ -266,9 +266,9 @@ static void si_inh2(uint32_t addr, uint32_t* reg)          // high
 	SI_SR_REG &= ~SI_SR_RDST2;
 	if ((SI_SR_REG &
 		(SI_SR_RDST0 |
-			SI_SR_RDST1 |
-			SI_SR_RDST2 |
-			SI_SR_RDST3)) == 0)
+		 SI_SR_RDST1 |
+		 SI_SR_RDST2 |
+		 SI_SR_RDST3)) == 0)
 	{
 		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
 		SIClearInterrupt();
@@ -305,9 +305,9 @@ static void si_inh3(uint32_t addr, uint32_t* reg)          // high
 	SI_SR_REG &= ~SI_SR_RDST3;
 	if ((SI_SR_REG &
 		(SI_SR_RDST0 |
-			SI_SR_RDST1 |
-			SI_SR_RDST2 |
-			SI_SR_RDST3)) == 0)
+		 SI_SR_RDST1 |
+		 SI_SR_RDST2 |
+		 SI_SR_RDST3)) == 0)
 	{
 		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
 		SIClearInterrupt();
