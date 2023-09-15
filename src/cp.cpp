@@ -431,7 +431,7 @@ namespace GX
 			case PI_CPMappedRegister::PI_CPTOP_ID:
 				return pi_cp_top & ~0x1f;
 			case PI_CPMappedRegister::PI_CPWRT_ID:
-				return pi_cp_wrptr & ~0x1f;
+				return (pi_cp_wrptr & ~0x1f) | (wrap_bit ? PI_CPWRT_WRAP : 0);
 			case PI_CPMappedRegister::PI_CPABT_ID:
 				Report(Channel::GP, "PI CP Abort read not implemented!\n");
 				return 0;
@@ -452,6 +452,7 @@ namespace GX
 				break;
 			case PI_CPMappedRegister::PI_CPWRT_ID:
 				pi_cp_wrptr = value & ~0x1f;
+				wrap_bit = 0;
 				break;
 			case PI_CPMappedRegister::PI_CPABT_ID:
 				if ((value & 1) != 0) {
@@ -467,15 +468,13 @@ namespace GX
 	{
 		// PI FIFO
 
-		pi_cp_wrptr &= ~PI_CPWRT_WRAP;
-
 		PIWriteBurst(pi_cp_wrptr & RAMMASK, data);
 		pi_cp_wrptr += 32;
 
 		if (pi_cp_wrptr == pi_cp_top)
 		{
 			pi_cp_wrptr = pi_cp_base;
-			pi_cp_wrptr |= PI_CPWRT_WRAP;
+			wrap_bit = 1;
 		}
 
 		// CP FIFO

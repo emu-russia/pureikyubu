@@ -2,7 +2,7 @@
 
 GameCube controllers emulation backend. This is shitty code in every way, don't look.
 
-Will be gradually superseded by DirectInput implementation.
+Will be gradually superseded by DirectInput/SDL implementation.
 
 ## Technical features
 
@@ -103,9 +103,9 @@ bool PADOpen()
 void PADClose()
 {
 	pad[0].plugged =
-		pad[1].plugged =
-		pad[2].plugged =
-		pad[3].plugged = 0;
+	pad[1].plugged =
+	pad[2].plugged =
+	pad[3].plugged = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,31 +189,43 @@ bool PADReadButtons(long padnum, PADState* state)
 			}
 		}
 
-		if (pad[padnum].vkeys[VKEY_FOR_XUP50] != -1)
-			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XUP50]) & 0x80000000) state->stickY += THRESOLD / 2;
-		if (pad[padnum].vkeys[VKEY_FOR_XUP100] != -1)
-			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XUP100]) & 0x80000000) state->stickY += THRESOLD;
-		if (pad[padnum].vkeys[VKEY_FOR_XDOWN50] != -1)
+		if (pad[padnum].vkeys[VKEY_FOR_XUP50] != -1) {
+			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XUP50]) & 0x80000000) state->stickY += +THRESOLD / 2;
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XUP100] != -1) {
+			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XUP100]) & 0x80000000) state->stickY += +THRESOLD;
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XDOWN50] != -1) {
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XDOWN50]) & 0x80000000) state->stickY += -THRESOLD / 2;
-		if (pad[padnum].vkeys[VKEY_FOR_XDOWN100] != -1)
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XDOWN100] != -1) {
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XDOWN100]) & 0x80000000) state->stickY += -THRESOLD;
-		if (pad[padnum].vkeys[VKEY_FOR_XRIGHT50] != -1)
-			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XRIGHT50]) & 0x80000000) state->stickX += THRESOLD / 2;
-		if (pad[padnum].vkeys[VKEY_FOR_XRIGHT100] != -1)
-			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XRIGHT100]) & 0x80000000) state->stickX += THRESOLD;
-		if (pad[padnum].vkeys[VKEY_FOR_XLEFT50] != -1)
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XRIGHT50] != -1) {
+			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XRIGHT50]) & 0x80000000) state->stickX += +THRESOLD / 2;
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XRIGHT100] != -1) {
+			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XRIGHT100]) & 0x80000000) state->stickX += +THRESOLD;
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XLEFT50] != -1) {
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XLEFT50]) & 0x80000000) state->stickX += -THRESOLD / 2;
-		if (pad[padnum].vkeys[VKEY_FOR_XLEFT100] != -1)
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_XLEFT100] != -1) {
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_XLEFT100]) & 0x80000000) state->stickX += -THRESOLD;
+		}
 
-		if (pad[padnum].vkeys[VKEY_FOR_CXUP] != -1)
-			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXUP]) & 0x80000000) state->substickY += THRESOLD;
-		if (pad[padnum].vkeys[VKEY_FOR_CXDOWN] != -1)
+		if (pad[padnum].vkeys[VKEY_FOR_CXUP] != -1) {
+			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXUP]) & 0x80000000) state->substickY += +THRESOLD;
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_CXDOWN] != -1) {
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXDOWN]) & 0x80000000) state->substickY += -THRESOLD;
-		if (pad[padnum].vkeys[VKEY_FOR_CXRIGHT] != -1)
-			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXRIGHT]) & 0x80000000) state->substickX += THRESOLD;
-		if (pad[padnum].vkeys[VKEY_FOR_CXLEFT] != -1)
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_CXRIGHT] != -1) {
+			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXRIGHT]) & 0x80000000) state->substickX += +THRESOLD;
+		}
+		if (pad[padnum].vkeys[VKEY_FOR_CXLEFT] != -1) {
 			if (GetAsyncKeyState(pad[padnum].vkeys[VKEY_FOR_CXLEFT]) & 0x80000000) state->substickX += -THRESOLD;
+		}
 	}
 	else return false;
 

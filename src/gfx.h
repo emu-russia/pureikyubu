@@ -35,7 +35,7 @@ What's not supported:
 #define GFX_USE_SDL_WINDOW 1
 #endif
 #ifdef _WINDOWS
-#define GFX_USE_SDL_WINDOW 1
+#define GFX_USE_SDL_WINDOW 0
 #endif
 
 namespace GX
@@ -119,6 +119,7 @@ namespace GX
 		volatile uint32_t pi_cp_base;
 		volatile uint32_t pi_cp_top;
 		volatile uint32_t pi_cp_wrptr;          // also WRAP bit
+		volatile uint32_t wrap_bit = 0;		// When the CPU writes to the CPWRT register, this bit is cleared. When the FIFO writes by the CPWRT address, this bit remains asserted
 
 		// CP Registers
 		uint16_t CpReadReg(CPMappedRegister id);
