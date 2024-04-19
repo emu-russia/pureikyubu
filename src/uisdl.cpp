@@ -129,7 +129,7 @@ static void ui_draw_about_box(bool* enabled)
 		std::string timeStamp = __TIME__;
 
 		auto buffer =
-			std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L"\n" +
+			Util::StringToWstring(APPNAME_A) + L" - " + std::wstring(APPDESC) + L"\n" +
 			std::wstring(L"Copyright 2003-2023 Dolwin team, emu-russia\n") +
 			std::wstring(L"Build version ") +
 			Util::StringToWstring(UI::Jdi->GetVersion()) + L" " +
