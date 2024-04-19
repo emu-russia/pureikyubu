@@ -128,14 +128,14 @@ static void ui_draw_about_box(bool* enabled)
 		std::string dateStamp = __DATE__;
 		std::string timeStamp = __TIME__;
 
-		auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} {:s} ({:s} {:s})\n",
-			Util::StringToWstring(APPNAME_A), APPDESC,
-			L"Copyright 2003-2023 Dolwin team, emu-russia",
-			L"Build version",
-			Util::StringToWstring(UI::Jdi->GetVersion()),
-			version, platform, jitc,
-			Util::StringToWstring(dateStamp),
-			Util::StringToWstring(timeStamp));
+		auto buffer =
+			std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L"\n" +
+			std::wstring(L"Copyright 2003-2023 Dolwin team, emu-russia\n") +
+			std::wstring(L"Build version ") +
+			Util::StringToWstring(UI::Jdi->GetVersion()) + L" " +
+			std::wstring(version) + L" " + std::wstring(platform) + L" " + std::wstring(jitc) + L" (" +
+			Util::StringToWstring(dateStamp) + L" " +
+			Util::StringToWstring(timeStamp) + L")\n";
 
 		ImGui::Text(Util::WstringToString(buffer).c_str());
 		ImGui::Separator();
@@ -486,7 +486,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		}
 
 		gameTitle = longTitle;
-		newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
+		newTitle = std::wstring(APPNAME) + L" - Running " + gameTitle;
 	}
 	else
 	{
@@ -496,10 +496,10 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		}
 		else
 		{
-			gameTitle = fmt::format(L"{:s} demo", currentFileName);
+			gameTitle = std::wstring(currentFileName) + L" demo";
 		}
 
-		newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
+		newTitle = std::wstring(APPNAME) + L" - Running " + gameTitle;
 	}
 
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
