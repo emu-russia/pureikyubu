@@ -517,7 +517,7 @@ void OnMainWindowClosed()
 	}
 
 	// set to Idle
-	auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi->GetVersion()));
+	auto win_name = std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L" (" + Util::StringToWstring(UI::Jdi->GetVersion()) + L")";
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
 	SDL_SetWindowTitle(window, utf8_conv.to_bytes(win_name).c_str());
 	ResetStatusBar();
