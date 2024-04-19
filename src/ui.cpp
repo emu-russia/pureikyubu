@@ -2475,7 +2475,7 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 		// get DiskID
 		std::vector<uint8_t> diskIDRaw;
 		diskIDRaw.resize(4);
-		wchar_t diskID[0x10] = { 0 };
+		char diskID[0x10] = { 0 };
 		UI::Jdi->DvdMount(Util::WstringToString(file));
 		UI::Jdi->DvdSeek(0);
 		UI::Jdi->DvdRead(diskIDRaw);
@@ -2485,8 +2485,10 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 		diskID[3] = diskIDRaw[3];
 		diskID[4] = 0;
 
-		/* Set GameID. */
-		item->id = fmt::sprintf(L"%.4s", diskID);
+		// Set GameID.
+		char game_id[0x10]{};
+		sprintf(game_id, "%.4s", diskID);
+		item->id = Util::StringToWstring(std::string(game_id));
 
 		// Restore previous mount state
 		if (mounted)
@@ -3558,13 +3560,14 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 	settingsLoaded[1] = FALSE;
 
 	// property sheet
-	auto title = fmt::format(L"Configure {:s}", APPNAME);
+	char title[0x100];
+	sprintf(title, "Configure %s", APPNAME_A);
 	psh.dwSize = sizeof(PROPSHEETHEADER);
 	psh.dwFlags = PSH_USEHICON | /*PSH_PROPTITLE |*/ PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
 	psh.hwndParent = hParentWnd;
 	psh.hInstance = hParentInst;
 	psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_PUREI_ICON));
-	psh.pszCaption = title.data();
+	psh.pszCaption = Util::StringToWstring(std::string(title)).c_str();
 	psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
 	psh.nStartPage = 0;
 	psh.ppsp = (LPCPROPSHEETPAGE)&psp;
