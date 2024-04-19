@@ -144,13 +144,13 @@ constexpr int MAX_COMMENT = 0x100;
 /* File entry */
 struct UserFile
 {
-	SELECTOR_FILE   type;       /* See above (one of SELECTOR_FILE_*)   */
-	size_t          size;       /* File size                            */
-	std::wstring    id;         /* GameID = DiskID + banner checksum    */
-	std::wstring    name;       /* File path and name                   */
+	SELECTOR_FILE   type;       // See above (one of SELECTOR_FILE_*)
+	size_t          size;       // File size
+	std::wstring    id;         // GameID = DiskID
+	std::wstring    name;       // File path and name
 	wchar_t			title[MAX_TITLE];       // alternate file name
 	wchar_t			comment[MAX_COMMENT];   // some notes
-	int             icon[2];    /* Banner/icon + same but highlighted   */
+	int             icon[2];    // Banner/icon + same but highlighted
 };
 
 /* Selector columns */

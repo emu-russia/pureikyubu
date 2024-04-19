@@ -52,9 +52,6 @@
 #endif
 #include "imgui.h"
 
-#include "../thirdparty/fmt/fmt/format.h"
-#include "../thirdparty/fmt/fmt/printf.h"
-
 #define my_max(a,b) (((a) > (b)) ? (a) : (b))
 #define my_min(a,b) (((a) < (b)) ? (a) : (b))
 

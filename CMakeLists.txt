@@ -24,9 +24,6 @@ add_definitions (-D_LINUX)
 add_compile_options(-Wno-attributes)
 add_compile_options(-lstdc++fs)
 
-# ThirdParty
-add_subdirectory (thirdparty/fmt/Scripts)
-
 add_executable (pureikyubu 
 	src/ai.cpp
 	src/audionull.cpp

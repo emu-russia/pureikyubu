@@ -4143,14 +4143,14 @@ namespace Gekko
 	// CR = (rs & mask) | (CR & ~mask)
 	void Interpreter::mtcrf()
 	{
-		uint32_t m, crm = info.paramBits[0], a, d = core->regs.gpr[info.paramBits[1]];
+		uint32_t crm = info.paramBits[0], d = core->regs.gpr[info.paramBits[1]];
 
 		for (int i = 0; i < 8; i++)
 		{
 			if ((crm >> i) & 1)
 			{
-				a = (d >> (i << 2)) & 0xf;
-				m = (0xf << (i << 2));
+				uint32_t a = (d >> (i << 2)) & 0xf;
+				uint32_t m = (0xf << (i << 2));
 				core->regs.cr = (core->regs.cr & ~m) | (a << (i << 2));
 			}
 		}

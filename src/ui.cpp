@@ -92,14 +92,14 @@ static INT_PTR CALLBACK AboutProc(
 			std::string dateStamp = __DATE__;
 			std::string timeStamp = __TIME__;
 
-			auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} {:s} ({:s} {:s})\n",
-				APPNAME, APPDESC,
-				L"Copyright 2003-2023 Dolwin team, emu-russia",
-				L"Build version",
-				Util::StringToWstring(UI::Jdi->GetVersion()),
-				version, platform, jitc,
-				Util::StringToWstring(dateStamp),
-				Util::StringToWstring(timeStamp));
+			auto buffer = 
+				std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L"\n" +
+				std::wstring(L"Copyright 2003-2023 Dolwin team, emu-russia\n") + 
+				std::wstring(L"Build version ") +
+				Util::StringToWstring(UI::Jdi->GetVersion()) + L" " +
+				std::wstring(version) + L" " + std::wstring(platform) + L" " + std::wstring(jitc) + L" (" +
+				Util::StringToWstring(dateStamp) + L" " +
+				Util::StringToWstring(timeStamp) + L")\n";
 
 			SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
 			return true;
@@ -555,50 +555,31 @@ namespace UI
 	/* Nice value of KB, MB or GB, for output. */
 	std::wstring FileSmartSize(size_t size)
 	{
-		static auto tempBuf = std::wstring();
-
-		if (size < 1024)
-		{
-			tempBuf = fmt::sprintf(L"%zi byte", size);
-		}
-		else if (size < 1024 * 1024)
-		{
-			tempBuf = fmt::sprintf(L"%zi KB", size / 1024);
-		}
-		else if (size < 1024 * 1024 * 1024)
-		{
-			tempBuf = fmt::sprintf(L"%zi MB", size / 1024 / 1024);
-		}
-		else
-		{
-			tempBuf = fmt::sprintf(L"%1.1f GB", (float)size / 1024 / 1024 / 1024);
-		}
-
-		return tempBuf;
+		return Util::StringToWstring(FileSmartSizeA(size));
 	}
 
 	std::string FileSmartSizeA(size_t size)
 	{
-		static auto tempBuf = std::string(1024, 0);
+		static char tempBuf[0x100];
 
 		if (size < 1024)
 		{
-			tempBuf = fmt::format("%zi byte", size);
+			sprintf(tempBuf, "%zi byte", size);
 		}
 		else if (size < 1024 * 1024)
 		{
-			tempBuf = fmt::format("%zi KB", size / 1024);
+			sprintf(tempBuf, "%zi KB", size / 1024);
 		}
 		else if (size < 1024 * 1024 * 1024)
 		{
-			tempBuf = fmt::format("%zi MB", size / 1024 / 1024);
+			sprintf(tempBuf, "%zi MB", size / 1024 / 1024);
 		}
 		else
 		{
-			tempBuf = fmt::format("%1.1f GB", (float)size / 1024 / 1024 / 1024);
+			sprintf(tempBuf, "%1.1f GB", (float)size / 1024 / 1024 / 1024);
 		}
 
-		return tempBuf;
+		return std::string(tempBuf);
 	}
 }
 
@@ -2161,7 +2142,7 @@ bool AddSelectorPath(const std::wstring& fullPath)
 
 		if (!old.empty())
 		{
-			path = fmt::format(L"{:s};{:s}", old, path);
+			path = old + L";" + path;
 		}
 
 		UI::Jdi->SetConfigString(USER_PATH, Util::WstringToString(path), USER_UI);
@@ -2475,7 +2456,7 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 		// get DiskID
 		std::vector<uint8_t> diskIDRaw;
 		diskIDRaw.resize(4);
-		wchar_t diskID[0x10] = { 0 };
+		char diskID[0x10] = { 0 };
 		UI::Jdi->DvdMount(Util::WstringToString(file));
 		UI::Jdi->DvdSeek(0);
 		UI::Jdi->DvdRead(diskIDRaw);
@@ -2485,8 +2466,10 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 		diskID[3] = diskIDRaw[3];
 		diskID[4] = 0;
 
-		/* Set GameID. */
-		item->id = fmt::sprintf(L"%.4s", diskID);
+		// Set GameID.
+		char game_id[0x10]{};
+		sprintf(game_id, "%.4s", diskID);
+		item->id = Util::StringToWstring(std::string(game_id));
 
 		// Restore previous mount state
 		if (mounted)
@@ -3558,13 +3541,14 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 	settingsLoaded[1] = FALSE;
 
 	// property sheet
-	auto title = fmt::format(L"Configure {:s}", APPNAME);
+	wchar_t title[0x100];
+	wsprintf(title, L"Configure %s", APPNAME);
 	psh.dwSize = sizeof(PROPSHEETHEADER);
 	psh.dwFlags = PSH_USEHICON | /*PSH_PROPTITLE |*/ PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
 	psh.hwndParent = hParentWnd;
 	psh.hInstance = hParentInst;
 	psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_PUREI_ICON));
-	psh.pszCaption = title.data();
+	psh.pszCaption = title;
 	psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
 	psh.nStartPage = 0;
 	psh.ppsp = (LPCPROPSHEETPAGE)&psp;
@@ -3884,7 +3868,7 @@ void UpdateRecentMenu(HWND hwnd)
 
 		for(int i = 0, n = RecentNum; i < RecentNum; i++, n--)
 		{
-			buffer = fmt::format(L"{:s}", UI::FileShortName(GetRecentEntry(n), 3));
+			buffer = UI::FileShortName(GetRecentEntry(n), 3);
 			AppendMenu(hReloadMenu, MF_STRING, ID_FILE_RECENT_1 + i, buffer.data());
 		}
 	}
@@ -4233,7 +4217,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		AddSelectorPath(fullPath);      // all checks are there
 
 		gameTitle = longTitle;
-		newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
+		newTitle = std::wstring(APPNAME) + L" - Running " + gameTitle;
 	}
 	else
 	{
@@ -4243,10 +4227,10 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		}
 		else
 		{
-			gameTitle = fmt::format(L"{:s} demo", name);
+			gameTitle = std::wstring(name) + L" demo";
 		}
 		
-		newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
+		newTitle = std::wstring(APPNAME) + L" - Running" + gameTitle;
 	}
 	
 	SetWindowText(wnd.hMainWindow, newTitle.c_str());
@@ -4269,7 +4253,7 @@ void OnMainWindowClosed()
 		wnd.hMainMenu, L"&Options")), 1, MF_BYPOSITION | MF_ENABLED);
 
 	// set to Idle
-	auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi->GetVersion()));
+	auto win_name = std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L" (" + Util::StringToWstring(UI::Jdi->GetVersion()) + L")";
 	SetWindowText(wnd.hMainWindow, win_name.c_str());
 	ResetStatusBar();
 }
@@ -4756,7 +4740,7 @@ HWND CreateMainWindow(HINSTANCE hInstance)
 	ATOM classAtom = RegisterClass(&wc);
 	assert(classAtom != 0);
 
-	auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi->GetVersion()));
+	auto win_name = std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L" (" + Util::StringToWstring(UI::Jdi->GetVersion()) + L")";
 	wnd.hMainWindow = CreateWindowEx(
 		0,
 		CLASS_NAME,
