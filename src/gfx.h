@@ -34,7 +34,7 @@ What's not supported:
 #ifdef _LINUX
 #define GFX_USE_SDL_WINDOW 1
 #endif
-#ifdef _WINDOWS
+#if defined(_WINDOWS) && !defined(GFX_USE_SDL_WINDOW)
 #define GFX_USE_SDL_WINDOW 0
 #endif
 
