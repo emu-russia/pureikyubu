@@ -434,8 +434,7 @@ namespace DVD
 
 	bool MountDolphinSdk::GenApploader()
 	{
-		auto path = fmt::format(L"{:s}{:s}", directory, AppldrPath);
-		AppldrData = Util::FileLoad(path);
+		AppldrData = Util::FileLoad(std::wstring(directory) + std::wstring(AppldrPath));
 
 		return true;
 	}
@@ -453,8 +452,7 @@ namespace DVD
 
 	bool MountDolphinSdk::GenBi2()
 	{
-		auto path = fmt::format(L"{:s}{:s}", directory, Bi2Path);
-		Bi2Data = Util::FileLoad(path);
+		Bi2Data = Util::FileLoad(std::wstring(directory) + std::wstring(Bi2Path));
 
 		return true;
 	}
