@@ -806,7 +806,7 @@ uint32_t LoadELF(const std::wstring& elfname)
 static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & diskId)
 {
 	// get map file name
-	wchar_t mapname[0x200]{};
+	std::wstring mapname{};
 	char drive[0x100], dir[0x1000], name[0x100], ext[0x100];
 
 	Util::SplitPath(Util::WstringToString(filename).c_str(),
@@ -818,33 +818,27 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
 	// Step 1: try to load map from Data directory
 	if (dvd)
 	{
-		swprintf(mapname, L"./Data/%s.map", diskId.c_str());
+		mapname = std::wstring(L"./Data/") + diskId + std::wstring(L".map");
 	}
 	else
 	{
-		swprintf(mapname, L"./Data/%s.map", Util::StringToWstring(name).c_str());
+		mapname = std::wstring(L"./Data/") + Util::StringToWstring(name) + std::wstring(L".map");
 	}
 	
-	MAP_FORMAT format = LoadMAP(mapname);
+	MAP_FORMAT format = LoadMAP(mapname.c_str());
 	if (format != MAP_FORMAT::BAD) return;
  
 	// Step 2: try to load map from file directory
 	if (dvd)
 	{
-		swprintf(mapname, L"%s%s%s.map", 
-			Util::StringToWstring(drive).c_str(), 
-			Util::StringToWstring(dir).c_str(), 
-			diskId.c_str() );
+		mapname = Util::StringToWstring(drive) + Util::StringToWstring(dir) + diskId + std::wstring(L".map");
 	}
 	else
 	{
-		swprintf(mapname, L"%s%s%s.map", 
-			Util::StringToWstring(drive).c_str(), 
-			Util::StringToWstring(dir).c_str(), 
-			Util::StringToWstring(name).c_str() );
+		mapname = Util::StringToWstring(drive) + Util::StringToWstring(dir) + Util::StringToWstring(name) + std::wstring(L".map");
 	}
 
-	format = LoadMAP(mapname);
+	format = LoadMAP(mapname.c_str());
 	if (format != MAP_FORMAT::BAD) return;
 
 	// sorry, no maps for this DVD/executable
@@ -855,18 +849,18 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
 	{
 		if (dvd)
 		{
-			swprintf(mapname, L"./Data/%s.map", diskId.c_str());
+			mapname = std::wstring(L"./Data/") + diskId + std::wstring(L".map");
 		}
 		else
 		{
-			swprintf(mapname, L"./Data/%s.map", Util::StringToWstring(name).c_str());
+			mapname = std::wstring(L"./Data/") + Util::StringToWstring(name) + std::wstring(L".map");
 		}
 		
 		Report(Channel::Loader, "Making new MAP file: %s\n\n", Util::WstringToString(mapname).c_str());
-		MAPInit(mapname);
+		MAPInit(mapname.c_str());
 		MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
 		MAPFinish();
-		LoadMAP(mapname);
+		LoadMAP(mapname.c_str());
 	}
 }
 
