@@ -4230,7 +4230,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 			gameTitle = std::wstring(name) + L" demo";
 		}
 		
-		newTitle = std::wstring(APPNAME) + L" - Running" + gameTitle;
+		newTitle = std::wstring(APPNAME) + L" - Running " + gameTitle;
 	}
 	
 	SetWindowText(wnd.hMainWindow, newTitle.c_str());
