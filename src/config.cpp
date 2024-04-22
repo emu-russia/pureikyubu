@@ -17,8 +17,8 @@ New settings are saved only in Settings.json.
 
 static SpinLock settingsLock;
 static bool SettingsLoaded = false;
-static Json defaultSettings;		// singletone. Autodeleted at exit
-static Json settings;		// singletone. Autodeleted at exit
+static Json defaultSettings;		// singleton. Autodeleted at exit
+static Json settings;		// singleton. Autodeleted at exit
 
 static void LoadSettings()
 {
