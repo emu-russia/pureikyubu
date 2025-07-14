@@ -18,8 +18,6 @@ x64
 *.aps
 *.pdb
 
-DolphinVideo
-
 *.vcxproj.user
 Data/EventLog.json
 EventLog.json
@@ -48,8 +46,6 @@ build/pureikyubu
 /*.json
 
 *PVS*
-
-dolwin-rnd
 
 build/*.elf
 build/*.map
