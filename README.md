@@ -11,7 +11,7 @@ GameCube is the hardware masterpiece of Nintendo/ArtX engineers and it's a pleas
 
 ### Windows version
 
-Build using Visual Studio 2022. To build, open `scripts/pureikyubu.sln` and click Build.
+Build using Visual Studio 2022/2026. To build, open `scripts/VS2022/pureikyubu.sln` (VS2026) and click Build.
 
 ### Generic Linux (Ubuntu) version
 

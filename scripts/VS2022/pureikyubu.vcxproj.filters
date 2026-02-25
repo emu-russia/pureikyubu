@@ -21,391 +21,391 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\src\res\GCN.ico">
+    <Image Include="..\..\src\res\GCN.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\GCN_sm.ico">
+    <Image Include="..\..\src\res\GCN_sm.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padArrows.bmp">
+    <Image Include="..\..\src\res\padArrows.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padButtons.bmp">
+    <Image Include="..\..\src\res\padButtons.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padStart.bmp">
+    <Image Include="..\..\src\res\padStart.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padStick.bmp">
+    <Image Include="..\..\src\res\padStick.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padSubStick.bmp">
+    <Image Include="..\..\src\res\padSubStick.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padTriggerL.bmp">
+    <Image Include="..\..\src\res\padTriggerL.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\padTriggerR.bmp">
+    <Image Include="..\..\src\res\padTriggerR.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\src\res\pureikyubu.ico">
+    <Image Include="..\..\src\res\pureikyubu.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\src\res\pureikyubu.rc">
+    <ResourceCompile Include="..\..\src\res\pureikyubu.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\res\resource.h">
+    <ClInclude Include="..\..\src\res\resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ai.h">
+    <ClInclude Include="..\..\src\ai.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\audio.h">
+    <ClInclude Include="..\..\src\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\bootrtc.h">
+    <ClInclude Include="..\..\src\bootrtc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\config.h">
+    <ClInclude Include="..\..\src\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cp.h">
+    <ClInclude Include="..\..\src\cp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\cui.h">
+    <ClInclude Include="..\..\src\cui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\debugui.h">
+    <ClInclude Include="..\..\src\debugui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\di.h">
+    <ClInclude Include="..\..\src\di.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dsp.h">
+    <ClInclude Include="..\..\src\dsp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dspcore.h">
+    <ClInclude Include="..\..\src\dspcore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dspdebug.h">
+    <ClInclude Include="..\..\src\dspdebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dspdec.h">
+    <ClInclude Include="..\..\src\dspdec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dspdisasm.h">
+    <ClInclude Include="..\..\src\dspdisasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dvd.h">
+    <ClInclude Include="..\..\src\dvd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\dvddebug.h">
+    <ClInclude Include="..\..\src\dvddebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\exi.h">
+    <ClInclude Include="..\..\src\exi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\flipper.h">
+    <ClInclude Include="..\..\src\flipper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gekko.h">
+    <ClInclude Include="..\..\src\gekko.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gekkoc.h">
+    <ClInclude Include="..\..\src\gekkoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gekkodebug.h">
+    <ClInclude Include="..\..\src\gekkodebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gekkodec.h">
+    <ClInclude Include="..\..\src\gekkodec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gekkodisasm.h">
+    <ClInclude Include="..\..\src\gekkodisasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gfx.h">
+    <ClInclude Include="..\..\src\gfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\jdi.h">
+    <ClInclude Include="..\..\src\jdi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\jdiserver.h">
+    <ClInclude Include="..\..\src\jdiserver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\json.h">
+    <ClInclude Include="..\..\src\json.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\main.h">
+    <ClInclude Include="..\..\src\main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\mem.h">
+    <ClInclude Include="..\..\src\mem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\memcard.h">
+    <ClInclude Include="..\..\src\memcard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\pad.h">
+    <ClInclude Include="..\..\src\pad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\pch.h">
+    <ClInclude Include="..\..\src\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\pe.h">
+    <ClInclude Include="..\..\src\pe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\pi.h">
+    <ClInclude Include="..\..\src\pi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\si.h">
+    <ClInclude Include="..\..\src\si.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\sym.h">
+    <ClInclude Include="..\..\src\sym.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ui.h">
+    <ClInclude Include="..\..\src\ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utils.h">
+    <ClInclude Include="..\..\src\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\vi.h">
+    <ClInclude Include="..\..\src\vi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\xf.h">
+    <ClInclude Include="..\..\src\xf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\xfb.h">
+    <ClInclude Include="..\..\src\xfb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\flipperdebug.h">
+    <ClInclude Include="..\..\src\flipperdebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\os.h">
+    <ClInclude Include="..\..\src\os.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\debug.h">
+    <ClInclude Include="..\..\src\debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\audionull.h">
+    <ClInclude Include="..\..\src\audionull.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\osdebug.h">
+    <ClInclude Include="..\..\src\osdebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tx.h">
+    <ClInclude Include="..\..\src\tx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tev.h">
+    <ClInclude Include="..\..\src\tev.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ras.h">
+    <ClInclude Include="..\..\src\ras.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\su.h">
+    <ClInclude Include="..\..\src\su.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\uijdi.h">
+    <ClInclude Include="..\..\src\uijdi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\ai.cpp">
+    <ClCompile Include="..\..\src\ai.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\audio.cpp">
+    <ClCompile Include="..\..\src\audio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\bootrtc.cpp">
+    <ClCompile Include="..\..\src\bootrtc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\config.cpp">
+    <ClCompile Include="..\..\src\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cp.cpp">
+    <ClCompile Include="..\..\src\cp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cui.cpp">
+    <ClCompile Include="..\..\src\cui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\debugui.cpp">
+    <ClCompile Include="..\..\src\debugui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\di.cpp">
+    <ClCompile Include="..\..\src\di.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dsp.cpp">
+    <ClCompile Include="..\..\src\dsp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dspcore.cpp">
+    <ClCompile Include="..\..\src\dspcore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dspdebug.cpp">
+    <ClCompile Include="..\..\src\dspdebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dspdec.cpp">
+    <ClCompile Include="..\..\src\dspdec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dspdisasm.cpp">
+    <ClCompile Include="..\..\src\dspdisasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dvd.cpp">
+    <ClCompile Include="..\..\src\dvd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dvddebug.cpp">
+    <ClCompile Include="..\..\src\dvddebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\exi.cpp">
+    <ClCompile Include="..\..\src\exi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\flipper.cpp">
+    <ClCompile Include="..\..\src\flipper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gekko.cpp">
+    <ClCompile Include="..\..\src\gekko.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gekkoc.cpp">
+    <ClCompile Include="..\..\src\gekkoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gekkodebug.cpp">
+    <ClCompile Include="..\..\src\gekkodebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gekkodec.cpp">
+    <ClCompile Include="..\..\src\gekkodec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gekkodisasm.cpp">
+    <ClCompile Include="..\..\src\gekkodisasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx.cpp">
+    <ClCompile Include="..\..\src\gfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\jdi.cpp">
+    <ClCompile Include="..\..\src\jdi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\jdiserver.cpp">
+    <ClCompile Include="..\..\src\jdiserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\json.cpp">
+    <ClCompile Include="..\..\src\json.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\main.cpp">
+    <ClCompile Include="..\..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\mem.cpp">
+    <ClCompile Include="..\..\src\mem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\memcard.cpp">
+    <ClCompile Include="..\..\src\memcard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\pad.cpp">
+    <ClCompile Include="..\..\src\pad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\pch.cpp">
+    <ClCompile Include="..\..\src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\pe.cpp">
+    <ClCompile Include="..\..\src\pe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\pi.cpp">
+    <ClCompile Include="..\..\src\pi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\si.cpp">
+    <ClCompile Include="..\..\src\si.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\sym.cpp">
+    <ClCompile Include="..\..\src\sym.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ui.cpp">
+    <ClCompile Include="..\..\src\ui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils.cpp">
+    <ClCompile Include="..\..\src\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\vi.cpp">
+    <ClCompile Include="..\..\src\vi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\xf.cpp">
+    <ClCompile Include="..\..\src\xf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\xfb.cpp">
+    <ClCompile Include="..\..\src\xfb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\flipperdebug.cpp">
+    <ClCompile Include="..\..\src\flipperdebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\os.cpp">
+    <ClCompile Include="..\..\src\os.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\debug.cpp">
+    <ClCompile Include="..\..\src\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\audionull.cpp">
+    <ClCompile Include="..\..\src\audionull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\osdebug.cpp">
+    <ClCompile Include="..\..\src\osdebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\xfbnull.cpp">
+    <ClCompile Include="..\..\src\xfbnull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\padnull.cpp">
+    <ClCompile Include="..\..\src\padnull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\uisimple.cpp">
+    <ClCompile Include="..\..\src\uisimple.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tx.cpp">
+    <ClCompile Include="..\..\src\tx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tev.cpp">
+    <ClCompile Include="..\..\src\tev.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ras.cpp">
+    <ClCompile Include="..\..\src\ras.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\su.cpp">
+    <ClCompile Include="..\..\src\su.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cuinull.cpp">
+    <ClCompile Include="..\..\src\cuinull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cuisdl.cpp">
+    <ClCompile Include="..\..\src\cuisdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\imgui.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\imgui_demo.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_demo.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\imgui_draw.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_draw.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\imgui_tables.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_tables.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\imgui_widgets.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\backends\imgui_impl_sdl2.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_sdl2.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\imgui\backends\imgui_impl_sdlrenderer2.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_sdlrenderer2.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\uijdi.cpp">
+    <ClCompile Include="..\..\src\uijdi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\thirdparty\glew-2.2.0\src\glew.c">
+    <ClCompile Include="..\..\thirdparty\glew-2.2.0\src\glew.c">
       <Filter>GLEW</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\uisdl.cpp">
+    <ClCompile Include="..\..\src\uisdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\xfbsdl.cpp">
+    <ClCompile Include="..\..\src\xfbsdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
