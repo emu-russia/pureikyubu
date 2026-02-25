@@ -1,6 +1,6 @@
 # プレイキューブ
 
-![pureikyubu](/imgstore/pureikyubu.png)
+![pureikyubu](/wiki/imgstore/pureikyubu.png)
 
 pureikyubu is work-in-progress emulator of Nintendo GameCube console.
 
@@ -33,7 +33,7 @@ Requirements: CMake, pthread, OpenGL, GLEW, imgui, SDL2. If cmake says that some
 
 ## Progress
 
-|![progress_bs2](/imgstore/progress_bs2.png)|![progress_ikaruga](/imgstore/progress_ikaruga.png)|![progress_luigi](/imgstore/progress_luigi.png)|
+|![progress_bs2](/wiki/imgstore/progress_bs2.png)|![progress_ikaruga](/wiki/imgstore/progress_ikaruga.png)|![progress_luigi](/wiki/imgstore/progress_luigi.png)|
 |---|---|---|
 
 ## Credits

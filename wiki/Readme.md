@@ -8,8 +8,8 @@ But here are some diagrams, just as a memo.
 
 GameCube:
 
-![gc_diagram](/imgstore/emu/gc_diagram.png)
+![gc_diagram](/wiki/imgstore/emu/gc_diagram.png)
 
 Flipper:
 
-![Flipper_ASIC_Block_Diagram](/imgstore/emu/Flipper_ASIC_Block_Diagram.png)
+![Flipper_ASIC_Block_Diagram](/wiki/imgstore/emu/Flipper_ASIC_Block_Diagram.png)
