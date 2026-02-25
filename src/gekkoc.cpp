@@ -2294,7 +2294,7 @@ namespace Gekko
 	//      n = n -1
 	void Interpreter::lswi()
 	{
-		int32_t rd = info.paramBits[0], n = (info.paramBits[2]) ? (info.paramBits[2]) : 32, i = 4;
+		int32_t rd = (int32_t)info.paramBits[0], n = ((int32_t)info.paramBits[2]) ? ((int32_t)info.paramBits[2]) : 32, i = 4;
 		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
 		uint32_t r = 0, val;
 
@@ -2345,7 +2345,7 @@ namespace Gekko
 	//      n = n -1
 	void Interpreter::lswx()
 	{
-		int32_t rd = info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 4;
+		int32_t rd = (int32_t)info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 4;
 		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];
 		uint32_t r = 0, val;
 
@@ -2394,7 +2394,7 @@ namespace Gekko
 	//      n = n -1
 	void Interpreter::stswi()
 	{
-		int32_t rs = info.paramBits[0], n = (info.paramBits[2]) ? (info.paramBits[2]) : 32, i = 0;
+		int32_t rs = (int32_t)info.paramBits[0], n = ((int32_t)info.paramBits[2]) ? ((int32_t)info.paramBits[2]) : 32, i = 0;
 		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
 		uint32_t r = 0;
 
@@ -2430,7 +2430,7 @@ namespace Gekko
 	//      n = n -1
 	void Interpreter::stswx()
 	{
-		int32_t rs = info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 0;
+		int32_t rs = (int32_t)info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 0;
 		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];
 		uint32_t r = 0;
 
@@ -3339,7 +3339,7 @@ namespace Gekko
 		{
 			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
 			GEKKO_QUANT_TYPE type = LD_TYPE(i);
 
@@ -3393,7 +3393,7 @@ namespace Gekko
 		{
 			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]];
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(i);
 			GEKKO_QUANT_TYPE type = ST_TYPE(i);
 
@@ -3440,7 +3440,7 @@ namespace Gekko
 		{
 			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
 			GEKKO_QUANT_TYPE type = LD_TYPE(i);
 
@@ -3496,7 +3496,7 @@ namespace Gekko
 		{
 			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]];
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(i);
 			GEKKO_QUANT_TYPE type = ST_TYPE(i);
 
@@ -3542,7 +3542,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			uint32_t EA = info.Imm.Signed & 0xfff, data0, data1;
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(info.paramBits[3]);
 			GEKKO_QUANT_TYPE type = LD_TYPE(info.paramBits[3]);
 
@@ -3597,7 +3597,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			uint32_t EA = info.Imm.Signed & 0xfff, data0, data1;
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(info.paramBits[3]);
 			GEKKO_QUANT_TYPE type = LD_TYPE(info.paramBits[3]);
 
@@ -3652,7 +3652,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			uint32_t EA = info.Imm.Signed & 0xfff;
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(info.paramBits[3]);
 			GEKKO_QUANT_TYPE type = ST_TYPE(info.paramBits[3]);
 
@@ -3699,7 +3699,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			uint32_t EA = info.Imm.Signed & 0xfff;
-			int32_t d = info.paramBits[0];
+			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(info.paramBits[3]);
 			GEKKO_QUANT_TYPE type = ST_TYPE(info.paramBits[3]);
 
@@ -4020,7 +4020,7 @@ namespace Gekko
 	void Interpreter::tw()
 	{
 		int32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]];
-		int32_t to = info.paramBits[0];
+		int32_t to = (int32_t)info.paramBits[0];
 
 		if (((a < b) && (to & 0x10)) ||
 			((a > b) && (to & 0x08)) ||
@@ -4042,7 +4042,7 @@ namespace Gekko
 	void Interpreter::twi()
 	{
 		int32_t a = core->regs.gpr[info.paramBits[1]], b = (int32_t)info.Imm.Signed;
-		int32_t to = info.paramBits[0];
+		int32_t to = (int32_t)info.paramBits[0];
 
 		if (((a < b) && (to & 0x10)) ||
 			((a > b) && (to & 0x08)) ||
@@ -4099,7 +4099,7 @@ namespace Gekko
 	// rd = spr
 	void Interpreter::mfspr()
 	{
-		int spr = info.paramBits[1];
+		size_t spr = info.paramBits[1];
 		uint32_t value;
 
 		switch (spr)
@@ -4125,7 +4125,7 @@ namespace Gekko
 	// rd = tbr
 	void Interpreter::mftb()
 	{
-		int tbr = info.paramBits[1];
+		size_t tbr = info.paramBits[1];
 
 		if (tbr == (int)TBR::TBL)
 		{
@@ -4143,7 +4143,7 @@ namespace Gekko
 	// CR = (rs & mask) | (CR & ~mask)
 	void Interpreter::mtcrf()
 	{
-		uint32_t crm = info.paramBits[0], d = core->regs.gpr[info.paramBits[1]];
+		uint32_t crm = (uint32_t)info.paramBits[0], d = core->regs.gpr[info.paramBits[1]];
 
 		for (int i = 0; i < 8; i++)
 		{
@@ -4186,7 +4186,7 @@ namespace Gekko
 	// spr = rs
 	void Interpreter::mtspr()
 	{
-		int spr = info.paramBits[0];
+		size_t spr = info.paramBits[0];
 
 		// Diagnostic output when the BAT registers are changed.
 

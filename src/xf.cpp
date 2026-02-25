@@ -99,7 +99,7 @@ namespace GX
 		// TODO: Second time? :/
 		XF_ApplyModelview(v, vpos, v->Position);
 
-		for (int ncol = 0; ncol < xf.numColors; ncol++) {
+		for (uint32_t ncol = 0; ncol < xf.numColors; ncol++) {
 
 			// -------------------------------------------------------------------
 
