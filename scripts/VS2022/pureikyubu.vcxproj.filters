@@ -178,7 +178,7 @@
     <ClInclude Include="..\..\src\xf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\xfb.h">
+    <ClInclude Include="..\..\src\video.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\flipperdebug.h">
@@ -209,6 +209,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\uijdi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspai.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dsparam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspdma.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -330,7 +339,7 @@
     <ClCompile Include="..\..\src\xf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\xfb.cpp">
+    <ClCompile Include="..\..\src\video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\flipperdebug.cpp">
@@ -348,7 +357,7 @@
     <ClCompile Include="..\..\src\osdebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\xfbnull.cpp">
+    <ClCompile Include="..\..\src\videonull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\padnull.cpp">
@@ -405,7 +414,16 @@
     <ClCompile Include="..\..\src\uisdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\xfbsdl.cpp">
+    <ClCompile Include="..\..\src\videosdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspai.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dsparam.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspdma.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

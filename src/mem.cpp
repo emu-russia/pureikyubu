@@ -203,8 +203,6 @@ void MIOpen(HWConfig* config)
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_VI_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PE_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PE_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-
-	LoadBootrom(config);
 }
 
 void MIClose()
@@ -214,30 +212,6 @@ void MIClose()
 		delete[] mi.ram;
 		mi.ram = nullptr;
 	}
-
-	if (mi.bootrom)
-	{
-		delete[] mi.bootrom;
-		mi.bootrom = nullptr;
-	}
-}
-
-uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
-{
-	if (!mi.ram || bytes == 0)
-		return nullptr;
-
-	if (physAddr < (RAMSIZE - bytes))
-	{
-		return &mi.ram[physAddr];
-	}
-
-	if (physAddr >= BOOTROM_START_ADDRESS && mi.BootromPresent)
-	{
-		return &mi.bootrom[physAddr - BOOTROM_START_ADDRESS];
-	}
-
-	return nullptr;
 }
 
 // The counters are not emulated accurately, but this is not required.

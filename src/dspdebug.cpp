@@ -417,7 +417,7 @@ namespace DSP
 	// Send DSP->CPU interrupt
 	static Json::Value* cmd_dspcpuint(std::vector<std::string>& args)
 	{
-		Flipper::DSPAssertInt();
+		DSPAssertInt();
 		return nullptr;
 	}
 

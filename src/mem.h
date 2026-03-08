@@ -9,11 +9,6 @@
 // 0x0fffffff, because GC architecture is limited by 256 mb of RAM
 #define RAMMASK     0x0fffffff
 
-// Bootrom size (in bytes)
-#define BOOTROM_SIZE    (2*1024*1024)
-// Bootrom start address
-#define BOOTROM_START_ADDRESS 0xfff00000
-
 // MEM PI Mapped regs
 
 enum MEM_PIMappedReg : size_t
@@ -117,11 +112,6 @@ struct MIControl
 	uint8_t* ram;
 	size_t ramSize;
 
-	// TODO: Move to bootrtc.cpp
-	uint8_t* bootrom;       // Descrambled (Thank you segher, you already have a place in heaven)
-	size_t bootromSize;
-	bool    BootromPresent;     // loaded and descrambled valid bootrom
-
 	uint32_t marr_start[4];
 	uint32_t marr_end[4];
 	MEMMarrControl marr_control;
@@ -142,8 +132,6 @@ extern	MIControl mi;
 
 void    MIOpen(HWConfig* config);
 void	MIClose();
-
-uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
 
 // These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
 

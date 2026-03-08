@@ -133,11 +133,11 @@ void MXTransfer()
 				}
 				if ((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
 				{
-					if (mi.BootromPresent)
+					if (exi.BootromPresent)
 					{
 						memcpy(
 							&mi.ram[exi.regs[0].madr & RAMMASK],
-							&mi.bootrom[ofs],
+							&exi.bootrom[ofs],
 							exi.regs[0].len
 						);
 					}
@@ -156,11 +156,11 @@ void MXTransfer()
 				}
 				if ((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
 				{
-					if (mi.BootromPresent)
+					if (exi.BootromPresent)
 					{
 						memcpy(
 							&mi.ram[exi.regs[0].madr & RAMMASK],
-							&mi.bootrom[ofs],
+							&exi.bootrom[ofs],
 							exi.regs[0].len
 						);
 					}
@@ -180,11 +180,11 @@ void MXTransfer()
 
 				// Bootrom reads
 
-				if (ofs < mi.bootromSize && mi.BootromPresent)
+				if (ofs < exi.bootromSize && exi.BootromPresent)
 				{
 					memcpy(
 						&mi.ram[exi.regs[0].madr & RAMMASK],
-						&mi.bootrom[ofs],
+						&exi.bootrom[ofs],
 						exi.regs[0].len
 					);
 					if (exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
@@ -644,9 +644,9 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
 bool IsBootromPALRevision()
 {
-	if (mi.BootromPresent) {
+	if (exi.BootromPresent) {
 
-		if (strstr((char*)mi.bootrom, "PAL")) {
+		if (strstr((char*)exi.bootrom, "PAL")) {
 			return true;
 		}
 	}
@@ -658,8 +658,8 @@ bool IsBootromPALRevision()
 
 void LoadBootrom(HWConfig* config)
 {
-	mi.BootromPresent = false;
-	mi.bootromSize = BOOTROM_SIZE;
+	exi.BootromPresent = false;
+	exi.bootromSize = BOOTROM_SIZE;
 
 	// Load bootrom image
 
@@ -676,16 +676,16 @@ void LoadBootrom(HWConfig* config)
 		return;
 	}
 
-	mi.bootrom = new uint8_t[mi.bootromSize];
+	exi.bootrom = new uint8_t[exi.bootromSize];
 
-	if (bootrom.size() != mi.bootromSize)
+	if (bootrom.size() != exi.bootromSize)
 	{
-		delete[] mi.bootrom;
-		mi.bootrom = nullptr;
+		delete[] exi.bootrom;
+		exi.bootrom = nullptr;
 		return;
 	}
 
-	memcpy(mi.bootrom, bootrom.data(), bootrom.size());
+	memcpy(exi.bootrom, bootrom.data(), bootrom.size());
 
 	// Determine size of encrypted data (find first empty cache burst line)
 
@@ -693,12 +693,12 @@ void LoadBootrom(HWConfig* config)
 	uint8_t zeroStride[strideSize] = { 0 };
 
 	size_t beginOffset = 0x100;
-	size_t endOffset = mi.bootromSize - strideSize;
+	size_t endOffset = exi.bootromSize - strideSize;
 	size_t offset = beginOffset;
 
 	while (offset < endOffset)
 	{
-		if (!memcmp(&mi.bootrom[offset], zeroStride, sizeof(zeroStride)))
+		if (!memcmp(&exi.bootrom[offset], zeroStride, sizeof(zeroStride)))
 		{
 			break;
 		}
@@ -710,18 +710,18 @@ void LoadBootrom(HWConfig* config)
 	{
 		// Empty cacheline not found, something wrong with the image
 
-		delete[] mi.bootrom;
-		mi.bootrom = nullptr;
+		delete[] exi.bootrom;
+		exi.bootrom = nullptr;
 		return;
 	}
 
 	// Descramble
 
-	IPLDescrambler(&mi.bootrom[beginOffset], (offset - beginOffset));
-	mi.BootromPresent = true;
+	IPLDescrambler(&exi.bootrom[beginOffset], (offset - beginOffset));
+	exi.BootromPresent = true;
 
 	// Show version
 
 	Report(Channel::MI, "Loaded and descrambled valid Bootrom\n");
-	Report(Channel::Norm, "%s\n", (char*)mi.bootrom);
+	Report(Channel::Norm, "%s\n", (char*)exi.bootrom);
 }

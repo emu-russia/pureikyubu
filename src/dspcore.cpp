@@ -1,4 +1,4 @@
-// Low-level DSP core
+// Low-level DSP core ("engine")
 #include "pch.h"
 
 using namespace Debug;
@@ -322,7 +322,7 @@ namespace DSP
 						regs.eas->clear();
 						regs.lcs->clear();
 
-						regs.pc = Flipper::DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
+						regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
 					}
 					else
 					{

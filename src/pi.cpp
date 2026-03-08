@@ -33,9 +33,9 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
-		if (mi.BootromPresent)
+		if (exi.BootromPresent)
 		{
-			ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+			ptr = &exi.bootrom[pa - BOOTROM_START_ADDRESS];
 			*reg = (uint32_t)*ptr;
 		}
 		else
@@ -110,9 +110,9 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
-		if (mi.BootromPresent)
+		if (exi.BootromPresent)
 		{
-			ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+			ptr = &exi.bootrom[pa - BOOTROM_START_ADDRESS];
 			*reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
 		}
 		else
@@ -195,9 +195,9 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
-		if (mi.BootromPresent)
+		if (exi.BootromPresent)
 		{
-			ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+			ptr = &exi.bootrom[pa - BOOTROM_START_ADDRESS];
 			*reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 		}
 		else
@@ -756,4 +756,22 @@ void PIClose()
 void PIBreakOnNextInt(uint32_t mask)
 {
 	pi.intbrk |= mask;
+}
+
+uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
+{
+	if (!mi.ram || bytes == 0)
+		return nullptr;
+
+	if (physAddr < (RAMSIZE - bytes))
+	{
+		return &mi.ram[physAddr];
+	}
+
+	if (physAddr >= BOOTROM_START_ADDRESS && exi.BootromPresent)
+	{
+		return &exi.bootrom[physAddr - BOOTROM_START_ADDRESS];
+	}
+
+	return nullptr;
 }

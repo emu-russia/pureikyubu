@@ -94,6 +94,9 @@ The debugging interface specification provided by this component can be found in
 #define RAM_TO_ARAM     0
 #define ARAM_TO_RAM     1
 
+// enable bit in AIDLEN register
+#define AID_EN              (1 << 15)
+
 // AI/DSP Control Register mask
 #define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
 #define AIDCR_DSPDMA        (1 << 10)       // DSP dma in progress
@@ -108,86 +111,10 @@ The debugging interface specification provided by this component can be found in
 #define AIDCR_DINT          (1 << 1)        // CPU->DSP interrupt
 #define AIDCR_RES           (1 << 0)        // reset DSP (waits for 0)
 
+#define AIDCR               dsp_ai.dcr
 
 // GAMECUBE DSP Interface.
 // In the previous version, the DSPcore implementation was mixed with the hardware binding (IFX) implementation. In this version, these entities are separated.
-
-namespace DSP
-{
-	union DspAccelAddress
-	{
-		struct
-		{
-			uint16_t l;
-			uint16_t h;
-		};
-		uint32_t addr;
-	};
-
-	struct DspAccel
-	{
-		uint16_t Fmt;					// Sample format
-		uint16_t AdpcmCoef[16];
-		uint16_t AdpcmPds;				// predictor / scale combination
-		uint16_t AdpcmYn1;				// y[n - 1]
-		uint16_t AdpcmYn2;				// y[n - 2]
-		uint16_t AdpcmGan;				// gain to be applied
-		DspAccelAddress StartAddress;
-		DspAccelAddress EndAddress;
-		DspAccelAddress CurrAddress;
-	};
-
-}
-
-
-namespace DSP
-{
-
-	// Accelerator sample format
-
-	enum class AccelFormat
-	{
-		RawByte = 0x0005,		// Seen in IROM
-		RawUInt16 = 0x0006,		// 
-		Pcm16 = 0x000A,			// Signed 16 bit PCM mono
-		Pcm8 = 0x0019,			// Signed 8 bit PCM mono
-		Adpcm = 0x0000,			// ADPCM encoded (both standard & extended)
-	};
-
-}
-
-
-// DSP DMA registers
-
-namespace DSP
-{
-
-	struct DspDmaRegs
-	{
-		union
-		{
-			struct
-			{
-				uint16_t	l;
-				uint16_t	h;
-			};
-			uint32_t	bits;
-		} mmemAddr;
-		DspAddress  dspAddr;
-		uint16_t	blockSize;
-		union
-		{
-			struct
-			{
-				unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
-				unsigned Imem : 1;			// 0: DMEM, 1: IMEM
-			};
-			uint16_t	bits;
-		} control;
-	};
-
-}
-
 
 namespace DSP
 {
@@ -337,29 +264,3 @@ namespace DSP
 	};
 
 }
-
-
-// TODO: Old code, need to merge with DSP Accelerator into one entity, and make ARAM DMA as a generic DspDma module (together with AI DMA and DSP DMA)
-
-
-#define ARAMSIZE        (16 * 1024 * 1024)  // 16 mb
-#define ARAM            aram.mem
-
-// ARAM state (registers and other data)
-struct ARControl
-{
-	uint8_t* mem;                // aux. memory buffer (size is ARAMSIZE)
-	volatile uint32_t    mmaddr, araddr;     // DMA address
-	volatile uint32_t    cnt;                // count + transfer type (bit31)
-	uint16_t    size;               // "AR_SIZE" (0x5012) register
-	Thread* dmaThread;
-	int64_t gekkoTicks;
-	size_t gekkoTicksPerSlice;
-	bool dspRunningBeforeAramDma;
-	bool log;
-};
-
-void    AROpen();
-void    ARClose();
-
-extern  ARControl aram;

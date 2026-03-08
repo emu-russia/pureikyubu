@@ -531,7 +531,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = (uint64_t)MITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		output->value.AsInt = (uint64_t)PITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		return output;
 	}
@@ -551,7 +551,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = (uint64_t)MITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		output->value.AsInt = (uint64_t)PITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		return output;
 	}
@@ -641,7 +641,7 @@ namespace Debug
 
 		std::string text = "";
 
-		uint8_t* ptr = MITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		uint8_t* ptr = PITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		if (ptr != nullptr)
 		{

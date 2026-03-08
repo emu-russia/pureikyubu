@@ -68,7 +68,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		memcpy(&aram.mem[address], data.data(), data.size());
+		memcpy(&DSP::aram.mem[address], data.data(), data.size());
 		return nullptr;
 	}
 
@@ -84,7 +84,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		auto ptr = &aram.mem[address];
+		auto ptr = &DSP::aram.mem[address];
 		auto buffer = std::vector<uint8_t>();
 		buffer.assign(ptr, ptr + dataSize);
 

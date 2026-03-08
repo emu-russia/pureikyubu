@@ -373,7 +373,7 @@ namespace HLE
 			return false;
 		}
 
-		uint8_t* ptr = MITranslatePhysicalAddress(threadPa, sizeof(OSThread));
+		uint8_t* ptr = PITranslatePhysicalAddress(threadPa, sizeof(OSThread));
 
 		if (ptr == nullptr)
 		{
@@ -428,7 +428,7 @@ namespace HLE
 			return nullptr;
 		}
 
-		uint8_t* ptr = MITranslatePhysicalAddress(linkActivePa, sizeof(OSThreadLink));
+		uint8_t* ptr = PITranslatePhysicalAddress(linkActivePa, sizeof(OSThreadLink));
 
 		if (ptr == nullptr)
 		{
@@ -505,7 +505,7 @@ namespace HLE
 			return nullptr;
 		}
 
-		uint8_t* ptr = MITranslatePhysicalAddress(physAddr, sizeof(OSContext));
+		uint8_t* ptr = PITranslatePhysicalAddress(physAddr, sizeof(OSContext));
 
 		if (ptr == nullptr)
 		{

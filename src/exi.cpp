@@ -328,7 +328,7 @@ void EIOpen(HWConfig* config)
 	exi.sel = -1;           // deselect MX device
 	SRAMLoad(&exi.sram);    // load sram
 	RTCUpdate();
-	if (!mi.BootromPresent)
+	if (!exi.BootromPresent)
 	{
 		FontLoad(&exi.ansiFont, ANSI_SIZE, config->ansiFilename);
 		FontLoad(&exi.sjisFont, SJIS_SIZE, config->sjisFilename);
@@ -358,7 +358,9 @@ void EIOpen(HWConfig* config)
 	// open memory cards
 	MCOpen(config);
 
-	// open broad band adapter
+	// TODO: open broad band adapter
+
+	LoadBootrom(config);
 }
 
 void EIClose()
@@ -366,7 +368,7 @@ void EIClose()
 	// close memory cards
 	MCClose();
 
-	// close broad band adapter
+	// TODO: close broad band adapter
 
 	// unload fonts
 	FontUnload(&exi.ansiFont);
@@ -374,4 +376,10 @@ void EIClose()
 
 	// sync sram
 	SRAMSave(&exi.sram);
+
+	if (exi.bootrom)
+	{
+		delete[] exi.bootrom;
+		exi.bootrom = nullptr;
+	}
 }

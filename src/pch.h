@@ -66,8 +66,20 @@
 #include "gekkodisasm.h"
 #include "gekkodebug.h"
 
+#include "flipper.h"
+
+#ifdef _WINDOWS
+#include "audio.h"
+#else
+#include "audionull.h"
+#endif
+#include "video.h"
+
 #include "dspdec.h"
 #include "dspcore.h"
+#include "dspai.h"
+#include "dsparam.h"
+#include "dspdma.h"
 #include "dsp.h"
 #include "dspdisasm.h"
 #include "dspdebug.h"
@@ -75,7 +87,6 @@
 #include "dvd.h"
 #include "dvddebug.h"
 
-#include "flipper.h"
 #include "gfx.h"
 #include "ai.h"
 #include "vi.h"
@@ -86,12 +97,6 @@
 #include "exi.h"
 #include "memcard.h"
 #include "pad.h"
-#ifdef _WINDOWS
-#include "audio.h"
-#else
-#include "audionull.h"
-#endif
-#include "xfb.h"
 #include "si.h"
 #include "flipperdebug.h"
 #include "cp.h"

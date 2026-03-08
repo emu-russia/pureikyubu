@@ -42,168 +42,7 @@ namespace Flipper
 	// AI state (registers and other data)
 	AIControl ai;
 
-	// ---------------------------------------------------------------------------
-	// AIDCR
-
-	static void write_aidcr(uint32_t addr, uint32_t data)
-	{
-		if (ai.log)
-		{
-			Report(Channel::AI, "AIDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n",
-				data,
-				data & AIDCR_RESETMOD ? 1 : 0,
-				data & AIDCR_DSPINTMSK ? 1 : 0,
-				data & AIDCR_DSPINT ? 1 : 0,
-				data & AIDCR_ARINTMSK ? 1 : 0,
-				data & AIDCR_ARINT ? 1 : 0,
-				data & AIDCR_AIINTMSK ? 1 : 0,
-				data & AIDCR_AIINT ? 1 : 0,
-				data & AIDCR_HALT ? 1 : 0,
-				data & AIDCR_DINT ? 1 : 0,
-				data & AIDCR_RES ? 1 : 0);
-		}
-
-		// set mask
-		if (data & AIDCR_DSPINTMSK)
-		{
-			AIDCR |= AIDCR_DSPINTMSK;
-		}
-		else
-		{
-			AIDCR &= ~AIDCR_DSPINTMSK;
-		}
-		if (data & AIDCR_ARINTMSK)
-		{
-			AIDCR |= AIDCR_ARINTMSK;
-		}
-		else
-		{
-			AIDCR &= ~AIDCR_ARINTMSK;
-		}
-		if (data & AIDCR_AIINTMSK)
-		{
-			AIDCR |= AIDCR_AIINTMSK;
-		}
-		else
-		{
-			AIDCR &= ~AIDCR_AIINTMSK;
-		}
-
-		// clear pending interrupts
-		if (data & AIDCR_DSPINT)
-		{
-			AIDCR &= ~AIDCR_DSPINT;
-		}
-		if (data & AIDCR_ARINT)
-		{
-			AIDCR &= ~AIDCR_ARINT;
-		}
-		if (data & AIDCR_AIINT)
-		{
-			AIDCR &= ~AIDCR_AIINT;
-		}
-
-		if ((AIDCR & AIDCR_DSPINT) == 0 && (AIDCR & AIDCR_ARINT) == 0 && (AIDCR & AIDCR_AIINT) == 0)
-		{
-			PIClearInt(PI_INTERRUPT_DSP);
-		}
-
-		// DSP DMA always ready
-		AIDCR &= ~AIDCR_DSPDMA;
-
-		// Reset modifier bit
-		if (data & AIDCR_RESETMOD)
-		{
-			AIDCR |= AIDCR_RESETMOD;
-		}
-		else
-		{
-			AIDCR &= ~AIDCR_RESETMOD;
-		}
-
-		// DSP controls
-		DSP->SetResetBit((data >> 0) & 1);
-		DSP->SetIntBit((data >> 1) & 1);
-		DSP->SetHaltBit((data >> 2) & 1);
-	}
-
-	static void read_aidcr(uint32_t addr, uint32_t* reg)
-	{
-		// DSP controls
-		AIDCR &= ~7;
-		AIDCR |= DSP->GetResetBit() << 0;
-		AIDCR |= DSP->GetIntBit() << 1;
-		AIDCR |= DSP->GetHaltBit() << 2;
-
-		*reg = AIDCR;
-	}
-
-	// ---------------------------------------------------------------------------
-	// DMA
-
-	// dma transfer complete (when AIDCNT == 0)
-	void AIDINT()
-	{
-		AIDCR |= AIDCR_AIINT;
-		if (AIDCR & AIDCR_AIINTMSK)
-		{
-			PIAssertInt(PI_INTERRUPT_DSP);
-			if (ai.log)
-			{
-				Report(Channel::AI, "AIDINT\n");
-			}
-		}
-	}
-
-	// how much time AI DMA need to playback "n" bytes in Gekko ticks
-	static int64_t AIGetTime(size_t dmaBytes, long rate)
-	{
-		size_t samples = dmaBytes / 4;    // left+right, 16-bit
-		return samples * (ai.one_second / rate);
-	}
-
-	static void AIStartDMA()
-	{
-		ai.dcnt = ai.len & ~AID_EN;
-		ai.dmaTime = Core->GetTicks() + AIGetTime(32, ai.dmaRate);
-		ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
-		if (ai.log)
-		{
-			Report(Channel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr, ai.dcnt * 32);
-		}
-		ai.audioThread->Resume();
-	}
-
-	// Simulate AI FIFO
-	static void AIFeedMixer()
-	{
-		int bytes = 32;
-
-		if (ai.dcnt == 0 || (ai.len & AID_EN) == 0)
-		{
-			ai.Mixer->PushBytes(AxChannel::AudioDma, ai.zeroes, bytes);
-		}
-		else
-		{
-			ai.Mixer->PushBytes(AxChannel::AudioDma, (uint8_t *)MIGetMemoryPointerForIO(ai.currentDmaAddr), bytes);
-			ai.currentDmaAddr += bytes;
-			ai.dcnt--;
-		}
-
-		ai.dmaTime = Core->GetTicks() + AIGetTime(bytes, ai.dmaRate);
-	}
-
-	static void AIStopDMA()
-	{
-		ai.dmaTime = -1;
-		ai.dcnt = 0;
-		if (ai.log)
-		{
-			Report(Channel::AI, "DMA stopped\n");
-		}
-	}
-
-	static void AISetDMASampleRate(AudioSampleRate rate)
+	static void MixerSetDMASampleRate(AudioSampleRate rate)
 	{
 		ai.Mixer->SetSampleRate(AxChannel::AudioDma, rate);
 		if (ai.log)
@@ -212,7 +51,7 @@ namespace Flipper
 		}
 	}
 
-	static void AISetDvdAudioSampleRate(AudioSampleRate rate)
+	static void MixerSetDvdAudioSampleRate(AudioSampleRate rate)
 	{
 		ai.Mixer->SetSampleRate(AxChannel::DvdAudio, rate);
 
@@ -229,63 +68,6 @@ namespace Flipper
 		{
 			Report(Channel::AIS, "DVD Audio sample rate: %i\n", rate == AudioSampleRate::Rate_32000 ? 32000 : 48000);
 		}
-	}
-
-	//
-	// dma buffer address
-	// 
-
-	static void write_dmah(uint32_t addr, uint32_t data)
-	{
-		ai.madr_hi = (uint16_t)data & 0x3FF;
-	}
-
-	static void write_dmal(uint32_t addr, uint32_t data)
-	{
-		ai.madr_lo = (uint16_t)data & ~0x1F;
-	}
-
-	static void read_dmah(uint32_t addr, uint32_t* reg) { *reg = ai.madr_hi & 0x3FF; }
-	static void read_dmal(uint32_t addr, uint32_t* reg) { *reg = ai.madr_lo & ~0x1F; }
-
-	//
-	// dma length / control
-	//
-
-	static void write_len(uint32_t addr, uint32_t data)
-	{
-		ai.len = (uint16_t)data;
-
-		// start/stop audio dma transfer
-		if (ai.len & AID_EN)
-		{
-			AIStartDMA();
-			if (!ai.Mixer->IsEnabled(AxChannel::AudioDma))
-			{
-				ai.Mixer->Enable(AxChannel::AudioDma, true);
-			}
-		}
-		else
-		{
-			AIStopDMA();
-			if (ai.Mixer->IsEnabled(AxChannel::AudioDma))
-			{
-				ai.Mixer->Enable(AxChannel::AudioDma, false);
-			}
-		}
-	}
-	static void read_len(uint32_t addr, uint32_t* reg)
-	{
-		*reg = ai.len;
-	}
-
-	//
-	// read sample block (32b) counter
-	//
-
-	static void read_dcnt(uint32_t addr, uint32_t* reg)
-	{
-		*reg = ai.dcnt & 0x7FFF;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -356,18 +138,18 @@ namespace Flipper
 		// set DMA sample rate
 		if (ai.cr & AICR_DFR)
 		{
-			ai.dmaRate = 32000;
-			AISetDMASampleRate(AudioSampleRate::Rate_32000);
+			DSP::DspSetAiDmaSampleRate(32000);
+			MixerSetDMASampleRate(AudioSampleRate::Rate_32000);
 		}
 		else
 		{
-			ai.dmaRate = 48000;
-			AISetDMASampleRate(AudioSampleRate::Rate_48000);
+			DSP::DspSetAiDmaSampleRate(48000);
+			MixerSetDMASampleRate(AudioSampleRate::Rate_48000);
 		}
 
 		// set DVD Audio sample rate
-		if (ai.cr & AICR_AFR) AISetDvdAudioSampleRate(AudioSampleRate::Rate_48000);
-		else AISetDvdAudioSampleRate(AudioSampleRate::Rate_32000);
+		if (ai.cr & AICR_AFR) MixerSetDvdAudioSampleRate(AudioSampleRate::Rate_48000);
+		else MixerSetDvdAudioSampleRate(AudioSampleRate::Rate_32000);
 	}
 	static void read_cr(uint32_t addr, uint32_t* reg)
 	{
@@ -399,44 +181,6 @@ namespace Flipper
 	static void read_vr(uint32_t addr, uint32_t* reg)
 	{
 		*reg = ai.vr;
-	}
-
-	// ---------------------------------------------------------------------------
-	// DSPCore interface (mailbox and interrupt)
-
-	static void write_out_mbox_h(uint32_t addr, uint32_t data) { DSP->CpuToDspWriteHi((uint16_t)data); }
-	static void write_out_mbox_l(uint32_t addr, uint32_t data) { DSP->CpuToDspWriteLo((uint16_t)data); }
-	static void read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DSP->CpuToDspReadHi(false); }
-	static void read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DSP->CpuToDspReadLo(false); }
-
-	static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DSP->DspToCpuReadHi(false); }
-	static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DSP->DspToCpuReadLo(false); }
-
-	static void write_in_mbox_h(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
-	static void write_in_mbox_l(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
-
-	void DSPAssertInt()
-	{
-		if (ai.log)
-		{
-			Report(Channel::AI, "DSPAssertInt\n");
-		}
-
-		AIDCR |= AIDCR_DSPINT;
-		if (AIDCR & AIDCR_DSPINTMSK)
-		{
-			PIAssertInt(PI_INTERRUPT_DSP);
-		}
-	}
-
-	bool DSPGetInterruptStatus()
-	{
-		return (AIDCR & AIDCR_DSPINT) != 0;
-	}
-
-	bool DSPGetResetModifier()
-	{
-		return (AIDCR & AIDCR_RESETMOD) != 0;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -492,39 +236,6 @@ namespace Flipper
 		}
 	}
 
-	// Update audio DMA thread
-	static void AIUpdate(void* Parameter)
-	{
-		if ((uint64_t)Core->GetTicks() >= ai.dmaTime)
-		{
-			if (ai.dcnt == 0)
-			{
-				if (ai.len & AID_EN)
-				{
-					// Restart Dma and signal AID_INT
-					ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
-					ai.dcnt = ai.len & ~AID_EN;
-					AIDINT();
-				}
-				else
-				{
-					ai.audioThread->Suspend();
-				}
-			}
-			else
-			{
-				if (ai.len & AID_EN)
-				{
-					AIFeedMixer();
-				}
-				else
-				{
-					ai.audioThread->Suspend();
-				}
-			}
-		}
-	}
-
 	void AIOpen(HWConfig* config)
 	{
 		Report(Channel::AI, "Audio interface (DSP AI/DVD Audio mixer)\n");
@@ -534,26 +245,7 @@ namespace Flipper
 
 		DVD::DDU->SetStreamCallback(AIStreamCallback);
 
-		ai.audioThread = EMUCreateThread(AIUpdate, true, nullptr, "AI");
-
-		ai.one_second = Core->OneSecond();
-		ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
-		ai.dmaTime = Core->GetTicks() + AIGetTime(32, ai.dmaRate);
 		ai.log = false;
-		AIStopDMA();
-
-		// set register traps
-		PISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
-
-		PISetTrap(16, DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
-		PISetTrap(16, DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
-		PISetTrap(16, DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
-		PISetTrap(16, DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
-
-		PISetTrap(16, AID_MADRH, read_dmah, write_dmah);
-		PISetTrap(16, AID_MADRL, read_dmal, write_dmal);
-		PISetTrap(16, AID_LEN, read_len, write_len);
-		PISetTrap(16, AID_CNT, read_dcnt, nullptr);
 
 		PISetTrap(32, AIS_CR, read_cr, write_cr);
 		PISetTrap(32, AIS_VR, read_vr, write_vr);
@@ -565,10 +257,7 @@ namespace Flipper
 
 	void AIClose()
 	{
-		AIStopDMA();
-		EMUJoinThread(ai.audioThread);
 		DVD::DDU->SetStreamCallback(nullptr);
 		delete ai.Mixer;
 	}
-
 }
