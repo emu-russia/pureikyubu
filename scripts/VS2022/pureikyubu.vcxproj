@@ -61,10 +61,13 @@
     <ClInclude Include="..\..\src\debugui.h" />
     <ClInclude Include="..\..\src\di.h" />
     <ClInclude Include="..\..\src\dsp.h" />
+    <ClInclude Include="..\..\src\dspai.h" />
+    <ClInclude Include="..\..\src\dsparam.h" />
     <ClInclude Include="..\..\src\dspcore.h" />
     <ClInclude Include="..\..\src\dspdebug.h" />
     <ClInclude Include="..\..\src\dspdec.h" />
     <ClInclude Include="..\..\src\dspdisasm.h" />
+    <ClInclude Include="..\..\src\dspdma.h" />
     <ClInclude Include="..\..\src\dvd.h" />
     <ClInclude Include="..\..\src\dvddebug.h" />
     <ClInclude Include="..\..\src\exi.h" />
@@ -100,7 +103,7 @@
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\vi.h" />
     <ClInclude Include="..\..\src\xf.h" />
-    <ClInclude Include="..\..\src\xfb.h" />
+    <ClInclude Include="..\..\src\video.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ai.cpp" />
@@ -148,10 +151,13 @@
     <ClCompile Include="..\..\src\debugui.cpp" />
     <ClCompile Include="..\..\src\di.cpp" />
     <ClCompile Include="..\..\src\dsp.cpp" />
+    <ClCompile Include="..\..\src\dspai.cpp" />
+    <ClCompile Include="..\..\src\dsparam.cpp" />
     <ClCompile Include="..\..\src\dspcore.cpp" />
     <ClCompile Include="..\..\src\dspdebug.cpp" />
     <ClCompile Include="..\..\src\dspdec.cpp" />
     <ClCompile Include="..\..\src\dspdisasm.cpp" />
+    <ClCompile Include="..\..\src\dspdma.cpp" />
     <ClCompile Include="..\..\src\dvd.cpp" />
     <ClCompile Include="..\..\src\dvddebug.cpp" />
     <ClCompile Include="..\..\src\exi.cpp" />
@@ -230,13 +236,13 @@
     <ClCompile Include="..\..\src\utils.cpp" />
     <ClCompile Include="..\..\src\vi.cpp" />
     <ClCompile Include="..\..\src\xf.cpp" />
-    <ClCompile Include="..\..\src\xfb.cpp">
+    <ClCompile Include="..\..\src\video.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release SDL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\src\xfbnull.cpp">
+    <ClCompile Include="..\..\src\videonull.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -246,7 +252,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\src\xfbsdl.cpp">
+    <ClCompile Include="..\..\src\videosdl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
