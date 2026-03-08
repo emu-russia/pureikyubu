@@ -1,6 +1,6 @@
 # Flipper
 
-![flipper_for_emu](/wiki/imgstore/emu/flipper_for_emu.png)
+![flipper_top_for_emu](/wiki/imgstore/emu/flipper_top_for_emu.png)
 
 The emulator's modules are designed to closely match the GameCube architecture. Each Flipper HDL module is emulated by a corresponding .cpp module.
 
