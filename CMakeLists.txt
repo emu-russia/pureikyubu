@@ -39,6 +39,9 @@ add_executable (pureikyubu
 	src/dspdebug.cpp
 	src/dspdec.cpp
 	src/dspdisasm.cpp
+	src/dspai.cpp
+	src/dsparam.cpp
+	src/dspdma.cpp
 	src/dvd.cpp
 	src/dvddebug.cpp
 	src/exi.cpp
@@ -74,7 +77,7 @@ add_executable (pureikyubu
 	src/utils.cpp
 	src/vi.cpp
 	src/xf.cpp
-	src/xfbsdl.cpp
+	src/videosdl.cpp
 
 	thirdparty/imgui/imgui.cpp
 	thirdparty/imgui/imgui_demo.cpp

@@ -42,7 +42,8 @@ namespace Flipper
 		CPOpen();		// Command Processor
 		PEOpen();		// PixelEngine
 		AIOpen(config); // audio (AID and AIS)
-		AROpen();       // aux. memory (ARAM)
+		DSP::DspAIOpen(config);			// TODO: find better place
+		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
 		EIOpen(config); // expansion interface (EXI)
 		DIOpen();       // disk
 		SIOpen();       // GC controllers
@@ -96,9 +97,10 @@ namespace Flipper
 		CPClose();
 		PEClose();
 		AIClose();
-		ARClose();      // release ARAM
+		DSP::DspAIClose();	// TODO: find better place
+		DSP::ARClose();      // release ARAM  TODO: find better place
 		EIClose();      // take care about closing of memcards and BBA
-		VIClose();      // close GDI (if opened)
+		VIClose();      // close VideoOut (if opened)
 		DIClose();      // release streaming buffer
 		MIClose();
 		PIClose();

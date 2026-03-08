@@ -15,7 +15,7 @@ Build using Visual Studio 2022/2026. To build, open `scripts/VS2022/pureikyubu.s
 
 ### Generic Linux (Ubuntu) version
 
-The Linux build does not yet have support for graphics and sound. All emulation output can be seen only through debug messages.
+The Linux build does not yet have support for sound.
 
 ```
 # Choose a suitable folder to store a clone of the repository, cd there and then

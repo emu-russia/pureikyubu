@@ -74,21 +74,6 @@
 // ---------------------------------------------------------------------------
 // hardware API
 
-#pragma pack(push, 1)
-
-union RGB
-{
-	struct {
-		uint8_t Blue;
-		uint8_t Green;
-		uint8_t Red;
-		uint8_t Reserved;
-	};
-	uint32_t raw;
-};
-
-#pragma pack(pop)
-
 // VI state (registers and other data)
 struct VIControl
 {

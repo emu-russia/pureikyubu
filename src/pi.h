@@ -106,6 +106,8 @@ void PIWriteDouble(uint32_t pa, uint64_t* data);
 void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 
+uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
+
 // ---------------------------------------------------------------------------
 // hardware API
 

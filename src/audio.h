@@ -5,7 +5,7 @@
 
 #include <dsound.h>
 
-namespace Flipper
+namespace Flipper		// really flipper? this is external DAC
 {
 	enum class AudioSampleRate
 	{

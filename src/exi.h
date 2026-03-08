@@ -52,6 +52,11 @@ struct EXIRegs
 	volatile uint32_t         data;           // immediate data register
 };
 
+// Bootrom size (in bytes)
+#define BOOTROM_SIZE    (2*1024*1024)
+// Bootrom start address
+#define BOOTROM_START_ADDRESS 0xfff00000
+
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -77,6 +82,10 @@ struct EIControl
 
 	bool        log;            // allow log EXI activities
 	bool        osReport;       // allow UART debugger output (log not affecting this)
+
+	uint8_t* bootrom;       // Descrambled (Thank you segher, you already have a place in heaven)
+	size_t bootromSize;
+	bool    BootromPresent;     // loaded and descrambled valid bootrom
 };
 
 extern  EIControl exi;
