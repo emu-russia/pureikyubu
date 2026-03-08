@@ -15,9 +15,11 @@ Build using Visual Studio 2022/2026. To build, open `scripts/VS2022/pureikyubu.s
 
 ### Generic Linux (Ubuntu) version
 
-The Linux build does not yet have support for sound.
+The Linux build does not yet have support for sound and input.
 
 ```
+# Install required packages
+sudo apt install libglew-dev
 # Choose a suitable folder to store a clone of the repository, cd there and then
 git clone https://github.com/emu-russia/pureikyubu.git 
 cd pureikyubu
@@ -30,6 +32,8 @@ make
 ```
 
 Requirements: CMake, pthread, OpenGL, GLEW, imgui, SDL2. If cmake says that some components cannot be built, you should look for solutions on the Internet (`apt get install xxx`) as usual.
+
+You can test your Linux build on Windows using WSL2. Recently, you can also run graphical applications (SDL2) there.
 
 ## Progress
 
