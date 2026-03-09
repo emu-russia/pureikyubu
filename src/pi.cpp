@@ -317,7 +317,7 @@ void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 		return;
 	}
 
-	memcpy(burstData, &mi.ram[phys_addr], 32);
+	MIReadBurst(phys_addr, burstData);
 }
 
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
@@ -325,7 +325,19 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 	// You can actually write anywhere on the page, but no one does that, so here's a simplified check.
 	if (phys_addr == PI_REGSPACE_GX_FIFO)
 	{
-		Flipper::Gx->FifoWriteBurst(burstData);
+		// PI FIFO
+
+		MIWriteBurst(pi.cp_wrptr & RAMMASK, burstData);
+		pi.cp_wrptr += 32;
+
+		if (pi.cp_wrptr == pi.cp_top)
+		{
+			pi.cp_wrptr = pi.cp_base;
+			pi.wrap_bit = 1;
+		}
+
+		// Notify CP
+		Flipper::Gx->FifoWriteBurst();
 		return;
 	}
 
@@ -334,7 +346,7 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 		return;
 	}
 
-	memcpy(&mi.ram[phys_addr], burstData, 32);
+	MIWriteBurst(phys_addr, burstData);
 }
 
 // ---------------------------------------------------------------------------
@@ -482,7 +494,7 @@ static const char* intdesc(uint32_t mask)
 {
 	switch (mask & 0xffff)
 	{
-		case PI_INTERRUPT_ARAM: return "ARAM";
+		case PI_INTERRUPT_HSP: return "HSP";
 		case PI_INTERRUPT_DEBUG: return "DEBUG";
 		case PI_INTERRUPT_CP: return "CP";
 		case PI_INTERRUPT_PE_FINISH: return "PE_FINISH";
@@ -586,10 +598,10 @@ static void read_intsr(uint32_t addr, uint32_t* reg)
 	*reg = pi.intsr /* | PI_INTSR_RSTSWB */;
 }
 
-// Write 1 clears only ARAM, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
+// Write 1 clears only HSP, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
 static void write_intsr(uint32_t addr, uint32_t data)
 {
-	data &= (PI_INTERRUPT_ARAM | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
+	data &= (PI_INTERRUPT_HSP | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
 	PIClearInt(data);
 }
 
@@ -692,14 +704,64 @@ static void write_strength(uint32_t addr, uint32_t data)
 // PI fifo (CPU)
 //
 
+static uint32_t PiCpReadReg(PI_CPMappedRegister id)
+{
+	switch (id)
+	{
+		case PI_CPMappedRegister::PI_CPBAS_ID:
+			return pi.cp_base & ~0x1f;
+		case PI_CPMappedRegister::PI_CPTOP_ID:
+			return pi.cp_top & ~0x1f;
+		case PI_CPMappedRegister::PI_CPWRT_ID:
+			return (pi.cp_wrptr & ~0x1f) | (pi.wrap_bit ? PI_CPWRT_WRAP : 0);
+		case PI_CPMappedRegister::PI_CPABT_ID:
+			Report(Channel::GP, "PI CP Abort read not implemented!\n");
+			return 0;
+	}
+
+	return 0;
+}
+
+static void PiCpWriteReg(PI_CPMappedRegister id, uint32_t value)
+{
+	switch (id)
+	{
+		case PI_CPMappedRegister::PI_CPBAS_ID:
+			pi.cp_base = value & ~0x1f;
+			break;
+		case PI_CPMappedRegister::PI_CPTOP_ID:
+			pi.cp_top = value & ~0x1f;
+			break;
+		case PI_CPMappedRegister::PI_CPWRT_ID:
+			pi.cp_wrptr = value & ~0x1f;
+			pi.wrap_bit = 0;
+			break;
+		case PI_CPMappedRegister::PI_CPABT_ID:
+			if ((value & 1) != 0) {
+				Flipper::Gx->CPAbortFifo();
+			}
+			break;
+	}
+}
+
 static void PI_CPRegRead(uint32_t addr, uint32_t* reg)
 {
-	*reg = Flipper::Gx->PiCpReadReg((GX::PI_CPMappedRegister)((addr & 0xFF) >> 2));
+	*reg = PiCpReadReg((PI_CPMappedRegister)((addr & 0xFF) >> 2));
 }
 
 static void PI_CPRegWrite(uint32_t addr, uint32_t data)
 {
-	Flipper::Gx->PiCpWriteReg((GX::PI_CPMappedRegister)((addr & 0xFF) >> 2), data);
+	PiCpWriteReg((PI_CPMappedRegister)((addr & 0xFF) >> 2), data);
+}
+
+// show PI fifo configuration
+void DumpPIFIFO()
+{
+	Report(Channel::Norm, "PI fifo configuration\n");
+	Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
+	Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
+	Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
+	Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
 }
 
 // ---------------------------------------------------------------------------
@@ -708,6 +770,8 @@ static void PI_CPRegWrite(uint32_t addr, uint32_t data)
 void PIOpen(HWConfig* config)
 {
 	Report(Channel::PI, "Processor interface\n");
+
+	memset(&pi, 0, sizeof(pi));
 
 	pi.consoleVer = config->consoleVer;
 	pi.log = false;
@@ -734,8 +798,7 @@ void PIOpen(HWConfig* config)
 	PISetTrap(32, PI_CONFIG, read_config, write_config);
 	PISetTrap(32, PI_STRGTH, nullptr, write_strength);
 
-	// Processor interface CP fifo.
-	// Some of the CP FIFO registers are mapped to PI registers for the reason that writes to the FIFO Stream Pointer are made by the Gekko Burst transactions and are serviced by PI.
+	// The PI contains its own part of the CP FIFO, intended for Burst transactions via the GFX FIFO Stream Pointer. The write event is simultaneously forwarded to the CP to track the WRPTR.
 	PISetTrap(32, PI_BASE, PI_CPRegRead, PI_CPRegWrite);
 	PISetTrap(32, PI_TOP, PI_CPRegRead, PI_CPRegWrite);
 	PISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);

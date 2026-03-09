@@ -45,7 +45,7 @@
 #define PI_INTSR_RSTSWB		0x10000			// The state of the reset switch button. Non-maskable INTSR bit
 
 // PI interrupt regs mask
-#define PI_INTERRUPT_ARAM		0x2000      // high-speed port (SDRAM)
+#define PI_INTERRUPT_HSP		0x2000      // high-speed port (SDRAM expansion)
 #define PI_INTERRUPT_DEBUG		0x1000      // debug hardware
 #define PI_INTERRUPT_CP			0x0800      // command fifo
 #define PI_INTERRUPT_PE_FINISH	0x0400      // PE finish command (draw done)
@@ -59,12 +59,24 @@
 #define PI_INTERRUPT_DI			0x0004      // DVD cover, break, transfer complete
 #define PI_INTERRUPT_RSW		0x0002      // Reset switch interrupt
 #define PI_INTERRUPT_PI			0x0001      // Generated when something goes wrong inside Flipper
-#define PI_INTERRUPT_MSB		PI_INTERRUPT_ARAM
+#define PI_INTERRUPT_MSB		PI_INTERRUPT_HSP
 
 // PI CONFIG Reset control bits
 #define PI_CONFIG_SYSRSTB 0x00000001
 #define PI_CONFIG_MEMRSTB 0x00000002
 #define PI_CONFIG_DIRSTB 0x00000004
+
+// PI FIFO registers
+enum class PI_CPMappedRegister
+{
+	PI_CPBAS_ID = 3,
+	PI_CPTOP_ID = 4,
+	PI_CPWRT_ID = 5,
+	PI_CPABT_ID = 6,
+};
+
+// PI CP write pointer wrap bit
+#define PI_CPWRT_WRAP   0x0400'0000
 
 enum class PIInterruptSource
 {
@@ -122,6 +134,12 @@ struct PIControl
 	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
 	int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
 	int64_t one_microsecond;	// one CPU microsecond in timer ticks
+
+	// PI FIFO
+	volatile uint32_t cp_base;
+	volatile uint32_t cp_top;
+	volatile uint32_t cp_wrptr;		// also WRAP bit
+	volatile uint32_t wrap_bit;		// When the CPU writes to the CPWRT register, this bit is cleared. When the FIFO writes by the CPWRT address, this bit remains asserted
 };
 
 extern  PIControl pi;
@@ -145,3 +163,5 @@ void PISetTrap(
 	uint32_t addr,                                       // physical address of trap
 	void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
 	void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
+
+void DumpPIFIFO();

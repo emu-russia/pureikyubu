@@ -133,12 +133,34 @@ extern	MIControl mi;
 void    MIOpen(HWConfig* config);
 void	MIClose();
 
+/// <summary>
+/// PI is used to read the cache line.
+/// </summary>
+void MIReadBurst(uint32_t mem_addr, uint8_t burstData[32]);
+
+/// <summary>
+/// PI is used to write data using GFX FIFO or for Cache Store (cache line write).
+/// </summary>
+void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32]);
+
 // These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
 
+/// <summary>
+/// Used for memory access from the CP side, for Vertex Array.
+/// </summary>
 void* MIGetMemoryPointerForCP(uint32_t phys_addr);
 
+/// <summary>
+/// The texture unit accesses MEM to sample textures in TMEM.
+/// </summary>
 void* MIGetMemoryPointerForTX(uint32_t phys_addr);
 
+/// <summary>
+/// VI uses MEM to gain access to the XFB.
+/// </summary>
 void* MIGetMemoryPointerForVI(uint32_t phys_addr);
 
+/// <summary>
+/// Used by various IO devices (AI, EXI, SI, DI) for DMA.
+/// </summary>
 void* MIGetMemoryPointerForIO(uint32_t phys_addr);

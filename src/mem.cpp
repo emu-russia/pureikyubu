@@ -216,27 +216,18 @@ void MIClose()
 
 // The counters are not emulated accurately, but this is not required.
 
-/// <summary>
-/// Used for memory access from the CP side, for Vertex Array.
-/// </summary>
 void* MIGetMemoryPointerForCP(uint32_t phys_addr)
 {
 	mi.cp_counter.cnt++;
 	return &mi.ram[phys_addr & RAMMASK];
 }
 
-/// <summary>
-/// The texture unit accesses MEM to sample textures in TMEM.
-/// </summary>
 void* MIGetMemoryPointerForTX(uint32_t phys_addr)
 {
 	mi.tc_counter.cnt++;
 	return &mi.ram[phys_addr & RAMMASK];
 }
 
-/// <summary>
-/// VI uses MEM to gain access to the XFB.
-/// </summary>
 void* MIGetMemoryPointerForVI(uint32_t phys_addr)
 {
 	mi.vi_counter.cnt++;
@@ -244,12 +235,21 @@ void* MIGetMemoryPointerForVI(uint32_t phys_addr)
 	else return &mi.ram[phys_addr & RAMMASK];
 }
 
-/// <summary>
-/// Used by various IO devices (AI, EXI, SI, DI) for DMA.
-/// </summary>
 void* MIGetMemoryPointerForIO(uint32_t phys_addr)
 {
 	mi.io_counter.cnt++;
 	if (phys_addr >= mi.ramSize) return nullptr;
 	else return &mi.ram[phys_addr & RAMMASK];
+}
+
+void MIReadBurst(uint32_t mem_addr, uint8_t burstData[32])
+{
+	memcpy(burstData, &mi.ram[mem_addr], 32);
+	mi.pi_read_counter.cnt++;
+}
+
+void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32])
+{
+	memcpy(&mi.ram[mem_addr], burstData, 32);
+	mi.pi_write_counter.cnt++;
 }

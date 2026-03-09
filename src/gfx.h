@@ -98,7 +98,6 @@ namespace GX
 		void ResizeRenderTarget(size_t width, size_t height);
 
 		// Debug
-		void DumpPIFIFO();
 		void DumpCPFIFO();
 		
 		GLuint vert_shader;
@@ -115,22 +114,12 @@ namespace GX
 
 #pragma region "Interface to Flipper"
 
-		// PI FIFO
-		volatile uint32_t pi_cp_base;
-		volatile uint32_t pi_cp_top;
-		volatile uint32_t pi_cp_wrptr;          // also WRAP bit
-		volatile uint32_t wrap_bit = 0;		// When the CPU writes to the CPWRT register, this bit is cleared. When the FIFO writes by the CPWRT address, this bit remains asserted
-
 		// CP Registers
 		uint16_t CpReadReg(CPMappedRegister id);
 		void CpWriteReg(CPMappedRegister id, uint16_t value);
 
-		// PI->CP Registers
-		uint32_t PiCpReadReg(PI_CPMappedRegister id);
-		void PiCpWriteReg(PI_CPMappedRegister id, uint32_t value);
-
-		// Streaming FIFO (32-byte burst-only)
-		void FifoWriteBurst(uint8_t data[32]);
+		// Streaming FIFO burst write notification from PI
+		void FifoWriteBurst();
 
 #pragma endregion "Interface to Flipper"
 

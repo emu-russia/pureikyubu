@@ -477,18 +477,6 @@ namespace GX
 	};
 
 	#pragma pack(pop)
-
-	// PI->CP FIFO registers
-	enum class PI_CPMappedRegister
-	{
-		PI_CPBAS_ID = 3,
-		PI_CPTOP_ID = 4,
-		PI_CPWRT_ID = 5,
-		PI_CPABT_ID = 6,
-	};
-
-	// PI CP write pointer wrap bit
-	#define PI_CPWRT_WRAP   0x0400'0000
 }
 
 

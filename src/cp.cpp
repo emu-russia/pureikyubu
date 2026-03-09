@@ -422,61 +422,8 @@ namespace GX
 		}
 	}
 
-	uint32_t GXCore::PiCpReadReg(PI_CPMappedRegister id)
+	void GXCore::FifoWriteBurst()
 	{
-		switch (id)
-		{
-			case PI_CPMappedRegister::PI_CPBAS_ID:
-				return pi_cp_base & ~0x1f;
-			case PI_CPMappedRegister::PI_CPTOP_ID:
-				return pi_cp_top & ~0x1f;
-			case PI_CPMappedRegister::PI_CPWRT_ID:
-				return (pi_cp_wrptr & ~0x1f) | (wrap_bit ? PI_CPWRT_WRAP : 0);
-			case PI_CPMappedRegister::PI_CPABT_ID:
-				Report(Channel::GP, "PI CP Abort read not implemented!\n");
-				return 0;
-		}
-
-		return 0;
-	}
-
-	void GXCore::PiCpWriteReg(PI_CPMappedRegister id, uint32_t value)
-	{
-		switch (id)
-		{
-			case PI_CPMappedRegister::PI_CPBAS_ID:
-				pi_cp_base = value & ~0x1f;
-				break;
-			case PI_CPMappedRegister::PI_CPTOP_ID:
-				pi_cp_top = value & ~0x1f;
-				break;
-			case PI_CPMappedRegister::PI_CPWRT_ID:
-				pi_cp_wrptr = value & ~0x1f;
-				wrap_bit = 0;
-				break;
-			case PI_CPMappedRegister::PI_CPABT_ID:
-				if ((value & 1) != 0) {
-					CPAbortFifo();
-				}
-				break;
-		}
-	}
-
-	// This method handles all the magic that occurs when writing to GX FIFO Streaming Pointer.
-
-	void GXCore::FifoWriteBurst(uint8_t data[32])
-	{
-		// PI FIFO
-
-		PIWriteBurst(pi_cp_wrptr & RAMMASK, data);
-		pi_cp_wrptr += 32;
-
-		if (pi_cp_wrptr == pi_cp_top)
-		{
-			pi_cp_wrptr = pi_cp_base;
-			wrap_bit = 1;
-		}
-
 		// CP FIFO
 
 		if (cpregs.cr & CP_CR_WPINC)
@@ -490,16 +437,6 @@ namespace GX
 
 			// All other work is done by CommandProcessor thread.
 		}
-	}
-
-	// show PI fifo configuration
-	void GXCore::DumpPIFIFO()
-	{
-		Report(Channel::Norm, "PI fifo configuration\n");
-		Report(Channel::Norm, "   base :0x%08X\n", pi_cp_base);
-		Report(Channel::Norm, "   top  :0x%08X\n", pi_cp_top);
-		Report(Channel::Norm, "   wrptr:0x%08X\n", pi_cp_wrptr);
-		Report(Channel::Norm, "   wrap :%i\n", (pi_cp_wrptr & PI_CPWRT_WRAP) ? (1) : (0));
 	}
 
 	// show CP fifo configuration
