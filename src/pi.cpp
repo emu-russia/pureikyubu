@@ -656,38 +656,35 @@ static void read_FlipperID(uint32_t addr, uint32_t* reg)
 
 static void write_config(uint32_t addr, uint32_t data)
 {
-	if (data)
+	// It is not yet clear what may or may not be affected by the support for system reset, for now we will leave only debug messages.
+
+	if ((data & PI_CONFIG_SYSRSTB) == 0)
 	{
-		// It is not yet clear what may or may not be affected by the support for system reset, for now we will leave only debug messages.
-
-		if (data & PI_CONFIG_SYSRSTB)
-		{
-			Report(Channel::PI, "System Reset requested.\n");
-		}
-
-		if (data & PI_CONFIG_MEMRSTB)
-		{
-			// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
-
-			Report(Channel::PI, "MEM Reset requested.\n");
-			memset(mi.ram, 0, mi.ramSize);
-		}
-
-		if (data & PI_CONFIG_DIRSTB)
-		{
-			Report(Channel::PI, "DVD Reset requested.\n");
-		}
-
+		Report(Channel::PI, "System Reset requested.\n");
 		// reset emulator
 		//EMUClose();
 		//EMUOpen();
+	}
+
+	if ((data & PI_CONFIG_MEMRSTB) == 0)
+	{
+		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
+
+		Report(Channel::PI, "MEM Reset requested.\n");
+		memset(mi.ram, 0, mi.ramSize);
+	}
+
+	if ((data & PI_CONFIG_DIRSTB) == 0)
+	{
+		Report(Channel::PI, "DVD Reset requested.\n");
+		DVD::DDU->Reset();
 	}
 }
 
 static void read_config(uint32_t addr, uint32_t* reg)
 {
-	// on system power-on, the code is zero
-	*reg = 0;
+	// Return the state that there is no reset. We process the reset immediately.
+	*reg = PI_CONFIG_MEMRSTB | PI_CONFIG_DIRSTB;
 }
 
 //
