@@ -679,6 +679,12 @@ int WINAPI WinMain(
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(nShowCmd);
 
+	DWORD attribs = GetFileAttributes(L"Data");
+	if (attribs == INVALID_FILE_ATTRIBUTES || (attribs & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+		UI::Error(L"Application data not found", L"The emulator stores all important data in the Data folder, which is not found. Verify that the executable file is in the correct location. If you are running the emulator from Visual Studio, ensure that Debugging->Working Directory is set to $(ProjectDir)../../build");
+		return -1;
+	}
+
 	EMUCtor();
 
 	// Create an interface for communicating with the emulator core
