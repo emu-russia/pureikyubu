@@ -142,11 +142,11 @@ namespace GX
 		}
 
 		// Watermarks logic. Active only in linked-mode.
-		if (gx->cpregs.cnt > gx->cpregs.himark && (gx->cpregs.cr & CP_CR_WPINC))
+		if (gx->cpregs.cnt > gx->cpregs.himark)
 		{
 			gx->CP_OVF();
 		}
-		if (gx->cpregs.cnt < gx->cpregs.lomark && (gx->cpregs.cr & CP_CR_WPINC))
+		if (gx->cpregs.cnt < gx->cpregs.lomark)
 		{
 			gx->CP_UVF();
 		}
