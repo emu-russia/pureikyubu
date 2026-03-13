@@ -133,17 +133,17 @@ extern	MIControl mi;
 void    MIOpen(HWConfig* config);
 void	MIClose();
 
+// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
+
 /// <summary>
-/// PI is used to read the cache line.
+/// used by PI to read the cache line.
 /// </summary>
 void MIReadBurst(uint32_t mem_addr, uint8_t burstData[32]);
 
 /// <summary>
-/// PI is used to write data using GFX FIFO or for Cache Store (cache line write).
+/// used by PI to write data using GFX FIFO or for Cache Store (cache line write).
 /// </summary>
 void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32]);
-
-// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
 
 /// <summary>
 /// Used for memory access from the CP side, for Vertex Array.
