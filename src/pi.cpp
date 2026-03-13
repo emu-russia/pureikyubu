@@ -754,7 +754,6 @@ void PIOpen(HWConfig* config)
 	PISetTrap(32, PI_INTSR, read_intsr, write_intsr);
 	PISetTrap(32, PI_INTMR, read_intmr, write_intmr);
 	PISetTrap(32, PI_CHIPID, read_FlipperID, nullptr);
-	PISetTrap(8, PI_CONFIG, read_config, write_config);
 	PISetTrap(32, PI_CONFIG, read_config, write_config);
 	PISetTrap(32, PI_STRGTH, nullptr, write_strength);
 
