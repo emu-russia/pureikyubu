@@ -159,7 +159,7 @@ void PIClose();
 void PIBreakOnNextInt(uint32_t mask);
 
 void PISetTrap(
-	uint32_t type,                                       // 8, 16 or 32
+	uint32_t type,                                       // 16 or 32
 	uint32_t addr,                                       // physical address of trap
 	void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
 	void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap

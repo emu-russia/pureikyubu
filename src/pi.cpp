@@ -7,8 +7,6 @@ using namespace Debug;
 PIControl pi;
 
 // hardware traps tables.
-static void (*hw_read8[0x10000])(uint32_t, uint32_t*);
-static void (*hw_write8[0x10000])(uint32_t, uint32_t);
 static void (*hw_read16[0x10000])(uint32_t, uint32_t*);
 static void (*hw_write16[0x10000])(uint32_t, uint32_t);
 static void (*hw_read32[0x10000])(uint32_t, uint32_t*);
@@ -45,13 +43,6 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 		return;
 	}
 
-	// hardware trap
-	if (pa >= HW_BASE)
-	{
-		hw_read8[pa & 0xffff](pa, reg);
-		return;
-	}
-
 	// bus load byte
 	if (pa < mi.ramSize)
 	{
@@ -76,13 +67,6 @@ void PIWriteByte(uint32_t pa, uint32_t data)
 
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
-		return;
-	}
-
-	// hardware trap
-	if (pa >= HW_BASE)
-	{
-		hw_write8[pa & 0xffff](pa, (uint8_t)data);
 		return;
 	}
 
@@ -386,18 +370,6 @@ static void def_hw_write32(uint32_t addr, uint32_t data)
 // ---------------------------------------------------------------------------
 // traps API
 
-static void PISetTrap8(
-	uint32_t addr,
-	void (*rdTrap)(uint32_t, uint32_t*),
-	void (*wrTrap)(uint32_t, uint32_t))
-{
-	if (rdTrap == NULL) rdTrap = def_hw_read8;
-	if (wrTrap == NULL) wrTrap = def_hw_write8;
-
-	hw_read8[addr & 0xffff] = rdTrap;
-	hw_write8[addr & 0xffff] = wrTrap;
-}
-
 static void PISetTrap16(
 	uint32_t addr,
 	void (*rdTrap)(uint32_t, uint32_t*),
@@ -441,9 +413,6 @@ void PISetTrap(
 	// select trap type
 	switch (type)
 	{
-		case 8:
-			PISetTrap8(addr, rdTrap, wrTrap);
-			break;
 		case 16:
 			PISetTrap16(addr, rdTrap, wrTrap);
 			break;
@@ -464,12 +433,6 @@ static void PIClearTraps()
 
 	// possible errors, if greater 0xffff
 	assert(HW_MAX_KNOWN < 0x10000);
-
-	// for 8-bit registers
-	for (addr = HW_BASE; addr < (HW_BASE + HW_MAX_KNOWN); addr++)
-	{
-		PISetTrap8(addr, NULL, NULL);
-	}
 
 	// for 16-bit registers
 	for (addr = HW_BASE; addr < (HW_BASE + HW_MAX_KNOWN); addr += 2)
