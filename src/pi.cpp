@@ -396,7 +396,7 @@ static void PISetTrap32(
 
 // wrapper
 void PISetTrap(
-	uint32_t type,                               // 8, 16 or 32
+	uint32_t type,                               // 16 or 32
 	uint32_t addr,                               // physical trap address
 	void (*rdTrap)(uint32_t, uint32_t*),  // register read trap
 	void (*wrTrap)(uint32_t, uint32_t))    // register write trap
@@ -634,7 +634,7 @@ static void write_config(uint32_t addr, uint32_t data)
 		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
 
 		Report(Channel::PI, "MEM Reset requested.\n");
-		memset(mi.ram, 0, mi.ramSize);
+		MemRst();
 	}
 
 	if ((data & PI_CONFIG_DIRSTB) == 0)
