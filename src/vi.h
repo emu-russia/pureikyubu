@@ -1,6 +1,6 @@
 #pragma once
 
-// VI registers (can be accessed from any offset and by any size, 1, 2 or 4 bytes)
+// VI registers (can be accessed from any offset and by any size, 2 or 4 bytes)
 
 #define VI_VERT_TIMING          0x0C002000      // Vertical Timing Register
 #define VI_DISP_CR              0x0C002002      // Display Configuration Register
@@ -19,7 +19,10 @@
 #define VI_INT1                 0x0C002034      // Display Interrupt Register 1
 #define VI_INT2                 0x0C002038      // Display Interrupt Register 2
 #define VI_INT3                 0x0C00203C      // Display Interrupt Register 3
-// ... unknown gap [32 * 3]
+#define VI_DISP_LATCH0			0x0C002040		// Display Latch Register 0
+#define VI_DISP_LATCH1			0x0C002044		// Display Latch Register 1
+#define VI_PICT_CR				0x0C002048		// Picture Configuration Register
+#define VI_HORZ_SCALE			0x0C00204A		// Horizontal Scale Register
 #define VI_TAP0                 0x0C00204C      // Filter Coefficient Table 0
 #define VI_TAP1                 0x0C002050      // Filter Coefficient Table 1
 #define VI_TAP2                 0x0C002054      // Filter Coefficient Table 2
@@ -27,20 +30,13 @@
 #define VI_TAP4                 0x0C00205C      // Filter Coefficient Table 4
 #define VI_TAP5                 0x0C002060      // Filter Coefficient Table 5
 #define VI_TAP6                 0x0C002064      // Filter Coefficient Table 6
-// ... unknown gap [32]
+#define VI_RESERVED_68			0x0C002068		// Reserved
+#define VI_OUT_POL				0x0C00206A		// Output Polarity Register
 #define VI_CLK_SEL              0x0C00206C      // VI Clock Select Register
 #define VI_DTV                  0x0C00206E      // VI DTV Status Register
-// ... unknown gap [16]
+#define VI_SCALE_WIDTH			0x0C002070		// Scaling Width Register
 #define VI_BRDR_HBE             0x0C002072      // Border HBE
 #define VI_BRDR_HBS             0x0C002074      // Border HBS
-
-// mapping is unknown for regs :
-#define VI_PICT_CR              0               // [16] Picture Configuration Register
-#define VI_DISP_LATCH0          0               // [32] Display Latch Register 0
-#define VI_DISP_LATCH1          0               // [32] Display Latch Register 1
-#define VI_OUT_POL              0               // [8?] Output Polarity Register
-#define VI_HORZ_SCALE           0               // [16] Horizontal Scale Register
-#define VI_SCALE_WIDTH          0               // [16] Scaling Width Register
 
 // Display Configuration Register mask (for 16-bit register)
 #define VI_CR_ENB       0x0001          // enable the video timing generation
