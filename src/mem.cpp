@@ -164,6 +164,8 @@ void MIOpen(HWConfig* config)
 
 	memset(mi.ram, 0, mi.ramSize);
 
+	mi.log = config->mi_log;
+
 	for (uint32_t ofs = 0; ofs < 0x100; ofs += 2)
 	{
 		PISetTrap(16, 0x0C004000 | ofs, no_read, no_write);

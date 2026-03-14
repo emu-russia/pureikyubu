@@ -38,6 +38,10 @@ struct HWConfig
 {
 	// MI
 	size_t      ramsize;
+	bool		mi_log;
+
+	// CP
+	bool		cp_log;
 
 	// VI
 	void* renderTarget;
@@ -47,12 +51,22 @@ struct HWConfig
 
 	// PI
 	uint32_t    consoleVer;
+	bool		pi_log;
 
 	// EI
 	bool        exi_log;
 	bool        exi_osReport;
 	wchar_t     ansiFilename[0x1000];
 	wchar_t     sjisFilename[0x1000];
+
+	// DI
+	bool		di_log;
+
+	// AI
+	bool		ai_log;
+
+	// SI
+	bool		si_log;
 
 	// MC
 	bool        MemcardA_Connected;

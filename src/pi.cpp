@@ -687,13 +687,13 @@ static void PiCpWriteReg(PI_CPMappedRegister id, uint32_t value)
 	switch (id)
 	{
 		case PI_CPMappedRegister::PI_CPBAS_ID:
-			pi.cp_base = value & ~0x1f;
+			pi.cp_base = value & PI_FIFO_ADDRESS_MASK;
 			break;
 		case PI_CPMappedRegister::PI_CPTOP_ID:
-			pi.cp_top = value & ~0x1f;
+			pi.cp_top = value & PI_FIFO_ADDRESS_MASK;
 			break;
 		case PI_CPMappedRegister::PI_CPWRT_ID:
-			pi.cp_wrptr = value & ~0x1f;
+			pi.cp_wrptr = value & PI_FIFO_ADDRESS_MASK;
 			pi.wrap_bit = 0;
 			break;
 		case PI_CPMappedRegister::PI_CPABT_ID:
@@ -711,17 +711,37 @@ static void PI_CPRegRead(uint32_t addr, uint32_t* reg)
 
 static void PI_CPRegWrite(uint32_t addr, uint32_t data)
 {
-	PiCpWriteReg((PI_CPMappedRegister)((addr & 0xFF) >> 2), data);
+	PI_CPMappedRegister id = (PI_CPMappedRegister)((addr & 0xFF) >> 2);
+	if (pi.log) {
+		DumpPIFIFO(id, data);
+	}
+	PiCpWriteReg(id, data);
 }
 
 // show PI fifo configuration
-void DumpPIFIFO()
+void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value)
 {
 	Report(Channel::Norm, "PI fifo configuration\n");
-	Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
-	Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
-	Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
-	Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
+	if (id == PI_CPMappedRegister::PI_CPBAS_ID) {
+		Report(Channel::Norm, "   base :0x%08X <- 0x%08X\n", pi.cp_base, new_value);
+	}
+	else {
+		Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
+	}
+	if (id == PI_CPMappedRegister::PI_CPTOP_ID) {
+		Report(Channel::Norm, "   top  :0x%08X <- 0x%08X\n", pi.cp_top, new_value);
+	}
+	else {
+		Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
+	}
+	if (id == PI_CPMappedRegister::PI_CPWRT_ID) {
+		Report(Channel::Norm, "   wrptr:0x%08X <- 0x%08X\n", pi.cp_wrptr, new_value);
+		Report(Channel::Norm, "   wrap :%d <- 0\n", pi.wrap_bit);
+	}
+	else {
+		Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
+		Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -734,7 +754,7 @@ void PIOpen(HWConfig* config)
 	memset(&pi, 0, sizeof(pi));
 
 	pi.consoleVer = config->consoleVer;
-	pi.log = false;
+	pi.log = config->pi_log;
 
 	// now any access will generate unhandled warning,
 	// if emulator try to read or write register,

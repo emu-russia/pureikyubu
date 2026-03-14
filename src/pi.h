@@ -78,6 +78,8 @@ enum class PI_CPMappedRegister
 // PI CP write pointer wrap bit
 #define PI_CPWRT_WRAP   0x0400'0000
 
+#define PI_FIFO_ADDRESS_MASK  0x03ff'ffe0		// Mask for FIFO registers (only bits 25:5 are used for memory addressing)
+
 enum class PIInterruptSource
 {
 	PI,
@@ -164,4 +166,4 @@ void PISetTrap(
 	void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
 	void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
 
-void DumpPIFIFO();
+void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value);

@@ -523,5 +523,5 @@ namespace GX
 
 }
 
-void CPOpen();
+void CPOpen(HWConfig* config);
 void CPClose();

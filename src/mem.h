@@ -111,6 +111,7 @@ struct MIControl
 {
 	uint8_t* ram;
 	size_t ramSize;
+	bool log;
 
 	uint32_t marr_start[4];
 	uint32_t marr_end[4];

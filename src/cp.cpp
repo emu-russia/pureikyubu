@@ -3,6 +3,8 @@
 
 // TODO: It's a bit crooked right now after refactoring, but will settle with time
 
+// CP is architecturally NOT part of the graphics Pipeline, but is the initiator of drawing primitives and updating the internal context of GFX registers (XF, SU, PE, etc. load reg commands)
+
 using namespace Debug;
 
 //
@@ -21,7 +23,7 @@ static void CPRegWrite(uint32_t addr, uint32_t data)
 
 // init
 
-void CPOpen()
+void CPOpen(HWConfig* config)
 {
 	Report(Channel::CP, "Command processor (for GX)\n");
 

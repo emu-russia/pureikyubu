@@ -53,6 +53,7 @@ void EMUGetHwConfig(HWConfig * config)
 	config->videoEncoderFuse = 0;
 
 	config->consoleVer = GetConfigInt(USER_CONSOLE, USER_HW);
+	config->pi_log = GetConfigBool(USER_PI_LOG, USER_HW);
 
 	config->exi_log = GetConfigBool(USER_EXI_LOG, USER_HW);
 	config->exi_osReport = GetConfigBool(USER_OS_REPORT, USER_HW);
@@ -65,6 +66,12 @@ void EMUGetHwConfig(HWConfig * config)
 	wcscpy (config->MemcardA_Filename, GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS));
 	wcscpy (config->MemcardB_Filename, GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS));
 	config->Memcard_SyncSave = GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
+
+	config->di_log = GetConfigBool(USER_DI_LOG, USER_HW);
+	config->si_log = GetConfigBool(USER_SI_LOG, USER_HW);
+	config->ai_log = GetConfigBool(USER_AI_LOG, USER_HW);
+	config->mi_log = GetConfigBool(USER_MI_LOG, USER_HW);
+	config->cp_log = GetConfigBool(USER_CP_LOG, USER_HW);
 
 	if (!Util::FileExists(config->MemcardA_Filename))
 	{
@@ -388,8 +395,14 @@ static Json::Value* CmdGetConfig(std::vector<std::string>& args)
 	Report(Channel::Norm, "%s = %s\n", USER_DSP_DROM, Util::WstringToString(GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
 	Report(Channel::Norm, "%s = %s\n", USER_DSP_IROM, Util::WstringToString(GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
 
+	Report(Channel::Norm, "%s = %i\n", USER_PI_LOG, GetConfigBool(USER_PI_LOG, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_EXI_LOG, GetConfigBool(USER_EXI_LOG, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_VI_LOG, GetConfigBool(USER_VI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_DI_LOG, GetConfigBool(USER_DI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_SI_LOG, GetConfigBool(USER_SI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_AI_LOG, GetConfigBool(USER_AI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_MI_LOG, GetConfigBool(USER_MI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_CP_LOG, GetConfigBool(USER_CP_LOG, USER_HW));
 
 	return nullptr;
 }

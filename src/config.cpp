@@ -74,6 +74,9 @@ static void SaveSettings()
 	std::vector<uint8_t> text(2 * textSize, 0);
 	settings.Serialize(text.data(), 2 * textSize, textSize);
 
+	size_t size = strlen((char *)text.data());
+	text.resize(size);
+
 	Util::FileSave(EMU_SETTINGS, text);
 }
 
