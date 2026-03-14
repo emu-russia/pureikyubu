@@ -631,7 +631,7 @@ static void write_config(uint32_t addr, uint32_t data)
 
 	if ((data & PI_CONFIG_MEMRSTB) == 0)
 	{
-		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
+		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads (really? but it looks like the memory reset is done BEFORE filling Splash with test patterns).
 
 		Report(Channel::PI, "MEM Reset requested.\n");
 		MemRst();
