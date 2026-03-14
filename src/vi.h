@@ -14,7 +14,7 @@
 #define VI_TFBR                 0x0C002020      // Top Field Base Register R
 #define VI_BFBL                 0x0C002024      // Bottom Field Base Register L
 #define VI_BFBR                 0x0C002028      // Bottom Field Base Register R
-#define VI_DISP_POS             0x0C00202C      // Display Position Register
+#define VI_DISP_POS             0x0C00202C      // Display Position Register   (Read Only ⚠️)
 #define VI_INT0                 0x0C002030      // Display Interrupt Register 0
 #define VI_INT1                 0x0C002034      // Display Interrupt Register 1
 #define VI_INT2                 0x0C002038      // Display Interrupt Register 2
@@ -33,7 +33,7 @@
 #define VI_RESERVED_68			0x0C002068		// Reserved
 #define VI_OUT_POL				0x0C00206A		// Output Polarity Register
 #define VI_CLK_SEL              0x0C00206C      // VI Clock Select Register
-#define VI_DTV                  0x0C00206E      // VI DTV Status Register
+#define VI_DTV                  0x0C00206E      // VI DTV Status Register  (Read Only ⚠️)
 #define VI_SCALE_WIDTH			0x0C002070		// Scaling Width Register
 #define VI_BRDR_HBE             0x0C002072      // Border HBE
 #define VI_BRDR_HBS             0x0C002074      // Border HBS
@@ -67,6 +67,20 @@
 #define VI_PAL_INTER        625         // 50 Hz
 #define VI_PAL_NON_INTER    313         // 25 Hz
 
+union VIPosition
+{
+	struct {
+		unsigned hcount : 11;			// horizontal count
+		unsigned padding1 : 5;
+		unsigned vcount : 11;			// vertical count
+		unsigned padding2 : 1;
+		unsigned enabled : 1;			// 1: interrupt enabled
+		unsigned padding3 : 2;
+		unsigned status : 1;			// 1: interrupt status / gun trigger flag
+	};
+	uint32_t val;
+};
+
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -76,12 +90,14 @@ struct VIControl
 	volatile uint16_t    disp_cr;    // display configuration register
 	volatile uint32_t    tfbl;       // video buffer (top field)
 	volatile uint32_t    bfbl;       // video buffer (bottom field)
-	volatile uint32_t    pos;        // beam position
-	volatile uint32_t    int0;       // INT0 status
+	volatile VIPosition  pos;        // beam position
+	volatile VIPosition  int0;       // INT0 status
+	volatile VIPosition	 latch0;
+	volatile VIPosition	 latch1;
 
 	volatile uint32_t    mode;       // see VI modes
 	bool        inter;      // 1, if interlace
-	volatile uint32_t    vcount;     // number of lines for single frame
+	int			vcount;		// number of lines for single frame
 	int64_t     vtime;      // frame timer
 	int64_t     one_frame;  // frame length in CPU timer ticks
 
@@ -105,3 +121,10 @@ void    VIOpen(HWConfig* config);
 void    VIClose();
 
 void    VISetEncoderFuse(int value);
+
+/// <summary>
+/// Simulate a light gun trigger pull (using external Flipper signals GUNTRG0 and GUNTRG1, which are routed to the VI).
+/// In this case, the current position is fixed in the Latch registers (0 or 1, depending on the signal).
+/// </summary>
+/// <param name="num">GUNTRG signal, 0 or 1</param>
+void	VIGunTrigger(int num);

@@ -118,37 +118,37 @@ void VIUpdate()
 {
 	if ((Core->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
 	{
+		if ((vi.disp_cr & VI_CR_RST) != 0) {
+			return;
+		}
+
 		vi.vtime = Core->GetTicks();
 
-		uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
-		uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
+		uint32_t currentBeamPos = vi.pos.vcount;
 
 		// generate VIINT ?
-		currentBeamPos++;
-		if (currentBeamPos == triggerBeamPos)
+		vi.pos.vcount++;
+		if (vi.pos.vcount == vi.int0.vcount)
 		{
-			vi.int0 |= VI_INT_INT;
-			if (vi.int0 & VI_INT_ENB)
+			vi.int0.status = 1;
+			if (vi.int0.enabled)
 			{
 				PIAssertInt(PI_INTERRUPT_VI);
 			}
 		}
 
 		// vertical counter
-		if (currentBeamPos >= vi.vcount)
+		if (vi.pos.vcount >= vi.vcount)
 		{
-			currentBeamPos = 1;
+			vi.pos.vcount = 1;
 
 			// draw XFB
-			if (vi.xfb)
+			if (vi.xfb && (vi.disp_cr & VI_CR_ENB) != 0)
 			{
 				YUVBlit(vi.xfbbuf, vi.gfxbuf);
 				vi.frames++;
 			}
 		}
-
-		vi.pos &= ~0x07ff0000;
-		vi.pos |= (currentBeamPos & 0x7ff) << 16;
 	}
 }
 
@@ -176,16 +176,16 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 			*reg = (uint16_t)vi.bfbl;
 			return;
 		case 0x2C:      // beam position hi
-			*reg = vi.pos >> 16;
+			*reg = vi.pos.val >> 16;
 			return;
 		case 0x2E:      // beam position low
-			*reg = (uint16_t)vi.pos;
+			*reg = (uint16_t)vi.pos.val;
 			return;
 		case 0x30:      // int0 control hi
-			*reg = vi.int0 >> 16;
+			*reg = vi.int0.val >> 16;
 			return;
 		case 0x32:      // int0 control low
-			*reg = (uint16_t)vi.int0;
+			*reg = (uint16_t)vi.int0.val;
 			return;
 	}
 	*reg = 0;
@@ -241,25 +241,17 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
 			//else vi.xfbbuf = &RAM[vi.bfbl];
 			return;
-		case 0x2C:      // beam position hi
-			vi.pos &= 0x0000ffff;
-			vi.pos |= data << 16;
-			return;
-		case 0x2E:      // beam position low
-			vi.pos &= 0xffff0000;
-			vi.pos |= (uint16_t)data;
-			return;
 		case 0x30:      // int0 control hi
-			vi.int0 &= 0x0000ffff;
-			vi.int0 |= data << 16;
-			if ((vi.int0 & VI_INT_INT) == 0)
+			vi.int0.val &= 0x0000ffff;
+			vi.int0.val |= data << 16;
+			if ((vi.int0.val & VI_INT_INT) == 0)
 			{
 				PIClearInt(PI_INTERRUPT_VI);
 			}
 			return;
 		case 0x32:      // int0 control low
-			vi.int0 &= 0xffff0000;
-			vi.int0 |= (uint16_t)data;
+			vi.int0.val &= 0xffff0000;
+			vi.int0.val |= (uint16_t)data;
 			return;
 	}
 }
@@ -279,10 +271,10 @@ static void vi_read32(uint32_t addr, uint32_t* reg)
 			*reg = vi.bfbl;
 			return;
 		case 0x2C:      // beam position
-			*reg = vi.pos;
+			*reg = vi.pos.val;
 			return;
 		case 0x30:      // int0 control
-			*reg = vi.int0;
+			*reg = vi.int0.val;
 			return;
 	}
 	*reg = 0;
@@ -313,12 +305,9 @@ static void vi_write32(uint32_t addr, uint32_t data)
 			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
 			//else vi.xfbbuf = &RAM[vi.bfbl];
 			return;
-		case 0x2C:      // beam position
-			vi.pos = data;
-			return;
 		case 0x30:      // int0 control
-			vi.int0 = data;
-			if ((vi.int0 & VI_INT_INT) == 0)
+			vi.int0.val = data;
+			if ((vi.int0.val & VI_INT_INT) == 0)
 			{
 				PIClearInt(PI_INTERRUPT_VI);
 			}
@@ -329,13 +318,10 @@ static void vi_write32(uint32_t addr, uint32_t data)
 // show VI info
 void VIStats()
 {
-	uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
-	uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
-
-	Report(Channel::Norm, "    VI interrupt : [%i x x x]\n", vi.int0 >> 31);
-	Report(Channel::Norm, "    VI int mask  : [%i x x x]\n", (vi.int0 >> 28) & 1);
-	Report(Channel::Norm, "    VI int pos   : %i == %i, x == x, x == x, x == x (line)\n", currentBeamPos, triggerBeamPos);
-	Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), enabled: %i\n", vi.tfbl, vi.bfbl, vi.xfb);
+	Report(Channel::Norm, "    VI interrupt : [%d x x x]\n", vi.int0.status);
+	Report(Channel::Norm, "    VI int mask  : [%d x x x]\n", vi.int0.enabled);
+	Report(Channel::Norm, "    VI int pos   : %d == %d, x == x, x == x, x == x (line)\n", vi.pos.vcount, vi.int0.vcount);
+	Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), enabled: %d\n", vi.tfbl, vi.bfbl, vi.xfb);
 }
 
 // ---------------------------------------------------------------------------
@@ -392,4 +378,19 @@ void VIClose()
 void VISetEncoderFuse(int value)
 {
 	vi.videoEncoderFuse = value;
+}
+
+void VIGunTrigger(int num)
+{
+	switch (num & 1) {
+		case 0:
+			vi.latch0.val = vi.pos.val;
+			vi.latch0.status = 1;
+			break;
+
+		case 1:
+			vi.latch1.val = vi.pos.val;
+			vi.latch1.status = 1;
+			break;
+	}
 }
