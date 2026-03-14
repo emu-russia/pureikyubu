@@ -7,8 +7,6 @@ using namespace Debug;
 PIControl pi;
 
 // hardware traps tables.
-static void (*hw_read8[0x10000])(uint32_t, uint32_t*);
-static void (*hw_write8[0x10000])(uint32_t, uint32_t);
 static void (*hw_read16[0x10000])(uint32_t, uint32_t*);
 static void (*hw_write16[0x10000])(uint32_t, uint32_t);
 static void (*hw_read32[0x10000])(uint32_t, uint32_t*);
@@ -45,13 +43,6 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 		return;
 	}
 
-	// hardware trap
-	if (pa >= HW_BASE)
-	{
-		hw_read8[pa & 0xffff](pa, reg);
-		return;
-	}
-
 	// bus load byte
 	if (pa < mi.ramSize)
 	{
@@ -76,13 +67,6 @@ void PIWriteByte(uint32_t pa, uint32_t data)
 
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
-		return;
-	}
-
-	// hardware trap
-	if (pa >= HW_BASE)
-	{
-		hw_write8[pa & 0xffff](pa, (uint8_t)data);
 		return;
 	}
 
@@ -386,18 +370,6 @@ static void def_hw_write32(uint32_t addr, uint32_t data)
 // ---------------------------------------------------------------------------
 // traps API
 
-static void PISetTrap8(
-	uint32_t addr,
-	void (*rdTrap)(uint32_t, uint32_t*),
-	void (*wrTrap)(uint32_t, uint32_t))
-{
-	if (rdTrap == NULL) rdTrap = def_hw_read8;
-	if (wrTrap == NULL) wrTrap = def_hw_write8;
-
-	hw_read8[addr & 0xffff] = rdTrap;
-	hw_write8[addr & 0xffff] = wrTrap;
-}
-
 static void PISetTrap16(
 	uint32_t addr,
 	void (*rdTrap)(uint32_t, uint32_t*),
@@ -424,7 +396,7 @@ static void PISetTrap32(
 
 // wrapper
 void PISetTrap(
-	uint32_t type,                               // 8, 16 or 32
+	uint32_t type,                               // 16 or 32
 	uint32_t addr,                               // physical trap address
 	void (*rdTrap)(uint32_t, uint32_t*),  // register read trap
 	void (*wrTrap)(uint32_t, uint32_t))    // register write trap
@@ -441,9 +413,6 @@ void PISetTrap(
 	// select trap type
 	switch (type)
 	{
-		case 8:
-			PISetTrap8(addr, rdTrap, wrTrap);
-			break;
 		case 16:
 			PISetTrap16(addr, rdTrap, wrTrap);
 			break;
@@ -464,12 +433,6 @@ static void PIClearTraps()
 
 	// possible errors, if greater 0xffff
 	assert(HW_MAX_KNOWN < 0x10000);
-
-	// for 8-bit registers
-	for (addr = HW_BASE; addr < (HW_BASE + HW_MAX_KNOWN); addr++)
-	{
-		PISetTrap8(addr, NULL, NULL);
-	}
 
 	// for 16-bit registers
 	for (addr = HW_BASE; addr < (HW_BASE + HW_MAX_KNOWN); addr += 2)
@@ -668,10 +631,10 @@ static void write_config(uint32_t addr, uint32_t data)
 
 	if ((data & PI_CONFIG_MEMRSTB) == 0)
 	{
-		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
+		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads (really? but it looks like the memory reset is done BEFORE filling Splash with test patterns).
 
 		Report(Channel::PI, "MEM Reset requested.\n");
-		memset(mi.ram, 0, mi.ramSize);
+		MemRst();
 	}
 
 	if ((data & PI_CONFIG_DIRSTB) == 0)
@@ -724,13 +687,13 @@ static void PiCpWriteReg(PI_CPMappedRegister id, uint32_t value)
 	switch (id)
 	{
 		case PI_CPMappedRegister::PI_CPBAS_ID:
-			pi.cp_base = value & ~0x1f;
+			pi.cp_base = value & PI_FIFO_ADDRESS_MASK;
 			break;
 		case PI_CPMappedRegister::PI_CPTOP_ID:
-			pi.cp_top = value & ~0x1f;
+			pi.cp_top = value & PI_FIFO_ADDRESS_MASK;
 			break;
 		case PI_CPMappedRegister::PI_CPWRT_ID:
-			pi.cp_wrptr = value & ~0x1f;
+			pi.cp_wrptr = value & PI_FIFO_ADDRESS_MASK;
 			pi.wrap_bit = 0;
 			break;
 		case PI_CPMappedRegister::PI_CPABT_ID:
@@ -748,17 +711,37 @@ static void PI_CPRegRead(uint32_t addr, uint32_t* reg)
 
 static void PI_CPRegWrite(uint32_t addr, uint32_t data)
 {
-	PiCpWriteReg((PI_CPMappedRegister)((addr & 0xFF) >> 2), data);
+	PI_CPMappedRegister id = (PI_CPMappedRegister)((addr & 0xFF) >> 2);
+	if (pi.log) {
+		DumpPIFIFO(id, data);
+	}
+	PiCpWriteReg(id, data);
 }
 
 // show PI fifo configuration
-void DumpPIFIFO()
+void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value)
 {
 	Report(Channel::Norm, "PI fifo configuration\n");
-	Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
-	Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
-	Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
-	Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
+	if (id == PI_CPMappedRegister::PI_CPBAS_ID) {
+		Report(Channel::Norm, "   base :0x%08X <- 0x%08X\n", pi.cp_base, new_value);
+	}
+	else {
+		Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
+	}
+	if (id == PI_CPMappedRegister::PI_CPTOP_ID) {
+		Report(Channel::Norm, "   top  :0x%08X <- 0x%08X\n", pi.cp_top, new_value);
+	}
+	else {
+		Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
+	}
+	if (id == PI_CPMappedRegister::PI_CPWRT_ID) {
+		Report(Channel::Norm, "   wrptr:0x%08X <- 0x%08X\n", pi.cp_wrptr, new_value);
+		Report(Channel::Norm, "   wrap :%d <- 0\n", pi.wrap_bit);
+	}
+	else {
+		Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
+		Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -771,7 +754,7 @@ void PIOpen(HWConfig* config)
 	memset(&pi, 0, sizeof(pi));
 
 	pi.consoleVer = config->consoleVer;
-	pi.log = false;
+	pi.log = config->pi_log;
 
 	// now any access will generate unhandled warning,
 	// if emulator try to read or write register,
@@ -791,7 +774,6 @@ void PIOpen(HWConfig* config)
 	PISetTrap(32, PI_INTSR, read_intsr, write_intsr);
 	PISetTrap(32, PI_INTMR, read_intmr, write_intmr);
 	PISetTrap(32, PI_CHIPID, read_FlipperID, nullptr);
-	PISetTrap(8, PI_CONFIG, read_config, write_config);
 	PISetTrap(32, PI_CONFIG, read_config, write_config);
 	PISetTrap(32, PI_STRGTH, nullptr, write_strength);
 

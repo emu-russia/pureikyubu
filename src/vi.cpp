@@ -155,18 +155,6 @@ void VIUpdate()
 // ---------------------------------------------------------------------------
 // accessing VI registers.
 
-static void vi_read8(uint32_t addr, uint32_t* reg)
-{
-	// TODO
-	Report(Channel::VI, "VI READ8\n");
-	*reg = 0;
-}
-
-static void vi_write8(uint32_t addr, uint32_t data)
-{
-	Report(Channel::VI, "VI WRITE8\n");
-}
-
 static void vi_read16(uint32_t addr, uint32_t* reg)
 {
 	switch (addr & 0x7f)
@@ -388,7 +376,6 @@ void VIOpen(HWConfig* config)
 	// set traps to VI registers
 	for (uint32_t ofs = 0; ofs < 0x80; ofs++)
 	{
-		PISetTrap(8, 0x0C002000 + ofs, vi_read8, vi_write8);
 		if ((ofs % 2) == 0) PISetTrap(16, 0x0C002000 + ofs, vi_read16, vi_write16);
 		if ((ofs % 4) == 0) PISetTrap(32, 0x0C002000 + ofs, vi_read32, vi_write32);
 	}

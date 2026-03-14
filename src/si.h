@@ -100,4 +100,5 @@ struct SIControl
 extern  SIControl si;
 
 void    SIPoll();
-void    SIOpen();
+void    SIOpen(HWConfig* config);
+void	SIClose();

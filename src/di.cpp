@@ -366,7 +366,7 @@ static void read_cfg(uint32_t addr, uint32_t* reg) { *reg = 0; }
 // ---------------------------------------------------------------------------
 // init
 
-void DIOpen()
+void DIOpen(HWConfig* config)
 {
 	Debug::Report(Debug::Channel::DI, "DVD interface hardware\n");
 
@@ -375,7 +375,7 @@ void DIOpen()
 	// clear registers
 	memset(&di, 0, sizeof(DIControl));
 
-	di.log = true;
+	di.log = config->di_log;
 
 	// Register DDU callbacks
 	DVD::DDU->SetCoverOpenCallback(DIOpenCover);

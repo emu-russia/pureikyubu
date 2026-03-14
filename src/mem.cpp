@@ -164,6 +164,8 @@ void MIOpen(HWConfig* config)
 
 	memset(mi.ram, 0, mi.ramSize);
 
+	mi.log = config->mi_log;
+
 	for (uint32_t ofs = 0; ofs < 0x100; ofs += 2)
 	{
 		PISetTrap(16, 0x0C004000 | ofs, no_read, no_write);
@@ -252,4 +254,10 @@ void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32])
 {
 	memcpy(&mi.ram[mem_addr], burstData, 32);
 	mi.pi_write_counter.cnt++;
+}
+
+void MemRst()
+{
+	// Let's clear the contents of Splash... I guess that will count as a MEM reset :)
+	memset(mi.ram, 0, mi.ramSize);
 }

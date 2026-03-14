@@ -29,8 +29,14 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 #define USER_DSP_IROM	"DSP_IROM"		// DSP IROM
 
 // TODO: Add more
+#define USER_PI_LOG "PI_LOG"			// PI interrupts & fifo
 #define USER_EXI_LOG "EXI_LOG"			// 1: log EXI activities
 #define USER_VI_LOG "VI_LOG"			// do debugger log output
+#define USER_DI_LOG "DI_LOG"
+#define USER_SI_LOG "SI_LOG"
+#define USER_AI_LOG "AI_LOG"
+#define USER_MI_LOG "MI_LOG"
+#define USER_CP_LOG "CP_LOG"
 
 // MC: Names of the keys used to store to configuration
 #define MemcardA_Connected_Key "MemcardA_Connected"

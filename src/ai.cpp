@@ -245,7 +245,7 @@ namespace Flipper
 
 		DVD::DDU->SetStreamCallback(AIStreamCallback);
 
-		ai.log = false;
+		ai.log = config->ai_log;
 
 		PISetTrap(32, AIS_CR, read_cr, write_cr);
 		PISetTrap(32, AIS_VR, read_vr, write_vr);

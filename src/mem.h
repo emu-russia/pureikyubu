@@ -111,6 +111,7 @@ struct MIControl
 {
 	uint8_t* ram;
 	size_t ramSize;
+	bool log;
 
 	uint32_t marr_start[4];
 	uint32_t marr_end[4];
@@ -133,17 +134,17 @@ extern	MIControl mi;
 void    MIOpen(HWConfig* config);
 void	MIClose();
 
+// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
+
 /// <summary>
-/// PI is used to read the cache line.
+/// used by PI to read the cache line.
 /// </summary>
 void MIReadBurst(uint32_t mem_addr, uint8_t burstData[32]);
 
 /// <summary>
-/// PI is used to write data using GFX FIFO or for Cache Store (cache line write).
+/// used by PI to write data using GFX FIFO or for Cache Store (cache line write).
 /// </summary>
 void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32]);
-
-// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
 
 /// <summary>
 /// Used for memory access from the CP side, for Vertex Array.
@@ -164,3 +165,10 @@ void* MIGetMemoryPointerForVI(uint32_t phys_addr);
 /// Used by various IO devices (AI, EXI, SI, DI) for DMA.
 /// </summary>
 void* MIGetMemoryPointerForIO(uint32_t phys_addr);
+
+/// <summary>
+/// The PI requested a MEM subsystem reset by clearing the PI_CONFIG_MEMRSTB bit (active low). Do something similar to a MEM reset.
+/// It's not yet clear exactly what happens when the MEM is reset, but it's clear that various FIFOs and the state machines in the MEM itself are cleared,
+/// and RST is also forwarded to the 1T-SRAM chips to reset the rich internal world of Splash.
+/// </summary>
+void MemRst();

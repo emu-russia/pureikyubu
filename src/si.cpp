@@ -545,12 +545,14 @@ void SIPoll()
 // ---------------------------------------------------------------------------
 // init
 
-void SIOpen()
+void SIOpen(HWConfig* config)
 {
 	Debug::Report(Debug::Channel::SI, "Serial interface driver\n");
 
 	// clear all registers
 	memset(&si, 0, sizeof(SIControl));
+
+	si.log = config->si_log;
 
 	si.pollingTime = Core->GetTicks() + SI_POLLING_INTERVAL;
 
@@ -596,4 +598,8 @@ void SIOpen()
 	{
 		PISetTrap(32, SI_COMBUF | ofs, read_sicom, write_sicom);
 	}
+}
+
+void SIClose()
+{
 }

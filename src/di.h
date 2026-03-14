@@ -60,5 +60,5 @@ struct DIControl
 
 extern  DIControl di;
 
-void    DIOpen();
+void    DIOpen(HWConfig* config);
 void    DIClose();
