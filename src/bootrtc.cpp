@@ -570,6 +570,8 @@ static void SyncTime(bool rtc)
 
 void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 {
+	MemRst();
+
 	// set initial MMU state, according with BS2/Dolphin OS
 	for (int sr = 0; sr < 16; sr++)
 	{

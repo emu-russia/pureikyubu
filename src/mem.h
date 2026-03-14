@@ -164,3 +164,10 @@ void* MIGetMemoryPointerForVI(uint32_t phys_addr);
 /// Used by various IO devices (AI, EXI, SI, DI) for DMA.
 /// </summary>
 void* MIGetMemoryPointerForIO(uint32_t phys_addr);
+
+/// <summary>
+/// The PI requested a MEM subsystem reset by clearing the PI_CONFIG_MEMRSTB bit (active low). Do something similar to a MEM reset.
+/// It's not yet clear exactly what happens when the MEM is reset, but it's clear that various FIFOs and the state machines in the MEM itself are cleared,
+/// and RST is also forwarded to the 1T-SRAM chips to reset the rich internal world of Splash.
+/// </summary>
+void MemRst();
