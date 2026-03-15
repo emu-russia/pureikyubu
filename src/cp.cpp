@@ -1839,6 +1839,8 @@ namespace GX
 
 	void GXCore::GxCommand(FifoProcessor* gxfifo)
 	{
+		GLenum gl_error;
+
 		if(frame_done)
 		{
 			GL_OpenSubsystem();
