@@ -118,13 +118,7 @@ void VIUpdate()
 {
 	if ((Core->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
 	{
-		if ((vi.disp_cr & VI_CR_RST) != 0) {
-			return;
-		}
-
 		vi.vtime = Core->GetTicks();
-
-		uint32_t currentBeamPos = vi.pos.vcount;
 
 		// generate VIINT ?
 		vi.pos.vcount++;
@@ -143,7 +137,7 @@ void VIUpdate()
 			vi.pos.vcount = 1;
 
 			// draw XFB
-			if (vi.xfb && (vi.disp_cr & VI_CR_ENB) != 0)
+			if (vi.xfb)
 			{
 				YUVBlit(vi.xfbbuf, vi.gfxbuf);
 				vi.frames++;
