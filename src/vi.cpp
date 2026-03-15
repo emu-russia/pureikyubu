@@ -111,6 +111,9 @@ void VIUpdate()
 			vi.int0.status = 1;
 			if (vi.int0.enabled)
 			{
+				if (vi.log) {
+					Report(Channel::VI, "VI Int0\n");
+				}
 				PIAssertInt(PI_INTERRUPT_VI);
 			}
 		}
@@ -138,8 +141,7 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 	switch (addr & 0x7f)
 	{
 		case VI_DISP_CR:
-			*reg = vi.disp_cr & ~1;
-			*reg |= vi.videoEncoderFuse & 1;
+			*reg = vi.disp_cr;
 			break;
 		case VI_TFBL:
 			*reg = vi.tfbl >> 16;
@@ -173,6 +175,10 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 
 static void vi_write16(uint32_t addr, uint32_t data)
 {
+	if (vi.log) {
+		Report(Channel::VI, "vi_write16 0x%x = 0x%04x\n", addr & 0x7f, data);
+	}
+
 	switch (addr & 0x7f)
 	{
 		case VI_DISP_CR:
