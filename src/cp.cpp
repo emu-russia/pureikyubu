@@ -162,13 +162,9 @@ namespace GX
 		// Advance read pointer.
 		if (gx->cpregs.cnt != 0 && gx->cpregs.cr & CP_CR_RDEN && (gx->cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
 		{
-			gx->cpregs.sr &= ~CP_SR_RD_IDLE;
-
-			gx->cpregs.sr &= ~CP_SR_CMD_IDLE;
+			gx->cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
 			gx->GXWriteFifo( (uint8_t*)MIGetMemoryPointerForCP(gx->cpregs.rdptr) );
-
-			gx->cpregs.sr |= CP_SR_CMD_IDLE;
 
 			gx->cpregs.rdptr += 32;
 			if (gx->cpregs.rdptr == gx->cpregs.top)
