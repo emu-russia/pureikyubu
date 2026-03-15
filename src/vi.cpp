@@ -137,47 +137,49 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 {
 	switch (addr & 0x7f)
 	{
-		case 0x02:      // display control
+		case VI_DISP_CR:
 			*reg = vi.disp_cr & ~1;
 			*reg |= vi.videoEncoderFuse & 1;
-			return;
-		case 0x1C:      // video buffer hi (TOP)
+			break;
+		case VI_TFBL:
 			*reg = vi.tfbl >> 16;
-			return;
-		case 0x1E:      // video buffer low (TOP)
+			break;
+		case VI_TFBL+2:
 			*reg = (uint16_t)vi.tfbl;
-			return;
-		case 0x24:      // video buffer hi (BOTTOM)
+			break;
+		case VI_BFBL:
 			*reg = vi.bfbl >> 16;
-			return;
-		case 0x26:      // video buffer low (BOTTOM)
+			break;
+		case VI_BFBL+2:
 			*reg = (uint16_t)vi.bfbl;
-			return;
-		case 0x2C:      // beam position hi
+			break;
+		case VI_DISP_POS:
 			*reg = vi.pos.val >> 16;
-			return;
-		case 0x2E:      // beam position low
+			break;
+		case VI_DISP_POS+2:
 			*reg = (uint16_t)vi.pos.val;
-			return;
-		case 0x30:      // int0 control hi
+			break;
+		case VI_INT0:
 			*reg = vi.int0.val >> 16;
-			return;
-		case 0x32:      // int0 control low
+			break;
+		case VI_INT0+2:
 			*reg = (uint16_t)vi.int0.val;
-			return;
+			break;
+		default:
+			*reg = 0;
+			break;
 	}
-	*reg = 0;
 }
 
 static void vi_write16(uint32_t addr, uint32_t data)
 {
 	switch (addr & 0x7f)
 	{
-		case 0x02:      // display control
+		case VI_DISP_CR:
 			vi.disp_cr = (uint16_t)data;
 			vi_set_timing();
-			return;
-		case 0x1C:      // video buffer hi (TOP)
+			break;
+		case VI_TFBL:
 			vi.tfbl &= 0x0000ffff;
 			vi.tfbl |= data << 16;
 			if (vi.log)
@@ -186,8 +188,8 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			vi.tfbl &= 0xffffff;
 			vi.xfbbuf = (uint8_t*)MIGetMemoryPointerForVI(vi.tfbl);
-			return;
-		case 0x1E:      // video buffer low (TOP)
+			break;
+		case VI_TFBL+2:
 			vi.tfbl &= 0xffff0000;
 			vi.tfbl |= (uint16_t)data;
 			if (vi.log)
@@ -196,8 +198,8 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			vi.tfbl &= 0xffffff;
 			vi.xfbbuf = (uint8_t*)MIGetMemoryPointerForVI(vi.tfbl);
-			return;
-		case 0x24:      // video buffer hi (BOTTOM)
+			break;
+		case VI_BFBL:
 			vi.bfbl &= 0x0000ffff;
 			vi.bfbl |= data << 16;
 			vi.bfbl &= 0xffffff;
@@ -207,8 +209,8 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
 			//else vi.xfbbuf = &RAM[vi.bfbl];
-			return;
-		case 0x26:      // video buffer low (BOTTOM)
+			break;
+		case VI_BFBL+2:
 			vi.bfbl &= 0xffff0000;
 			vi.bfbl |= (uint16_t)data;
 			vi.bfbl &= 0xffffff;
@@ -218,79 +220,36 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
 			//else vi.xfbbuf = &RAM[vi.bfbl];
-			return;
-		case 0x30:      // int0 control hi
+			break;
+		case VI_INT0:
 			vi.int0.val &= 0x0000ffff;
 			vi.int0.val |= data << 16;
 			if ((vi.int0.val & VI_INT_INT) == 0)
 			{
 				PIClearInt(PI_INTERRUPT_VI);
 			}
-			return;
-		case 0x32:      // int0 control low
+			break;
+		case VI_INT0+2:
 			vi.int0.val &= 0xffff0000;
 			vi.int0.val |= (uint16_t)data;
-			return;
+			break;
+		default:
+			break;
 	}
 }
 
 static void vi_read32(uint32_t addr, uint32_t* reg)
 {
-	switch (addr & 0x7f)
-	{
-		case 0x00:      // display control
-			*reg = (uint32_t)(vi.disp_cr & ~1);
-			*reg |= vi.videoEncoderFuse & 1;
-			return;
-		case 0x1C:      // video buffer (TOP)
-			*reg = vi.tfbl;
-			return;
-		case 0x24:      // video buffer (BOTTOM)
-			*reg = vi.bfbl;
-			return;
-		case 0x2C:      // beam position
-			*reg = vi.pos.val;
-			return;
-		case 0x30:      // int0 control
-			*reg = vi.int0.val;
-			return;
-	}
-	*reg = 0;
+	uint32_t hi_part, lo_part;
+	vi_read16(addr, &hi_part);
+	vi_read16(addr+2, &lo_part);
+	*reg = (uint32_t)(hi_part << 16) | (uint16_t)lo_part;
 }
 
 static void vi_write32(uint32_t addr, uint32_t data)
 {
-	switch (addr & 0x7f)
-	{
-		case 0x00:      // display control
-			vi.disp_cr = (uint16_t)data;
-			vi_set_timing();
-			return;
-		case 0x1C:      // video buffer (TOP)
-			vi.tfbl = data & 0xffffff;
-			if (vi.log)
-			{
-				Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
-			}
-			vi.xfbbuf = (uint8_t *)MIGetMemoryPointerForVI(vi.tfbl);
-			return;
-		case 0x24:      // video buffer (BOTTOM)
-			vi.bfbl = data & 0xffffff;
-			if (vi.log)
-			{
-				Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
-			}
-			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
-			//else vi.xfbbuf = &RAM[vi.bfbl];
-			return;
-		case 0x30:      // int0 control
-			vi.int0.val = data;
-			if ((vi.int0.val & VI_INT_INT) == 0)
-			{
-				PIClearInt(PI_INTERRUPT_VI);
-			}
-			return;
-	}
+	vi_write16(addr, (uint16_t)(data >> 16));
+	vi_write16(addr+2, (uint16_t)data);
 }
 
 // show VI info

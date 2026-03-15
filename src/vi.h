@@ -2,41 +2,41 @@
 
 // VI registers (can be accessed from any offset and by any size, 2 or 4 bytes)
 
-#define VI_VERT_TIMING          0x0C002000      // Vertical Timing Register
-#define VI_DISP_CR              0x0C002002      // Display Configuration Register
-#define VI_HORZ_TIMING0         0x0C002004      // Horizontal Timing 0 Register
-#define VI_HORZ_TIMING1         0x0C002008      // Horizontal Timing 1 Register
-#define VI_VERT_TIMING_ODD      0x0C00200C      // Odd Field Vertical Timing Register
-#define VI_VERT_TIMING_EVEN     0x0C002010      // Even Field Vertical Timing Register
-#define VI_BBINT_ODD            0x0C002014      // Odd Field Burst Blanking Interval Register
-#define VI_BBINT_EVEN           0x0C002018      // Even Field Burst Blanking Interval Register
-#define VI_TFBL                 0x0C00201C      // Top Field Base Register L
-#define VI_TFBR                 0x0C002020      // Top Field Base Register R
-#define VI_BFBL                 0x0C002024      // Bottom Field Base Register L
-#define VI_BFBR                 0x0C002028      // Bottom Field Base Register R
-#define VI_DISP_POS             0x0C00202C      // Display Position Register   (Read Only ⚠️)
-#define VI_INT0                 0x0C002030      // Display Interrupt Register 0
-#define VI_INT1                 0x0C002034      // Display Interrupt Register 1
-#define VI_INT2                 0x0C002038      // Display Interrupt Register 2
-#define VI_INT3                 0x0C00203C      // Display Interrupt Register 3
-#define VI_DISP_LATCH0			0x0C002040		// Display Latch Register 0
-#define VI_DISP_LATCH1			0x0C002044		// Display Latch Register 1
-#define VI_PICT_CR				0x0C002048		// Picture Configuration Register
-#define VI_HORZ_SCALE			0x0C00204A		// Horizontal Scale Register
-#define VI_TAP0                 0x0C00204C      // Filter Coefficient Table 0
-#define VI_TAP1                 0x0C002050      // Filter Coefficient Table 1
-#define VI_TAP2                 0x0C002054      // Filter Coefficient Table 2
-#define VI_TAP3                 0x0C002058      // Filter Coefficient Table 3
-#define VI_TAP4                 0x0C00205C      // Filter Coefficient Table 4
-#define VI_TAP5                 0x0C002060      // Filter Coefficient Table 5
-#define VI_TAP6                 0x0C002064      // Filter Coefficient Table 6
-#define VI_RESERVED_68			0x0C002068		// Reserved
-#define VI_OUT_POL				0x0C00206A		// Output Polarity Register
-#define VI_CLK_SEL              0x0C00206C      // VI Clock Select Register
-#define VI_DTV                  0x0C00206E      // VI DTV Status Register  (Read Only ⚠️)
-#define VI_SCALE_WIDTH			0x0C002070		// Scaling Width Register
-#define VI_BRDR_HBE             0x0C002072      // Border HBE
-#define VI_BRDR_HBS             0x0C002074      // Border HBS
+#define VI_VERT_TIMING          0x00	// Vertical Timing Register
+#define VI_DISP_CR              0x02	// Display Configuration Register
+#define VI_HORZ_TIMING0         0x04	// Horizontal Timing 0 Register
+#define VI_HORZ_TIMING1         0x08	// Horizontal Timing 1 Register
+#define VI_VERT_TIMING_ODD      0x0C	// Odd Field Vertical Timing Register
+#define VI_VERT_TIMING_EVEN     0x10	// Even Field Vertical Timing Register
+#define VI_BBINT_ODD            0x14	// Odd Field Burst Blanking Interval Register
+#define VI_BBINT_EVEN           0x18	// Even Field Burst Blanking Interval Register
+#define VI_TFBL                 0x1C	// Top Field Base Register L
+#define VI_TFBR                 0x20	// Top Field Base Register R
+#define VI_BFBL                 0x24	// Bottom Field Base Register L
+#define VI_BFBR                 0x28	// Bottom Field Base Register R
+#define VI_DISP_POS             0x2C	// Display Position Register   (Read Only ⚠️)
+#define VI_INT0                 0x30	// Display Interrupt Register 0
+#define VI_INT1                 0x34	// Display Interrupt Register 1
+#define VI_INT2                 0x38	// Display Interrupt Register 2
+#define VI_INT3                 0x3C	// Display Interrupt Register 3
+#define VI_DISP_LATCH0			0x40	// Display Latch Register 0
+#define VI_DISP_LATCH1			0x44	// Display Latch Register 1
+#define VI_PICT_CR				0x48	// Picture Configuration Register
+#define VI_HORZ_SCALE			0x4A	// Horizontal Scale Register
+#define VI_TAP0                 0x4C	// Filter Coefficient Table 0
+#define VI_TAP1                 0x50	// Filter Coefficient Table 1
+#define VI_TAP2                 0x54	// Filter Coefficient Table 2
+#define VI_TAP3                 0x58	// Filter Coefficient Table 3
+#define VI_TAP4                 0x5C	// Filter Coefficient Table 4
+#define VI_TAP5                 0x60	// Filter Coefficient Table 5
+#define VI_TAP6                 0x64	// Filter Coefficient Table 6
+#define VI_RESERVED_68			0x68	// Reserved
+#define VI_OUT_POL				0x6A	// Output Polarity Register
+#define VI_CLK_SEL              0x6C	// VI Clock Select Register
+#define VI_DTV                  0x6E	// VI DTV Status Register  (Read Only ⚠️)
+#define VI_SCALE_WIDTH			0x70	// Scaling Width Register
+#define VI_BRDR_HBE             0x72	// Border HBE
+#define VI_BRDR_HBS             0x74	// Border HBS
 
 // Display Configuration Register mask (for 16-bit register)
 #define VI_CR_ENB       0x0001          // enable the video timing generation
