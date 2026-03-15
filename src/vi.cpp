@@ -26,22 +26,6 @@
 	progressive = double-strike = non-interlaced;
 	"field" is the tv-frame as in "odd- and even- field" makes one frame
 
-	Registers
-	---------
-
-	VI registers block takes 0x76 bytes (from reversing of VI library) :
-
-	static struct
-	{
-		uint16_t         regs[59];       // regs are copied to shdwRegs
-		uint16_t         shdwRegs[59];   // shdwRegs are copied to hardware registers
-		VIHorVer    HorVer;         // used for temporary calculations
-	} vi;
-
-	useful VI regs : VI_DISP_CR, VI_TFBL, VI_DISP_POS, VI_INT0.
-	dont care about others. Nintendo promised to add HCOUNT (line) interrupt,
-	but until it is not used by IPL, we will not use it too.
-
 --------------------------------------------------------------------------- */
 
 using namespace Debug;
@@ -113,7 +97,7 @@ static void vi_set_timing()
 	}
 }
 
-// step line counter(s), update GUI and poll controller
+// step position counter(s), update XFB
 void VIUpdate()
 {
 	if ((Core->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))

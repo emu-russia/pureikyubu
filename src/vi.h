@@ -97,7 +97,7 @@ struct VIControl
 
 	volatile uint32_t    mode;       // see VI modes
 	bool        inter;      // 1, if interlace
-	int			vcount;		// number of lines for single frame
+	uint32_t	vcount;		// number of lines for single frame
 	int64_t     vtime;      // frame timer
 	int64_t     one_frame;  // frame length in CPU timer ticks
 
