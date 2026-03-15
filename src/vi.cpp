@@ -26,22 +26,6 @@
 	progressive = double-strike = non-interlaced;
 	"field" is the tv-frame as in "odd- and even- field" makes one frame
 
-	Registers
-	---------
-
-	VI registers block takes 0x76 bytes (from reversing of VI library) :
-
-	static struct
-	{
-		uint16_t         regs[59];       // regs are copied to shdwRegs
-		uint16_t         shdwRegs[59];   // shdwRegs are copied to hardware registers
-		VIHorVer    HorVer;         // used for temporary calculations
-	} vi;
-
-	useful VI regs : VI_DISP_CR, VI_TFBL, VI_DISP_POS, VI_INT0.
-	dont care about others. Nintendo promised to add HCOUNT (line) interrupt,
-	but until it is not used by IPL, we will not use it too.
-
 --------------------------------------------------------------------------- */
 
 using namespace Debug;
@@ -113,31 +97,31 @@ static void vi_set_timing()
 	}
 }
 
-// step line counter(s), update GUI and poll controller
+// step position counter(s), update XFB
 void VIUpdate()
 {
 	if ((Core->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
 	{
 		vi.vtime = Core->GetTicks();
 
-		uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
-		uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
-
 		// generate VIINT ?
-		currentBeamPos++;
-		if (currentBeamPos == triggerBeamPos)
+		vi.pos.vcount++;
+		if (vi.pos.vcount == vi.int0.vcount)
 		{
-			vi.int0 |= VI_INT_INT;
-			if (vi.int0 & VI_INT_ENB)
+			vi.int0.status = 1;
+			if (vi.int0.enabled)
 			{
+				if (vi.log) {
+					Report(Channel::VI, "VI Int0\n");
+				}
 				PIAssertInt(PI_INTERRUPT_VI);
 			}
 		}
 
 		// vertical counter
-		if (currentBeamPos >= vi.vcount)
+		if (vi.pos.vcount >= vi.vcount)
 		{
-			currentBeamPos = 1;
+			vi.pos.vcount = 1;
 
 			// draw XFB
 			if (vi.xfb)
@@ -146,9 +130,6 @@ void VIUpdate()
 				vi.frames++;
 			}
 		}
-
-		vi.pos &= ~0x07ff0000;
-		vi.pos |= (currentBeamPos & 0x7ff) << 16;
 	}
 }
 
@@ -159,47 +140,52 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 {
 	switch (addr & 0x7f)
 	{
-		case 0x02:      // display control
-			*reg = vi.disp_cr & ~1;
-			*reg |= vi.videoEncoderFuse & 1;
-			return;
-		case 0x1C:      // video buffer hi (TOP)
+		case VI_DISP_CR:
+			*reg = vi.disp_cr;
+			break;
+		case VI_TFBL:
 			*reg = vi.tfbl >> 16;
-			return;
-		case 0x1E:      // video buffer low (TOP)
+			break;
+		case VI_TFBL+2:
 			*reg = (uint16_t)vi.tfbl;
-			return;
-		case 0x24:      // video buffer hi (BOTTOM)
+			break;
+		case VI_BFBL:
 			*reg = vi.bfbl >> 16;
-			return;
-		case 0x26:      // video buffer low (BOTTOM)
+			break;
+		case VI_BFBL+2:
 			*reg = (uint16_t)vi.bfbl;
-			return;
-		case 0x2C:      // beam position hi
-			*reg = vi.pos >> 16;
-			return;
-		case 0x2E:      // beam position low
-			*reg = (uint16_t)vi.pos;
-			return;
-		case 0x30:      // int0 control hi
-			*reg = vi.int0 >> 16;
-			return;
-		case 0x32:      // int0 control low
-			*reg = (uint16_t)vi.int0;
-			return;
+			break;
+		case VI_DISP_POS:
+			*reg = vi.pos.val >> 16;
+			break;
+		case VI_DISP_POS+2:
+			*reg = (uint16_t)vi.pos.val;
+			break;
+		case VI_INT0:
+			*reg = vi.int0.val >> 16;
+			break;
+		case VI_INT0+2:
+			*reg = (uint16_t)vi.int0.val;
+			break;
+		default:
+			*reg = 0;
+			break;
 	}
-	*reg = 0;
 }
 
 static void vi_write16(uint32_t addr, uint32_t data)
 {
+	if (vi.log) {
+		Report(Channel::VI, "vi_write16 0x%x = 0x%04x\n", addr & 0x7f, data);
+	}
+
 	switch (addr & 0x7f)
 	{
-		case 0x02:      // display control
+		case VI_DISP_CR:
 			vi.disp_cr = (uint16_t)data;
 			vi_set_timing();
-			return;
-		case 0x1C:      // video buffer hi (TOP)
+			break;
+		case VI_TFBL:
 			vi.tfbl &= 0x0000ffff;
 			vi.tfbl |= data << 16;
 			if (vi.log)
@@ -208,8 +194,8 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			vi.tfbl &= 0xffffff;
 			vi.xfbbuf = (uint8_t*)MIGetMemoryPointerForVI(vi.tfbl);
-			return;
-		case 0x1E:      // video buffer low (TOP)
+			break;
+		case VI_TFBL+2:
 			vi.tfbl &= 0xffff0000;
 			vi.tfbl |= (uint16_t)data;
 			if (vi.log)
@@ -218,8 +204,8 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			vi.tfbl &= 0xffffff;
 			vi.xfbbuf = (uint8_t*)MIGetMemoryPointerForVI(vi.tfbl);
-			return;
-		case 0x24:      // video buffer hi (BOTTOM)
+			break;
+		case VI_BFBL:
 			vi.bfbl &= 0x0000ffff;
 			vi.bfbl |= data << 16;
 			vi.bfbl &= 0xffffff;
@@ -229,8 +215,8 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
 			//else vi.xfbbuf = &RAM[vi.bfbl];
-			return;
-		case 0x26:      // video buffer low (BOTTOM)
+			break;
+		case VI_BFBL+2:
 			vi.bfbl &= 0xffff0000;
 			vi.bfbl |= (uint16_t)data;
 			vi.bfbl &= 0xffffff;
@@ -240,102 +226,45 @@ static void vi_write16(uint32_t addr, uint32_t data)
 			}
 			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
 			//else vi.xfbbuf = &RAM[vi.bfbl];
-			return;
-		case 0x2C:      // beam position hi
-			vi.pos &= 0x0000ffff;
-			vi.pos |= data << 16;
-			return;
-		case 0x2E:      // beam position low
-			vi.pos &= 0xffff0000;
-			vi.pos |= (uint16_t)data;
-			return;
-		case 0x30:      // int0 control hi
-			vi.int0 &= 0x0000ffff;
-			vi.int0 |= data << 16;
-			if ((vi.int0 & VI_INT_INT) == 0)
+			break;
+		case VI_INT0:
+			vi.int0.val &= 0x0000ffff;
+			vi.int0.val |= data << 16;
+			if ((vi.int0.val & VI_INT_INT) == 0)
 			{
 				PIClearInt(PI_INTERRUPT_VI);
 			}
-			return;
-		case 0x32:      // int0 control low
-			vi.int0 &= 0xffff0000;
-			vi.int0 |= (uint16_t)data;
-			return;
+			break;
+		case VI_INT0+2:
+			vi.int0.val &= 0xffff0000;
+			vi.int0.val |= (uint16_t)data;
+			break;
+		default:
+			break;
 	}
 }
 
 static void vi_read32(uint32_t addr, uint32_t* reg)
 {
-	switch (addr & 0x7f)
-	{
-		case 0x00:      // display control
-			*reg = (uint32_t)(vi.disp_cr & ~1);
-			*reg |= vi.videoEncoderFuse & 1;
-			return;
-		case 0x1C:      // video buffer (TOP)
-			*reg = vi.tfbl;
-			return;
-		case 0x24:      // video buffer (BOTTOM)
-			*reg = vi.bfbl;
-			return;
-		case 0x2C:      // beam position
-			*reg = vi.pos;
-			return;
-		case 0x30:      // int0 control
-			*reg = vi.int0;
-			return;
-	}
-	*reg = 0;
+	uint32_t hi_part, lo_part;
+	vi_read16(addr, &hi_part);
+	vi_read16(addr+2, &lo_part);
+	*reg = (uint32_t)(hi_part << 16) | (uint16_t)lo_part;
 }
 
 static void vi_write32(uint32_t addr, uint32_t data)
 {
-	switch (addr & 0x7f)
-	{
-		case 0x00:      // display control
-			vi.disp_cr = (uint16_t)data;
-			vi_set_timing();
-			return;
-		case 0x1C:      // video buffer (TOP)
-			vi.tfbl = data & 0xffffff;
-			if (vi.log)
-			{
-				Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
-			}
-			vi.xfbbuf = (uint8_t *)MIGetMemoryPointerForVI(vi.tfbl);
-			return;
-		case 0x24:      // video buffer (BOTTOM)
-			vi.bfbl = data & 0xffffff;
-			if (vi.log)
-			{
-				Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
-			}
-			//if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
-			//else vi.xfbbuf = &RAM[vi.bfbl];
-			return;
-		case 0x2C:      // beam position
-			vi.pos = data;
-			return;
-		case 0x30:      // int0 control
-			vi.int0 = data;
-			if ((vi.int0 & VI_INT_INT) == 0)
-			{
-				PIClearInt(PI_INTERRUPT_VI);
-			}
-			return;
-	}
+	vi_write16(addr, (uint16_t)(data >> 16));
+	vi_write16(addr+2, (uint16_t)data);
 }
 
 // show VI info
 void VIStats()
 {
-	uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
-	uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
-
-	Report(Channel::Norm, "    VI interrupt : [%i x x x]\n", vi.int0 >> 31);
-	Report(Channel::Norm, "    VI int mask  : [%i x x x]\n", (vi.int0 >> 28) & 1);
-	Report(Channel::Norm, "    VI int pos   : %i == %i, x == x, x == x, x == x (line)\n", currentBeamPos, triggerBeamPos);
-	Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), enabled: %i\n", vi.tfbl, vi.bfbl, vi.xfb);
+	Report(Channel::Norm, "    VI interrupt : [%d x x x]\n", vi.int0.status);
+	Report(Channel::Norm, "    VI int mask  : [%d x x x]\n", vi.int0.enabled);
+	Report(Channel::Norm, "    VI int pos   : %d == %d, x == x, x == x, x == x (line)\n", vi.pos.vcount, vi.int0.vcount);
+	Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), enabled: %d\n", vi.tfbl, vi.bfbl, vi.xfb);
 }
 
 // ---------------------------------------------------------------------------
@@ -376,8 +305,8 @@ void VIOpen(HWConfig* config)
 	// set traps to VI registers
 	for (uint32_t ofs = 0; ofs < 0x80; ofs++)
 	{
-		if ((ofs % 2) == 0) PISetTrap(16, 0x0C002000 + ofs, vi_read16, vi_write16);
-		if ((ofs % 4) == 0) PISetTrap(32, 0x0C002000 + ofs, vi_read32, vi_write32);
+		if ((ofs % 2) == 0) PISetTrap(16, PI_REGSPACE_VI + ofs, vi_read16, vi_write16);
+		if ((ofs % 4) == 0) PISetTrap(32, PI_REGSPACE_VI + ofs, vi_read32, vi_write32);
 	}
 }
 
@@ -392,4 +321,19 @@ void VIClose()
 void VISetEncoderFuse(int value)
 {
 	vi.videoEncoderFuse = value;
+}
+
+void VIGunTrigger(int num)
+{
+	switch (num & 1) {
+		case 0:
+			vi.latch0.val = vi.pos.val;
+			vi.latch0.status = 1;
+			break;
+
+		case 1:
+			vi.latch1.val = vi.pos.val;
+			vi.latch1.status = 1;
+			break;
+	}
 }

@@ -516,7 +516,7 @@ namespace GX
 		FifoProcessor(GXCore* gx, uint8_t* fifoPtr, size_t size);	// Call FIFO
 		~FifoProcessor();
 
-		void WriteBytes(uint8_t dataPtr[32]);
+		void PushBytes(uint8_t dataPtr[32]);
 
 		void Reset();
 	};

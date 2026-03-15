@@ -18,7 +18,6 @@
 #define PI_REGSPACE_GX_FIFO     0x0C00'8000         // GX streaming fifo
 #define PI_MEMSPACE_BOOTROM     0xFFF0'0000
 
-#define PI_REG8_TO_SPACE(space, id)     (space | ((uint32_t)(id)))
 #define PI_REG16_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 1))
 #define PI_REG32_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 2))
 

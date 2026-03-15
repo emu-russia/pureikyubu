@@ -819,7 +819,6 @@ namespace DSP
 		if (dsp->IsRunning())
 		{
 			Report(Channel::DSP, "It is impossible while running DSP thread.\n");
-			_TE();
 			return;
 		}
 
