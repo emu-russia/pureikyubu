@@ -114,7 +114,7 @@ namespace GX
 
 	void GXCore::GXWriteFifo(uint8_t dataPtr[32])
 	{
-		fifo->WriteBytes(dataPtr);
+		fifo->PushBytes(dataPtr);
 
 		while (fifo->EnoughToExecute())
 		{
@@ -143,7 +143,7 @@ namespace GX
 			gx->cpregs.cnt = (gx->cpregs.top - gx->cpregs.rdptr) + (gx->cpregs.wrptr - gx->cpregs.base);
 		}
 
-		// Watermarks logic. Active only in linked-mode.
+		// Watermarks logic. Active only in linked-mode (?).
 		if (gx->cpregs.cnt > gx->cpregs.himark)
 		{
 			gx->CP_OVF();
@@ -154,7 +154,7 @@ namespace GX
 		}
 
 		// Breakpoint
-		if ((gx->cpregs.rdptr & ~0x1f) == (gx->cpregs.bpptr & ~0x1f) && (gx->cpregs.cr & CP_CR_BPEN))
+		if ((gx->cpregs.rdptr & ~0x1f) == (gx->cpregs.bpptr & ~0x1f))
 		{
 			gx->CP_BREAK();
 		}
@@ -166,7 +166,7 @@ namespace GX
 
 			gx->cpregs.sr &= ~CP_SR_CMD_IDLE;
 
-			gx->GXWriteFifo(&mi.ram[gx->cpregs.rdptr & RAMMASK]);
+			gx->GXWriteFifo( (uint8_t*)MIGetMemoryPointerForCP(gx->cpregs.rdptr) );
 
 			gx->cpregs.sr |= CP_SR_CMD_IDLE;
 
@@ -628,7 +628,7 @@ namespace GX
 		readPtr = writePtr = 0;
 	}
 
-	void FifoProcessor::WriteBytes(uint8_t dataPtr[32])
+	void FifoProcessor::PushBytes(uint8_t dataPtr[32])
 	{
 		lock.Lock();
 
