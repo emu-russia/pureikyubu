@@ -1,5 +1,7 @@
 #pragma once
 
+#define VI_REGS_BASE	0x0C002000
+
 // VI registers (can be accessed from any offset and by any size, 2 or 4 bytes)
 
 #define VI_VERT_TIMING          0x00	// Vertical Timing Register
