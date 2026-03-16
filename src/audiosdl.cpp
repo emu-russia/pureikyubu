@@ -201,7 +201,7 @@ namespace Flipper
     void AudioRing::DumpRing()
     {
         char filename[0x100] = { 0, };
-        sprintf_s(filename, sizeof(filename), "Data\\AXRing_%04zu.bin", frameCounter);
+        sprintf(filename, "./Data/AXRing_%04zu.bin", frameCounter);
 
         Report(Channel::AX, "frame: %zu, readPtr: %zu, writePtr: %zu, size: %zu\n",
             frameCounter, ringReadPtr, ringWritePtr, CurrentSize());
