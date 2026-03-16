@@ -337,16 +337,6 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 // default hardware R/W operations.
 // emulation is halted on unknown register access.
 
-static void def_hw_read8(uint32_t addr, uint32_t* reg)
-{
-	Halt("PI: Unhandled HW access:  R8 %08X\n", addr);
-}
-
-static void def_hw_write8(uint32_t addr, uint32_t data)
-{
-	Halt("PI: Unhandled HW access:  W8 %08X = %02X\n", addr, (uint8_t)data);
-}
-
 static void def_hw_read16(uint32_t addr, uint32_t* reg)
 {
 	Halt("PI: Unhandled HW access: R16 %08X\n", addr);
@@ -721,7 +711,7 @@ static void PI_CPRegWrite(uint32_t addr, uint32_t data)
 // show PI fifo configuration
 void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value)
 {
-	Report(Channel::Norm, "PI fifo configuration\n");
+	Report(Channel::Norm, "PI fifo configuration (pc=0x%08X)\n", CallJdi("GetPc")->value.AsUint32);
 	if (id == PI_CPMappedRegister::PI_CPBAS_ID) {
 		Report(Channel::Norm, "   base :0x%08X <- 0x%08X\n", pi.cp_base, new_value);
 	}
