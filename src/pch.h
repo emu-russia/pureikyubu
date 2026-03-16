@@ -68,10 +68,10 @@
 
 #include "flipper.h"
 
-#ifdef _WINDOWS
-#include "audio.h"
+#if defined(GFX_USE_SDL_WINDOW) || defined(_LINUX)
+#include "audiosdl.h"
 #else
-#include "audionull.h"
+#include "audio.h"
 #endif
 #include "video.h"
 

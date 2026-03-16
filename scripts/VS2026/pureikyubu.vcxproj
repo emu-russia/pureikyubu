@@ -53,6 +53,7 @@
     <ClInclude Include="..\..\src\ai.h" />
     <ClInclude Include="..\..\src\audio.h" />
     <ClInclude Include="..\..\src\audionull.h" />
+    <ClInclude Include="..\..\src\audiosdl.h" />
     <ClInclude Include="..\..\src\bootrtc.h" />
     <ClInclude Include="..\..\src\config.h" />
     <ClInclude Include="..\..\src\cp.h" />
@@ -107,7 +108,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ai.cpp" />
-    <ClCompile Include="..\..\src\audio.cpp" />
+    <ClCompile Include="..\..\src\audio.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release SDL|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\audionull.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">true</ExcludedFromBuild>
@@ -117,6 +123,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug SDL|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audiosdl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\src\bootrtc.cpp" />
     <ClCompile Include="..\..\src\config.cpp" />

@@ -1839,6 +1839,10 @@ namespace GX
 
 	void GXCore::GxCommand(FifoProcessor* gxfifo)
 	{
+#if GFX_BLACKJACK_AND_SHADERS
+		GLenum gl_error;
+#endif
+
 		if(frame_done)
 		{
 			GL_OpenSubsystem();

@@ -26,7 +26,7 @@ add_compile_options(-lstdc++fs)
 
 add_executable (pureikyubu 
 	src/ai.cpp
-	src/audionull.cpp
+	src/audiosdl.cpp
 	src/bootrtc.cpp
 	src/config.cpp
 	src/cp.cpp
