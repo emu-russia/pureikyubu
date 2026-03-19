@@ -34,7 +34,7 @@ SIState si;
 // data packet, written back to the communication buffer
 //
 
-static void SICommand(int chan, uint8_t* ptr)
+static void SICommand(int chan, int outlen, int inlen, uint8_t* ptr)
 {
 	uint8_t  cmd = ptr[0];
 
@@ -96,57 +96,83 @@ static void SIClearInterrupt()
 // command output buffers are read/write
 //
 
-static void si_wr_out(int chan, uint32_t mask, uint32_t data)
+static void si_wr_out_hi(int chan, uint32_t data)
 {
-	si.shdw[chan] = data;
+	si.shdw[chan] &= 0x0000ffff;
+	si.shdw[chan] |= data << 16;
+}
+
+static void si_wr_out_lo(int chan, uint32_t mask, uint32_t data)
+{
+	si.shdw[chan] &= 0xffff0000;
+	si.shdw[chan] |= (uint16_t)data;
 	SI_SR_REG |= mask;
 
 	// control motor
-	if (data == 0x00400000) PADSetRumble(chan, PAD_MOTOR_STOP);
-	else if (data == 0x00400001) PADSetRumble(chan, PAD_MOTOR_RUMBLE);
-	else if (data == 0x00400002) PADSetRumble(chan, PAD_MOTOR_STOP_HARD);
+	if (si.shdw[chan] == 0x00400000) PADSetRumble(chan, PAD_MOTOR_STOP);
+	else if (si.shdw[chan] == 0x00400001) PADSetRumble(chan, PAD_MOTOR_RUMBLE);
+	else if (si.shdw[chan] == 0x00400002) PADSetRumble(chan, PAD_MOTOR_STOP_HARD);
 }
 
 /* ******* CHAN 0 ******* */
 
-static void si_wr_out0(uint32_t addr, uint32_t data) { si_wr_out(0, SI_SR_WRST0, data); }
-static void si_rd_out0(uint32_t addr, uint32_t* reg) { *reg = si.out[0]; }
+static void si_wr_out0_hi(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_hi(0, data); }
+static void si_wr_out0_lo(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_lo(0, SI_SR_WRST0, data); }
+static void si_rd_out0_hi(uint32_t addr, uint32_t* reg, void* ctx) { *reg = si.out[0] >> 16; }
+static void si_rd_out0_lo(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)si.out[0]; }
 
 /* ******* CHAN 1 ******* */
 
-static void si_wr_out1(uint32_t addr, uint32_t data) { si_wr_out(1, SI_SR_WRST1, data); }
-static void si_rd_out1(uint32_t addr, uint32_t* reg) { *reg = si.out[1]; }
+static void si_wr_out1_hi(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_hi(1, data); }
+static void si_wr_out1_lo(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_lo(1, SI_SR_WRST1, data); }
+static void si_rd_out1_hi(uint32_t addr, uint32_t* reg, void* ctx) { *reg = si.out[1] >> 16; }
+static void si_rd_out1_lo(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)si.out[1]; }
 
 /* ******* CHAN 2 ******* */
 
-static void si_wr_out2(uint32_t addr, uint32_t data) { si_wr_out(2, SI_SR_WRST2, data); }
-static void si_rd_out2(uint32_t addr, uint32_t* reg) { *reg = si.out[2]; }
+static void si_wr_out2_hi(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_hi(2, data); }
+static void si_wr_out2_lo(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_lo(2, SI_SR_WRST2, data); }
+static void si_rd_out2_hi(uint32_t addr, uint32_t* reg, void* ctx) { *reg = si.out[2] >> 16; }
+static void si_rd_out2_lo(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)si.out[2]; }
 
 /* ******* CHAN 3 ******* */
 
-static void si_wr_out3(uint32_t addr, uint32_t data) { si_wr_out(3, SI_SR_WRST3, data); }
-static void si_rd_out3(uint32_t addr, uint32_t* reg) { *reg = si.out[3]; }
+static void si_wr_out3_hi(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_hi(3, data); }
+static void si_wr_out3_lo(uint32_t addr, uint32_t data, void* ctx) { si_wr_out_lo(3, SI_SR_WRST3, data); }
+static void si_rd_out3_hi(uint32_t addr, uint32_t* reg, void* ctx) { *reg = si.out[3] >> 16; }
+static void si_rd_out3_lo(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)si.out[3]; }
 
 //
 // input buffers are read only
 //
 
-static void si_inh(int chan, uint32_t mask, uint32_t* reg)          // high
+// The names are a bit silly here. The registers themselves are called High and Low. We also refer to the higher and lower halves, which are also called hi and lo.
+
+static void si_inh_hi(int chan, uint32_t* reg)          // high [31:16]
+{
+	uint32_t res;
+
+	// return swapped joypad values
+	res = si.pad[chan].button;
+
+	*reg = res;
+}
+
+static void si_inh_lo(int chan, uint32_t mask, uint32_t* reg)          // high [15:0]
 {
 	uint32_t res;
 
 	// return swapped joypad values
 	res = (uint8_t)si.pad[chan].stickY;
 	res |= (uint8_t)si.pad[chan].stickX << 8;
-	res |= si.pad[chan].button << 16;
 
 	// clear RDST mask and interrupt
 	SI_SR_REG &= ~mask;
 	if ((SI_SR_REG &
 		(SI_SR_RDST0 |
-		SI_SR_RDST1 |
-		SI_SR_RDST2 |
-		SI_SR_RDST3)) == 0)
+		 SI_SR_RDST1 |
+		 SI_SR_RDST2 |
+		 SI_SR_RDST3)  ) == 0)
 	{
 		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
 		SIClearInterrupt();
@@ -155,38 +181,55 @@ static void si_inh(int chan, uint32_t mask, uint32_t* reg)          // high
 	*reg = res;
 }
 
-static void si_inl(int chan, uint32_t* reg)          // low
+static void si_inl_hi(int chan, uint32_t* reg)          // low [31:16]
+{
+	uint32_t res;
+
+	// return swapped joypad values
+	res = (uint8_t)si.pad[chan].substickY;
+	res |= (uint8_t)si.pad[chan].substickX << 8;
+
+	*reg = res;
+}
+
+static void si_inl_lo(int chan, uint32_t* reg)          // low [15:0]
 {
 	uint32_t res;
 
 	// return swapped joypad values
 	res = (uint8_t)si.pad[chan].triggerRight;
 	res |= (uint8_t)si.pad[chan].triggerLeft << 8;
-	res |= (uint8_t)si.pad[chan].substickY << 16;
-	res |= (uint8_t)si.pad[chan].substickX << 24;
 
 	*reg = res;
 }
 
 /* ******* CHAN 0 ******* */
 
-static void si_inh0(uint32_t addr, uint32_t* reg) { si_inh(0, SI_SR_RDST0, reg); }
-static void si_inl0(uint32_t addr, uint32_t* reg) { si_inl(0, reg); }
+static void si_inh0_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_hi(0, reg); }
+static void si_inh0_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_lo(0, SI_SR_RDST0, reg); }
+static void si_inl0_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_hi(0, reg); }
+static void si_inl0_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_lo(0, reg); }
 
 /* ******* CHAN 1 ******* */
 
-static void si_inh1(uint32_t addr, uint32_t* reg) { si_inh(1, SI_SR_RDST1, reg); }
-static void si_inl1(uint32_t addr, uint32_t* reg) { si_inl(1, reg); }
+static void si_inh1_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_hi(1, reg); }
+static void si_inh1_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_lo(1, SI_SR_RDST1, reg); }
+static void si_inl1_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_hi(1, reg); }
+static void si_inl1_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_lo(1, reg); }
 
 /* ******* CHAN 2 ******* */
 
-static void si_inh2(uint32_t addr, uint32_t* reg) { si_inh(2, SI_SR_RDST2, reg); }
-static void si_inl2(uint32_t addr, uint32_t* reg) { si_inl(2, reg); }
+static void si_inh2_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_hi(2, reg); }
+static void si_inh2_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_lo(2, SI_SR_RDST2, reg); }
+static void si_inl2_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_hi(2, reg); }
+static void si_inl2_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_lo(2, reg); }
 
 /* ******* CHAN 3 ******* */
 
-static void si_inh3(uint32_t addr, uint32_t* reg) { si_inh(3, SI_SR_RDST3, reg); }
-static void si_inl3(uint32_t addr, uint32_t* reg) { si_inl(3, reg); }
+static void si_inh3_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_hi(3, reg); }
+static void si_inh3_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inh_lo(3, SI_SR_RDST3, reg); }
+static void si_inl3_hi(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_hi(3, reg); }
+static void si_inl3_lo(uint32_t addr, uint32_t* reg, void* ctx) { si_inl_lo(3, reg); }
 
 //
 // communication buffer access
@@ -215,15 +258,25 @@ static void read_sicom(uint32_t addr, uint32_t* reg, void* ctx)
 // polling register
 //
 
-static void write_poll(uint32_t addr, uint32_t data) { SI_POLL_REG = data; }
-static void read_poll(uint32_t addr, uint32_t* reg) { *reg = SI_POLL_REG; }
+static void write_poll_hi(uint32_t addr, uint32_t data, void* ctx) {
+	SI_POLL_REG &= 0x0000ffff;
+	SI_POLL_REG |= data << 16;
+}
+static void write_poll_lo(uint32_t addr, uint32_t data, void* ctx) {
+	SI_POLL_REG &= 0xffff0000;
+	SI_POLL_REG |= data;
+}
+static void read_poll_hi(uint32_t addr, uint32_t* reg, void* ctx) { *reg = SI_POLL_REG >> 16; }
+static void read_poll_lo(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)SI_POLL_REG; }
 
 //
 // communication control/status 
 //
 
-static void write_commcsr(uint32_t addr, uint32_t data)
+static void write_commcsr_hi(uint32_t addr, uint32_t data, void* ctx)
 {
+	data <<= 16;
+
 	// clear incoming interrupt
 	if (data & SI_COMCSR_TCINT)
 	{
@@ -239,23 +292,31 @@ static void write_commcsr(uint32_t addr, uint32_t data)
 	if (data & SI_COMCSR_TCINTMSK) SI_COMCSR_REG |= SI_COMCSR_TCINTMSK;
 	else SI_COMCSR_REG &= ~SI_COMCSR_TCINTMSK;
 
+	int outlen = SI_COMCSR_OUTLEN(data);
+	SI_COMCSR_REG &= ~SI_COMCSR_OUTLEN_MASK;
+	SI_COMCSR_REG |= (outlen << 16);
+}
+
+static void write_commcsr_lo(uint32_t addr, uint32_t data, void* ctx)
+{
 	// commands are executed immediately
 	if (data & SI_COMCSR_TSTART)
 	{
 		// select channel
 		int chan = SI_COMCSR_CHAN(data);
+		SI_COMCSR_REG &= ~SI_COMCSR_CHAN_MASK;
 		SI_COMCSR_REG |= (chan << 1);
 
 		// setup in/out length
 		int inlen = SI_COMCSR_INLEN(data);
+		SI_COMCSR_REG &= ~SI_COMCSR_INLEN_MASK;
 		SI_COMCSR_REG |= (inlen << 8);
 		if (inlen == 0) inlen = 128;
 		int outlen = SI_COMCSR_OUTLEN(data);
-		SI_COMCSR_REG |= (outlen << 16);
 		if (outlen == 0) outlen = 128;
 
 		// make actual transfer
-		SICommand(chan, si.combuf);
+		SICommand(chan, outlen, inlen, si.combuf);
 
 		// complete transfer
 		SI_COMCSR_REG &= ~SI_COMCSR_TSTART;
@@ -271,17 +332,23 @@ static void write_commcsr(uint32_t addr, uint32_t data)
 	}
 }
 
-static void read_commcsr(uint32_t addr, uint32_t* reg)
+static void read_commcsr_hi(uint32_t addr, uint32_t* reg, void* ctx)
 {
-	*reg = SI_COMCSR_REG;
+	*reg = SI_COMCSR_REG >> 16;
+}
+static void read_commcsr_lo(uint32_t addr, uint32_t* reg, void* ctx)
+{
+	*reg = (uint16_t)SI_COMCSR_REG;
 }
 
 //
 // status register
 //
 
-static void write_sisr(uint32_t addr, uint32_t data)
+static void write_sisr_hi(uint32_t addr, uint32_t data, void* ctx)
 {
+	data <<= 16;
+
 	// copy shadow command registers
 	if (data & SI_SR_WR)
 	{
@@ -295,18 +362,33 @@ static void write_sisr(uint32_t addr, uint32_t data)
 		SI_SR_REG &= ~SI_SR_WRST3;
 	}
 }
-
-static void read_sisr(uint32_t addr, uint32_t* reg)
+static void write_sisr_lo(uint32_t addr, uint32_t data, void* ctx)
 {
-	*reg = SI_SR_REG;
+}
+
+static void read_sisr_hi(uint32_t addr, uint32_t* reg, void* ctx)
+{
+	*reg = SI_SR_REG >> 16;
+}
+static void read_sisr_lo(uint32_t addr, uint32_t* reg, void* ctx)
+{
+	*reg = (uint16_t)SI_SR_REG;
 }
 
 // 
 // EXI clock lock reg (dummy)
 //
 
-static void write_exilk(uint32_t addr, uint32_t data) { si.exilk = data; }
-static void read_exilk(uint32_t addr, uint32_t* reg) { *reg = si.exilk; }
+static void write_exilk_hi(uint32_t addr, uint32_t data, void* ctx) {
+	si.exilk &= 0x0000ffff;
+	si.exilk |= data << 16;
+}
+static void write_exilk_lo(uint32_t addr, uint32_t data, void* ctx) {
+	si.exilk &= 0xffff0000;
+	si.exilk |= data;
+}
+static void read_exilk_hi(uint32_t addr, uint32_t* reg, void* ctx) { *reg = si.exilk >> 16; }
+static void read_exilk_lo(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)si.exilk; }
 
 // ---------------------------------------------------------------------------
 // polling
@@ -412,28 +494,45 @@ void SIOpen(HWConfig* config)
 	SIPoll();
 
 	// set rumble flags
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++) {
 		si.rumble[i] = PADSetRumble(i, PAD_MOTOR_STOP);
+	}
 
 	// joypads in/out command buffer
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF, si_rd_out0, si_wr_out0);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH, si_inh0, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL, si_inl0, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF, si_rd_out1, si_wr_out1);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH, si_inh1, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL, si_inl1, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF, si_rd_out2, si_wr_out2);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH, si_inh2, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL, si_inl2, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF, si_rd_out3, si_wr_out3);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH, si_inh3, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL, si_inl3, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF, si_rd_out0_hi, si_wr_out0_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF+2, si_rd_out0_lo, si_wr_out0_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH, si_inh0_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH+2, si_inh0_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL, si_inl0_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL+2, si_inl0_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF, si_rd_out1_hi, si_wr_out1_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF+2, si_rd_out1_lo, si_wr_out1_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH, si_inh1_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH+2, si_inh1_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL, si_inl1_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL+2, si_inl1_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF, si_rd_out2_hi, si_wr_out2_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF+2, si_rd_out2_lo, si_wr_out2_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH, si_inh2_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH+2, si_inh2_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL, si_inl2_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL+2, si_inl2_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF, si_rd_out3_hi, si_wr_out3_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF+2, si_rd_out3_lo, si_wr_out3_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH, si_inh3_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH+2, si_inh3_lo, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL, si_inl3_hi, NULL);
+	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL+2, si_inl3_lo, NULL);
 
 	// si control registers
-	PISetTrap(PI_REGSPACE_SI | SI_POLL, read_poll, write_poll);
-	PISetTrap(PI_REGSPACE_SI | SI_COMCSR, read_commcsr, write_commcsr);
-	PISetTrap(PI_REGSPACE_SI | SI_SR, read_sisr, write_sisr);
-	PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk, write_exilk);
+	PISetTrap(PI_REGSPACE_SI | SI_POLL, read_poll_hi, write_poll_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_POLL+2, read_poll_lo, write_poll_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_COMCSR, read_commcsr_hi, write_commcsr_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_COMCSR+2, read_commcsr_lo, write_commcsr_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_SR, read_sisr_hi, write_sisr_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_SR+2, read_sisr_lo, write_sisr_lo);
+	PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk_hi, write_exilk_hi);
+	PISetTrap(PI_REGSPACE_SI | SI_EXILK+2, read_exilk_lo, write_exilk_lo);
 
 	// serial communcation buffer
 	for (unsigned ofs = 0; ofs < 128; ofs += 2)

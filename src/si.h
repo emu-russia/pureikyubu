@@ -47,8 +47,11 @@
 #define SI_COMCSR_RDSTINT       (1 << 28)
 #define SI_COMCSR_RDSTINTMSK    (1 << 27)
 #define SI_COMCSR_OUTLEN(reg)   ((reg >> 16) & 0x7f)
+#define SI_COMCSR_OUTLEN_MASK	0x007f0000
 #define SI_COMCSR_INLEN(reg)    ((reg >>  8) & 0x7f)
+#define SI_COMCSR_INLEN_MASK	0x00007f00
 #define SI_COMCSR_CHAN(reg)     ((reg >> 1) & 3)
+#define SI_COMCSR_CHAN_MASK		0x00000006
 #define SI_COMCSR_TSTART        (1)
 
 // SI Status Register mask

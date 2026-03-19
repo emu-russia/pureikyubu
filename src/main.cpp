@@ -904,7 +904,7 @@ void LoadFile(const std::wstring& filename)
 	// load file
 	if (filename == L"Bootrom")
 	{
-		entryPoint = BOOTROM_START_ADDRESS + 0x100;
+		entryPoint = PI_MEMSPACE_BOOTROM + 0x100;
 		dvd = false;
 		emu.bootrom = true;
 	}
