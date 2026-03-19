@@ -26,9 +26,9 @@
 
 #define PI_INTSR            0x00      // master interrupt reg
 #define PI_INTMR            0x04      // master interrupt mask (a set bit means that the interrupt is enabled)
-#define PI_BASE             0x0C      // PI CP fifo base
-#define PI_TOP              0x10      // PI CP fifo top
-#define PI_WRPTR            0x14      // PI CP fifo write pointer
+#define PI_CPBAS            0x0C      // PI CP fifo base
+#define PI_CPTOP            0x10      // PI CP fifo top
+#define PI_CPWRT            0x14      // PI CP fifo write pointer
 #define PI_CPABT            0x18      // Abort PI CP FIFO
 #define PI_PIESR            0x1C
 #define PI_PIEAR            0x20
@@ -37,6 +37,7 @@
 #define PI_CHIPID           0x2C      // Flipper ID (console revision)
 #define PI_STRGTH           0x30
 #define PI_CPUDBB           0x34
+#define PI_REG_MAX			0x38
 
 #define PI_INTSR_RSTSWB		0x10000			// The state of the reset switch button. Non-maskable INTSR bit
 
@@ -62,19 +63,12 @@
 #define PI_CONFIG_MEMRSTB 0x00000002
 #define PI_CONFIG_DIRSTB 0x00000004
 
-// PI FIFO registers
-enum class PI_CPMappedRegister
-{
-	PI_CPBAS_ID = 3,
-	PI_CPTOP_ID = 4,
-	PI_CPWRT_ID = 5,
-	PI_CPABT_ID = 6,
-};
+// PI CP write pointer wrap bit (for the upper register)
+#define PI_CPWRT_WRAP   0x0400
 
-// PI CP write pointer wrap bit
-#define PI_CPWRT_WRAP   0x0400'0000
-
-#define PI_FIFO_ADDRESS_MASK  0x03ff'ffe0		// Mask for FIFO registers (only bits 25:5 are used for memory addressing)
+// Mask for FIFO registers (only bits 25:5 are used for memory addressing)
+#define PI_FIFO_ADDRESS_MASK_HI  0x03ff
+#define PI_FIFO_ADDRESS_MASK_LO  0xffe0
 
 enum class PIInterruptSource
 {
@@ -124,16 +118,17 @@ uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
 // PI state (registers and other data)
 struct PIControl
 {
-	volatile uint32_t intsr;	// interrupt cause
-	volatile uint32_t intmr;	// interrupt mask
-	volatile uint32_t intbrk;	// one-shot interrup breakpoint
+	volatile uint16_t intsr;	// interrupt cause
+	volatile uint16_t intmr;	// interrupt mask
+	volatile uint16_t intbrk;	// one-shot interrup breakpoint
 	bool        log;			// log interrupts
 	uint32_t    consoleVer;		// console version
+	uint32_t	chipid;
 	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
 	int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
 	int64_t one_microsecond;	// one CPU microsecond in timer ticks
 
-	// PI FIFO
+	// The PI contains its own part of the CP FIFO, intended for Burst transactions via the GFX FIFO Stream Pointer. The write event is simultaneously forwarded to the CP to track the WRPTR.
 	volatile uint32_t cp_base;
 	volatile uint32_t cp_top;
 	volatile uint32_t cp_wrptr;		// also WRAP bit
@@ -169,4 +164,4 @@ void PISetTrap(
 	void (*wrTrap)(uint32_t, uint32_t, void*) = NULL,
 	void *context = NULL);
 
-void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value);
+void DumpPIFIFO();

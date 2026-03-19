@@ -4,7 +4,7 @@
 using namespace Debug;
 
 // DI state (registers and other data)
-DIControl di;
+DIState di;
 
 static uint8_t DIHostToDduCallbackCommand();
 static uint8_t DIHostToDduCallbackData();
@@ -373,7 +373,7 @@ void DIOpen(HWConfig* config)
 	// Current DVD is set by Loader, or when disk is swapped by UI.
 
 	// clear registers
-	memset(&di, 0, sizeof(DIControl));
+	memset(&di, 0, sizeof(di));
 
 	di.log = config->di_log;
 
@@ -383,7 +383,7 @@ void DIOpen(HWConfig* config)
 	DVD::DDU->SetErrorCallback(DIErrorCallback);
 	DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
 
-	// set 32-bit register traps
+	// set register traps
 	PISetTrap(PI_REGSPACE_DI | DI_SR, read_sr, write_sr);
 	PISetTrap(PI_REGSPACE_DI | DI_CVR, read_cvr, write_cvr);
 	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF0, read_cmdbuf0, write_cmdbuf0);

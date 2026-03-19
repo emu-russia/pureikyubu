@@ -43,7 +43,7 @@
 // hardware API
 
 // DI state (registers and other data)
-struct DIControl
+struct DIState
 {
 	volatile uint32_t        sr, cvr, cr;    // DI registers
 	volatile uint32_t        mar, len;
@@ -58,7 +58,7 @@ struct DIControl
 	bool            log;
 };
 
-extern  DIControl di;
+extern  DIState di;
 
 void    DIOpen(HWConfig* config);
 void    DIClose();

@@ -5,11 +5,12 @@
 
 // AI Streaming registers
 
-// 32-bit access
-#define AIS_CR              0x00      // AIS control register 
-#define AIS_VR              0x04      // AIS volume register
-#define AIS_SCNT            0x08      // AIS sample counter
-#define AIS_IT              0x0C      // AIS interrupt timing
+// 32-bit access usually
+#define AIS_CR              0x00		// AI control register 
+#define AIS_VR              0x04		// AI volume register
+#define AIS_SCNT            0x08		// AI sample counter
+#define AIS_IT              0x0C		// AI interrupt timing
+#define AIS_REG_MAX			0x10
 
 // Audio Interface Control Register mask
 #define AICR_DFR            (1 << 6)        // AID sample rate (HW2 only). 0 - 48000, 1 - 32000
@@ -28,7 +29,7 @@ namespace Flipper
 	class AudioMixer;
 
 	// AI state (registers and other data)
-	struct AIControl
+	struct AIState
 	{
 		// AIS
 		volatile uint32_t    cr;             // AIS control reg
@@ -44,7 +45,7 @@ namespace Flipper
 		AudioMixer* Mixer = nullptr;
 	};
 
-	extern  AIControl ai;
+	extern  AIState ai;
 
 	void AIOpen(HWConfig* config);
 	void AIClose();

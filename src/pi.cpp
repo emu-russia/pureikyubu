@@ -318,12 +318,12 @@ void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-	// You can actually write anywhere on the page, but no one does that, so here's a simplified check.
-	if (phys_addr == PI_REGSPACE_GX_FIFO)
+	// You can actually write anywhere on the page
+	if ((phys_addr & ~0xfff) == PI_REGSPACE_GX_FIFO)
 	{
 		// PI FIFO
 
-		MIWriteBurst(pi.cp_wrptr & RAMMASK, burstData);
+		MIWriteBurst(pi.cp_wrptr, burstData);
 		pi.cp_wrptr += 32;
 
 		if (pi.cp_wrptr == pi.cp_top)
@@ -364,7 +364,7 @@ static void def_hw_write16(uint32_t addr, uint32_t data, void* context)
 
 void PISetTrap(
 	uint32_t addr,
-	void (*rdTrap)(uint32_t, uint32_t*, void *),
+	void (*rdTrap)(uint32_t, uint32_t*, void*),
 	void (*wrTrap)(uint32_t, uint32_t, void*),
 	void *context)
 {
@@ -508,70 +508,12 @@ void PIClearInt(uint32_t mask)
 }
 
 // ---------------------------------------------------------------------------
-// traps for interrupt regs
-
-static void read_intsr(uint32_t addr, uint32_t* reg)
-{
-	*reg = pi.intsr /* | PI_INTSR_RSTSWB */;
-}
-
-// Write 1 clears only HSP, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
-static void write_intsr(uint32_t addr, uint32_t data)
-{
-	data &= (PI_INTERRUPT_HSP | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
-	PIClearInt(data);
-}
-
-static void read_intmr(uint32_t addr, uint32_t* reg)
-{
-	*reg = pi.intmr;
-}
-
-static void write_intmr(uint32_t addr, uint32_t data)
-{
-	pi.intmr = data;
-
-	// print out list of masked interrupts
-	if (pi.intmr && pi.log)
-	{
-		std::string buf;
-		for (uint32_t m = 1; m <= PI_INTERRUPT_MSB; m <<= 1)
-		{
-			if (pi.intmr & m)
-			{
-				buf += intdesc(m);
-				buf += " ";
-			}
-		}
-
-		Report(Channel::PI, "unmasked : %s\n", buf.c_str());
-	}
-}
-
-//
-// Flipper revision
-//
-
-static void read_FlipperID(uint32_t addr, uint32_t* reg)
-{
-	uint32_t ver = pi.consoleVer;
-
-	// bootrom using this register in following way :
-	//
-	//  [8000002C] =  1                     // set machine type to retail1
-	//  [8000002C] += [CC00302C] >> 28;     // upgrade revision
-
-	// set to HW2 final production board 
-	// we need to set [8000002C] with value 3 (retail3)
-	// so return '2'
-	*reg = ((ver & 0xf) - 1) << 28;
-}
+// pi reg access
 
 //
 // CONFIG register
 //
-
-static void write_config(uint32_t addr, uint32_t data)
+static void pi_write_config(uint32_t data)
 {
 	// It is not yet clear what may or may not be affected by the support for system reset, for now we will leave only debug messages.
 
@@ -598,104 +540,144 @@ static void write_config(uint32_t addr, uint32_t data)
 	}
 }
 
-static void read_config(uint32_t addr, uint32_t* reg)
+void PIRegRead(uint32_t addr, uint32_t* reg, void *ctx)
 {
-	// Return the state that there is no reset. We process the reset immediately.
-	*reg = PI_CONFIG_MEMRSTB | PI_CONFIG_DIRSTB;
-}
+	switch (addr & 0xFF) {
 
-//
-// PI_STRGTH
-//
+		case PI_INTSR+2:
+			*reg = pi.intsr /* | PI_INTSR_RSTSWB */;
+			break;
+		case PI_INTMR+2:
+			*reg = pi.intmr;
+			break;
+		case PI_CPBAS:
+			*reg = (pi.cp_base >> 16) & PI_FIFO_ADDRESS_MASK_HI;
+			break;
+		case PI_CPBAS+2:
+			*reg = (uint16_t)pi.cp_base & PI_FIFO_ADDRESS_MASK_LO;
+			break;
+		case PI_CPTOP:
+			*reg = (pi.cp_top >> 16) & PI_FIFO_ADDRESS_MASK_HI;
+			break;
+		case PI_CPTOP+2:
+			*reg = (uint16_t)pi.cp_top & PI_FIFO_ADDRESS_MASK_LO;
+			break;
+		case PI_CPWRT:
+			*reg = (pi.cp_wrptr >> 16) & PI_FIFO_ADDRESS_MASK_HI | (pi.wrap_bit ? PI_CPWRT_WRAP : 0);
+			break;
+		case PI_CPWRT+2:
+			*reg = (uint16_t)pi.cp_wrptr & PI_FIFO_ADDRESS_MASK_LO;
+			break;
+		case PI_CPABT+2:
+			Report(Channel::PI, "PI CP Abort read not implemented!\n");
+			*reg = 0;
+			break;
+		case PI_CONFIG+2:
+			// Return the state that there is no reset. We process the reset immediately.
+			*reg = PI_CONFIG_MEMRSTB | PI_CONFIG_DIRSTB;
+			break;
+		case PI_CHIPID:
+			*reg = pi.chipid >> 16;
+			break;
+		case PI_CHIPID+2:
+			*reg = (uint16_t)pi.chipid;
+			break;
 
-static void write_strength(uint32_t addr, uint32_t data)
-{
-	// Just so the BS doesn't give an error on unmapped HW.
-	Report(Channel::PI, "Strength: 0x%08x\n", data);
-}
-
-//
-// PI fifo (CPU)
-//
-
-static uint32_t PiCpReadReg(PI_CPMappedRegister id)
-{
-	switch (id)
-	{
-		case PI_CPMappedRegister::PI_CPBAS_ID:
-			return pi.cp_base & ~0x1f;
-		case PI_CPMappedRegister::PI_CPTOP_ID:
-			return pi.cp_top & ~0x1f;
-		case PI_CPMappedRegister::PI_CPWRT_ID:
-			return (pi.cp_wrptr & ~0x1f) | (pi.wrap_bit ? PI_CPWRT_WRAP : 0);
-		case PI_CPMappedRegister::PI_CPABT_ID:
-			Report(Channel::GP, "PI CP Abort read not implemented!\n");
-			return 0;
+		default:
+			*reg = 0;
+			break;
 	}
-
-	return 0;
 }
 
-static void PiCpWriteReg(PI_CPMappedRegister id, uint32_t value)
+void PIRegWrite(uint32_t addr, uint32_t data, void *ctx)
 {
-	switch (id)
-	{
-		case PI_CPMappedRegister::PI_CPBAS_ID:
-			pi.cp_base = value & PI_FIFO_ADDRESS_MASK;
+	switch (addr & 0xFF) {
+
+		case PI_INTSR+2:
+			// Write 1 clears only HSP, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
+			data &= (PI_INTERRUPT_HSP | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
+			PIClearInt(data);
 			break;
-		case PI_CPMappedRegister::PI_CPTOP_ID:
-			pi.cp_top = value & PI_FIFO_ADDRESS_MASK;
+		case PI_INTMR+2:
+			pi.intmr = data;
+
+			// print out list of masked interrupts
+			if (pi.intmr && pi.log)
+			{
+				std::string buf;
+				for (uint32_t m = 1; m <= PI_INTERRUPT_MSB; m <<= 1)
+				{
+					if (pi.intmr & m)
+					{
+						buf += intdesc(m);
+						buf += " ";
+					}
+				}
+
+				Report(Channel::PI, "unmasked : %s\n", buf.c_str());
+			}
 			break;
-		case PI_CPMappedRegister::PI_CPWRT_ID:
-			pi.cp_wrptr = value & PI_FIFO_ADDRESS_MASK;
+		case PI_CPBAS:
+			pi.cp_base &= 0x0000ffff;
+			pi.cp_base |= (data & PI_FIFO_ADDRESS_MASK_HI) << 16;
+			break;
+		case PI_CPBAS+2:
+			pi.cp_base &= 0xffff0000;
+			pi.cp_base |= (uint16_t)data & PI_FIFO_ADDRESS_MASK_LO;
+			if (pi.log) {
+				DumpPIFIFO();
+			}
+			break;
+		case PI_CPTOP:
+			pi.cp_top &= 0x0000ffff;
+			pi.cp_top |= (data & PI_FIFO_ADDRESS_MASK_HI) << 16;
+			break;
+		case PI_CPTOP+2:
+			pi.cp_top &= 0xffff0000;
+			pi.cp_top |= (uint16_t)data & PI_FIFO_ADDRESS_MASK_LO;
+			if (pi.log) {
+				DumpPIFIFO();
+			}
+			break;
+		case PI_CPWRT:
+			pi.cp_wrptr &= 0x0000ffff;
+			pi.cp_wrptr |= (data & PI_FIFO_ADDRESS_MASK_HI) << 16;
 			pi.wrap_bit = 0;
 			break;
-		case PI_CPMappedRegister::PI_CPABT_ID:
-			if ((value & 1) != 0) {
+		case PI_CPWRT+2:
+			pi.cp_wrptr &= 0xffff0000;
+			pi.cp_wrptr |= (uint16_t)data & PI_FIFO_ADDRESS_MASK_LO;
+			pi.wrap_bit = 0;
+			if (pi.log) {
+				DumpPIFIFO();
+			}
+			break;
+		case PI_CPABT+2:
+			if ((data & 1) != 0) {
 				Flipper::Gx->CPAbortFifo();
 			}
 			break;
-	}
-}
+		case PI_CONFIG+2:
+			pi_write_config(data);
+			break;
+		case PI_STRGTH+2:
+			// Just so the BS doesn't give an error on unmapped HW.
+			Report(Channel::PI, "Strength: 0x%08x\n", data);
+			break;
 
-static void PI_CPRegRead(uint32_t addr, uint32_t* reg)
-{
-	*reg = PiCpReadReg((PI_CPMappedRegister)((addr & 0xFF) >> 2));
-}
-
-static void PI_CPRegWrite(uint32_t addr, uint32_t data)
-{
-	PI_CPMappedRegister id = (PI_CPMappedRegister)((addr & 0xFF) >> 2);
-	if (pi.log) {
-		DumpPIFIFO(id, data);
+		default:
+			break;
 	}
-	PiCpWriteReg(id, data);
 }
 
 // show PI fifo configuration
-void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value)
+void DumpPIFIFO()
 {
 	Report(Channel::Norm, "PI fifo configuration (pc=0x%08X)\n", CallJdi("GetPc")->value.AsUint32);
-	if (id == PI_CPMappedRegister::PI_CPBAS_ID) {
-		Report(Channel::Norm, "   base :0x%08X <- 0x%08X\n", pi.cp_base, new_value);
-	}
-	else {
-		Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
-	}
-	if (id == PI_CPMappedRegister::PI_CPTOP_ID) {
-		Report(Channel::Norm, "   top  :0x%08X <- 0x%08X\n", pi.cp_top, new_value);
-	}
-	else {
-		Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
-	}
-	if (id == PI_CPMappedRegister::PI_CPWRT_ID) {
-		Report(Channel::Norm, "   wrptr:0x%08X <- 0x%08X\n", pi.cp_wrptr, new_value);
-		Report(Channel::Norm, "   wrap :%d <- 0\n", pi.wrap_bit);
-	}
-	else {
-		Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
-		Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
-	}
+	Report(Channel::Norm, "   base :0x%08X\n", pi.cp_base);
+	Report(Channel::Norm, "   top  :0x%08X\n", pi.cp_top);
+	Report(Channel::Norm, "   wrptr:0x%08X\n", pi.cp_wrptr);
+	Report(Channel::Norm, "   wrap :%d\n", pi.wrap_bit);
 }
 
 // ---------------------------------------------------------------------------
@@ -709,6 +691,15 @@ void PIOpen(HWConfig* config)
 
 	pi.consoleVer = config->consoleVer;
 	pi.log = config->pi_log;
+
+	// bootrom using this register in following way:
+	//
+	//  [8000002C] =  1                     // set machine type to retail1
+	//  [8000002C] += [CC00302C] >> 28;     // upgrade revision
+	// set to HW2 final production board 
+	// we need to set [8000002C] with value 3 (retail3)
+	// so return '2'
+	pi.chipid = ((pi.consoleVer & 0xf) - 1) << 28;
 
 	// now any access will generate unhandled warning,
 	// if emulator try to read or write register,
@@ -724,18 +715,10 @@ void PIOpen(HWConfig* config)
 	pi.last_int_ticks = 0;
 	pi.one_microsecond = Core->OneSecond() / 1000000;
 
-	// set interrupt registers hooks
-	PISetTrap(32, PI_INTSR, read_intsr, write_intsr);
-	PISetTrap(32, PI_INTMR, read_intmr, write_intmr);
-	PISetTrap(32, PI_CHIPID, read_FlipperID, nullptr);
-	PISetTrap(32, PI_CONFIG, read_config, write_config);
-	PISetTrap(32, PI_STRGTH, nullptr, write_strength);
-
-	// The PI contains its own part of the CP FIFO, intended for Burst transactions via the GFX FIFO Stream Pointer. The write event is simultaneously forwarded to the CP to track the WRPTR.
-	PISetTrap(32, PI_BASE, PI_CPRegRead, PI_CPRegWrite);
-	PISetTrap(32, PI_TOP, PI_CPRegRead, PI_CPRegWrite);
-	PISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);
-	PISetTrap(32, PI_CPABT, nullptr, PI_CPRegWrite);
+	// set registers hooks
+	for (uint32_t i = 0; i < PI_REG_MAX; i += 2) {
+		PISetTrap(PI_REGSPACE_PI + i, PIRegRead, PIRegWrite);
+	}
 
 	// Reset interrupt counters
 	for (size_t i = 0; i < (size_t)PIInterruptSource::Max; i++)
@@ -764,9 +747,9 @@ uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
 		return &mi.ram[physAddr];
 	}
 
-	if (physAddr >= BOOTROM_START_ADDRESS && exi.BootromPresent)
+	if (physAddr >= PI_MEMSPACE_BOOTROM && exi.BootromPresent)
 	{
-		return &exi.bootrom[physAddr - BOOTROM_START_ADDRESS];
+		return &exi.bootrom[physAddr - PI_MEMSPACE_BOOTROM];
 	}
 
 	return nullptr;

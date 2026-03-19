@@ -11,7 +11,7 @@ namespace DSP
 	// ---------------------------------------------------------------------------
 	// AIDCR
 
-	static void write_aidcr(uint32_t addr, uint32_t data)
+	static void write_aidcr(uint32_t addr, uint32_t data, void* ctx)
 	{
 		if (dsp_ai.log)
 		{
@@ -93,7 +93,7 @@ namespace DSP
 		Flipper::DSP->SetHaltBit((data >> 2) & 1);
 	}
 
-	static void read_aidcr(uint32_t addr, uint32_t* reg)
+	static void read_aidcr(uint32_t addr, uint32_t* reg, void* ctx)
 	{
 		// DSP controls
 		AIDCR &= ~7;
@@ -173,24 +173,24 @@ namespace DSP
 	// dma buffer address
 	// 
 
-	static void write_dmah(uint32_t addr, uint32_t data)
+	static void write_dmah(uint32_t addr, uint32_t data, void* ctx)
 	{
 		dsp_ai.madr_hi = (uint16_t)data & 0x3FF;
 	}
 
-	static void write_dmal(uint32_t addr, uint32_t data)
+	static void write_dmal(uint32_t addr, uint32_t data, void* ctx)
 	{
 		dsp_ai.madr_lo = (uint16_t)data & ~0x1F;
 	}
 
-	static void read_dmah(uint32_t addr, uint32_t* reg) { *reg = dsp_ai.madr_hi & 0x3FF; }
-	static void read_dmal(uint32_t addr, uint32_t* reg) { *reg = dsp_ai.madr_lo & ~0x1F; }
+	static void read_dmah(uint32_t addr, uint32_t* reg, void* ctx) { *reg = dsp_ai.madr_hi & 0x3FF; }
+	static void read_dmal(uint32_t addr, uint32_t* reg, void* ctx) { *reg = dsp_ai.madr_lo & ~0x1F; }
 
 	//
 	// dma length / control
 	//
 
-	static void write_len(uint32_t addr, uint32_t data)
+	static void write_len(uint32_t addr, uint32_t data, void* ctx)
 	{
 		dsp_ai.len = (uint16_t)data;
 
@@ -212,7 +212,7 @@ namespace DSP
 			}
 		}
 	}
-	static void read_len(uint32_t addr, uint32_t* reg)
+	static void read_len(uint32_t addr, uint32_t* reg, void* ctx)
 	{
 		*reg = dsp_ai.len;
 	}
@@ -221,7 +221,7 @@ namespace DSP
 	// read sample block (32b) counter
 	//
 
-	static void read_dcnt(uint32_t addr, uint32_t* reg)
+	static void read_dcnt(uint32_t addr, uint32_t* reg, void* ctx)
 	{
 		*reg = dsp_ai.dcnt & 0x7FFF;
 	}
@@ -229,16 +229,16 @@ namespace DSP
 	// ---------------------------------------------------------------------------
 	// DSPCore interface (mailbox and interrupt)
 
-	static void write_out_mbox_h(uint32_t addr, uint32_t data) { Flipper::DSP->CpuToDspWriteHi((uint16_t)data); }
-	static void write_out_mbox_l(uint32_t addr, uint32_t data) { Flipper::DSP->CpuToDspWriteLo((uint16_t)data); }
-	static void read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->CpuToDspReadHi(false); }
-	static void read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->CpuToDspReadLo(false); }
+	static void write_out_mbox_h(uint32_t addr, uint32_t data, void *ctx) { Flipper::DSP->CpuToDspWriteHi((uint16_t)data); }
+	static void write_out_mbox_l(uint32_t addr, uint32_t data, void* ctx) { Flipper::DSP->CpuToDspWriteLo((uint16_t)data); }
+	static void read_out_mbox_h(uint32_t addr, uint32_t* reg, void* ctx) { *reg = Flipper::DSP->CpuToDspReadHi(false); }
+	static void read_out_mbox_l(uint32_t addr, uint32_t* reg, void* ctx) { *reg = Flipper::DSP->CpuToDspReadLo(false); }
 
-	static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->DspToCpuReadHi(false); }
-	static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->DspToCpuReadLo(false); }
+	static void read_in_mbox_h(uint32_t addr, uint32_t* reg, void* ctx) { *reg = Flipper::DSP->DspToCpuReadHi(false); }
+	static void read_in_mbox_l(uint32_t addr, uint32_t* reg, void* ctx) { *reg = Flipper::DSP->DspToCpuReadLo(false); }
 
-	static void write_in_mbox_h(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
-	static void write_in_mbox_l(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
+	static void write_in_mbox_h(uint32_t addr, uint32_t data, void* ctx) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
+	static void write_in_mbox_l(uint32_t addr, uint32_t data, void* ctx) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
 
 	void DSPAssertInt()
 	{
@@ -313,17 +313,17 @@ namespace DSP
 		AIStopDMA();
 
 		// set register traps
-		PISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
+		PISetTrap(PI_REGSPACE_DSP | AI_DCR, read_aidcr, write_aidcr);
 
-		PISetTrap(16, DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
-		PISetTrap(16, DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
-		PISetTrap(16, DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
-		PISetTrap(16, DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
+		PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
+		PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
+		PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
+		PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
 
-		PISetTrap(16, AID_MADRH, read_dmah, write_dmah);
-		PISetTrap(16, AID_MADRL, read_dmal, write_dmal);
-		PISetTrap(16, AID_LEN, read_len, write_len);
-		PISetTrap(16, AID_CNT, read_dcnt, nullptr);
+		PISetTrap(PI_REGSPACE_DSP | AID_MADRH, read_dmah, write_dmah);
+		PISetTrap(PI_REGSPACE_DSP | AID_MADRL, read_dmal, write_dmal);
+		PISetTrap(PI_REGSPACE_DSP | AID_LEN, read_len, write_len);
+		PISetTrap(PI_REGSPACE_DSP | AID_CNT, read_dcnt, nullptr);
 	}
 
 	void DspAIClose()

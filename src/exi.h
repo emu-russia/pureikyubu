@@ -59,7 +59,7 @@ struct EXIRegs
 // hardware API
 
 // EXI state (registers and other data)
-struct EIControl
+struct EXIState
 {
 	// hardware state
 	EXIRegs     regs[3];        // exi registers
@@ -86,12 +86,12 @@ struct EIControl
 	bool    BootromPresent;     // loaded and descrambled valid bootrom
 };
 
-extern  EIControl exi;
+extern  EXIState exi;
 
 // for memcards and other external devices
 void    EXIUpdateInterrupts();
 void    EXIAttach(int chan);    // connect device
 void    EXIDetach(int chan);    // disconnect device
 
-void    EIOpen(HWConfig* config);
-void    EIClose();
+void    EXIOpen(HWConfig* config);
+void    EXIClose();

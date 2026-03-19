@@ -180,14 +180,14 @@ namespace DSP
 		static void DspThreadProc(void* Parameter);
 		uint64_t savedGekkoTicks = 0;
 
-		DspDmaRegs DmaRegs;
+		DspDmaRegs DmaRegs{};
 
-		DspAccel Accel;
+		DspAccel Accel{};
 
-		volatile uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
+		volatile uint16_t DspToCpuMailbox[2]{};		// DMBH, DMBL
 		SpinLock DspToCpuLock[2];
 		
-		volatile uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
+		volatile uint16_t CpuToDspMailbox[2]{};		// CMBH, CMBL
 		SpinLock CpuToDspLock[2];
 
 		void ResetIfx();

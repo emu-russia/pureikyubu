@@ -2,7 +2,7 @@
 #include "pch.h"
 
 // SI state (registers and other data)
-SIControl si;
+SIState si;
 
 // IMPORTANT : transfer will never be aborted by communication error, 
 // so all ERROR bits/status in SI regs are not used in emulator.
@@ -550,7 +550,7 @@ void SIOpen(HWConfig* config)
 	Debug::Report(Debug::Channel::SI, "Serial interface driver\n");
 
 	// clear all registers
-	memset(&si, 0, sizeof(SIControl));
+	memset(&si, 0, sizeof(si));
 
 	si.log = config->si_log;
 

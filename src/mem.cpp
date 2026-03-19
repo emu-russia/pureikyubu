@@ -5,61 +5,61 @@
 
 using namespace Debug;
 
-MIControl mi;
+MIState mi;
 
 // stubs for MI registers
-static void no_write(uint32_t addr, uint32_t data) {}
-static void no_read(uint32_t addr, uint32_t* reg) { *reg = 0; }
+static void no_write(uint32_t addr, uint32_t data, void *ctx) {}
+static void no_read(uint32_t addr, uint32_t* reg, void* ctx) { *reg = 0; }
 
-static void MEM_WriteMarrStart(uint32_t addr, uint32_t data)
+static void MEM_WriteMarrStart(uint32_t addr, uint32_t data, void* ctx)
 {
-	switch ((addr & 0xFF) >> 1)
+	switch (addr & 0xFF)
 	{
-		case MEM_MARR0_START_ID: mi.marr_start[0] = data; break;
-		case MEM_MARR1_START_ID: mi.marr_start[1] = data; break;
-		case MEM_MARR2_START_ID: mi.marr_start[2] = data; break;
-		case MEM_MARR3_START_ID: mi.marr_start[3] = data; break;
+		case MEM_MARR0_START: mi.marr_start[0] = data; break;
+		case MEM_MARR1_START: mi.marr_start[1] = data; break;
+		case MEM_MARR2_START: mi.marr_start[2] = data; break;
+		case MEM_MARR3_START: mi.marr_start[3] = data; break;
 		default: break;
 	}
 }
 
-static void MEM_ReadMarrStart(uint32_t addr, uint32_t* reg)
+static void MEM_ReadMarrStart(uint32_t addr, uint32_t* reg, void* ctx)
 {
-	switch ((addr & 0xFF) >> 1)
+	switch (addr & 0xFF)
 	{
-		case MEM_MARR0_START_ID: *reg = mi.marr_start[0]; break;
-		case MEM_MARR1_START_ID: *reg = mi.marr_start[1]; break;
-		case MEM_MARR2_START_ID: *reg = mi.marr_start[2]; break;
-		case MEM_MARR3_START_ID: *reg = mi.marr_start[3]; break;
+		case MEM_MARR0_START: *reg = mi.marr_start[0]; break;
+		case MEM_MARR1_START: *reg = mi.marr_start[1]; break;
+		case MEM_MARR2_START: *reg = mi.marr_start[2]; break;
+		case MEM_MARR3_START: *reg = mi.marr_start[3]; break;
 		default: break;
 	}
 }
 
-static void MEM_WriteMarrEnd(uint32_t addr, uint32_t data)
+static void MEM_WriteMarrEnd(uint32_t addr, uint32_t data, void* ctx)
 {
-	switch ((addr & 0xFF) >> 1)
+	switch (addr & 0xFF)
 	{
-		case MEM_MARR0_END_ID: mi.marr_end[0] = data; break;
-		case MEM_MARR1_END_ID: mi.marr_end[1] = data; break;
-		case MEM_MARR2_END_ID: mi.marr_end[2] = data; break;
-		case MEM_MARR3_END_ID: mi.marr_end[3] = data; break;
+		case MEM_MARR0_END: mi.marr_end[0] = data; break;
+		case MEM_MARR1_END: mi.marr_end[1] = data; break;
+		case MEM_MARR2_END: mi.marr_end[2] = data; break;
+		case MEM_MARR3_END: mi.marr_end[3] = data; break;
 		default: break;
 	}
 }
 
-static void MEM_ReadMarrEnd(uint32_t addr, uint32_t* reg)
+static void MEM_ReadMarrEnd(uint32_t addr, uint32_t* reg, void* ctx)
 {
-	switch ((addr & 0xFF) >> 1)
+	switch (addr & 0xFF)
 	{
-		case MEM_MARR0_END_ID: *reg = mi.marr_end[0]; break;
-		case MEM_MARR1_END_ID: *reg = mi.marr_end[1]; break;
-		case MEM_MARR2_END_ID: *reg = mi.marr_end[2]; break;
-		case MEM_MARR3_END_ID: *reg = mi.marr_end[3]; break;
+		case MEM_MARR0_END: *reg = mi.marr_end[0]; break;
+		case MEM_MARR1_END: *reg = mi.marr_end[1]; break;
+		case MEM_MARR2_END: *reg = mi.marr_end[2]; break;
+		case MEM_MARR3_END: *reg = mi.marr_end[3]; break;
 		default: break;
 	}
 }
 
-static void MEM_WriteMarrControl(uint32_t addr, uint32_t data)
+static void MEM_WriteMarrControl(uint32_t addr, uint32_t data, void* ctx)
 {
 	mi.marr_control.bits = data;
 
@@ -70,27 +70,27 @@ static void MEM_WriteMarrControl(uint32_t addr, uint32_t data)
 		mi.marr_control.marr3_read_enable, mi.marr_control.marr3_write_enable);
 }
 
-static void MEM_ReadMarrControl(uint32_t addr, uint32_t* reg)
+static void MEM_ReadMarrControl(uint32_t addr, uint32_t* reg, void* ctx)
 {
 	*reg = mi.marr_control.bits;
 }
 
-static void MEM_WriteIntEnable(uint32_t addr, uint32_t data)
+static void MEM_WriteIntEnable(uint32_t addr, uint32_t data, void* ctx)
 {
 	mi.int_enable.bits = data;
 }
 
-static void MEM_ReadIntEnable(uint32_t addr, uint32_t* reg)
+static void MEM_ReadIntEnable(uint32_t addr, uint32_t* reg, void* ctx)
 {
 	*reg = mi.int_enable.bits;
 }
 
-static void MEM_ReadIntStatus(uint32_t addr, uint32_t* reg)
+static void MEM_ReadIntStatus(uint32_t addr, uint32_t* reg, void* ctx)
 {
 	*reg = mi.int_status.bits;
 }
 
-static void MEM_WriteIntClear(uint32_t addr, uint32_t data)
+static void MEM_WriteIntClear(uint32_t addr, uint32_t data, void* ctx)
 {
 	mi.int_status.bits &= ~(data);
 
@@ -102,51 +102,51 @@ static void MEM_WriteIntClear(uint32_t addr, uint32_t data)
 	}
 }
 
-static void MEM_WriteCounter(uint32_t addr, uint32_t data)
+static void MEM_WriteCounter(uint32_t addr, uint32_t data, void* ctx)
 {
-	switch ((addr & 0xFF) >> 1)
+	switch (addr & 0xFF)
 	{
-		case MEM_CP_COUNTERH_ID: mi.cp_counter.hi = data; break;
-		case MEM_CP_COUNTERL_ID: mi.cp_counter.lo = data; break;
-		case MEM_TC_COUNTERH_ID: mi.tc_counter.hi = data; break;
-		case MEM_TC_COUNTERL_ID: mi.tc_counter.lo = data; break;
-		case MEM_PI_READ_COUNTERH_ID: mi.pi_read_counter.hi = data; break;
-		case MEM_PI_READ_COUNTERL_ID: mi.pi_read_counter.lo = data; break;
-		case MEM_PI_WRITE_COUNTERH_ID: mi.pi_write_counter.hi = data; break;
-		case MEM_PI_WRITE_COUNTERL_ID: mi.pi_write_counter.lo = data; break;
-		case MEM_DSP_COUNTERH_ID: mi.dsp_counter.hi = data; break;
-		case MEM_DSP_COUNTERL_ID: mi.dsp_counter.lo = data; break;
-		case MEM_IO_COUNTERH_ID: mi.io_counter.hi = data; break;
-		case MEM_IO_COUNTERL_ID: mi.io_counter.lo = data; break;
-		case MEM_VI_COUNTERH_ID: mi.vi_counter.hi = data; break;
-		case MEM_VI_COUNTERL_ID: mi.vi_counter.lo = data; break;
-		case MEM_PE_COUNTERH_ID: mi.pe_counter.hi = data; break;
-		case MEM_PE_COUNTERL_ID: mi.pe_counter.lo = data; break;
+		case MEM_CP_COUNTERH: mi.cp_counter.hi = data; break;
+		case MEM_CP_COUNTERL: mi.cp_counter.lo = data; break;
+		case MEM_TC_COUNTERH: mi.tc_counter.hi = data; break;
+		case MEM_TC_COUNTERL: mi.tc_counter.lo = data; break;
+		case MEM_PI_READ_COUNTERH: mi.pi_read_counter.hi = data; break;
+		case MEM_PI_READ_COUNTERL: mi.pi_read_counter.lo = data; break;
+		case MEM_PI_WRITE_COUNTERH: mi.pi_write_counter.hi = data; break;
+		case MEM_PI_WRITE_COUNTERL: mi.pi_write_counter.lo = data; break;
+		case MEM_DSP_COUNTERH: mi.dsp_counter.hi = data; break;
+		case MEM_DSP_COUNTERL: mi.dsp_counter.lo = data; break;
+		case MEM_IO_COUNTERH: mi.io_counter.hi = data; break;
+		case MEM_IO_COUNTERL: mi.io_counter.lo = data; break;
+		case MEM_VI_COUNTERH: mi.vi_counter.hi = data; break;
+		case MEM_VI_COUNTERL: mi.vi_counter.lo = data; break;
+		case MEM_PE_COUNTERH: mi.pe_counter.hi = data; break;
+		case MEM_PE_COUNTERL: mi.pe_counter.lo = data; break;
 		default:
 			break;
 	}
 }
 
-static void MEM_ReadCounter(uint32_t addr, uint32_t* reg)
+static void MEM_ReadCounter(uint32_t addr, uint32_t* reg, void* ctx)
 {
-	switch ((addr & 0xFF) >> 1)
+	switch (addr & 0xFF)
 	{
-		case MEM_CP_COUNTERH_ID: *reg = mi.cp_counter.hi; break;
-		case MEM_CP_COUNTERL_ID: *reg = mi.cp_counter.lo; break;
-		case MEM_TC_COUNTERH_ID: *reg = mi.tc_counter.hi; break;
-		case MEM_TC_COUNTERL_ID: *reg = mi.tc_counter.lo; break;
-		case MEM_PI_READ_COUNTERH_ID: *reg = mi.pi_read_counter.hi; break;
-		case MEM_PI_READ_COUNTERL_ID: *reg = mi.pi_read_counter.lo; break;
-		case MEM_PI_WRITE_COUNTERH_ID: *reg = mi.pi_write_counter.hi; break;
-		case MEM_PI_WRITE_COUNTERL_ID: *reg = mi.pi_write_counter.lo; break;
-		case MEM_DSP_COUNTERH_ID: *reg = mi.dsp_counter.hi; break;
-		case MEM_DSP_COUNTERL_ID: *reg = mi.dsp_counter.lo; break;
-		case MEM_IO_COUNTERH_ID: *reg = mi.io_counter.hi; break;
-		case MEM_IO_COUNTERL_ID: *reg = mi.io_counter.lo; break;
-		case MEM_VI_COUNTERH_ID: *reg = mi.vi_counter.hi; break;
-		case MEM_VI_COUNTERL_ID: *reg = mi.vi_counter.lo; break;
-		case MEM_PE_COUNTERH_ID: *reg = mi.pe_counter.hi; break;
-		case MEM_PE_COUNTERL_ID: *reg = mi.pe_counter.lo; break;
+		case MEM_CP_COUNTERH: *reg = mi.cp_counter.hi; break;
+		case MEM_CP_COUNTERL: *reg = mi.cp_counter.lo; break;
+		case MEM_TC_COUNTERH: *reg = mi.tc_counter.hi; break;
+		case MEM_TC_COUNTERL: *reg = mi.tc_counter.lo; break;
+		case MEM_PI_READ_COUNTERH: *reg = mi.pi_read_counter.hi; break;
+		case MEM_PI_READ_COUNTERL: *reg = mi.pi_read_counter.lo; break;
+		case MEM_PI_WRITE_COUNTERH: *reg = mi.pi_write_counter.hi; break;
+		case MEM_PI_WRITE_COUNTERL: *reg = mi.pi_write_counter.lo; break;
+		case MEM_DSP_COUNTERH: *reg = mi.dsp_counter.hi; break;
+		case MEM_DSP_COUNTERL: *reg = mi.dsp_counter.lo; break;
+		case MEM_IO_COUNTERH: *reg = mi.io_counter.hi; break;
+		case MEM_IO_COUNTERL: *reg = mi.io_counter.lo; break;
+		case MEM_VI_COUNTERH: *reg = mi.vi_counter.hi; break;
+		case MEM_VI_COUNTERL: *reg = mi.vi_counter.lo; break;
+		case MEM_PE_COUNTERH: *reg = mi.pe_counter.hi; break;
+		case MEM_PE_COUNTERL: *reg = mi.pe_counter.lo; break;
 		default:
 			*reg = 0;
 			break;
@@ -168,43 +168,43 @@ void MIOpen(HWConfig* config)
 
 	for (uint32_t ofs = 0; ofs < 0x100; ofs += 2)
 	{
-		PISetTrap(16, 0x0C004000 | ofs, no_read, no_write);
+		PISetTrap(PI_REGSPACE_MEM | ofs, no_read, no_write);
 	}
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR0_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR1_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR2_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR3_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_START, MEM_ReadMarrStart, MEM_WriteMarrStart);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR1_START, MEM_ReadMarrStart, MEM_WriteMarrStart);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR2_START, MEM_ReadMarrStart, MEM_WriteMarrStart);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR3_START, MEM_ReadMarrStart, MEM_WriteMarrStart);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR0_END_ID), MEM_ReadMarrEnd, MEM_WriteMarrEnd);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR1_END_ID), MEM_ReadMarrEnd, MEM_WriteMarrEnd);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR2_END_ID), MEM_ReadMarrEnd, MEM_WriteMarrEnd);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR3_END_ID), MEM_ReadMarrEnd, MEM_WriteMarrEnd);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR1_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR2_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR3_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR_CONTROL_ID), MEM_ReadMarrControl, MEM_WriteMarrControl);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR_CONTROL, MEM_ReadMarrControl, MEM_WriteMarrControl);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_INT_ENABLE_ID), MEM_ReadIntEnable, MEM_WriteIntEnable);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_INT_STATUS_ID), MEM_ReadIntStatus, nullptr);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_INT_CLR_ID), nullptr, MEM_WriteIntClear);
+	PISetTrap(PI_REGSPACE_MEM | MEM_INT_ENABLE, MEM_ReadIntEnable, MEM_WriteIntEnable);
+	PISetTrap(PI_REGSPACE_MEM | MEM_INT_STATUS, MEM_ReadIntStatus, nullptr);
+	PISetTrap(PI_REGSPACE_MEM | MEM_INT_CLR, nullptr, MEM_WriteIntClear);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_MARR0_START_ID), MEM_ReadMarrStart, MEM_WriteMarrStart);
+	PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_START, MEM_ReadMarrStart, MEM_WriteMarrStart);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_CP_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_CP_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_TC_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_TC_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_READ_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_READ_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_WRITE_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PI_WRITE_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_DSP_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_DSP_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_IO_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_IO_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_VI_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_VI_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PE_COUNTERH_ID), MEM_ReadCounter, MEM_WriteCounter);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_MEM, MEM_PE_COUNTERL_ID), MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_CP_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_CP_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_TC_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_TC_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_PI_READ_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_PI_READ_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_PI_WRITE_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_PI_WRITE_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_DSP_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_DSP_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_IO_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_IO_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_VI_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_VI_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_PE_COUNTERH, MEM_ReadCounter, MEM_WriteCounter);
+	PISetTrap(PI_REGSPACE_MEM | MEM_PE_COUNTERL, MEM_ReadCounter, MEM_WriteCounter);
 }
 
 void MIClose()

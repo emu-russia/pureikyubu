@@ -59,8 +59,8 @@
 
 using namespace Debug;
 
-// SI state (registers and other data)
-EIControl exi;
+// EXI state (registers and other data)
+EXIState exi;
 
 // forward refs on EXI transfers
 void    UnknownTransfer();  // ???
@@ -313,12 +313,12 @@ static void exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[2].data = d
 // ---------------------------------------------------------------------------
 // init
 
-void EIOpen(HWConfig* config)
+void EXIOpen(HWConfig* config)
 {
 	Report(Channel::EXI, "External devices interface bus\n");
 
 	// clear registers
-	memset(&exi, 0, sizeof(EIControl));
+	memset(&exi, 0, sizeof(exi));
 
 	// load user variables
 	exi.log = config->exi_log;
@@ -335,25 +335,25 @@ void EIOpen(HWConfig* config)
 	}
 
 	// set traps for EXI channel 0 registers
-	PISetTrap(32, EXI0_CSR, exi0_read_csr, exi0_write_csr);
-	PISetTrap(32, EXI0_MADR, exi0_read_madr, exi0_write_madr);
-	PISetTrap(32, EXI0_LEN, exi0_read_len, exi0_write_len);
-	PISetTrap(32, EXI0_CR, exi0_read_cr, exi0_write_cr);
-	PISetTrap(32, EXI0_DATA, exi0_read_data, exi0_write_data);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_CSR, exi0_read_csr, exi0_write_csr);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_MADR, exi0_read_madr, exi0_write_madr);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_LEN, exi0_read_len, exi0_write_len);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_CR, exi0_read_cr, exi0_write_cr);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_DATA, exi0_read_data, exi0_write_data);
 
 	// set traps for EXI channel 1 registers
-	PISetTrap(32, EXI1_CSR, exi1_read_csr, exi1_write_csr);
-	PISetTrap(32, EXI1_MADR, exi1_read_madr, exi1_write_madr);
-	PISetTrap(32, EXI1_LEN, exi1_read_len, exi1_write_len);
-	PISetTrap(32, EXI1_CR, exi1_read_cr, exi1_write_cr);
-	PISetTrap(32, EXI1_DATA, exi1_read_data, exi1_write_data);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_CSR, exi1_read_csr, exi1_write_csr);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_MADR, exi1_read_madr, exi1_write_madr);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_LEN, exi1_read_len, exi1_write_len);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_CR, exi1_read_cr, exi1_write_cr);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_DATA, exi1_read_data, exi1_write_data);
 
 	// set traps for EXI channel 2 registers
-	PISetTrap(32, EXI2_CSR, exi2_read_csr, exi2_write_csr);
-	PISetTrap(32, EXI2_MADR, exi2_read_madr, exi2_write_madr);
-	PISetTrap(32, EXI2_LEN, exi2_read_len, exi2_write_len);
-	PISetTrap(32, EXI2_CR, exi2_read_cr, exi2_write_cr);
-	PISetTrap(32, EXI2_DATA, exi2_read_data, exi2_write_data);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_CSR, exi2_read_csr, exi2_write_csr);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_MADR, exi2_read_madr, exi2_write_madr);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_LEN, exi2_read_len, exi2_write_len);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_CR, exi2_read_cr, exi2_write_cr);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_DATA, exi2_read_data, exi2_write_data);
 
 	// open memory cards
 	MCOpen(config);
@@ -363,7 +363,7 @@ void EIOpen(HWConfig* config)
 	LoadBootrom(config);
 }
 
-void EIClose()
+void EXIClose()
 {
 	// close memory cards
 	MCClose();

@@ -31,7 +31,7 @@
 using namespace Debug;
 
 // VI state (registers and other data)
-VIControl vi;
+VIState vi;
 
 // ---------------------------------------------------------------------------
 // drawing of XFB
@@ -261,7 +261,7 @@ void VIOpen(HWConfig* config)
 	Report(Channel::VI, "Video-out hardware interface\n");
 
 	// clear VI regs
-	memset(&vi, 0, sizeof(VIControl));
+	memset(&vi, 0, sizeof(vi));
 
 	vi.one_second = Core->OneSecond();
 

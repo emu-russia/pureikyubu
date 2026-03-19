@@ -25,7 +25,10 @@ static void CPRegWrite(uint32_t addr, uint32_t data, void* context)
 
 void CPOpen(HWConfig* config)
 {
-	Report(Channel::CP, "Command processor (for GX)\n");
+	Report(Channel::CP, "Command processor (for GFX)\n");
+
+	memset(&Flipper::Gx->cpregs, 0, sizeof(Flipper::Gx->cpregs));
+	Flipper::Gx->cpregs.cr |= CP_CR_WPINC;		// 1 on reset
 
 	// Command Processor
 	PISetTrap(PI_REGSPACE_CP | CP_STATUS, CPRegRead, CPRegWrite);

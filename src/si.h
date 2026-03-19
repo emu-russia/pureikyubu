@@ -81,7 +81,7 @@
 // hardware API
 
 // SI state (registers and other data)
-struct SIControl
+struct SIState
 {
 	volatile uint32_t            out[4], shdw[4];// out + shadows
 	volatile uint32_t            poll;           // poll control
@@ -97,7 +97,7 @@ struct SIControl
 	int64_t             pollingTime;    // Saved Gekko TBR for polling
 };
 
-extern  SIControl si;
+extern  SIState si;
 
 void    SIPoll();
 void    SIOpen(HWConfig* config);
