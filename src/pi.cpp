@@ -200,9 +200,11 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 	// hardware trap
 	if (pa >= HW_BASE)
 	{
-		pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffc];
+		pi_reg_trap* trap;
 		uint32_t temp_hi, temp_lo;
+		trap = &hw_reg_traps[pa & 0xffff];
 		trap->read(pa, &temp_hi, trap->context);
+		trap = &hw_reg_traps[(pa + 2) & 0xffff];
 		trap->read(pa+2, &temp_lo, trap->context);
 		*reg = (uint32_t)(temp_hi << 16) | (uint16_t)temp_lo;
 		return;
@@ -236,8 +238,9 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 	// hardware trap
 	if (pa >= HW_BASE)
 	{
-		pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffc];
+		pi_reg_trap* trap = &hw_reg_traps[pa & 0xffff];
 		trap->write(pa, data >> 16, trap->context);
+		trap = &hw_reg_traps[(pa + 2) & 0xffff];
 		trap->write(pa + 2, (uint16_t)data, trap->context);
 		return;
 	}

@@ -153,6 +153,9 @@ void PIBreakOnNextInt(uint32_t mask);
 
 /// <summary>
 /// Install a handler to access a register mapped to the CPU address space.
+/// The PI is designed so that all register operations are inherently 16-bit.
+/// 32-bit operations are implemented by performing two 16-bit operations: first on the high-order half of the register at address +0, 
+/// then on the low-order half of the register at address +2.
 /// </summary>
 /// <param name="addr">physical address of trap</param>
 /// <param name="rdTrap">register read trap</param>
