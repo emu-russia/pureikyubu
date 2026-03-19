@@ -39,49 +39,46 @@ namespace GX
 
 	// CP Registers (from CPU side). 16-bit access
 
-	enum class CPMappedRegister
-	{
-		CP_STATUS_ID = 0x00,
-		CP_ENABLE_ID = 0x01,
-		CP_CLR_ID = 0x02,
-		CP_MEMPERF_SEL_ID = 0x03,
-		CP_STM_LOW_ID = 0x05,
-		CP_FIFO_BASEL_ID = 0x10,
-		CP_FIFO_BASEH_ID = 0x11,
-		CP_FIFO_TOPL_ID = 0x12,
-		CP_FIFO_TOPH_ID = 0x13,
-		CP_FIFO_HICNTL_ID = 0x14,
-		CP_FIFO_HICNTH_ID = 0x15,
-		CP_FIFO_LOCNTL_ID = 0x16,
-		CP_FIFO_LOCNTH_ID = 0x17,
-		CP_FIFO_COUNTL_ID = 0x18,
-		CP_FIFO_COUNTH_ID = 0x19,
-		CP_FIFO_WPTRL_ID = 0x1a,
-		CP_FIFO_WPTRH_ID = 0x1b,
-		CP_FIFO_RPTRL_ID = 0x1c,
-		CP_FIFO_RPTRH_ID = 0x1d,
-		CP_FIFO_BRKL_ID = 0x1e,
-		CP_FIFO_BRKH_ID = 0x1f,
-		CP_COUNTER0L_ID = 0x20,
-		CP_COUNTER0H_ID = 0x21,
-		CP_COUNTER1L_ID = 0x22,
-		CP_COUNTER1H_ID = 0x23,
-		CP_COUNTER2L_ID = 0x24,
-		CP_COUNTER2H_ID = 0x25,
-		CP_COUNTER3L_ID = 0x26,
-		CP_COUNTER3H_ID = 0x27,
-		CP_VC_CHKCNTL_ID = 0x28,
-		CP_VC_CHKCNTH_ID = 0x29,
-		CP_VC_MISSL_ID = 0x2a,
-		CP_VC_MISSH_ID = 0x2b,
-		CP_VC_STALLL_ID = 0x2c,
-		CP_VC_STALLH_ID = 0x2d,
-		CP_FRCLK_CNTL_ID = 0x2e,
-		CP_FRCLK_CNTH_ID = 0x2f,
-		CP_XF_ADDR_ID = 0x30,
-		CP_XF_DATAL_ID = 0x31,
-		CP_XF_DATAH_ID = 0x32,
-	};
+	#define CP_STATUS 0x00
+	#define CP_ENABLE 0x02
+	#define CP_CLR 0x04
+	#define CP_MEMPERF_SEL 0x06
+	#define CP_STM_LOW 0x0a
+	#define CP_FIFO_BASEL 0x20
+	#define CP_FIFO_BASEH 0x22
+	#define CP_FIFO_TOPL 0x24
+	#define CP_FIFO_TOPH 0x26
+	#define CP_FIFO_HICNTL 0x28
+	#define CP_FIFO_HICNTH 0x2a
+	#define CP_FIFO_LOCNTL 0x2c
+	#define CP_FIFO_LOCNTH 0x2e
+	#define CP_FIFO_COUNTL 0x30
+	#define CP_FIFO_COUNTH 0x32
+	#define CP_FIFO_WPTRL 0x34
+	#define CP_FIFO_WPTRH 0x36
+	#define CP_FIFO_RPTRL 0x38
+	#define CP_FIFO_RPTRH 0x3a
+	#define CP_FIFO_BRKL 0x3c
+	#define CP_FIFO_BRKH 0x3e
+	#define CP_COUNTER0L 0x40
+	#define CP_COUNTER0H 0x42
+	#define CP_COUNTER1L 0x44
+	#define CP_COUNTER1H 0x46
+	#define CP_COUNTER2L 0x48
+	#define CP_COUNTER2H 0x4a
+	#define CP_COUNTER3L 0x4c
+	#define CP_COUNTER3H 0x4e
+	#define CP_VC_CHKCNTL 0x50
+	#define CP_VC_CHKCNTH 0x52
+	#define CP_VC_MISSL 0x54
+	#define CP_VC_MISSH 0x56
+	#define CP_VC_STALLL 0x58
+	#define CP_VC_STALLH 0x5a
+	#define CP_FRCLK_CNTL 0x5c
+	#define CP_FRCLK_CNTH 0x5e
+	#define CP_XF_ADDR 0x60
+	#define CP_XF_DATAL 0x62
+	#define CP_XF_DATAH 0x64
 
 	// CP STATUS register mask layout
 	#define CP_SR_OVF       (1 << 0)        // FIFO overflow (fifo_count > FIFO_HICNT)

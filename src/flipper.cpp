@@ -44,7 +44,7 @@ namespace Flipper
 		AIOpen(config); // audio (AID and AIS)
 		DSP::DspAIOpen(config);			// TODO: find better place
 		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
-		EIOpen(config); // expansion interface (EXI)
+		EXIOpen(config); // expansion interface (EXI)
 		DIOpen(config);	// disk
 		SIOpen(config);	// GC controllers
 
@@ -100,7 +100,7 @@ namespace Flipper
 		DSP::DspAIClose();	// TODO: find better place
 		DSP::ARClose();      // release ARAM  TODO: find better place
 		SIClose();
-		EIClose();      // take care about closing of memcards and BBA
+		EXIClose();     // take care about closing of memcards and BBA
 		VIClose();      // close VideoOut (if opened)
 		DIClose();      // release streaming buffer
 		MIClose();

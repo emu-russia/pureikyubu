@@ -3,35 +3,32 @@
 namespace GX
 {
 
-	// PE Registers (from CPU side). 16-bit access.
+    // PE Registers (from CPU side). 16-bit access.
 
-	enum class PEMappedRegister
-	{
-		PE_PI_ZMODE_ID = 0,			// Cpu2Efb Z mode
-		PE_PI_CMODE0_ID,			// Cpu2Efb Color mode 0
-		PE_PI_CMODE1_ID,			// Cpu2Efb Color mode 1
-		PE_PI_ALPHA_THRES_ID,		// Cpu2Efb Alpha mode 0
-		PE_PI_CONTROL_ID,
-		PE_PI_INTRCTRL_ID,
-		PE_PI_INTRSTAT_ID,
-		PE_PI_TOKEN_ID,				// Last token value
-		PE_PI_XBOUND0_ID,
-		PE_PI_XBOUND1_ID,
-		PE_PI_YBOUND0_ID,
-		PE_PI_YBOUND1_ID,
-		PE_PI_PERF_COUNTER_0L_ID,	// 0x18
-		PE_PI_PERF_COUNTER_0H_ID,	// 0x1a
-		PE_PI_PERF_COUNTER_1L_ID,	// 0x20
-		PE_PI_PERF_COUNTER_1H_ID,	// 0x22
-		PE_PI_PERF_COUNTER_2L_ID,	// 0x24
-		PE_PI_PERF_COUNTER_2H_ID,	// 0x26
-		PE_PI_PERF_COUNTER_3L_ID,	// 0x28
-		PE_PI_PERF_COUNTER_3H_ID,	// 0x2a
-		PE_PI_PERF_COUNTER_4L_ID,	// 0x2c
-		PE_PI_PERF_COUNTER_4H_ID,	// 0x30
-		PE_PI_PERF_COUNTER_5L_ID,	// 0x32
-		PE_PI_PERF_COUNTER_5H_ID,	// 0x34
-	};
+    #define PE_PI_ZMODE 0x00         // Cpu2Efb Z mode
+    #define PE_PI_CMODE0 0x02        // Cpu2Efb Color mode 0
+    #define PE_PI_CMODE1 0x04        // Cpu2Efb Color mode 1
+    #define PE_PI_ALPHA_THRES 0x06   // Cpu2Efb Alpha mode 0
+    #define PE_PI_CONTROL 0x08
+    #define PE_PI_INTRCTRL 0x0a
+    #define PE_PI_INTRSTAT 0x0c
+    #define PE_PI_TOKEN 0x0e         // Last token value
+    #define PE_PI_XBOUND0 0x10
+    #define PE_PI_XBOUND1 0x12
+    #define PE_PI_YBOUND0 0x14
+    #define PE_PI_YBOUND1 0x16
+    #define PE_PI_PERF_COUNTER_0L 0x18
+    #define PE_PI_PERF_COUNTER_0H 0x1a
+    #define PE_PI_PERF_COUNTER_1L 0x20
+    #define PE_PI_PERF_COUNTER_1H 0x22
+    #define PE_PI_PERF_COUNTER_2L 0x24
+    #define PE_PI_PERF_COUNTER_2H 0x26
+    #define PE_PI_PERF_COUNTER_3L 0x28
+    #define PE_PI_PERF_COUNTER_3H 0x2a
+    #define PE_PI_PERF_COUNTER_4L 0x2c
+    #define PE_PI_PERF_COUNTER_4H 0x30
+    #define PE_PI_PERF_COUNTER_5L 0x32
+    #define PE_PI_PERF_COUNTER_5H 0x34
 
 	// PE intrctrl register
 	#define PE_SR_DONE      (1 << 0)

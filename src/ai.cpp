@@ -40,7 +40,7 @@ namespace Flipper
 {
 
 	// AI state (registers and other data)
-	AIControl ai;
+	AIState ai;
 
 	static void MixerSetDMASampleRate(AudioSampleRate rate)
 	{
@@ -92,10 +92,8 @@ namespace Flipper
 	}
 
 	// AI control register
-	static void write_cr(uint32_t addr, uint32_t data)
+	static void AIControl()
 	{
-		ai.cr = data & 0x7F;
-
 		// clear stream interrupt
 		if (ai.cr & AICR_AIINT)
 		{
@@ -151,36 +149,62 @@ namespace Flipper
 		if (ai.cr & AICR_AFR) MixerSetDvdAudioSampleRate(AudioSampleRate::Rate_48000);
 		else MixerSetDvdAudioSampleRate(AudioSampleRate::Rate_32000);
 	}
-	static void read_cr(uint32_t addr, uint32_t* reg)
-	{
-		*reg = ai.cr;
-	}
 
-	// stream samples counter
-	static void read_scnt(uint32_t addr, uint32_t* reg)
+	static void AIReadReg(uint32_t addr, uint32_t* reg, void *ctx)
 	{
-		*reg = ai.scnt;
-	}
+		switch (addr & 0xFF) {
 
-	// interrupt trigger
-	static void write_it(uint32_t addr, uint32_t data)
-	{
-		if (ai.log)
-		{
-			Report(Channel::AIS, "set trigger to : 0x%08X\n", data);
+			case AIS_CR+2:
+				*reg = (uint16_t)ai.cr;
+				break;
+			case AIS_VR+2:
+				*reg = (uint16_t)ai.vr;
+				break;
+			case AIS_SCNT:
+				*reg = ai.scnt >> 16;
+				break;
+			case AIS_SCNT+2:
+				*reg = (uint16_t)ai.scnt;
+				break;
+			case AIS_IT:
+				*reg = ai.it >> 16;
+				break;
+			case AIS_IT+2:
+				*reg = (uint16_t)ai.it;
+				break;
+
+			default:
+				*reg = 0;
+				break;
 		}
-		ai.it = data;
 	}
-	static void read_it(uint32_t addr, uint32_t* reg) { *reg = ai.it; }
 
-	// stream volume register
-	static void write_vr(uint32_t addr, uint32_t data)
+	static void AIWriteReg(uint32_t addr, uint32_t data, void *ctx)
 	{
-		ai.vr = (uint16_t)data;
-	}
-	static void read_vr(uint32_t addr, uint32_t* reg)
-	{
-		*reg = ai.vr;
+		switch (addr & 0xFF) {
+
+			case AIS_CR+2:
+				ai.cr = data & 0x7F;
+				AIControl();
+				break;
+			case AIS_VR+2:
+				ai.vr = (uint16_t)data;
+				break;
+			case AIS_IT:
+				ai.it &= 0x0000ffff;
+				ai.it |= data << 16;
+				break;
+			case AIS_IT+2:
+				ai.it &= 0xffff0000;
+				ai.it |= data;
+				if (ai.log) {
+					Report(Channel::AIS, "set trigger to: 0x%08X\n", ai.it);
+				}
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -241,16 +265,15 @@ namespace Flipper
 		Report(Channel::AI, "Audio interface (DSP AI/DVD Audio mixer)\n");
 
 		// clear regs
-		memset(&ai, 0, sizeof(AIControl));
+		memset(&ai, 0, sizeof(ai));
 
 		DVD::DDU->SetStreamCallback(AIStreamCallback);
 
 		ai.log = config->ai_log;
 
-		PISetTrap(32, AIS_CR, read_cr, write_cr);
-		PISetTrap(32, AIS_VR, read_vr, write_vr);
-		PISetTrap(32, AIS_SCNT, read_scnt, nullptr);
-		PISetTrap(32, AIS_IT, read_it, write_it);
+		for (uint32_t i = 0; i < AIS_REG_MAX; i+=2) {
+			PISetTrap(PI_REGSPACE_AI + i, AIReadReg, AIWriteReg);
+		}
 
 		ai.Mixer = new AudioMixer(config);
 	}

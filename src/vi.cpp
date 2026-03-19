@@ -31,7 +31,7 @@
 using namespace Debug;
 
 // VI state (registers and other data)
-VIControl vi;
+VIState vi;
 
 // ---------------------------------------------------------------------------
 // drawing of XFB
@@ -136,7 +136,7 @@ void VIUpdate()
 // ---------------------------------------------------------------------------
 // accessing VI registers.
 
-static void vi_read16(uint32_t addr, uint32_t* reg)
+static void VIRegRead(uint32_t addr, uint32_t* reg, void *context)
 {
 	switch (addr & 0x7f)
 	{
@@ -173,10 +173,10 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 	}
 }
 
-static void vi_write16(uint32_t addr, uint32_t data)
+static void VIRegWrite(uint32_t addr, uint32_t data, void* context)
 {
 	if (vi.log) {
-		Report(Channel::VI, "vi_write16 0x%x = 0x%04x\n", addr & 0x7f, data);
+		Report(Channel::VI, "VIRegWrite 0x%x = 0x%04x\n", addr & 0x7f, data);
 	}
 
 	switch (addr & 0x7f)
@@ -244,20 +244,6 @@ static void vi_write16(uint32_t addr, uint32_t data)
 	}
 }
 
-static void vi_read32(uint32_t addr, uint32_t* reg)
-{
-	uint32_t hi_part, lo_part;
-	vi_read16(addr, &hi_part);
-	vi_read16(addr+2, &lo_part);
-	*reg = (uint32_t)(hi_part << 16) | (uint16_t)lo_part;
-}
-
-static void vi_write32(uint32_t addr, uint32_t data)
-{
-	vi_write16(addr, (uint16_t)(data >> 16));
-	vi_write16(addr+2, (uint16_t)data);
-}
-
 // show VI info
 void VIStats()
 {
@@ -275,7 +261,7 @@ void VIOpen(HWConfig* config)
 	Report(Channel::VI, "Video-out hardware interface\n");
 
 	// clear VI regs
-	memset(&vi, 0, sizeof(VIControl));
+	memset(&vi, 0, sizeof(vi));
 
 	vi.one_second = Core->OneSecond();
 
@@ -303,10 +289,9 @@ void VIOpen(HWConfig* config)
 	}
 
 	// set traps to VI registers
-	for (uint32_t ofs = 0; ofs < 0x80; ofs++)
+	for (uint32_t ofs = 0; ofs < 0x80; ofs += 2)
 	{
-		if ((ofs % 2) == 0) PISetTrap(16, PI_REGSPACE_VI + ofs, vi_read16, vi_write16);
-		if ((ofs % 4) == 0) PISetTrap(32, PI_REGSPACE_VI + ofs, vi_read32, vi_write32);
+		PISetTrap(PI_REGSPACE_VI + ofs, VIRegRead, VIRegWrite);
 	}
 }
 

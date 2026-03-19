@@ -2,66 +2,60 @@
 
 #pragma once
 
-// amount of main memory (in bytes)
-#define RAMSIZE     0x01800000      // 24 mb
+#define RAMSIZE     0x01800000      //!< amount of main memory (in bytes), 24 MBytes
 
-// physical memory mask
-// 0x0fffffff, because GC architecture is limited by 256 mb of RAM
-#define RAMMASK     0x0fffffff
+#define RAMMASK     0x0fffffff		//!< physical memory mask (GC architecture is limited by 256 mb of RAM max)
 
 // MEM PI Mapped regs
 
-enum MEM_PIMappedReg : size_t
-{
-	// Mem ranges (addr >> 10)
-	MEM_MARR0_START_ID = 0,
-	MEM_MARR0_END_ID,
-	MEM_MARR1_START_ID,
-	MEM_MARR1_END_ID,
-	MEM_MARR2_START_ID,
-	MEM_MARR2_END_ID,
-	MEM_MARR3_START_ID,
-	MEM_MARR3_END_ID,
-	MEM_MARR_CONTROL_ID,
-	MEM_CP_DIAL_ID,
-	MEM_TC_DIAL_ID,
-	MEM_PE_DIAL_ID,
-	MEM_PI_READ_DIAL_ID,
-	MEM_PI_WRITE_DIAL_ID,
-	MEM_INT_ENABLE_ID,				// MI interrupt enable
-	MEM_INT_STATUS_ID,				// MI interrupt status
-	MEM_INT_CLR_ID,					// Clear pending MI interrupt
-	MEM_INT_ADDRL_ID,				// Interrupted Mem address
-	MEM_INT_ADDRH_ID,
-	MEM_REFRESH_ID,					// Cycles between refresh
-	MEM_CONFIG_ID,
-	MEM_LATENCY_ID,					// Mem latency cycles (3-6)
-	MEM_RDTORD_ID,					// Idle cycles
-	MEM_RDTOWR_ID,
-	MEM_WRTORD_ID,
-	MEM_CP_COUNTERH_ID,
-	MEM_CP_COUNTERL_ID,
-	MEM_TC_COUNTERH_ID,
-	MEM_TC_COUNTERL_ID,
-	MEM_PI_READ_COUNTERH_ID,
-	MEM_PI_READ_COUNTERL_ID,
-	MEM_PI_WRITE_COUNTERH_ID,
-	MEM_PI_WRITE_COUNTERL_ID,
-	MEM_DSP_COUNTERH_ID,
-	MEM_DSP_COUNTERL_ID,
-	MEM_IO_COUNTERH_ID,
-	MEM_IO_COUNTERL_ID,
-	MEM_VI_COUNTERH_ID,
-	MEM_VI_COUNTERL_ID,
-	MEM_PE_COUNTERH_ID,
-	MEM_PE_COUNTERL_ID,
-	MEM_RF_COUNTERH_ID,				// Refresh requests
-	MEM_RF_COUNTERL_ID,
-	MEM_FI_COUNTERH_ID,				// Forced idle cycles
-	MEM_FI_COUNTERL_ID,
-	MEM_DRV_STRENGTH_ID,
-	MEM_REFRESH_THRES_ID,
-};
+// Mem ranges (addr >> 10)
+#define MEM_MARR0_START 0x00
+#define MEM_MARR0_END 0x02
+#define MEM_MARR1_START 0x04
+#define MEM_MARR1_END 0x06
+#define MEM_MARR2_START 0x08
+#define MEM_MARR2_END 0x0a
+#define MEM_MARR3_START 0x0c
+#define MEM_MARR3_END 0x0e
+#define MEM_MARR_CONTROL 0x10
+#define MEM_CP_DIAL 0x12
+#define MEM_TC_DIAL 0x14
+#define MEM_PE_DIAL 0x16
+#define MEM_PI_READ_DIAL 0x18
+#define MEM_PI_WRITE_DIAL 0x1a
+#define MEM_INT_ENABLE 0x1c				// MI interrupt enable
+#define MEM_INT_STATUS 0x1e				// MI interrupt status
+#define MEM_INT_CLR 0x20				// Clear pending MI interrupt
+#define MEM_INT_ADDRL 0x22				// Interrupted Mem address
+#define MEM_INT_ADDRH 0x24
+#define MEM_REFRESH 0x26				// Cycles between refresh
+#define MEM_CONFIG 0x28
+#define MEM_LATENCY 0x2a				// Mem latency cycles (3-6)
+#define MEM_RDTORD 0x2c					// Idle cycles
+#define MEM_RDTOWR 0x2e
+#define MEM_WRTORD 0x30
+#define MEM_CP_COUNTERH 0x32
+#define MEM_CP_COUNTERL 0x34
+#define MEM_TC_COUNTERH 0x36
+#define MEM_TC_COUNTERL 0x38
+#define MEM_PI_READ_COUNTERH 0x3a
+#define MEM_PI_READ_COUNTERL 0x3c
+#define MEM_PI_WRITE_COUNTERH 0x3e
+#define MEM_PI_WRITE_COUNTERL 0x40
+#define MEM_DSP_COUNTERH 0x42
+#define MEM_DSP_COUNTERL 0x44
+#define MEM_IO_COUNTERH 0x46
+#define MEM_IO_COUNTERL 0x48
+#define MEM_VI_COUNTERH 0x4a
+#define MEM_VI_COUNTERL 0x4c
+#define MEM_PE_COUNTERH 0x4e
+#define MEM_PE_COUNTERL 0x50
+#define MEM_RF_COUNTERH 0x52			// Refresh requests
+#define MEM_RF_COUNTERL 0x54
+#define MEM_FI_COUNTERH 0x56			// Forced idle cycles
+#define MEM_FI_COUNTERL 0x58
+#define MEM_DRV_STRENGTH 0x5a
+#define MEM_REFRESH_THRES 0x5c
 
 #define MEM_MARR_SHIFT 10
 #define MEM_MARR_MASK 0x03fffc00
@@ -107,7 +101,7 @@ union MEMCounter
 };
 #pragma pack(pop)
 
-struct MIControl
+struct MIState
 {
 	uint8_t* ram;
 	size_t ramSize;
@@ -129,7 +123,7 @@ struct MIControl
 	MEMCounter pe_counter;
 };
 
-extern	MIControl mi;
+extern	MIState mi;
 
 void    MIOpen(HWConfig* config);
 void	MIClose();

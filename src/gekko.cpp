@@ -584,8 +584,8 @@ namespace Gekko
 			return;
 		}
 
-		// You don't need to use the ICache in BS1, even if it is enabled
-		if (pa >= BOOTROM_START_ADDRESS) {
+		// HACK: You don't need to use the ICache in BS1, even if it is enabled
+		if (pa >= PI_MEMSPACE_BOOTROM) {
 			PIReadWord(pa, reg);
 			return;
 		}

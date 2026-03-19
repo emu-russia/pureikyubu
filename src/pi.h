@@ -3,10 +3,10 @@
 #pragma once
 
 // Address spaces
-#define PI_MEMSPACE_MAINMEM     0x0000'0000         // 1T-SRAM main memory
-#define PI_MEMSPACE_EFB         0x0800'0000         // GX eFB base address
+#define PI_MEMSPACE_MAINMEM     0x0000'0000         // 1T-SRAM main memory ("Splash")
+#define PI_MEMSPACE_EFB         0x0800'0000         // GFX eFB base address
 #define PI_REGSPACE_CP          0x0C00'0000
-#define PI_REGSPACE_PE          0x0C00'1000         // GX Pixel Engine regs mapped to physical memory
+#define PI_REGSPACE_PE          0x0C00'1000         // GFX Pixel Engine regs mapped to physical memory
 #define PI_REGSPACE_VI          0x0C00'2000
 #define PI_REGSPACE_PI          0x0C00'3000
 #define PI_REGSPACE_MEM         0x0C00'4000
@@ -15,11 +15,8 @@
 #define PI_REGSPACE_SI          0x0C00'6400
 #define PI_REGSPACE_EXI         0x0C00'6800
 #define PI_REGSPACE_AI          0x0C00'6C00
-#define PI_REGSPACE_GX_FIFO     0x0C00'8000         // GX streaming fifo
-#define PI_MEMSPACE_BOOTROM     0xFFF0'0000
-
-#define PI_REG16_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 1))
-#define PI_REG32_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 2))
+#define PI_REGSPACE_GFX_FIFO    0x0C00'8000         // GFX streaming fifo
+#define PI_MEMSPACE_BOOTROM     0xFFF0'0000			// Bootrom start address
 
 // Efb Z-plane select
 #define PI_EFB_ZPLANE       0x0040'0000 
@@ -27,19 +24,20 @@
 // Mask EFB address
 #define PI_EFB_ADDRESS_MASK 0xFF80'0000
 
-#define PI_INTSR            0x0C003000      // master interrupt reg
-#define PI_INTMR            0x0C003004      // master interrupt mask (a set bit means that the interrupt is enabled)
-#define PI_BASE             0x0C00300C      // PI CP fifo base
-#define PI_TOP              0x0C003010      // PI CP fifo top
-#define PI_WRPTR            0x0C003014      // PI CP fifo write pointer
-#define PI_CPABT            0x0C003018      // Abort PI CP FIFO
-#define PI_PIESR            0x0C00301C
-#define PI_PIEAR            0x0C003020
-#define PI_CONFIG           0x0C003024      // PI CFG + reset bits
-#define PI_DURAR            0x0C003028
-#define PI_CHIPID           0x0C00302C      // Flipper ID (console revision)
-#define PI_STRGTH           0x0C003030
-#define PI_CPUDBB           0x0C003034
+#define PI_INTSR            0x00      // master interrupt reg
+#define PI_INTMR            0x04      // master interrupt mask (a set bit means that the interrupt is enabled)
+#define PI_CPBAS            0x0C      // PI CP fifo base
+#define PI_CPTOP            0x10      // PI CP fifo top
+#define PI_CPWRT            0x14      // PI CP fifo write pointer
+#define PI_CPABT            0x18      // Abort PI CP FIFO
+#define PI_PIESR            0x1C
+#define PI_PIEAR            0x20
+#define PI_CONFIG           0x24      // PI CFG + reset bits
+#define PI_DURAR            0x28
+#define PI_CHIPID           0x2C      // Flipper ID (console revision)
+#define PI_STRGTH           0x30
+#define PI_CPUDBB           0x34
+#define PI_REG_MAX			0x38
 
 #define PI_INTSR_RSTSWB		0x10000			// The state of the reset switch button. Non-maskable INTSR bit
 
@@ -65,19 +63,12 @@
 #define PI_CONFIG_MEMRSTB 0x00000002
 #define PI_CONFIG_DIRSTB 0x00000004
 
-// PI FIFO registers
-enum class PI_CPMappedRegister
-{
-	PI_CPBAS_ID = 3,
-	PI_CPTOP_ID = 4,
-	PI_CPWRT_ID = 5,
-	PI_CPABT_ID = 6,
-};
+// PI CP write pointer wrap bit (for the upper register)
+#define PI_CPWRT_WRAP   0x0400
 
-// PI CP write pointer wrap bit
-#define PI_CPWRT_WRAP   0x0400'0000
-
-#define PI_FIFO_ADDRESS_MASK  0x03ff'ffe0		// Mask for FIFO registers (only bits 25:5 are used for memory addressing)
+// Mask for FIFO registers (only bits 25:5 are used for memory addressing)
+#define PI_FIFO_ADDRESS_MASK_HI  0x03ff
+#define PI_FIFO_ADDRESS_MASK_LO  0xffe0
 
 enum class PIInterruptSource
 {
@@ -127,16 +118,17 @@ uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
 // PI state (registers and other data)
 struct PIControl
 {
-	volatile uint32_t intsr;	// interrupt cause
-	volatile uint32_t intmr;	// interrupt mask
-	volatile uint32_t intbrk;	// one-shot interrup breakpoint
+	volatile uint16_t intsr;	// interrupt cause
+	volatile uint16_t intmr;	// interrupt mask
+	volatile uint16_t intbrk;	// one-shot interrup breakpoint
 	bool        log;			// log interrupts
 	uint32_t    consoleVer;		// console version
+	uint32_t	chipid;
 	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
 	int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
 	int64_t one_microsecond;	// one CPU microsecond in timer ticks
 
-	// PI FIFO
+	// The PI contains its own part of the CP FIFO, intended for Burst transactions via the GFX FIFO Stream Pointer. The write event is simultaneously forwarded to the CP to track the WRPTR.
 	volatile uint32_t cp_base;
 	volatile uint32_t cp_top;
 	volatile uint32_t cp_wrptr;		// also WRAP bit
@@ -159,10 +151,20 @@ void PIClose();
 /// <param name="mask">Mask of interrupts that require a one-shot break</param>
 void PIBreakOnNextInt(uint32_t mask);
 
+/// <summary>
+/// Install a handler to access a register mapped to the CPU address space.
+/// The PI is designed so that all register operations are inherently 16-bit.
+/// 32-bit operations are implemented by performing two 16-bit operations: first on the high-order half of the register at address +0, 
+/// then on the low-order half of the register at address +2.
+/// </summary>
+/// <param name="addr">physical address of trap</param>
+/// <param name="rdTrap">register read trap</param>
+/// <param name="wrTrap">register write trap</param>
+/// <param name="context">An arbitrary context that will be passed to the handler (e.g. `this`)</param>
 void PISetTrap(
-	uint32_t type,                                       // 16 or 32
-	uint32_t addr,                                       // physical address of trap
-	void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
-	void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
+	uint32_t addr,
+	void (*rdTrap)(uint32_t, uint32_t*, void*) = NULL,
+	void (*wrTrap)(uint32_t, uint32_t, void*) = NULL,
+	void *context = NULL);
 
-void DumpPIFIFO(PI_CPMappedRegister id, uint32_t new_value);
+void DumpPIFIFO();

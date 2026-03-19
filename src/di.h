@@ -1,16 +1,17 @@
 #pragma once
 
-// DI registers (32-bit)
-#define DI_SR            0x0C006000     // Status Register
-#define DI_CVR           0x0C006004     // Cover Register
-#define DI_CMDBUF0       0x0C006008     // Command Buffer 0
-#define DI_CMDBUF1       0x0C00600C     // Command Buffer 1
-#define DI_CMDBUF2       0x0C006010     // Command Buffer 2
-#define DI_MAR           0x0C006014     // DMA Memory Address Register
-#define DI_LEN           0x0C006018     // DMA Transfer Length Register
-#define DI_CR            0x0C00601C     // Control Register
-#define DI_IMMBUF        0x0C006020     // Immediate Data Buffer
-#define DI_CFG           0x0C006024     // Configuration Register
+// DI registers (32-bit from the software side)
+#define DI_SR            0x00     // Status Register
+#define DI_CVR           0x04     // Cover Register
+#define DI_CMDBUF0       0x08     // Command Buffer 0
+#define DI_CMDBUF1       0x0C     // Command Buffer 1
+#define DI_CMDBUF2       0x10     // Command Buffer 2
+#define DI_MAR           0x14     // DMA Memory Address Register
+#define DI_LEN           0x18     // DMA Transfer Length Register
+#define DI_CR            0x1C     // Control Register
+#define DI_IMMBUF        0x20     // Immediate Data Buffer
+#define DI_CFG           0x24     // Configuration Register
+#define DI_REG_MAX	     0x28
 
 #define DISR             di.sr
 #define DICVR            di.cvr
@@ -37,19 +38,22 @@
 #define DI_CR_DMA        (1 << 1)           // 0 = Immediate Mode, 1 = DMA Mode
 #define DI_CR_TSTART     (1 << 0)
 
-#define DI_DIMAR_MASK    0x03fffffe0        // Valid bits of DIMAR
+#define DI_DIMAR_MASK    0x03ff'ffe0        // Valid bits of DIMAR
+#define DI_DIMAR_MASK_HI 0x03ff
+#define DI_DIMAR_MASK_LO 0xffe0
 
 // ---------------------------------------------------------------------------
 // hardware API
 
 // DI state (registers and other data)
-struct DIControl
+struct DIState
 {
-	volatile uint32_t        sr, cvr, cr;    // DI registers
+	// DI registers
+	volatile uint16_t        sr, cvr, cr;
 	volatile uint32_t        mar, len;
 	volatile uint8_t         cmdbuf[12];
 	volatile uint8_t         immbuf[4];
-	volatile uint32_t        cfg;
+	volatile uint16_t        cfg;
 	uint8_t         dmaFifo[32];
 
 	int             dduToHostByteCounter;
@@ -58,7 +62,7 @@ struct DIControl
 	bool            log;
 };
 
-extern  DIControl di;
+extern  DIState di;
 
 void    DIOpen(HWConfig* config);
 void    DIClose();

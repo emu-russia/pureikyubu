@@ -9,8 +9,6 @@ namespace GX
 	GXCore::GXCore()
 	{
 		fifo = new FifoProcessor(this);
-		memset(&cpregs, 0, sizeof(cpregs));
-		cpregs.cr |= CP_CR_WPINC;		// 1 on reset
 	}
 
 	GXCore::~GXCore()

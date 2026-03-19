@@ -85,7 +85,7 @@ union VIPosition
 // hardware API
 
 // VI state (registers and other data)
-struct VIControl
+struct VIState
 {
 	volatile uint16_t    disp_cr;    // display configuration register
 	volatile uint32_t    tfbl;       // video buffer (top field)
@@ -113,7 +113,7 @@ struct VIControl
 	int         videoEncoderFuse;
 };
 
-extern  VIControl vi;
+extern  VIState vi;
 
 void    VIUpdate();
 void    VIStats();

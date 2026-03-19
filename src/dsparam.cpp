@@ -371,81 +371,65 @@ namespace DSP
 
 	// RAM pointer
 
-	static void ar_write_maddr_h(uint32_t addr, uint32_t data)
+	static void ar_write_maddr_h(uint32_t addr, uint32_t data, void* ctx)
 	{
 		aram.mmaddr &= 0x0000ffff;
 		aram.mmaddr |= ((data & 0x3ff) << 16);
 	}
-	static void ar_read_maddr_h(uint32_t addr, uint32_t* reg) { *reg = (aram.mmaddr >> 16) & 0x3FF; }
+	static void ar_read_maddr_h(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (aram.mmaddr >> 16) & 0x3FF; }
 
-	static void ar_write_maddr_l(uint32_t addr, uint32_t data)
+	static void ar_write_maddr_l(uint32_t addr, uint32_t data, void* ctx)
 	{
 		aram.mmaddr &= 0xffff0000;
 		aram.mmaddr |= ((data & ~0x1F) & 0xffff);
 	}
-	static void ar_read_maddr_l(uint32_t addr, uint32_t* reg) { *reg = (uint16_t)aram.mmaddr & ~0x1F; }
+	static void ar_read_maddr_l(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)aram.mmaddr & ~0x1F; }
 
 	// ARAM pointer
 
-	static void ar_write_araddr_h(uint32_t addr, uint32_t data)
+	static void ar_write_araddr_h(uint32_t addr, uint32_t data, void* ctx)
 	{
 		aram.araddr &= 0x0000ffff;
 		aram.araddr |= ((data & 0x3FF) << 16);
 	}
-	static void ar_read_araddr_h(uint32_t addr, uint32_t* reg) { *reg = (aram.araddr >> 16) & 0x3FF; }
+	static void ar_read_araddr_h(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (aram.araddr >> 16) & 0x3FF; }
 
-	static void ar_write_araddr_l(uint32_t addr, uint32_t data)
+	static void ar_write_araddr_l(uint32_t addr, uint32_t data, void* ctx)
 	{
 		aram.araddr &= 0xffff0000;
 		aram.araddr |= ((data & ~0x1F) & 0xffff);
 	}
-	static void ar_read_araddr_l(uint32_t addr, uint32_t* reg) { *reg = (uint16_t)aram.araddr & ~0x1F; }
+	static void ar_read_araddr_l(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)aram.araddr & ~0x1F; }
 
 	//
 	// byte count register
 	//
 
-	static void ar_write_cnt_h(uint32_t addr, uint32_t data)
+	static void ar_write_cnt_h(uint32_t addr, uint32_t data, void* ctx)
 	{
 		aram.cnt &= 0x0000ffff;
 		aram.cnt |= ((data & 0x83FF) << 16);
 	}
-	static void ar_read_cnt_h(uint32_t addr, uint32_t* reg) { *reg = (aram.cnt >> 16) & 0x83FF; }
+	static void ar_read_cnt_h(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (aram.cnt >> 16) & 0x83FF; }
 
-	static void ar_write_cnt_l(uint32_t addr, uint32_t data)
+	static void ar_write_cnt_l(uint32_t addr, uint32_t data, void* ctx)
 	{
 		aram.cnt &= 0xffff0000;
 		aram.cnt |= ((data & ~0x1F) & 0xffff);
 		ARDMA();
 	}
-	static void ar_read_cnt_l(uint32_t addr, uint32_t* reg) { *reg = (uint16_t)aram.cnt & ~0x1F; }
+	static void ar_read_cnt_l(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)aram.cnt & ~0x1F; }
 
 	//
 	// hacks
 	//
 
-	static void no_read(uint32_t addr, uint32_t* reg) { *reg = 0; }
-	static void no_write(uint32_t addr, uint32_t data) {}
+	static void no_read(uint32_t addr, uint32_t* reg, void* ctx) { *reg = 0; }
+	static void no_write(uint32_t addr, uint32_t data, void* ctx) {}
 
-	static void ar_hack_size_r(uint32_t addr, uint32_t* reg) { *reg = aram.size; }
-	static void ar_hack_size_w(uint32_t addr, uint32_t data) { aram.size = (uint16_t)data; }
-	static void ar_hack_mode(uint32_t addr, uint32_t* reg) { *reg = 1; }
-
-	// ---------------------------------------------------------------------------
-	// 32-bit ARAM registers
-
-	static void ar_write_maddr(uint32_t addr, uint32_t data) { aram.mmaddr = data & 0x03FF'FFE0; }
-	static void ar_read_maddr(uint32_t addr, uint32_t* reg) { *reg = aram.mmaddr; }
-
-	static void ar_write_araddr(uint32_t addr, uint32_t data) { aram.araddr = data & 0x03FF'FFE0; }
-	static void ar_read_araddr(uint32_t addr, uint32_t* reg) { *reg = aram.araddr; }
-
-	static void ar_write_cnt(uint32_t addr, uint32_t data)
-	{
-		aram.cnt = data & 0x83FF'FFE0;
-		ARDMA();
-	}
-	static void ar_read_cnt(uint32_t addr, uint32_t* reg) { *reg = aram.cnt & 0x83FF'FFE0; }
+	static void ar_hack_size_r(uint32_t addr, uint32_t* reg, void *ctx) { *reg = aram.size; }
+	static void ar_hack_size_w(uint32_t addr, uint32_t data, void* ctx) { aram.size = (uint16_t)data; }
+	static void ar_hack_mode(uint32_t addr, uint32_t* reg, void* ctx) { *reg = 1; }
 
 	// ---------------------------------------------------------------------------
 	// init
@@ -466,21 +450,17 @@ namespace DSP
 		aram.log = true;
 
 		// set traps to aram registers
-		PISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
-		PISetTrap(16, AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
-		PISetTrap(16, AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
-		PISetTrap(16, AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
-		PISetTrap(16, AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
-		PISetTrap(16, AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
-
-		PISetTrap(32, AR_DMA_MMADDR, ar_read_maddr, ar_write_maddr);
-		PISetTrap(32, AR_DMA_ARADDR, ar_read_araddr, ar_write_araddr);
-		PISetTrap(32, AR_DMA_CNT, ar_read_cnt, ar_write_cnt);
+		PISetTrap(PI_REGSPACE_DSP | AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
+		PISetTrap(PI_REGSPACE_DSP | AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
+		PISetTrap(PI_REGSPACE_DSP | AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
+		PISetTrap(PI_REGSPACE_DSP | AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
+		PISetTrap(PI_REGSPACE_DSP | AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
+		PISetTrap(PI_REGSPACE_DSP | AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
 
 		// hacks
-		PISetTrap(16, AR_SIZE, ar_hack_size_r, ar_hack_size_w);
-		PISetTrap(16, AR_MODE, ar_hack_mode, no_write);
-		PISetTrap(16, AR_REFRESH, no_read, no_write);
+		PISetTrap(PI_REGSPACE_DSP | AR_SIZE, ar_hack_size_r, ar_hack_size_w);
+		PISetTrap(PI_REGSPACE_DSP | AR_MODE, ar_hack_mode, no_write);
+		PISetTrap(PI_REGSPACE_DSP | AR_REFRESH, no_read, no_write);
 
 		aram.dmaThread = EMUCreateThread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
 	}
