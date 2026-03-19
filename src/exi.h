@@ -1,6 +1,6 @@
 #pragma once
 
-// EXI registers (all registers are 32-bit)
+// EXI registers (all registers are 32-bit from the software side)
 //                      (chan 0)
 #define EXI0_CSR        0x00          // Communication Status Register
 #define EXI0_MADR       0x04          // DMA Memory Address Register
@@ -45,10 +45,10 @@
 // EXI registers block
 struct EXIRegs
 {
-	volatile uint32_t         csr;            // communication register 
+	volatile uint16_t         csr;            // communication register 
 	volatile uint32_t         madr;           // memory address (32 byte aligned)
 	volatile uint32_t         len;            // size (32 bytes aligned)
-	volatile uint32_t         cr;             // control register
+	volatile uint16_t         cr;             // control register
 	volatile uint32_t         data;           // immediate data register
 };
 

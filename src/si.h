@@ -3,7 +3,7 @@
 
 #define SI_POLLING_INTERVAL     0x10000      // In Gekko ticks
 
-// SI registers (all registers are 32-bit)
+// SI registers (all registers are 32-bit from the software side)
 
 #define SI_CHAN0_OUTBUF     0x00      // Channel 0 Output Buffer
 #define SI_CHAN0_INBUFH     0x04      // Channel 0 Input Buffer High
@@ -21,6 +21,7 @@
 #define SI_COMCSR           0x34      // Communication Control Status Register
 #define SI_SR               0x38      // Status Register
 #define SI_EXILK            0x3C      // EXI Clock Lock (unused)
+#define SI_REG_MAX			0x40
 #define SI_COMBUF           0x80      // Communication Buffer (128 bytes)
 
 #define SI_POLL_REG         si.poll

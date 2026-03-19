@@ -232,7 +232,7 @@ static void DIDduToHostCallback(uint8_t data)
 // DI register traps
 
 // status register
-static void write_sr(uint32_t addr, uint32_t data)
+static void write_sr(uint16_t data)
 {
 	// set masks
 	if (data & DI_SR_BRKINTMSK) DISR |= DI_SR_BRKINTMSK;
@@ -266,15 +266,10 @@ static void write_sr(uint32_t addr, uint32_t data)
 	}
 }
 
-static void read_sr(uint32_t addr, uint32_t* reg)
-{
-	*reg = (uint16_t)DISR;
-}
-
 // control register
-static void write_cr(uint32_t addr, uint32_t data)
+static void write_cr(uint16_t data)
 {
-	DICR = (uint16_t)data;
+	DICR = data;
 
 	// start command
 	if (DICR & DI_CR_TSTART)
@@ -298,13 +293,8 @@ static void write_cr(uint32_t addr, uint32_t data)
 	}
 }
 
-static void read_cr(uint32_t addr, uint32_t* reg)
-{
-	*reg = (uint16_t)DICR;
-}
-
 // cover register
-static void write_cvr(uint32_t addr, uint32_t data)
+static void write_cvr(uint16_t data)
 {
 	// clear cover interrupt
 	if (data & DI_CVR_CVRINT)
@@ -318,7 +308,7 @@ static void write_cvr(uint32_t addr, uint32_t data)
 	else DICVR &= ~DI_CVR_CVRINTMSK;
 }
 
-static void read_cvr(uint32_t addr, uint32_t* reg)
+static void read_cvr(uint32_t* reg)
 {
 	uint32_t value = DICVR & ~DI_CVR_CVR;
 
@@ -330,38 +320,112 @@ static void read_cvr(uint32_t addr, uint32_t* reg)
 	*reg = value;
 }
 
-// dma registers
-static void read_mar(uint32_t addr, uint32_t* reg) { *reg = DIMAR & DI_DIMAR_MASK; }
-static void write_mar(uint32_t addr, uint32_t data) { DIMAR = data; }
-static void read_len(uint32_t addr, uint32_t* reg) { *reg = DILEN & ~0x1f; }
-static void write_len(uint32_t addr, uint32_t data) { DILEN = data; }
-
-static void DISetCommandBuffer(int n, uint32_t value)
+void DIRegRead(uint32_t addr, uint32_t* reg, void* context)
 {
-	volatile uint8_t* ptr = &di.cmdbuf[n * 4];
-	*(uint32_t*)ptr = _BYTESWAP_UINT32(value);
+	switch (addr & 0xFF) {
+
+		case DI_SR+2:
+			*reg = (uint16_t)DISR;
+			break;
+		case DI_CVR+2:
+			read_cvr(reg);
+			break;
+		case DI_CMDBUF0:
+		case DI_CMDBUF0+2:
+		case DI_CMDBUF1:
+		case DI_CMDBUF1+2:
+		case DI_CMDBUF2:
+		case DI_CMDBUF2+2: {
+			uint32_t ofs = (addr & 0xFF) - DI_CMDBUF0;
+			*reg = (uint32_t)di.cmdbuf[ofs] << 8;
+			*reg |= di.cmdbuf[ofs + 1];
+			break;
+		}
+		case DI_MAR:
+			*reg = (DIMAR >> 16) & DI_DIMAR_MASK_HI;
+			break;
+		case DI_MAR+2:
+			*reg = (uint16_t)DIMAR & DI_DIMAR_MASK_LO;
+			break;
+		case DI_LEN:
+			*reg = DILEN >> 16;
+			break;
+		case DI_LEN+2:
+			*reg = (uint16_t)DILEN & ~0x1f;
+			break;
+		case DI_CR+2:
+			*reg = (uint16_t)DICR;
+			break;
+		case DI_IMMBUF:
+		case DI_IMMBUF+2: {
+			uint32_t ofs = (addr & 0xFF) - DI_IMMBUF;
+			*reg = (uint32_t)di.immbuf[ofs] << 8;
+			*reg |= di.immbuf[ofs + 1];
+			break;
+		}
+		case DI_CFG+2:
+			// register is read only.
+			// currently, bit 0 is used for BootROM scramble disable ("chicken bit"), bits 1-7 are reserved
+			// used in EXISync->__OSGetDIConfig call, return 0 and forget.
+			*reg = 0;
+			break;
+		default:
+			*reg = 0;
+			break;
+	}
 }
 
-static uint32_t DIGetCommandBuffer(int n)
+void DIRegWrite(uint32_t addr, uint32_t data, void* context)
 {
-	volatile uint8_t* ptr = &di.cmdbuf[n * 4];
-	return _BYTESWAP_UINT32(*(uint32_t*)ptr);
+	switch (addr & 0xFF) {
+
+		case DI_SR+2:
+			write_sr((uint16_t)data);
+			break;
+		case DI_CVR+2:
+			write_cvr((uint16_t)data);
+			break;
+		case DI_CMDBUF0:
+		case DI_CMDBUF0+2:
+		case DI_CMDBUF1:
+		case DI_CMDBUF1+2:
+		case DI_CMDBUF2:
+		case DI_CMDBUF2+2: {
+			uint32_t ofs = (addr & 0xFF) - DI_CMDBUF0;
+			di.cmdbuf[ofs] = (uint8_t)(data >> 8);
+			di.cmdbuf[ofs + 1] = (uint8_t)data;
+			break;
+		}
+		case DI_MAR:
+			DIMAR &= 0x0000ffff;
+			DIMAR |= (data & DI_DIMAR_MASK_HI) << 16;
+			break;
+		case DI_MAR+2:
+			DIMAR &= 0xffff0000;
+			DIMAR |= (uint16_t)data & DI_DIMAR_MASK_LO;
+			break;
+		case DI_LEN:
+			DILEN &= 0x0000ffff;
+			DILEN |= data << 16;
+			break;
+		case DI_LEN+2:
+			DILEN &= 0xffff0000;
+			DILEN |= (uint16_t)data & ~0x1f;
+			break;
+		case DI_CR+2:
+			write_cr((uint16_t)data);
+			break;
+		case DI_IMMBUF:
+		case DI_IMMBUF+2: {
+			uint32_t ofs = (addr & 0xFF) - DI_IMMBUF;
+			di.immbuf[ofs] = (uint8_t)(data >> 8);
+			di.immbuf[ofs + 1] = (uint8_t)data;
+			break;
+		}
+		default:
+			break;
+	}
 }
-
-// di buffers
-static void read_cmdbuf0(uint32_t addr, uint32_t* reg) { *reg = DIGetCommandBuffer(0); }
-static void write_cmdbuf0(uint32_t addr, uint32_t data) { DISetCommandBuffer(0, data); }
-static void read_cmdbuf1(uint32_t addr, uint32_t* reg) { *reg = DIGetCommandBuffer(1); }
-static void write_cmdbuf1(uint32_t addr, uint32_t data) { DISetCommandBuffer(1, data); }
-static void read_cmdbuf2(uint32_t addr, uint32_t* reg) { *reg = DIGetCommandBuffer(2); }
-static void write_cmdbuf2(uint32_t addr, uint32_t data) { DISetCommandBuffer(2, data); }
-static void read_immbuf(uint32_t addr, uint32_t* reg) { *reg = _BYTESWAP_UINT32(*(uint32_t*)di.immbuf); }
-static void write_immbuf(uint32_t addr, uint32_t data) { *(uint32_t*)di.immbuf = _BYTESWAP_UINT32(data); }
-
-// register is read only.
-// currently, bit 0 is used for BootROM scramble disable ("chicken bit"), bits 1-7 are reserved
-// used in EXISync->__OSGetDIConfig call, return 0 and forget.
-static void read_cfg(uint32_t addr, uint32_t* reg) { *reg = 0; }
 
 // ---------------------------------------------------------------------------
 // init
@@ -384,16 +448,9 @@ void DIOpen(HWConfig* config)
 	DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
 
 	// set register traps
-	PISetTrap(PI_REGSPACE_DI | DI_SR, read_sr, write_sr);
-	PISetTrap(PI_REGSPACE_DI | DI_CVR, read_cvr, write_cvr);
-	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF0, read_cmdbuf0, write_cmdbuf0);
-	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF1, read_cmdbuf1, write_cmdbuf1);
-	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF2, read_cmdbuf2, write_cmdbuf2);
-	PISetTrap(PI_REGSPACE_DI | DI_MAR, read_mar, write_mar);
-	PISetTrap(PI_REGSPACE_DI | DI_LEN, read_len, write_len);
-	PISetTrap(PI_REGSPACE_DI | DI_CR, read_cr, write_cr);
-	PISetTrap(PI_REGSPACE_DI | DI_IMMBUF, read_immbuf, write_immbuf);
-	PISetTrap(PI_REGSPACE_DI | DI_CFG, read_cfg, NULL);
+	for (uint32_t i = 0; i < DI_REG_MAX; i += 2) {
+		PISetTrap(PI_REGSPACE_DI + i, DIRegRead, DIRegWrite);
+	}
 }
 
 void DIClose()

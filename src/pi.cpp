@@ -319,7 +319,7 @@ void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
 	// You can actually write anywhere on the page
-	if ((phys_addr & ~0xfff) == PI_REGSPACE_GX_FIFO)
+	if ((phys_addr & ~0xfff) == PI_REGSPACE_GFX_FIFO)
 	{
 		// PI FIFO
 

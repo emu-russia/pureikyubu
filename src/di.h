@@ -1,6 +1,6 @@
 #pragma once
 
-// DI registers (32-bit)
+// DI registers (32-bit from the software side)
 #define DI_SR            0x00     // Status Register
 #define DI_CVR           0x04     // Cover Register
 #define DI_CMDBUF0       0x08     // Command Buffer 0
@@ -11,6 +11,7 @@
 #define DI_CR            0x1C     // Control Register
 #define DI_IMMBUF        0x20     // Immediate Data Buffer
 #define DI_CFG           0x24     // Configuration Register
+#define DI_REG_MAX	     0x28
 
 #define DISR             di.sr
 #define DICVR            di.cvr
@@ -37,7 +38,9 @@
 #define DI_CR_DMA        (1 << 1)           // 0 = Immediate Mode, 1 = DMA Mode
 #define DI_CR_TSTART     (1 << 0)
 
-#define DI_DIMAR_MASK    0x03fffffe0        // Valid bits of DIMAR
+#define DI_DIMAR_MASK    0x03ff'ffe0        // Valid bits of DIMAR
+#define DI_DIMAR_MASK_HI 0x03ff
+#define DI_DIMAR_MASK_LO 0xffe0
 
 // ---------------------------------------------------------------------------
 // hardware API
@@ -45,11 +48,12 @@
 // DI state (registers and other data)
 struct DIState
 {
-	volatile uint32_t        sr, cvr, cr;    // DI registers
+	// DI registers
+	volatile uint16_t        sr, cvr, cr;
 	volatile uint32_t        mar, len;
 	volatile uint8_t         cmdbuf[12];
 	volatile uint8_t         immbuf[4];
-	volatile uint32_t        cfg;
+	volatile uint16_t        cfg;
 	uint8_t         dmaFifo[32];
 
 	int             dduToHostByteCounter;

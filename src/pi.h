@@ -15,7 +15,7 @@
 #define PI_REGSPACE_SI          0x0C00'6400
 #define PI_REGSPACE_EXI         0x0C00'6800
 #define PI_REGSPACE_AI          0x0C00'6C00
-#define PI_REGSPACE_GX_FIFO     0x0C00'8000         // GFX streaming fifo
+#define PI_REGSPACE_GFX_FIFO    0x0C00'8000         // GFX streaming fifo
 #define PI_MEMSPACE_BOOTROM     0xFFF0'0000			// Bootrom start address
 
 // Efb Z-plane select

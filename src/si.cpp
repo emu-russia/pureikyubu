@@ -96,263 +96,116 @@ static void SIClearInterrupt()
 // command output buffers are read/write
 //
 
-/* ******* CHAN 0 ******* */
-
-static void si_wr_out0(uint32_t addr, uint32_t data)       // write
+static void si_wr_out(int chan, uint32_t mask, uint32_t data)
 {
-	si.shdw[0] = data;
-	SI_SR_REG |= SI_SR_WRST0;
+	si.shdw[chan] = data;
+	SI_SR_REG |= mask;
 
 	// control motor
-	if (data == 0x00400000) PADSetRumble(0, PAD_MOTOR_STOP);
-	else if (data == 0x00400001) PADSetRumble(0, PAD_MOTOR_RUMBLE);
-	else if (data == 0x00400002) PADSetRumble(0, PAD_MOTOR_STOP_HARD);
+	if (data == 0x00400000) PADSetRumble(chan, PAD_MOTOR_STOP);
+	else if (data == 0x00400001) PADSetRumble(chan, PAD_MOTOR_RUMBLE);
+	else if (data == 0x00400002) PADSetRumble(chan, PAD_MOTOR_STOP_HARD);
 }
 
-static void si_rd_out0(uint32_t addr, uint32_t* reg)       // read
-{
-	*reg = si.out[0];
-}
+/* ******* CHAN 0 ******* */
+
+static void si_wr_out0(uint32_t addr, uint32_t data) { si_wr_out(0, SI_SR_WRST0, data); }
+static void si_rd_out0(uint32_t addr, uint32_t* reg) { *reg = si.out[0]; }
 
 /* ******* CHAN 1 ******* */
 
-static void si_wr_out1(uint32_t addr, uint32_t data)       // write
-{
-	si.shdw[1] = data;
-	SI_SR_REG |= SI_SR_WRST1;
-
-	// control motor
-	if (data == 0x00400000) PADSetRumble(1, PAD_MOTOR_STOP);
-	else if (data == 0x00400001) PADSetRumble(1, PAD_MOTOR_RUMBLE);
-	else if (data == 0x00400002) PADSetRumble(1, PAD_MOTOR_STOP_HARD);
-}
-
-static void si_rd_out1(uint32_t addr, uint32_t* reg)       // read
-{
-	*reg = si.out[1];
-}
+static void si_wr_out1(uint32_t addr, uint32_t data) { si_wr_out(1, SI_SR_WRST1, data); }
+static void si_rd_out1(uint32_t addr, uint32_t* reg) { *reg = si.out[1]; }
 
 /* ******* CHAN 2 ******* */
 
-static void si_wr_out2(uint32_t addr, uint32_t data)       // write
-{
-	si.shdw[2] = data;
-	SI_SR_REG |= SI_SR_WRST2;
-
-	// control motor
-	if (data == 0x00400000) PADSetRumble(2, PAD_MOTOR_STOP);
-	else if (data == 0x00400001) PADSetRumble(2, PAD_MOTOR_RUMBLE);
-	else if (data == 0x00400002) PADSetRumble(2, PAD_MOTOR_STOP_HARD);
-}
-
-static void si_rd_out2(uint32_t addr, uint32_t* reg)       // read
-{
-	*reg = si.out[2];
-}
+static void si_wr_out2(uint32_t addr, uint32_t data) { si_wr_out(2, SI_SR_WRST2, data); }
+static void si_rd_out2(uint32_t addr, uint32_t* reg) { *reg = si.out[2]; }
 
 /* ******* CHAN 3 ******* */
 
-static void si_wr_out3(uint32_t addr, uint32_t data)       // write
-{
-	si.shdw[3] = data;
-	SI_SR_REG |= SI_SR_WRST3;
-
-	// control motor
-	if (data == 0x00400000) PADSetRumble(3, PAD_MOTOR_STOP);
-	else if (data == 0x00400001) PADSetRumble(3, PAD_MOTOR_RUMBLE);
-	else if (data == 0x00400002) PADSetRumble(3, PAD_MOTOR_STOP_HARD);
-}
-
-static void si_rd_out3(uint32_t addr, uint32_t* reg)       // read
-{
-	*reg = si.out[3];
-}
+static void si_wr_out3(uint32_t addr, uint32_t data) { si_wr_out(3, SI_SR_WRST3, data); }
+static void si_rd_out3(uint32_t addr, uint32_t* reg) { *reg = si.out[3]; }
 
 //
 // input buffers are read only
-// 0.09 has swapped high-low register traps :) fixed.
 //
+
+static void si_inh(int chan, uint32_t mask, uint32_t* reg)          // high
+{
+	uint32_t res;
+
+	// return swapped joypad values
+	res = (uint8_t)si.pad[chan].stickY;
+	res |= (uint8_t)si.pad[chan].stickX << 8;
+	res |= si.pad[chan].button << 16;
+
+	// clear RDST mask and interrupt
+	SI_SR_REG &= ~mask;
+	if ((SI_SR_REG &
+		(SI_SR_RDST0 |
+		SI_SR_RDST1 |
+		SI_SR_RDST2 |
+		SI_SR_RDST3)) == 0)
+	{
+		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
+		SIClearInterrupt();
+	}
+
+	*reg = res;
+}
+
+static void si_inl(int chan, uint32_t* reg)          // low
+{
+	uint32_t res;
+
+	// return swapped joypad values
+	res = (uint8_t)si.pad[chan].triggerRight;
+	res |= (uint8_t)si.pad[chan].triggerLeft << 8;
+	res |= (uint8_t)si.pad[chan].substickY << 16;
+	res |= (uint8_t)si.pad[chan].substickX << 24;
+
+	*reg = res;
+}
 
 /* ******* CHAN 0 ******* */
 
-static void si_inh0(uint32_t addr, uint32_t* reg)          // high
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[0].stickY;
-	res |= (uint8_t)si.pad[0].stickX << 8;
-	res |= si.pad[0].button << 16;
-
-	// clear RDST mask and interrupt
-	SI_SR_REG &= ~SI_SR_RDST0;
-	if ((SI_SR_REG &
-		(SI_SR_RDST0 |
-		 SI_SR_RDST1 |
-		 SI_SR_RDST2 |
-		 SI_SR_RDST3)) == 0)
-	{
-		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-		SIClearInterrupt();
-	}
-
-	*reg = res;
-}
-
-static void si_inl0(uint32_t addr, uint32_t* reg)          // low
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[0].triggerRight;
-	res |= (uint8_t)si.pad[0].triggerLeft << 8;
-	res |= (uint8_t)si.pad[0].substickY << 16;
-	res |= (uint8_t)si.pad[0].substickX << 24;
-
-	*reg = res;
-}
+static void si_inh0(uint32_t addr, uint32_t* reg) { si_inh(0, SI_SR_RDST0, reg); }
+static void si_inl0(uint32_t addr, uint32_t* reg) { si_inl(0, reg); }
 
 /* ******* CHAN 1 ******* */
 
-static void si_inh1(uint32_t addr, uint32_t* reg)          // high
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[1].stickY;
-	res |= (uint8_t)si.pad[1].stickX << 8;
-	res |= si.pad[1].button << 16;
-
-	// clear RDST mask and interrupt
-	SI_SR_REG &= ~SI_SR_RDST1;
-	if ((SI_SR_REG &
-		(SI_SR_RDST0 |
-		 SI_SR_RDST1 |
-		 SI_SR_RDST2 |
-		 SI_SR_RDST3)) == 0)
-	{
-		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-		SIClearInterrupt();
-	}
-
-	*reg = res;
-}
-
-static void si_inl1(uint32_t addr, uint32_t* reg)          // low
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[1].triggerRight;
-	res |= (uint8_t)si.pad[1].triggerLeft << 8;
-	res |= (uint8_t)si.pad[1].substickY << 16;
-	res |= (uint8_t)si.pad[1].substickX << 24;
-
-	*reg = res;
-}
+static void si_inh1(uint32_t addr, uint32_t* reg) { si_inh(1, SI_SR_RDST1, reg); }
+static void si_inl1(uint32_t addr, uint32_t* reg) { si_inl(1, reg); }
 
 /* ******* CHAN 2 ******* */
 
-static void si_inh2(uint32_t addr, uint32_t* reg)          // high
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[2].stickY;
-	res |= (uint8_t)si.pad[2].stickX << 8;
-	res |= si.pad[2].button << 16;
-
-	// clear RDST mask and interrupt
-	SI_SR_REG &= ~SI_SR_RDST2;
-	if ((SI_SR_REG &
-		(SI_SR_RDST0 |
-		 SI_SR_RDST1 |
-		 SI_SR_RDST2 |
-		 SI_SR_RDST3)) == 0)
-	{
-		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-		SIClearInterrupt();
-	}
-
-	*reg = res;
-}
-
-static void si_inl2(uint32_t addr, uint32_t* reg)          // low
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[2].triggerRight;
-	res |= (uint8_t)si.pad[2].triggerLeft << 8;
-	res |= (uint8_t)si.pad[2].substickY << 16;
-	res |= (uint8_t)si.pad[2].substickX << 24;
-
-	*reg = res;
-}
+static void si_inh2(uint32_t addr, uint32_t* reg) { si_inh(2, SI_SR_RDST2, reg); }
+static void si_inl2(uint32_t addr, uint32_t* reg) { si_inl(2, reg); }
 
 /* ******* CHAN 3 ******* */
 
-static void si_inh3(uint32_t addr, uint32_t* reg)          // high
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[3].stickY;
-	res |= (uint8_t)si.pad[3].stickX << 8;
-	res |= si.pad[3].button << 16;
-
-	// clear RDST mask and interrupt
-	SI_SR_REG &= ~SI_SR_RDST3;
-	if ((SI_SR_REG &
-		(SI_SR_RDST0 |
-		 SI_SR_RDST1 |
-		 SI_SR_RDST2 |
-		 SI_SR_RDST3)) == 0)
-	{
-		SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-		SIClearInterrupt();
-	}
-
-	*reg = res;
-}
-
-static void si_inl3(uint32_t addr, uint32_t* reg)          // low
-{
-	uint32_t res;
-
-	// return swapped joypad values
-	res = (uint8_t)si.pad[3].triggerRight;
-	res |= (uint8_t)si.pad[3].triggerLeft << 8;
-	res |= (uint8_t)si.pad[3].substickY << 16;
-	res |= (uint8_t)si.pad[3].substickX << 24;
-
-	*reg = res;
-}
+static void si_inh3(uint32_t addr, uint32_t* reg) { si_inh(3, SI_SR_RDST3, reg); }
+static void si_inl3(uint32_t addr, uint32_t* reg) { si_inl(3, reg); }
 
 //
 // communication buffer access
 //
 
-static void write_sicom(uint32_t addr, uint32_t data)
+static void write_sicom(uint32_t addr, uint32_t data, void *ctx)
 {
 	unsigned ofs = addr & 0x7f;
-	uint8_t* out = (uint8_t*)&data;
 
-	si.combuf[ofs + 0] = out[3];
-	si.combuf[ofs + 1] = out[2];
-	si.combuf[ofs + 2] = out[1];
-	si.combuf[ofs + 3] = out[0];
+	si.combuf[ofs + 0] = (uint8_t)(data >> 8);
+	si.combuf[ofs + 1] = (uint8_t)data;
 }
 
-static void read_sicom(uint32_t addr, uint32_t* reg)
+static void read_sicom(uint32_t addr, uint32_t* reg, void* ctx)
 {
 	unsigned ofs = addr & 0x7f;
-	uint8_t* in = (uint8_t*)reg;
 
-	in[0] = si.combuf[ofs + 3];
-	in[1] = si.combuf[ofs + 2];
-	in[2] = si.combuf[ofs + 1];
-	in[3] = si.combuf[ofs + 0];
+	*reg  = ((uint32_t)si.combuf[ofs + 0] << 8);
+	*reg |= si.combuf[ofs + 1];
 }
 
 // ---------------------------------------------------------------------------
@@ -454,17 +307,6 @@ static void read_sisr(uint32_t addr, uint32_t* reg)
 
 static void write_exilk(uint32_t addr, uint32_t data) { si.exilk = data; }
 static void read_exilk(uint32_t addr, uint32_t* reg) { *reg = si.exilk; }
-
-//
-// stubs for fake mode
-//
-
-static void no_write(uint32_t addr, uint32_t data) {}
-static void no_read(uint32_t addr, uint32_t* reg)
-{
-	if (addr == SI_POLL) *reg = 0xffffffff;
-	else *reg = 0;
-}
 
 // ---------------------------------------------------------------------------
 // polling
@@ -594,7 +436,7 @@ void SIOpen(HWConfig* config)
 	PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk, write_exilk);
 
 	// serial communcation buffer
-	for (unsigned ofs = 0; ofs < 128; ofs += 4)
+	for (unsigned ofs = 0; ofs < 128; ofs += 2)
 	{
 		PISetTrap((PI_REGSPACE_SI | SI_COMBUF) + ofs, read_sicom, write_sicom);
 	}

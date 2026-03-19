@@ -234,34 +234,87 @@ static void write_csr(int chan, uint32_t data)
 	EXIUpdateInterrupts();
 }
 
-static void exi0_read_csr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[0].csr; }
-static void exi1_read_csr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[1].csr; }
-static void exi2_read_csr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[2].csr; }
-static void exi0_write_csr(uint32_t addr, uint32_t data) { write_csr(0, data); }
-static void exi1_write_csr(uint32_t addr, uint32_t data) { write_csr(1, data); }
-static void exi2_write_csr(uint32_t addr, uint32_t data) { write_csr(2, data); }
+static void exi_read_dummy(uint32_t addr, uint32_t* reg, void* ctx) { *reg = 0; }
+static void exi_write_dummy(uint32_t addr, uint32_t data, void* ctx) { }
+
+static void exi0_read_csr(uint32_t addr, uint32_t* reg, void *ctx) { *reg = exi.regs[0].csr; }
+static void exi1_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[1].csr; }
+static void exi2_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[2].csr; }
+static void exi0_write_csr(uint32_t addr, uint32_t data, void* ctx) { write_csr(0, data); }
+static void exi1_write_csr(uint32_t addr, uint32_t data, void* ctx) { write_csr(1, data); }
+static void exi2_write_csr(uint32_t addr, uint32_t data, void* ctx) { write_csr(2, data); }
 
 //
 // memory address for EXI DMA
 //
 
-static void exi0_read_madr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[0].madr; }
-static void exi1_read_madr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[1].madr; }
-static void exi2_read_madr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[2].madr; }
-static void exi0_write_madr(uint32_t addr, uint32_t data) { exi.regs[0].madr = data; }
-static void exi1_write_madr(uint32_t addr, uint32_t data) { exi.regs[1].madr = data; }
-static void exi2_write_madr(uint32_t addr, uint32_t data) { exi.regs[2].madr = data; }
+static void exi0_read_madrh(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[0].madr >> 16; }
+static void exi1_read_madrh(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[1].madr >> 16; }
+static void exi2_read_madrh(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[2].madr >> 16; }
+static void exi0_write_madrh(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[0].madr &= 0x0000ffff;
+	exi.regs[0].madr |= data << 16;
+}
+static void exi1_write_madrh(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[1].madr &= 0x0000ffff;
+	exi.regs[1].madr |= data << 16;
+}
+static void exi2_write_madrh(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[2].madr &= 0x0000ffff;
+	exi.regs[2].madr |= data << 16;
+}
+
+static void exi0_read_madrl(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[0].madr; }
+static void exi1_read_madrl(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[1].madr; }
+static void exi2_read_madrl(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[2].madr; }
+static void exi0_write_madrl(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[0].madr &= 0xffff0000;
+	exi.regs[0].madr |= (uint16_t)data;
+}
+static void exi1_write_madrl(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[1].madr &= 0xffff0000;
+	exi.regs[1].madr |= (uint16_t)data;
+}
+static void exi2_write_madrl(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[2].madr &= 0xffff0000;
+	exi.regs[2].madr |= (uint16_t)data;
+}
 
 //
 // data length for DMA
 //
 
-static void exi0_read_len(uint32_t addr, uint32_t* reg) { *reg = exi.regs[0].len; }
-static void exi1_read_len(uint32_t addr, uint32_t* reg) { *reg = exi.regs[1].len; }
-static void exi2_read_len(uint32_t addr, uint32_t* reg) { *reg = exi.regs[2].len; }
-static void exi0_write_len(uint32_t addr, uint32_t data) { exi.regs[0].len = data; }
-static void exi1_write_len(uint32_t addr, uint32_t data) { exi.regs[1].len = data; }
-static void exi2_write_len(uint32_t addr, uint32_t data) { exi.regs[2].len = data; }
+static void exi0_read_lenh(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[0].len >> 16; }
+static void exi1_read_lenh(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[1].len >> 16; }
+static void exi2_read_lenh(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[2].len >> 16; }
+static void exi0_write_lenh(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[0].len &= 0x0000ffff;
+	exi.regs[0].len |= data << 16;
+}
+static void exi1_write_lenh(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[1].len &= 0x0000ffff;
+	exi.regs[1].len |= data << 16;
+}
+static void exi2_write_lenh(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[2].len &= 0x0000ffff;
+	exi.regs[2].len |= data << 16;
+}
+
+static void exi0_read_lenl(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[0].len; }
+static void exi1_read_lenl(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[1].len; }
+static void exi2_read_lenl(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[2].len; }
+static void exi0_write_lenl(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[0].len &= 0xffff0000;
+	exi.regs[0].len |= (uint16_t)data;
+}
+static void exi1_write_lenl(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[1].len &= 0xffff0000;
+	exi.regs[1].len |= (uint16_t)data;
+}
+static void exi2_write_lenl(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[2].len &= 0xffff0000;
+	exi.regs[2].len |= (uint16_t)data;
+}
 
 //
 // EXI control 
@@ -292,23 +345,48 @@ static void exi_write_cr(int chan, uint32_t data)
 	}
 }
 
-static void exi0_read_cr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[0].cr; }
-static void exi1_read_cr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[1].cr; }
-static void exi2_read_cr(uint32_t addr, uint32_t* reg) { *reg = exi.regs[2].cr; }
-static void exi0_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(0, data); }
-static void exi1_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(1, data); }
-static void exi2_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(2, data); }
+static void exi0_read_cr(uint32_t addr, uint32_t* reg, void *ctx) { *reg = exi.regs[0].cr; }
+static void exi1_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[1].cr; }
+static void exi2_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[2].cr; }
+static void exi0_write_cr(uint32_t addr, uint32_t data, void* ctx) { exi_write_cr(0, data); }
+static void exi1_write_cr(uint32_t addr, uint32_t data, void* ctx) { exi_write_cr(1, data); }
+static void exi2_write_cr(uint32_t addr, uint32_t data, void* ctx) { exi_write_cr(2, data); }
 
 //
 // EXI immediate data
 //
 
-static void exi0_read_data(uint32_t addr, uint32_t* reg) { *reg = exi.regs[0].data; }
-static void exi1_read_data(uint32_t addr, uint32_t* reg) { *reg = exi.regs[1].data; }
-static void exi2_read_data(uint32_t addr, uint32_t* reg) { *reg = exi.regs[2].data; }
-static void exi0_write_data(uint32_t addr, uint32_t data) { exi.regs[0].data = data; }
-static void exi1_write_data(uint32_t addr, uint32_t data) { exi.regs[1].data = data; }
-static void exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[2].data = data; }
+static void exi0_read_datah(uint32_t addr, uint32_t* reg, void *ctx) { *reg = exi.regs[0].data >> 16; }
+static void exi1_read_datah(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[1].data >> 16; }
+static void exi2_read_datah(uint32_t addr, uint32_t* reg, void* ctx) { *reg = exi.regs[2].data >> 16; }
+static void exi0_write_datah(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[0].data &= 0x0000ffff;
+	exi.regs[0].data |= data << 16;
+}
+static void exi1_write_datah(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[1].data &= 0x0000ffff;
+	exi.regs[1].data |= data << 16;
+}
+static void exi2_write_datah(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[2].data &= 0x0000ffff;
+	exi.regs[2].data |= data << 16;
+}
+
+static void exi0_read_datal(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[0].data; }
+static void exi1_read_datal(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[1].data; }
+static void exi2_read_datal(uint32_t addr, uint32_t* reg, void* ctx) { *reg = (uint16_t)exi.regs[2].data; }
+static void exi0_write_datal(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[0].data &= 0xffff0000;
+	exi.regs[0].data |= (uint16_t)data;
+}
+static void exi1_write_datal(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[1].data &= 0xffff0000;
+	exi.regs[1].data |= (uint16_t)data;
+}
+static void exi2_write_datal(uint32_t addr, uint32_t data, void* ctx) {
+	exi.regs[2].data &= 0xffff0000;
+	exi.regs[2].data |= (uint16_t)data;
+}
 
 // ---------------------------------------------------------------------------
 // init
@@ -335,25 +413,40 @@ void EXIOpen(HWConfig* config)
 	}
 
 	// set traps for EXI channel 0 registers
-	PISetTrap(PI_REGSPACE_EXI | EXI0_CSR, exi0_read_csr, exi0_write_csr);
-	PISetTrap(PI_REGSPACE_EXI | EXI0_MADR, exi0_read_madr, exi0_write_madr);
-	PISetTrap(PI_REGSPACE_EXI | EXI0_LEN, exi0_read_len, exi0_write_len);
-	PISetTrap(PI_REGSPACE_EXI | EXI0_CR, exi0_read_cr, exi0_write_cr);
-	PISetTrap(PI_REGSPACE_EXI | EXI0_DATA, exi0_read_data, exi0_write_data);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_CSR, exi_read_dummy, exi_write_dummy);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_CSR + 2, exi0_read_csr, exi0_write_csr);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_MADR, exi0_read_madrh, exi0_write_madrh);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_MADR + 2, exi0_read_madrl, exi0_write_madrl);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_LEN, exi0_read_lenh, exi0_write_lenh);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_LEN + 2, exi0_read_lenl, exi0_write_lenl);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_CR, exi_read_dummy, exi_write_dummy);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_CR + 2, exi0_read_cr, exi0_write_cr);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_DATA, exi0_read_datah, exi0_write_datah);
+	PISetTrap(PI_REGSPACE_EXI | EXI0_DATA + 2, exi0_read_datal, exi0_write_datal);
 
 	// set traps for EXI channel 1 registers
-	PISetTrap(PI_REGSPACE_EXI | EXI1_CSR, exi1_read_csr, exi1_write_csr);
-	PISetTrap(PI_REGSPACE_EXI | EXI1_MADR, exi1_read_madr, exi1_write_madr);
-	PISetTrap(PI_REGSPACE_EXI | EXI1_LEN, exi1_read_len, exi1_write_len);
-	PISetTrap(PI_REGSPACE_EXI | EXI1_CR, exi1_read_cr, exi1_write_cr);
-	PISetTrap(PI_REGSPACE_EXI | EXI1_DATA, exi1_read_data, exi1_write_data);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_CSR, exi_read_dummy, exi_write_dummy);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_CSR + 2, exi1_read_csr, exi1_write_csr);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_MADR, exi1_read_madrh, exi1_write_madrh);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_MADR + 2, exi1_read_madrl, exi1_write_madrl);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_LEN, exi1_read_lenh, exi1_write_lenh);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_LEN + 2, exi1_read_lenl, exi1_write_lenl);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_CR, exi_read_dummy, exi_write_dummy);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_CR + 2, exi1_read_cr, exi1_write_cr);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_DATA, exi1_read_datah, exi1_write_datah);
+	PISetTrap(PI_REGSPACE_EXI | EXI1_DATA + 2, exi1_read_datal, exi1_write_datal);
 
 	// set traps for EXI channel 2 registers
-	PISetTrap(PI_REGSPACE_EXI | EXI2_CSR, exi2_read_csr, exi2_write_csr);
-	PISetTrap(PI_REGSPACE_EXI | EXI2_MADR, exi2_read_madr, exi2_write_madr);
-	PISetTrap(PI_REGSPACE_EXI | EXI2_LEN, exi2_read_len, exi2_write_len);
-	PISetTrap(PI_REGSPACE_EXI | EXI2_CR, exi2_read_cr, exi2_write_cr);
-	PISetTrap(PI_REGSPACE_EXI | EXI2_DATA, exi2_read_data, exi2_write_data);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_CSR, exi_read_dummy, exi_write_dummy);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_CSR + 2, exi2_read_csr, exi2_write_csr);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_MADR, exi2_read_madrh, exi2_write_madrh);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_MADR + 2, exi2_read_madrl, exi2_write_madrl);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_LEN, exi2_read_lenh, exi2_write_lenh);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_LEN + 2, exi2_read_lenl, exi2_write_lenl);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_CR, exi_read_dummy, exi_write_dummy);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_CR + 2, exi2_read_cr, exi2_write_cr);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_DATA, exi2_read_datah, exi2_write_datah);
+	PISetTrap(PI_REGSPACE_EXI | EXI2_DATA + 2, exi2_read_datal, exi2_write_datal);
 
 	// open memory cards
 	MCOpen(config);
