@@ -5,23 +5,23 @@
 
 // SI registers (all registers are 32-bit)
 
-#define SI_CHAN0_OUTBUF     0x0C006400      // Channel 0 Output Buffer
-#define SI_CHAN0_INBUFH     0x0C006404      // Channel 0 Input Buffer High
-#define SI_CHAN0_INBUFL     0x0C006408      // Channel 0 Input Buffer Low
-#define SI_CHAN1_OUTBUF     0x0C00640C      // Channel 1 Output Buffer
-#define SI_CHAN1_INBUFH     0x0C006410      // Channel 1 Input Buffer High
-#define SI_CHAN1_INBUFL     0x0C006414      // Channel 1 Input Buffer Low
-#define SI_CHAN2_OUTBUF     0x0C006418      // Channel 2 Output Buffer
-#define SI_CHAN2_INBUFH     0x0C00641C      // Channel 2 Input Buffer High
-#define SI_CHAN2_INBUFL     0x0C006420      // Channel 2 Input Buffer Low
-#define SI_CHAN3_OUTBUF     0x0C006424      // Channel 3 Output Buffer
-#define SI_CHAN3_INBUFH     0x0C006428      // Channel 3 Input Buffer High
-#define SI_CHAN3_INBUFL     0x0C00642C      // Channel 3 Input Buffer Low
-#define SI_POLL             0x0C006430      // Poll Register
-#define SI_COMCSR           0x0C006434      // Communication Control Status Register
-#define SI_SR               0x0C006438      // Status Register
-#define SI_EXILK            0x0C00643C      // EXI Clock Lock (unused)
-#define SI_COMBUF           0x0C006480      // Communication Buffer (128 bytes)
+#define SI_CHAN0_OUTBUF     0x00      // Channel 0 Output Buffer
+#define SI_CHAN0_INBUFH     0x04      // Channel 0 Input Buffer High
+#define SI_CHAN0_INBUFL     0x08      // Channel 0 Input Buffer Low
+#define SI_CHAN1_OUTBUF     0x0C      // Channel 1 Output Buffer
+#define SI_CHAN1_INBUFH     0x10      // Channel 1 Input Buffer High
+#define SI_CHAN1_INBUFL     0x14      // Channel 1 Input Buffer Low
+#define SI_CHAN2_OUTBUF     0x18      // Channel 2 Output Buffer
+#define SI_CHAN2_INBUFH     0x1C      // Channel 2 Input Buffer High
+#define SI_CHAN2_INBUFL     0x20      // Channel 2 Input Buffer Low
+#define SI_CHAN3_OUTBUF     0x24      // Channel 3 Output Buffer
+#define SI_CHAN3_INBUFH     0x28      // Channel 3 Input Buffer High
+#define SI_CHAN3_INBUFL     0x2C      // Channel 3 Input Buffer Low
+#define SI_POLL             0x30      // Poll Register
+#define SI_COMCSR           0x34      // Communication Control Status Register
+#define SI_SR               0x38      // Status Register
+#define SI_EXILK            0x3C      // EXI Clock Lock (unused)
+#define SI_COMBUF           0x80      // Communication Buffer (128 bytes)
 
 #define SI_POLL_REG         si.poll
 #define SI_COMCSR_REG       si.comcsr

@@ -6,11 +6,15 @@ using namespace Debug;
 // PI state (registers and other data)
 PIControl pi;
 
+struct pi_reg_trap
+{
+	void (*read)(uint32_t, uint32_t*, void*);
+	void (*write)(uint32_t, uint32_t, void*);
+	void* context;
+};
+
 // hardware traps tables.
-static void (*hw_read16[0x10000])(uint32_t, uint32_t*);
-static void (*hw_write16[0x10000])(uint32_t, uint32_t);
-static void (*hw_read32[0x10000])(uint32_t, uint32_t*);
-static void (*hw_write32[0x10000])(uint32_t, uint32_t);
+static pi_reg_trap hw_reg_traps[0x10000];
 
 #pragma region "Processor Memory Interface"
 
@@ -29,11 +33,11 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 		return;
 	}
 
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		if (exi.BootromPresent)
 		{
-			ptr = &exi.bootrom[pa - BOOTROM_START_ADDRESS];
+			ptr = &exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
 			*reg = (uint32_t)*ptr;
 		}
 		else
@@ -65,7 +69,7 @@ void PIWriteByte(uint32_t pa, uint32_t data)
 		return;
 	}
 
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		return;
 	}
@@ -92,11 +96,11 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 		return;
 	}
 
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		if (exi.BootromPresent)
 		{
-			ptr = &exi.bootrom[pa - BOOTROM_START_ADDRESS];
+			ptr = &exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
 			*reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
 		}
 		else
@@ -109,7 +113,8 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 	// hardware trap
 	if (pa >= HW_BASE)
 	{
-		hw_read16[pa & 0xfffe](pa, reg);
+		pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffe];
+		trap->read(pa, reg, trap->context);
 		return;
 	}
 
@@ -135,7 +140,7 @@ void PIWriteHalf(uint32_t pa, uint32_t data)
 		return;
 	}
 
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		return;
 	}
@@ -143,7 +148,8 @@ void PIWriteHalf(uint32_t pa, uint32_t data)
 	// hardware trap
 	if (pa >= HW_BASE)
 	{
-		hw_write16[pa & 0xfffe](pa, data);
+		pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffe];
+		trap->write(pa, data, trap->context);
 		return;
 	}
 
@@ -177,11 +183,11 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 		return;
 	}
 
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		if (exi.BootromPresent)
 		{
-			ptr = &exi.bootrom[pa - BOOTROM_START_ADDRESS];
+			ptr = &exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
 			*reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 		}
 		else
@@ -194,7 +200,11 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 	// hardware trap
 	if (pa >= HW_BASE)
 	{
-		hw_read32[pa & 0xfffc](pa, reg);
+		pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffc];
+		uint32_t temp_hi, temp_lo;
+		trap->read(pa, &temp_hi, trap->context);
+		trap->read(pa+2, &temp_lo, trap->context);
+		*reg = (uint32_t)(temp_hi << 16) | (uint16_t)temp_lo;
 		return;
 	}
 
@@ -218,7 +228,7 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 		return;
 	}
 
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		return;
 	}
@@ -226,7 +236,9 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 	// hardware trap
 	if (pa >= HW_BASE)
 	{
-		hw_write32[pa & 0xfffc](pa, data);
+		pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffc];
+		trap->write(pa, data >> 16, trap->context);
+		trap->write(pa + 2, (uint16_t)data, trap->context);
 		return;
 	}
 
@@ -255,7 +267,7 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 
 void PIReadDouble(uint32_t pa, uint64_t* reg)
 {
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		Halt("PI: Attempting to read uint64_t from BootROM\n");
 		return;
@@ -276,7 +288,7 @@ void PIReadDouble(uint32_t pa, uint64_t* reg)
 
 void PIWriteDouble(uint32_t pa, uint64_t* data)
 {
-	if (pa >= BOOTROM_START_ADDRESS)
+	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		Halt("PI: Attempting to write uint64_t to BootROM\n");
 		return;
@@ -337,59 +349,24 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 // default hardware R/W operations.
 // emulation is halted on unknown register access.
 
-static void def_hw_read16(uint32_t addr, uint32_t* reg)
+static void def_hw_read16(uint32_t addr, uint32_t* reg, void *context)
 {
 	Halt("PI: Unhandled HW access: R16 %08X\n", addr);
 }
 
-static void def_hw_write16(uint32_t addr, uint32_t data)
+static void def_hw_write16(uint32_t addr, uint32_t data, void* context)
 {
 	Halt("PI: Unhandled HW access: W16 %08X = %04X\n", addr, (uint16_t)data);
-}
-
-static void def_hw_read32(uint32_t addr, uint32_t* reg)
-{
-	Halt("PI: Unhandled HW access: R32 %08X\n", addr);
-}
-
-static void def_hw_write32(uint32_t addr, uint32_t data)
-{
-	Halt("PI: Unhandled HW access: W32 %08X = %08X\n", addr, data);
 }
 
 // ---------------------------------------------------------------------------
 // traps API
 
-static void PISetTrap16(
-	uint32_t addr,
-	void (*rdTrap)(uint32_t, uint32_t*),
-	void (*wrTrap)(uint32_t, uint32_t))
-{
-	if (rdTrap == NULL) rdTrap = def_hw_read16;
-	if (wrTrap == NULL) wrTrap = def_hw_write16;
-
-	hw_read16[addr & 0xfffe] = rdTrap;
-	hw_write16[addr & 0xfffe] = wrTrap;
-}
-
-static void PISetTrap32(
-	uint32_t addr,
-	void (*rdTrap)(uint32_t, uint32_t*),
-	void (*wrTrap)(uint32_t, uint32_t))
-{
-	if (rdTrap == NULL) rdTrap = def_hw_read32;
-	if (wrTrap == NULL) wrTrap = def_hw_write32;
-
-	hw_read32[addr & 0xfffc] = rdTrap;
-	hw_write32[addr & 0xfffc] = wrTrap;
-}
-
-// wrapper
 void PISetTrap(
-	uint32_t type,                               // 16 or 32
-	uint32_t addr,                               // physical trap address
-	void (*rdTrap)(uint32_t, uint32_t*),  // register read trap
-	void (*wrTrap)(uint32_t, uint32_t))    // register write trap
+	uint32_t addr,
+	void (*rdTrap)(uint32_t, uint32_t*, void *),
+	void (*wrTrap)(uint32_t, uint32_t, void*),
+	void *context)
 {
 	// address must be in correct range
 	if (!((addr >= HW_BASE) && (addr < (HW_BASE + HW_MAX_KNOWN))))
@@ -400,20 +377,13 @@ void PISetTrap(
 		);
 	}
 
-	// select trap type
-	switch (type)
-	{
-		case 16:
-			PISetTrap16(addr, rdTrap, wrTrap);
-			break;
-		case 32:
-			PISetTrap32(addr, rdTrap, wrTrap);
-			break;
+	if (rdTrap == NULL) rdTrap = def_hw_read16;
+	if (wrTrap == NULL) wrTrap = def_hw_write16;
 
-			// should never happen
-		default:
-			throw "PI: Unknown trap type";
-	}
+	pi_reg_trap* trap = &hw_reg_traps[addr & 0xfffe];
+	trap->read = rdTrap;
+	trap->write = wrTrap;
+	trap->context = context;
 }
 
 // Set default traps for any access, called every time when emu restarted
@@ -427,13 +397,7 @@ static void PIClearTraps()
 	// for 16-bit registers
 	for (addr = HW_BASE; addr < (HW_BASE + HW_MAX_KNOWN); addr += 2)
 	{
-		PISetTrap16(addr, NULL, NULL);
-	}
-
-	// for 32-bit registers
-	for (addr = HW_BASE; addr < (HW_BASE + HW_MAX_KNOWN); addr += 4)
-	{
-		PISetTrap32(addr, NULL, NULL);
+		PISetTrap(addr);
 	}
 }
 

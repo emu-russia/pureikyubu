@@ -65,30 +65,26 @@ The debugging interface specification provided by this component can be found in
 // DSP<->PI registers
 
 // 16-bit access
-#define DSP_OUTMBOXH        0x0C005000      // CPU->DSP mailbox
-#define DSP_OUTMBOXL        0x0C005002
-#define DSP_INMBOXH         0x0C005004      // DSP->CPU mailbox
-#define DSP_INMBOXL         0x0C005006
-#define AI_DCR              0x0C00500A      // AI/DSP control register (the real name of this register is CDCR. Well, we almost guessed :))
+#define DSP_OUTMBOXH        0x00      // CPU->DSP mailbox
+#define DSP_OUTMBOXL        0x02
+#define DSP_INMBOXH         0x04      // DSP->CPU mailbox
+#define DSP_INMBOXL         0x06
+#define AI_DCR              0x0A      // AI/DSP control register (the real name of this register is CDCR. Well, we almost guessed :))
 // known ARAM controller registers (not sure about AR_SIZE, AR_MODE and AR_REFRESH)
-#define AR_SIZE             0x0C005012
-#define AR_MODE             0x0C005016
-#define AR_REFRESH          0x0C00501A
-#define AR_DMA_MMADDR_H     0x0C005020
-#define AR_DMA_MMADDR_L     0x0C005022
-#define AR_DMA_ARADDR_H     0x0C005024
-#define AR_DMA_ARADDR_L     0x0C005026
-#define AR_DMA_CNT_H        0x0C005028
-#define AR_DMA_CNT_L        0x0C00502A
+#define AR_SIZE             0x12
+#define AR_MODE             0x16
+#define AR_REFRESH          0x1A
+#define AR_DMA_MMADDR_H     0x20
+#define AR_DMA_MMADDR_L     0x22
+#define AR_DMA_ARADDR_H     0x24
+#define AR_DMA_ARADDR_L     0x26
+#define AR_DMA_CNT_H        0x28
+#define AR_DMA_CNT_L        0x2A
 // AI DMA
-#define AID_MADRH           0x0C005030      // DMA start address (High)
-#define AID_MADRL           0x0C005032      // DMA start address (Low)
-#define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data in 32 Byte blocks)
-#define AID_CNT             0x0C00503A      // counts down to zero showing how many 32 Byte blocks are left
-
-#define AR_DMA_MMADDR       0x0C005020      // ARAM 32 bit regs
-#define AR_DMA_ARADDR       0x0C005024
-#define AR_DMA_CNT          0x0C005028
+#define AID_MADRH           0x30      // DMA start address (High)
+#define AID_MADRL           0x32      // DMA start address (Low)
+#define AID_LEN             0x36      // DMA control/DMA length (length of audio data in 32 Byte blocks)
+#define AID_CNT             0x3A      // counts down to zero showing how many 32 Byte blocks are left
 
 // aram dma transfer type (CNT bit31)
 #define RAM_TO_ARAM     0

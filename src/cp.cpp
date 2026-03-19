@@ -11,14 +11,14 @@ using namespace Debug;
 // Stubs
 //
 
-static void CPRegRead(uint32_t addr, uint32_t* reg)
+static void CPRegRead(uint32_t addr, uint32_t* reg, void *context)
 {
-	*reg = Flipper::Gx->CpReadReg((GX::CPMappedRegister)((addr & 0xFF) >> 1));
+	*reg = Flipper::Gx->CpReadReg(addr & 0xFF);
 }
 
-static void CPRegWrite(uint32_t addr, uint32_t data)
+static void CPRegWrite(uint32_t addr, uint32_t data, void* context)
 {
-	Flipper::Gx->CpWriteReg((GX::CPMappedRegister)((addr & 0xFF) >> 1), data);
+	Flipper::Gx->CpWriteReg(addr & 0xFF, data);
 }
 
 // init
@@ -28,49 +28,49 @@ void CPOpen(HWConfig* config)
 	Report(Channel::CP, "Command processor (for GX)\n");
 
 	// Command Processor
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_STATUS_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_ENABLE_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_CLR_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_MEMPERF_SEL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_STM_LOW_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_BASEL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_BASEH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_TOPL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_TOPH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_HICNTL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_HICNTH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_LOCNTL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_LOCNTH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_COUNTL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_COUNTH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_WPTRL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_WPTRH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_RPTRL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_RPTRH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_BRKL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FIFO_BRKH_ID), CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_STATUS, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_ENABLE, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_CLR, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_MEMPERF_SEL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_STM_LOW, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKH, CPRegRead, CPRegWrite);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER0L_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER0H_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER1L_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER1H_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER2L_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER2H_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER3L_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_COUNTER3H_ID), CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER0L, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER0H, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER1L, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER1H, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER2L, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER2H, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER3L, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_COUNTER3H, CPRegRead, CPRegWrite);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_VC_CHKCNTL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_VC_CHKCNTH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_VC_MISSL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_VC_MISSH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_VC_STALLL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_VC_STALLH_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FRCLK_CNTL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_FRCLK_CNTH_ID), CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_VC_MISSL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_VC_MISSH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_VC_STALLL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_VC_STALLH, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTH, CPRegRead, CPRegWrite);
 
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_XF_ADDR_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_XF_DATAL_ID), CPRegRead, CPRegWrite);
-	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_XF_DATAH_ID), CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_XF_ADDR, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_XF_DATAL, CPRegRead, CPRegWrite);
+	PISetTrap(PI_REGSPACE_CP | CP_XF_DATAH, CPRegRead, CPRegWrite);
 }
 
 void CPClose()
@@ -202,102 +202,102 @@ namespace GX
 		fifo->Reset();
 	}
 
-	uint16_t GXCore::CpReadReg(CPMappedRegister id)
+	uint16_t GXCore::CpReadReg(uint32_t addr)
 	{
-		switch (id)
+		switch (addr)
 		{
-			case CPMappedRegister::CP_STATUS_ID:
+			case CP_STATUS:
 				return cpregs.sr;
-			case CPMappedRegister::CP_ENABLE_ID:
+			case CP_ENABLE:
 				return cpregs.cr;
-			case CPMappedRegister::CP_CLR_ID:
+			case CP_CLR:
 				return 0;
-			case CPMappedRegister::CP_MEMPERF_SEL_ID:
+			case CP_MEMPERF_SEL:
 				return 0;
-			case CPMappedRegister::CP_STM_LOW_ID:
+			case CP_STM_LOW:
 				return 0;
-			case CPMappedRegister::CP_FIFO_BASEL_ID:
+			case CP_FIFO_BASEL:
 				return cpregs.basel & 0xffe0;
-			case CPMappedRegister::CP_FIFO_BASEH_ID:
+			case CP_FIFO_BASEH:
 				return cpregs.baseh;
-			case CPMappedRegister::CP_FIFO_TOPL_ID:
+			case CP_FIFO_TOPL:
 				return cpregs.topl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_TOPH_ID:
+			case CP_FIFO_TOPH:
 				return cpregs.toph;
-			case CPMappedRegister::CP_FIFO_HICNTL_ID:
+			case CP_FIFO_HICNTL:
 				return cpregs.himarkl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_HICNTH_ID:
+			case CP_FIFO_HICNTH:
 				return cpregs.himarkh;
-			case CPMappedRegister::CP_FIFO_LOCNTL_ID:
+			case CP_FIFO_LOCNTL:
 				return cpregs.lomarkl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_LOCNTH_ID:
+			case CP_FIFO_LOCNTH:
 				return cpregs.lomarkh;
-			case CPMappedRegister::CP_FIFO_COUNTL_ID:
+			case CP_FIFO_COUNTL:
 				return cpregs.cntl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_COUNTH_ID:
+			case CP_FIFO_COUNTH:
 				return cpregs.cnth;
-			case CPMappedRegister::CP_FIFO_WPTRL_ID:
+			case CP_FIFO_WPTRL:
 				return cpregs.wrptrl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_WPTRH_ID:
+			case CP_FIFO_WPTRH:
 				return cpregs.wrptrh;
-			case CPMappedRegister::CP_FIFO_RPTRL_ID:
+			case CP_FIFO_RPTRL:
 				return cpregs.rdptrl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_RPTRH_ID:
+			case CP_FIFO_RPTRH:
 				return cpregs.rdptrh;
-			case CPMappedRegister::CP_FIFO_BRKL_ID:
+			case CP_FIFO_BRKL:
 				return cpregs.bpptrl & 0xffe0;
-			case CPMappedRegister::CP_FIFO_BRKH_ID:
+			case CP_FIFO_BRKH:
 				return cpregs.bpptrh;
-			case CPMappedRegister::CP_COUNTER0L_ID:
+			case CP_COUNTER0L:
 				return 0;
-			case CPMappedRegister::CP_COUNTER0H_ID:
+			case CP_COUNTER0H:
 				return 0;
-			case CPMappedRegister::CP_COUNTER1L_ID:
+			case CP_COUNTER1L:
 				return 0;
-			case CPMappedRegister::CP_COUNTER1H_ID:
+			case CP_COUNTER1H:
 				return 0;
-			case CPMappedRegister::CP_COUNTER2L_ID:
+			case CP_COUNTER2L:
 				return 0;
-			case CPMappedRegister::CP_COUNTER2H_ID:
+			case CP_COUNTER2H:
 				return 0;
-			case CPMappedRegister::CP_COUNTER3L_ID:
+			case CP_COUNTER3L:
 				return 0;
-			case CPMappedRegister::CP_COUNTER3H_ID:
+			case CP_COUNTER3H:
 				return 0;
-			case CPMappedRegister::CP_VC_CHKCNTL_ID:
+			case CP_VC_CHKCNTL:
 				return 0;
-			case CPMappedRegister::CP_VC_CHKCNTH_ID:
+			case CP_VC_CHKCNTH:
 				return 0;
-			case CPMappedRegister::CP_VC_MISSL_ID:
+			case CP_VC_MISSL:
 				return 0;
-			case CPMappedRegister::CP_VC_MISSH_ID:
+			case CP_VC_MISSH:
 				return 0;
-			case CPMappedRegister::CP_VC_STALLL_ID:
+			case CP_VC_STALLL:
 				return 0;
-			case CPMappedRegister::CP_VC_STALLH_ID:
+			case CP_VC_STALLH:
 				return 0;
-			case CPMappedRegister::CP_FRCLK_CNTL_ID:
+			case CP_FRCLK_CNTL:
 				return 0;
-			case CPMappedRegister::CP_FRCLK_CNTH_ID:
+			case CP_FRCLK_CNTH:
 				return 0;
-			case CPMappedRegister::CP_XF_ADDR_ID:
+			case CP_XF_ADDR:
 				return 0;
-			case CPMappedRegister::CP_XF_DATAL_ID:
+			case CP_XF_DATAL:
 				return 0;
-			case CPMappedRegister::CP_XF_DATAH_ID:
+			case CP_XF_DATAH:
 				return 0;
 		}
 
 		return 0;
 	}
 
-	void GXCore::CpWriteReg(CPMappedRegister id, uint16_t value)
+	void GXCore::CpWriteReg(uint32_t addr, uint16_t value)
 	{
-		switch (id)
+		switch (addr)
 		{
-			case CPMappedRegister::CP_STATUS_ID:
+			case CP_STATUS:
 				break;
-			case CPMappedRegister::CP_ENABLE_ID:
+			case CP_ENABLE:
 				cpregs.cr = (uint16_t)value;
 
 				// clear breakpoint
@@ -311,7 +311,7 @@ namespace GX
 					PIClearInt(PI_INTERRUPT_CP);
 				}
 				break;
-			case CPMappedRegister::CP_CLR_ID:
+			case CP_CLR:
 				// clear watermark conditions
 				if (value & CP_CLR_OVFCLR)
 				{
@@ -327,95 +327,95 @@ namespace GX
 					PIClearInt(PI_INTERRUPT_CP);
 				}
 				break;
-			case CPMappedRegister::CP_MEMPERF_SEL_ID:
+			case CP_MEMPERF_SEL:
 				break;
-			case CPMappedRegister::CP_STM_LOW_ID:
+			case CP_STM_LOW:
 				break;
-			case CPMappedRegister::CP_FIFO_BASEL_ID:
+			case CP_FIFO_BASEL:
 				cpregs.basel = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_BASEH_ID:
+			case CP_FIFO_BASEH:
 				cpregs.baseh = value;
 				break;
-			case CPMappedRegister::CP_FIFO_TOPL_ID:
+			case CP_FIFO_TOPL:
 				cpregs.topl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_TOPH_ID:
+			case CP_FIFO_TOPH:
 				cpregs.toph = value;
 				break;
-			case CPMappedRegister::CP_FIFO_HICNTL_ID:
+			case CP_FIFO_HICNTL:
 				cpregs.himarkl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_HICNTH_ID:
+			case CP_FIFO_HICNTH:
 				cpregs.himarkh = value;
 				break;
-			case CPMappedRegister::CP_FIFO_LOCNTL_ID:
+			case CP_FIFO_LOCNTL:
 				cpregs.lomarkl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_LOCNTH_ID:
+			case CP_FIFO_LOCNTH:
 				cpregs.lomarkh = value;
 				break;
-			case CPMappedRegister::CP_FIFO_COUNTL_ID:
+			case CP_FIFO_COUNTL:
 				cpregs.cntl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_COUNTH_ID:
+			case CP_FIFO_COUNTH:
 				cpregs.cnth = value;
 				break;
-			case CPMappedRegister::CP_FIFO_WPTRL_ID:
+			case CP_FIFO_WPTRL:
 				cpregs.wrptrl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_WPTRH_ID:
+			case CP_FIFO_WPTRH:
 				cpregs.wrptrh = value;
 				break;
-			case CPMappedRegister::CP_FIFO_RPTRL_ID:
+			case CP_FIFO_RPTRL:
 				cpregs.rdptrl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_RPTRH_ID:
+			case CP_FIFO_RPTRH:
 				cpregs.rdptrh = value;
 				break;
-			case CPMappedRegister::CP_FIFO_BRKL_ID:
+			case CP_FIFO_BRKL:
 				cpregs.bpptrl = value & 0xffe0;
 				break;
-			case CPMappedRegister::CP_FIFO_BRKH_ID:
+			case CP_FIFO_BRKH:
 				cpregs.bpptrh = value;
 				break;
-			case CPMappedRegister::CP_COUNTER0L_ID:
+			case CP_COUNTER0L:
 				break;
-			case CPMappedRegister::CP_COUNTER0H_ID:
+			case CP_COUNTER0H:
 				break;
-			case CPMappedRegister::CP_COUNTER1L_ID:
+			case CP_COUNTER1L:
 				break;
-			case CPMappedRegister::CP_COUNTER1H_ID:
+			case CP_COUNTER1H:
 				break;
-			case CPMappedRegister::CP_COUNTER2L_ID:
+			case CP_COUNTER2L:
 				break;
-			case CPMappedRegister::CP_COUNTER2H_ID:
+			case CP_COUNTER2H:
 				break;
-			case CPMappedRegister::CP_COUNTER3L_ID:
+			case CP_COUNTER3L:
 				break;
-			case CPMappedRegister::CP_COUNTER3H_ID:
+			case CP_COUNTER3H:
 				break;
-			case CPMappedRegister::CP_VC_CHKCNTL_ID:
+			case CP_VC_CHKCNTL:
 				break;
-			case CPMappedRegister::CP_VC_CHKCNTH_ID:
+			case CP_VC_CHKCNTH:
 				break;
-			case CPMappedRegister::CP_VC_MISSL_ID:
+			case CP_VC_MISSL:
 				break;
-			case CPMappedRegister::CP_VC_MISSH_ID:
+			case CP_VC_MISSH:
 				break;
-			case CPMappedRegister::CP_VC_STALLL_ID:
+			case CP_VC_STALLL:
 				break;
-			case CPMappedRegister::CP_VC_STALLH_ID:
+			case CP_VC_STALLH:
 				break;
-			case CPMappedRegister::CP_FRCLK_CNTL_ID:
+			case CP_FRCLK_CNTL:
 				break;
-			case CPMappedRegister::CP_FRCLK_CNTH_ID:
+			case CP_FRCLK_CNTH:
 				break;
-			case CPMappedRegister::CP_XF_ADDR_ID:
+			case CP_XF_ADDR:
 				break;
-			case CPMappedRegister::CP_XF_DATAL_ID:
+			case CP_XF_DATAL:
 				break;
-			case CPMappedRegister::CP_XF_DATAH_ID:
+			case CP_XF_DATAH:
 				break;
 		}
 	}

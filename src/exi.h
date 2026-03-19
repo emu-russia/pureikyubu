@@ -2,23 +2,23 @@
 
 // EXI registers (all registers are 32-bit)
 //                      (chan 0)
-#define EXI0_CSR        0x0C006800          // Communication Status Register
-#define EXI0_MADR       0x0C006804          // DMA Memory Address Register
-#define EXI0_LEN        0x0C006808          // DMA Length Register
-#define EXI0_CR         0x0C00680C          // Control Register
-#define EXI0_DATA       0x0C006810          // Data Register
+#define EXI0_CSR        0x00          // Communication Status Register
+#define EXI0_MADR       0x04          // DMA Memory Address Register
+#define EXI0_LEN        0x08          // DMA Length Register
+#define EXI0_CR         0x0C          // Control Register
+#define EXI0_DATA       0x10          // Data Register
 //                      (chan 1)
-#define EXI1_CSR        0x0C006814          // -"-
-#define EXI1_MADR       0x0C006818
-#define EXI1_LEN        0x0C00681C
-#define EXI1_CR         0x0C006820
-#define EXI1_DATA       0x0C006824
+#define EXI1_CSR        0x14          // -"-
+#define EXI1_MADR       0x18
+#define EXI1_LEN        0x1C
+#define EXI1_CR         0x20
+#define EXI1_DATA       0x24
 //                      (chan 2)
-#define EXI2_CSR        0x0C006828          // -"-
-#define EXI2_MADR       0x0C00682C
-#define EXI2_LEN        0x0C006830
-#define EXI2_CR         0x0C006834
-#define EXI2_DATA       0x0C006838
+#define EXI2_CSR        0x28          // -"-
+#define EXI2_MADR       0x2C
+#define EXI2_LEN        0x30
+#define EXI2_CR         0x34
+#define EXI2_DATA       0x38
 
 // EXI Communication Status Register mask
 #define EXI_CSR_ROMDIS      (1 << 13)       // disable IPL decryption logic
@@ -54,8 +54,6 @@ struct EXIRegs
 
 // Bootrom size (in bytes)
 #define BOOTROM_SIZE    (2*1024*1024)
-// Bootrom start address
-#define BOOTROM_START_ADDRESS 0xfff00000
 
 // ---------------------------------------------------------------------------
 // hardware API

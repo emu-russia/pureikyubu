@@ -247,10 +247,10 @@ namespace Flipper
 
 		ai.log = config->ai_log;
 
-		PISetTrap(32, AIS_CR, read_cr, write_cr);
-		PISetTrap(32, AIS_VR, read_vr, write_vr);
-		PISetTrap(32, AIS_SCNT, read_scnt, nullptr);
-		PISetTrap(32, AIS_IT, read_it, write_it);
+		PISetTrap(PI_REGSPACE_AI | AIS_CR, read_cr, write_cr);
+		PISetTrap(PI_REGSPACE_AI | AIS_VR, read_vr, write_vr);
+		PISetTrap(PI_REGSPACE_AI | AIS_SCNT, read_scnt, nullptr);
+		PISetTrap(PI_REGSPACE_AI | AIS_IT, read_it, write_it);
 
 		ai.Mixer = new AudioMixer(config);
 	}

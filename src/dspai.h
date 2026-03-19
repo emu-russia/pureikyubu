@@ -6,7 +6,7 @@ namespace DSP
 {
 	struct DspAIControl
 	{
-		// AID
+		// AI DMA regs
 		volatile uint16_t dcr;			// AI/DSP control register
 		volatile uint16_t madr_hi;		// DMA start address hi
 		volatile uint16_t madr_lo;		// DMA start address lo

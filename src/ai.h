@@ -6,14 +6,10 @@
 // AI Streaming registers
 
 // 32-bit access
-#define AIS_CR              0x0C006C00      // AIS control register 
-#define AIS_VR              0x0C006C04      // AIS volume register
-#define AIS_SCNT            0x0C006C08      // AIS sample counter
-#define AIS_IT              0x0C006C0C      // AIS interrupt timing
-#define AIS_UNUSED_4        0x0C006C10
-#define AIS_UNUSED_5        0x0C006C14
-#define AIS_UNUSED_6        0x0C006C18
-#define AIS_UNUSED_7        0x0C006C1C
+#define AIS_CR              0x00      // AIS control register 
+#define AIS_VR              0x04      // AIS volume register
+#define AIS_SCNT            0x08      // AIS sample counter
+#define AIS_IT              0x0C      // AIS interrupt timing
 
 // Audio Interface Control Register mask
 #define AICR_DFR            (1 << 6)        // AID sample rate (HW2 only). 0 - 48000, 1 - 32000

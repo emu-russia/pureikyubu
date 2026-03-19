@@ -115,8 +115,8 @@ namespace GX
 #pragma region "Interface to Flipper"
 
 		// CP Registers
-		uint16_t CpReadReg(CPMappedRegister id);
-		void CpWriteReg(CPMappedRegister id, uint16_t value);
+		uint16_t CpReadReg(uint32_t addr);
+		void CpWriteReg(uint32_t addr, uint16_t value);
 
 		// Streaming FIFO burst write notification from PI
 		void FifoWriteBurst();
@@ -275,8 +275,8 @@ namespace GX
 		void GL_SaveBitmap(uint8_t* buf);
 
 		// Pixel Engine mapped regs
-		uint16_t PeReadReg(PEMappedRegister id);
-		void PeWriteReg(PEMappedRegister id, uint16_t value);
+		uint16_t PeReadReg(uint32_t addr);
+		void PeWriteReg(uint32_t addr, uint16_t value);
 		uint32_t EfbPeek(uint32_t addr);
 		void EfbPoke(uint32_t addr, uint32_t value);
 

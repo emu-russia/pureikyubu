@@ -384,16 +384,16 @@ void DIOpen(HWConfig* config)
 	DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
 
 	// set 32-bit register traps
-	PISetTrap(32, DI_SR, read_sr, write_sr);
-	PISetTrap(32, DI_CVR, read_cvr, write_cvr);
-	PISetTrap(32, DI_CMDBUF0, read_cmdbuf0, write_cmdbuf0);
-	PISetTrap(32, DI_CMDBUF1, read_cmdbuf1, write_cmdbuf1);
-	PISetTrap(32, DI_CMDBUF2, read_cmdbuf2, write_cmdbuf2);
-	PISetTrap(32, DI_MAR, read_mar, write_mar);
-	PISetTrap(32, DI_LEN, read_len, write_len);
-	PISetTrap(32, DI_CR, read_cr, write_cr);
-	PISetTrap(32, DI_IMMBUF, read_immbuf, write_immbuf);
-	PISetTrap(32, DI_CFG, read_cfg, NULL);
+	PISetTrap(PI_REGSPACE_DI | DI_SR, read_sr, write_sr);
+	PISetTrap(PI_REGSPACE_DI | DI_CVR, read_cvr, write_cvr);
+	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF0, read_cmdbuf0, write_cmdbuf0);
+	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF1, read_cmdbuf1, write_cmdbuf1);
+	PISetTrap(PI_REGSPACE_DI | DI_CMDBUF2, read_cmdbuf2, write_cmdbuf2);
+	PISetTrap(PI_REGSPACE_DI | DI_MAR, read_mar, write_mar);
+	PISetTrap(PI_REGSPACE_DI | DI_LEN, read_len, write_len);
+	PISetTrap(PI_REGSPACE_DI | DI_CR, read_cr, write_cr);
+	PISetTrap(PI_REGSPACE_DI | DI_IMMBUF, read_immbuf, write_immbuf);
+	PISetTrap(PI_REGSPACE_DI | DI_CFG, read_cfg, NULL);
 }
 
 void DIClose()
