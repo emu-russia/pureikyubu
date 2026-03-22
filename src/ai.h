@@ -13,12 +13,12 @@
 #define AIS_REG_MAX			0x10
 
 // Audio Interface Control Register mask
-#define AICR_DFR            (1 << 6)        // AID sample rate (HW2 only). 0 - 48000, 1 - 32000
+#define AICR_DFR            (1 << 6)        // AI DSP DMA sample rate (HW2 only). 0 - 48000, 1 - 32000
 #define AICR_SCRESET        (1 << 5)        // reset sample counter
 #define AICR_AIINTVLD       (1 << 4)        // This bit controls whether AIINT is affected by the AIIT register matching (0 - match affects, 1 - not)
-#define AICR_AIINT          (1 << 3)        // AIS interrupt status
-#define AICR_AIINTMSK       (1 << 2)        // AIS interrupt mask
-#define AICR_AFR            (1 << 1)        // AIS sample rate. 0 - 32000, 1 - 48000
+#define AICR_AIINT          (1 << 3)        // AI Streaming interrupt status
+#define AICR_AIINTMSK       (1 << 2)        // AI Streaming interrupt mask
+#define AICR_AFR            (1 << 1)        // AI Streaming sample rate. 0 - 32000, 1 - 48000
 #define AICR_PSTAT          (1 << 0)        // This bit enables the DDU AISLR clock
 
 // ---------------------------------------------------------------------------
@@ -41,8 +41,20 @@ namespace Flipper
 		bool        log;            // Enable AI Streaming log
 	};
 
-	extern  AIState ai;
+	class AudioInterface
+	{
+		AIState ai;			//!< AI state (registers and other data)
 
-	void AIOpen(HWConfig* config);
-	void AIClose();
+		void MixerSetDvdAudioSampleRate(AudioSampleRate rate);
+		void AISINT();
+		void AIControl();
+		static void AIReadReg(uint32_t addr, uint32_t* reg, void* ctx);
+		static void AIWriteReg(uint32_t addr, uint32_t data, void* ctx);
+		uint16_t AdjustVolume(uint16_t sampleValue, int volume);
+		static void AIStreamCallback(uint16_t l, uint16_t r, void* ctx);
+
+	public:
+		AudioInterface(HWConfig* config);
+		~AudioInterface();
+	};
 }

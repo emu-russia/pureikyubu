@@ -344,10 +344,10 @@ namespace DVD
 		Rate_48000,
 	};
 
-	typedef void (*DduCallback)();
-	typedef uint8_t(*HostToDduCallback)();
-	typedef void (*DduToHostCallback)(uint8_t data);
-	typedef void (*DduStreamCallback)(uint16_t l, uint16_t r);
+	typedef void (*DduCallback)(void* ctx);
+	typedef uint8_t(*HostToDduCallback)(void* ctx);
+	typedef void (*DduToHostCallback)(uint8_t data, void *ctx);
+	typedef void (*DduStreamCallback)(uint16_t l, uint16_t r, void *ctx);
 
 	struct DduStats
 	{
@@ -373,12 +373,15 @@ namespace DVD
 	{
 		CoverStatus coverStatus = CoverStatus::Close;		// Mechanical cover status
 		DduCallback openCoverCallback = nullptr;
+		void* openCoverContext = nullptr;
 		DduCallback closeCoverCallback = nullptr;
+		void* closeCoverContext = nullptr;
 
 #pragma region "Error Handling"
 
 		void DeviceError(uint32_t reason);				// DIERR
 		DduCallback errorCallback = nullptr;		// Device error callback
+		void* errorContext = nullptr;
 		bool errorState = false;				// DDU is in error state
 		uint32_t errorCode = 0;					// Last error code
 
@@ -397,6 +400,7 @@ namespace DVD
 		DduBusDirection busDir;
 		HostToDduCallback hostToDduCallback = nullptr;
 		DduToHostCallback dduToHostCallback = nullptr;
+		void* transferContext = nullptr;
 		uint8_t commandBuffer[12] = { 0 };
 		int commandPtr = 0;
 		uint8_t immediateBuffer[4] = { 0 };
@@ -417,6 +421,7 @@ namespace DVD
 		uint32_t streamSeekVal = 0;					// Current seek for streaming (sample-based)
 		int32_t streamCount = 0;				// Decoded LR sample counter
 		DduStreamCallback streamCallback = nullptr;
+		void* streamContext = nullptr;
 		bool streamClockEnabled = false;
 		DvdAudioSampleRate sampleRate = DvdAudioSampleRate::Rate_32000;
 		int64_t nextGekkoTicksToSample = 0;
@@ -451,21 +456,24 @@ namespace DVD
 		CoverStatus GetCoverStatus() { return coverStatus; }
 
 		// Host interface to cover events
-		void SetCoverOpenCallback(DduCallback callback)
+		void SetCoverOpenCallback(DduCallback callback, void *ctx)
 		{
 			openCoverCallback = callback;
+			openCoverContext = ctx;
 		}
-		void SetCoverCloseCallback(DduCallback callback)
+		void SetCoverCloseCallback(DduCallback callback, void *ctx)
 		{
 			closeCoverCallback = callback;
+			closeCoverContext = ctx;
 		}
 
 		// Handling of DIRST signal
 		void Reset();
 
-		void SetErrorCallback(DduCallback callback)
+		void SetErrorCallback(DduCallback callback, void* ctx)
 		{
 			errorCallback = callback;
+			errorContext = ctx;
 		}
 
 		// Handling Break (DIBRK signal)
@@ -477,10 +485,11 @@ namespace DVD
 
 		// DDU Bus interface
 
-		void SetTransferCallbacks(HostToDduCallback hostToDdu, DduToHostCallback dduToHost)
+		void SetTransferCallbacks(HostToDduCallback hostToDdu, DduToHostCallback dduToHost, void *ctx)
 		{
 			hostToDduCallback = hostToDdu;
 			dduToHostCallback = dduToHost;
+			transferContext = ctx;
 		}
 
 		void StartTransfer(DduBusDirection direction);
@@ -495,9 +504,10 @@ namespace DVD
 		void EnableAudioStreamClock(bool enable);
 		bool IsAudioStreamClockEnabled() { return streamClockEnabled; }
 		void SetDvdAudioSampleRate(DvdAudioSampleRate rate);
-		void SetStreamCallback(DduStreamCallback callback)
+		void SetStreamCallback(DduStreamCallback callback, void *ctx)
 		{
 			streamCallback = callback;
+			streamContext = ctx;
 		}
 
 #pragma endregion "Streaming Audio interface"

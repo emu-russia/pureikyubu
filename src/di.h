@@ -62,7 +62,29 @@ struct DIState
 	bool            log;
 };
 
-extern  DIState di;
+namespace Flipper
+{
+	class DiskInterface
+	{
+		DIState di;		//!< DI state (registers and other data)
 
-void    DIOpen(HWConfig* config);
-void    DIClose();
+		static void DIOpenCover(void* ctx);
+		static void DICloseCover(void* ctx);
+		static void DIErrorCallback(void* ctx);
+		void DIBreak();
+		void DITransferComplete();
+		static uint8_t DIHostToDduCallbackCommand(void* ctx);
+		static uint8_t DIHostToDduCallbackData(void* ctx);
+		static void DIDduToHostCallback(uint8_t data, void* ctx);
+		void write_sr(uint16_t data);
+		void write_cr(uint16_t data);
+		void write_cvr(uint16_t data);
+		void read_cvr(uint32_t* reg);
+		static void DIRegRead(uint32_t addr, uint32_t* reg, void* context);
+		static void DIRegWrite(uint32_t addr, uint32_t data, void* context);
+
+	public:
+		DiskInterface(HWConfig* config);
+		~DiskInterface();
+	};
+}

@@ -56,61 +56,61 @@ const uint32_t Memcard_BytesMask[5] = { 0x00000000, 0xFF000000, 0xFFFF0000, 0xFF
  /* 0x83 0x00
   * Returns the status byte of the memcard.
   */
-static void MCGetStatusProc(Memcard* memcard);
+static void MCGetStatusProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0x89
  * Clear errors bits on the status byte of the memcard.
  */
-static void MCClearStatusProc(Memcard* memcard);
+static void MCClearStatusProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0xF2 SA2 SA1 PN BA
  * Reads a specified number of bytes from the specified pointer
  * and writes them to the memcard, at the specified sector, page and byte address
  */
-static void MCPageProgramProc(Memcard* memcard);
+static void MCPageProgramProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0x52 SA2 SA1 PN BA 0x00 0x00 0x00 0x00
  * Reads a specified number of bytes from the memcard
  * at the specified sector, page and byte address,
  * and writes them to the specified pointer
  */
-static void MCReadArrayProc(Memcard* memcard);
+static void MCReadArrayProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0xF1 SA2 SA1
  * Erases the specified sector
  */
-static void MCSectorEraseProc(Memcard* memcard);
+static void MCSectorEraseProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0x00 0x00
  * Returns the Id of this EXI device ( the size of the memcards in MBits in this case )
  * Returns 0 on error
  */
-static void MCGetEXIDeviceIdProc(Memcard* memcard);
+static void MCGetEXIDeviceIdProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0xF4 0x00 0x00
  * Erases all the memcard data
  */
-static void MCCardEraseProc(Memcard* memcard);
+static void MCCardEraseProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0x81 EN
  * Enables/disables interrupts
  */
-static void MCEnableInterruptsProc(Memcard* memcard);
+static void MCEnableInterruptsProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0X85 0x00
  * Returns the memcard id (Manufacturer and device id).
  */
-static void MCReadIdProc(Memcard* memcard);
+static void MCReadIdProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0X88
  * Puts the memcard in sleep mode
  */
-static void MCSleepProc(Memcard* memcard);
+static void MCSleepProc(Memcard* memcard, EXIRegs* exi);
 
 /* 0X87
  * Puts the memcard in non-sleep mode
  */
-static void MCWakeUpProc(Memcard* memcard);
+static void MCWakeUpProc(Memcard* memcard, EXIRegs* exi);
 
 #define Num_Memcard_ValidCommands 11
 const MCCommand Memcard_ValidCommands[Num_Memcard_ValidCommands] = {
@@ -177,15 +177,14 @@ static void MCSyncSave(Memcard* memcard, uint32_t offset, uint32_t size) {
  * All the following procedures asume that (memcard->connected == TRUE)
  */
  /**********************************MCGetStatusProc*********************************************/
-static void MCGetStatusProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCGetStatusProc(Memcard* memcard, EXIRegs* exi) {
 
 	int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
 	exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
 		(((uint32_t)memcard->status << 24) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCClearStatusProc*********************************************/
-static void MCClearStatusProc(Memcard* memcard) {
+static void MCClearStatusProc(Memcard* memcard, EXIRegs* exi) {
 	// TODO : Verify which bits are cleared
 		//memcard[cardnum].status &= (~MEMCARD_STATUS_ERASEERROR | ~MEMCARD_STATUS_PROGRAMEERROR);
 	memcard->status &= (~MEMCARD_STATUS_ERASEERROR |
@@ -193,8 +192,7 @@ static void MCClearStatusProc(Memcard* memcard) {
 		~MEMCARD_STATUS_ARRAYTOBUFFER);
 }
 /**********************************MCPageProgramProc*********************************************/
-static void MCPageProgramProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCPageProgramProc(Memcard* memcard, EXIRegs* exi) {
 
 	uint32_t offset;
 	uint8_t auxbyte = (uint8_t)(memcard->commandData & 0x000000FF);
@@ -229,8 +227,7 @@ static void MCPageProgramProc(Memcard* memcard) {
 	exi->csr |= EXI_CSR_EXIINT;
 }
 /**********************************MCReadArrayProc*********************************************/
-static void MCReadArrayProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCReadArrayProc(Memcard* memcard, EXIRegs* exi) {
 
 	uint32_t offset;
 	uint8_t auxbyte = (uint8_t)(memcard->commandData & 0x000000FF);
@@ -271,10 +268,8 @@ static void MCReadArrayProc(Memcard* memcard) {
 	}
 }
 /**********************************MCSectorEraseProc*********************************************/
-static void MCSectorEraseProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCSectorEraseProc(Memcard* memcard, EXIRegs* exi) {
 	uint32_t offset;
-
 
 	offset = MCCalculateOffset(memcard->commandData);
 
@@ -294,15 +289,14 @@ static void MCSectorEraseProc(Memcard* memcard) {
 	exi->csr |= EXI_CSR_EXIINT;
 }
 /**********************************MCSectorEraseProc*********************************************/
-static void MCGetEXIDeviceIdProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCGetEXIDeviceIdProc(Memcard* memcard, EXIRegs* exi) {
 
 	int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
 	exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
 		((uint32_t)(memcard->size >> 17) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCCardEraseProc*********************************************/
-static void MCCardEraseProc(Memcard* memcard) {
+static void MCCardEraseProc(Memcard* memcard, EXIRegs* exi) {
 	uint32_t offset = 0;
 
 	/* memcard->status |= MEMCARD_STATUS_BUSY; */
@@ -314,8 +308,7 @@ static void MCCardEraseProc(Memcard* memcard) {
 	/* memcard->status &= ~MEMCARD_STATUS_BUSY; */
 }
 /**********************************MCEnableInterruptsProc*********************************************/
-static void MCEnableInterruptsProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCEnableInterruptsProc(Memcard* memcard, EXIRegs* exi) {
 
 	if (memcard->commandData & (0x01 << 24))
 		Report(Channel::MC, "Enable Interrupts\n");
@@ -323,107 +316,110 @@ static void MCEnableInterruptsProc(Memcard* memcard) {
 		Report(Channel::MC, "Disable Interrupts\n");
 }
 /**********************************MCReadIdProc*********************************************/
-static void MCReadIdProc(Memcard* memcard) {
-	EXIRegs* exi = memcard->exi;
+static void MCReadIdProc(Memcard* memcard, EXIRegs* exi) {
 
 	int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
 	exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
 		(((uint32_t)memcard->ID << 16) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCSleepProc*********************************************/
-static void MCSleepProc(Memcard* memcard) {
+static void MCSleepProc(Memcard* memcard, EXIRegs* exi) {
 	memcard->status |= MEMCARD_STATUS_SLEEP;
 }
 /**********************************MCWakeUpProc*********************************************/
-static void MCWakeUpProc(Memcard* memcard) {
+static void MCWakeUpProc(Memcard* memcard, EXIRegs* exi) {
 	memcard->status &= ~MEMCARD_STATUS_SLEEP;
 }
 
 /********************************************************************************************/
-void MCTransfer() {
+void MCTransfer(void* ctx) {
+	Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)ctx;
 	uint32_t auxdata, auxdma;
 	int auxbytes, i;
 	Memcard* auxmc;
 	EXIRegs* auxexi;
 
-	if ((exi.regs[MEMCARD_SLOTA].cr & EXI_CR_TSTART) &&
-		(exi.regs[MEMCARD_SLOTA].csr & EXI_CSR_CS0B))
+	if ((exi->exi.regs[MEMCARD_SLOTA].cr & EXI_CR_TSTART) &&
+		(exi->exi.regs[MEMCARD_SLOTA].csr & EXI_CSR_CS0B)) {
 		auxmc = &memcard[MEMCARD_SLOTA];
-	else if ((exi.regs[MEMCARD_SLOTB].cr & EXI_CR_TSTART) &&
-		(exi.regs[MEMCARD_SLOTB].csr & EXI_CSR_CS0B))
+		auxexi = &Flipper::HW->exi->exi.regs[MEMCARD_SLOTA];
+	}
+	else if ((exi->exi.regs[MEMCARD_SLOTB].cr & EXI_CR_TSTART) &&
+		(exi->exi.regs[MEMCARD_SLOTB].csr & EXI_CSR_CS0B)) {
 		auxmc = &memcard[MEMCARD_SLOTB];
+		auxexi = &Flipper::HW->exi->exi.regs[MEMCARD_SLOTB];
+	}
 	else return;
 
 	if (auxmc->connected == false) return;
 
-	auxexi = auxmc->exi;
 	auxdma = auxexi->cr & EXI_CR_DMA;
 
 	switch (EXI_CR_RW(auxexi->cr)) {
-	case 0:  // Read Transfer
-		if (auxmc->ready) {
-			if (auxdma && (auxmc->executionFlags & MCDmaRead))
-				auxmc->procedure(auxmc);
-			else if (!auxdma && (auxmc->executionFlags & MCImmRead))
-				auxmc->procedure(auxmc);
-		}
-		break;
-	case 1:  // Write Transfer
-		auxdata = auxexi->data;
-		auxbytes = (EXI_CR_TLEN(auxexi->cr) + 1);
-		if (!auxdma) {
-			while (auxbytes > 0) {
-				if (auxmc->Command == MEMCARD_COMMAND_UNDEFINED || auxmc->ready) {
-					auxmc->Command = (uint8_t)(auxdata >> 24);
-					for (i = 0; i < Num_Memcard_ValidCommands; i++)
-						if (auxmc->Command == Memcard_ValidCommands[i].Command) {
-							auxmc->databytes = Memcard_ValidCommands[i].databytes;
-							auxmc->dummybytes = Memcard_ValidCommands[i].dummybytes;
-							auxmc->executionFlags = Memcard_ValidCommands[i].executionFlags;
-							auxmc->procedure = Memcard_ValidCommands[i].procedure;
-							auxmc->databytesread = 0;
-							auxmc->dummybytesread = 0;
-							auxmc->commandData = 0x00000000;
-							auxmc->ready = false;
-							break;
-						}
+		case 0:  // Read Transfer
+			if (auxmc->ready) {
+				if (auxdma && (auxmc->executionFlags & MCDmaRead))
+					auxmc->procedure(auxmc, auxexi);
+				else if (!auxdma && (auxmc->executionFlags & MCImmRead))
+					auxmc->procedure(auxmc, auxexi);
+			}
+			break;
+		case 1:  // Write Transfer
+			auxdata = auxexi->data;
+			auxbytes = (EXI_CR_TLEN(auxexi->cr) + 1);
+			if (!auxdma) {
+				while (auxbytes > 0) {
+					if (auxmc->Command == MEMCARD_COMMAND_UNDEFINED || auxmc->ready) {
+						auxmc->Command = (uint8_t)(auxdata >> 24);
+						for (i = 0; i < Num_Memcard_ValidCommands; i++)
+							if (auxmc->Command == Memcard_ValidCommands[i].Command) {
+								auxmc->databytes = Memcard_ValidCommands[i].databytes;
+								auxmc->dummybytes = Memcard_ValidCommands[i].dummybytes;
+								auxmc->executionFlags = Memcard_ValidCommands[i].executionFlags;
+								auxmc->procedure = Memcard_ValidCommands[i].procedure;
+								auxmc->databytesread = 0;
+								auxmc->dummybytesread = 0;
+								auxmc->commandData = 0x00000000;
+								auxmc->ready = false;
+								break;
+							}
 
-					if (i >= Num_Memcard_ValidCommands) {
-						Halt("MC :: Unrecognized Memcard Command %02x\n", auxmc->Command);
-						auxmc->Command = MEMCARD_COMMAND_UNDEFINED;
+						if (i >= Num_Memcard_ValidCommands) {
+							Halt("MC :: Unrecognized Memcard Command %02x\n", auxmc->Command);
+							auxmc->Command = MEMCARD_COMMAND_UNDEFINED;
+						}
+						else {
+							Report(Channel::MC, "Recognized Memcard Command %02x\n", auxmc->Command);
+						}
 					}
-					else {
-						Report(Channel::MC, "Recognized Memcard Command %02x\n", auxmc->Command);
+					else if (auxmc->databytesread < auxmc->databytes) {
+						auxmc->commandData |= ((auxdata & 0xFF000000) >> (auxmc->databytesread * 8));
+						auxmc->databytesread++;
 					}
+					else if (auxmc->dummybytesread < auxmc->dummybytes) {
+						auxmc->dummybytesread++;
+					}
+					else
+						Halt("MC :: Extra bytes at transfer , data : %02x\n", (uint8_t)(auxdata >> 24));
+					auxdata = auxdata << 8;
+					auxbytes--;
 				}
-				else if (auxmc->databytesread < auxmc->databytes) {
-					auxmc->commandData |= ((auxdata & 0xFF000000) >> (auxmc->databytesread * 8));
-					auxmc->databytesread++;
-				}
-				else if (auxmc->dummybytesread < auxmc->dummybytes) {
-					auxmc->dummybytesread++;
-				}
-				else
-					Halt("MC :: Extra bytes at transfer , data : %02x\n", (uint8_t)(auxdata >> 24));
-				auxdata = auxdata << 8;
-				auxbytes--;
+
+				if (auxmc->Command != MEMCARD_COMMAND_UNDEFINED &&
+					auxmc->databytesread == auxmc->databytes &&
+					auxmc->dummybytesread == auxmc->dummybytes)
+					auxmc->ready = true;
 			}
 
-			if (auxmc->Command != MEMCARD_COMMAND_UNDEFINED &&
-				auxmc->databytesread == auxmc->databytes &&
-				auxmc->dummybytesread == auxmc->dummybytes)
-				auxmc->ready = true;
-		}
-
-		if (auxmc->ready) {
-			if (auxdma && (auxmc->executionFlags & MCDmaWrite))
-				auxmc->procedure(auxmc);
-			else if (!auxdma && (auxmc->executionFlags & MCImmWrite))
-				auxmc->procedure(auxmc);
-		}
-		break;
-	default:
-		Halt("MC: Unknown memcard transfer type\n");
+			if (auxmc->ready) {
+				if (auxdma && (auxmc->executionFlags & MCDmaWrite))
+					auxmc->procedure(auxmc, auxexi);
+				else if (!auxdma && (auxmc->executionFlags & MCImmWrite))
+					auxmc->procedure(auxmc, auxexi);
+			}
+			break;
+		default:
+			Halt("MC: Unknown memcard transfer type\n");
 	}
 }
 
@@ -452,18 +448,18 @@ bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id) {
 	uint8_t newfile_buffer[Memcard_BlockSize];
 
 	switch (memcard_id) {
-	case MEMCARD_ID_64:
-	case MEMCARD_ID_128:
-	case MEMCARD_ID_256:
-	case MEMCARD_ID_512:
-	case MEMCARD_ID_1024:
-	case MEMCARD_ID_2048:
-		/* 17 = Mbits to byte conversion */
-		blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2);
-		break;
-	default:
-		Halt("MC: Wrong card id for creating file.\n");
-		return false;
+		case MEMCARD_ID_64:
+		case MEMCARD_ID_128:
+		case MEMCARD_ID_256:
+		case MEMCARD_ID_512:
+		case MEMCARD_ID_1024:
+		case MEMCARD_ID_2048:
+			/* 17 = Mbits to byte conversion */
+			blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2);
+			break;
+		default:
+			Halt("MC: Wrong card id for creating file.\n");
+			return false;
 	}
 
 	newfile = nullptr;
@@ -520,8 +516,6 @@ void MCOpen(HWConfig* config)
 	memcard[MEMCARD_SLOTB].Command = MEMCARD_COMMAND_UNDEFINED;
 	memcard[MEMCARD_SLOTA].ready = true;
 	memcard[MEMCARD_SLOTB].ready = true;
-	memcard[MEMCARD_SLOTA].exi = &exi.regs[MEMCARD_SLOTA];
-	memcard[MEMCARD_SLOTB].exi = &exi.regs[MEMCARD_SLOTB];
 
 	/* load settings */
 	Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
@@ -560,81 +554,81 @@ bool MCConnect(int cardnum) {
 	bool ret = true;
 	int i;
 	switch (cardnum) {
-	case -1:
-		if (Memcard_Connected[MEMCARD_SLOTA] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTA);
-		if (Memcard_Connected[MEMCARD_SLOTB] /*== TRUE*/)   ret = ret && MCConnect(MEMCARD_SLOTB);
-		return ret;
-		break;
-	case MEMCARD_SLOTA:
-	case MEMCARD_SLOTB:
-		if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum);
+		case -1:
+			if (Memcard_Connected[MEMCARD_SLOTA] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTA);
+			if (Memcard_Connected[MEMCARD_SLOTB] /*== TRUE*/)   ret = ret && MCConnect(MEMCARD_SLOTB);
+			return ret;
+			break;
+		case MEMCARD_SLOTA:
+		case MEMCARD_SLOTB:
+			if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum);
 
-		size_t memcardSize = Util::FileSize(memcard[cardnum].filename);
+			size_t memcardSize = Util::FileSize(memcard[cardnum].filename);
 
-		memcard[cardnum].file = nullptr;
-		memcard[cardnum].file = fopen(Util::WstringToString(memcard[cardnum].filename).c_str(), "r+b");
-		if (memcard[cardnum].file == nullptr) {
-			static char slt[2] = { 'A', 'B' };
-
-			// TODO: redirect user to memcard configure dialog ?
-			Report(
-				Channel::MC,
-				"Couldnt open memcard (slot %c),\n"
-				"location : %s\n\n"
-				"Check path or file attributes.",
-				slt[cardnum], Util::WstringToString(memcard[cardnum].filename).c_str()
-			);
-			return false;
-		}
-
-		for (i = 0; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)memcardSize; i++);
-
-		if (i >= Num_Memcard_ValidSizes) {
-			//          DBReport(YEL "memcard file doesnt have a valid size\n");
-			Halt("Memcard Error: memcard file doesnt have a valid size\n");
-			fclose(memcard[cardnum].file);
 			memcard[cardnum].file = nullptr;
-			return false;
-		}
+			memcard[cardnum].file = fopen(Util::WstringToString(memcard[cardnum].filename).c_str(), "r+b");
+			if (memcard[cardnum].file == nullptr) {
+				static char slt[2] = { 'A', 'B' };
 
-		memcard[cardnum].size = (uint32_t)memcardSize;
-		memcard[cardnum].data = (uint8_t*)malloc(memcard[cardnum].size);
+				// TODO: redirect user to memcard configure dialog ?
+				Report(
+					Channel::MC,
+					"Couldnt open memcard (slot %c),\n"
+					"location : %s\n\n"
+					"Check path or file attributes.",
+					slt[cardnum], Util::WstringToString(memcard[cardnum].filename).c_str()
+				);
+				return false;
+			}
 
-		if (memcard[cardnum].data == nullptr) {
-			//          DBReport(YEL "couldnt allocate enough memory for memcard\n");
-			Halt("Memcard Error: couldnt allocate enough memory for memcard\n");
-			fclose(memcard[cardnum].file);
-			memcard[cardnum].file = nullptr;
-			return false;
-		}
+			for (i = 0; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)memcardSize; i++);
 
-		if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
-			//          DBReport(YEL "error at locating file cursor\n");
-			Halt("Memcard Error: error at locating file cursor\n");
-			free(memcard[cardnum].data);
-			memcard[cardnum].data = nullptr;
-			fclose(memcard[cardnum].file);
-			memcard[cardnum].file = nullptr;
-			return false;
-		}
+			if (i >= Num_Memcard_ValidSizes) {
+				//          DBReport(YEL "memcard file doesnt have a valid size\n");
+				Halt("Memcard Error: memcard file doesnt have a valid size\n");
+				fclose(memcard[cardnum].file);
+				memcard[cardnum].file = nullptr;
+				return false;
+			}
 
-		if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
-			//          DBReport(YEL "error at reading the memcard file\n");
-			Halt("Memcard Error: error at reading the memcard file\n");
-			free(memcard[cardnum].data);
-			memcard[cardnum].data = nullptr;
-			fclose(memcard[cardnum].file);
-			memcard[cardnum].file = nullptr;
-			return false;
-		}
+			memcard[cardnum].size = (uint32_t)memcardSize;
+			memcard[cardnum].data = (uint8_t*)malloc(memcard[cardnum].size);
 
-		/* if nothing fails... */
-		memcard[cardnum].ID = ((uint16_t)0xC2) << 8 | (uint16_t)0x42; // Datel's code just for now
-		memcard[cardnum].status = MEMCARD_STATUS_READY;
-		memcard[cardnum].connected = true;
-		EXIAttach(cardnum);        // connect device
+			if (memcard[cardnum].data == nullptr) {
+				//          DBReport(YEL "couldnt allocate enough memory for memcard\n");
+				Halt("Memcard Error: couldnt allocate enough memory for memcard\n");
+				fclose(memcard[cardnum].file);
+				memcard[cardnum].file = nullptr;
+				return false;
+			}
 
-		return true;
+			if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
+				//          DBReport(YEL "error at locating file cursor\n");
+				Halt("Memcard Error: error at locating file cursor\n");
+				free(memcard[cardnum].data);
+				memcard[cardnum].data = nullptr;
+				fclose(memcard[cardnum].file);
+				memcard[cardnum].file = nullptr;
+				return false;
+			}
+
+			if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
+				//          DBReport(YEL "error at reading the memcard file\n");
+				Halt("Memcard Error: error at reading the memcard file\n");
+				free(memcard[cardnum].data);
+				memcard[cardnum].data = nullptr;
+				fclose(memcard[cardnum].file);
+				memcard[cardnum].file = nullptr;
+				return false;
+			}
+
+			/* if nothing fails... */
+			memcard[cardnum].ID = ((uint16_t)0xC2) << 8 | (uint16_t)0x42; // Datel's code just for now
+			memcard[cardnum].status = MEMCARD_STATUS_READY;
+			memcard[cardnum].connected = true;
+			Flipper::HW->exi->EXIAttach(cardnum);        // connect device
+
+			return true;
 	}
 	return false;
 }
@@ -647,40 +641,40 @@ bool MCConnect(int cardnum) {
 bool MCDisconnect(int cardnum) {
 	bool ret = true;
 	switch (cardnum) {
-	case -1:
-		ret = MCDisconnect(MEMCARD_SLOTA) && MCDisconnect(MEMCARD_SLOTB);
-		break;
-	case MEMCARD_SLOTA:
-	case MEMCARD_SLOTB:
-		if (!memcard[cardnum].connected) break;
+		case -1:
+			ret = MCDisconnect(MEMCARD_SLOTA) && MCDisconnect(MEMCARD_SLOTB);
+			break;
+		case MEMCARD_SLOTA:
+		case MEMCARD_SLOTB:
+			if (!memcard[cardnum].connected) break;
 
-		if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0)
-		{
-			ret = false;
-		}
-		else
-		{
-			/* write to the file */
-			if (fwrite(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1)
+			if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0)
 			{
 				ret = false;
 			}
+			else
+			{
+				/* write to the file */
+				if (fwrite(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1)
+				{
+					ret = false;
+				}
 
-		}
-		/* close the file */
-		fclose(memcard[cardnum].file);
+			}
+			/* close the file */
+			fclose(memcard[cardnum].file);
 
-		free(memcard[cardnum].data);
+			free(memcard[cardnum].data);
 
-		memcard[cardnum].ID = 0;
-		memcard[cardnum].size = 0;
-		memcard[cardnum].file = nullptr;
-		memcard[cardnum].data = nullptr;
-		memcard[cardnum].status = 0;
-		memcard[cardnum].connected = false;
-		EXIDetach(cardnum);        // disconnect device
+			memcard[cardnum].ID = 0;
+			memcard[cardnum].size = 0;
+			memcard[cardnum].file = nullptr;
+			memcard[cardnum].data = nullptr;
+			memcard[cardnum].status = 0;
+			memcard[cardnum].connected = false;
+			Flipper::HW->exi->EXIDetach(cardnum);        // disconnect device
 
-		break;
+			break;
 	}
 	return ret;
 }

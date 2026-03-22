@@ -42,11 +42,11 @@ namespace Flipper
 		MIOpen(config); // memory protection and 1T-SRAM interface
 		VIOpen(config); // video (TV)
 		cp = new CommandProcessor(config);
-		AIOpen(config); // audio (AID and AIS)
+		ai = new AudioInterface(config);
 		DSP::DspAIOpen(config);			// TODO: find better place
 		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
-		EXIOpen(config); // expansion interface (EXI)
-		DIOpen(config);	// disk
+		exi = new ExternalInterface(config);
+		di = new DiskInterface(config);
 		SIOpen(config);	// GC controllers
 
 		DSP->core->HardReset();
@@ -82,6 +82,9 @@ namespace Flipper
 		Gx->Open(config);
 		PADOpen();
 
+		// open memory cards
+		MCOpen(config);
+
 		JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
 		hwUpdateThread = EMUCreateThread(HwUpdateThread, false, this, "HW");
@@ -96,19 +99,22 @@ namespace Flipper
 		DSP->Suspend();
 
 		delete cp;
-		AIClose();
+		delete ai;
 		DSP::DspAIClose();	// TODO: find better place
 		DSP::ARClose();      // release ARAM  TODO: find better place
 		SIClose();
-		EXIClose();     // take care about closing of memcards and BBA
+		delete exi;
 		VIClose();      // close VideoOut (if opened)
-		DIClose();      // release streaming buffer
+		delete di;
 		MIClose();
 		PIClose();
 
 		delete Mixer;
 		PADClose();
 		Gx->Close();
+
+		// close memory cards
+		MCClose();
 	}
 
 	void Flipper::Update()

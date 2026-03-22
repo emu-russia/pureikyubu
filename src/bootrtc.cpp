@@ -43,9 +43,9 @@ void SRAMSave(SRAM* s)
 // While emulating always 0 (as if the user took out the CR2032 battery).
 // The SRAM settings store the counterBias, which is set by the user via the IPL calendar menu.
 // Technically, you could update counterBias with the number of emulated seconds when you stop the emulation, but that will do for now.
-void RTCUpdate()
+void RTCUpdate(uint32_t* rtc_val)
 {
-	exi.rtcVal = 0;
+	*rtc_val = 0;
 }
 
 //
@@ -108,109 +108,110 @@ static char* uartf(char* buf)
 }
 
 // MX chip transfers (EXI device 0:1)
-void MXTransfer()
+void MXTransfer(void *ctx)
 {
+	Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)ctx;
 	uint32_t ofs;
-	bool dma = (exi.regs[0].cr & EXI_CR_DMA) ? (true) : (false);
+	bool dma = (exi->exi.regs[0].cr & EXI_CR_DMA) ? (true) : (false);
 
 	// read or write ?
-	switch (EXI_CR_RW(exi.regs[0].cr))
+	switch (EXI_CR_RW(exi->exi.regs[0].cr))
 	{
 		case 0:                 // read
 		{
 			if (dma)             // dma
 			{
-				ofs = exi.mxaddr & 0x7fffffff;
+				ofs = exi->exi.mxaddr & 0x7fffffff;
 				if (ofs == 0x20000100)
 				{
-					if (exi.regs[0].len > sizeof(SRAM))
+					if (exi->exi.regs[0].len > sizeof(SRAM))
 					{
 						Report(Channel::EXI, "wrong input buffer size for SRAM read dma\n");
 						return;
 					}
-					memcpy(&mi.ram[exi.regs[0].madr & RAMMASK], &exi.sram, sizeof(SRAM));
+					memcpy(&mi.ram[exi->exi.regs[0].madr & RAMMASK], &exi->exi.sram, sizeof(SRAM));
 					return;
 				}
 				if ((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
 				{
-					if (exi.BootromPresent)
+					if (exi->exi.BootromPresent)
 					{
 						memcpy(
-							&mi.ram[exi.regs[0].madr & RAMMASK],
-							&exi.bootrom[ofs],
-							exi.regs[0].len
+							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							&exi->exi.bootrom[ofs],
+							exi->exi.regs[0].len
 						);
 					}
 					else
 					{
-						assert(exi.ansiFont);
+						assert(exi->exi.ansiFont);
 						memcpy(
-							&mi.ram[exi.regs[0].madr & RAMMASK],
-							&exi.ansiFont[ofs - 0x001fcf00],
-							exi.regs[0].len
+							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							&exi->exi.ansiFont[ofs - 0x001fcf00],
+							exi->exi.regs[0].len
 						);
 					}
-					if (exi.log) Report(Channel::EXI, "ansi font copy %08X->%08X (%i)\n",
-						ofs, exi.regs[0].madr, exi.regs[0].len);
+					if (exi->exi.log) Report(Channel::EXI, "ansi font copy %08X->%08X (%i)\n",
+						ofs, exi->exi.regs[0].madr, exi->exi.regs[0].len);
 					return;
 				}
 				if ((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
 				{
-					if (exi.BootromPresent)
+					if (exi->exi.BootromPresent)
 					{
 						memcpy(
-							&mi.ram[exi.regs[0].madr & RAMMASK],
-							&exi.bootrom[ofs],
-							exi.regs[0].len
+							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							&exi->exi.bootrom[ofs],
+							exi->exi.regs[0].len
 						);
 					}
 					else
 					{
-						assert(exi.sjisFont);
+						assert(exi->exi.sjisFont);
 						memcpy(
-							&mi.ram[exi.regs[0].madr & RAMMASK],
-							&exi.sjisFont[ofs - 0x001aff00],
-							exi.regs[0].len
+							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							&exi->exi.sjisFont[ofs - 0x001aff00],
+							exi->exi.regs[0].len
 						);
 					}
-					if (exi.log) Report(Channel::EXI, "sjis font copy %08X->%08X (%i)\n",
-						ofs, exi.regs[0].madr, exi.regs[0].len);
+					if (exi->exi.log) Report(Channel::EXI, "sjis font copy %08X->%08X (%i)\n",
+						ofs, exi->exi.regs[0].madr, exi->exi.regs[0].len);
 					return;
 				}
 
 				// Bootrom reads
 
-				if (ofs < exi.bootromSize && exi.BootromPresent)
+				if (ofs < exi->exi.bootromSize && exi->exi.BootromPresent)
 				{
 					memcpy(
-						&mi.ram[exi.regs[0].madr & RAMMASK],
-						&exi.bootrom[ofs],
-						exi.regs[0].len
+						&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+						&exi->exi.bootrom[ofs],
+						exi->exi.regs[0].len
 					);
-					if (exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
-						exi.regs[0].madr, exi.regs[0].len);
+					if (exi->exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
+						exi->exi.regs[0].madr, exi->exi.regs[0].len);
 					return;
 				}
 
 				if (ofs)
 				{
-					if (exi.log) Report(Channel::EXI, "unknown MX chip dma read\n");
+					if (exi->exi.log) Report(Channel::EXI, "unknown MX chip dma read\n");
 				}
 			}
 			else                // immediate access
 			{
-				ofs = exi.mxaddr & 0x7fffffff;
+				ofs = exi->exi.mxaddr & 0x7fffffff;
 				if (ofs == 0x20000000)
 				{
-					RTCUpdate();
-					exi.regs[0].data = exi.rtcVal;
+					RTCUpdate(&exi->exi.rtcVal);
+					exi->exi.regs[0].data = exi->exi.rtcVal;
 					return;
 				}
 				else if ((ofs >= 0x20000100) && (ofs < (0x20000100 + (sizeof(SRAM) << 6))))
 				{
-					int len = EXI_CR_TLEN(exi.regs[0].cr);
-					uint8_t* sofs = (uint8_t*)&exi.sram + ((ofs >> 6) & 0xff) - 4;
-					uint8_t* rofs = (uint8_t*)&exi.regs[0].data;
+					int len = EXI_CR_TLEN(exi->exi.regs[0].cr);
+					uint8_t* sofs = (uint8_t*)&exi->exi.sram + ((ofs >> 6) & 0xff) - 4;
+					uint8_t* rofs = (uint8_t*)&exi->exi.regs[0].data;
 					switch (len)
 					{
 						case 0:         // byte
@@ -218,36 +219,36 @@ void MXTransfer()
 								rofs[1] =
 								rofs[2] = 0;
 							rofs[3] = sofs[0];
-							exi.mxaddr += 1 << 6;
+							exi->exi.mxaddr += 1 << 6;
 							break;
 						case 1:         // hword
 							rofs[0] =
 								rofs[1] = 0;
 							rofs[2] = sofs[1];
 							rofs[3] = sofs[0];
-							exi.mxaddr += 2 << 6;
+							exi->exi.mxaddr += 2 << 6;
 							break;
 						case 2:         // triplet
 							rofs[0] = 0;
 							rofs[1] = sofs[2];
 							rofs[2] = sofs[1];
 							rofs[3] = sofs[0];
-							exi.mxaddr += 3 << 6;
+							exi->exi.mxaddr += 3 << 6;
 							break;
 						case 3:         // word
 							rofs[0] = sofs[3];
 							rofs[1] = sofs[2];
 							rofs[2] = sofs[1];
 							rofs[3] = sofs[0];
-							exi.mxaddr += 4 << 6;
+							exi->exi.mxaddr += 4 << 6;
 							break;
 					}
-					if (exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len + 1);
+					if (exi->exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len + 1);
 					return;
 				}
 				else if (ofs == 0x20010000)
 				{
-					exi.regs[0].data = 0x03000000;
+					exi->exi.regs[0].data = 0x03000000;
 					return;
 				}
 				else
@@ -267,28 +268,28 @@ void MXTransfer()
 			}
 			else                // immediate access
 			{
-				if (exi.firstImm)
+				if (exi->exi.firstImm)
 				{
-					exi.firstImm = false;
-					exi.mxaddr = exi.regs[0].data;
-					if (exi.mxaddr < 0x20000000) exi.mxaddr >>= 6;
+					exi->exi.firstImm = false;
+					exi->exi.mxaddr = exi->exi.regs[0].data;
+					if (exi->exi.mxaddr < 0x20000000) exi->exi.mxaddr >>= 6;
 				}
 				else
 				{
-					uint32_t bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
-					uint32_t data = _BYTESWAP_UINT32(exi.regs[0].data);
+					uint32_t bytes = (EXI_CR_TLEN(exi->exi.regs[0].cr) + 1);
+					uint32_t data = _BYTESWAP_UINT32(exi->exi.regs[0].data);
 
-					ofs = exi.mxaddr & 0x7fffffff;
+					ofs = exi->exi.mxaddr & 0x7fffffff;
 					if ((ofs >= 0x20000100) && (ofs <= 0x20001000))
 					{
 						// SRAM immediate writes
 						uint32_t pos = (((ofs - 256) >> 6) & 0x3F);
 
-						if (exi.log) Report(Channel::EXI, "SRAM write immediate pos %d data %08x bytes %08x\n",
-							pos, exi.regs[0].data, bytes);
+						if (exi->exi.log) Report(Channel::EXI, "SRAM write immediate pos %d data %08x bytes %08x\n",
+							pos, exi->exi.regs[0].data, bytes);
 
-						memcpy(((uint8_t*)&exi.sram) + pos, &data, bytes);
-						exi.mxaddr += (bytes << 6);
+						memcpy(((uint8_t*)&exi->exi.sram) + pos, &data, bytes);
+						exi->exi.mxaddr += (bytes << 6);
 					}
 					else if ((ofs >= 0x20010000) && (ofs < 0x20010100))
 					{
@@ -296,14 +297,14 @@ void MXTransfer()
 						uint8_t* buf = (uint8_t*)&data;
 						for (uint32_t n = 0; n < bytes; n++)
 						{
-							exi.uart[exi.upos++] = buf[n];
+							exi->exi.uart[exi->exi.upos++] = buf[n];
 
 							// output UART buffer after de-select
 							if (buf[n] == 13)
 							{
-								exi.uart[exi.upos] = 0;
-								exi.upos = 0;
-								if (exi.osReport) Report(Channel::Info, "%s", uartf(exi.uart));
+								exi->exi.uart[exi->exi.upos] = 0;
+								exi->exi.upos = 0;
+								if (exi->exi.osReport) Report(Channel::Info, "%s", uartf(exi->exi.uart));
 							}
 						}
 					}
@@ -315,7 +316,7 @@ void MXTransfer()
 
 		default:
 		{
-			if (EXI_CR_RW(exi.regs[0].cr))
+			if (EXI_CR_RW(exi->exi.regs[0].cr))
 			{
 				Report(Channel::EXI, "unknown EXI transfer mode for MX chip\n");
 			}
@@ -551,13 +552,13 @@ static void SyncTime(bool rtc)
 		return;
 	}
 
-	RTCUpdate();
+	RTCUpdate(&Flipper::HW->exi->exi.rtcVal);
 
 	Report(Channel::HLE, "updating timer value..\n");
 
-	int32_t counterBias = (int32_t)_BYTESWAP_UINT32(exi.sram.counterBias);
-	int32_t rtcValue = exi.rtcVal + counterBias;
-	Report(Channel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
+	int32_t counterBias = (int32_t)_BYTESWAP_UINT32(Flipper::HW->exi->exi.sram.counterBias);
+	int32_t rtcValue = Flipper::HW->exi->exi.rtcVal + counterBias;
+	Report(Channel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, Flipper::HW->exi->exi.rtcVal);
 
 	int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
 	int64_t systemTime;
@@ -644,9 +645,9 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
 bool IsBootromPALRevision()
 {
-	if (exi.BootromPresent) {
+	if (Flipper::HW->exi->exi.BootromPresent) {
 
-		if (strstr((char*)exi.bootrom, "PAL")) {
+		if (strstr((char*)Flipper::HW->exi->exi.bootrom, "PAL")) {
 			return true;
 		}
 	}
@@ -656,10 +657,10 @@ bool IsBootromPALRevision()
 // Load and descramble bootrom.
 // This implementation makes working with Bootrom easier, since we do not need to monitor cache transactions ("bursts") from the processor.
 
-void LoadBootrom(HWConfig* config)
+void LoadBootrom(HWConfig* config, bool& BootromPresent, size_t& bootromSize, uint8_t** bootrom_out)
 {
-	exi.BootromPresent = false;
-	exi.bootromSize = BOOTROM_SIZE;
+	BootromPresent = false;
+	bootromSize = BOOTROM_SIZE;
 
 	// Load bootrom image
 
@@ -676,16 +677,16 @@ void LoadBootrom(HWConfig* config)
 		return;
 	}
 
-	exi.bootrom = new uint8_t[exi.bootromSize];
+	*bootrom_out = nullptr;
+	uint8_t* bootrom_data = new uint8_t[bootromSize];
 
-	if (bootrom.size() != exi.bootromSize)
+	if (bootrom.size() != bootromSize)
 	{
-		delete[] exi.bootrom;
-		exi.bootrom = nullptr;
+		delete[] bootrom_data;
 		return;
 	}
 
-	memcpy(exi.bootrom, bootrom.data(), bootrom.size());
+	memcpy(bootrom_data, bootrom.data(), bootrom.size());
 
 	// Determine size of encrypted data (find first empty cache burst line)
 
@@ -693,12 +694,12 @@ void LoadBootrom(HWConfig* config)
 	uint8_t zeroStride[strideSize] = { 0 };
 
 	size_t beginOffset = 0x100;
-	size_t endOffset = exi.bootromSize - strideSize;
+	size_t endOffset = bootromSize - strideSize;
 	size_t offset = beginOffset;
 
 	while (offset < endOffset)
 	{
-		if (!memcmp(&exi.bootrom[offset], zeroStride, sizeof(zeroStride)))
+		if (!memcmp(&bootrom_data[offset], zeroStride, sizeof(zeroStride)))
 		{
 			break;
 		}
@@ -710,18 +711,18 @@ void LoadBootrom(HWConfig* config)
 	{
 		// Empty cacheline not found, something wrong with the image
 
-		delete[] exi.bootrom;
-		exi.bootrom = nullptr;
+		delete[] bootrom_data;
 		return;
 	}
 
 	// Descramble
 
-	IPLDescrambler(&exi.bootrom[beginOffset], (offset - beginOffset));
-	exi.BootromPresent = true;
+	IPLDescrambler(&bootrom_data[beginOffset], (offset - beginOffset));
+	BootromPresent = true;
+	*bootrom_out = bootrom_data;
 
 	// Show version
 
 	Report(Channel::MI, "Loaded and descrambled valid Bootrom\n");
-	Report(Channel::Norm, "%s\n", (char*)exi.bootrom);
+	Report(Channel::Norm, "%s\n", (char*)bootrom_data);
 }

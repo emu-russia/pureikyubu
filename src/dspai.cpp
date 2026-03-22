@@ -307,7 +307,7 @@ namespace DSP
 		dsp_ai.audioThread = EMUCreateThread(AIUpdate, true, nullptr, "AI");
 
 		dsp_ai.one_second = Core->OneSecond();
-		dsp_ai.dmaRate = Flipper::ai.cr & AICR_DFR ? 32000 : 48000;
+		dsp_ai.dmaRate = 48000;			// The initial value of the bit 6 in AI CR is zero, which corresponds to 48 kHz
 		dsp_ai.dmaTime = Core->GetTicks() + AIGetTime(32, dsp_ai.dmaRate);
 		dsp_ai.log = false;
 		AIStopDMA();

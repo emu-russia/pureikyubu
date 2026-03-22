@@ -35,9 +35,9 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
-		if (exi.BootromPresent)
+		if (Flipper::HW->exi->exi.BootromPresent)
 		{
-			ptr = &exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
+			ptr = &Flipper::HW->exi->exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
 			*reg = (uint32_t)*ptr;
 		}
 		else
@@ -98,9 +98,9 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
-		if (exi.BootromPresent)
+		if (Flipper::HW->exi->exi.BootromPresent)
 		{
-			ptr = &exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
+			ptr = &Flipper::HW->exi->exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
 			*reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
 		}
 		else
@@ -185,9 +185,9 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
-		if (exi.BootromPresent)
+		if (Flipper::HW->exi->exi.BootromPresent)
 		{
-			ptr = &exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
+			ptr = &Flipper::HW->exi->exi.bootrom[pa - PI_MEMSPACE_BOOTROM];
 			*reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 		}
 		else
@@ -750,9 +750,9 @@ uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
 		return &mi.ram[physAddr];
 	}
 
-	if (physAddr >= PI_MEMSPACE_BOOTROM && exi.BootromPresent)
+	if (physAddr >= PI_MEMSPACE_BOOTROM && Flipper::HW->exi->exi.BootromPresent)
 	{
-		return &exi.bootrom[physAddr - PI_MEMSPACE_BOOTROM];
+		return &Flipper::HW->exi->exi.bootrom[physAddr - PI_MEMSPACE_BOOTROM];
 	}
 
 	return nullptr;

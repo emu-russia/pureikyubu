@@ -12,7 +12,8 @@ A short tour into the Flipper stuff, without shocking details:
 - IO subsystem, which includes: AI (Audio Mixer), EXI (SPI-like Macronix interface), SI (Serial Interface, goes to GameCube controllers connectors), DI (DVD Interface)
 - VI: Video output
 - DSP: It contains interface with PI, 3 DMA engines (ARAM, AI, DSP Mem), accelerator+interface for working with ARAM and DSPCore itself (computational module+IMEM/DMEM)
-- GFX Engine
+- CP: Command Processor, used to send primitives to the GFX Engine (via XF)
+- GFX Engine Pipeline: XF -> SU -> RAS0 (edge) -> PE (Z-compare) -> RAS1 (s,t) -> TX -> RAS2 (color) -> TEV -> PE (Blending)
 
 ## Real revisions of Flipper
 
@@ -85,10 +86,14 @@ struct HWConfig
 namespace Flipper
 {
 	class AudioMixer;
+	class AudioInterface;
+	class DiskInterface;
+	class ExternalInterface;
 	class CommandProcessor;
 
-	// Global class for driving Flipper ASIC.
-
+	/// <summary>
+	/// Global class for driving Flipper ASIC.
+	/// </summary>
 	class Flipper
 	{
 		static void HwUpdateThread(void* Parameter);
@@ -98,15 +103,19 @@ namespace Flipper
 		Thread* hwUpdateThread = nullptr;
 		static const size_t ticksToHwUpdate = 100;
 
+		void Update();
+
+		AudioInterface* ai = nullptr;
+		DiskInterface* di = nullptr;
+
 	public:
 		Flipper(HWConfig* config);
 		~Flipper();
 
-		void Update();
-
 		AudioMixer* Mixer = nullptr;
 
 		CommandProcessor* cp = nullptr;
+		ExternalInterface* exi = nullptr;
 	};
 
 	extern Flipper* HW;
