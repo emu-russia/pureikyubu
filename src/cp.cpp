@@ -7,85 +7,104 @@
 
 using namespace Debug;
 
-//
-// Stubs
-//
-
-static void CPRegRead(uint32_t addr, uint32_t* reg, void *context)
+namespace Flipper
 {
-	*reg = Flipper::Gx->CpReadReg(addr & 0xFF);
-}
+	// init
 
-static void CPRegWrite(uint32_t addr, uint32_t data, void* context)
-{
-	Flipper::Gx->CpWriteReg(addr & 0xFF, data);
-}
+	CommandProcessor::CommandProcessor(HWConfig* config)
+	{
+		Report(Channel::CP, "Command processor (for GFX)\n");
 
-// init
+		memset(&cpregs, 0, sizeof(cpregs));
+		cpregs.cr |= CP_CR_WPINC;		// 1 on reset
 
-void CPOpen(HWConfig* config)
-{
-	Report(Channel::CP, "Command processor (for GFX)\n");
+		// Command Processor
+		PISetTrap(PI_REGSPACE_CP | CP_STATUS, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_ENABLE, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_CLR, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_MEMPERF_SEL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_STM_LOW, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKH, CPRegRead, CPRegWrite, this);
 
-	memset(&Flipper::Gx->cpregs, 0, sizeof(Flipper::Gx->cpregs));
-	Flipper::Gx->cpregs.cr |= CP_CR_WPINC;		// 1 on reset
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER0L, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER0H, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER1L, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER1H, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER2L, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER2H, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER3L, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_COUNTER3H, CPRegRead, CPRegWrite, this);
 
-	// Command Processor
-	PISetTrap(PI_REGSPACE_CP | CP_STATUS, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_ENABLE, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_CLR, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_MEMPERF_SEL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_STM_LOW, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKH, CPRegRead, CPRegWrite);
+		PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_VC_MISSL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_VC_MISSH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_VC_STALLL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_VC_STALLH, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTH, CPRegRead, CPRegWrite, this);
 
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER0L, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER0H, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER1L, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER1H, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER2L, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER2H, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER3L, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_COUNTER3H, CPRegRead, CPRegWrite);
+		PISetTrap(PI_REGSPACE_CP | CP_XF_ADDR, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_XF_DATAL, CPRegRead, CPRegWrite, this);
+		PISetTrap(PI_REGSPACE_CP | CP_XF_DATAH, CPRegRead, CPRegWrite, this);
 
-	PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_VC_MISSL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_VC_MISSH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_VC_STALLL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_VC_STALLH, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTH, CPRegRead, CPRegWrite);
+		fifo = new FifoProcessor();
+		fifo->Reset();
 
-	PISetTrap(PI_REGSPACE_CP | CP_XF_ADDR, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_XF_DATAL, CPRegRead, CPRegWrite);
-	PISetTrap(PI_REGSPACE_CP | CP_XF_DATAH, CPRegRead, CPRegWrite);
-}
+		tickPerFifo = 100;
+		updateTbrValue = Core->GetTicks() + tickPerFifo;
 
-void CPClose()
-{
-}
+		cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
+		// clear counters
+		tris = pts = lines = 0;
+	}
 
-namespace GX
-{
+	CommandProcessor::~CommandProcessor()
+	{
+		if (cp_thread)
+		{
+			EMUJoinThread(cp_thread);
+			cp_thread = nullptr;
+		}
+
+		delete fifo;
+	}
+
 	#pragma region "Dealing with registers"
 
-	void GXCore::CP_BREAK()
+	//
+	// Stubs
+	//
+
+	void CommandProcessor::CPRegRead(uint32_t addr, uint32_t* reg, void* context)
+	{
+		CommandProcessor* cp = (CommandProcessor*)context;
+		*reg = cp->CpReadReg(addr & 0xFF);
+	}
+
+	void CommandProcessor::CPRegWrite(uint32_t addr, uint32_t data, void* context)
+	{
+		CommandProcessor* cp = (CommandProcessor*)context;
+		cp->CpWriteReg(addr & 0xFF, data);
+	}
+
+	void CommandProcessor::CP_BREAK()
 	{
 		if (cpregs.cr & CP_CR_BPINTEN && (cpregs.sr & CP_SR_BPINT) == 0)
 		{
@@ -95,7 +114,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::CP_OVF()
+	void CommandProcessor::CP_OVF()
 	{
 		if (cpregs.cr & CP_CR_OVFEN && (cpregs.sr & CP_SR_OVF) == 0)
 		{
@@ -105,7 +124,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::CP_UVF()
+	void CommandProcessor::CP_UVF()
 	{
 		if (cpregs.cr & CP_CR_UVFEN && (cpregs.sr & CP_SR_UVF) == 0)
 		{
@@ -115,7 +134,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::GXWriteFifo(uint8_t dataPtr[32])
+	void CommandProcessor::GXWriteFifo(uint8_t dataPtr[32])
 	{
 		fifo->PushBytes(dataPtr);
 
@@ -125,87 +144,69 @@ namespace GX
 		}
 	}
 
-	void GXCore::CPThread(void* Param)
+	void CommandProcessor::CPThread(void* Param)
 	{
-		GXCore* gx = (GXCore*)Param;
+		CommandProcessor* cp = (CommandProcessor*)Param;
 
 		int64_t ticks = Core->GetTicks();
-		if (ticks < gx->updateTbrValue)
+		if (ticks < cp->updateTbrValue)
 		{
 			return;
 		}
-		gx->updateTbrValue = ticks + gx->tickPerFifo;
+		cp->updateTbrValue = ticks + cp->tickPerFifo;
 
 		// Calculate count
-		if (gx->cpregs.wrptr >= gx->cpregs.rdptr)
+		if (cp->cpregs.wrptr >= cp->cpregs.rdptr)
 		{
-			gx->cpregs.cnt = gx->cpregs.wrptr - gx->cpregs.rdptr;
+			cp->cpregs.cnt = cp->cpregs.wrptr - cp->cpregs.rdptr;
 		}
 		else
 		{
-			gx->cpregs.cnt = (gx->cpregs.top - gx->cpregs.rdptr) + (gx->cpregs.wrptr - gx->cpregs.base);
+			cp->cpregs.cnt = (cp->cpregs.top - cp->cpregs.rdptr) + (cp->cpregs.wrptr - cp->cpregs.base);
 		}
 
 		// Watermarks logic. Active only in linked-mode (?).
-		if (gx->cpregs.cnt > gx->cpregs.himark)
+		if (cp->cpregs.cnt > cp->cpregs.himark)
 		{
-			gx->CP_OVF();
+			cp->CP_OVF();
 		}
-		if (gx->cpregs.cnt < gx->cpregs.lomark)
+		if (cp->cpregs.cnt < cp->cpregs.lomark)
 		{
-			gx->CP_UVF();
+			cp->CP_UVF();
 		}
 
 		// Breakpoint
-		if ((gx->cpregs.rdptr & ~0x1f) == (gx->cpregs.bpptr & ~0x1f))
+		if ((cp->cpregs.rdptr & ~0x1f) == (cp->cpregs.bpptr & ~0x1f))
 		{
-			gx->CP_BREAK();
+			cp->CP_BREAK();
 		}
 
 		// Advance read pointer.
-		if (gx->cpregs.cnt != 0 && gx->cpregs.cr & CP_CR_RDEN && (gx->cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+		if (cp->cpregs.cnt != 0 && cp->cpregs.cr & CP_CR_RDEN && (cp->cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
 		{
-			gx->cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cp->cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
-			gx->GXWriteFifo( (uint8_t*)MIGetMemoryPointerForCP(gx->cpregs.rdptr) );
+			cp->GXWriteFifo( (uint8_t*)MIGetMemoryPointerForCP(cp->cpregs.rdptr) );
 
-			gx->cpregs.rdptr += 32;
-			if (gx->cpregs.rdptr == gx->cpregs.top)
+			cp->cpregs.rdptr += 32;
+			if (cp->cpregs.rdptr == cp->cpregs.top)
 			{
-				gx->cpregs.rdptr = gx->cpregs.base;
+				cp->cpregs.rdptr = cp->cpregs.base;
 			}
 		}
 		else
 		{
-			gx->cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cp->cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 		}
 	}
 
-	void GXCore::DONE_INT()
-	{
-		if (peregs.sr & PE_SR_DONEMSK)
-		{
-			peregs.sr |= PE_SR_DONE;
-			PIAssertInt(PI_INTERRUPT_PE_FINISH);
-		}
-	}
-
-	void GXCore::TOKEN_INT()
-	{
-		if (peregs.sr & PE_SR_TOKENMSK)
-		{
-			peregs.sr |= PE_SR_TOKEN;
-			PIAssertInt(PI_INTERRUPT_PE_TOKEN);
-		}
-	}
-
-	void GXCore::CPAbortFifo()
+	void CommandProcessor::CPAbortFifo()
 	{
 		Report(Channel::GP, "CP Abort FIFO\n");
 		fifo->Reset();
 	}
 
-	uint16_t GXCore::CpReadReg(uint32_t addr)
+	uint16_t CommandProcessor::CpReadReg(uint32_t addr)
 	{
 		switch (addr)
 		{
@@ -294,7 +295,7 @@ namespace GX
 		return 0;
 	}
 
-	void GXCore::CpWriteReg(uint32_t addr, uint16_t value)
+	void CommandProcessor::CpWriteReg(uint32_t addr, uint16_t value)
 	{
 		switch (addr)
 		{
@@ -423,7 +424,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::FifoWriteBurst()
+	void CommandProcessor::FifoWriteBurst()
 	{
 		// CP FIFO
 
@@ -441,7 +442,7 @@ namespace GX
 	}
 
 	// show CP fifo configuration
-	void GXCore::DumpCPFIFO()
+	void CommandProcessor::DumpCPFIFO()
 	{
 		// fifo modes
 		char* md = (cpregs.cr & CP_CR_WPINC) ? ((char*)"immediate ") : ((char*)"multi-");
@@ -464,7 +465,7 @@ namespace GX
 
 	// index range = 00..FF
 	// reg size = 32 bit
-	void GXCore::loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo)
+	void CommandProcessor::loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo)
 	{
 		cpLoads++;
 
@@ -597,17 +598,15 @@ namespace GX
 
 	#pragma region "FIFO Processing"
 
-	FifoProcessor::FifoProcessor(GXCore* gx)
+	FifoProcessor::FifoProcessor()
 	{
-		gxcore = gx;
 		fifo = new uint8_t[fifoSize];
 		memset(fifo, 0, fifoSize);
 		allocated = true;
 	}
 
-	FifoProcessor::FifoProcessor(GXCore* gx, uint8_t* fifoPtr, size_t size)
+	FifoProcessor::FifoProcessor(uint8_t* fifoPtr, size_t size)
 	{
-		gxcore = gx;
 		fifo = fifoPtr;
 		fifoSize = size + 1;
 		writePtr = fifoSize - 1;
@@ -934,7 +933,7 @@ namespace GX
 
 
 	// Helper function
-	std::string GXCore::AttrToString(VertexAttr attr)
+	std::string CommandProcessor::AttrToString(VertexAttr attr)
 	{
 		switch (attr)
 		{
@@ -960,7 +959,7 @@ namespace GX
 	}
 
 	// calculate size of current vertex
-	int GXCore::gx_vtxsize(unsigned v)
+	int CommandProcessor::gx_vtxsize(unsigned v)
 	{
 		int vtxsize = 0;
 		static int cntp[] = { 2, 3 };
@@ -1148,7 +1147,7 @@ namespace GX
 		return vtxsize;
 	}
 
-	void GXCore::FifoReconfigure(FifoProcessor *gxfifo)
+	void CommandProcessor::FifoReconfigure(FifoProcessor *gxfifo)
 	{
 		for (unsigned v = 0; v < 8; v++)
 		{
@@ -1156,14 +1155,14 @@ namespace GX
 		}
 	}
 
-	void * GXCore::GetArrayPtr(ArrayId arrayId, int idx, int compSize)
+	void * CommandProcessor::GetArrayPtr(ArrayId arrayId, int idx, int compSize)
 	{
 		uint32_t address = cp.arrayBase[(size_t)arrayId].Base + 
 			(uint32_t)idx * cp.arrayStride[(size_t)arrayId].Stride;
 		return MIGetMemoryPointerForCP(address);
 	}
 
-	void GXCore::FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId)
+	void CommandProcessor::FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId)
 	{
 		void* ptr;
 		static int fmtsz[] = { 1, 1, 2, 2, 4 };
@@ -1310,7 +1309,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3)
+	void CommandProcessor::FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3)
 	{
 		void* ptr1;
 		void* ptr2;
@@ -1451,10 +1450,10 @@ namespace GX
 		}
 	}
 
-	Color GXCore::FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId)
+	GX::Color CommandProcessor::FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId)
 	{
 		void* ptr;
-		Color col;
+		GX::Color col{};
 		static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
 
 		col.R = 0;
@@ -1613,18 +1612,18 @@ namespace GX
 	}
 
 	// collect vertex data
-	void GXCore::FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo)
+	void CommandProcessor::FifoWalk(unsigned vatnum, GX::Vertex* vtx, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
-		vtx->matIdx0.PosNrmMatIdx = xf.matIdxA.PosNrmMatIdx;
-		vtx->matIdx0.Tex0MatIdx = xf.matIdxA.Tex0MatIdx;
-		vtx->matIdx0.Tex1MatIdx = xf.matIdxA.Tex1MatIdx;
-		vtx->matIdx0.Tex2MatIdx = xf.matIdxA.Tex2MatIdx;
-		vtx->matIdx0.Tex3MatIdx = xf.matIdxA.Tex3MatIdx;
-		vtx->matIdx1.Tex4MatIdx = xf.matIdxB.Tex4MatIdx;
-		vtx->matIdx1.Tex5MatIdx = xf.matIdxB.Tex5MatIdx;
-		vtx->matIdx1.Tex6MatIdx = xf.matIdxB.Tex6MatIdx;
-		vtx->matIdx1.Tex7MatIdx = xf.matIdxB.Tex7MatIdx;
+		vtx->matIdx0.PosNrmMatIdx = Gx->xf.matIdxA.PosNrmMatIdx;
+		vtx->matIdx0.Tex0MatIdx = Gx->xf.matIdxA.Tex0MatIdx;
+		vtx->matIdx0.Tex1MatIdx = Gx->xf.matIdxA.Tex1MatIdx;
+		vtx->matIdx0.Tex2MatIdx = Gx->xf.matIdxA.Tex2MatIdx;
+		vtx->matIdx0.Tex3MatIdx = Gx->xf.matIdxA.Tex3MatIdx;
+		vtx->matIdx1.Tex4MatIdx = Gx->xf.matIdxB.Tex4MatIdx;
+		vtx->matIdx1.Tex5MatIdx = Gx->xf.matIdxB.Tex5MatIdx;
+		vtx->matIdx1.Tex6MatIdx = Gx->xf.matIdxB.Tex6MatIdx;
+		vtx->matIdx1.Tex7MatIdx = Gx->xf.matIdxB.Tex7MatIdx;
 
 		// Matrix Index
 
@@ -1805,7 +1804,7 @@ namespace GX
 			ArrayId::Tex7Coord);
 	}
 
-	void GXCore::GxBadFifo(uint8_t command)
+	void CommandProcessor::GxBadFifo(uint8_t command)
 	{
 		Halt(
 			"Unimplemented command : 0x%02X\n"
@@ -1840,18 +1839,13 @@ namespace GX
 		);
 	}
 
-	void GXCore::GxCommand(FifoProcessor* gxfifo)
+	void CommandProcessor::GxCommand(FifoProcessor* gxfifo)
 	{
 #if GFX_BLACKJACK_AND_SHADERS
 		GLenum gl_error;
 #endif
 
-		if(frame_done)
-		{
-			GL_OpenSubsystem();
-			GL_BeginFrame();
-			frame_done = 0;
-		}
+		Gx->GPFrameBegin();
 
 		uint8_t cmd = gxfifo->Read8();
 
@@ -1901,7 +1895,7 @@ namespace GX
 					Report(Channel::GP, "CP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
 				}
 
-				FifoProcessor* callDlFifo = new FifoProcessor(this, fifoPtr, size);
+				FifoProcessor* callDlFifo = new FifoProcessor(fifoPtr, size);
 
 				while (callDlFifo->EnoughToExecute())
 				{
@@ -1932,7 +1926,18 @@ namespace GX
 			case CP_CMD_LOAD_BPREG | 0xf:
 			{
 				uint32_t word = gxfifo->Read32();
-				loadBPReg(word >> 24, word & 0xffffff);
+
+				bpLoads++;
+
+				size_t index = word >> 24;
+				uint32_t value = word & 0xffffff;
+
+				if (GpRegsLog)
+				{
+					Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X\n", index, value);
+				}
+
+				Gx->loadBPReg(index, value);
 				break;
 			}
 
@@ -1965,7 +1970,14 @@ namespace GX
 				len = gxfifo->Read16() + 1;
 				index = gxfifo->Read16();
 
-				loadXFRegs(index, len, gxfifo);
+				xfLoads += (uint32_t)len;
+
+				if (GpRegsLog)
+				{
+					Report(Channel::GP, "XF load, start index: %04X, n : %i\n", index, len);
+				}
+
+				Gx->loadXFRegs(index, len, gxfifo);
 				break;
 			}
 
@@ -2075,14 +2087,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_QUAD, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_QUAD, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2119,14 +2131,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_QUAD_STRIP, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_QUAD_STRIP, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2163,14 +2175,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_TRIANGLE: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_TRIANGLE, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_TRIANGLE, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2207,14 +2219,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_STRIP: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_TRIANGLE_STRIP, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_TRIANGLE_STRIP, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2251,14 +2263,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_FAN: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_TRIANGLE_FAN, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_TRIANGLE_FAN, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2295,14 +2307,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_LINE: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_LINE, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_LINE, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2339,14 +2351,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_LINESTRIP: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_LINE_STRIP, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_LINE_STRIP, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2383,14 +2395,14 @@ namespace GX
 						Halt("GL Error CP_CMD_DRAW_POINT: %x\n", gl_error);
 					}
 #else
-					RAS_Begin(RAS_POINT, vtxnum);
-					Vertex vtx;
+					Gx->RAS_Begin(GX::RAS_POINT, vtxnum);
+					GX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						RAS_SendVertex(&vtx);
+						Gx->RAS_SendVertex(&vtx);
 					}
-					RAS_End();
+					Gx->RAS_End();
 #endif
 				}
 				break;
@@ -2407,4 +2419,9 @@ namespace GX
 		}
 	}
 
+	void CommandProcessor::ResetFrameStats()
+	{
+		tris = pts = lines = 0;
+		cpLoads = bpLoads = xfLoads = 0;
+	}
 }

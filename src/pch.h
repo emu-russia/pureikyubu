@@ -88,6 +88,7 @@
 #include "dvddebug.h"
 
 #include "gfx.h"
+#include "cp.h"
 #include "ai.h"
 #include "vi.h"
 #include "pi.h"
@@ -99,7 +100,6 @@
 #include "pad.h"
 #include "si.h"
 #include "flipperdebug.h"
-#include "cp.h"
 
 namespace Flipper
 {

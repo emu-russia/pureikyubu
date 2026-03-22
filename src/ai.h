@@ -26,23 +26,19 @@
 
 namespace Flipper
 {
-	class AudioMixer;
-
 	// AI state (registers and other data)
 	struct AIState
 	{
-		// AIS
-		volatile uint32_t    cr;             // AIS control reg
-		volatile uint32_t    vr;             // AIS volume
-		volatile uint32_t    scnt;           // sample counter
-		volatile uint32_t    it;             // sample counter trigger
+		// AI Streaming
+		volatile uint32_t    cr;             // AI Streaming control reg
+		volatile uint32_t    vr;             // AI Streaming volume
+		volatile uint32_t    scnt;           // Streaming sample counter
+		volatile uint32_t    it;             // Streaming sample counter trigger
 
 		uint8_t     streamFifo[32];
 		size_t      streamFifoPtr;
 
-		bool        log;            // Enable AI log
-
-		AudioMixer* Mixer = nullptr;
+		bool        log;            // Enable AI Streaming log
 	};
 
 	extern  AIState ai;

@@ -391,6 +391,13 @@ namespace GX
         uint32_t bits;
     };
 
+    // color type
+    union Color
+    {
+        struct { uint8_t A, B, G, R; };
+        uint32_t     RGBA;
+    };
+
     struct PEState
     {
         PE_ZMODE zmode;		// 0x40

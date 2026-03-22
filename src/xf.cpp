@@ -534,15 +534,8 @@ namespace GX
 
 	// index range = 0000..FFFF
 	// reg size = 32 bit
-	void GXCore::loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo)
+	void GXCore::loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo)
 	{
-		xfLoads += (uint32_t)amount;
-
-		if (GpRegsLog)
-		{
-			Report(Channel::GP, "XF load, start index: %04X, n : %i\n", startIdx, amount);
-		}
-
 		// load geometry matrix
 		if ((startIdx >= XF_MATRIX_MEMORY_ID) && (startIdx < (XF_MATRIX_MEMORY_ID + XF_MATRIX_MEMORY_SIZE)))
 		{
@@ -667,7 +660,7 @@ namespace GX
 					Matrix[3][3] = 1.0f;
 				}
 
-				GL_SetProjection((float*)Matrix);
+				Flipper::Gx->GL_SetProjection((float*)Matrix);
 			}
 			return;
 
@@ -707,7 +700,7 @@ namespace GX
 				zn = -((xf.viewportScale[2] / 16777215.0f) - zf);
 
 				//GFXError("viewport (%.2f, %.2f)-(%.2f, %.2f), %f, %f", x, y, w, h, zn, zf);
-				GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
+				Flipper::Gx->GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
 			}
 			return;
 

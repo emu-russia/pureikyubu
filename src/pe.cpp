@@ -7,6 +7,23 @@ using namespace Debug;
 
 namespace GX
 {
+	void GXCore::DONE_INT()
+	{
+		if (peregs.sr & PE_SR_DONEMSK)
+		{
+			peregs.sr |= PE_SR_DONE;
+			PIAssertInt(PI_INTERRUPT_PE_FINISH);
+		}
+	}
+
+	void GXCore::TOKEN_INT()
+	{
+		if (peregs.sr & PE_SR_TOKENMSK)
+		{
+			peregs.sr |= PE_SR_TOKEN;
+			PIAssertInt(PI_INTERRUPT_PE_TOKEN);
+		}
+	}
 
 	uint16_t GXCore::PeReadReg(uint32_t addr)
 	{

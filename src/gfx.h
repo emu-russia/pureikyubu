@@ -20,7 +20,6 @@ What's not supported:
 
 #pragma once
 
-#include "cp.h"
 #include "pe.h"
 #include "xf.h"
 #include "su.h"
@@ -38,30 +37,20 @@ What's not supported:
 #define GFX_USE_SDL_WINDOW 0
 #endif
 
+namespace Flipper
+{
+	class FifoProcessor;
+}
+
 namespace GX
 {
 	class GXCore
 	{
-		void DONE_INT();
-		void TOKEN_INT();
-		void CP_BREAK();
-		void CP_OVF();
-		void CP_UVF();
-
-		static void CPThread(void* Param);
-
-		FifoProcessor * fifo = nullptr;	// Internal CP FIFO
-
 		bool gxOpened = false;
 		bool frame_done = true;
 		bool disableDraw = false;
 		bool frameReady = false;
 		bool backend_started = false;
-
-		// logging
-		bool logOpcode = false;
-		bool logDrawCommands = false;
-		bool GpRegsLog = false;
 
 #if GFX_USE_SDL_WINDOW
 		SDL_Window* render_window = nullptr;
@@ -93,16 +82,19 @@ namespace GX
 		void GL_CloseSubsystem();
 		void GL_BeginFrame();
 		void GL_EndFrame();
+		void GPFrameBegin();
 		void GPFrameDone();
 
 		void ResizeRenderTarget(size_t width, size_t height);
-
-		// Debug
-		void DumpCPFIFO();
 		
 		GLuint vert_shader;
 		GLuint frag_shader;
 		GLuint shader_prog;
+
+		GLuint vao;
+		GLuint vbo;
+		size_t vbo_size = 0x10000;		// Maximum number of vertices that can be used in Draw primitive parameters
+		GX::Vertex* vertex_data = nullptr;
 
 		void UploadShaders(const char* vert_source, const char* frag_source);
 		void DisposeShaders();
@@ -112,60 +104,12 @@ namespace GX
 
 		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
 
-#pragma region "Interface to Flipper"
-
-		// CP Registers
-		uint16_t CpReadReg(uint32_t addr);
-		void CpWriteReg(uint32_t addr, uint16_t value);
-
-		// Streaming FIFO burst write notification from PI
-		void FifoWriteBurst();
-
-#pragma endregion "Interface to Flipper"
-
-
 #pragma region "Gfx Common"
 
 		GenMode genmode;
 		GenMsloc msloc[4];
 
 #pragma endregion "Gfx Common"
-
-
-#pragma region "Command Processor"
-
-		CPHostRegs cpregs;		// Mapped command processor registers
-		CPState cp;				// Internal registers (for setting VCD/VAT, etc.)
-
-		Thread* cp_thread;     // CP FIFO thread
-		size_t	tickPerFifo;
-		int64_t	updateTbrValue;
-
-		// Stats
-		size_t cpLoads;
-		size_t xfLoads;
-		size_t bpLoads;
-
-		GLuint vao;
-		GLuint vbo;
-		size_t vbo_size = 0x10000;		// Maximum number of vertices that can be used in Draw primitive parameters
-		Vertex* vertex_data = nullptr;
-
-		void GXWriteFifo(uint8_t dataPtr[32]);
-		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
-		std::string AttrToString(VertexAttr attr);
-		int gx_vtxsize(unsigned v);
-		void FifoReconfigure(FifoProcessor* gxfifo);
-		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
-		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
-		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
-		Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
-		void FifoWalk(unsigned vatnum, Vertex* vtx, FifoProcessor* gxfifo);
-		void GxBadFifo(uint8_t command);
-		void GxCommand(FifoProcessor* gxfifo);
-		void CPAbortFifo();
-
-#pragma endregion "Command Processor"
 
 
 #pragma region "Transform Unit"
@@ -184,7 +128,7 @@ namespace GX
 		void NormalTransform(const Vertex* v, float* out, const float* in);
 		void GL_SetProjection(float* mtx);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
-		void loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo);
+		void loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo);
 
 #pragma endregion "Transform Unit"
 
@@ -204,9 +148,6 @@ namespace GX
 
 
 #pragma region "Rasterizers"
-
-		// perfomance counters
-		size_t tris = 0, pts = 0, lines = 0;
 
 		bool ras_wireframe = false;			// Enable wireframe drawing of primitives (DEBUG)
 		bool ras_use_texture = false;
@@ -279,6 +220,9 @@ namespace GX
 		void PeWriteReg(uint32_t addr, uint16_t value);
 		uint32_t EfbPeek(uint32_t addr);
 		void EfbPoke(uint32_t addr, uint32_t value);
+
+		void DONE_INT();
+		void TOKEN_INT();
 
 #pragma endregion "Pixel Engine"
 

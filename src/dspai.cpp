@@ -147,11 +147,11 @@ namespace DSP
 
 		if (dsp_ai.dcnt == 0 || (dsp_ai.len & AID_EN) == 0)
 		{
-			Flipper::ai.Mixer->PushBytes(Flipper::AxChannel::AudioDma, dsp_ai.zeroes, bytes);
+			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, dsp_ai.zeroes, bytes);
 		}
 		else
 		{
-			Flipper::ai.Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)MIGetMemoryPointerForIO(dsp_ai.currentDmaAddr), bytes);
+			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)MIGetMemoryPointerForIO(dsp_ai.currentDmaAddr), bytes);
 			dsp_ai.currentDmaAddr += bytes;
 			dsp_ai.dcnt--;
 		}
@@ -198,17 +198,17 @@ namespace DSP
 		if (dsp_ai.len & AID_EN)
 		{
 			AIStartDMA();
-			if (!Flipper::ai.Mixer->IsEnabled(Flipper::AxChannel::AudioDma))
+			if (!Flipper::HW->Mixer->IsEnabled(Flipper::AxChannel::AudioDma))
 			{
-				Flipper::ai.Mixer->Enable(Flipper::AxChannel::AudioDma, true);
+				Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, true);
 			}
 		}
 		else
 		{
 			AIStopDMA();
-			if (Flipper::ai.Mixer->IsEnabled(Flipper::AxChannel::AudioDma))
+			if (Flipper::HW->Mixer->IsEnabled(Flipper::AxChannel::AudioDma))
 			{
-				Flipper::ai.Mixer->Enable(Flipper::AxChannel::AudioDma, false);
+				Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, false);
 			}
 		}
 	}
@@ -332,8 +332,18 @@ namespace DSP
 		AIStopDMA();
 	}
 
+	static void MixerSetDMASampleRate(Flipper::AudioSampleRate rate)
+	{
+		Flipper::HW->Mixer->SetSampleRate(Flipper::AxChannel::AudioDma, rate);
+		if (dsp_ai.log)
+		{
+			Report(Channel::DSP, "AI DMA sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
+		}
+	}
+
 	void DspSetAiDmaSampleRate(int32_t rate)
 	{
 		dsp_ai.dmaRate = rate;
+		MixerSetDMASampleRate(rate == 32000 ? Flipper::AudioSampleRate::Rate_32000 : Flipper::AudioSampleRate::Rate_48000);
 	}
 }

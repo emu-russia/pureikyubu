@@ -42,18 +42,9 @@ namespace Flipper
 	// AI state (registers and other data)
 	AIState ai;
 
-	static void MixerSetDMASampleRate(AudioSampleRate rate)
-	{
-		ai.Mixer->SetSampleRate(AxChannel::AudioDma, rate);
-		if (ai.log)
-		{
-			Report(Channel::AI, "DMA sample rate: %i\n", rate == AudioSampleRate::Rate_32000 ? 32000 : 48000);
-		}
-	}
-
 	static void MixerSetDvdAudioSampleRate(AudioSampleRate rate)
 	{
-		ai.Mixer->SetSampleRate(AxChannel::DvdAudio, rate);
+		HW->Mixer->SetSampleRate(AxChannel::DvdAudio, rate);
 
 		if (rate == AudioSampleRate::Rate_48000)
 		{
@@ -109,7 +100,7 @@ namespace Flipper
 				Report(Channel::AIS, "start streaming clock\n");
 			}
 			DVD::DDU->EnableAudioStreamClock(true);
-			ai.Mixer->Enable(AxChannel::DvdAudio, true);
+			HW->Mixer->Enable(AxChannel::DvdAudio, true);
 			ai.streamFifoPtr = 0;
 		}
 		else
@@ -119,7 +110,7 @@ namespace Flipper
 				Report(Channel::AIS, "stop streaming clock\n");
 			}
 			DVD::DDU->EnableAudioStreamClock(false);
-			ai.Mixer->Enable(AxChannel::DvdAudio, false);
+			HW->Mixer->Enable(AxChannel::DvdAudio, false);
 		}
 
 		// reset sample counter
@@ -137,12 +128,10 @@ namespace Flipper
 		if (ai.cr & AICR_DFR)
 		{
 			DSP::DspSetAiDmaSampleRate(32000);
-			MixerSetDMASampleRate(AudioSampleRate::Rate_32000);
 		}
 		else
 		{
 			DSP::DspSetAiDmaSampleRate(48000);
-			MixerSetDMASampleRate(AudioSampleRate::Rate_48000);
 		}
 
 		// set DVD Audio sample rate
@@ -230,7 +219,7 @@ namespace Flipper
 		{
 			ai.streamFifoPtr = 0;
 			// Feed mixer
-			ai.Mixer->PushBytes(AxChannel::DvdAudio, ai.streamFifo, sizeof(ai.streamFifo));
+			HW->Mixer->PushBytes(AxChannel::DvdAudio, ai.streamFifo, sizeof(ai.streamFifo));
 		}
 
 		// Adjust volume and swap endianess
@@ -274,13 +263,10 @@ namespace Flipper
 		for (uint32_t i = 0; i < AIS_REG_MAX; i+=2) {
 			PISetTrap(PI_REGSPACE_AI + i, AIReadReg, AIWriteReg);
 		}
-
-		ai.Mixer = new AudioMixer(config);
 	}
 
 	void AIClose()
 	{
 		DVD::DDU->SetStreamCallback(nullptr);
-		delete ai.Mixer;
 	}
 }

@@ -84,6 +84,9 @@ struct HWConfig
 
 namespace Flipper
 {
+	class AudioMixer;
+	class CommandProcessor;
+
 	// Global class for driving Flipper ASIC.
 
 	class Flipper
@@ -100,6 +103,10 @@ namespace Flipper
 		~Flipper();
 
 		void Update();
+
+		AudioMixer* Mixer = nullptr;
+
+		CommandProcessor* cp = nullptr;
 	};
 
 	extern Flipper* HW;

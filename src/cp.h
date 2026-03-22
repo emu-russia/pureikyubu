@@ -10,7 +10,7 @@
 
 // Vertex Cache is not supported.
 
-namespace GX
+namespace Flipper
 {
 
 	// CP Commands. Format of commands transmitted via FIFO and display lists (DL)
@@ -453,13 +453,6 @@ namespace GX
 		Max,
 	};
 
-	// color type
-	union Color
-	{
-		struct { uint8_t A, B, G, R; };
-		uint32_t     RGBA;
-	};
-
 	struct CPState
 	{
 		MatrixIndexA matIndexA;			// 0011xxxx
@@ -474,12 +467,6 @@ namespace GX
 	};
 
 	#pragma pack(pop)
-}
-
-
-namespace GX
-{
-	class GXCore;
 
 	class FifoProcessor
 	{
@@ -489,7 +476,6 @@ namespace GX
 		size_t writePtr = 0;
 		bool allocated = false;
 
-		GXCore* gxcore = nullptr;
 		SpinLock lock;
 
 	public:
@@ -509,8 +495,8 @@ namespace GX
 
 		void ExecuteCommand();
 
-		FifoProcessor(GXCore* gx);
-		FifoProcessor(GXCore* gx, uint8_t* fifoPtr, size_t size);	// Call FIFO
+		FifoProcessor();
+		FifoProcessor(uint8_t* fifoPtr, size_t size);	// Call FIFO
 		~FifoProcessor();
 
 		void PushBytes(uint8_t dataPtr[32]);
@@ -518,7 +504,68 @@ namespace GX
 		void Reset();
 	};
 
-}
+	class CommandProcessor
+	{
+		// logging
+		bool logOpcode = false;
+		bool logDrawCommands = false;
+		bool GpRegsLog = false;
 
-void CPOpen(HWConfig* config);
-void CPClose();
+		// primitive counters
+		size_t tris = 0, pts = 0, lines = 0;
+
+		void CP_BREAK();
+		void CP_OVF();
+		void CP_UVF();
+
+		static void CPThread(void* Param);
+
+		FifoProcessor* fifo = nullptr;	// Internal CP FIFO
+
+		// Debug
+		void DumpCPFIFO();
+
+		CPHostRegs cpregs;		// Mapped command processor registers
+		CPState cp;				// Internal registers (for setting VCD/VAT, etc.)
+
+		Thread* cp_thread;     // CP FIFO thread
+		size_t	tickPerFifo;
+		int64_t	updateTbrValue;
+
+		// Stats
+		size_t cpLoads;
+		size_t xfLoads;
+		size_t bpLoads;
+
+		void GXWriteFifo(uint8_t dataPtr[32]);
+		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
+		std::string AttrToString(VertexAttr attr);
+		int gx_vtxsize(unsigned v);
+		void FifoReconfigure(FifoProcessor* gxfifo);
+		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
+		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
+		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
+		GX::Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
+		void FifoWalk(unsigned vatnum, GX::Vertex* vtx, FifoProcessor* gxfifo);
+		void GxBadFifo(uint8_t command);
+		void GxCommand(FifoProcessor* gxfifo);
+
+		static void CPRegRead(uint32_t addr, uint32_t* reg, void* context);
+		static void CPRegWrite(uint32_t addr, uint32_t data, void* context);
+
+		// CP Registers
+		uint16_t CpReadReg(uint32_t addr);
+		void CpWriteReg(uint32_t addr, uint16_t value);
+
+	public:
+		CommandProcessor(HWConfig* config);
+		~CommandProcessor();
+
+		// Streaming FIFO burst write notification from PI
+		void FifoWriteBurst();
+
+		void CPAbortFifo();
+
+		void ResetFrameStats();
+	};
+}
