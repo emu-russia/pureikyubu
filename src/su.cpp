@@ -46,13 +46,6 @@ namespace GX
 	// reg size = 24 bit (value is already masked)
 	void GXCore::loadBPReg(size_t index, uint32_t value)
 	{
-		bpLoads++;
-
-		if (GpRegsLog)
-		{
-			Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X\n", index, value);
-		}
-
 		switch (index)
 		{
 			//

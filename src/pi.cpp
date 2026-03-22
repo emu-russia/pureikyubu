@@ -336,7 +336,7 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 		}
 
 		// Notify CP
-		Flipper::Gx->FifoWriteBurst();
+		Flipper::HW->cp->FifoWriteBurst();
 		return;
 	}
 
@@ -657,7 +657,7 @@ void PIRegWrite(uint32_t addr, uint32_t data, void *ctx)
 			break;
 		case PI_CPABT+2:
 			if ((data & 1) != 0) {
-				Flipper::Gx->CPAbortFifo();
+				Flipper::HW->cp->CPAbortFifo();
 			}
 			break;
 		case PI_CONFIG+2:

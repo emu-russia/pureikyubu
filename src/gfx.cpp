@@ -8,25 +8,16 @@ namespace GX
 {
 	GXCore::GXCore()
 	{
-		fifo = new FifoProcessor(this);
 	}
 
 	GXCore::~GXCore()
 	{
-		delete fifo;
 	}
 
 	void GXCore::Open(HWConfig* config)
 	{
 		if (gxOpened)
 			return;
-
-		tickPerFifo = 100;
-		updateTbrValue = Core->GetTicks() + tickPerFifo;
-
-		fifo->Reset();
-
-		cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
 #if GFX_USE_SDL_WINDOW
 		render_window = (SDL_Window*)config->renderTarget;
@@ -43,6 +34,8 @@ namespace GX
 		// flush texture cache
 		TexInit();
 
+		PEOpen();		// PixelEngine
+
 		gxOpened = true;
 	}
 
@@ -51,15 +44,11 @@ namespace GX
 		if (!gxOpened)
 			return;
 
-		if (cp_thread)
-		{
-			EMUJoinThread(cp_thread);
-			cp_thread = nullptr;
-		}
-
 		GL_CloseSubsystem();
 
 		TexFree();
+
+		PEClose();
 
 		gxOpened = false;
 	}
@@ -162,8 +151,8 @@ namespace GX
 		InitVBO();
 #endif
 
-		// clear performance counters
-		frames = tris = pts = lines = 0;
+		// clear frame counter
+		frames = 0;
 
 		if (ras_wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -258,8 +247,17 @@ namespace GX
 		frameReady = false;
 		//Report(Channel::GP, "gfx frame: %d\n", frames);
 		frames++;
-		tris = pts = lines = 0;
-		cpLoads = bpLoads = xfLoads = 0;
+		Flipper::HW->cp->ResetFrameStats();
+	}
+
+	void GXCore::GPFrameBegin()
+	{
+		if (frame_done)
+		{
+			GL_OpenSubsystem();
+			GL_BeginFrame();
+			frame_done = 0;
+		}
 	}
 
 	// rendering complete, swap buffers, sync to vretrace
@@ -363,42 +361,42 @@ namespace GX
 	{
 		GLenum gl_error;
 
-		glBindAttribLocation(shader_prog, VTX_POS, "in_Position");
+		glBindAttribLocation(shader_prog, Flipper::VTX_POS, "in_Position");
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL glBindAttribLocation VTX_POS Error: %x\n", gl_error);
 		}
 
-		glBindAttribLocation(shader_prog, VTX_NRM, "in_Normal");
-		glBindAttribLocation(shader_prog, VTX_BINRM, "in_Binormal");
-		glBindAttribLocation(shader_prog, VTX_TANGENT, "in_Tangent");
+		glBindAttribLocation(shader_prog, Flipper::VTX_NRM, "in_Normal");
+		glBindAttribLocation(shader_prog, Flipper::VTX_BINRM, "in_Binormal");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TANGENT, "in_Tangent");
 
-		glBindAttribLocation(shader_prog, VTX_COLOR0, "in_Color0");
-		glBindAttribLocation(shader_prog, VTX_COLOR1, "in_Color1");
+		glBindAttribLocation(shader_prog, Flipper::VTX_COLOR0, "in_Color0");
+		glBindAttribLocation(shader_prog, Flipper::VTX_COLOR1, "in_Color1");
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL glBindAttribLocation VTX_COLOR1 Error: %x\n", gl_error);
 		}
 
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD0, "in_TexCoord0");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD1, "in_TexCoord1");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD2, "in_TexCoord2");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD3, "in_TexCoord3");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD4, "in_TexCoord4");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD5, "in_TexCoord5");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD6, "in_TexCoord6");
-		glBindAttribLocation(shader_prog, VTX_TEXCOORD7, "in_TexCoord7");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD0, "in_TexCoord0");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD1, "in_TexCoord1");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD2, "in_TexCoord2");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD3, "in_TexCoord3");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD4, "in_TexCoord4");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD5, "in_TexCoord5");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD6, "in_TexCoord6");
+		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD7, "in_TexCoord7");
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL glBindAttribLocation VTX_TEXCOORD7 Error: %x\n", gl_error);
 		}
 
-		glBindAttribLocation(shader_prog, VTX_MATIDX0, "MatrixIndex0");
+		glBindAttribLocation(shader_prog, Flipper::VTX_MATIDX0, "MatrixIndex0");
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL glBindAttribLocation VTX_MATIDX0 Error: %x\n", gl_error);
 		}
-		glBindAttribLocation(shader_prog, VTX_MATIDX1, "MatrixIndex1");
+		glBindAttribLocation(shader_prog, Flipper::VTX_MATIDX1, "MatrixIndex1");
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL glBindAttribLocation VTX_MATIDX1 Error: %x\n", gl_error);
@@ -430,54 +428,54 @@ namespace GX
 
 		GLsizei attr_stride = sizeof(Vertex);
 
-		glEnableVertexAttribArray(VTX_POS);
-		glVertexAttribPointer(VTX_POS, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Position)));
+		glEnableVertexAttribArray(Flipper::VTX_POS);
+		glVertexAttribPointer(Flipper::VTX_POS, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Position)));
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL InitVBO after glVertexAttribPointer VTX_POS Error: %x\n", gl_error);
 		}
 
-		glEnableVertexAttribArray(VTX_NRM);
-		glVertexAttribPointer(VTX_NRM, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Normal)));
-		glEnableVertexAttribArray(VTX_BINRM);
-		glVertexAttribPointer(VTX_BINRM, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Binormal)));
-		glEnableVertexAttribArray(VTX_TANGENT);
-		glVertexAttribPointer(VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Tangent)));
+		glEnableVertexAttribArray(Flipper::VTX_NRM);
+		glVertexAttribPointer(Flipper::VTX_NRM, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Normal)));
+		glEnableVertexAttribArray(Flipper::VTX_BINRM);
+		glVertexAttribPointer(Flipper::VTX_BINRM, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Binormal)));
+		glEnableVertexAttribArray(Flipper::VTX_TANGENT);
+		glVertexAttribPointer(Flipper::VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Tangent)));
 
-		glEnableVertexAttribArray(VTX_COLOR0);
-		glVertexAttribPointer(VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[0])));
-		glEnableVertexAttribArray(VTX_COLOR1);
-		glVertexAttribPointer(VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[1])));
+		glEnableVertexAttribArray(Flipper::VTX_COLOR0);
+		glVertexAttribPointer(Flipper::VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[0])));
+		glEnableVertexAttribArray(Flipper::VTX_COLOR1);
+		glVertexAttribPointer(Flipper::VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[1])));
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL InitVBO after glVertexAttribPointer VTX_COLOR1 Error: %x\n", gl_error);
 		}
 
-		glEnableVertexAttribArray(VTX_TEXCOORD0);
-		glVertexAttribPointer(VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[0])));
-		glEnableVertexAttribArray(VTX_TEXCOORD1);
-		glVertexAttribPointer(VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[1])));
-		glEnableVertexAttribArray(VTX_TEXCOORD2);
-		glVertexAttribPointer(VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[2])));
-		glEnableVertexAttribArray(VTX_TEXCOORD3);
-		glVertexAttribPointer(VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[3])));
-		glEnableVertexAttribArray(VTX_TEXCOORD4);
-		glVertexAttribPointer(VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[4])));
-		glEnableVertexAttribArray(VTX_TEXCOORD5);
-		glVertexAttribPointer(VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[5])));
-		glEnableVertexAttribArray(VTX_TEXCOORD6);
-		glVertexAttribPointer(VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[6])));
-		glEnableVertexAttribArray(VTX_TEXCOORD7);
-		glVertexAttribPointer(VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[7])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD0);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[0])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD1);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[1])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD2);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[2])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD3);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[3])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD4);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[4])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD5);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[5])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD6);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[6])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD7);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[7])));
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL InitVBO after glVertexAttribPointer VTX_TEXCOORD7 Error: %x\n", gl_error);
 		}
 
-		glEnableVertexAttribArray(VTX_MATIDX0);
-		glVertexAttribPointer(VTX_MATIDX0, 1, GL_UNSIGNED_INT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, matIdx0)));
-		glEnableVertexAttribArray(VTX_MATIDX1);
-		glVertexAttribPointer(VTX_MATIDX1, 1, GL_UNSIGNED_INT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, matIdx1)));
+		glEnableVertexAttribArray(Flipper::VTX_MATIDX0);
+		glVertexAttribPointer(Flipper::VTX_MATIDX0, 1, GL_UNSIGNED_INT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, matIdx0)));
+		glEnableVertexAttribArray(Flipper::VTX_MATIDX1);
+		glVertexAttribPointer(Flipper::VTX_MATIDX1, 1, GL_UNSIGNED_INT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, matIdx1)));
 		gl_error = glGetError();
 		if (gl_error != GL_NO_ERROR) {
 			Halt("GL InitVBO after glVertexAttribPointer VTX_MATIDX1 Error: %x\n", gl_error);

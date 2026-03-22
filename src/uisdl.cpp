@@ -130,7 +130,7 @@ static void ui_draw_about_box(bool* enabled)
 
 		auto buffer =
 			Util::StringToWstring(APPNAME_A) + L" - " + std::wstring(APPDESC) + L"\n" +
-			std::wstring(L"Copyright 2003-2023 Dolwin team, emu-russia\n") +
+			std::wstring(L"Copyright 2003-2026 Dolwin team, emu-russia\n") +
 			std::wstring(L"Build version ") +
 			Util::StringToWstring(UI::Jdi->GetVersion()) + L" " +
 			std::wstring(version) + L" " + std::wstring(platform) + L" " + std::wstring(jitc) + L" (" +
@@ -392,7 +392,7 @@ static void CreateRenderTarget()
 {
 	// Create RenderTarget (for xfb / gfx)
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
-	render_target = SDL_CreateWindow("Gfx Output", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);
+	render_target = SDL_CreateWindow("Video Output", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);
 }
 
 static void DestroyRenderTarget()

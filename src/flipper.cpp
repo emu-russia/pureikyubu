@@ -36,11 +36,12 @@ namespace Flipper
 			"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
 		);
 
+		Mixer = new AudioMixer(config);
+
 		PIOpen(config); // interrupts, console regs
 		MIOpen(config); // memory protection and 1T-SRAM interface
 		VIOpen(config); // video (TV)
-		CPOpen(config);	// Command Processor
-		PEOpen();		// PixelEngine
+		cp = new CommandProcessor(config);
 		AIOpen(config); // audio (AID and AIS)
 		DSP::DspAIOpen(config);			// TODO: find better place
 		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
@@ -94,8 +95,7 @@ namespace Flipper
 
 		DSP->Suspend();
 
-		CPClose();
-		PEClose();
+		delete cp;
 		AIClose();
 		DSP::DspAIClose();	// TODO: find better place
 		DSP::ARClose();      // release ARAM  TODO: find better place
@@ -106,6 +106,7 @@ namespace Flipper
 		MIClose();
 		PIClose();
 
+		delete Mixer;
 		PADClose();
 		Gx->Close();
 	}
