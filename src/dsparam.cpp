@@ -248,13 +248,14 @@ namespace DSP
 		uint32_t cnt = aram.cnt & 0x3FF'FFE0;
 
 		// blast data
+		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
 		if (type == RAM_TO_ARAM)
 		{
-			memcpy(&ARAM[aram.araddr], &mi.ram[aram.mmaddr], 32);
+			memcpy(&ARAM[aram.araddr], ptr, 32);
 		}
 		else
 		{
-			memcpy(&mi.ram[aram.mmaddr], &ARAM[aram.araddr], 32);
+			memcpy(ptr, &ARAM[aram.araddr], 32);
 		}
 
 		aram.araddr += 32;
@@ -305,7 +306,8 @@ namespace DSP
 
 			// Special ARAM DMA to IRAM
 
-			Flipper::DSP->SpecialAramImemDma(&mi.ram[aram.mmaddr], cnt);
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
+			Flipper::DSP->SpecialAramImemDma(ptr, cnt);
 
 			aram.cnt &= 0x80000000;     // clear dma counter
 			ARINT();                    // invoke aram TC interrupt
@@ -319,7 +321,8 @@ namespace DSP
 		{
 			if (type == ARAM_TO_RAM)
 			{
-				memset(&mi.ram[aram.mmaddr], 0, cnt);
+				uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
+				memset(ptr, 0, cnt);
 
 				aram.cnt &= 0x80000000;     // clear dma counter
 				ARINT();                    // invoke aram TC interrupt
@@ -331,11 +334,12 @@ namespace DSP
 
 		if (cnt <= 32) {
 
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
 			if (type == RAM_TO_ARAM) {
-				memcpy(&ARAM[aram.araddr], &mi.ram[aram.mmaddr], 32);
+				memcpy(&ARAM[aram.araddr], ptr, 32);
 			}
 			else {
-				memcpy(&mi.ram[aram.mmaddr], &ARAM[aram.araddr], 32);
+				memcpy(ptr, &ARAM[aram.araddr], 32);
 			}
 
 			aram.araddr += 32;

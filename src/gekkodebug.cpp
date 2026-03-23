@@ -698,11 +698,11 @@ namespace Debug
 		bool flowControl = false;
 		uint32_t targetAddress = 0;
 
-		if (pa < RAMSIZE)
+		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(pa);
+		if (ptr != nullptr)
 		{
 			Gekko::DecoderInfo info = { 0 };
 
-			uint8_t* ptr = &mi.ram[pa];
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
 			Gekko::Decoder::Decode(addr, instr, &info);

@@ -186,7 +186,7 @@ namespace Flipper
 		{
 			cp->cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
-			cp->GXWriteFifo( (uint8_t*)MIGetMemoryPointerForCP(cp->cpregs.rdptr) );
+			cp->GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cp->cpregs.rdptr) );
 
 			cp->cpregs.rdptr += 32;
 			if (cp->cpregs.rdptr == cp->cpregs.top)
@@ -1159,7 +1159,7 @@ namespace Flipper
 	{
 		uint32_t address = cp.arrayBase[(size_t)arrayId].Base + 
 			(uint32_t)idx * cp.arrayStride[(size_t)arrayId].Stride;
-		return MIGetMemoryPointerForCP(address);
+		return HW->mem->MIGetMemoryPointerForCP(address);
 	}
 
 	void CommandProcessor::FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId)
@@ -1886,8 +1886,8 @@ namespace Flipper
 			case CP_CMD_CALL_DL | 6:
 			case CP_CMD_CALL_DL | 7:
 			{
-				uint32_t physAddress = gxfifo->Read32() & ~0x1f;
-				uint8_t* fifoPtr = (uint8_t *)MIGetMemoryPointerForCP(physAddress);
+				uint32_t physAddress = gxfifo->Read32() & 0x03ffffe0;
+				uint8_t* fifoPtr = (uint8_t *)HW->mem->MIGetMemoryPointerForCP(physAddress);
 				size_t size = gxfifo->Read32() & ~0x1f;
 
 				if (logDrawCommands)

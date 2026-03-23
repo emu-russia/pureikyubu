@@ -193,7 +193,7 @@ static void VIRegWrite(uint32_t addr, uint32_t data, void* context)
 				Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
 			}
 			vi.tfbl &= 0xffffff;
-			vi.xfbbuf = (uint8_t*)MIGetMemoryPointerForVI(vi.tfbl);
+			vi.xfbbuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForVI(vi.tfbl);
 			break;
 		case VI_TFBL+2:
 			vi.tfbl &= 0xffff0000;
@@ -203,7 +203,7 @@ static void VIRegWrite(uint32_t addr, uint32_t data, void* context)
 				Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
 			}
 			vi.tfbl &= 0xffffff;
-			vi.xfbbuf = (uint8_t*)MIGetMemoryPointerForVI(vi.tfbl);
+			vi.xfbbuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForVI(vi.tfbl);
 			break;
 		case VI_BFBL:
 			vi.bfbl &= 0x0000ffff;

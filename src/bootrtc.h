@@ -36,7 +36,7 @@ void MXTransfer(void* ctx);		// to EXI
 
 void IPLDescrambler(uint8_t* data, size_t size);
 
-void BootROM(bool dvd, bool rtc, uint32_t consoleVer);
+void BootROM(HWConfig *config, bool dvd, bool rtc);
 
 /// <summary>
 /// Checks that the bootstrap (if present) is of PAL revision. This is determined by the "PAL" substring in the first unencoded 0x100 bytes with copyright.

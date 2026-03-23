@@ -36,10 +36,12 @@ namespace Flipper
 			"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
 		);
 
+		memsize = config->ramsize;
+
 		Mixer = new AudioMixer(config);
 
 		PIOpen(config); // interrupts, console regs
-		MIOpen(config); // memory protection and 1T-SRAM interface
+		mem = new MemoryInterface(config);
 		VIOpen(config); // video (TV)
 		cp = new CommandProcessor(config);
 		ai = new AudioInterface(config);
@@ -106,7 +108,7 @@ namespace Flipper
 		delete exi;
 		VIClose();      // close VideoOut (if opened)
 		delete di;
-		MIClose();
+		delete mem;
 		PIClose();
 
 		delete Mixer;
@@ -122,5 +124,10 @@ namespace Flipper
 		// update joypads and video
 		VIUpdate();
 		SIPoll();
+	}
+
+	uint32_t Flipper::GetMemorySize()
+	{
+		return (uint32_t)memsize;
 	}
 }

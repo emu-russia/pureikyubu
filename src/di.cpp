@@ -134,7 +134,7 @@ namespace Flipper
 				if (di->DILEN)
 				{
 					uint32_t dimar = di->DIMAR & DI_DIMAR_MASK;
-					uint8_t* ptr = (uint8_t*)MIGetMemoryPointerForIO(dimar);
+					uint8_t* ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForIO(dimar);
 					memcpy(ptr, di->di.dmaFifo, 32);
 					di->DIMAR += 32;
 					di->DILEN -= 32;
@@ -199,7 +199,7 @@ namespace Flipper
 				if (di->DILEN)
 				{
 					uint32_t dimar = di->DIMAR & DI_DIMAR_MASK;
-					uint8_t* memptr = (uint8_t*)MIGetMemoryPointerForIO(dimar);
+					uint8_t* memptr = (uint8_t*)HW->mem->MIGetMemoryPointerForIO(dimar);
 					memcpy(memptr, di->di.dmaFifo, 32);
 					di->DIMAR += 32;
 					di->DILEN -= 32;

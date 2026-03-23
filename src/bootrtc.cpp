@@ -113,6 +113,7 @@ void MXTransfer(void *ctx)
 	Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)ctx;
 	uint32_t ofs;
 	bool dma = (exi->exi.regs[0].cr & EXI_CR_DMA) ? (true) : (false);
+	uint8_t* ptr{};
 
 	// read or write ?
 	switch (EXI_CR_RW(exi->exi.regs[0].cr))
@@ -129,15 +130,17 @@ void MXTransfer(void *ctx)
 						Report(Channel::EXI, "wrong input buffer size for SRAM read dma\n");
 						return;
 					}
-					memcpy(&mi.ram[exi->exi.regs[0].madr & RAMMASK], &exi->exi.sram, sizeof(SRAM));
+					ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
+					memcpy(ptr, &exi->exi.sram, sizeof(SRAM));
 					return;
 				}
 				if ((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
 				{
 					if (exi->exi.BootromPresent)
 					{
+						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
 						memcpy(
-							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							ptr,
 							&exi->exi.bootrom[ofs],
 							exi->exi.regs[0].len
 						);
@@ -145,8 +148,9 @@ void MXTransfer(void *ctx)
 					else
 					{
 						assert(exi->exi.ansiFont);
+						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
 						memcpy(
-							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							ptr,
 							&exi->exi.ansiFont[ofs - 0x001fcf00],
 							exi->exi.regs[0].len
 						);
@@ -159,8 +163,9 @@ void MXTransfer(void *ctx)
 				{
 					if (exi->exi.BootromPresent)
 					{
+						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
 						memcpy(
-							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							ptr,
 							&exi->exi.bootrom[ofs],
 							exi->exi.regs[0].len
 						);
@@ -168,8 +173,9 @@ void MXTransfer(void *ctx)
 					else
 					{
 						assert(exi->exi.sjisFont);
+						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
 						memcpy(
-							&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+							ptr,
 							&exi->exi.sjisFont[ofs - 0x001aff00],
 							exi->exi.regs[0].len
 						);
@@ -183,8 +189,9 @@ void MXTransfer(void *ctx)
 
 				if (ofs < exi->exi.bootromSize && exi->exi.BootromPresent)
 				{
+					ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
 					memcpy(
-						&mi.ram[exi->exi.regs[0].madr & RAMMASK],
+						ptr,
 						&exi->exi.bootrom[ofs],
 						exi->exi.regs[0].len
 					);
@@ -405,8 +412,9 @@ static void ReadFST()
 	#define DOL_LIMIT   (4*1024*1024)
 	#define ROUND32(x)  (((uint32_t)(x)+32-1)&~(32-1))
 
-	uint32_t     bb2[8];         // space for BB2
-	uint32_t     fstAddr, fstOffs, fstSize, fstMaxSize;
+	uint32_t bb2[8]{};		// space for BB2
+	uint32_t fstAddr, fstOffs, fstSize, fstMaxSize;
+	uint8_t* ptr{};
 
 	// read BB2
 	DVD::Seek(DVD_BB2_OFFSET);
@@ -428,7 +436,8 @@ static void ReadFST()
 
 	// load FST into memory
 	DVD::Seek(fstOffs);
-	DVD::Read(&mi.ram[ArenaHi & RAMMASK], fstSize);
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(ArenaHi & 0x0fffffff);
+	DVD::Read(ptr, fstSize);
 
 	// save fst configuration in lomem
 	Core->WriteWord(0x80000038, ArenaHi);
@@ -444,11 +453,12 @@ static void ReadFST()
 // this is exact apploader emulation. it is safe and checked.
 static void BootApploader()
 {
-	uint32_t     appHeader[8];           // apploader header information
-	uint32_t     appSize;                // size of apploader image
-	uint32_t     appEntryPoint;
-	uint32_t     _prolog, _main, _epilog;
-	uint32_t     offs, size, addr;       // return of apploader main
+	uint32_t appHeader[8]{};		// apploader header information
+	uint32_t appSize;				// size of apploader image
+	uint32_t appEntryPoint;
+	uint32_t _prolog, _main, _epilog;
+	uint32_t offs, size, addr;		// return of apploader main
+	uint8_t* ptr;
 
 	// I use prolog/epilog terms here, but Nintendo is using 
 	// something weird, like : appLoaderFunc1 (see Zelda dump - it 
@@ -469,7 +479,8 @@ static void BootApploader()
 
 	// load apploader image
 	DVD::Seek(0x2460);
-	DVD::Read(&mi.ram[0x81200000 & RAMMASK], appSize);
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(0x81200000 & 0x0fffffff);
+	DVD::Read(ptr, appSize);
 
 	// set parameters for apploader entrypoint
 	Core->regs.gpr[3] = 0x81300004;            // save apploader _prolog offset
@@ -523,7 +534,8 @@ static void BootApploader()
 		if (size)
 		{
 			DVD::Seek(offs);
-			DVD::Read(&mi.ram[addr & RAMMASK], size);
+			ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(addr & 0x0fffffff);
+			DVD::Read(ptr, size);
 
 			Report(Channel::HLE, "apploader read : offs : %08X size : %08X addr : %08X\n",
 				offs, size, addr);
@@ -569,8 +581,10 @@ static void SyncTime(bool rtc)
 	Report(Channel::HLE, "new timer: 0x%llx\n\n", Core->GetTicks());
 }
 
-void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
+void BootROM(HWConfig* config, bool dvd, bool rtc)
 {
+	uint8_t* ptr{};
+
 	// set initial MMU state, according with BS2/Dolphin OS
 	for (int sr = 0; sr < 16; sr++)
 	{
@@ -605,15 +619,16 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 	SyncTime(rtc);
 
 	// modify important OS low memory variables (lomem) (BS)
-	Core->WriteWord(0x8000002c, consoleVer);   // console type
-	Core->WriteWord(0x80000028, RAMSIZE);      // memsize
-	Core->WriteWord(0x800000f0, RAMSIZE);      // simmemsize
+	Core->WriteWord(0x8000002c, config->consoleVer);   // console type
+	Core->WriteWord(0x80000028, (uint32_t)config->ramsize);      // memsize
+	Core->WriteWord(0x800000f0, (uint32_t)config->ramsize);      // simmemsize
 	Core->WriteWord(0x800000f8, CPU_BUS_CLOCK);
 	Core->WriteWord(0x800000fc, CPU_CORE_CLOCK);
 
 	// install default syscall. not important for Dolphin OS,
 	// but should be installed to avoid crash on SC opcode.
-	memcpy(&mi.ram[(int)Gekko::Exception::EXCEPTION_SYSTEM_CALL],
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug((uint32_t)Gekko::Exception::EXCEPTION_SYSTEM_CALL);
+	memcpy(ptr,
 		default_syscall,
 		sizeof(default_syscall));
 
@@ -626,10 +641,11 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 	{
 		// read disk ID information to 0x80000000
 		DVD::Seek(0);
-		DVD::Read(mi.ram, 32);
+		ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(0);
+		DVD::Read(ptr, 32);
 
 		// additional PAL/NTSC selection hack for old VIConfigure()
-		char* id = (char*)mi.ram;
+		char* id = (char*)ptr;
 		if (id[3] == 'P') Core->WriteWord(0x800000CC, 1);   // set to PAL
 		else Core->WriteWord(0x800000CC, 0);
 

@@ -151,7 +151,7 @@ namespace DSP
 		}
 		else
 		{
-			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)MIGetMemoryPointerForIO(dsp_ai.currentDmaAddr), bytes);
+			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForDSP(dsp_ai.currentDmaAddr), bytes);
 			dsp_ai.currentDmaAddr += bytes;
 			dsp_ai.dcnt--;
 		}

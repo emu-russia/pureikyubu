@@ -42,6 +42,8 @@
 #define EXI_CR_DMA          (1 << 1)        // select dma transfer (dma/immediate)
 #define EXI_CR_TSTART       (1 << 0)        // start transfer
 
+#define EXI_MADR_MASK 0x3fff'ffe0
+
 // EXI registers block
 struct EXIRegs
 {

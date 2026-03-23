@@ -200,7 +200,7 @@ static void MCPageProgramProc(Memcard* memcard, EXIRegs* exi) {
 	uint8_t* abuf;
 	uint32_t size;
 	if (exi->cr & EXI_CR_DMA) {
-		abuf = &mi.ram[exi->madr & RAMMASK];
+		abuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->madr & EXI_MADR_MASK);
 		size = exi->len;
 	}
 	else {
@@ -237,7 +237,7 @@ static void MCReadArrayProc(Memcard* memcard, EXIRegs* exi) {
 	uint32_t size;
 
 	if (exi->cr & EXI_CR_DMA) {
-		abuf = &mi.ram[exi->madr & RAMMASK];
+		abuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->madr & EXI_MADR_MASK);
 		size = exi->len;
 	}
 	else {

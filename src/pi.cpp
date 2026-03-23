@@ -27,12 +27,6 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 {
 	uint8_t* ptr;
 
-	if (mi.ram == nullptr)
-	{
-		*reg = 0;
-		return;
-	}
-
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		if (Flipper::HW->exi->exi.BootromPresent)
@@ -48,9 +42,9 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 	}
 
 	// bus load byte
-	if (pa < mi.ramSize)
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (ptr)
 	{
-		ptr = &mi.ram[pa];
 		*reg = (uint32_t)*ptr;
 	}
 	else
@@ -64,20 +58,15 @@ void PIWriteByte(uint32_t pa, uint32_t data)
 {
 	uint8_t* ptr;
 
-	if (mi.ram == nullptr)
-	{
-		return;
-	}
-
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		return;
 	}
 
 	// bus store byte
-	if (pa < mi.ramSize)
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (ptr)
 	{
-		ptr = &mi.ram[pa];
 		*ptr = (uint8_t)data;
 	}
 	else
@@ -89,12 +78,6 @@ void PIWriteByte(uint32_t pa, uint32_t data)
 void PIReadHalf(uint32_t pa, uint32_t* reg)
 {
 	uint8_t* ptr;
-
-	if (mi.ram == nullptr)
-	{
-		*reg = 0;
-		return;
-	}
 
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
@@ -119,9 +102,9 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 	}
 
 	// bus load halfword
-	if (pa < mi.ramSize)
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (ptr)
 	{
-		ptr = &mi.ram[pa];
 		*reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
 	}
 	else
@@ -134,11 +117,6 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 void PIWriteHalf(uint32_t pa, uint32_t data)
 {
 	uint8_t* ptr;
-
-	if (mi.ram == nullptr)
-	{
-		return;
-	}
 
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
@@ -154,9 +132,9 @@ void PIWriteHalf(uint32_t pa, uint32_t data)
 	}
 
 	// bus store halfword
-	if (pa < mi.ramSize)
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (ptr)
 	{
-		ptr = &mi.ram[pa];
 		*(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
 	}
 	else
@@ -169,16 +147,10 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 {
 	uint8_t* ptr;
 
-	if (mi.ram == nullptr)
-	{
-		*reg = 0;
-		return;
-	}
-
 	// bus load word
-	if (pa < mi.ramSize)
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (ptr)
 	{
-		ptr = &mi.ram[pa];
 		*reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 		return;
 	}
@@ -225,11 +197,6 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 {
 	uint8_t* ptr;
 
-	if (mi.ram == nullptr)
-	{
-		return;
-	}
-
 	if (pa >= PI_MEMSPACE_BOOTROM)
 	{
 		return;
@@ -253,9 +220,9 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 	}
 
 	// bus store word
-	if (pa < mi.ramSize)
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (ptr)
 	{
-		ptr = &mi.ram[pa];
 		*(uint32_t*)ptr = _BYTESWAP_UINT32(data);
 	}
 	else
@@ -276,14 +243,15 @@ void PIReadDouble(uint32_t pa, uint64_t* reg)
 		return;
 	}
 
-	if (pa >= RAMSIZE || mi.ram == nullptr)
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (!ptr)
 	{
 		Report(Channel::PI, "Unmapped memory read uint64: 0x%08X\n", pa);
 		*reg = 0;
 		return;
 	}
 
-	uint8_t* buf = &mi.ram[pa];
+	uint8_t* buf = ptr;
 
 	// bus load doubleword
 	*reg = _BYTESWAP_UINT64(*(uint64_t*)buf);
@@ -297,13 +265,14 @@ void PIWriteDouble(uint32_t pa, uint64_t* data)
 		return;
 	}
 
-	if (pa >= RAMSIZE || mi.ram == nullptr)
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(pa);
+	if (!ptr)
 	{
 		Report(Channel::PI, "Unmapped memory write uint64: 0x%08X\n", pa);
 		return;
 	}
 
-	uint8_t* buf = &mi.ram[pa];
+	uint8_t* buf = ptr;
 
 	// bus store doubleword
 	*(uint64_t*)buf = _BYTESWAP_UINT64(*data);
@@ -311,12 +280,13 @@ void PIWriteDouble(uint32_t pa, uint64_t* data)
 
 void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-	if ((phys_addr + 32) > RAMSIZE) {
-		Halt("PI: Unmapped read burst\n");
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(phys_addr);
+	if (!ptr) {
+		Halt("PI: Unmapped read burst 0x%08X\n", phys_addr);
 		return;
 	}
 
-	MIReadBurst(phys_addr, burstData);
+	Flipper::HW->mem->MIReadBurst(phys_addr, burstData);
 }
 
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
@@ -326,7 +296,7 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 	{
 		// PI FIFO
 
-		MIWriteBurst(pi.cp_wrptr, burstData);
+		Flipper::HW->mem->MIWriteBurst(pi.cp_wrptr, burstData);
 		pi.cp_wrptr += 32;
 
 		if (pi.cp_wrptr == pi.cp_top)
@@ -340,12 +310,13 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 		return;
 	}
 
-	if ((phys_addr + 32) > RAMSIZE) {
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(phys_addr);
+	if (!ptr) {
 		Halt("PI: Unmapped write burst\n");
 		return;
 	}
 
-	MIWriteBurst(phys_addr, burstData);
+	Flipper::HW->mem->MIWriteBurst(phys_addr, burstData);
 }
 
 // ---------------------------------------------------------------------------
@@ -533,7 +504,7 @@ static void pi_write_config(uint32_t data)
 		// BS1 clears memory so that VI does not produce nasty garbage when XFB loads (really? but it looks like the memory reset is done BEFORE filling Splash with test patterns).
 
 		Report(Channel::PI, "MEM Reset requested.\n");
-		MemRst();
+		Flipper::HW->mem->MemRst();
 	}
 
 	if ((data & PI_CONFIG_DIRSTB) == 0)
@@ -742,17 +713,18 @@ void PIBreakOnNextInt(uint32_t mask)
 
 uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
 {
-	if (!mi.ram || bytes == 0)
+	if (bytes == 0)
 		return nullptr;
-
-	if (physAddr < (RAMSIZE - bytes))
-	{
-		return &mi.ram[physAddr];
-	}
 
 	if (physAddr >= PI_MEMSPACE_BOOTROM && Flipper::HW->exi->exi.BootromPresent)
 	{
 		return &Flipper::HW->exi->exi.bootrom[physAddr - PI_MEMSPACE_BOOTROM];
+	}
+
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(physAddr);
+	if (ptr)
+	{
+		return ptr;
 	}
 
 	return nullptr;

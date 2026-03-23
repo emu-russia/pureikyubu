@@ -45,7 +45,7 @@ void EMUGetHwConfig(HWConfig * config)
 		delete renderTarget;
 	}
 
-	config->ramsize = RAMSIZE;
+	config->ramsize = 24*1024*1024;			// TODO: Make it configurable
 
 	config->vi_log = GetConfigBool(USER_VI_LOG, USER_HW);
 	config->vi_xfb = GetConfigBool(USER_VI_XFB, USER_HW);
@@ -100,10 +100,9 @@ void EMUOpen(const std::wstring& filename)
 
 	// open other sub-systems
 	Core->Reset();
-	HWConfig* hwconfig = new HWConfig;
-	EMUGetHwConfig(hwconfig);
-	Flipper::HW = new Flipper::Flipper(hwconfig);
-	delete hwconfig;
+	HWConfig hwconfig{};
+	EMUGetHwConfig(&hwconfig);
+	Flipper::HW = new Flipper::Flipper(&hwconfig);
 
 	CallJdi("script autoexec.cmd");
 	LoadFile(filename);   // Gekko PC will be set here
@@ -538,7 +537,7 @@ uint32_t DOLSize(DolHeader *dol)
 /* under control of DolphinOS, so just use simple translation mask.     */
 uint32_t LoadDOL(const std::wstring& dolname)
 {
-	DolHeader   dh;
+	DolHeader dh{};
 
 	/* Try to open file. */
 	auto dol = std::ifstream( Util::WstringToString(dolname).c_str(), std::ifstream::binary);
@@ -558,7 +557,8 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	{
 		if(dh.textOffset[i])    /* If offset is 0, then section is empty */
 		{
-			char* addr = (char*)&mi.ram[dh.textAddress[i] & RAMMASK];
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.textAddress[i]);
+			char* addr = (char*)ptr;
 
 			dol.seekg(dh.textOffset[i]);
 			dol.read(addr, dh.textSize[i]);
@@ -576,7 +576,8 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	{
 		if (dh.dataOffset[i])    /* If offset is 0, then section is empty */
 		{
-			char* addr = (char*)&mi.ram[dh.dataAddress[i] & RAMMASK];
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.dataAddress[i]);
+			char* addr = (char*)ptr;
 
 			dol.seekg(dh.dataOffset[i]);
 			dol.read(addr, dh.dataSize[i]);
@@ -589,9 +590,9 @@ uint32_t LoadDOL(const std::wstring& dolname)
 		}
 	}
 
-	HWConfig* config = new HWConfig;
-	EMUGetHwConfig(config);
-	BootROM(false, false, config->consoleVer);
+	HWConfig config{};
+	EMUGetHwConfig(&config);
+	BootROM(&config, false, false);
 
 	/* Setup registers. */
 	Core->regs.gpr[1] = 0x816ffffc;
@@ -621,7 +622,8 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 	{
 		if(dol->textOffset[i])  // if offset is 0, then section is empty
 		{
-			uint8_t*addr = &mi.ram[dol->textAddress[i] & RAMMASK];
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->textAddress[i]);
+			uint8_t* addr = ptr;
 			memcpy(addr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
 
 			Report(Channel::Loader,
@@ -637,7 +639,8 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 	{
 		if(dol->dataOffset[i])  // if offset is 0, then section is empty
 		{
-			uint8_t *addr = &mi.ram[dol->dataAddress[i] & RAMMASK];
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->dataAddress[i]);
+			uint8_t *addr = ptr;
 			memcpy(addr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
 
 			Report(Channel::Loader,
@@ -802,7 +805,8 @@ uint32_t LoadELF(const std::wstring& elfname)
 				vend = vaddr + size;
 
 				file.seekg(Elf_SwapOff(phdr.p_offset));
-				file.read((char*)&mi.ram[vaddr & RAMMASK], vend - vaddr);
+				uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(vaddr);
+				file.read((char*)ptr, vend - vaddr);
 			}
 		}
 
@@ -816,7 +820,7 @@ uint32_t LoadELF(const std::wstring& elfname)
 /* ---------------------------------------------------------------------------  */
 /* File loader engine                                                           */
 
-static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & diskId)
+static void AutoloadMap(HWConfig* config, const std::wstring & filename, bool dvd, std::wstring & diskId)
 {
 	// get map file name
 	std::wstring mapname{};
@@ -871,7 +875,7 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
 		
 		Report(Channel::Loader, "Making new MAP file: %s\n\n", Util::WstringToString(mapname).c_str());
 		MAPInit(mapname.c_str());
-		MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
+		MAPAddRange(0x80000000, 0x80000000 | (uint32_t)config->ramsize);  // user can wait for once :O)
 		MAPFinish();
 		LoadMAP(mapname.c_str());
 	}
@@ -942,20 +946,20 @@ void LoadFile(const std::wstring& filename)
 		throw "Cannot load file!";
 	}
 
+	HWConfig config{};
+	EMUGetHwConfig(&config);
+
 	// simulate bootrom
 	if (!emu.bootrom)
 	{
-		HWConfig* config = new HWConfig;
-		EMUGetHwConfig(config);
-		BootROM(dvd, false, config->consoleVer);
-		delete config;
+		BootROM(&config, dvd, false);
 		Thread::Sleep(10);
 	}
 
 	// autoload map file
 	if (!emu.bootrom)
 	{
-		AutoloadMap(filename, dvd, diskId);
+		AutoloadMap(&config, filename, dvd, diskId);
 	}
 
 	// set entrypoint (for DVD, PC will set in apploader)

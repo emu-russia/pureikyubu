@@ -89,6 +89,7 @@ namespace Flipper
 	class AudioInterface;
 	class DiskInterface;
 	class ExternalInterface;
+	class MemoryInterface;
 	class CommandProcessor;
 
 	/// <summary>
@@ -108,6 +109,8 @@ namespace Flipper
 		AudioInterface* ai = nullptr;
 		DiskInterface* di = nullptr;
 
+		size_t memsize;			//!< The size of the main memory (Splash) from the configuration. Used to call GetMemorySize.
+
 	public:
 		Flipper(HWConfig* config);
 		~Flipper();
@@ -116,6 +119,9 @@ namespace Flipper
 
 		CommandProcessor* cp = nullptr;
 		ExternalInterface* exi = nullptr;
+		MemoryInterface* mem = nullptr;
+
+		uint32_t GetMemorySize();
 	};
 
 	extern Flipper* HW;
