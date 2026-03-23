@@ -3,8 +3,10 @@
 
 // TEV cannot be emulated by "simple" OpenGL, it requires more advanced pixel shaders.
 
-namespace GX
+namespace GFX
 {
+	class SetupUnit;
+
 	// 0xC0..0xDF
 	union TEV_ColorEnv
 	{
@@ -261,5 +263,17 @@ namespace GX
 		TEV_ZEnv0 zenv0{};		// 0xF4
 		TEV_ZEnv1 zenv1{};		// 0xF5
 		TEV_KSel ksel[8]{};		// 0xF6..0xFD
+	};
+
+	class TextureEnvironmentUnit
+	{
+		friend GFXCore;
+		friend SetupUnit;
+		GFXCore* gfx = nullptr;
+		TEVState tev{};
+
+	public:
+		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
+		~TextureEnvironmentUnit();
 	};
 }

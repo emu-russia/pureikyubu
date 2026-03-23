@@ -59,9 +59,6 @@
 
 using namespace Debug;
 
-// EXI state (registers and other data)
-EXIState exi;
-
 namespace Flipper
 {
 	// EXI transfer bindings

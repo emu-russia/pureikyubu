@@ -2,10 +2,9 @@
 
 // Now we're putting all the drawing on the shoulders of the graphics API. If we get bored, we can make a software rasterizer.
 
-namespace GX
+namespace GFX
 {
-
-	void GXCore::RAS_Begin(RAS_Primitive prim, size_t vtx_num)
+	void Rasterizer::RAS_Begin(RAS_Primitive prim, size_t vtx_num)
 	{
 		switch (prim)
 		{
@@ -36,10 +35,10 @@ namespace GX
 		}
 
 		// texture hack
-		if (ras_use_texture && xf.numTex && tID[0])
+		if (ras_use_texture && gfx->xf->xf.numTex && gfx->tx->tID[0])
 		{
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, tID[0]->bind);
+			glBindTexture(GL_TEXTURE_2D, gfx->tx->tID[0]->bind);
 		}
 
 		switch (prim)
@@ -77,40 +76,49 @@ namespace GX
 		}
 	}
 
-	void GXCore::RAS_End()
+	void Rasterizer::RAS_End()
 	{
 		glEnd();
 	}
 
-	void GXCore::RAS_SendVertex(const Vertex* v)
+	void Rasterizer::RAS_SendVertex(const Vertex* v)
 	{
-		float mv[3];
+		float mv[3]{};
 		
-		XF_ApplyModelview(v, mv, v->Position);
+		gfx->xf->XF_ApplyModelview(v, mv, v->Position);
 
 		// The color is transferred via Uniforms
 
-		if (xf.numColors != 0)
+		if (gfx->xf->xf.numColors != 0)
 		{
-			XF_DoLights(v);
+			gfx->xf->XF_DoLights(v);
 
 			if (ras_wireframe) {
 				glColor3ub(0, 255, 255);
 			}
 			else {
-				glColor4ub(colora[0].R, colora[0].G, colora[0].B, colora[0].A);
+				glColor4ub(gfx->xf->colora[0].R, gfx->xf->colora[0].G, gfx->xf->colora[0].B, gfx->xf->colora[0].A);
 			}
 		}
 
 		// texture hack
-		if (ras_use_texture && xf.numTex && tID[0])
+		if (ras_use_texture && gfx->xf->xf.numTex && gfx->tx->tID[0])
 		{
-			XF_DoTexGen(v);
-			tgout[0].out[0] *= tID[0]->ds;
-			tgout[0].out[1] *= tID[0]->dt;
-			glTexCoord2fv(tgout[0].out);
+			gfx->xf->XF_DoTexGen(v);
+			gfx->xf->tgout[0].out[0] *= gfx->tx->tID[0]->ds;
+			gfx->xf->tgout[0].out[1] *= gfx->tx->tID[0]->dt;
+			glTexCoord2fv(gfx->xf->tgout[0].out);
 		}
 
 		glVertex3fv(mv);
+	}
+
+	Rasterizer::Rasterizer(HWConfig* config, GFXCore* parent_gfx)
+	{
+		gfx = parent_gfx;
+	}
+
+	Rasterizer::~Rasterizer()
+	{
 	}
 }

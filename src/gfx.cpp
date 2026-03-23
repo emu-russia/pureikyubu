@@ -4,21 +4,10 @@
 
 using namespace Debug;
 
-namespace GX
+namespace GFX
 {
-	GXCore::GXCore()
+	GFXCore::GFXCore(HWConfig* config)
 	{
-	}
-
-	GXCore::~GXCore()
-	{
-	}
-
-	void GXCore::Open(HWConfig* config)
-	{
-		if (gxOpened)
-			return;
-
 #if GFX_USE_SDL_WINDOW
 		render_window = (SDL_Window*)config->renderTarget;
 #else
@@ -31,26 +20,24 @@ namespace GX
 		// reset pipeline
 		frame_done = true;
 
-		// flush texture cache
-		TexInit();
-
-		PEOpen();		// PixelEngine
-
-		gxOpened = true;
+		xf = new TransformUnit(config, this);
+		su = new SetupUnit(config, this);
+		ras = new Rasterizer(config, this);			// TODO: For now, only single instance; will be developed for software rendering.
+		pe = new PixelEngine(config, this);
+		tx = new TextureEngine(config, this);
+		tev = new TextureEnvironmentUnit(config, this);
 	}
 
-	void GXCore::Close()
+	GFXCore::~GFXCore()
 	{
-		if (!gxOpened)
-			return;
-
 		GL_CloseSubsystem();
 
-		TexFree();
-
-		PEClose();
-
-		gxOpened = false;
+		delete xf;
+		delete su;
+		delete ras;
+		delete pe;
+		delete tx;
+		delete tev;
 	}
 
 #ifdef _WINDOWS
@@ -85,12 +72,12 @@ namespace GX
 	}
 #endif
 
-	bool GXCore::GL_LazyOpenSubsystem()
+	bool GFXCore::GL_LazyOpenSubsystem()
 	{
 		return true;
 	}
 
-	bool GXCore::GL_OpenSubsystem()
+	bool GFXCore::GL_OpenSubsystem()
 	{
 		if (backend_started)
 			return true;
@@ -152,9 +139,9 @@ namespace GX
 #endif
 
 		// clear frame counter
-		frames = 0;
+		pe->frames = 0;
 
-		if (ras_wireframe) {
+		if (ras->ras_wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 
@@ -162,7 +149,7 @@ namespace GX
 		return true;
 	}
 
-	void GXCore::GL_CloseSubsystem()
+	void GFXCore::GL_CloseSubsystem()
 	{
 		if (!backend_started)
 			return;
@@ -185,7 +172,7 @@ namespace GX
 	}
 
 	// init rendering (call before drawing FIFO primitives)
-	void GXCore::GL_BeginFrame()
+	void GFXCore::GL_BeginFrame()
 	{
 		if (frameReady) return;
 
@@ -195,20 +182,20 @@ namespace GX
 		glDrawBuffer(GL_BACK);
 
 		glClearColor(
-			(float)(pe.copy_clear_ar.red / 255.0f),
-			(float)(pe.copy_clear_gb.green / 255.0f),
-			(float)(pe.copy_clear_gb.blue / 255.0f),
-			(float)(pe.copy_clear_ar.alpha / 255.0f)
+			(float)(pe->pe.copy_clear_ar.red / 255.0f),
+			(float)(pe->pe.copy_clear_gb.green / 255.0f),
+			(float)(pe->pe.copy_clear_gb.blue / 255.0f),
+			(float)(pe->pe.copy_clear_ar.alpha / 255.0f)
 		);
 
-		glClearDepth((double)(pe.copy_clear_z.value / 16777215.0));
+		glClearDepth((double)(pe->pe.copy_clear_z.value / 16777215.0));
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		frameReady = true;
 	}
 
 	// done rendering (call when frame is ready)
-	void GXCore::GL_EndFrame()
+	void GFXCore::GL_EndFrame()
 	{
 		bool showPerf = false;
 		if (!frameReady) return;
@@ -232,7 +219,7 @@ namespace GX
 		if (make_shot)
 		{
 			make_shot = false;
-			GL_DoSnapshot(false, snap_file, NULL, snap_w, snap_h);
+			pe->GL_DoSnapshot(false, snap_file, NULL, snap_w, snap_h);
 		}
 
 		glFinish();
@@ -246,11 +233,11 @@ namespace GX
 
 		frameReady = false;
 		//Report(Channel::GP, "gfx frame: %d\n", frames);
-		frames++;
+		pe->frames++;
 		Flipper::HW->cp->ResetFrameStats();
 	}
 
-	void GXCore::GPFrameBegin()
+	void GFXCore::GPFrameBegin()
 	{
 		if (frame_done)
 		{
@@ -261,13 +248,13 @@ namespace GX
 	}
 
 	// rendering complete, swap buffers, sync to vretrace
-	void GXCore::GPFrameDone()
+	void GFXCore::GPFrameDone()
 	{
 		GL_EndFrame();
 		frame_done = true;
 	}
 
-	void GXCore::ResizeRenderTarget(size_t width, size_t height)
+	void GFXCore::ResizeRenderTarget(size_t width, size_t height)
 	{
 		if (backend_started) {
 			scr_w = (uint32_t)width;
@@ -276,7 +263,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::UploadShaders(const char* vert_source, const char* frag_source)
+	void GFXCore::UploadShaders(const char* vert_source, const char* frag_source)
 	{
 		char infoLog[0x1000]{};
 		int success;
@@ -345,7 +332,7 @@ namespace GX
 		Report(Channel::GP, "Shader program is uploaded to GPU\n");
 	}
 
-	void GXCore::DisposeShaders()
+	void GFXCore::DisposeShaders()
 	{
 		glFinish();
 
@@ -357,7 +344,7 @@ namespace GX
 		glDeleteProgram(shader_prog);
 	}
 
-	void GXCore::BindShadersWithVBO()
+	void GFXCore::BindShadersWithVBO()
 	{
 		GLenum gl_error;
 
@@ -403,7 +390,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::InitVBO()
+	void GFXCore::InitVBO()
 	{
 		GLenum gl_error;
 
@@ -482,7 +469,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::DisposeVBO()
+	void GFXCore::DisposeVBO()
 	{
 		glFinish();
 

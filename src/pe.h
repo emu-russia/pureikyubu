@@ -1,43 +1,43 @@
 #pragma once
 
-namespace GX
+// PE Registers (from CPU side). 16-bit access.
+
+#define PE_PI_ZMODE 0x00         // Cpu2Efb Z mode
+#define PE_PI_CMODE0 0x02        // Cpu2Efb Color mode 0
+#define PE_PI_CMODE1 0x04        // Cpu2Efb Color mode 1
+#define PE_PI_ALPHA_THRES 0x06   // Cpu2Efb Alpha mode 0
+#define PE_PI_CONTROL 0x08
+#define PE_PI_INTRCTRL 0x0a
+#define PE_PI_INTRSTAT 0x0c
+#define PE_PI_TOKEN 0x0e         // Last token value
+#define PE_PI_XBOUND0 0x10
+#define PE_PI_XBOUND1 0x12
+#define PE_PI_YBOUND0 0x14
+#define PE_PI_YBOUND1 0x16
+#define PE_PI_PERF_COUNTER_0L 0x18
+#define PE_PI_PERF_COUNTER_0H 0x1a
+#define PE_PI_PERF_COUNTER_1L 0x1c
+#define PE_PI_PERF_COUNTER_1H 0x1e
+#define PE_PI_PERF_COUNTER_2L 0x20
+#define PE_PI_PERF_COUNTER_2H 0x22
+#define PE_PI_PERF_COUNTER_3L 0x24
+#define PE_PI_PERF_COUNTER_3H 0x26
+#define PE_PI_PERF_COUNTER_4L 0x28
+#define PE_PI_PERF_COUNTER_4H 0x2a
+#define PE_PI_PERF_COUNTER_5L 0x2c
+#define PE_PI_PERF_COUNTER_5H 0x2e
+
+// PE intrctrl register
+#define PE_SR_DONE      (1 << 0)
+#define PE_SR_TOKEN     (1 << 1)
+#define PE_SR_DONEMSK   (1 << 2)
+#define PE_SR_TOKENMSK  (1 << 3)
+
+namespace GFX
 {
-
-	// PE Registers (from CPU side). 16-bit access.
-
-	#define PE_PI_ZMODE 0x00         // Cpu2Efb Z mode
-	#define PE_PI_CMODE0 0x02        // Cpu2Efb Color mode 0
-	#define PE_PI_CMODE1 0x04        // Cpu2Efb Color mode 1
-	#define PE_PI_ALPHA_THRES 0x06   // Cpu2Efb Alpha mode 0
-	#define PE_PI_CONTROL 0x08
-	#define PE_PI_INTRCTRL 0x0a
-	#define PE_PI_INTRSTAT 0x0c
-	#define PE_PI_TOKEN 0x0e         // Last token value
-	#define PE_PI_XBOUND0 0x10
-	#define PE_PI_XBOUND1 0x12
-	#define PE_PI_YBOUND0 0x14
-	#define PE_PI_YBOUND1 0x16
-	#define PE_PI_PERF_COUNTER_0L 0x18
-	#define PE_PI_PERF_COUNTER_0H 0x1a
-	#define PE_PI_PERF_COUNTER_1L 0x1c
-	#define PE_PI_PERF_COUNTER_1H 0x1e
-	#define PE_PI_PERF_COUNTER_2L 0x20
-	#define PE_PI_PERF_COUNTER_2H 0x22
-	#define PE_PI_PERF_COUNTER_3L 0x24
-	#define PE_PI_PERF_COUNTER_3H 0x26
-	#define PE_PI_PERF_COUNTER_4L 0x28
-	#define PE_PI_PERF_COUNTER_4H 0x2a
-	#define PE_PI_PERF_COUNTER_5L 0x2c
-	#define PE_PI_PERF_COUNTER_5H 0x2e
-
-	// PE intrctrl register
-	#define PE_SR_DONE      (1 << 0)
-	#define PE_SR_TOKEN     (1 << 1)
-	#define PE_SR_DONEMSK   (1 << 2)
-	#define PE_SR_TOKENMSK  (1 << 3)
+	class SetupUnit;
 
 	// The register definitions for PE PI are slightly different from command stream PE registers because PE PI registers are 16-bit
-
 	// PE registers mapped to CPU
 	struct PERegs
 	{
@@ -426,7 +426,39 @@ namespace GX
 		PE_CHICKEN chicken;  // 0x58
 		PE_QUAD_OFFSET quad_offset;  // 0x59
 	};
-}
 
-void PEOpen();
-void PEClose();
+	class PixelEngine
+	{
+		friend GFXCore;
+		friend SetupUnit;
+		GFXCore* gfx = nullptr;
+
+		size_t frames = 0;
+		size_t pe_done_num = 0;   // number of drawdone (PE_FINISH) events
+
+		PERegs peregs{};	// PE PI regs
+
+		PEState pe{};		// Internal PE state
+
+		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
+		void GL_MakeSnapshot(char* path);
+		void GL_SaveBitmap(uint8_t* buf);
+
+		// Pixel Engine mapped regs
+		uint16_t PeReadReg(uint32_t addr);
+		void PeWriteReg(uint32_t addr, uint16_t value);
+
+		void DONE_INT();
+		void TOKEN_INT();
+
+		static void PERegRead(uint32_t addr, uint32_t* reg, void* context);
+		static void PERegWrite(uint32_t addr, uint32_t data, void* context);
+
+	public:
+		PixelEngine(HWConfig *config, GFXCore *parent_gfx);
+		~PixelEngine();
+
+		uint32_t EfbPeek(uint32_t addr);
+		void EfbPoke(uint32_t addr, uint32_t value);
+	};
+}

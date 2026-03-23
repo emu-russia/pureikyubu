@@ -1450,10 +1450,10 @@ namespace Flipper
 		}
 	}
 
-	GX::Color CommandProcessor::FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId)
+	GFX::Color CommandProcessor::FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId)
 	{
 		void* ptr;
-		GX::Color col{};
+		GFX::Color col{};
 		static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
 
 		col.R = 0;
@@ -1612,18 +1612,18 @@ namespace Flipper
 	}
 
 	// collect vertex data
-	void CommandProcessor::FifoWalk(unsigned vatnum, GX::Vertex* vtx, FifoProcessor* gxfifo)
+	void CommandProcessor::FifoWalk(unsigned vatnum, GFX::Vertex* vtx, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
-		vtx->matIdx0.PosNrmMatIdx = Gx->xf.matIdxA.PosNrmMatIdx;
-		vtx->matIdx0.Tex0MatIdx = Gx->xf.matIdxA.Tex0MatIdx;
-		vtx->matIdx0.Tex1MatIdx = Gx->xf.matIdxA.Tex1MatIdx;
-		vtx->matIdx0.Tex2MatIdx = Gx->xf.matIdxA.Tex2MatIdx;
-		vtx->matIdx0.Tex3MatIdx = Gx->xf.matIdxA.Tex3MatIdx;
-		vtx->matIdx1.Tex4MatIdx = Gx->xf.matIdxB.Tex4MatIdx;
-		vtx->matIdx1.Tex5MatIdx = Gx->xf.matIdxB.Tex5MatIdx;
-		vtx->matIdx1.Tex6MatIdx = Gx->xf.matIdxB.Tex6MatIdx;
-		vtx->matIdx1.Tex7MatIdx = Gx->xf.matIdxB.Tex7MatIdx;
+		vtx->matIdx0.PosNrmMatIdx = HW->gfx->xf->xf.matIdxA.PosNrmMatIdx;
+		vtx->matIdx0.Tex0MatIdx = HW->gfx->xf->xf.matIdxA.Tex0MatIdx;
+		vtx->matIdx0.Tex1MatIdx = HW->gfx->xf->xf.matIdxA.Tex1MatIdx;
+		vtx->matIdx0.Tex2MatIdx = HW->gfx->xf->xf.matIdxA.Tex2MatIdx;
+		vtx->matIdx0.Tex3MatIdx = HW->gfx->xf->xf.matIdxA.Tex3MatIdx;
+		vtx->matIdx1.Tex4MatIdx = HW->gfx->xf->xf.matIdxB.Tex4MatIdx;
+		vtx->matIdx1.Tex5MatIdx = HW->gfx->xf->xf.matIdxB.Tex5MatIdx;
+		vtx->matIdx1.Tex6MatIdx = HW->gfx->xf->xf.matIdxB.Tex6MatIdx;
+		vtx->matIdx1.Tex7MatIdx = HW->gfx->xf->xf.matIdxB.Tex7MatIdx;
 
 		// Matrix Index
 
@@ -1845,7 +1845,7 @@ namespace Flipper
 		GLenum gl_error;
 #endif
 
-		Gx->GPFrameBegin();
+		HW->gfx->GPFrameBegin();
 
 		uint8_t cmd = gxfifo->Read8();
 
@@ -1937,7 +1937,7 @@ namespace Flipper
 					Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X\n", index, value);
 				}
 
-				Gx->loadBPReg(index, value);
+				HW->gfx->su->loadBPReg(index, value);
 				break;
 			}
 
@@ -1977,7 +1977,7 @@ namespace Flipper
 					Report(Channel::GP, "XF load, start index: %04X, n : %i\n", index, len);
 				}
 
-				Gx->loadXFRegs(index, len, gxfifo);
+				HW->gfx->xf->loadXFRegs(index, len, gxfifo);
 				break;
 			}
 
@@ -2087,14 +2087,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_QUAD, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_QUAD, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2131,14 +2131,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_QUAD_STRIP, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_QUAD_STRIP, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2175,14 +2175,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_TRIANGLE: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_TRIANGLE, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2219,14 +2219,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_STRIP: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_TRIANGLE_STRIP, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE_STRIP, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2263,14 +2263,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_FAN: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_TRIANGLE_FAN, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE_FAN, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2307,14 +2307,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_LINE: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_LINE, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_LINE, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2351,14 +2351,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_LINESTRIP: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_LINE_STRIP, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_LINE_STRIP, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;
@@ -2395,14 +2395,14 @@ namespace Flipper
 						Halt("GL Error CP_CMD_DRAW_POINT: %x\n", gl_error);
 					}
 #else
-					Gx->RAS_Begin(GX::RAS_POINT, vtxnum);
-					GX::Vertex vtx;
+					HW->gfx->ras->RAS_Begin(GFX::RAS_POINT, vtxnum);
+					GFX::Vertex vtx;
 					while (vtxnum--) {
 
 						FifoWalk(vatnum, &vtx, gxfifo);
-						Gx->RAS_SendVertex(&vtx);
+						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
-					Gx->RAS_End();
+					HW->gfx->ras->RAS_End();
 #endif
 				}
 				break;

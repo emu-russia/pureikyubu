@@ -84,28 +84,28 @@
 // ---------------------------------------------------------------------------
 // hardware API
 
-// SI state (registers and other data)
-struct SIState
-{
-	volatile uint32_t            out[4], shdw[4];// out + shadows
-	volatile uint32_t            poll;           // poll control
-	volatile uint32_t            comcsr;         // CSR
-	volatile uint32_t            sr;             // status
-	volatile uint32_t            exilk;          // EXILK dummy
-	uint8_t             combuf[128 + 32]; // communication buffer (+ overrun protection)
-
-	PADState            pad[4];         // PAD state (inbuf replacement)
-	bool                rumble[4];      // rumble support flags for every controller
-	// filled when SI is inited, by checking PADSetRumble
-	bool                log;            // do debugger log output
-	int64_t             pollingTime;    // Saved Gekko TBR for polling
-};
-
 namespace Flipper
 {
+	// SI state (registers and other data)
+	struct SIState
+	{
+		volatile uint32_t            out[4], shdw[4];// out + shadows
+		volatile uint32_t            poll;           // poll control
+		volatile uint32_t            comcsr;         // CSR
+		volatile uint32_t            sr;             // status
+		volatile uint32_t            exilk;          // EXILK dummy
+		uint8_t             combuf[128 + 32]; // communication buffer (+ overrun protection)
+
+		PADState            pad[4];         // PAD state (inbuf replacement)
+		bool                rumble[4];      // rumble support flags for every controller
+		// filled when SI is inited, by checking PADSetRumble
+		bool                log;            // do debugger log output
+		int64_t             pollingTime;    // Saved Gekko TBR for polling
+	};
+
 	class SerialInterface
 	{
-		SIState si{};
+		SIState si{};		//!< SI state (registers and other data)
 
 		void SICommand(int chan, int outlen, int inlen, uint8_t* ptr);
 		void SIClearInterrupt();

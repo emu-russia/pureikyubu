@@ -1,7 +1,7 @@
 // Setup Unit
 #pragma once
 
-namespace GX
+namespace GFX
 {
 	// SU BP (ByPass) address space (SU/RAS/TEV etc) Registers
 	// There is no such entity as "BP" in Flipper. SU is simply used to "throw" registers further down the shop (to RAS, TEV, TX)
@@ -375,4 +375,24 @@ namespace GX
 	#define GEN_REJECT_FRONT 1
 	#define GEN_REJECT_BACK 2
 	#define GEN_REJECT_ALL 3
+
+	class SetupUnit
+	{
+		friend GFXCore;
+		GFXCore* gfx = nullptr;
+
+		SU_SCIS0 scis0;		// 0x20
+		SU_SCIS1 scis1;		// 0x21
+		SU_TS0 ssize[8];	// 0x3n
+		SU_TS1 tsize[8];	// 0x3n
+
+		void GL_SetScissor(int x, int y, int w, int h);
+		void GL_SetCullMode(int mode);
+
+	public:
+		SetupUnit(HWConfig* config, GFXCore* parent_gfx);
+		~SetupUnit();
+
+		void loadBPReg(size_t index, uint32_t value);
+	};
 }

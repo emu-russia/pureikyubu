@@ -3,9 +3,6 @@
 
 using namespace Debug;
 
-// PI state (registers and other data)
-PIControl pi;
-
 namespace Flipper
 {
 	struct pi_reg_trap
@@ -187,7 +184,7 @@ namespace Flipper
 		// embedded frame buffer
 		if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
 		{
-			*reg = Gx->EfbPeek(pa);
+			*reg = HW->gfx->pe->EfbPeek(pa);
 			return;
 		}
 
@@ -217,7 +214,7 @@ namespace Flipper
 		// embedded frame buffer
 		if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
 		{
-			Gx->EfbPoke(pa, data);
+			HW->gfx->pe->EfbPoke(pa, data);
 			return;
 		}
 

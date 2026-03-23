@@ -82,6 +82,10 @@ struct HWConfig
 
 };
 
+namespace GFX
+{
+	class GFXCore;
+}
 
 namespace Flipper
 {
@@ -126,6 +130,7 @@ namespace Flipper
 		MemoryInterface* mem = nullptr;
 		ProcessorInterface* pi = nullptr;
 		VideoInterface* vi = nullptr;
+		GFX::GFXCore* gfx = nullptr;
 
 		uint32_t GetMemorySize();
 	};

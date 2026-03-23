@@ -3,10 +3,10 @@
 
 #define TEXMODE     GL_MODULATE
 
-namespace GX
+namespace GFX
 {
 
-	void GXCore::TexInit()
+	void TextureEngine::TexInit()
 	{
 		memset(tcache, 0, sizeof(tcache));
 		tptr = 1;
@@ -18,7 +18,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::TexFree()
+	void TextureEngine::TexFree()
 	{
 		for (unsigned n = 0; n < GFX_MAX_TEXTURES; n++)
 		{
@@ -30,7 +30,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height)
+	void TextureEngine::DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height)
 	{
 #ifdef _WINDOWS
 		char    path[256];
@@ -80,7 +80,7 @@ namespace GX
 #endif // _WINDOWS
 	}
 
-	void GXCore::tryLoadTex(int id)
+	void TextureEngine::tryLoadTex(int id)
 	{
 		if (texvalid[0][id] && texvalid[3][id])
 		{
@@ -99,7 +99,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::GetTlutCol(Color* c, unsigned id, unsigned entry)
+	void TextureEngine::GetTlutCol(Color* c, unsigned id, unsigned entry)
 	{
 		uint16_t* tptr = (uint16_t*)(&tlut[(settlut[id].tmem << 9) + 2 * entry]);
 		int fmt = settlut[id].fmt;
@@ -167,7 +167,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::RebindTexture(unsigned id)
+	void TextureEngine::RebindTexture(unsigned id)
 	{
 		glBindTexture(GL_TEXTURE_2D, tID[id]->bind);
 
@@ -206,7 +206,7 @@ namespace GX
 		);
 	}
 
-	void GXCore::LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
+	void TextureEngine::LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
 	{
 		bool doDump = false;
 		Color* texbuf;
@@ -807,11 +807,21 @@ namespace GX
 		RebindTexture(id);
 	}
 
-	void GXCore::LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
+	void TextureEngine::LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
 	{
 		assert(tmem < sizeof(tlut));
 		uint8_t* ptr = (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
 		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
 	}
 
+	TextureEngine::TextureEngine(HWConfig* config, GFXCore* parent_gfx)
+	{
+		gfx = parent_gfx;
+		TexInit();
+	}
+
+	TextureEngine::~TextureEngine()
+	{
+		TexFree();
+	}
 }

@@ -8,7 +8,6 @@ namespace Flipper
 {
 	Flipper* HW;
 	DSP::Dsp16* DSP;      // Instance of dsp core
-	GX::GXCore* Gx;         // Instance of GX processor
 
 	// This thread acts as the HWUpdate of Dolwin 0.10.
 	// Previously, an HWUpdate call occurred after each Gekko instruction (or so).
@@ -81,7 +80,7 @@ namespace Flipper
 
 		Report(Channel::Norm, "\n");
 
-		Gx->Open(config);
+		gfx = new GFX::GFXCore(config);
 		PADOpen();
 
 		// open memory cards
@@ -140,7 +139,10 @@ namespace Flipper
 			Mixer = nullptr;
 		}
 		PADClose();
-		Gx->Close();
+		if (gfx) {
+			delete gfx;
+			gfx = nullptr;
+		}
 
 		// close memory cards
 		MCClose();

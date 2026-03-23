@@ -68,54 +68,54 @@
 #define VI_PAL_INTER        625         // 50 Hz
 #define VI_PAL_NON_INTER    313         // 25 Hz
 
-union VIPosition
-{
-	struct {
-		unsigned hcount : 11;			// horizontal count
-		unsigned padding1 : 5;
-		unsigned vcount : 11;			// vertical count
-		unsigned padding2 : 1;
-		unsigned enabled : 1;			// 1: interrupt enabled
-		unsigned padding3 : 2;
-		unsigned status : 1;			// 1: interrupt status / gun trigger flag
-	};
-	uint32_t val;
-};
-
 // ---------------------------------------------------------------------------
 // hardware API
 
-// VI state (registers and other data)
-struct VIState
-{
-	volatile uint16_t    disp_cr;    // display configuration register
-	volatile uint32_t    tfbl;       // video buffer (top field)
-	volatile uint32_t    bfbl;       // video buffer (bottom field)
-	volatile VIPosition  pos;        // beam position
-	volatile VIPosition  int0;       // INT0 status
-	volatile VIPosition	 latch0;
-	volatile VIPosition	 latch1;
-
-	volatile uint32_t    mode;       // see VI modes
-	bool        inter;      // 1, if interlace
-	uint32_t	vcount;		// number of lines for single frame
-	int64_t     vtime;      // frame timer
-	int64_t     one_frame;  // frame length in CPU timer ticks
-
-	bool        xfb;        // enable video frame buffer (GDI)
-	uint8_t* xfbbuf;     // translated TFBL pointer
-	RGB* gfxbuf;     // DIB
-
-	bool        log;        // do debugger log output
-	size_t      frames;     // frames rendered by VI
-
-	int64_t     one_second;     // one CPU second in timer ticks
-
-	int         videoEncoderFuse;
-};
-
 namespace Flipper
 {
+	union VIPosition
+	{
+		struct {
+			unsigned hcount : 11;			// horizontal count
+			unsigned padding1 : 5;
+			unsigned vcount : 11;			// vertical count
+			unsigned padding2 : 1;
+			unsigned enabled : 1;			// 1: interrupt enabled
+			unsigned padding3 : 2;
+			unsigned status : 1;			// 1: interrupt status / gun trigger flag
+		};
+		uint32_t val;
+	};
+
+	// VI state (registers and other data)
+	struct VIState
+	{
+		volatile uint16_t    disp_cr;    // display configuration register
+		volatile uint32_t    tfbl;       // video buffer (top field)
+		volatile uint32_t    bfbl;       // video buffer (bottom field)
+		volatile VIPosition  pos;        // beam position
+		volatile VIPosition  int0;       // INT0 status
+		volatile VIPosition	 latch0;
+		volatile VIPosition	 latch1;
+
+		volatile uint32_t    mode;       // see VI modes
+		bool        inter;      // 1, if interlace
+		uint32_t	vcount;		// number of lines for single frame
+		int64_t     vtime;      // frame timer
+		int64_t     one_frame;  // frame length in CPU timer ticks
+
+		bool        xfb;        // enable video frame buffer (GDI)
+		uint8_t* xfbbuf;     // translated TFBL pointer
+		RGB* gfxbuf;     // DIB
+
+		bool        log;        // do debugger log output
+		size_t      frames;     // frames rendered by VI
+
+		int64_t     one_second;     // one CPU second in timer ticks
+
+		int         videoEncoderFuse;
+	};
+
 	class VideoInterface
 	{
 		VIState vi{};		//!< VI state (registers and other data)

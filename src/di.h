@@ -45,25 +45,25 @@
 // ---------------------------------------------------------------------------
 // hardware API
 
-// DI state (registers and other data)
-struct DIState
-{
-	// DI registers
-	volatile uint16_t        sr, cvr, cr;
-	volatile uint32_t        mar, len;
-	volatile uint8_t         cmdbuf[12];
-	volatile uint8_t         immbuf[4];
-	volatile uint16_t        cfg;
-	uint8_t         dmaFifo[32];
-
-	int             dduToHostByteCounter;
-	int             hostToDduByteCounter;
-
-	bool            log;
-};
-
 namespace Flipper
 {
+	// DI state (registers and other data)
+	struct DIState
+	{
+		// DI registers
+		volatile uint16_t        sr, cvr, cr;
+		volatile uint32_t        mar, len;
+		volatile uint8_t         cmdbuf[12];
+		volatile uint8_t         immbuf[4];
+		volatile uint16_t        cfg;
+		uint8_t         dmaFifo[32];
+
+		int             dduToHostByteCounter;
+		int             hostToDduByteCounter;
+
+		bool            log;
+	};
+
 	class DiskInterface
 	{
 		DIState di{};		//!< DI state (registers and other data)
