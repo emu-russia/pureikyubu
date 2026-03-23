@@ -545,8 +545,8 @@ namespace Flipper
 		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
-		GX::Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
-		void FifoWalk(unsigned vatnum, GX::Vertex* vtx, FifoProcessor* gxfifo);
+		GFX::Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
+		void FifoWalk(unsigned vatnum, GFX::Vertex* vtx, FifoProcessor* gxfifo);
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
 

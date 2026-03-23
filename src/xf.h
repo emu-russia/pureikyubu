@@ -7,8 +7,14 @@
 
 #pragma once
 
-namespace GX
+namespace Flipper
 {
+	class FifoProcessor;
+}
+
+namespace GFX
+{
+	class Rasterizer;
 
 	// XF Registers
 
@@ -259,6 +265,12 @@ namespace GX
 		uint32_t bits;
 	};
 
+	// TODO: Old implementation, will be redone nicely.
+	struct TexGenOut
+	{
+		float   out[4];
+	};
+
 	struct XFState
 	{
 		// Matrix memory
@@ -309,13 +321,31 @@ namespace GX
 
 #pragma pack(pop)
 
+	class TransformUnit
+	{
+		friend GFXCore;
+		friend Rasterizer;		// TODO: Remove
+		GFXCore* gfx = nullptr;
+
+	public:
+
+		XFState xf{};
+
+		TexGenOut tgout[8]{};
+		Color colora[2]{};	// lighting stage output colors (COLOR0A0 / COLOR1A1)
+
+		bool XF_LightColorEnabled(int chan, int light);
+		bool XF_LightAlphaEnabled(int chan, int light);
+		void XF_DoLights(const Vertex* v);
+		void XF_DoTexGen(const Vertex* v);
+		void VECNormalize(float vec[3]);
+		void XF_ApplyModelview(const Vertex* v, float* out, const float* in);
+		void NormalTransform(const Vertex* v, float* out, const float* in);
+		void GL_SetProjection(float* mtx);
+		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
+		void loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo);
+
+		TransformUnit(HWConfig* config, GFXCore* parent_gfx);
+		~TransformUnit();
+	};
 }
-
-
-
-// TODO: Old implementation, will be redone nicely.
-
-typedef struct
-{
-	float   out[4];
-} TexGenOut;

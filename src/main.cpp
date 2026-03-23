@@ -127,11 +127,15 @@ void EMUClose()
 	Core->Suspend();
 	Core->Reset();
 
-	delete Flipper::HW;
-	Flipper::HW = nullptr;
+	if (Flipper::HW) {
+		delete Flipper::HW;
+		Flipper::HW = nullptr;
+	}
 
-	delete Debug::Log;
-	Debug::Log = nullptr;
+	if (Debug::Log) {
+		delete Debug::Log;
+		Debug::Log = nullptr;
+	}
 
 	emu.loaded = false;
 }
@@ -158,7 +162,6 @@ void EMUCtor()
 	JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, Debug::gekko_init_handlers);
 	Core = new Gekko::GekkoCore();
 	Flipper::DSP = new DSP::Dsp16();
-	Flipper::Gx = new GX::GXCore();
 	JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
 	DVD::InitSubsystem();
 	HLEInit();
@@ -179,8 +182,6 @@ void EMUDtor()
 	Core = nullptr;
 	delete Flipper::DSP;
 	Flipper::DSP = nullptr;
-	delete Flipper::Gx;
-	Flipper::Gx = nullptr;
 	HLEShutdown();
 	JDI::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
 	JDI::Hub.RemoveNode(DEBUGGER_JDI_JSON);

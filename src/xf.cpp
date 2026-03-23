@@ -5,9 +5,9 @@ using namespace Debug;
 
 #define NO_VIEWPORT
 
-namespace GX
+namespace GFX
 {
-	bool GXCore::XF_LightColorEnabled(int chan, int light)
+	bool TransformUnit::XF_LightColorEnabled(int chan, int light)
 	{
 		switch (light)
 		{
@@ -23,7 +23,7 @@ namespace GX
 		}
 	}
 
-	bool GXCore::XF_LightAlphaEnabled(int chan, int light)
+	bool TransformUnit::XF_LightAlphaEnabled(int chan, int light)
 	{
 		switch (light)
 		{
@@ -40,7 +40,7 @@ namespace GX
 	}
 
 	// normalize (clamp vector to 1.0 length)
-	void GXCore::VECNormalize(float vec[3])
+	void TransformUnit::VECNormalize(float vec[3])
 	{
 		float d = (float)sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
 
@@ -50,7 +50,7 @@ namespace GX
 	}
 
 	// perform position transform
-	void GXCore::XF_ApplyModelview(const Vertex* v, float* out, const float* in)
+	void TransformUnit::XF_ApplyModelview(const Vertex* v, float* out, const float* in)
 	{
 		float* mx = &xf.mvTexMtx[v->matIdx0.PosNrmMatIdx * 4];
 
@@ -61,7 +61,7 @@ namespace GX
 
 	// perform normal transform
 	// matrix must be the inverse transpose of the modelview matrix
-	void GXCore::NormalTransform(const Vertex* v, float* out, const float* in)
+	void TransformUnit::NormalTransform(const Vertex* v, float* out, const float* in)
 	{
 		float* mx = &xf.nrmMtx[v->matIdx0.PosNrmMatIdx * 3];
 
@@ -89,7 +89,7 @@ namespace GX
 	}
 
 	// color0 only calculation
-	void GXCore::XF_DoLights(const Vertex* v)
+	void TransformUnit::XF_DoLights(const Vertex* v)
 	{
 		float vpos[3], vnrm[3];
 		float col[3], res[3];
@@ -366,7 +366,7 @@ namespace GX
 	}
 
 	// generate NUMTEX coordinates
-	void GXCore::XF_DoTexGen(const Vertex* v)
+	void TransformUnit::XF_DoTexGen(const Vertex* v)
 	{
 		float   in[4], q;
 		float* mx = nullptr;
@@ -516,25 +516,25 @@ namespace GX
 
 
 	// load projection matrix
-	void GXCore::GL_SetProjection(float* mtx)
+	void TransformUnit::GL_SetProjection(float* mtx)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadMatrixf((GLfloat*)mtx);
 		glMatrixMode(GL_MODELVIEW);
 	}
 
-	void GXCore::GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
+	void TransformUnit::GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
 	{
 		//h += 32;
 //#ifndef NO_VIEWPORT
-		glViewport(x, scr_h - (h + y), w, h);
+		glViewport(x, gfx->scr_h - (h + y), w, h);
 		glDepthRange(znear, zfar);
 //#endif
 	}
 
 	// index range = 0000..FFFF
 	// reg size = 32 bit
-	void GXCore::loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo)
+	void TransformUnit::loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo)
 	{
 		// load geometry matrix
 		if ((startIdx >= XF_MATRIX_MEMORY_ID) && (startIdx < (XF_MATRIX_MEMORY_ID + XF_MATRIX_MEMORY_SIZE)))
@@ -660,7 +660,7 @@ namespace GX
 					Matrix[3][3] = 1.0f;
 				}
 
-				Flipper::Gx->GL_SetProjection((float*)Matrix);
+				GL_SetProjection((float*)Matrix);
 			}
 			return;
 
@@ -700,7 +700,7 @@ namespace GX
 				zn = -((xf.viewportScale[2] / 16777215.0f) - zf);
 
 				//GFXError("viewport (%.2f, %.2f)-(%.2f, %.2f), %f, %f", x, y, w, h, zn, zf);
-				Flipper::Gx->GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
+				GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
 			}
 			return;
 
@@ -906,4 +906,12 @@ namespace GX
 		}
 	}
 
+	TransformUnit::TransformUnit(HWConfig* config, GFXCore* parent_gfx)
+	{
+		gfx = parent_gfx;
+	}
+
+	TransformUnit::~TransformUnit()
+	{
+	}
 }

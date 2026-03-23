@@ -5,9 +5,9 @@ using namespace Debug;
 
 // Handling access to the PE registers available to the CPU and EFB
 
-namespace GX
+namespace GFX
 {
-	void GXCore::DONE_INT()
+	void PixelEngine::DONE_INT()
 	{
 		if (peregs.sr & PE_SR_DONEMSK)
 		{
@@ -16,7 +16,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::TOKEN_INT()
+	void PixelEngine::TOKEN_INT()
 	{
 		if (peregs.sr & PE_SR_TOKENMSK)
 		{
@@ -25,7 +25,7 @@ namespace GX
 		}
 	}
 
-	uint16_t GXCore::PeReadReg(uint32_t addr)
+	uint16_t PixelEngine::PeReadReg(uint32_t addr)
 	{
 		switch (addr)
 		{
@@ -40,7 +40,7 @@ namespace GX
 		}
 	}
 
-	void GXCore::PeWriteReg(uint32_t addr, uint16_t value)
+	void PixelEngine::PeWriteReg(uint32_t addr, uint16_t value)
 	{
 		switch (addr)
 		{
@@ -73,19 +73,19 @@ namespace GX
 
 	// Currently, Cpu2Efb emulation is not supported. It is planned to be forwarded to the graphic Backend.
 
-	uint32_t GXCore::EfbPeek(uint32_t addr)
+	uint32_t PixelEngine::EfbPeek(uint32_t addr)
 	{
 		Report(Channel::GP, "EfbPeek, address: 0x%08X\n", addr);
 		return 0;
 	}
 
-	void GXCore::EfbPoke(uint32_t addr, uint32_t value)
+	void PixelEngine::EfbPoke(uint32_t addr, uint32_t value)
 	{
 		Report(Channel::GP, "EfbPoke, address: 0x%08X, value: 0x%08X\n", addr, value);
 	}
 
 	// sel:0 - file, sel:1 - memory
-	void GXCore::GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height)
+	void PixelEngine::GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height)
 	{
 		uint8_t      hdr[14 + 40];   // bmp header
 		uint16_t* phdr;
@@ -95,11 +95,11 @@ namespace GX
 		bool    linear = false;
 
 		// allocate temporary buffer
-		buf = (uint8_t*)malloc(scr_w * scr_h * 3);
+		buf = (uint8_t*)malloc(gfx->scr_w * gfx->scr_h * 3);
 
 		// calculate aspects
-		ds = (float)scr_w / (float)width;
-		dt = (float)scr_h / (float)height;
+		ds = (float)gfx->scr_w / (float)width;
+		dt = (float)gfx->scr_h / (float)height;
 		if (ds != 1.0f) linear = true;
 
 		// write hardcoded header
@@ -118,7 +118,7 @@ namespace GX
 		else fwrite(hdr, 1, sizeof(hdr), f);
 
 		// read opengl buffer
-		glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, buf);
+		glReadPixels(0, 0, gfx->scr_w, gfx->scr_h, GL_RGB, GL_UNSIGNED_BYTE, buf);
 
 		// write texture image
 		for (t = 0, d0 = 0; t < height; t++, d0 += dt)
@@ -127,7 +127,7 @@ namespace GX
 			{
 				uint8_t  prev[3] = { 0 };
 				uint8_t  rgb[3];     // RGB triplet
-				ptr = &buf[3 * (scr_w * (int)d0 + (int)d1)];
+				ptr = &buf[3 * (gfx->scr_w * (int)d0 + (int)d1)];
 				{
 					// linear filter
 					if (s && linear)
@@ -159,75 +159,79 @@ namespace GX
 		free(buf);
 	}
 
-	void GXCore::GL_MakeSnapshot(char* path)
+	void PixelEngine::GL_MakeSnapshot(char* path)
 	{
-		if (make_shot) return;
-		snap_w = scr_w, snap_h = scr_h;
+		if (gfx->make_shot) return;
+		gfx->snap_w = gfx->scr_w;
+		gfx->snap_h = gfx->scr_h;
 		// create new file    
-		if (snap_file)
+		if (gfx->snap_file)
 		{
-			fclose(snap_file);
-			snap_file = NULL;
+			fclose(gfx->snap_file);
+			gfx->snap_file = NULL;
 		}
-		snap_file = fopen(path, "wb");
-		if (snap_file) make_shot = true;
+		gfx->snap_file = fopen(path, "wb");
+		if (gfx->snap_file) gfx->make_shot = true;
 	}
 
 	// make small snapshot for savestate
 	// new size 160x120
-	void GXCore::GL_SaveBitmap(uint8_t* buf)
+	void PixelEngine::GL_SaveBitmap(uint8_t* buf)
 	{
 		GL_DoSnapshot(true, NULL, buf, 160, 120);
 	}
 
-}
+	//
+	// Stubs
+	//
 
-//
-// Stubs
-//
+	void PixelEngine::PERegRead(uint32_t addr, uint32_t* reg, void* context)
+	{
+		PixelEngine* pe = (PixelEngine*)context;
+		*reg = pe->PeReadReg(addr & 0xFF);
+	}
 
-static void PERegRead(uint32_t addr, uint32_t* reg, void *context)
-{
-	*reg = Flipper::Gx->PeReadReg(addr & 0xFF);
-}
+	void PixelEngine::PERegWrite(uint32_t addr, uint32_t data, void* context)
+	{
+		PixelEngine* pe = (PixelEngine*)context;
+		pe->PeWriteReg(addr & 0xFF, data);
+	}
 
-static void PERegWrite(uint32_t addr, uint32_t data, void* context)
-{
-	Flipper::Gx->PeWriteReg(addr & 0xFF, data);
-}
+	PixelEngine::PixelEngine(HWConfig* config, GFXCore* parent_gfx)
+	{
+		gfx = parent_gfx;
 
-void PEOpen()
-{
-	Report(Channel::CP, "Pixel Engine (for GX)\n");
+		Report(Channel::CP, "Pixel Engine (for GFX)\n");
 
-	// Pixel Engine
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_ZMODE, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE0, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE1, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_ALPHA_THRES, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CONTROL, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_INTRCTRL, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_TOKEN, PERegRead, PERegWrite);
+		// Pixel Engine
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_ZMODE, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE0, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE1, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_ALPHA_THRES, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CONTROL, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_INTRCTRL, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_TOKEN, PERegRead, PERegWrite, this);
 
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND0, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND1, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND0, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND1, PERegRead, PERegWrite);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND0, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND1, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND0, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND1, PERegRead, PERegWrite, this);
 
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0L, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0H, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1L, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1H, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2L, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2H, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3L, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3H, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4L, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4H, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5L, PERegRead, PERegWrite);
-	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5H, PERegRead, PERegWrite);
-}
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0L, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0H, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1L, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1H, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2L, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2H, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3L, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3H, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4L, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4H, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5L, PERegRead, PERegWrite, this);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5H, PERegRead, PERegWrite, this);
+	}
 
-void PEClose()
-{
+	PixelEngine::~PixelEngine()
+	{
+	}
 }

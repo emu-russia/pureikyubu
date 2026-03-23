@@ -2,8 +2,9 @@
 // and from the point of view of graphics backend (texture upload to the real graphics device, bindings).
 #pragma once
 
-namespace GX
+namespace GFX
 {
+	class SetupUnit;
 
 	// Texture offset
 
@@ -206,5 +207,46 @@ namespace GX
 		uint16_t     rgb0;       // color 2
 		uint16_t     rgb1;       // color 1
 		uint8_t      row[4];
+	};
+
+	class TextureEngine
+	{
+		friend GFXCore;
+		friend Rasterizer;		// TODO: Remove
+		friend SetupUnit;
+		GFXCore* gfx = nullptr;
+
+		LoadTlut0 loadtlut0;		// 0x64
+		LoadTlut1 loadtlut1;		// 0x65
+		TexMode0 texmode0[8];		// 0x80-0x83, 0xA0-0xA3
+		TexMode1 texmode1[8];		// 0x84-0x87, 0xA4-0xA7
+		TexImage0 teximg0[8];		// 0x88-0x8B, 0xA8-0xAB
+		TexImage1 teximg1[8];		// 0x8C-0x8F, 0xAC-0xAF
+		TexImage2 teximg2[8];		// 0x90-0x93, 0xB0-0xB3
+		TexImage3 teximg3[8];		// 0x94-0x97, 0xB4-0xB7
+		SetTlut settlut[8];			// 0x98-0x9B, 0xB8-0xBB
+		bool texvalid[4][8];
+
+		#define GFX_MAX_TEXTURES 32
+
+		TexEntry* tID[8];
+		Color rgbabuf[1024 * 1024];
+		TexEntry tcache[GFX_MAX_TEXTURES];
+		unsigned tptr;
+		GLuint texlist[GFX_MAX_TEXTURES + 1];     // gl texture list (0 entry reserved)
+		uint8_t tlut[1024 * 1024];  // temporary TLUT buffer
+
+		void TexInit();
+		void TexFree();
+		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
+		void tryLoadTex(int id);
+		void GetTlutCol(Color* c, unsigned id, unsigned entry);
+		void RebindTexture(unsigned id);
+		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
+		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
+
+	public:
+		TextureEngine(HWConfig* config, GFXCore* parent_gfx);
+		~TextureEngine();
 	};
 }

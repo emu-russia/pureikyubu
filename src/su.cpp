@@ -7,10 +7,10 @@ using namespace Debug;
 
 #define NO_VIEWPORT
 
-namespace GX
+namespace GFX
 {
 
-	void GXCore::GL_SetScissor(int x, int y, int w, int h)
+	void SetupUnit::GL_SetScissor(int x, int y, int w, int h)
 	{
 		//h += 32;
 #ifndef NO_VIEWPORT
@@ -18,7 +18,7 @@ namespace GX
 #endif
 	}
 
-	void GXCore::GL_SetCullMode(int mode)
+	void SetupUnit::GL_SetCullMode(int mode)
 	{
 		switch(mode)
 		{
@@ -44,7 +44,7 @@ namespace GX
 
 	// index range = 00..FF
 	// reg size = 24 bit (value is already masked)
-	void GXCore::loadBPReg(size_t index, uint32_t value)
+	void SetupUnit::loadBPReg(size_t index, uint32_t value)
 	{
 		switch (index)
 		{
@@ -54,24 +54,24 @@ namespace GX
 
 			case GEN_MODE_ID:
 			{
-				genmode.bits = value;
-				GL_SetCullMode(genmode.reject_en);
+				gfx->genmode.bits = value;
+				GL_SetCullMode(gfx->genmode.reject_en);
 			}
 			return;
 
 			// I don't see any use for MSLOC yet, I added it to avoid spamming with warnings
 
 			case GEN_MSLOC0_ID:
-				msloc[0].bits = value;
+				gfx->msloc[0].bits = value;
 				break;
 			case GEN_MSLOC1_ID:
-				msloc[1].bits = value;
+				gfx->msloc[1].bits = value;
 				break;
 			case GEN_MSLOC2_ID:
-				msloc[2].bits = value;
+				gfx->msloc[2].bits = value;
 				break;
 			case GEN_MSLOC3_ID:
-				msloc[3].bits = value;
+				gfx->msloc[3].bits = value;
 				break;
 
 			//
@@ -136,7 +136,7 @@ namespace GX
 					GL_ALWAYS
 				};
 
-				pe.zmode.bits = value;
+				gfx->pe->pe.zmode.bits = value;
 
 				/*/
 				GFXError(
@@ -150,11 +150,11 @@ namespace GX
 				);
 				/*/
 
-				if (pe.zmode.enable)
+				if (gfx->pe->pe.zmode.enable)
 				{
 					glEnable(GL_DEPTH_TEST);
-					glDepthFunc(glzf[pe.zmode.func]);
-					glDepthMask(pe.zmode.mask);
+					glDepthFunc(glzf[gfx->pe->pe.zmode.func]);
+					glDepthMask(gfx->pe->pe.zmode.mask);
 				}
 				else glDisable(GL_DEPTH_TEST);
 			}
@@ -163,7 +163,7 @@ namespace GX
 			// set blending rules
 			case PE_CMODE0_ID:
 			{
-				pe.cmode0.bits = value;
+				gfx->pe->pe.cmode0.bits = value;
 
 				static const char* logicop[] = {
 					"clear",
@@ -244,10 +244,10 @@ namespace GX
 				};
 
 				// blend hack
-				if (pe.cmode0.blend_en)
+				if (gfx->pe->pe.cmode0.blend_en)
 				{
 					glEnable(GL_BLEND);
-					glBlendFunc(glsf[pe.cmode0.sfactor], gldf[pe.cmode0.dfactor]);
+					glBlendFunc(glsf[gfx->pe->pe.cmode0.sfactor], gldf[gfx->pe->pe.cmode0.dfactor]);
 				}
 				else glDisable(GL_BLEND);
 
@@ -271,17 +271,17 @@ namespace GX
 				};
 
 				// logic operations
-				if (pe.cmode0.logop_en)
+				if (gfx->pe->pe.cmode0.logop_en)
 				{
 					glEnable(GL_COLOR_LOGIC_OP);
-					glLogicOp(logop[pe.cmode0.logop]);
+					glLogicOp(logop[gfx->pe->pe.cmode0.logop]);
 				}
 				else glDisable(GL_COLOR_LOGIC_OP);
 			}
 			return;
 
 			case PE_CMODE1_ID:
-				pe.cmode1.bits = value;
+				gfx->pe->pe.cmode1.bits = value;
 				break;
 
 			// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
@@ -289,45 +289,45 @@ namespace GX
 			// draw done
 			case PE_FINISH_ID:
 			{
-				GPFrameDone();
+				gfx->GPFrameDone();
 
-				pe_done_num++;
-				if (pe_done_num == 1)
+				gfx->pe->pe_done_num++;
+				if (gfx->pe->pe_done_num == 1)
 				{
 					Flipper::HW->vi->VIDisableXfb();	// disable VI output
 				}
-				DONE_INT();
+				gfx->pe->DONE_INT();
 			}
 			break;
 
 			case PE_TOKEN_ID:
 			{
-				pe.token.bits = value;
-				if (pe.token.token == pe.token_int.token)
+				gfx->pe->pe.token.bits = value;
+				if (gfx->pe->pe.token.token == gfx->pe->pe.token_int.token)
 				{
-					GPFrameDone();
+					gfx->GPFrameDone();
 
 					Flipper::HW->vi->VIDisableXfb();	// disable VI output
-					TOKEN_INT();
+					gfx->pe->TOKEN_INT();
 				}
 			}
 			break;
 
 			// token
 			case PE_TOKEN_INT_ID:
-				pe.token_int.bits = value;
+				gfx->pe->pe.token_int.bits = value;
 				break;
 
 			case PE_COPY_CLEAR_AR_ID:
-				pe.copy_clear_ar.bits = value;
+				gfx->pe->pe.copy_clear_ar.bits = value;
 				break;
 
 			case PE_COPY_CLEAR_GB_ID:
-				pe.copy_clear_gb.bits = value;
+				gfx->pe->pe.copy_clear_gb.bits = value;
 				break;
 
 			case PE_COPY_CLEAR_Z_ID:
-				pe.copy_clear_z.bits = value;
+				gfx->pe->pe.copy_clear_z.bits = value;
 				break;
 
 			//
@@ -336,64 +336,64 @@ namespace GX
 
 			case TX_SETIMAGE0_I0_ID:
 			{
-				teximg0[0].bits = value;
-				texvalid[0][0] = true;
-				tryLoadTex(0);
+				gfx->tx->teximg0[0].bits = value;
+				gfx->tx->texvalid[0][0] = true;
+				gfx->tx->tryLoadTex(0);
 			}
 			return;
 
 			case TX_SETIMAGE0_I1_ID:
 			{
-				teximg0[1].bits = value;
-				texvalid[0][1] = true;
+				gfx->tx->teximg0[1].bits = value;
+				gfx->tx->texvalid[0][1] = true;
 				//tryLoadTex(1);
 			}
 			return;
 
 			case TX_SETIMAGE0_I2_ID:
 			{
-				teximg0[2].bits = value;
-				texvalid[0][2] = true;
+				gfx->tx->teximg0[2].bits = value;
+				gfx->tx->texvalid[0][2] = true;
 				//tryLoadTex(2);
 			}
 			return;
 
 			case TX_SETIMAGE0_I3_ID:
 			{
-				teximg0[3].bits = value;
-				texvalid[0][3] = true;
+				gfx->tx->teximg0[3].bits = value;
+				gfx->tx->texvalid[0][3] = true;
 				//tryLoadTex(3);
 			}
 			return;
 
 			case TX_SETIMAGE0_I4_ID:
 			{
-				teximg0[4].bits = value;
-				texvalid[0][4] = true;
+				gfx->tx->teximg0[4].bits = value;
+				gfx->tx->texvalid[0][4] = true;
 				//tryLoadTex(4);
 			}
 			return;
 
 			case TX_SETIMAGE0_I5_ID:
 			{
-				teximg0[5].bits = value;
-				texvalid[0][5] = true;
+				gfx->tx->teximg0[5].bits = value;
+				gfx->tx->texvalid[0][5] = true;
 				//tryLoadTex(5);
 			}
 			return;
 
 			case TX_SETIMAGE0_I6_ID:
 			{
-				teximg0[6].bits = value;
-				texvalid[0][6] = true;
+				gfx->tx->teximg0[6].bits = value;
+				gfx->tx->texvalid[0][6] = true;
 				//tryLoadTex(6);
 			}
 			return;
 
 			case TX_SETIMAGE0_I7_ID:
 			{
-				teximg0[7].bits = value;
-				texvalid[0][7] = true;
+				gfx->tx->teximg0[7].bits = value;
+				gfx->tx->texvalid[0][7] = true;
 				//tryLoadTex(7);
 			}
 			return;
@@ -408,64 +408,64 @@ namespace GX
 
 			case TX_SETIMAGE3_I0_ID:
 			{
-				teximg3[0].bits = value;
-				texvalid[3][0] = true;
-				tryLoadTex(0);
+				gfx->tx->teximg3[0].bits = value;
+				gfx->tx->texvalid[3][0] = true;
+				gfx->tx->tryLoadTex(0);
 			}
 			return;
 
 			case TX_SETIMAGE3_I1_ID:
 			{
-				teximg3[1].bits = value;
-				texvalid[3][1] = true;
+				gfx->tx->teximg3[1].bits = value;
+				gfx->tx->texvalid[3][1] = true;
 				//tryLoadTex(1);
 			}
 			return;
 
 			case TX_SETIMAGE3_I2_ID:
 			{
-				teximg3[2].bits = value;
-				texvalid[3][2] = true;
+				gfx->tx->teximg3[2].bits = value;
+				gfx->tx->texvalid[3][2] = true;
 				//tryLoadTex(2);
 			}
 			return;
 
 			case TX_SETIMAGE3_I3_ID:
 			{
-				teximg3[3].bits = value;
-				texvalid[3][3] = true;
+				gfx->tx->teximg3[3].bits = value;
+				gfx->tx->texvalid[3][3] = true;
 				//tryLoadTex(3);
 			}
 			return;
 
 			case TX_SETIMAGE3_I4_ID:
 			{
-				teximg3[4].bits = value;
-				texvalid[3][4] = true;
+				gfx->tx->teximg3[4].bits = value;
+				gfx->tx->texvalid[3][4] = true;
 				//tryLoadTex(4);
 			}
 			return;
 
 			case TX_SETIMAGE3_I5_ID:
 			{
-				teximg3[5].bits = value;
-				texvalid[3][5] = true;
+				gfx->tx->teximg3[5].bits = value;
+				gfx->tx->texvalid[3][5] = true;
 				//tryLoadTex(5);
 			}
 			return;
 
 			case TX_SETIMAGE3_I6_ID:
 			{
-				teximg3[6].bits = value;
-				texvalid[3][6] = true;
+				gfx->tx->teximg3[6].bits = value;
+				gfx->tx->texvalid[3][6] = true;
 				//tryLoadTex(6);
 			}
 			return;
 
 			case TX_SETIMAGE3_I7_ID:
 			{
-				teximg3[7].bits = value;
-				texvalid[3][7] = true;
+				gfx->tx->teximg3[7].bits = value;
+				gfx->tx->texvalid[3][7] = true;
 				//tryLoadTex(7);
 			}
 			return;
@@ -476,24 +476,24 @@ namespace GX
 
 			case TX_LOADTLUT0_ID:
 			{
-				loadtlut0.bits = value;
+				gfx->tx->loadtlut0.bits = value;
 
-				LoadTlut(
-					(loadtlut0.base << 5),   // ram address
-					(loadtlut1.tmem << 9),   // tlut offset
-					loadtlut1.count          // tlut size
+				gfx->tx->LoadTlut(
+					(gfx->tx->loadtlut0.base << 5),   // ram address
+					(gfx->tx->loadtlut1.tmem << 9),   // tlut offset
+					gfx->tx->loadtlut1.count          // tlut size
 				);
 			}
 			return;
 
 			case TX_LOADTLUT1_ID:
 			{
-				loadtlut1.bits = value;
+				gfx->tx->loadtlut1.bits = value;
 
-				LoadTlut(
-					(loadtlut0.base << 5),   // ram address
-					(loadtlut1.tmem << 9),   // tlut offset
-					loadtlut1.count          // tlut size
+				gfx->tx->LoadTlut(
+					(gfx->tx->loadtlut0.base << 5),   // ram address
+					(gfx->tx->loadtlut1.tmem << 9),   // tlut offset
+					gfx->tx->loadtlut1.count          // tlut size
 				);
 			}
 			return;
@@ -504,7 +504,7 @@ namespace GX
 
 			case TX_SETTLUT_I0_ID:
 			{
-				settlut[0].bits = value;
+				gfx->tx->settlut[0].bits = value;
 			}
 			return;
 
@@ -514,7 +514,7 @@ namespace GX
 
 			case TX_SETMODE0_I0_ID:
 			{
-				texmode0[0].bits = value;
+				gfx->tx->texmode0[0].bits = value;
 			}
 			return;
 
@@ -552,69 +552,69 @@ namespace GX
 
 #pragma region "TEV bypass"
 
-			case TEV_COLOR_ENV_0_ID: tev.color_env[0].bits = value; break;
-			case TEV_ALPHA_ENV_0_ID: tev.alpha_env[0].bits = value; break;
-			case TEV_COLOR_ENV_1_ID: tev.color_env[1].bits = value; break;
-			case TEV_ALPHA_ENV_1_ID: tev.alpha_env[1].bits = value; break;
-			case TEV_COLOR_ENV_2_ID: tev.color_env[2].bits = value; break;
-			case TEV_ALPHA_ENV_2_ID: tev.alpha_env[2].bits = value; break;
-			case TEV_COLOR_ENV_3_ID: tev.color_env[3].bits = value; break;
-			case TEV_ALPHA_ENV_3_ID: tev.alpha_env[3].bits = value; break;
-			case TEV_COLOR_ENV_4_ID: tev.color_env[4].bits = value; break;
-			case TEV_ALPHA_ENV_4_ID: tev.alpha_env[4].bits = value; break;
-			case TEV_COLOR_ENV_5_ID: tev.color_env[5].bits = value; break;
-			case TEV_ALPHA_ENV_5_ID: tev.alpha_env[5].bits = value; break;
-			case TEV_COLOR_ENV_6_ID: tev.color_env[6].bits = value; break;
-			case TEV_ALPHA_ENV_6_ID: tev.alpha_env[6].bits = value; break;
-			case TEV_COLOR_ENV_7_ID: tev.color_env[7].bits = value; break;
-			case TEV_ALPHA_ENV_7_ID: tev.alpha_env[7].bits = value; break;
-			case TEV_COLOR_ENV_8_ID: tev.color_env[8].bits = value; break;
-			case TEV_ALPHA_ENV_8_ID: tev.alpha_env[8].bits = value; break;
-			case TEV_COLOR_ENV_9_ID: tev.color_env[9].bits = value; break;
-			case TEV_ALPHA_ENV_9_ID: tev.alpha_env[9].bits = value; break;
-			case TEV_COLOR_ENV_A_ID: tev.color_env[0xa].bits = value; break;
-			case TEV_ALPHA_ENV_A_ID: tev.alpha_env[0xa].bits = value; break;
-			case TEV_COLOR_ENV_B_ID: tev.color_env[0xb].bits = value; break;
-			case TEV_ALPHA_ENV_B_ID: tev.alpha_env[0xb].bits = value; break;
-			case TEV_COLOR_ENV_C_ID: tev.color_env[0xc].bits = value; break;
-			case TEV_ALPHA_ENV_C_ID: tev.alpha_env[0xc].bits = value; break;
-			case TEV_COLOR_ENV_D_ID: tev.color_env[0xd].bits = value; break;
-			case TEV_ALPHA_ENV_D_ID: tev.alpha_env[0xd].bits = value; break;
-			case TEV_COLOR_ENV_E_ID: tev.color_env[0xe].bits = value; break;
-			case TEV_ALPHA_ENV_E_ID: tev.alpha_env[0xe].bits = value; break;
-			case TEV_COLOR_ENV_F_ID: tev.color_env[0xf].bits = value; break;
-			case TEV_ALPHA_ENV_F_ID: tev.alpha_env[0xf].bits = value; break;
+			case TEV_COLOR_ENV_0_ID: gfx->tev->tev.color_env[0].bits = value; break;
+			case TEV_ALPHA_ENV_0_ID: gfx->tev->tev.alpha_env[0].bits = value; break;
+			case TEV_COLOR_ENV_1_ID: gfx->tev->tev.color_env[1].bits = value; break;
+			case TEV_ALPHA_ENV_1_ID: gfx->tev->tev.alpha_env[1].bits = value; break;
+			case TEV_COLOR_ENV_2_ID: gfx->tev->tev.color_env[2].bits = value; break;
+			case TEV_ALPHA_ENV_2_ID: gfx->tev->tev.alpha_env[2].bits = value; break;
+			case TEV_COLOR_ENV_3_ID: gfx->tev->tev.color_env[3].bits = value; break;
+			case TEV_ALPHA_ENV_3_ID: gfx->tev->tev.alpha_env[3].bits = value; break;
+			case TEV_COLOR_ENV_4_ID: gfx->tev->tev.color_env[4].bits = value; break;
+			case TEV_ALPHA_ENV_4_ID: gfx->tev->tev.alpha_env[4].bits = value; break;
+			case TEV_COLOR_ENV_5_ID: gfx->tev->tev.color_env[5].bits = value; break;
+			case TEV_ALPHA_ENV_5_ID: gfx->tev->tev.alpha_env[5].bits = value; break;
+			case TEV_COLOR_ENV_6_ID: gfx->tev->tev.color_env[6].bits = value; break;
+			case TEV_ALPHA_ENV_6_ID: gfx->tev->tev.alpha_env[6].bits = value; break;
+			case TEV_COLOR_ENV_7_ID: gfx->tev->tev.color_env[7].bits = value; break;
+			case TEV_ALPHA_ENV_7_ID: gfx->tev->tev.alpha_env[7].bits = value; break;
+			case TEV_COLOR_ENV_8_ID: gfx->tev->tev.color_env[8].bits = value; break;
+			case TEV_ALPHA_ENV_8_ID: gfx->tev->tev.alpha_env[8].bits = value; break;
+			case TEV_COLOR_ENV_9_ID: gfx->tev->tev.color_env[9].bits = value; break;
+			case TEV_ALPHA_ENV_9_ID: gfx->tev->tev.alpha_env[9].bits = value; break;
+			case TEV_COLOR_ENV_A_ID: gfx->tev->tev.color_env[0xa].bits = value; break;
+			case TEV_ALPHA_ENV_A_ID: gfx->tev->tev.alpha_env[0xa].bits = value; break;
+			case TEV_COLOR_ENV_B_ID: gfx->tev->tev.color_env[0xb].bits = value; break;
+			case TEV_ALPHA_ENV_B_ID: gfx->tev->tev.alpha_env[0xb].bits = value; break;
+			case TEV_COLOR_ENV_C_ID: gfx->tev->tev.color_env[0xc].bits = value; break;
+			case TEV_ALPHA_ENV_C_ID: gfx->tev->tev.alpha_env[0xc].bits = value; break;
+			case TEV_COLOR_ENV_D_ID: gfx->tev->tev.color_env[0xd].bits = value; break;
+			case TEV_ALPHA_ENV_D_ID: gfx->tev->tev.alpha_env[0xd].bits = value; break;
+			case TEV_COLOR_ENV_E_ID: gfx->tev->tev.color_env[0xe].bits = value; break;
+			case TEV_ALPHA_ENV_E_ID: gfx->tev->tev.alpha_env[0xe].bits = value; break;
+			case TEV_COLOR_ENV_F_ID: gfx->tev->tev.color_env[0xf].bits = value; break;
+			case TEV_ALPHA_ENV_F_ID: gfx->tev->tev.alpha_env[0xf].bits = value; break;
 
-			case TEV_REGISTERL_0_ID: tev.regl[0].bits = value; break;
-			case TEV_REGISTERH_0_ID: tev.regh[0].bits = value; break;
-			case TEV_REGISTERL_1_ID: tev.regl[1].bits = value; break;
-			case TEV_REGISTERH_1_ID: tev.regh[1].bits = value; break;
-			case TEV_REGISTERL_2_ID: tev.regl[2].bits = value; break;
-			case TEV_REGISTERH_2_ID: tev.regh[2].bits = value; break;
-			case TEV_REGISTERL_3_ID: tev.regl[3].bits = value; break;
-			case TEV_REGISTERH_3_ID: tev.regh[3].bits = value; break;
-			case TEV_RANGE_ADJ_C_ID: tev.rangeadj_control.bits = value; break;
-			case TEV_RANGE_ADJ_0_ID: tev.range_adj[0].bits = value; break;
-			case TEV_RANGE_ADJ_1_ID: tev.range_adj[1].bits = value; break;
-			case TEV_RANGE_ADJ_2_ID: tev.range_adj[2].bits = value; break;
-			case TEV_RANGE_ADJ_3_ID: tev.range_adj[3].bits = value; break;
-			case TEV_RANGE_ADJ_4_ID: tev.range_adj[4].bits = value; break;
-			case TEV_FOG_PARAM_0_ID: tev.fog_param0.bits = value; break;
-			case TEV_FOG_PARAM_1_ID: tev.fog_param1.bits = value; break;
-			case TEV_FOG_PARAM_2_ID: tev.fog_param2.bits = value; break;
-			case TEV_FOG_PARAM_3_ID: tev.fog_param3.bits = value; break;
-			case TEV_FOG_COLOR_ID: tev.fog_color.bits = value; break;
-			case TEV_ALPHAFUNC_ID: tev.alpha_func.bits = value; break;
-			case TEV_Z_ENV_0_ID: tev.zenv0.bits = value; break;
-			case TEV_Z_ENV_1_ID: tev.zenv1.bits = value; break;
-			case TEV_KSEL_0_ID: tev.ksel[0].bits = value; break;
-			case TEV_KSEL_1_ID: tev.ksel[1].bits = value; break;
-			case TEV_KSEL_2_ID: tev.ksel[2].bits = value; break;
-			case TEV_KSEL_3_ID: tev.ksel[3].bits = value; break;
-			case TEV_KSEL_4_ID: tev.ksel[4].bits = value; break;
-			case TEV_KSEL_5_ID: tev.ksel[5].bits = value; break;
-			case TEV_KSEL_6_ID: tev.ksel[6].bits = value; break;
-			case TEV_KSEL_7_ID: tev.ksel[7].bits = value; break;
+			case TEV_REGISTERL_0_ID: gfx->tev->tev.regl[0].bits = value; break;
+			case TEV_REGISTERH_0_ID: gfx->tev->tev.regh[0].bits = value; break;
+			case TEV_REGISTERL_1_ID: gfx->tev->tev.regl[1].bits = value; break;
+			case TEV_REGISTERH_1_ID: gfx->tev->tev.regh[1].bits = value; break;
+			case TEV_REGISTERL_2_ID: gfx->tev->tev.regl[2].bits = value; break;
+			case TEV_REGISTERH_2_ID: gfx->tev->tev.regh[2].bits = value; break;
+			case TEV_REGISTERL_3_ID: gfx->tev->tev.regl[3].bits = value; break;
+			case TEV_REGISTERH_3_ID: gfx->tev->tev.regh[3].bits = value; break;
+			case TEV_RANGE_ADJ_C_ID: gfx->tev->tev.rangeadj_control.bits = value; break;
+			case TEV_RANGE_ADJ_0_ID: gfx->tev->tev.range_adj[0].bits = value; break;
+			case TEV_RANGE_ADJ_1_ID: gfx->tev->tev.range_adj[1].bits = value; break;
+			case TEV_RANGE_ADJ_2_ID: gfx->tev->tev.range_adj[2].bits = value; break;
+			case TEV_RANGE_ADJ_3_ID: gfx->tev->tev.range_adj[3].bits = value; break;
+			case TEV_RANGE_ADJ_4_ID: gfx->tev->tev.range_adj[4].bits = value; break;
+			case TEV_FOG_PARAM_0_ID: gfx->tev->tev.fog_param0.bits = value; break;
+			case TEV_FOG_PARAM_1_ID: gfx->tev->tev.fog_param1.bits = value; break;
+			case TEV_FOG_PARAM_2_ID: gfx->tev->tev.fog_param2.bits = value; break;
+			case TEV_FOG_PARAM_3_ID: gfx->tev->tev.fog_param3.bits = value; break;
+			case TEV_FOG_COLOR_ID: gfx->tev->tev.fog_color.bits = value; break;
+			case TEV_ALPHAFUNC_ID: gfx->tev->tev.alpha_func.bits = value; break;
+			case TEV_Z_ENV_0_ID: gfx->tev->tev.zenv0.bits = value; break;
+			case TEV_Z_ENV_1_ID: gfx->tev->tev.zenv1.bits = value; break;
+			case TEV_KSEL_0_ID: gfx->tev->tev.ksel[0].bits = value; break;
+			case TEV_KSEL_1_ID: gfx->tev->tev.ksel[1].bits = value; break;
+			case TEV_KSEL_2_ID: gfx->tev->tev.ksel[2].bits = value; break;
+			case TEV_KSEL_3_ID: gfx->tev->tev.ksel[3].bits = value; break;
+			case TEV_KSEL_4_ID: gfx->tev->tev.ksel[4].bits = value; break;
+			case TEV_KSEL_5_ID: gfx->tev->tev.ksel[5].bits = value; break;
+			case TEV_KSEL_6_ID: gfx->tev->tev.ksel[6].bits = value; break;
+			case TEV_KSEL_7_ID: gfx->tev->tev.ksel[7].bits = value; break;
 
 #pragma endregion "TEV bypass"
 
@@ -624,5 +624,14 @@ namespace GX
 				break;
 			}
 		}
+	}
+
+	SetupUnit::SetupUnit(HWConfig* config, GFXCore* parent_gfx)
+	{
+		gfx = parent_gfx;
+	}
+
+	SetupUnit::~SetupUnit()
+	{
 	}
 }
