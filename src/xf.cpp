@@ -9,7 +9,7 @@ namespace GX
 {
 	bool GXCore::XF_LightColorEnabled(int chan, int light)
 	{
-		switch (chan)
+		switch (light)
 		{
 			case 0: return xf.colorControl[chan].Light0;
 			case 1: return xf.colorControl[chan].Light1;
@@ -25,7 +25,7 @@ namespace GX
 
 	bool GXCore::XF_LightAlphaEnabled(int chan, int light)
 	{
-		switch (chan)
+		switch (light)
 		{
 			case 0: return xf.alphaControl[chan].Light0;
 			case 1: return xf.alphaControl[chan].Light1;

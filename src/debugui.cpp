@@ -2613,17 +2613,17 @@ namespace Debug
 			case MemoryViewMode::GekkoVirtual:
 				cursor = &vm_cursor;
 				top = 0x8000'0000;
-				bottom = 0x8000'0000 | RAMSIZE;
+				bottom = 0x8000'0000 | Flipper::HW->GetMemorySize();
 				break;
 			case MemoryViewMode::GekkoDataCache: 
 				cursor = &dcache_cursor;
 				top = 0;
-				bottom = RAMSIZE;
+				bottom = Flipper::HW->GetMemorySize();
 				break;
 			case MemoryViewMode::MainMem:
 				cursor = &mmem_cursor;
 				top = 0;
-				bottom = RAMSIZE;
+				bottom = Flipper::HW->GetMemorySize();
 				break;
 			case MemoryViewMode::DSP_ARAM: 
 				cursor = &aram_cursor;
@@ -2733,7 +2733,7 @@ namespace Debug
 				ptr = Core->GetDataCachePointer(addr);
 				break;
 			case MemoryViewMode::MainMem:
-				ptr = PITranslatePhysicalAddress(addr, 1);
+				ptr = Flipper::HW->pi->PITranslatePhysicalAddress(addr, 1);
 				break;
 			case MemoryViewMode::DSP_ARAM: 
 				ptr = Jdi->IsLoaded() ? &ARAM[addr] : nullptr;
@@ -2765,7 +2765,7 @@ namespace Debug
 				ptr = Core->GetDataCachePointer(addr);
 				break;
 			case MemoryViewMode::MainMem:
-				ptr = PITranslatePhysicalAddress(addr, 1);
+				ptr = Flipper::HW->pi->PITranslatePhysicalAddress(addr, 1);
 				break;
 			case MemoryViewMode::DSP_ARAM: 
 				ptr = Jdi->IsLoaded() ? &ARAM[addr] : nullptr;

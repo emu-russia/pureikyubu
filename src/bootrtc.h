@@ -27,20 +27,20 @@ struct SRAM
 void SRAMLoad(SRAM* s);
 void SRAMSave(SRAM* s);
 
-void RTCUpdate();
+void RTCUpdate(uint32_t *rtc_val);
 
 void FontLoad(uint8_t** font, uint32_t fontsize, wchar_t* filename);
 void FontUnload(uint8_t** font);
 
-void MXTransfer();		// to EXI
+void MXTransfer(void* ctx);		// to EXI
 
 void IPLDescrambler(uint8_t* data, size_t size);
 
-void BootROM(bool dvd, bool rtc, uint32_t consoleVer);
+void BootROM(HWConfig *config, bool dvd, bool rtc);
 
 /// <summary>
 /// Checks that the bootstrap (if present) is of PAL revision. This is determined by the "PAL" substring in the first unencoded 0x100 bytes with copyright.
 /// </summary>
 bool IsBootromPALRevision();
 
-void LoadBootrom(HWConfig* config);
+void LoadBootrom(HWConfig* config, bool& BootromPresent, size_t& bootromSize, uint8_t** bootrom_out);

@@ -71,7 +71,7 @@ namespace DSP
 
 		if ((AIDCR & AIDCR_DSPINT) == 0 && (AIDCR & AIDCR_ARINT) == 0 && (AIDCR & AIDCR_AIINT) == 0)
 		{
-			PIClearInt(PI_INTERRUPT_DSP);
+			Flipper::HW->pi->PIClearInt(PI_INTERRUPT_DSP);
 		}
 
 		// DSP DMA always ready
@@ -113,7 +113,7 @@ namespace DSP
 		AIDCR |= AIDCR_AIINT;
 		if (AIDCR & AIDCR_AIINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DSP);
+			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
 			if (dsp_ai.log)
 			{
 				Report(Channel::AI, "AIDINT\n");
@@ -151,7 +151,7 @@ namespace DSP
 		}
 		else
 		{
-			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)MIGetMemoryPointerForIO(dsp_ai.currentDmaAddr), bytes);
+			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForDSP(dsp_ai.currentDmaAddr), bytes);
 			dsp_ai.currentDmaAddr += bytes;
 			dsp_ai.dcnt--;
 		}
@@ -250,7 +250,7 @@ namespace DSP
 		AIDCR |= AIDCR_DSPINT;
 		if (AIDCR & AIDCR_DSPINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DSP);
+			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
 		}
 	}
 
@@ -307,23 +307,23 @@ namespace DSP
 		dsp_ai.audioThread = EMUCreateThread(AIUpdate, true, nullptr, "AI");
 
 		dsp_ai.one_second = Core->OneSecond();
-		dsp_ai.dmaRate = Flipper::ai.cr & AICR_DFR ? 32000 : 48000;
+		dsp_ai.dmaRate = 48000;			// The initial value of the bit 6 in AI CR is zero, which corresponds to 48 kHz
 		dsp_ai.dmaTime = Core->GetTicks() + AIGetTime(32, dsp_ai.dmaRate);
 		dsp_ai.log = false;
 		AIStopDMA();
 
 		// set register traps
-		PISetTrap(PI_REGSPACE_DSP | AI_DCR, read_aidcr, write_aidcr);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AI_DCR, read_aidcr, write_aidcr);
 
-		PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
-		PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
-		PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
-		PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
 
-		PISetTrap(PI_REGSPACE_DSP | AID_MADRH, read_dmah, write_dmah);
-		PISetTrap(PI_REGSPACE_DSP | AID_MADRL, read_dmal, write_dmal);
-		PISetTrap(PI_REGSPACE_DSP | AID_LEN, read_len, write_len);
-		PISetTrap(PI_REGSPACE_DSP | AID_CNT, read_dcnt, nullptr);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_MADRH, read_dmah, write_dmah);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_MADRL, read_dmal, write_dmal);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_LEN, read_len, write_len);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_CNT, read_dcnt, nullptr);
 	}
 
 	void DspAIClose()

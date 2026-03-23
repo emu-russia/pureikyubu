@@ -2,10 +2,6 @@
 
 #pragma once
 
-#define RAMSIZE     0x01800000      //!< amount of main memory (in bytes), 24 MBytes
-
-#define RAMMASK     0x0fffffff		//!< physical memory mask (GC architecture is limited by 256 mb of RAM max)
-
 // MEM PI Mapped regs
 
 // Mem ranges (addr >> 10)
@@ -56,9 +52,10 @@
 #define MEM_FI_COUNTERL 0x58
 #define MEM_DRV_STRENGTH 0x5a
 #define MEM_REFRESH_THRES 0x5c
+#define MEM_REG_MAX 0x5e
 
 #define MEM_MARR_SHIFT 10
-#define MEM_MARR_MASK 0x03fffc00
+#define MEM_MARR_MASK 0x03fffc00		//!< Valid bits for a MARR address
 
 union MEMMarrControl
 {
@@ -123,46 +120,83 @@ struct MIState
 	MEMCounter pe_counter;
 };
 
-extern	MIState mi;
+namespace Flipper
+{
+	class MemoryInterface
+	{
+		MIState mi{};
 
-void    MIOpen(HWConfig* config);
-void	MIClose();
+		static void mi_no_write(uint32_t addr, uint32_t data, void* ctx);
+		static void mi_no_read(uint32_t addr, uint32_t* reg, void* ctx);
+		static void MEM_WriteMarrStart(uint32_t addr, uint32_t data, void* ctx);
+		static void MEM_ReadMarrStart(uint32_t addr, uint32_t* reg, void* ctx);
+		static void MEM_WriteMarrEnd(uint32_t addr, uint32_t data, void* ctx);
+		static void MEM_ReadMarrEnd(uint32_t addr, uint32_t* reg, void* ctx);
+		static void MEM_WriteMarrControl(uint32_t addr, uint32_t data, void* ctx);
+		static void MEM_ReadMarrControl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void MEM_WriteIntEnable(uint32_t addr, uint32_t data, void* ctx);
+		static void MEM_ReadIntEnable(uint32_t addr, uint32_t* reg, void* ctx);
+		static void MEM_ReadIntStatus(uint32_t addr, uint32_t* reg, void* ctx);
+		static void MEM_WriteIntClear(uint32_t addr, uint32_t data, void* ctx);
+		static void MEM_WriteCounter(uint32_t addr, uint32_t data, void* ctx);
+		static void MEM_ReadCounter(uint32_t addr, uint32_t* reg, void* ctx);
 
-// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
+	public:
+		MemoryInterface(HWConfig* config);
+		~MemoryInterface();
 
-/// <summary>
-/// used by PI to read the cache line.
-/// </summary>
-void MIReadBurst(uint32_t mem_addr, uint8_t burstData[32]);
+		// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
 
-/// <summary>
-/// used by PI to write data using GFX FIFO or for Cache Store (cache line write).
-/// </summary>
-void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32]);
+		/// <summary>
+		/// used by PI to read the cache line.
+		/// </summary>
+		void MIReadBurst(uint32_t mem_addr, uint8_t burstData[32]);
 
-/// <summary>
-/// Used for memory access from the CP side, for Vertex Array.
-/// </summary>
-void* MIGetMemoryPointerForCP(uint32_t phys_addr);
+		/// <summary>
+		/// used by PI to write data using GFX FIFO or for Cache Store (cache line write).
+		/// </summary>
+		void MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32]);
 
-/// <summary>
-/// The texture unit accesses MEM to sample textures in TMEM.
-/// </summary>
-void* MIGetMemoryPointerForTX(uint32_t phys_addr);
+		/// <summary>
+		/// Get a pointer to memory for Single-beat transactions from the PI side (8, 16, 32, 64 bits in size).
+		/// </summary>
+		void* MIGetMemoryPointerForPI(uint32_t phys_addr);
 
-/// <summary>
-/// VI uses MEM to gain access to the XFB.
-/// </summary>
-void* MIGetMemoryPointerForVI(uint32_t phys_addr);
+		/// <summary>
+		/// Used for memory access from the CP side, for Vertex Array.
+		/// </summary>
+		void* MIGetMemoryPointerForCP(uint32_t phys_addr);
 
-/// <summary>
-/// Used by various IO devices (AI, EXI, SI, DI) for DMA.
-/// </summary>
-void* MIGetMemoryPointerForIO(uint32_t phys_addr);
+		/// <summary>
+		/// The texture unit accesses MEM to sample textures in TMEM.
+		/// </summary>
+		void* MIGetMemoryPointerForTX(uint32_t phys_addr);
 
-/// <summary>
-/// The PI requested a MEM subsystem reset by clearing the PI_CONFIG_MEMRSTB bit (active low). Do something similar to a MEM reset.
-/// It's not yet clear exactly what happens when the MEM is reset, but it's clear that various FIFOs and the state machines in the MEM itself are cleared,
-/// and RST is also forwarded to the 1T-SRAM chips to reset the rich internal world of Splash.
-/// </summary>
-void MemRst();
+		/// <summary>
+		/// VI uses MEM to gain access to the XFB.
+		/// </summary>
+		void* MIGetMemoryPointerForVI(uint32_t phys_addr);
+
+		/// <summary>
+		/// Get a pointer to memory for DSP DMA purposes.
+		/// </summary>
+		void* MIGetMemoryPointerForDSP(uint32_t phys_addr);
+
+		/// <summary>
+		/// Used by various IO devices (AI, EXI, SI, DI) for DMA.
+		/// </summary>
+		void* MIGetMemoryPointerForIO(uint32_t phys_addr);
+
+		/// <summary>
+		/// Get a pointer to a location in Splash memory for debugging purposes.
+		/// </summary>
+		void* MIGetMemoryPointerForDebug(uint32_t phys_addr);
+
+		/// <summary>
+		/// The PI requested a MEM subsystem reset by clearing the PI_CONFIG_MEMRSTB bit (active low). Do something similar to a MEM reset.
+		/// It's not yet clear exactly what happens when the MEM is reset, but it's clear that various FIFOs and the state machines in the MEM itself are cleared,
+		/// and RST is also forwarded to the 1T-SRAM chips to reset the rich internal world of Splash.
+		/// </summary>
+		void MemRst();
+	};
+}

@@ -667,10 +667,10 @@ namespace Debug
 				return Flipper::DSP->core->GetInstructionCounter();
 				break;
 			case PerfCounter::VIs:
-				return pi.intCounters[(size_t)PIInterruptSource::VI];
+				return Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::VI);
 				break;
 			case PerfCounter::PEs:
-				return pi.intCounters[(size_t)PIInterruptSource::PE_FINISH];
+				return Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::PE_FINISH);
 				break;
 		}
 
@@ -688,10 +688,10 @@ namespace Debug
 				Flipper::DSP->core->ResetInstructionCounter();
 				break;
 			case PerfCounter::VIs:
-				pi.intCounters[(size_t)PIInterruptSource::VI] = 0;
+				Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::VI);
 				break;
 			case PerfCounter::PEs:
-				pi.intCounters[(size_t)PIInterruptSource::PE_FINISH] = 0;
+				Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::PE_FINISH);
 				break;
 		}
 	}

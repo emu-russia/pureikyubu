@@ -244,7 +244,7 @@ namespace GX
 		// new
 		n = tptr;
 		tcache[n].ramAddr = addr;
-		tcache[n].rawData = (uint8_t *)MIGetMemoryPointerForTX (addr);
+		tcache[n].rawData = (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForTX (addr);
 		tcache[n].fmt = fmt;
 
 		// aspect
@@ -810,7 +810,8 @@ namespace GX
 	void GXCore::LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
 	{
 		assert(tmem < sizeof(tlut));
-		memcpy(&tlut[tmem], &mi.ram[addr], cnt * 16 * 2);
+		uint8_t* ptr = (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
+		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
 	}
 
 }

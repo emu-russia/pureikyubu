@@ -12,7 +12,7 @@ namespace GX
 		if (peregs.sr & PE_SR_DONEMSK)
 		{
 			peregs.sr |= PE_SR_DONE;
-			PIAssertInt(PI_INTERRUPT_PE_FINISH);
+			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_PE_FINISH);
 		}
 	}
 
@@ -21,7 +21,7 @@ namespace GX
 		if (peregs.sr & PE_SR_TOKENMSK)
 		{
 			peregs.sr |= PE_SR_TOKEN;
-			PIAssertInt(PI_INTERRUPT_PE_TOKEN);
+			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_PE_TOKEN);
 		}
 	}
 
@@ -50,12 +50,12 @@ namespace GX
 				if (peregs.sr & PE_SR_DONE)
 				{
 					peregs.sr &= ~PE_SR_DONE;
-					PIClearInt(PI_INTERRUPT_PE_FINISH);
+					Flipper::HW->pi->PIClearInt(PI_INTERRUPT_PE_FINISH);
 				}
 				if (peregs.sr & PE_SR_TOKEN)
 				{
 					peregs.sr &= ~PE_SR_TOKEN;
-					PIClearInt(PI_INTERRUPT_PE_TOKEN);
+					Flipper::HW->pi->PIClearInt(PI_INTERRUPT_PE_TOKEN);
 				}
 
 				// set mask bits
@@ -201,31 +201,31 @@ void PEOpen()
 	Report(Channel::CP, "Pixel Engine (for GX)\n");
 
 	// Pixel Engine
-	PISetTrap(PI_REGSPACE_PE | PE_PI_ZMODE, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE0, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE1, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_ALPHA_THRES, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_CONTROL, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_INTRCTRL, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_TOKEN, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_ZMODE, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE0, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CMODE1, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_ALPHA_THRES, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_CONTROL, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_INTRCTRL, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_TOKEN, PERegRead, PERegWrite);
 
-	PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND0, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND1, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND0, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND1, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND0, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_XBOUND1, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND0, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_YBOUND1, PERegRead, PERegWrite);
 
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0L, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0H, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1L, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1H, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2L, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2H, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3L, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3H, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4L, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4H, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5L, PERegRead, PERegWrite);
-	PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5H, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0L, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_0H, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1L, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_1H, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2L, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_2H, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3L, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_3H, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4L, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_4H, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5L, PERegRead, PERegWrite);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_PE | PE_PI_PERF_COUNTER_5H, PERegRead, PERegWrite);
 }
 
 void PEClose()

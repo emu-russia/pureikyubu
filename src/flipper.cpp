@@ -36,18 +36,20 @@ namespace Flipper
 			"-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
 		);
 
+		memsize = config->ramsize;
+
 		Mixer = new AudioMixer(config);
 
-		PIOpen(config); // interrupts, console regs
-		MIOpen(config); // memory protection and 1T-SRAM interface
-		VIOpen(config); // video (TV)
+		pi = new ProcessorInterface(config);
+		mem = new MemoryInterface(config);
+		vi = new VideoInterface(config);
 		cp = new CommandProcessor(config);
-		AIOpen(config); // audio (AID and AIS)
+		ai = new AudioInterface(config);
 		DSP::DspAIOpen(config);			// TODO: find better place
 		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
-		EXIOpen(config); // expansion interface (EXI)
-		DIOpen(config);	// disk
-		SIOpen(config);	// GC controllers
+		exi = new ExternalInterface(config);
+		di = new DiskInterface(config);
+		si = new SerialInterface(config);
 
 		DSP->core->HardReset();
 
@@ -82,6 +84,9 @@ namespace Flipper
 		Gx->Open(config);
 		PADOpen();
 
+		// open memory cards
+		MCOpen(config);
+
 		JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
 		hwUpdateThread = EMUCreateThread(HwUpdateThread, false, this, "HW");
@@ -95,26 +100,61 @@ namespace Flipper
 
 		DSP->Suspend();
 
-		delete cp;
-		AIClose();
+		if (cp) {
+			delete cp;
+			cp = nullptr;
+		}
+		if (ai) {
+			delete ai;
+			ai = nullptr;
+		}
 		DSP::DspAIClose();	// TODO: find better place
 		DSP::ARClose();      // release ARAM  TODO: find better place
-		SIClose();
-		EXIClose();     // take care about closing of memcards and BBA
-		VIClose();      // close VideoOut (if opened)
-		DIClose();      // release streaming buffer
-		MIClose();
-		PIClose();
+		if (si) {
+			delete si;
+			si = nullptr;
+		}
+		if (exi) {
+			delete exi;
+			exi = nullptr;
+		}
+		if (vi) {
+			delete vi;
+			vi = nullptr;
+		}
+		if (di) {
+			delete di;
+			di = nullptr;
+		}
+		if (mem) {
+			delete mem;
+			mem = nullptr;
+		}
+		if (pi) {
+			delete pi;
+			pi = nullptr;
+		}
 
-		delete Mixer;
+		if (Mixer) {
+			delete Mixer;
+			Mixer = nullptr;
+		}
 		PADClose();
 		Gx->Close();
+
+		// close memory cards
+		MCClose();
 	}
 
 	void Flipper::Update()
 	{
 		// update joypads and video
-		VIUpdate();
-		SIPoll();
+		vi->VIUpdate();
+		si->SIPoll();
+	}
+
+	uint32_t Flipper::GetMemorySize()
+	{
+		return (uint32_t)memsize;
 	}
 }

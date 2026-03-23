@@ -50,19 +50,18 @@ struct Memcard {
 	int databytes;
 	int dummybytes;
 	uint32_t executionFlags;
-	void (*procedure)(Memcard*);
+	void (*procedure)(Memcard*, EXIRegs*);
 	int databytesread;
 	int dummybytesread;
 	uint32_t commandData;
 	bool ready;
-	EXIRegs* exi;
 };
 
 struct MCCommand {
 	int databytes;
 	int dummybytes;
 	uint32_t executionFlags;
-	void (*procedure)(Memcard*);
+	void (*procedure)(Memcard*, EXIRegs*);
 	uint8_t Command;
 };
 
@@ -95,7 +94,7 @@ extern bool MCOpened;
 
 /***************************************************************/
 
-void MCTransfer();
+void MCTransfer(void* ctx);
 
 /*
  * Checks if the memcard is connected.

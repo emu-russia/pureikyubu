@@ -1,8 +1,6 @@
 // AX audio mixer (SDL2 implementation)
 #pragma once
 
-#include <SDL.h>
-
 namespace Flipper
 {
     enum class AudioSampleRate

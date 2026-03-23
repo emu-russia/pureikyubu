@@ -194,13 +194,15 @@ void HLE_memcpy()
 
 	assert( paDest != Gekko::BadAddress);
 	assert( paSrc != Gekko::BadAddress);
-	assert( (paDest + cnt) < RAMSIZE);
-	assert( (paSrc + cnt) < RAMSIZE);
+	//assert( (paDest + cnt) < RAMSIZE);
+	//assert( (paSrc + cnt) < RAMSIZE);
 
 //  DBReport( GREEN "memcpy(0x%08X, 0x%08X, %i(%s))\n", 
 //            eaDest, eaSrc, cnt, FileSmartSize(cnt) );
 
-	memcpy(&mi.ram[paDest], &mi.ram[paSrc], cnt);
+	uint8_t* ptrDst = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(paDest);
+	uint8_t* ptrSrc = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(paSrc);
+	memcpy(ptrDst, ptrSrc, cnt);
 }
 
 // void *memset( void *dest, int c, size_t count );
@@ -211,12 +213,13 @@ void HLE_memset()
 	uint32_t paDest = Core->EffectiveToPhysical(eaDest, Gekko::MmuAccess::Read, WIMG);
 
 	assert(paDest != Gekko::BadAddress);
-	assert( (paDest + cnt) < RAMSIZE);
+	//assert( (paDest + cnt) < RAMSIZE);
 
 //  DBReport( GREEN "memcpy(0x%08X, %i(%c), %i(%s))\n", 
 //            eaDest, c, cnt, FileSmartSize(cnt) );
 
-	memset(&mi.ram[paDest], c, cnt);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(paDest);
+	memset(ptr, c, cnt);
 }
 
 /* ---------------------------------------------------------------------------
@@ -244,7 +247,8 @@ void HLE_cos()
 void HLE_modf()
 {
 	int WIMG;
-	double * intptr = (double *)(&mi.ram[Core->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read, WIMG)]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(Core->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read, WIMG));
+	double * intptr = (double *)(ptr);
 	
 	FPRDBL(1) = modf(FPRDBL(1), intptr);
 	swap_double(intptr);
@@ -254,7 +258,8 @@ void HLE_modf()
 void HLE_frexp()
 {
 	int WIMG;
-	uint32_t * expptr = (uint32_t *)(&mi.ram[Core->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read, WIMG)]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(Core->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read, WIMG));
+	uint32_t * expptr = (uint32_t *)(ptr);
 	
 	FPRDBL(1) = frexp(FPRDBL(1), (int *)expptr);
 	*expptr = SWAP(*expptr);
@@ -373,7 +378,7 @@ namespace HLE
 			return false;
 		}
 
-		uint8_t* ptr = PITranslatePhysicalAddress(threadPa, sizeof(OSThread));
+		uint8_t* ptr = Flipper::HW->pi->PITranslatePhysicalAddress(threadPa, sizeof(OSThread));
 
 		if (ptr == nullptr)
 		{
@@ -428,7 +433,7 @@ namespace HLE
 			return nullptr;
 		}
 
-		uint8_t* ptr = PITranslatePhysicalAddress(linkActivePa, sizeof(OSThreadLink));
+		uint8_t* ptr = Flipper::HW->pi->PITranslatePhysicalAddress(linkActivePa, sizeof(OSThreadLink));
 
 		if (ptr == nullptr)
 		{
@@ -505,7 +510,7 @@ namespace HLE
 			return nullptr;
 		}
 
-		uint8_t* ptr = PITranslatePhysicalAddress(physAddr, sizeof(OSContext));
+		uint8_t* ptr = Flipper::HW->pi->PITranslatePhysicalAddress(physAddr, sizeof(OSContext));
 
 		if (ptr == nullptr)
 		{
@@ -696,7 +701,8 @@ static Matrix tmpMatrix[4];
 
 void C_MTXIdentity(void)
 {
-	MatrixPtr m = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	MatrixPtr m = (MatrixPtr)(ptr);
 
 	MTX(m)[0][0] = ONE;  MTX(m)[0][1] = ZERO; MTX(m)[0][2] = ZERO; MTX(m)[0][3] = ZERO;
 	MTX(m)[1][0] = ZERO; MTX(m)[1][1] = ONE;  MTX(m)[1][2] = ZERO; MTX(m)[1][3] = ZERO;
@@ -705,8 +711,11 @@ void C_MTXIdentity(void)
 
 void C_MTXCopy(void)
 {
-	MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
-	MatrixPtr dst = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
+	uint8_t* ptr_src = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	uint8_t* ptr_dst = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(1));
+
+	MatrixPtr src = (MatrixPtr)(ptr_src);
+	MatrixPtr dst = (MatrixPtr)(ptr_dst);
 
 	if(src == dst) return;
 
@@ -720,9 +729,13 @@ void C_MTXCopy(void)
 
 void C_MTXConcat(void)
 {
-	MatrixFPtr a = (MatrixFPtr)(&mi.ram[PARAM(0) & RAMMASK]);
-	MatrixFPtr b = (MatrixFPtr)(&mi.ram[PARAM(1) & RAMMASK]);
-	MatrixFPtr axb = (MatrixFPtr)(&mi.ram[PARAM(2) & RAMMASK]);
+	uint8_t* ptr_a = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	uint8_t* ptr_b = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(1));
+	uint8_t* ptr_axb = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(2));
+
+	MatrixFPtr a = (MatrixFPtr)(ptr_a);
+	MatrixFPtr b = (MatrixFPtr)(ptr_b);
+	MatrixFPtr axb = (MatrixFPtr)(ptr_axb);
 	MatrixFPtr t = (MatrixFPtr)(&tmpMatrix[0]), m;
 
 	if( (axb == a) || (axb == b) ) m = t;
@@ -772,8 +785,11 @@ void C_MTXConcat(void)
 
 void C_MTXTranspose(void)
 {
-	MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
-	MatrixPtr xPose = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
+	uint8_t* ptr_src = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	uint8_t* ptr_xPose = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(1));
+
+	MatrixPtr src = (MatrixPtr)(ptr_src);
+	MatrixPtr xPose = (MatrixPtr)(ptr_xPose);
 	MatrixPtr t = (&tmpMatrix[0]), m;
 
 	if(src == xPose) m = t;
@@ -827,11 +843,12 @@ static  uint32_t     __OSDefaultThread;      // OS_DEFAULT_THREAD
 void OSSetCurrentContext(void)
 {
 	__OSCurrentContext  = PARAM(0);
-	__OSPhysicalContext = __OSCurrentContext & RAMMASK; // simple translation
+	__OSPhysicalContext = __OSCurrentContext & 0x0fffffff; // simple translation
 	Core->WriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
 	Core->WriteWord(OS_PHYSICAL_CONTEXT, __OSPhysicalContext);
 
-	OSContext *c = (OSContext *)(&mi.ram[__OSPhysicalContext]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(__OSPhysicalContext);
+	OSContext *c = (OSContext *)(ptr);
 
 	if(__OSCurrentContext == __OSDefaultThread/*context*/)
 	{
@@ -859,7 +876,8 @@ void OSSaveContext(void)
 {
 	int i;
 
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	OSContext * c = (OSContext *)(ptr);
 
 	// always save FP/PS context
 	OSSaveFPUContext();
@@ -892,7 +910,8 @@ void OSSaveContext(void)
 // see sym.cpp, SYMSetHighlevel, line 97
 void OSLoadContext(void)
 {
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	OSContext * c = (OSContext *)(ptr);
 
 	// thread switch on OSDisableInterrupts is omitted, because
 	// interrupts are generated only at branch opcodes;
@@ -942,7 +961,8 @@ void OSLoadContext(void)
 
 void OSClearContext(void)
 {
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	OSContext * c = (OSContext *)(ptr);
 
 	c->mode = 0;
 	c->state = 0;
@@ -958,7 +978,8 @@ void OSInitContext(void)
 {
 	int i;
 
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	OSContext * c = (OSContext *)(ptr);
 
 	c->srr[0] = SWAP(PARAM(1));
 	c->gpr[1] = SWAP(PARAM(2));
@@ -981,7 +1002,8 @@ void OSInitContext(void)
 void OSLoadFPUContext(void)
 {
 	PARAM(1) = PARAM(0);
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(1) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(1));
+	OSContext * c = (OSContext *)(ptr);
 
 	//u16 state = (c->state >> 8) | (c->state << 8);
 	//if(! (state & OS_CONTEXT_STATE_FPSAVED) )
@@ -1004,7 +1026,8 @@ void OSLoadFPUContext(void)
 void OSSaveFPUContext(void)
 {
 	PARAM(2) = PARAM(0);
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(2) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(2));
+	OSContext * c = (OSContext *)(ptr);
 
 	//c->state |= (OS_CONTEXT_STATE_FPSAVED >> 8) | (OS_CONTEXT_STATE_FPSAVED << 8);
 	c->fpscr = SWAP(Core->regs.fpscr);
@@ -1023,7 +1046,8 @@ void OSSaveFPUContext(void)
 
 void OSFillFPUContext(void)
 {
-	OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(PARAM(0));
+	OSContext * c = (OSContext *)(ptr);
 	
 	Core->regs.msr |= MSR_FP;
 	c->fpscr = SWAP(Core->regs.fpscr);

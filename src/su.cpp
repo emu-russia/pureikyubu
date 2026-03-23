@@ -294,7 +294,7 @@ namespace GX
 				pe_done_num++;
 				if (pe_done_num == 1)
 				{
-					vi.xfb = false;     // disable VI output
+					Flipper::HW->vi->VIDisableXfb();	// disable VI output
 				}
 				DONE_INT();
 			}
@@ -307,7 +307,7 @@ namespace GX
 				{
 					GPFrameDone();
 
-					vi.xfb = false;     // disable VI output
+					Flipper::HW->vi->VIDisableXfb();	// disable VI output
 					TOKEN_INT();
 				}
 			}
@@ -317,10 +317,6 @@ namespace GX
 			case PE_TOKEN_INT_ID:
 				pe.token_int.bits = value;
 				break;
-
-
-
-
 
 			case PE_COPY_CLEAR_AR_ID:
 				pe.copy_clear_ar.bits = value;

@@ -1630,7 +1630,7 @@ namespace DVD
 					case DduThreadState::WriteCommand:
 						if (core->commandPtr < sizeof(core->commandBuffer))
 						{
-							core->commandBuffer[core->commandPtr] = core->hostToDduCallback();
+							core->commandBuffer[core->commandPtr] = core->hostToDduCallback(core->transferContext);
 							core->stats.bytesWrite++;
 							core->commandPtr++;
 						}
@@ -1670,13 +1670,13 @@ namespace DVD
 							core->dataCachePtr = 0;
 						}
 
-						core->dduToHostCallback(core->dataCache[core->dataCachePtr]);
+						core->dduToHostCallback(core->dataCache[core->dataCachePtr], core->transferContext);
 						core->stats.bytesRead++;
 						core->dataCachePtr++;
 						break;
 
 					case DduThreadState::ReadBogusData:
-						core->dduToHostCallback(0);
+						core->dduToHostCallback(0, core->transferContext);
 						core->stats.bytesRead++;
 						break;
 
@@ -1685,7 +1685,7 @@ namespace DVD
 					case DduThreadState::GetStreamBogus:
 						if (core->immediateBufferPtr < sizeof(core->immediateBuffer))
 						{
-							core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr]);
+							core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr], core->transferContext);
 							core->stats.bytesRead++;
 							core->immediateBufferPtr++;
 						}
@@ -1800,7 +1800,7 @@ namespace DVD
 
 			if (core->streamCallback)
 			{
-				core->streamCallback(sample[0], sample[1]);
+				core->streamCallback(sample[0], sample[1], core->streamContext);
 			}
 
 			core->stats.sampleCounter++;
@@ -1877,7 +1877,7 @@ namespace DVD
 		// Notify host hardware
 		if (openCoverCallback)
 		{
-			openCoverCallback();
+			openCoverCallback(openCoverContext);
 		}
 	}
 
@@ -1892,7 +1892,7 @@ namespace DVD
 		// Notify host hardware
 		if (closeCoverCallback)
 		{
-			closeCoverCallback();
+			closeCoverCallback(closeCoverContext);
 		}
 	}
 
@@ -1905,7 +1905,7 @@ namespace DVD
 		ddBusBusy = false;
 		if (errorCallback)
 		{
-			errorCallback();
+			errorCallback(errorContext);
 		}
 	}
 

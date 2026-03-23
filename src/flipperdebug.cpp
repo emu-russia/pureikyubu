@@ -8,10 +8,11 @@ namespace Flipper
 	// Load binary file to main memory
 	static Json::Value* cmd_ramload(std::vector<std::string>& args)
 	{
-		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
+		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & 0x0fffffff;
 		auto data = Util::FileLoad(args[1]);
 
-		if (address >= mi.ramSize || (address + data.size()) >= mi.ramSize)
+		uint8_t* ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForDebug(address);
+		if (!ptr)
 		{
 			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
@@ -23,23 +24,23 @@ namespace Flipper
 			return nullptr;
 		}
 
-		memcpy(&mi.ram[address], data.data(), data.size());
+		memcpy(ptr, data.data(), data.size());
 		return nullptr;
 	}
 
 	// Save main memory content to file
 	static Json::Value* cmd_ramsave(std::vector<std::string>& args)
 	{
-		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
+		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & 0x0fffffff;
 		uint32_t dataSize = (uint32_t)strtoul(args[3].c_str(), nullptr, 0);
 
-		if (address >= mi.ramSize || (address + dataSize) >= mi.ramSize)
+		uint8_t* ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForDebug(address);
+		if (!ptr)
 		{
 			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
-		auto ptr = &mi.ram[address];
 		auto buffer = std::vector<uint8_t>();
 		buffer.assign(ptr, ptr + dataSize);
 
@@ -101,7 +102,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		PIBreakOnNextInt(PI_INTERRUPT_VI);
+		HW->pi->PIBreakOnNextInt(PI_INTERRUPT_VI);
 		Core->Run();
 		return nullptr;
 	}
@@ -112,7 +113,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		PIBreakOnNextInt(PI_INTERRUPT_PE_FINISH | PI_INTERRUPT_PE_TOKEN);
+		HW->pi->PIBreakOnNextInt(PI_INTERRUPT_PE_FINISH | PI_INTERRUPT_PE_TOKEN);
 		Core->Run();
 		return nullptr;
 	}

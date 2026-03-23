@@ -101,8 +101,82 @@ struct SIState
 	int64_t             pollingTime;    // Saved Gekko TBR for polling
 };
 
-extern  SIState si;
+namespace Flipper
+{
+	class SerialInterface
+	{
+		SIState si{};
 
-void    SIPoll();
-void    SIOpen(HWConfig* config);
-void	SIClose();
+		void SICommand(int chan, int outlen, int inlen, uint8_t* ptr);
+		void SIClearInterrupt();
+
+		void si_wr_out_hi(int chan, uint32_t data);
+		void si_wr_out_lo(int chan, uint32_t mask, uint32_t data);
+		static void si_wr_out0_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void si_wr_out0_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void si_rd_out0_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_rd_out0_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_wr_out1_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void si_wr_out1_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void si_rd_out1_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_rd_out1_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_wr_out2_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void si_wr_out2_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void si_rd_out2_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_rd_out2_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_wr_out3_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void si_wr_out3_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void si_rd_out3_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_rd_out3_lo(uint32_t addr, uint32_t* reg, void* ctx);
+
+		void si_inh_hi(int chan, uint32_t* reg);
+		void si_inh_lo(int chan, uint32_t mask, uint32_t* reg);
+		void si_inl_hi(int chan, uint32_t* reg);
+		void si_inl_lo(int chan, uint32_t* reg);
+		static void si_inh0_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh0_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl0_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl0_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh1_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh1_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl1_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl1_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh2_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh2_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl2_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl2_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh3_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inh3_lo(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl3_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void si_inl3_lo(uint32_t addr, uint32_t* reg, void* ctx);
+
+		static void write_sicom(uint32_t addr, uint32_t data, void* ctx);
+		static void read_sicom(uint32_t addr, uint32_t* reg, void* ctx);
+
+		static void write_poll_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void write_poll_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void read_poll_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void read_poll_lo(uint32_t addr, uint32_t* reg, void* ctx);
+
+		static void write_commcsr_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void write_commcsr_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void read_commcsr_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void read_commcsr_lo(uint32_t addr, uint32_t* reg, void* ctx);
+
+		static void write_sisr_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void write_sisr_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void read_sisr_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void read_sisr_lo(uint32_t addr, uint32_t* reg, void* ctx);
+
+		static void write_exilk_hi(uint32_t addr, uint32_t data, void* ctx);
+		static void write_exilk_lo(uint32_t addr, uint32_t data, void* ctx);
+		static void read_exilk_hi(uint32_t addr, uint32_t* reg, void* ctx);
+		static void read_exilk_lo(uint32_t addr, uint32_t* reg, void* ctx);
+
+	public:
+		SerialInterface(HWConfig* config);
+		~SerialInterface();
+
+		void SIPoll();
+	};
+}

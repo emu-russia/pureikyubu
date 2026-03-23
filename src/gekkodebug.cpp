@@ -531,7 +531,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = (uint64_t)PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		output->value.AsInt = (uint64_t)Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		return output;
 	}
@@ -551,7 +551,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = (uint64_t)PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		output->value.AsInt = (uint64_t)Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		return output;
 	}
@@ -641,7 +641,7 @@ namespace Debug
 
 		std::string text = "";
 
-		uint8_t* ptr = PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		uint8_t* ptr = Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		if (ptr != nullptr)
 		{
@@ -698,11 +698,11 @@ namespace Debug
 		bool flowControl = false;
 		uint32_t targetAddress = 0;
 
-		if (pa < RAMSIZE)
+		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(pa);
+		if (ptr != nullptr)
 		{
 			Gekko::DecoderInfo info = { 0 };
 
-			uint8_t* ptr = &mi.ram[pa];
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
 			Gekko::Decoder::Decode(addr, instr, &info);
@@ -734,7 +734,7 @@ namespace Debug
 		int wimg;
 		uint32_t pa = Core->EffectiveToPhysical(ea, Gekko::MmuAccess::Read , wimg);
 		if (pa != Gekko::BadAddress) {
-			PIWriteWord(pa, 0x6000'0000);
+			Flipper::HW->pi->PIWriteWord(pa, 0x6000'0000);
 		}
 
 		// You also need to invalidate the Gekko instruction cache

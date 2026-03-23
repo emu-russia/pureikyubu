@@ -31,15 +31,16 @@ namespace DSP
 			return;
 		}
 
-		if (DmaRegs.mmemAddr.bits < mi.ramSize)
+		uint8_t* mem_ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(DmaRegs.mmemAddr.bits);
+		if (mem_ptr)
 		{
 			if (DmaRegs.control.Dsp2Mmem)
 			{
-				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
+				memcpy(mem_ptr, ptr, DmaRegs.blockSize);
 			}
 			else
 			{
-				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
+				memcpy(ptr, mem_ptr, DmaRegs.blockSize);
 			}
 		}
 

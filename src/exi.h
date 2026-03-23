@@ -42,6 +42,8 @@
 #define EXI_CR_DMA          (1 << 1)        // select dma transfer (dma/immediate)
 #define EXI_CR_TSTART       (1 << 0)        // start transfer
 
+#define EXI_MADR_MASK 0x3fff'ffe0
+
 // EXI registers block
 struct EXIRegs
 {
@@ -86,12 +88,87 @@ struct EXIState
 	bool    BootromPresent;     // loaded and descrambled valid bootrom
 };
 
-extern  EXIState exi;
+typedef void (*EXITransferCallback)(void* ctx);
 
-// for memcards and other external devices
-void    EXIUpdateInterrupts();
-void    EXIAttach(int chan);    // connect device
-void    EXIDetach(int chan);    // disconnect device
+namespace Flipper
+{
+	class ExternalInterface
+	{
+		void exi_select(int chan);
+		void write_csr(int chan, uint32_t data);
 
-void    EXIOpen(HWConfig* config);
-void    EXIClose();
+		static void exi_read_dummy(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi_write_dummy(uint32_t addr, uint32_t data, void* ctx);
+
+		static void exi0_read_csr(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_csr(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_csr(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_csr(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_csr(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_csr(uint32_t addr, uint32_t data, void* ctx);
+
+		static void exi0_read_madrh(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_madrh(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_madrh(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_madrh(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_madrh(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_madrh(uint32_t addr, uint32_t data, void* ctx);
+		static void exi0_read_madrl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_madrl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_madrl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_madrl(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_madrl(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_madrl(uint32_t addr, uint32_t data, void* ctx);
+
+		static void exi0_read_lenh(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_lenh(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_lenh(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_lenh(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_lenh(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_lenh(uint32_t addr, uint32_t data, void* ctx);
+		static void exi0_read_lenl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_lenl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_lenl(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_lenl(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_lenl(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_lenl(uint32_t addr, uint32_t data, void* ctx);
+
+		void exi_write_cr(int chan, uint32_t data);
+
+		static void exi0_read_cr(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_cr(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_cr(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_cr(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_cr(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_cr(uint32_t addr, uint32_t data, void* ctx);
+
+		static void exi0_read_datah(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_datah(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_datah(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_datah(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_datah(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_datah(uint32_t addr, uint32_t data, void* ctx);
+		static void exi0_read_datal(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi1_read_datal(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi2_read_datal(uint32_t addr, uint32_t* reg, void* ctx);
+		static void exi0_write_datal(uint32_t addr, uint32_t data, void* ctx);
+		static void exi1_write_datal(uint32_t addr, uint32_t data, void* ctx);
+		static void exi2_write_datal(uint32_t addr, uint32_t data, void* ctx);
+
+	public:
+		ExternalInterface(HWConfig* config);
+		~ExternalInterface();
+
+		EXIState exi{};
+
+		static void UnknownTransfer(void* ctx);
+		static void ADTransfer(void* ctx);
+
+		// for memcards and other external devices
+		void EXIUpdateInterrupts();
+		// connect device
+		void EXIAttach(int chan);
+		// disconnect device
+		void EXIDetach(int chan);
+	};
+}

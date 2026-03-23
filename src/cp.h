@@ -525,17 +525,17 @@ namespace Flipper
 		// Debug
 		void DumpCPFIFO();
 
-		CPHostRegs cpregs;		// Mapped command processor registers
-		CPState cp;				// Internal registers (for setting VCD/VAT, etc.)
+		CPHostRegs cpregs{};	// Mapped command processor registers
+		CPState cp{};			// Internal registers (for setting VCD/VAT, etc.)
 
-		Thread* cp_thread;     // CP FIFO thread
-		size_t	tickPerFifo;
-		int64_t	updateTbrValue;
+		Thread* cp_thread = nullptr;     // CP FIFO thread
+		size_t	tickPerFifo = 0;
+		int64_t	updateTbrValue = 0;
 
 		// Stats
-		size_t cpLoads;
-		size_t xfLoads;
-		size_t bpLoads;
+		size_t cpLoads = 0;
+		size_t xfLoads = 0;
+		size_t bpLoads = 0;
 
 		void GXWriteFifo(uint8_t dataPtr[32]);
 		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
