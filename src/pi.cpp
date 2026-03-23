@@ -3,9 +3,6 @@
 
 using namespace Debug;
 
-// PI state (registers and other data)
-PIControl pi;
-
 namespace Flipper
 {
 	struct pi_reg_trap

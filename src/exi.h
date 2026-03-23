@@ -60,38 +60,38 @@ struct EXIRegs
 // ---------------------------------------------------------------------------
 // hardware API
 
-// EXI state (registers and other data)
-struct EXIState
-{
-	// hardware state
-	EXIRegs     regs[3];        // exi registers
-	SRAM        sram;           // battery-backed memory (misc console settings)
-	uint8_t*	ansiFont;       // bootrom font (loaded from file)
-	uint8_t*	sjisFont;
-	uint32_t    rtcVal;         // last updated RTC value
-	uint32_t    ad16;           // trace step
-	char        uart[256];      // UART I/O buffer
-	uint32_t    upos;           // UART buffer position (if > 0, UART buffer not empty)
-
-	// helper variables used for EXI transfers
-	int32_t     chan, sel;      // curent selected chan:device (sel=-1 no device)
-	uint32_t    ad16_cmd;       // command for AD16
-	bool        firstImm;       // first imm write is always command
-	uint32_t    mxaddr;         // "address" inside MX chip for transfers
-	bool        uartNE;
-
-	bool        log;            // allow log EXI activities
-	bool        osReport;       // allow UART debugger output (log not affecting this)
-
-	uint8_t* bootrom;       // Descrambled (Thank you segher, you already have a place in heaven)
-	size_t bootromSize;
-	bool    BootromPresent;     // loaded and descrambled valid bootrom
-};
-
 typedef void (*EXITransferCallback)(void* ctx);
 
 namespace Flipper
 {
+	// EXI state (registers and other data)
+	struct EXIState
+	{
+		// hardware state
+		EXIRegs     regs[3];        // exi registers
+		SRAM        sram;           // battery-backed memory (misc console settings)
+		uint8_t* ansiFont;       // bootrom font (loaded from file)
+		uint8_t* sjisFont;
+		uint32_t    rtcVal;         // last updated RTC value
+		uint32_t    ad16;           // trace step
+		char        uart[256];      // UART I/O buffer
+		uint32_t    upos;           // UART buffer position (if > 0, UART buffer not empty)
+
+		// helper variables used for EXI transfers
+		int32_t     chan, sel;      // curent selected chan:device (sel=-1 no device)
+		uint32_t    ad16_cmd;       // command for AD16
+		bool        firstImm;       // first imm write is always command
+		uint32_t    mxaddr;         // "address" inside MX chip for transfers
+		bool        uartNE;
+
+		bool        log;            // allow log EXI activities
+		bool        osReport;       // allow UART debugger output (log not affecting this)
+
+		uint8_t* bootrom;       // Descrambled (Thank you segher, you already have a place in heaven)
+		size_t bootromSize;
+		bool    BootromPresent;     // loaded and descrambled valid bootrom
+	};
+
 	class ExternalInterface
 	{
 		void exi_select(int chan);
@@ -159,7 +159,7 @@ namespace Flipper
 		ExternalInterface(HWConfig* config);
 		~ExternalInterface();
 
-		EXIState exi{};
+		EXIState exi{};		//!< EXI state (registers and other data)
 
 		static void UnknownTransfer(void* ctx);
 		static void ADTransfer(void* ctx);

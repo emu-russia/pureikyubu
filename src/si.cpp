@@ -1,9 +1,6 @@
 // SI - serial interface (only GC "Spec5" controllers atm, by PAD plugin calls).
 #include "pch.h"
 
-// SI state (registers and other data)
-SIState si;
-
 // IMPORTANT : transfer will never be aborted by communication error, 
 // so all ERROR bits/status in SI regs are not used in emulator.
 

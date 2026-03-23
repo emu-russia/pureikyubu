@@ -57,71 +57,71 @@
 #define MEM_MARR_SHIFT 10
 #define MEM_MARR_MASK 0x03fffc00		//!< Valid bits for a MARR address
 
-union MEMMarrControl
-{
-	struct
-	{
-		unsigned marr0_read_enable : 1;
-		unsigned marr0_write_enable : 1;
-		unsigned marr1_read_enable : 1;
-		unsigned marr1_write_enable : 1;
-		unsigned marr2_read_enable : 1;
-		unsigned marr2_write_enable : 1;
-		unsigned marr3_read_enable : 1;
-		unsigned marr3_write_enable : 1;
-	};
-	uint32_t bits;
-};
-
-union MEMIntReg
-{
-	struct
-	{
-		unsigned marr0 : 1;
-		unsigned marr1 : 1;
-		unsigned marr2 : 1;
-		unsigned marr3 : 1;
-		unsigned addr_err : 1;
-	};
-	uint32_t bits;
-};
-
-#pragma pack(push, 1)
-union MEMCounter
-{
-	struct
-	{
-		uint16_t lo;
-		uint16_t hi;
-	};
-	uint32_t cnt;
-};
-#pragma pack(pop)
-
-struct MIState
-{
-	uint8_t* ram;
-	size_t ramSize;
-	bool log;
-
-	uint32_t marr_start[4];
-	uint32_t marr_end[4];
-	MEMMarrControl marr_control;
-	MEMIntReg int_enable;
-	MEMIntReg int_status;
-
-	MEMCounter cp_counter;
-	MEMCounter tc_counter;
-	MEMCounter pi_read_counter;
-	MEMCounter pi_write_counter;
-	MEMCounter dsp_counter;
-	MEMCounter io_counter;
-	MEMCounter vi_counter;
-	MEMCounter pe_counter;
-};
-
 namespace Flipper
 {
+	union MEMMarrControl
+	{
+		struct
+		{
+			unsigned marr0_read_enable : 1;
+			unsigned marr0_write_enable : 1;
+			unsigned marr1_read_enable : 1;
+			unsigned marr1_write_enable : 1;
+			unsigned marr2_read_enable : 1;
+			unsigned marr2_write_enable : 1;
+			unsigned marr3_read_enable : 1;
+			unsigned marr3_write_enable : 1;
+		};
+		uint32_t bits;
+	};
+
+	union MEMIntReg
+	{
+		struct
+		{
+			unsigned marr0 : 1;
+			unsigned marr1 : 1;
+			unsigned marr2 : 1;
+			unsigned marr3 : 1;
+			unsigned addr_err : 1;
+		};
+		uint32_t bits;
+	};
+
+#pragma pack(push, 1)
+	union MEMCounter
+	{
+		struct
+		{
+			uint16_t lo;
+			uint16_t hi;
+		};
+		uint32_t cnt;
+	};
+#pragma pack(pop)
+
+	struct MIState
+	{
+		uint8_t* ram;
+		size_t ramSize;
+		bool log;
+
+		uint32_t marr_start[4];
+		uint32_t marr_end[4];
+		MEMMarrControl marr_control;
+		MEMIntReg int_enable;
+		MEMIntReg int_status;
+
+		MEMCounter cp_counter;
+		MEMCounter tc_counter;
+		MEMCounter pi_read_counter;
+		MEMCounter pi_write_counter;
+		MEMCounter dsp_counter;
+		MEMCounter io_counter;
+		MEMCounter vi_counter;
+		MEMCounter pe_counter;
+	};
+
 	class MemoryInterface
 	{
 		MIState mi{};

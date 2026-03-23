@@ -100,31 +100,31 @@ enum class PIInterruptSource
 // ---------------------------------------------------------------------------
 // hardware API
 
-// PI state (registers and other data)
-struct PIControl
-{
-	volatile uint16_t intsr;	// interrupt cause
-	volatile uint16_t intmr;	// interrupt mask
-	volatile uint16_t intbrk;	// one-shot interrup breakpoint
-	bool        log;			// log interrupts
-	uint32_t    consoleVer;		// console version
-	uint32_t	chipid;
-	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
-	int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
-	int64_t one_microsecond;	// one CPU microsecond in timer ticks
-
-	// The PI contains its own part of the CP FIFO, intended for Burst transactions via the GFX FIFO Stream Pointer. The write event is simultaneously forwarded to the CP to track the WRPTR.
-	volatile uint32_t cp_base;
-	volatile uint32_t cp_top;
-	volatile uint32_t cp_wrptr;		// also WRAP bit
-	volatile uint32_t wrap_bit;		// When the CPU writes to the CPWRT register, this bit is cleared. When the FIFO writes by the CPWRT address, this bit remains asserted
-};
-
 namespace Flipper
 {
+	// PI state (registers and other data)
+	struct PIState
+	{
+		volatile uint16_t intsr;	// interrupt cause
+		volatile uint16_t intmr;	// interrupt mask
+		volatile uint16_t intbrk;	// one-shot interrup breakpoint
+		bool        log;			// log interrupts
+		uint32_t    consoleVer;		// console version
+		uint32_t	chipid;
+		int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
+		int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
+		int64_t one_microsecond;	// one CPU microsecond in timer ticks
+
+		// The PI contains its own part of the CP FIFO, intended for Burst transactions via the GFX FIFO Stream Pointer. The write event is simultaneously forwarded to the CP to track the WRPTR.
+		volatile uint32_t cp_base;
+		volatile uint32_t cp_top;
+		volatile uint32_t cp_wrptr;		// also WRAP bit
+		volatile uint32_t wrap_bit;		// When the CPU writes to the CPWRT register, this bit is cleared. When the FIFO writes by the CPWRT address, this bit remains asserted
+	};
+
 	class ProcessorInterface
 	{
-		PIControl pi{};		//!< PI state (registers and other data)
+		PIState pi{};		//!< PI state (registers and other data)
 
 		static void pi_def_hw_read16(uint32_t addr, uint32_t* reg, void* context);
 		static void pi_def_hw_write16(uint32_t addr, uint32_t data, void* context);

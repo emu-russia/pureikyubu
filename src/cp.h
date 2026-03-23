@@ -10,6 +10,68 @@
 
 // Vertex Cache is not supported.
 
+// CP Registers (from CPU side). 16-bit access
+#define CP_STATUS 0x00
+#define CP_ENABLE 0x02
+#define CP_CLR 0x04
+#define CP_MEMPERF_SEL 0x06
+#define CP_STM_LOW 0x0a
+#define CP_FIFO_BASEL 0x20
+#define CP_FIFO_BASEH 0x22
+#define CP_FIFO_TOPL 0x24
+#define CP_FIFO_TOPH 0x26
+#define CP_FIFO_HICNTL 0x28
+#define CP_FIFO_HICNTH 0x2a
+#define CP_FIFO_LOCNTL 0x2c
+#define CP_FIFO_LOCNTH 0x2e
+#define CP_FIFO_COUNTL 0x30
+#define CP_FIFO_COUNTH 0x32
+#define CP_FIFO_WPTRL 0x34
+#define CP_FIFO_WPTRH 0x36
+#define CP_FIFO_RPTRL 0x38
+#define CP_FIFO_RPTRH 0x3a
+#define CP_FIFO_BRKL 0x3c
+#define CP_FIFO_BRKH 0x3e
+#define CP_COUNTER0L 0x40
+#define CP_COUNTER0H 0x42
+#define CP_COUNTER1L 0x44
+#define CP_COUNTER1H 0x46
+#define CP_COUNTER2L 0x48
+#define CP_COUNTER2H 0x4a
+#define CP_COUNTER3L 0x4c
+#define CP_COUNTER3H 0x4e
+#define CP_VC_CHKCNTL 0x50
+#define CP_VC_CHKCNTH 0x52
+#define CP_VC_MISSL 0x54
+#define CP_VC_MISSH 0x56
+#define CP_VC_STALLL 0x58
+#define CP_VC_STALLH 0x5a
+#define CP_FRCLK_CNTL 0x5c
+#define CP_FRCLK_CNTH 0x5e
+#define CP_XF_ADDR 0x60
+#define CP_XF_DATAL 0x62
+#define CP_XF_DATAH 0x64
+
+// CP STATUS register mask layout
+#define CP_SR_OVF       (1 << 0)        // FIFO overflow (fifo_count > FIFO_HICNT)
+#define CP_SR_UVF       (1 << 1)        // FIFO underflow (fifo_count < FIFO_LOCNT)
+#define CP_SR_RD_IDLE   (1 << 2)        // FIFO read unit idle
+#define CP_SR_CMD_IDLE  (1 << 3)        // CP idle
+#define CP_SR_BPINT     (1 << 4)        // FIFO reach break point (cleared by disable FIFO break point)
+
+// CP ENABLE register mask layout
+#define CP_CR_RDEN      (1 << 0)        // Enable FIFO reads, reset value is 0 disable
+#define CP_CR_BPEN      (1 << 1)        // FIFO break point enable bit, reset value is 0 disable. Write 0 to clear BPINT
+#define CP_CR_OVFEN     (1 << 2)        // FIFO overflow interrupt enable, reset value is 0 disable
+#define CP_CR_UVFEN     (1 << 3)        // FIFO underflow interrupt enable, reset value is 0 disable
+#define CP_CR_WPINC     (1 << 4)        // FIFO write pointer increment enable, reset value is 1 enable
+#define CP_CR_BPINTEN   (1 << 5)        // FIFO break point interrupt enable, reset value is 0 disable
+
+// CP clear register mask layout
+#define CP_CLR_OVFCLR   (1 << 0)        // clear FIFO overflow interrupt
+#define CP_CLR_UVFCLR   (1 << 1)        // clear FIFO underflow interrupt
+
+
 namespace Flipper
 {
 
@@ -36,68 +98,6 @@ namespace Flipper
 		CP_CMD_DRAW_LINESTRIP = 0xB0,		// 10110 vat(2:0)
 		CP_CMD_DRAW_POINT = 0xB8,			// 10111 vat(2:0)
 	};
-
-	// CP Registers (from CPU side). 16-bit access
-
-	#define CP_STATUS 0x00
-	#define CP_ENABLE 0x02
-	#define CP_CLR 0x04
-	#define CP_MEMPERF_SEL 0x06
-	#define CP_STM_LOW 0x0a
-	#define CP_FIFO_BASEL 0x20
-	#define CP_FIFO_BASEH 0x22
-	#define CP_FIFO_TOPL 0x24
-	#define CP_FIFO_TOPH 0x26
-	#define CP_FIFO_HICNTL 0x28
-	#define CP_FIFO_HICNTH 0x2a
-	#define CP_FIFO_LOCNTL 0x2c
-	#define CP_FIFO_LOCNTH 0x2e
-	#define CP_FIFO_COUNTL 0x30
-	#define CP_FIFO_COUNTH 0x32
-	#define CP_FIFO_WPTRL 0x34
-	#define CP_FIFO_WPTRH 0x36
-	#define CP_FIFO_RPTRL 0x38
-	#define CP_FIFO_RPTRH 0x3a
-	#define CP_FIFO_BRKL 0x3c
-	#define CP_FIFO_BRKH 0x3e
-	#define CP_COUNTER0L 0x40
-	#define CP_COUNTER0H 0x42
-	#define CP_COUNTER1L 0x44
-	#define CP_COUNTER1H 0x46
-	#define CP_COUNTER2L 0x48
-	#define CP_COUNTER2H 0x4a
-	#define CP_COUNTER3L 0x4c
-	#define CP_COUNTER3H 0x4e
-	#define CP_VC_CHKCNTL 0x50
-	#define CP_VC_CHKCNTH 0x52
-	#define CP_VC_MISSL 0x54
-	#define CP_VC_MISSH 0x56
-	#define CP_VC_STALLL 0x58
-	#define CP_VC_STALLH 0x5a
-	#define CP_FRCLK_CNTL 0x5c
-	#define CP_FRCLK_CNTH 0x5e
-	#define CP_XF_ADDR 0x60
-	#define CP_XF_DATAL 0x62
-	#define CP_XF_DATAH 0x64
-
-	// CP STATUS register mask layout
-	#define CP_SR_OVF       (1 << 0)        // FIFO overflow (fifo_count > FIFO_HICNT)
-	#define CP_SR_UVF       (1 << 1)        // FIFO underflow (fifo_count < FIFO_LOCNT)
-	#define CP_SR_RD_IDLE   (1 << 2)        // FIFO read unit idle
-	#define CP_SR_CMD_IDLE  (1 << 3)        // CP idle
-	#define CP_SR_BPINT     (1 << 4)        // FIFO reach break point (cleared by disable FIFO break point)
-
-	// CP ENABLE register mask layout
-	#define CP_CR_RDEN      (1 << 0)        // Enable FIFO reads, reset value is 0 disable
-	#define CP_CR_BPEN      (1 << 1)        // FIFO break point enable bit, reset value is 0 disable. Write 0 to clear BPINT
-	#define CP_CR_OVFEN     (1 << 2)        // FIFO overflow interrupt enable, reset value is 0 disable
-	#define CP_CR_UVFEN     (1 << 3)        // FIFO underflow interrupt enable, reset value is 0 disable
-	#define CP_CR_WPINC     (1 << 4)        // FIFO write pointer increment enable, reset value is 1 enable
-	#define CP_CR_BPINTEN   (1 << 5)        // FIFO break point interrupt enable, reset value is 0 disable
-
-	// CP clear register mask layout
-	#define CP_CLR_OVFCLR   (1 << 0)        // clear FIFO overflow interrupt
-	#define CP_CLR_UVFCLR   (1 << 1)        // clear FIFO underflow interrupt
 
 	#pragma pack(push, 8)
 
