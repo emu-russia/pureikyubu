@@ -91,6 +91,7 @@ namespace Flipper
 	class ExternalInterface;
 	class MemoryInterface;
 	class CommandProcessor;
+	class ProcessorInterface;
 
 	/// <summary>
 	/// Global class for driving Flipper ASIC.
@@ -120,6 +121,7 @@ namespace Flipper
 		CommandProcessor* cp = nullptr;
 		ExternalInterface* exi = nullptr;
 		MemoryInterface* mem = nullptr;
+		ProcessorInterface* pi = nullptr;
 
 		uint32_t GetMemorySize();
 	};

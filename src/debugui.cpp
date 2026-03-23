@@ -2733,7 +2733,7 @@ namespace Debug
 				ptr = Core->GetDataCachePointer(addr);
 				break;
 			case MemoryViewMode::MainMem:
-				ptr = PITranslatePhysicalAddress(addr, 1);
+				ptr = Flipper::HW->pi->PITranslatePhysicalAddress(addr, 1);
 				break;
 			case MemoryViewMode::DSP_ARAM: 
 				ptr = Jdi->IsLoaded() ? &ARAM[addr] : nullptr;
@@ -2765,7 +2765,7 @@ namespace Debug
 				ptr = Core->GetDataCachePointer(addr);
 				break;
 			case MemoryViewMode::MainMem:
-				ptr = PITranslatePhysicalAddress(addr, 1);
+				ptr = Flipper::HW->pi->PITranslatePhysicalAddress(addr, 1);
 				break;
 			case MemoryViewMode::DSP_ARAM: 
 				ptr = Jdi->IsLoaded() ? &ARAM[addr] : nullptr;

@@ -37,6 +37,7 @@
 #define VI_SCALE_WIDTH			0x70	// Scaling Width Register
 #define VI_BRDR_HBE             0x72	// Border HBE
 #define VI_BRDR_HBS             0x74	// Border HBS
+#define VI_REG_MAX				0x76
 
 // Display Configuration Register mask (for 16-bit register)
 #define VI_CR_ENB       0x0001          // enable the video timing generation

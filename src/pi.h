@@ -97,21 +97,6 @@ enum class PIInterruptSource
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
 
-// Program interface that implements transactions over Gekko 60x Bus
-
-void PIReadByte(uint32_t pa, uint32_t* reg);
-void PIWriteByte(uint32_t pa, uint32_t data);
-void PIReadHalf(uint32_t pa, uint32_t* reg);
-void PIWriteHalf(uint32_t pa, uint32_t data);
-void PIReadWord(uint32_t pa, uint32_t* reg);
-void PIWriteWord(uint32_t pa, uint32_t data);
-void PIReadDouble(uint32_t pa, uint64_t* reg);
-void PIWriteDouble(uint32_t pa, uint64_t* data);
-void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
-void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
-
-uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
-
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -135,36 +120,72 @@ struct PIControl
 	volatile uint32_t wrap_bit;		// When the CPU writes to the CPWRT register, this bit is cleared. When the FIFO writes by the CPWRT address, this bit remains asserted
 };
 
-extern  PIControl pi;
+namespace Flipper
+{
+	class ProcessorInterface
+	{
+		PIControl pi;		//!< PI state (registers and other data)
 
-// The role of the /HRESET signal is performed by the PIOpen/PIClose pairing. The role of INT signal is performed by PIAssertInt/PIClearInt pairing
+		static void pi_def_hw_read16(uint32_t addr, uint32_t* reg, void* context);
+		static void pi_def_hw_write16(uint32_t addr, uint32_t data, void* context);
+		void PIClearTraps();
+		const char* intdesc(uint32_t mask);
+		void printOut(uint32_t mask, const char* fix);
 
-void PIAssertInt(uint32_t mask);  // set interrupt(s)
-void PIClearInt(uint32_t mask);   // clear interrupt(s)
-void PIOpen(HWConfig* config);
-void PIClose();
+		void pi_write_config(uint32_t data);
+		static void PIRegRead(uint32_t addr, uint32_t* reg, void* ctx);
+		static void PIRegWrite(uint32_t addr, uint32_t data, void* ctx);
 
-/// <summary>
-/// Set the breakpoint (Halt) to trigger once per interrupt.
-/// Used by debug commands for step-by-step debugging of system runtime.
-/// </summary>
-/// <param name="mask">Mask of interrupts that require a one-shot break</param>
-void PIBreakOnNextInt(uint32_t mask);
+	public:
+		ProcessorInterface(HWConfig* config);
+		~ProcessorInterface();
 
-/// <summary>
-/// Install a handler to access a register mapped to the CPU address space.
-/// The PI is designed so that all register operations are inherently 16-bit.
-/// 32-bit operations are implemented by performing two 16-bit operations: first on the high-order half of the register at address +0, 
-/// then on the low-order half of the register at address +2.
-/// </summary>
-/// <param name="addr">physical address of trap</param>
-/// <param name="rdTrap">register read trap</param>
-/// <param name="wrTrap">register write trap</param>
-/// <param name="context">An arbitrary context that will be passed to the handler (e.g. `this`)</param>
-void PISetTrap(
-	uint32_t addr,
-	void (*rdTrap)(uint32_t, uint32_t*, void*) = NULL,
-	void (*wrTrap)(uint32_t, uint32_t, void*) = NULL,
-	void *context = NULL);
+		// The role of the /HRESET signal is performed by the new PI/delete PI pairing. The role of INT signal is performed by PIAssertInt/PIClearInt pairing
 
-void DumpPIFIFO();
+		void PIAssertInt(uint32_t mask);  // set interrupt(s)
+		void PIClearInt(uint32_t mask);   // clear interrupt(s)
+
+		/// <summary>
+		/// Set the breakpoint (Halt) to trigger once per interrupt.
+		/// Used by debug commands for step-by-step debugging of system runtime.
+		/// </summary>
+		/// <param name="mask">Mask of interrupts that require a one-shot break</param>
+		void PIBreakOnNextInt(uint32_t mask);
+
+		/// <summary>
+		/// Install a handler to access a register mapped to the CPU address space.
+		/// The PI is designed so that all register operations are inherently 16-bit.
+		/// 32-bit operations are implemented by performing two 16-bit operations: first on the high-order half of the register at address +0, 
+		/// then on the low-order half of the register at address +2.
+		/// </summary>
+		/// <param name="addr">physical address of trap</param>
+		/// <param name="rdTrap">register read trap</param>
+		/// <param name="wrTrap">register write trap</param>
+		/// <param name="context">An arbitrary context that will be passed to the handler (e.g. `this`)</param>
+		void PISetTrap(
+			uint32_t addr,
+			void (*rdTrap)(uint32_t, uint32_t*, void*) = NULL,
+			void (*wrTrap)(uint32_t, uint32_t, void*) = NULL,
+			void* context = NULL);
+
+		void DumpPIFIFO();
+
+		// Program interface that implements transactions over Gekko 60x Bus
+
+		void PIReadByte(uint32_t pa, uint32_t* reg);
+		void PIWriteByte(uint32_t pa, uint32_t data);
+		void PIReadHalf(uint32_t pa, uint32_t* reg);
+		void PIWriteHalf(uint32_t pa, uint32_t data);
+		void PIReadWord(uint32_t pa, uint32_t* reg);
+		void PIWriteWord(uint32_t pa, uint32_t data);
+		void PIReadDouble(uint32_t pa, uint64_t* reg);
+		void PIWriteDouble(uint32_t pa, uint64_t* data);
+		void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
+		void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
+
+		uint8_t* PITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);
+
+		int64_t PIGetInterruptCounter(PIInterruptSource src);
+		void PIResetInterruptCounter(PIInterruptSource src);
+	};
+}

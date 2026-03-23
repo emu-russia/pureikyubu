@@ -40,7 +40,7 @@ namespace Flipper
 
 		Mixer = new AudioMixer(config);
 
-		PIOpen(config); // interrupts, console regs
+		pi = new ProcessorInterface(config);
 		mem = new MemoryInterface(config);
 		VIOpen(config); // video (TV)
 		cp = new CommandProcessor(config);
@@ -100,18 +100,39 @@ namespace Flipper
 
 		DSP->Suspend();
 
-		delete cp;
-		delete ai;
+		if (cp) {
+			delete cp;
+			cp = nullptr;
+		}
+		if (ai) {
+			delete ai;
+			ai = nullptr;
+		}
 		DSP::DspAIClose();	// TODO: find better place
 		DSP::ARClose();      // release ARAM  TODO: find better place
 		SIClose();
-		delete exi;
+		if (exi) {
+			delete exi;
+			exi = nullptr;
+		}
 		VIClose();      // close VideoOut (if opened)
-		delete di;
-		delete mem;
-		PIClose();
+		if (di) {
+			delete di;
+			di = nullptr;
+		}
+		if (mem) {
+			delete mem;
+			mem = nullptr;
+		}
+		if (pi) {
+			delete pi;
+			pi = nullptr;
+		}
 
-		delete Mixer;
+		if (Mixer) {
+			delete Mixer;
+			Mixer = nullptr;
+		}
 		PADClose();
 		Gx->Close();
 

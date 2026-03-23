@@ -85,7 +85,7 @@ static void SIClearInterrupt()
 {
 	if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
 	{
-		PIClearInt(PI_INTERRUPT_SI);
+		Flipper::HW->pi->PIClearInt(PI_INTERRUPT_SI);
 	}
 }
 
@@ -327,7 +327,7 @@ static void write_commcsr_lo(uint32_t addr, uint32_t data, void* ctx)
 		// generate cpu interrupt (if mask allows that)
 		if (SI_COMCSR_REG & SI_COMCSR_TCINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_SI);
+			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_SI);
 		}
 	}
 }
@@ -462,7 +462,7 @@ void SIPoll()
 	if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) && (SI_COMCSR_REG & SI_COMCSR_RDSTINTMSK))
 	{
 		// assert processor interrupt
-		PIAssertInt(PI_INTERRUPT_SI);
+		Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_SI);
 	}
 }
 
@@ -499,45 +499,45 @@ void SIOpen(HWConfig* config)
 	}
 
 	// joypads in/out command buffer
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF, si_rd_out0_hi, si_wr_out0_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF+2, si_rd_out0_lo, si_wr_out0_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH, si_inh0_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH+2, si_inh0_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL, si_inl0_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL+2, si_inl0_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF, si_rd_out1_hi, si_wr_out1_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF+2, si_rd_out1_lo, si_wr_out1_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH, si_inh1_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH+2, si_inh1_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL, si_inl1_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL+2, si_inl1_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF, si_rd_out2_hi, si_wr_out2_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF+2, si_rd_out2_lo, si_wr_out2_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH, si_inh2_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH+2, si_inh2_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL, si_inl2_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL+2, si_inl2_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF, si_rd_out3_hi, si_wr_out3_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF+2, si_rd_out3_lo, si_wr_out3_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH, si_inh3_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH+2, si_inh3_lo, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL, si_inl3_hi, NULL);
-	PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL+2, si_inl3_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF, si_rd_out0_hi, si_wr_out0_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF+2, si_rd_out0_lo, si_wr_out0_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH, si_inh0_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH+2, si_inh0_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL, si_inl0_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL+2, si_inl0_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF, si_rd_out1_hi, si_wr_out1_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF+2, si_rd_out1_lo, si_wr_out1_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH, si_inh1_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH+2, si_inh1_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL, si_inl1_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL+2, si_inl1_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF, si_rd_out2_hi, si_wr_out2_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF+2, si_rd_out2_lo, si_wr_out2_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH, si_inh2_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH+2, si_inh2_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL, si_inl2_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL+2, si_inl2_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF, si_rd_out3_hi, si_wr_out3_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF+2, si_rd_out3_lo, si_wr_out3_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH, si_inh3_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH+2, si_inh3_lo, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL, si_inl3_hi, NULL);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL+2, si_inl3_lo, NULL);
 
 	// si control registers
-	PISetTrap(PI_REGSPACE_SI | SI_POLL, read_poll_hi, write_poll_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_POLL+2, read_poll_lo, write_poll_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_COMCSR, read_commcsr_hi, write_commcsr_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_COMCSR+2, read_commcsr_lo, write_commcsr_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_SR, read_sisr_hi, write_sisr_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_SR+2, read_sisr_lo, write_sisr_lo);
-	PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk_hi, write_exilk_hi);
-	PISetTrap(PI_REGSPACE_SI | SI_EXILK+2, read_exilk_lo, write_exilk_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_POLL, read_poll_hi, write_poll_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_POLL+2, read_poll_lo, write_poll_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_COMCSR, read_commcsr_hi, write_commcsr_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_COMCSR+2, read_commcsr_lo, write_commcsr_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_SR, read_sisr_hi, write_sisr_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_SR+2, read_sisr_lo, write_sisr_lo);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk_hi, write_exilk_hi);
+	Flipper::HW->pi->PISetTrap(PI_REGSPACE_SI | SI_EXILK+2, read_exilk_lo, write_exilk_lo);
 
 	// serial communcation buffer
 	for (unsigned ofs = 0; ofs < 128; ofs += 2)
 	{
-		PISetTrap((PI_REGSPACE_SI | SI_COMBUF) + ofs, read_sicom, write_sicom);
+		Flipper::HW->pi->PISetTrap((PI_REGSPACE_SI | SI_COMBUF) + ofs, read_sicom, write_sicom);
 	}
 }
 

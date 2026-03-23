@@ -102,7 +102,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		PIBreakOnNextInt(PI_INTERRUPT_VI);
+		HW->pi->PIBreakOnNextInt(PI_INTERRUPT_VI);
 		Core->Run();
 		return nullptr;
 	}
@@ -113,7 +113,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		PIBreakOnNextInt(PI_INTERRUPT_PE_FINISH | PI_INTERRUPT_PE_TOKEN);
+		HW->pi->PIBreakOnNextInt(PI_INTERRUPT_PE_FINISH | PI_INTERRUPT_PE_TOKEN);
 		Core->Run();
 		return nullptr;
 	}

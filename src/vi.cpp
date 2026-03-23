@@ -114,7 +114,7 @@ void VIUpdate()
 				if (vi.log) {
 					Report(Channel::VI, "VI Int0\n");
 				}
-				PIAssertInt(PI_INTERRUPT_VI);
+				Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_VI);
 			}
 		}
 
@@ -232,7 +232,7 @@ static void VIRegWrite(uint32_t addr, uint32_t data, void* context)
 			vi.int0.val |= data << 16;
 			if ((vi.int0.val & VI_INT_INT) == 0)
 			{
-				PIClearInt(PI_INTERRUPT_VI);
+				Flipper::HW->pi->PIClearInt(PI_INTERRUPT_VI);
 			}
 			break;
 		case VI_INT0+2:
@@ -289,9 +289,9 @@ void VIOpen(HWConfig* config)
 	}
 
 	// set traps to VI registers
-	for (uint32_t ofs = 0; ofs < 0x80; ofs += 2)
+	for (uint32_t ofs = 0; ofs < VI_REG_MAX; ofs += 2)
 	{
-		PISetTrap(PI_REGSPACE_VI + ofs, VIRegRead, VIRegWrite);
+		Flipper::HW->pi->PISetTrap(PI_REGSPACE_VI + ofs, VIRegRead, VIRegWrite);
 	}
 }
 

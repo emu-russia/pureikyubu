@@ -19,49 +19,49 @@ namespace Flipper
 		cpregs.cr |= CP_CR_WPINC;		// 1 on reset
 
 		// Command Processor
-		PISetTrap(PI_REGSPACE_CP | CP_STATUS, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_ENABLE, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_CLR, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_MEMPERF_SEL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_STM_LOW, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_STATUS, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_ENABLE, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_CLR, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_MEMPERF_SEL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_STM_LOW, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_BASEH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_TOPH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_HICNTH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_LOCNTH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_COUNTH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_WPTRH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_RPTRH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FIFO_BRKH, CPRegRead, CPRegWrite, this);
 
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER0L, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER0H, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER1L, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER1H, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER2L, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER2H, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER3L, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_COUNTER3H, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER0L, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER0H, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER1L, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER1H, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER2L, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER2H, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER3L, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_COUNTER3H, CPRegRead, CPRegWrite, this);
 
-		PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_VC_MISSL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_VC_MISSH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_VC_STALLL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_VC_STALLH, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_VC_CHKCNTH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_VC_MISSL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_VC_MISSH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_VC_STALLL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_VC_STALLH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_FRCLK_CNTH, CPRegRead, CPRegWrite, this);
 
-		PISetTrap(PI_REGSPACE_CP | CP_XF_ADDR, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_XF_DATAL, CPRegRead, CPRegWrite, this);
-		PISetTrap(PI_REGSPACE_CP | CP_XF_DATAH, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_XF_ADDR, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_XF_DATAL, CPRegRead, CPRegWrite, this);
+		HW->pi->PISetTrap(PI_REGSPACE_CP | CP_XF_DATAH, CPRegRead, CPRegWrite, this);
 
 		fifo = new FifoProcessor();
 		fifo->Reset();
@@ -109,7 +109,7 @@ namespace Flipper
 		if (cpregs.cr & CP_CR_BPINTEN && (cpregs.sr & CP_SR_BPINT) == 0)
 		{
 			cpregs.sr |= CP_SR_BPINT;
-			PIAssertInt(PI_INTERRUPT_CP);
+			HW->pi->PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "BREAK\n");
 		}
 	}
@@ -119,7 +119,7 @@ namespace Flipper
 		if (cpregs.cr & CP_CR_OVFEN && (cpregs.sr & CP_SR_OVF) == 0)
 		{
 			cpregs.sr |= CP_SR_OVF;
-			PIAssertInt(PI_INTERRUPT_CP);
+			HW->pi->PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "OVF\n");
 		}
 	}
@@ -129,7 +129,7 @@ namespace Flipper
 		if (cpregs.cr & CP_CR_UVFEN && (cpregs.sr & CP_SR_UVF) == 0)
 		{
 			cpregs.sr |= CP_SR_UVF;
-			PIAssertInt(PI_INTERRUPT_CP);
+			HW->pi->PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "UVF\n");
 		}
 	}
@@ -312,7 +312,7 @@ namespace Flipper
 
 				if ((cpregs.sr & CP_SR_BPINT) == 0 && (cpregs.sr & CP_SR_OVF) == 0 && (cpregs.sr & CP_SR_UVF) == 0)
 				{
-					PIClearInt(PI_INTERRUPT_CP);
+					HW->pi->PIClearInt(PI_INTERRUPT_CP);
 				}
 				break;
 			case CP_CLR:
@@ -328,7 +328,7 @@ namespace Flipper
 
 				if ((cpregs.sr & CP_SR_BPINT) == 0 && (cpregs.sr & CP_SR_OVF) == 0 && (cpregs.sr & CP_SR_UVF) == 0)
 				{
-					PIClearInt(PI_INTERRUPT_CP);
+					HW->pi->PIClearInt(PI_INTERRUPT_CP);
 				}
 				break;
 			case CP_MEMPERF_SEL:

@@ -16,7 +16,7 @@ namespace Flipper
 		di->DICVR |= DI_CVR_CVRINT;
 		if (di->DICVR & DI_CVR_CVRINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DI);
+			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
 		}
 	}
 
@@ -27,7 +27,7 @@ namespace Flipper
 		di->DICVR |= DI_CVR_CVRINT;
 		if (di->DICVR & DI_CVR_CVRINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DI);
+			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
 		}
 	}
 
@@ -42,7 +42,7 @@ namespace Flipper
 		di->DISR |= DI_SR_DEINT;
 		if (di->DISR & DI_SR_DEINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DI);
+			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
 		}
 
 		DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback, di);
@@ -60,7 +60,7 @@ namespace Flipper
 		DISR |= DI_SR_BRKINT;
 		if (DISR & DI_SR_BRKINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DI);
+			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
 		}
 
 		DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback, this);
@@ -74,7 +74,7 @@ namespace Flipper
 		DISR |= DI_SR_TCINT;
 		if (DISR & DI_SR_TCINTMSK)
 		{
-			PIAssertInt(PI_INTERRUPT_DI);
+			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
 		}
 
 		if (di.log) {
@@ -258,7 +258,7 @@ namespace Flipper
 		}
 		if ((DISR & DI_SR_BRKINT) == 0 && (DISR & DI_SR_TCINT) == 0 && (DISR & DI_SR_DEINT) == 0)
 		{
-			PIClearInt(PI_INTERRUPT_DI);
+			HW->pi->PIClearInt(PI_INTERRUPT_DI);
 		}
 
 		// Issue break
@@ -303,7 +303,7 @@ namespace Flipper
 		if (data & DI_CVR_CVRINT)
 		{
 			DICVR &= ~DI_CVR_CVRINT;
-			PIClearInt(PI_INTERRUPT_DI);
+			HW->pi->PIClearInt(PI_INTERRUPT_DI);
 		}
 
 		// set mask
@@ -456,7 +456,7 @@ namespace Flipper
 
 		// set register traps
 		for (uint32_t i = 0; i < DI_REG_MAX; i += 2) {
-			PISetTrap(PI_REGSPACE_DI + i, DIRegRead, DIRegWrite, this);
+			HW->pi->PISetTrap(PI_REGSPACE_DI + i, DIRegRead, DIRegWrite, this);
 		}
 	}
 

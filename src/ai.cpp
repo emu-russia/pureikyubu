@@ -41,7 +41,7 @@ namespace Flipper
 			ai.cr |= AICR_AIINT;
 			if (ai.cr & AICR_AIINTMSK)
 			{
-				PIAssertInt(PI_INTERRUPT_AI);
+				HW->pi->PIAssertInt(PI_INTERRUPT_AI);
 				if (ai.log)
 				{
 					Report(Channel::AIS, "AISINT\n");
@@ -57,7 +57,7 @@ namespace Flipper
 		if (ai.cr & AICR_AIINT)
 		{
 			ai.cr &= ~AICR_AIINT;
-			PIClearInt(PI_INTERRUPT_AI);
+			HW->pi->PIClearInt(PI_INTERRUPT_AI);
 		}
 
 		// enable sample counter
@@ -235,7 +235,7 @@ namespace Flipper
 		ai.log = config->ai_log;
 
 		for (uint32_t i = 0; i < AIS_REG_MAX; i+=2) {
-			PISetTrap(PI_REGSPACE_AI + i, AIReadReg, AIWriteReg, this);
+			HW->pi->PISetTrap(PI_REGSPACE_AI + i, AIReadReg, AIWriteReg, this);
 		}
 	}
 
