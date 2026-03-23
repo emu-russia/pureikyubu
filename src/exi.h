@@ -159,7 +159,7 @@ namespace Flipper
 		ExternalInterface(HWConfig* config);
 		~ExternalInterface();
 
-		EXIState exi;
+		EXIState exi{};
 
 		static void UnknownTransfer(void* ctx);
 		static void ADTransfer(void* ctx);

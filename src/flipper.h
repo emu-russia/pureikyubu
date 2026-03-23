@@ -89,9 +89,11 @@ namespace Flipper
 	class AudioInterface;
 	class DiskInterface;
 	class ExternalInterface;
+	class SerialInterface;
 	class MemoryInterface;
 	class CommandProcessor;
 	class ProcessorInterface;
+	class VideoInterface;
 
 	/// <summary>
 	/// Global class for driving Flipper ASIC.
@@ -109,6 +111,7 @@ namespace Flipper
 
 		AudioInterface* ai = nullptr;
 		DiskInterface* di = nullptr;
+		SerialInterface* si = nullptr;
 
 		size_t memsize;			//!< The size of the main memory (Splash) from the configuration. Used to call GetMemorySize.
 
@@ -122,6 +125,7 @@ namespace Flipper
 		ExternalInterface* exi = nullptr;
 		MemoryInterface* mem = nullptr;
 		ProcessorInterface* pi = nullptr;
+		VideoInterface* vi = nullptr;
 
 		uint32_t GetMemorySize();
 	};

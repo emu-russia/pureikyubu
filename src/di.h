@@ -66,7 +66,7 @@ namespace Flipper
 {
 	class DiskInterface
 	{
-		DIState di;		//!< DI state (registers and other data)
+		DIState di{};		//!< DI state (registers and other data)
 
 		static void DIOpenCover(void* ctx);
 		static void DICloseCover(void* ctx);

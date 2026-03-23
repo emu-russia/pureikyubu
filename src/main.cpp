@@ -979,12 +979,12 @@ void LoadFile(const std::wstring& filename)
 		DVD::Read(id, 4);
 
 		DVD::Region region = DVD::RegionById(id);
-		VISetEncoderFuse(DVD::IsNtsc(region) ? 0 : 1);
+		Flipper::HW->vi->VISetEncoderFuse(DVD::IsNtsc(region) ? 0 : 1);
 	}
 
 	// Do the same for the bootstrap.
 	if (emu.bootrom) {
 
-		VISetEncoderFuse(IsBootromPALRevision() ? 1 : 0);
+		Flipper::HW->vi->VISetEncoderFuse(IsBootromPALRevision() ? 1 : 0);
 	}
 }

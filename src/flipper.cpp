@@ -42,14 +42,14 @@ namespace Flipper
 
 		pi = new ProcessorInterface(config);
 		mem = new MemoryInterface(config);
-		VIOpen(config); // video (TV)
+		vi = new VideoInterface(config);
 		cp = new CommandProcessor(config);
 		ai = new AudioInterface(config);
 		DSP::DspAIOpen(config);			// TODO: find better place
 		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
 		exi = new ExternalInterface(config);
 		di = new DiskInterface(config);
-		SIOpen(config);	// GC controllers
+		si = new SerialInterface(config);
 
 		DSP->core->HardReset();
 
@@ -110,12 +110,18 @@ namespace Flipper
 		}
 		DSP::DspAIClose();	// TODO: find better place
 		DSP::ARClose();      // release ARAM  TODO: find better place
-		SIClose();
+		if (si) {
+			delete si;
+			si = nullptr;
+		}
 		if (exi) {
 			delete exi;
 			exi = nullptr;
 		}
-		VIClose();      // close VideoOut (if opened)
+		if (vi) {
+			delete vi;
+			vi = nullptr;
+		}
 		if (di) {
 			delete di;
 			di = nullptr;
@@ -143,8 +149,8 @@ namespace Flipper
 	void Flipper::Update()
 	{
 		// update joypads and video
-		VIUpdate();
-		SIPoll();
+		vi->VIUpdate();
+		si->SIPoll();
 	}
 
 	uint32_t Flipper::GetMemorySize()

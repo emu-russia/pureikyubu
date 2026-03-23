@@ -43,7 +43,7 @@ namespace Flipper
 
 	class AudioInterface
 	{
-		AIState ai;			//!< AI state (registers and other data)
+		AIState ai{};		//!< AI state (registers and other data)
 
 		void MixerSetDvdAudioSampleRate(AudioSampleRate rate);
 		void AISINT();

@@ -124,7 +124,7 @@ namespace Flipper
 {
 	class ProcessorInterface
 	{
-		PIControl pi;		//!< PI state (registers and other data)
+		PIControl pi{};		//!< PI state (registers and other data)
 
 		static void pi_def_hw_read16(uint32_t addr, uint32_t* reg, void* context);
 		static void pi_def_hw_write16(uint32_t addr, uint32_t data, void* context);

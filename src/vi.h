@@ -114,18 +114,33 @@ struct VIState
 	int         videoEncoderFuse;
 };
 
-extern  VIState vi;
+namespace Flipper
+{
+	class VideoInterface
+	{
+		VIState vi{};		//!< VI state (registers and other data)
 
-void    VIUpdate();
-void    VIStats();
-void    VIOpen(HWConfig* config);
-void    VIClose();
+		void YUVBlit(uint8_t* yuvbuf, RGB* dib);
+		void vi_set_timing();
+		static void VIRegRead(uint32_t addr, uint32_t* reg, void* context);
+		static void VIRegWrite(uint32_t addr, uint32_t data, void* context);
 
-void    VISetEncoderFuse(int value);
+	public:
+		VideoInterface(HWConfig* config);
+		~VideoInterface();
 
-/// <summary>
-/// Simulate a light gun trigger pull (using external Flipper signals GUNTRG0 and GUNTRG1, which are routed to the VI).
-/// In this case, the current position is fixed in the Latch registers (0 or 1, depending on the signal).
-/// </summary>
-/// <param name="num">GUNTRG signal, 0 or 1</param>
-void	VIGunTrigger(int num);
+		void VIUpdate();
+		void VIStats();
+
+		void VISetEncoderFuse(int value);
+
+		/// <summary>
+		/// Simulate a light gun trigger pull (using external Flipper signals GUNTRG0 and GUNTRG1, which are routed to the VI).
+		/// In this case, the current position is fixed in the Latch registers (0 or 1, depending on the signal).
+		/// </summary>
+		/// <param name="num">GUNTRG signal, 0 or 1</param>
+		void VIGunTrigger(int num);
+
+		void VIDisableXfb();
+	};
+}
