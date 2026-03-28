@@ -4695,7 +4695,9 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			VideoOutResize(LOWORD(lParam), HIWORD(lParam));
 
 			// Resize gfx renderer
-			Flipper::Gx->ResizeRenderTarget(LOWORD(lParam), HIWORD(lParam));
+			if (Flipper::HW && Flipper::HW->gfx) {
+				Flipper::HW->gfx->ResizeRenderTarget(LOWORD(lParam), HIWORD(lParam));
+			}
 
 			return 0;
 		}

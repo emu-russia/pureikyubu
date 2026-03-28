@@ -7,6 +7,19 @@
 
 namespace GFX
 {
+	#define RAS1_PERF_ID 0x24
+	#define RAS1_SS0_ID 0x25
+	#define RAS1_SS1_ID 0x26
+	#define RAS1_IREF_ID 0x27
+	#define RAS1_TREF0_ID 0x28
+	#define RAS1_TREF1_ID 0x29
+	#define RAS1_TREF2_ID 0x2A
+	#define RAS1_TREF3_ID 0x2B
+	#define RAS1_TREF4_ID 0x2C
+	#define RAS1_TREF5_ID 0x2D
+	#define RAS1_TREF6_ID 0x2E
+	#define RAS1_TREF7_ID 0x2F
+
 	enum RAS_Primitive : size_t
 	{
 		RAS_QUAD = 0,
@@ -34,5 +47,7 @@ namespace GFX
 		void RAS_Begin(RAS_Primitive prim, size_t vtx_num);
 		void RAS_End();
 		void RAS_SendVertex(const Vertex* v);
+		
+		void loadRASReg(size_t index, uint32_t value);
 	};
 }

@@ -1,41 +1,39 @@
 #pragma once
 
-// PE Registers (from CPU side). 16-bit access.
-
-#define PE_PI_ZMODE 0x00         // Cpu2Efb Z mode
-#define PE_PI_CMODE0 0x02        // Cpu2Efb Color mode 0
-#define PE_PI_CMODE1 0x04        // Cpu2Efb Color mode 1
-#define PE_PI_ALPHA_THRES 0x06   // Cpu2Efb Alpha mode 0
-#define PE_PI_CONTROL 0x08
-#define PE_PI_INTRCTRL 0x0a
-#define PE_PI_INTRSTAT 0x0c
-#define PE_PI_TOKEN 0x0e         // Last token value
-#define PE_PI_XBOUND0 0x10
-#define PE_PI_XBOUND1 0x12
-#define PE_PI_YBOUND0 0x14
-#define PE_PI_YBOUND1 0x16
-#define PE_PI_PERF_COUNTER_0L 0x18
-#define PE_PI_PERF_COUNTER_0H 0x1a
-#define PE_PI_PERF_COUNTER_1L 0x1c
-#define PE_PI_PERF_COUNTER_1H 0x1e
-#define PE_PI_PERF_COUNTER_2L 0x20
-#define PE_PI_PERF_COUNTER_2H 0x22
-#define PE_PI_PERF_COUNTER_3L 0x24
-#define PE_PI_PERF_COUNTER_3H 0x26
-#define PE_PI_PERF_COUNTER_4L 0x28
-#define PE_PI_PERF_COUNTER_4H 0x2a
-#define PE_PI_PERF_COUNTER_5L 0x2c
-#define PE_PI_PERF_COUNTER_5H 0x2e
-
-// PE intrctrl register
-#define PE_SR_DONE      (1 << 0)
-#define PE_SR_TOKEN     (1 << 1)
-#define PE_SR_DONEMSK   (1 << 2)
-#define PE_SR_TOKENMSK  (1 << 3)
-
 namespace GFX
 {
-	class SetupUnit;
+	// PE Registers (from CPU side). 16-bit access.
+
+	#define PE_PI_ZMODE 0x00         // Cpu2Efb Z mode
+	#define PE_PI_CMODE0 0x02        // Cpu2Efb Color mode 0
+	#define PE_PI_CMODE1 0x04        // Cpu2Efb Color mode 1
+	#define PE_PI_ALPHA_THRES 0x06   // Cpu2Efb Alpha mode 0
+	#define PE_PI_CONTROL 0x08
+	#define PE_PI_INTRCTRL 0x0a
+	#define PE_PI_INTRSTAT 0x0c
+	#define PE_PI_TOKEN 0x0e         // Last token value
+	#define PE_PI_XBOUND0 0x10
+	#define PE_PI_XBOUND1 0x12
+	#define PE_PI_YBOUND0 0x14
+	#define PE_PI_YBOUND1 0x16
+	#define PE_PI_PERF_COUNTER_0L 0x18
+	#define PE_PI_PERF_COUNTER_0H 0x1a
+	#define PE_PI_PERF_COUNTER_1L 0x1c
+	#define PE_PI_PERF_COUNTER_1H 0x1e
+	#define PE_PI_PERF_COUNTER_2L 0x20
+	#define PE_PI_PERF_COUNTER_2H 0x22
+	#define PE_PI_PERF_COUNTER_3L 0x24
+	#define PE_PI_PERF_COUNTER_3H 0x26
+	#define PE_PI_PERF_COUNTER_4L 0x28
+	#define PE_PI_PERF_COUNTER_4H 0x2a
+	#define PE_PI_PERF_COUNTER_5L 0x2c
+	#define PE_PI_PERF_COUNTER_5H 0x2e
+
+	// PE intrctrl register
+	#define PE_SR_DONE      (1 << 0)
+	#define PE_SR_TOKEN     (1 << 1)
+	#define PE_SR_DONEMSK   (1 << 2)
+	#define PE_SR_TOKENMSK  (1 << 3)
 
 	// The register definitions for PE PI are slightly different from command stream PE registers because PE PI registers are 16-bit
 	// PE registers mapped to CPU
@@ -45,6 +43,34 @@ namespace GFX
 	};
 
 	// PE register definitions that come through the command stream.
+
+	// Pixel Engine
+	#define PE_ZMODE_ID 0x40
+	#define PE_CMODE0_ID 0x41
+	#define PE_CMODE1_ID 0x42
+	#define PE_CONTROL_ID 0x43
+	#define PE_FIELD_MASK_ID 0x44
+	#define PE_FINISH_ID 0x45
+	#define PE_REFRESH_ID 0x46
+	#define PE_TOKEN_ID 0x47
+	#define PE_TOKEN_INT_ID 0x48
+	#define PE_COPY_SRC_ADDR_ID 0x49
+	#define PE_COPY_SRC_SIZE_ID 0x4a
+	#define PE_COPY_DST_BASE0_ID 0x4b
+	#define PE_COPY_DST_BASE1_ID 0x4c
+	#define PE_COPY_DST_STRIDE_ID 0x4d
+	#define PE_COPY_SCALE_ID 0x4e
+	#define PE_COPY_CLEAR_AR_ID 0x4F
+	#define PE_COPY_CLEAR_GB_ID 0x50
+	#define PE_COPY_CLEAR_Z_ID 0x51
+	#define PE_COPY_CMD_ID 0x52
+	#define PE_COPY_VFILTER0_ID 0x53
+	#define PE_COPY_VFILTER1_ID 0x54
+	#define PE_XBOUND_ID 0x55
+	#define PE_YBOUND_ID 0x56
+	#define PE_PERFMODE_ID 0x57
+	#define PE_CHICKEN_ID 0x58
+	#define PE_QUAD_OFFSET_ID 0x59
 
 	// 0x40
 	union PE_ZMODE
@@ -430,7 +456,6 @@ namespace GFX
 	class PixelEngine
 	{
 		friend GFXCore;
-		friend SetupUnit;
 		GFXCore* gfx = nullptr;
 
 		size_t frames = 0;
@@ -444,13 +469,10 @@ namespace GFX
 		void GL_MakeSnapshot(char* path);
 		void GL_SaveBitmap(uint8_t* buf);
 
+		void PE_DONE_INT();
+		void PE_TOKEN_INT();
+		
 		// Pixel Engine mapped regs
-		uint16_t PeReadReg(uint32_t addr);
-		void PeWriteReg(uint32_t addr, uint16_t value);
-
-		void DONE_INT();
-		void TOKEN_INT();
-
 		static void PERegRead(uint32_t addr, uint32_t* reg, void* context);
 		static void PERegWrite(uint32_t addr, uint32_t data, void* context);
 
@@ -460,5 +482,7 @@ namespace GFX
 
 		uint32_t EfbPeek(uint32_t addr);
 		void EfbPoke(uint32_t addr, uint32_t value);
+
+		void loadPEReg(size_t index, uint32_t value);
 	};
 }

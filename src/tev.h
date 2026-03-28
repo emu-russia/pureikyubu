@@ -5,7 +5,70 @@
 
 namespace GFX
 {
-	class SetupUnit;
+	// TEV Regs
+	#define TEV_COLOR_ENV_0_ID 0xC0
+	#define TEV_ALPHA_ENV_0_ID 0xC1
+	#define TEV_COLOR_ENV_1_ID 0xC2
+	#define TEV_ALPHA_ENV_1_ID 0xC3
+	#define TEV_COLOR_ENV_2_ID 0xC4
+	#define TEV_ALPHA_ENV_2_ID 0xC5
+	#define TEV_COLOR_ENV_3_ID 0xC6
+	#define TEV_ALPHA_ENV_3_ID 0xC7
+	#define TEV_COLOR_ENV_4_ID 0xC8
+	#define TEV_ALPHA_ENV_4_ID 0xC9
+	#define TEV_COLOR_ENV_5_ID 0xCA
+	#define TEV_ALPHA_ENV_5_ID 0xCB
+	#define TEV_COLOR_ENV_6_ID 0xCC
+	#define TEV_ALPHA_ENV_6_ID 0xCD
+	#define TEV_COLOR_ENV_7_ID 0xCE
+	#define TEV_ALPHA_ENV_7_ID 0xCF
+	#define TEV_COLOR_ENV_8_ID 0xD0
+	#define TEV_ALPHA_ENV_8_ID 0xD1
+	#define TEV_COLOR_ENV_9_ID 0xD2
+	#define TEV_ALPHA_ENV_9_ID 0xD3
+	#define TEV_COLOR_ENV_A_ID 0xD4
+	#define TEV_ALPHA_ENV_A_ID 0xD5
+	#define TEV_COLOR_ENV_B_ID 0xD6
+	#define TEV_ALPHA_ENV_B_ID 0xD7
+	#define TEV_COLOR_ENV_C_ID 0xD8
+	#define TEV_ALPHA_ENV_C_ID 0xD9
+	#define TEV_COLOR_ENV_D_ID 0xDA
+	#define TEV_ALPHA_ENV_D_ID 0xDB
+	#define TEV_COLOR_ENV_E_ID 0xDC
+	#define TEV_ALPHA_ENV_E_ID 0xDD
+	#define TEV_COLOR_ENV_F_ID 0xDE
+	#define TEV_ALPHA_ENV_F_ID 0xDF
+
+	#define TEV_REGISTERL_0_ID 0xE0
+	#define TEV_REGISTERH_0_ID 0xE1
+	#define TEV_REGISTERL_1_ID 0xE2
+	#define TEV_REGISTERH_1_ID 0xE3
+	#define TEV_REGISTERL_2_ID 0xE4
+	#define TEV_REGISTERH_2_ID 0xE5
+	#define TEV_REGISTERL_3_ID 0xE6
+	#define TEV_REGISTERH_3_ID 0xE7
+	#define TEV_RANGE_ADJ_C_ID 0xE8
+	#define TEV_RANGE_ADJ_0_ID 0xE9
+	#define TEV_RANGE_ADJ_1_ID 0xEA
+	#define TEV_RANGE_ADJ_2_ID 0xEB
+	#define TEV_RANGE_ADJ_3_ID 0xEC
+	#define TEV_RANGE_ADJ_4_ID 0xED
+	#define TEV_FOG_PARAM_0_ID 0xEE
+	#define TEV_FOG_PARAM_1_ID 0xEF
+	#define TEV_FOG_PARAM_2_ID 0xF0
+	#define TEV_FOG_PARAM_3_ID 0xF1
+	#define TEV_FOG_COLOR_ID 0xF2
+	#define TEV_ALPHAFUNC_ID 0xF3
+	#define TEV_Z_ENV_0_ID 0xF4
+	#define TEV_Z_ENV_1_ID 0xF5
+	#define TEV_KSEL_0_ID 0xF6
+	#define TEV_KSEL_1_ID 0xF7
+	#define TEV_KSEL_2_ID 0xF8
+	#define TEV_KSEL_3_ID 0xF9
+	#define TEV_KSEL_4_ID 0xFA
+	#define TEV_KSEL_5_ID 0xFB
+	#define TEV_KSEL_6_ID 0xFC
+	#define TEV_KSEL_7_ID 0xFD
 
 	// 0xC0..0xDF
 	union TEV_ColorEnv
@@ -268,12 +331,13 @@ namespace GFX
 	class TextureEnvironmentUnit
 	{
 		friend GFXCore;
-		friend SetupUnit;
 		GFXCore* gfx = nullptr;
 		TEVState tev{};
 
 	public:
 		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEnvironmentUnit();
+
+		void loadTEVReg(size_t index, uint32_t value);
 	};
 }

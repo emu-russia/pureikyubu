@@ -1934,10 +1934,10 @@ namespace Flipper
 
 				if (GpRegsLog)
 				{
-					Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X\n", index, value);
+					Report(Channel::GP, "Load reg: index: 0x%02X, data: 0x%08X\n", index, value);
 				}
 
-				HW->gfx->su->loadBPReg(index, value);
+				HW->gfx->su->loadSUReg(index, value);
 				break;
 			}
 

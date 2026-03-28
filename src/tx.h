@@ -4,7 +4,75 @@
 
 namespace GFX
 {
-	class SetupUnit;
+	// Texture
+	#define TX_LOADBLOCK0_ID 0x60
+	#define TX_LOADBLOCK1_ID 0x61
+	#define TX_LOADBLOCK2_ID 0x62
+	#define TX_LOADBLOCK3_ID 0x63
+	#define TX_LOADTLUT0_ID 0x64    // tlut base in memory
+	#define TX_LOADTLUT1_ID 0x65    // tmem ofs and size
+	#define TX_INVTAGS_ID 0x66
+	#define TX_PERFMODE_ID 0x67
+	#define TX_MISC_ID 0x68
+	#define TX_REFRESH_ID 0x69
+
+	#define TX_SETMODE0_I0_ID 0x80    // wrap (mode)
+	#define TX_SETMODE0_I1_ID 0x81
+	#define TX_SETMODE0_I2_ID 0x82
+	#define TX_SETMODE0_I3_ID 0x83
+	#define TX_SETMODE1_I0_ID 0x84
+	#define TX_SETMODE1_I1_ID 0x85
+	#define TX_SETMODE1_I2_ID 0x86
+	#define TX_SETMODE1_I3_ID 0x87
+	#define TX_SETIMAGE0_I0_ID 0x88    // texture width, height, format
+	#define TX_SETIMAGE0_I1_ID 0x89
+	#define TX_SETIMAGE0_I2_ID 0x8A
+	#define TX_SETIMAGE0_I3_ID 0x8B
+	#define TX_SETIMAGE1_I0_ID 0x8C
+	#define TX_SETIMAGE1_I1_ID 0x8D
+	#define TX_SETIMAGE1_I2_ID 0x8E
+	#define TX_SETIMAGE1_I3_ID 0x8F
+	#define TX_SETIMAGE2_I0_ID 0x90
+	#define TX_SETIMAGE2_I1_ID 0x91
+	#define TX_SETIMAGE2_I2_ID 0x92
+	#define TX_SETIMAGE2_I3_ID 0x93
+	#define TX_SETIMAGE3_I0_ID 0x94    // texture_map >> 5, physical address
+	#define TX_SETIMAGE3_I1_ID 0x95
+	#define TX_SETIMAGE3_I2_ID 0x96
+	#define TX_SETIMAGE3_I3_ID 0x97
+	#define TX_SETTLUT_I0_ID 0x98    // bind tlut with texture
+	#define TX_SETTLUT_I1_ID 0x99
+	#define TX_SETTLUT_I2_ID 0x9A
+	#define TX_SETTLUT_I3_ID 0x9B
+
+	#define TX_SETMODE0_I4_ID 0xA0
+	#define TX_SETMODE0_I5_ID 0xA1
+	#define TX_SETMODE0_I6_ID 0xA2
+	#define TX_SETMODE0_I7_ID 0xA3
+	#define TX_SETMODE1_I4_ID 0xA4
+	#define TX_SETMODE1_I5_ID 0xA5
+	#define TX_SETMODE1_I6_ID 0xA6
+	#define TX_SETMODE1_I7_ID 0xA7
+	#define TX_SETIMAGE0_I4_ID 0xA8
+	#define TX_SETIMAGE0_I5_ID 0xA9
+	#define TX_SETIMAGE0_I6_ID 0xAA
+	#define TX_SETIMAGE0_I7_ID 0xAB
+	#define TX_SETIMAGE1_I4_ID 0xAC
+	#define TX_SETIMAGE1_I5_ID 0xAD
+	#define TX_SETIMAGE1_I6_ID 0xAE
+	#define TX_SETIMAGE1_I7_ID 0xAF
+	#define TX_SETIMAGE2_I4_ID 0xB0
+	#define TX_SETIMAGE2_I5_ID 0xB1
+	#define TX_SETIMAGE2_I6_ID 0xB2
+	#define TX_SETIMAGE2_I7_ID 0xB3
+	#define TX_SETIMAGE3_I4_ID 0xB4
+	#define TX_SETIMAGE3_I5_ID 0xB5
+	#define TX_SETIMAGE3_I6_ID 0xB6
+	#define TX_SETIMAGE3_I7_ID 0xB7
+	#define TX_SETTLUT_I4_ID 0xB8
+	#define TX_SETTLUT_I5_ID 0xB9
+	#define TX_SETTLUT_I6_ID 0xBA
+	#define TX_SETTLUT_I7_ID 0xBB
 
 	// Texture offset
 
@@ -213,7 +281,6 @@ namespace GFX
 	{
 		friend GFXCore;
 		friend Rasterizer;		// TODO: Remove
-		friend SetupUnit;
 		GFXCore* gfx = nullptr;
 
 		LoadTlut0 loadtlut0;		// 0x64
@@ -248,5 +315,7 @@ namespace GFX
 	public:
 		TextureEngine(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEngine();
+
+		void loadTXReg(size_t index, uint32_t value);
 	};
 }

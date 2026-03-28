@@ -24,6 +24,7 @@ namespace GFX
 		su = new SetupUnit(config, this);
 		ras = new Rasterizer(config, this);			// TODO: For now, only single instance; will be developed for software rendering.
 		pe = new PixelEngine(config, this);
+		bump = new BumpMappingUnit(config, this);
 		tx = new TextureEngine(config, this);
 		tev = new TextureEnvironmentUnit(config, this);
 	}
@@ -36,6 +37,7 @@ namespace GFX
 		delete su;
 		delete ras;
 		delete pe;
+		delete bump;
 		delete tx;
 		delete tev;
 	}

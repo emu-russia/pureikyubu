@@ -531,7 +531,9 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = (uint64_t)Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		if (Flipper::HW) {
+			output->value.AsInt = (uint64_t)Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		}
 
 		return output;
 	}
@@ -551,7 +553,9 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = (uint64_t)Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		if (Flipper::HW) {
+			output->value.AsInt = (uint64_t)Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+		}
 
 		return output;
 	}
