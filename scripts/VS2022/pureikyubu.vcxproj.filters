@@ -223,6 +223,9 @@
     <ClInclude Include="..\..\src\audiosdl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\bump.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ai.cpp">
@@ -430,6 +433,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\audiosdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bump.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
