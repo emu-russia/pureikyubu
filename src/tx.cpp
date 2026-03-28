@@ -824,4 +824,202 @@ namespace GFX
 	{
 		TexFree();
 	}
+
+	void TextureEngine::loadTXReg(size_t index, uint32_t value)
+	{
+		switch (index)
+		{
+			//
+			// SetImage0. texture image width, height, format
+			//
+
+			case TX_SETIMAGE0_I0_ID:
+			{
+				teximg0[0].bits = value;
+				texvalid[0][0] = true;
+				tryLoadTex(0);
+			}
+			break;
+
+			case TX_SETIMAGE0_I1_ID:
+			{
+				teximg0[1].bits = value;
+				texvalid[0][1] = true;
+				//tryLoadTex(1);
+			}
+			break;
+
+			case TX_SETIMAGE0_I2_ID:
+			{
+				teximg0[2].bits = value;
+				texvalid[0][2] = true;
+				//tryLoadTex(2);
+			}
+			break;
+
+			case TX_SETIMAGE0_I3_ID:
+			{
+				teximg0[3].bits = value;
+				texvalid[0][3] = true;
+				//tryLoadTex(3);
+			}
+			break;
+
+			case TX_SETIMAGE0_I4_ID:
+			{
+				teximg0[4].bits = value;
+				texvalid[0][4] = true;
+				//tryLoadTex(4);
+			}
+			break;
+
+			case TX_SETIMAGE0_I5_ID:
+			{
+				teximg0[5].bits = value;
+				texvalid[0][5] = true;
+				//tryLoadTex(5);
+			}
+			break;
+
+			case TX_SETIMAGE0_I6_ID:
+			{
+				teximg0[6].bits = value;
+				texvalid[0][6] = true;
+				//tryLoadTex(6);
+			}
+			break;
+
+			case TX_SETIMAGE0_I7_ID:
+			{
+				teximg0[7].bits = value;
+				texvalid[0][7] = true;
+				//tryLoadTex(7);
+			}
+			break;
+
+			// SetImage1
+
+			// SetImage2
+
+			//
+			// SetImage3. texture image base
+			//
+
+			case TX_SETIMAGE3_I0_ID:
+			{
+				teximg3[0].bits = value;
+				texvalid[3][0] = true;
+				tryLoadTex(0);
+			}
+			break;
+
+			case TX_SETIMAGE3_I1_ID:
+			{
+				teximg3[1].bits = value;
+				texvalid[3][1] = true;
+				//tryLoadTex(1);
+			}
+			break;
+
+			case TX_SETIMAGE3_I2_ID:
+			{
+				teximg3[2].bits = value;
+				texvalid[3][2] = true;
+				//tryLoadTex(2);
+			}
+			break;
+
+			case TX_SETIMAGE3_I3_ID:
+			{
+				teximg3[3].bits = value;
+				texvalid[3][3] = true;
+				//tryLoadTex(3);
+			}
+			break;
+
+			case TX_SETIMAGE3_I4_ID:
+			{
+				teximg3[4].bits = value;
+				texvalid[3][4] = true;
+				//tryLoadTex(4);
+			}
+			break;
+
+			case TX_SETIMAGE3_I5_ID:
+			{
+				teximg3[5].bits = value;
+				texvalid[3][5] = true;
+				//tryLoadTex(5);
+			}
+			break;
+
+			case TX_SETIMAGE3_I6_ID:
+			{
+				teximg3[6].bits = value;
+				texvalid[3][6] = true;
+				//tryLoadTex(6);
+			}
+			break;
+
+			case TX_SETIMAGE3_I7_ID:
+			{
+				teximg3[7].bits = value;
+				texvalid[3][7] = true;
+				//tryLoadTex(7);
+			}
+			break;
+
+			//
+			// load tlut
+			//
+
+			case TX_LOADTLUT0_ID:
+			{
+				loadtlut0.bits = value;
+
+				LoadTlut(
+					(loadtlut0.base << 5),   // ram address
+					(loadtlut1.tmem << 9),   // tlut offset
+					loadtlut1.count          // tlut size
+				);
+			}
+			break;
+
+			case TX_LOADTLUT1_ID:
+			{
+				loadtlut1.bits = value;
+
+				LoadTlut(
+					(loadtlut0.base << 5),   // ram address
+					(loadtlut1.tmem << 9),   // tlut offset
+					loadtlut1.count          // tlut size
+				);
+			}
+			break;
+
+			//
+			// set tlut
+			//
+
+			case TX_SETTLUT_I0_ID:
+			{
+				settlut[0].bits = value;
+			}
+			break;
+
+			//
+			// set texture modes
+			//
+
+			case TX_SETMODE0_I0_ID:
+			{
+				texmode0[0].bits = value;
+			}
+			break;
+
+			default:
+				gfx->tev->loadTEVReg(index, value);
+				break;
+		}
+	}
 }

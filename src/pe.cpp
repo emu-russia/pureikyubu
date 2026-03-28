@@ -7,7 +7,7 @@ using namespace Debug;
 
 namespace GFX
 {
-	void PixelEngine::DONE_INT()
+	void PixelEngine::PE_DONE_INT()
 	{
 		if (peregs.sr & PE_SR_DONEMSK)
 		{
@@ -16,58 +16,12 @@ namespace GFX
 		}
 	}
 
-	void PixelEngine::TOKEN_INT()
+	void PixelEngine::PE_TOKEN_INT()
 	{
 		if (peregs.sr & PE_SR_TOKENMSK)
 		{
 			peregs.sr |= PE_SR_TOKEN;
 			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_PE_TOKEN);
-		}
-	}
-
-	uint16_t PixelEngine::PeReadReg(uint32_t addr)
-	{
-		switch (addr)
-		{
-			case PE_PI_INTRCTRL:
-				return peregs.sr;
-
-			case PE_PI_TOKEN:
-				return pe.token.token;
-
-			default:
-				return 0;
-		}
-	}
-
-	void PixelEngine::PeWriteReg(uint32_t addr, uint16_t value)
-	{
-		switch (addr)
-		{
-			case PE_PI_INTRCTRL:
-
-				// clear interrupts
-				if (peregs.sr & PE_SR_DONE)
-				{
-					peregs.sr &= ~PE_SR_DONE;
-					Flipper::HW->pi->PIClearInt(PI_INTERRUPT_PE_FINISH);
-				}
-				if (peregs.sr & PE_SR_TOKEN)
-				{
-					peregs.sr &= ~PE_SR_TOKEN;
-					Flipper::HW->pi->PIClearInt(PI_INTERRUPT_PE_TOKEN);
-				}
-
-				// set mask bits
-				if (value & PE_SR_DONEMSK) peregs.sr |= PE_SR_DONEMSK;
-				else peregs.sr &= ~PE_SR_DONEMSK;
-				if (value & PE_SR_TOKENMSK) peregs.sr |= PE_SR_TOKENMSK;
-				else peregs.sr &= ~PE_SR_TOKENMSK;
-
-				break;
-
-			default:
-				break;
 		}
 	}
 
@@ -181,20 +135,55 @@ namespace GFX
 		GL_DoSnapshot(true, NULL, buf, 160, 120);
 	}
 
-	//
-	// Stubs
-	//
-
 	void PixelEngine::PERegRead(uint32_t addr, uint32_t* reg, void* context)
 	{
 		PixelEngine* pe = (PixelEngine*)context;
-		*reg = pe->PeReadReg(addr & 0xFF);
+		switch (addr & 0xFF)
+		{
+			case PE_PI_INTRCTRL:
+				*reg = pe->peregs.sr;
+				break;
+
+			case PE_PI_TOKEN:
+				*reg = pe->pe.token.token;
+				break;
+
+			default:
+				*reg = 0;
+				break;
+		}
 	}
 
 	void PixelEngine::PERegWrite(uint32_t addr, uint32_t data, void* context)
 	{
 		PixelEngine* pe = (PixelEngine*)context;
-		pe->PeWriteReg(addr & 0xFF, data);
+		switch (addr & 0xFF)
+		{
+			case PE_PI_INTRCTRL:
+
+				// clear interrupts
+				if (pe->peregs.sr & PE_SR_DONE)
+				{
+					pe->peregs.sr &= ~PE_SR_DONE;
+					Flipper::HW->pi->PIClearInt(PI_INTERRUPT_PE_FINISH);
+				}
+				if (pe->peregs.sr & PE_SR_TOKEN)
+				{
+					pe->peregs.sr &= ~PE_SR_TOKEN;
+					Flipper::HW->pi->PIClearInt(PI_INTERRUPT_PE_TOKEN);
+				}
+
+				// set mask bits
+				if (data & PE_SR_DONEMSK) pe->peregs.sr |= PE_SR_DONEMSK;
+				else pe->peregs.sr &= ~PE_SR_DONEMSK;
+				if (data & PE_SR_TOKENMSK) pe->peregs.sr |= PE_SR_TOKENMSK;
+				else pe->peregs.sr &= ~PE_SR_TOKENMSK;
+
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	PixelEngine::PixelEngine(HWConfig* config, GFXCore* parent_gfx)
@@ -233,5 +222,235 @@ namespace GFX
 
 	PixelEngine::~PixelEngine()
 	{
+	}
+
+	void PixelEngine::loadPEReg(size_t index, uint32_t value)
+	{
+		switch (index)
+		{
+			// Pixel Engine block
+
+			case PE_ZMODE_ID:
+			{
+				static const char* zf[] = {
+					"NEVER",
+					"LESS",
+					"EQUAL",
+					"LEQUAL",
+					"GREATER",
+					"NEQUAL",
+					"GEQUAL",
+					"ALWAYS"
+				};
+
+				static uint32_t glzf[] = {
+					GL_NEVER,
+					GL_LESS,
+					GL_EQUAL,
+					GL_LEQUAL,
+					GL_GREATER,
+					GL_NOTEQUAL,
+					GL_GEQUAL,
+					GL_ALWAYS
+				};
+
+				pe.zmode.bits = value;
+
+				/*/
+				GFXError(
+					"z mode:\n"
+					"compare: %s\n"
+					"func: %s\n"
+					"update: %s",
+					(bpRegs.zmode.enable) ? ("yes") : ("no"),
+					zf[bpRegs.zmode.func],
+					(bpRegs.zmode.mask) ? ("yes") : ("no")
+				);
+				/*/
+
+				if (pe.zmode.enable)
+				{
+					glEnable(GL_DEPTH_TEST);
+					glDepthFunc(glzf[pe.zmode.func]);
+					glDepthMask(pe.zmode.mask);
+				}
+				else glDisable(GL_DEPTH_TEST);
+			}
+			break;
+
+			// set blending rules
+			case PE_CMODE0_ID:
+			{
+				pe.cmode0.bits = value;
+
+				static const char* logicop[] = {
+					"clear",
+					"and",
+					"revand",
+					"copy",
+					"invand",
+					"nop",
+					"xor",
+					"or",
+					"nor",
+					"eqv",
+					"inv",
+					"revor",
+					"invcopy",
+					"invor",
+					"nand",
+					"set"
+				};
+
+				static const char* sfactor[] = {
+					"zero",
+					"one",
+					"srcclr",
+					"invsrcclr",
+					"srcalpha",
+					"invsrcalpha",
+					"dstalpha",
+					"invdstalpha"
+				};
+
+				static const char* dfactor[] = {
+					"zero",
+					"one",
+					"dstclr",
+					"invdstclr",
+					"srcalpha",
+					"invsrcalpha",
+					"dstalpha",
+					"invdstalpha"
+				};
+
+				/*/
+				GFXError(
+					"blend rules\n\n"
+					"blend:%s, logic:%s\n"
+					"logic op : %s\n"
+					"sfactor : %s\n"
+					"dfactor : %s\n",
+					(bpRegs.cmode0.blend_en) ? ("on") : ("off"),
+					(bpRegs.cmode0.logop_en) ? ("on") : ("off"),
+					logicop[bpRegs.cmode0.logop],
+					sfactor[bpRegs.cmode0.sfactor],
+					dfactor[bpRegs.cmode0.dfactor]
+				);
+				/*/
+
+				static uint32_t glsf[] = {
+					GL_ZERO,
+					GL_ONE,
+					GL_SRC_COLOR,
+					GL_ONE_MINUS_SRC_COLOR,
+					GL_SRC_ALPHA,
+					GL_ONE_MINUS_SRC_ALPHA,
+					GL_DST_ALPHA,
+					GL_ONE_MINUS_DST_ALPHA
+				};
+
+				static uint32_t gldf[] = {
+					GL_ZERO,
+					GL_ONE,
+					GL_DST_COLOR,
+					GL_ONE_MINUS_DST_COLOR,
+					GL_SRC_ALPHA,
+					GL_ONE_MINUS_SRC_ALPHA,
+					GL_DST_ALPHA,
+					GL_ONE_MINUS_DST_ALPHA
+				};
+
+				// blend hack
+				if (pe.cmode0.blend_en)
+				{
+					glEnable(GL_BLEND);
+					glBlendFunc(glsf[pe.cmode0.sfactor], gldf[pe.cmode0.dfactor]);
+				}
+				else glDisable(GL_BLEND);
+
+				static uint32_t logop[] = {
+					GL_CLEAR,
+					GL_AND,
+					GL_AND_REVERSE,
+					GL_COPY,
+					GL_AND_INVERTED,
+					GL_NOOP,
+					GL_XOR,
+					GL_OR,
+					GL_NOR,
+					GL_EQUIV,
+					GL_INVERT,
+					GL_OR_REVERSE,
+					GL_COPY_INVERTED,
+					GL_OR_INVERTED,
+					GL_NAND,
+					GL_SET
+				};
+
+				// logic operations
+				if (pe.cmode0.logop_en)
+				{
+					glEnable(GL_COLOR_LOGIC_OP);
+					glLogicOp(logop[pe.cmode0.logop]);
+				}
+				else glDisable(GL_COLOR_LOGIC_OP);
+			}
+			break;
+
+			case PE_CMODE1_ID:
+				pe.cmode1.bits = value;
+				break;
+
+			// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
+
+			// draw done
+			case PE_FINISH_ID:
+			{
+				gfx->GPFrameDone();
+
+				pe_done_num++;
+				if (pe_done_num == 1)
+				{
+					Flipper::HW->vi->VIDisableXfb();	// disable VI output
+				}
+				PE_DONE_INT();
+			}
+			break;
+
+			case PE_TOKEN_ID:
+			{
+				pe.token.bits = value;
+				if (pe.token.token == pe.token_int.token)
+				{
+					gfx->GPFrameDone();
+
+					Flipper::HW->vi->VIDisableXfb();	// disable VI output
+					PE_TOKEN_INT();
+				}
+			}
+			break;
+
+			// token
+			case PE_TOKEN_INT_ID:
+				pe.token_int.bits = value;
+				break;
+
+			case PE_COPY_CLEAR_AR_ID:
+				pe.copy_clear_ar.bits = value;
+				break;
+
+			case PE_COPY_CLEAR_GB_ID:
+				pe.copy_clear_gb.bits = value;
+				break;
+
+			case PE_COPY_CLEAR_Z_ID:
+				pe.copy_clear_z.bits = value;
+				break;
+
+			default:
+				gfx->bump->loadBUMPReg(index, value);
+				break;
+		}
 	}
 }

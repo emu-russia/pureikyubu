@@ -121,4 +121,9 @@ namespace GFX
 	Rasterizer::~Rasterizer()
 	{
 	}
+
+	void Rasterizer::loadRASReg(size_t index, uint32_t value)
+	{
+		gfx->pe->loadPEReg(index, value);
+	}
 }

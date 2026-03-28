@@ -28,6 +28,7 @@ add_executable (pureikyubu
 	src/ai.cpp
 	src/audiosdl.cpp
 	src/bootrtc.cpp
+	src/bump.cpp
 	src/config.cpp
 	src/cp.cpp
 	src/cuisdl.cpp

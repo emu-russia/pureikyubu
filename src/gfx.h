@@ -30,6 +30,7 @@ namespace GFX
 #include "su.h"
 #include "ras.h"
 #include "tev.h"
+#include "bump.h"
 #include "tx.h"
 
 #define GFX_BLACKJACK_AND_SHADERS 0			// 1: Use modern OpenGL (VBO + Shaders). Under development, do not enable
@@ -50,6 +51,7 @@ namespace GFX
 		friend SetupUnit;
 		friend Rasterizer;
 		friend PixelEngine;
+		friend BumpMappingUnit;
 		friend TextureEngine;
 		friend TextureEnvironmentUnit;
 
@@ -114,6 +116,7 @@ namespace GFX
 		TransformUnit* xf = nullptr;
 		SetupUnit* su = nullptr;
 		Rasterizer* ras = nullptr;
+		BumpMappingUnit* bump = nullptr;
 		TextureEngine* tx = nullptr;
 		TextureEnvironmentUnit* tev = nullptr;
 		PixelEngine* pe = nullptr;
