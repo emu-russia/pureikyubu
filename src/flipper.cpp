@@ -39,16 +39,16 @@ namespace Flipper
 
 		Mixer = new AudioMixer(config);
 
-		pi = new ProcessorInterface(config);
-		mem = new MemoryInterface(config);
-		vi = new VideoInterface(config);
-		cp = new CommandProcessor(config);
-		ai = new AudioInterface(config);
-		DSP::DspAIOpen(config);			// TODO: find better place
-		DSP::AROpen();       // aux. memory (ARAM)  TODO: find better place
-		exi = new ExternalInterface(config);
-		di = new DiskInterface(config);
-		si = new SerialInterface(config);
+		pi = new ProcessorInterface(this, config);
+		mem = new MemoryInterface(this, config);
+		vi = new VideoInterface(this, config);
+		cp = new CommandProcessor(this, config);
+		ai = new AudioInterface(this, config);
+		DSP::DspAIOpen(this, config);			// TODO: find better place
+		DSP::AROpen(this);       // aux. memory (ARAM)  TODO: find better place
+		exi = new ExternalInterface(this, config);
+		di = new DiskInterface(this, config);
+		si = new SerialInterface(this, config);
 
 		DSP->core->HardReset();
 
@@ -80,7 +80,7 @@ namespace Flipper
 
 		Report(Channel::Norm, "\n");
 
-		gfx = new GFX::GFXCore(config);
+		gfx = new GFX::GFXCore(this, config);
 		PADOpen();
 
 		// open memory cards

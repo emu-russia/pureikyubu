@@ -408,7 +408,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// init
 
-	ExternalInterface::ExternalInterface(HWConfig* config)
+	ExternalInterface::ExternalInterface(Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::EXI, "External devices interface bus\n");
 
@@ -430,40 +430,40 @@ namespace Flipper
 		}
 
 		// set traps for EXI channel 0 registers
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CSR, exi_read_dummy, exi_write_dummy, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CSR + 2, exi0_read_csr, exi0_write_csr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_MADR, exi0_read_madrh, exi0_write_madrh, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_MADR + 2, exi0_read_madrl, exi0_write_madrl, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_LEN, exi0_read_lenh, exi0_write_lenh, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_LEN + 2, exi0_read_lenl, exi0_write_lenl, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CR, exi_read_dummy, exi_write_dummy, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CR + 2, exi0_read_cr, exi0_write_cr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_DATA, exi0_read_datah, exi0_write_datah, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_DATA + 2, exi0_read_datal, exi0_write_datal, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CSR, exi_read_dummy, exi_write_dummy, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CSR + 2, exi0_read_csr, exi0_write_csr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_MADR, exi0_read_madrh, exi0_write_madrh, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_MADR + 2, exi0_read_madrl, exi0_write_madrl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_LEN, exi0_read_lenh, exi0_write_lenh, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_LEN + 2, exi0_read_lenl, exi0_write_lenl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CR, exi_read_dummy, exi_write_dummy, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_CR + 2, exi0_read_cr, exi0_write_cr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_DATA, exi0_read_datah, exi0_write_datah, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI0_DATA + 2, exi0_read_datal, exi0_write_datal, this);
 
 		// set traps for EXI channel 1 registers
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CSR, exi_read_dummy, exi_write_dummy, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CSR + 2, exi1_read_csr, exi1_write_csr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_MADR, exi1_read_madrh, exi1_write_madrh, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_MADR + 2, exi1_read_madrl, exi1_write_madrl, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_LEN, exi1_read_lenh, exi1_write_lenh, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_LEN + 2, exi1_read_lenl, exi1_write_lenl, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CR, exi_read_dummy, exi_write_dummy, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CR + 2, exi1_read_cr, exi1_write_cr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_DATA, exi1_read_datah, exi1_write_datah, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_DATA + 2, exi1_read_datal, exi1_write_datal, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CSR, exi_read_dummy, exi_write_dummy, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CSR + 2, exi1_read_csr, exi1_write_csr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_MADR, exi1_read_madrh, exi1_write_madrh, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_MADR + 2, exi1_read_madrl, exi1_write_madrl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_LEN, exi1_read_lenh, exi1_write_lenh, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_LEN + 2, exi1_read_lenl, exi1_write_lenl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CR, exi_read_dummy, exi_write_dummy, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_CR + 2, exi1_read_cr, exi1_write_cr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_DATA, exi1_read_datah, exi1_write_datah, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI1_DATA + 2, exi1_read_datal, exi1_write_datal, this);
 
 		// set traps for EXI channel 2 registers
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CSR, exi_read_dummy, exi_write_dummy, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CSR + 2, exi2_read_csr, exi2_write_csr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_MADR, exi2_read_madrh, exi2_write_madrh, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_MADR + 2, exi2_read_madrl, exi2_write_madrl, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_LEN, exi2_read_lenh, exi2_write_lenh, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_LEN + 2, exi2_read_lenl, exi2_write_lenl, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CR, exi_read_dummy, exi_write_dummy, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CR + 2, exi2_read_cr, exi2_write_cr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_DATA, exi2_read_datah, exi2_write_datah, this);
-		HW->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_DATA + 2, exi2_read_datal, exi2_write_datal, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CSR, exi_read_dummy, exi_write_dummy, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CSR + 2, exi2_read_csr, exi2_write_csr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_MADR, exi2_read_madrh, exi2_write_madrh, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_MADR + 2, exi2_read_madrl, exi2_write_madrl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_LEN, exi2_read_lenh, exi2_write_lenh, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_LEN + 2, exi2_read_lenl, exi2_write_lenl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CR, exi_read_dummy, exi_write_dummy, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_CR + 2, exi2_read_cr, exi2_write_cr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_DATA, exi2_read_datah, exi2_write_datah, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_EXI | EXI2_DATA + 2, exi2_read_datal, exi2_write_datal, this);
 
 		LoadBootrom(config, exi.BootromPresent, exi.bootromSize, &exi.bootrom);
 	}

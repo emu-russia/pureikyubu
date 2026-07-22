@@ -65,7 +65,7 @@ namespace DSP
 		bool log;
 	};
 
-	void    AROpen();
+	void    AROpen(Flipper::Flipper* flipper);
 	void    ARClose();
 
 	extern  ARControl aram;

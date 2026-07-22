@@ -126,7 +126,7 @@ namespace Flipper
 		static void VIRegWrite(uint32_t addr, uint32_t data, void* context);
 
 	public:
-		VideoInterface(HWConfig* config);
+		VideoInterface(Flipper* flipper, HWConfig* config);
 		~VideoInterface();
 
 		void VIUpdate();

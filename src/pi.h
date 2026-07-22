@@ -137,7 +137,7 @@ namespace Flipper
 		static void PIRegWrite(uint32_t addr, uint32_t data, void* ctx);
 
 	public:
-		ProcessorInterface(HWConfig* config);
+		ProcessorInterface(Flipper* flipper, HWConfig* config);
 		~ProcessorInterface();
 
 		// The role of the /HRESET signal is performed by the new PI/delete PI pairing. The role of INT signal is performed by PIAssertInt/PIClearInt pairing

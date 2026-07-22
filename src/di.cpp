@@ -437,7 +437,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// init
 
-	DiskInterface::DiskInterface(HWConfig* config)
+	DiskInterface::DiskInterface(Flipper* flipper, HWConfig* config)
 	{
 		Debug::Report(Debug::Channel::DI, "DVD interface hardware\n");
 
@@ -456,7 +456,7 @@ namespace Flipper
 
 		// set register traps
 		for (uint32_t i = 0; i < DI_REG_MAX; i += 2) {
-			HW->pi->PISetTrap(PI_REGSPACE_DI + i, DIRegRead, DIRegWrite, this);
+			flipper->pi->PISetTrap(PI_REGSPACE_DI + i, DIRegRead, DIRegWrite, this);
 		}
 	}
 

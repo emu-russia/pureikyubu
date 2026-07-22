@@ -156,7 +156,7 @@ namespace Flipper
 		static void exi2_write_datal(uint32_t addr, uint32_t data, void* ctx);
 
 	public:
-		ExternalInterface(HWConfig* config);
+		ExternalInterface(Flipper* flipper, HWConfig* config);
 		~ExternalInterface();
 
 		EXIState exi{};		//!< EXI state (registers and other data)

@@ -79,7 +79,7 @@ namespace GFX
 		uint32_t scr_w = 640, scr_h = 480;
 
 	public:
-		GFXCore(HWConfig* config);
+		GFXCore(Flipper::Flipper* flipper, HWConfig* config);
 		~GFXCore();
 
 		bool GL_LazyOpenSubsystem();

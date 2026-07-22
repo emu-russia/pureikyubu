@@ -254,7 +254,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// init
 
-	VideoInterface::VideoInterface(HWConfig* config)
+	VideoInterface::VideoInterface(Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::VI, "Video-out hardware interface\n");
 
@@ -289,7 +289,7 @@ namespace Flipper
 		// set traps to VI registers
 		for (uint32_t ofs = 0; ofs < VI_REG_MAX; ofs += 2)
 		{
-			HW->pi->PISetTrap(PI_REGSPACE_VI + ofs, VIRegRead, VIRegWrite, this);
+			flipper->pi->PISetTrap(PI_REGSPACE_VI + ofs, VIRegRead, VIRegWrite, this);
 		}
 	}
 

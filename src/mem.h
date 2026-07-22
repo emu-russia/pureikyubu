@@ -142,7 +142,7 @@ namespace Flipper
 		static void MEM_ReadCounter(uint32_t addr, uint32_t* reg, void* ctx);
 
 	public:
-		MemoryInterface(HWConfig* config);
+		MemoryInterface(Flipper* flipper, HWConfig* config);
 		~MemoryInterface();
 
 		// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
