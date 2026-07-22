@@ -227,9 +227,9 @@ CallJdiReturnBool(const char* request, bool* valueOut)
 }
 
 void 
-JdiAddNode(const char* filename, JDI::JdiReflector reflector)
+JdiAddNode(const char* filename, const char* jsonText, JDI::JdiReflector reflector)
 {
-	JDI::Hub.AddNode(Util::StringToWstring(filename), reflector);
+	JDI::Hub.AddNode(Util::StringToWstring(filename), jsonText, reflector);
 }
 
 void 

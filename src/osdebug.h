@@ -2,9 +2,8 @@
 
 #pragma once
 
-#define HLE_JDI_JSON L"./Data/Json/HLEJdi.json"
-
 namespace HLE
 {
+	extern const char* HleJdi;
 	void JdiReflector();
 }
