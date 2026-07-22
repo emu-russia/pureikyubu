@@ -5,6 +5,66 @@ using namespace Debug;
 
 namespace Flipper
 {
+	const char *HwJdi = R"json(
+{
+  "info": {
+	"description": "Various commands for debugging hardware (Flipper). Available only after emulation has been started.",
+	"helpGroup": "HW Debug Commands"
+  },
+
+  "can": {
+
+	"ramload": {
+	  "help": "Load binary file to main memory",
+	  "args": 2,
+	  "usage": [
+		"Syntax: ramload <file> <address>\n",
+		"Example of use: ramload lomem.bin 0x80000000\n"
+	  ]
+	},
+
+	"ramsave": {
+	  "help": "Save main memory content to file",
+	  "args": 3,
+	  "usage": [
+		"Syntax: ramsave <file> <address> <size>\n",
+		"Example of use: ramsave lomem.bin 0x80000000 0x3300\n"
+	  ]
+	},
+
+	"aramload": {
+	  "help": "Load binary file to ARAM",
+	  "args": 2,
+	  "usage": [
+		"Syntax: aramload <file> <address>\n",
+		"Example of use: aramload samples.bin 0x10000\n"
+	  ]
+	},
+
+	"aramsave": {
+	  "help": "Save ARAM content to file",
+	  "args": 3,
+	  "usage": [
+		"Syntax: aramsave <file> <address> <size>\n",
+		"Example of use: aramsave samples.bin 0x10000 0x200\n"
+	  ]
+	},
+
+	"nvi": {
+	  "help": "Run emulation until the next VI interrupt. You can perform frame-by-frame emulation from a VI perspective"
+	},
+
+	"npe": {
+	  "help": "Run emulation until the next PE interrupt (Done/Token). You can perform frame-by-frame emulation from the GFX Engine perspective"
+	}
+
+  },
+
+  "todo": [ "Parametrize input/output Arrays"]
+
+}
+	)json";
+
 	// Load binary file to main memory
 	static Json::Value* cmd_ramload(std::vector<std::string>& args)
 	{

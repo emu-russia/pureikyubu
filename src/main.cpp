@@ -3,6 +3,175 @@
 
 using namespace Debug;
 
+const char* EmuJdi = R"json(
+
+{
+  "info": {
+    "description": "Emulator Jey-Dai specs.",
+    "helpGroup": "EMU Control Commands"
+  },
+
+  "can": {
+
+    "FileLoad": {
+      "help": "Load file",
+      "args": 1,
+      "hints": "<file>",
+      "usage": [
+        "Syntax: FileLoad <file>\n",
+        "Commands outputs Array of bytes [], which can be used by other commands.\n",
+        "Example: FileLoad \"Data\\AnsiFont.szp\"\n"
+      ],
+      "output": "Array bytes []"
+    },
+
+    "FileSave": {
+      "help": "Save file",
+      "args": 2,
+      "hints": "<file> <cmd>",
+      "usage": [
+        "Syntax: FileSave <file> <cmd ...>\n",
+        "Save data returned by another command (cmd) to specified file.\n",
+        "Example: FileSave \"Data\\FST.bin\" DumpFst\n"
+      ]
+    },
+
+    "sleep": {
+      "help": "Sleep specified number of milliseconds",
+      "args": 1,
+      "hints": "<msec>",
+      "usage": [
+        "Syntax: sleep <milliseconds>\n",
+        "Examples of use: sleep 1000\n"
+      ]
+    },
+
+    "exit": {
+      "help": "Exit (also: x, quit, q)"
+    },
+    "quit": {
+      "internal": true,
+      "help": "Exit"
+    },
+    "x": {
+      "internal": true,
+      "help": "Exit"
+    },
+    "q": {
+      "internal": true,
+      "help": "Exit"
+    },
+
+    "load": {
+      "help": "load DVD/executable from file",
+      "args": 1,
+      "usage": [
+        "Syntax: load <file>\n",
+        "path can be relative. Use `load Bootrom` to load IPL.\n",
+        "Examples of use: boot c:\\luigimansion.gcm\n",
+        "                 boot PONG.dol\n"
+      ]
+    },
+
+    "unload": {
+      "help": "unload current file"
+    },
+
+    "reset": {
+      "help": "Reset emulation"
+    },
+
+    "IsLoaded": {
+      "internal": true,
+      "help": "Return true if emulation state is `Loaded`",
+      "output": "Bool"
+    },
+
+    "GetLoaded": {
+      "internal": true,
+      "help": "Get the full path of the loaded file",
+      "info": "Used by other components to obtain information about the currently running game or DOL file.",
+      "output": "{ loaded: PathString }"
+    },
+
+    "GetVersion": {
+      "internal": true,
+      "help": "Get emulator version",
+      "output": "Array: [String]"
+    },
+
+    "GetConfig": {
+      "help": "Dump config"
+    },
+
+    "GetConfigString": {
+      "internal": true,
+      "help": "Get configuration String parameter",
+      "args": 2,
+      "usage": [
+        "Use: GetConfigString <section> <param>"
+      ],
+      "output": "Array: [String]"
+    },
+
+    "SetConfigString": {
+      "internal": true,
+      "help": "Set configuration String parameter",
+      "args": 3,
+      "usage": [
+        "Use: SetConfigString <section> <param> <value>"
+      ]
+    },
+
+    "GetConfigInt": {
+      "internal": true,
+      "help": "Get configuration Int parameter",
+      "args": 2,
+      "usage": [
+        "Use: GetConfigInt <section> <param>"
+      ],
+      "output": "Array: [Int]"
+    },
+
+    "SetConfigInt": {
+      "internal": true,
+      "help": "Set configuration Int parameter",
+      "args": 3,
+      "usage": [
+        "Use: SetConfigInt <section> <param> <value>"
+      ]
+    },
+
+    "GetConfigBool": {
+      "internal": true,
+      "help": "Get configuration Bool parameter",
+      "args": 2,
+      "usage": [
+        "Use: GetConfigBool <section> <param>"
+      ],
+      "output": "Array: [Bool]"
+    },
+
+    "SetConfigBool": {
+      "internal": true,
+      "help": "Set configuration Bool parameter",
+      "args": 3,
+      "usage": [
+        "Use: SetConfigBool <section> <param> <value>"
+      ]
+    },
+
+    "threads": {
+      "help": "Show emulator threads (Util::Thread)"
+    }
+
+  }
+
+}
+
+
+)json";
+
 // Emulator state
 Emulator emu;
 
@@ -158,11 +327,11 @@ void EMUCtor()
 	{
 		return;
 	}
-	JDI::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
-	JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, Debug::gekko_init_handlers);
+	JDI::Hub.AddNode(L"DEBUGGER_JDI_JSON", Debug::DebuggerJdi, Debug::Reflector);
+	JDI::Hub.AddNode(L"GEKKO_CORE_JDI_JSON", Debug::GekkoCoreJdi, Debug::gekko_init_handlers);
 	Core = new Gekko::GekkoCore();
 	Flipper::DSP = new DSP::Dsp16();
-	JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
+	JDI::Hub.AddNode(L"EMU_JDI_JSON", EmuJdi, EmuReflector);
 	DVD::InitSubsystem();
 	HLEInit();
 	Debug::g_PerfCounters = new Debug::PerfCounters();
@@ -175,7 +344,7 @@ void EMUDtor()
 	{
 		return;
 	}
-	JDI::Hub.RemoveNode(EMU_JDI_JSON);
+	JDI::Hub.RemoveNode(L"EMU_JDI_JSON");
 	DVD::Unmount();
 	DVD::ShutdownSubsystem();
 	delete Core;
@@ -183,8 +352,8 @@ void EMUDtor()
 	delete Flipper::DSP;
 	Flipper::DSP = nullptr;
 	HLEShutdown();
-	JDI::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
-	JDI::Hub.RemoveNode(DEBUGGER_JDI_JSON);
+	JDI::Hub.RemoveNode(L"GEKKO_CORE_JDI_JSON");
+	JDI::Hub.RemoveNode(L"DEBUGGER_JDI_JSON");
 	delete Debug::g_PerfCounters;
 	emu.init = false;
 }

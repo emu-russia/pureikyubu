@@ -41,22 +41,14 @@ namespace JDI
 	}
 
 	// Register JDI node.
-	void JdiHub::AddNode(std::wstring filename, JdiReflector reflector)
+	void JdiHub::AddNode(std::wstring filename, const char *jsonText, JdiReflector reflector)
 	{
 		Json* json = new Json();
 
-		size_t jsonTextSize = Util::FileSize(filename);
-
-		auto data = Util::FileLoad(filename);
-
-		uint8_t* jsonText = new uint8_t[jsonTextSize + 1];      // +Safety zero trailer
-		memcpy(jsonText, data.data(), data.size());
-		jsonText[jsonTextSize] = 0;         // Safety zero trailer
+		size_t jsonTextSize = strlen(jsonText);
 
 		// Parse
-		json->Deserialize(jsonText, jsonTextSize);
-
-		delete[] jsonText;
+		json->Deserialize((void *)jsonText, jsonTextSize);
 
 		nodes[SimpleHash(filename)] = json;
 

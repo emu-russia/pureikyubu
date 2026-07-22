@@ -86,7 +86,7 @@ namespace Flipper
 		// open memory cards
 		MCOpen(config);
 
-		JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
+		JDI::Hub.AddNode(L"HW_JDI_JSON", HwJdi, hw_init_handlers);
 
 		hwUpdateThread = EMUCreateThread(HwUpdateThread, false, this, "HW");
 	}
@@ -95,7 +95,7 @@ namespace Flipper
 	{
 		EMUJoinThread(hwUpdateThread);
 
-		JDI::Hub.RemoveNode(HW_JDI_JSON);
+		JDI::Hub.RemoveNode(L"HW_JDI_JSON");
 
 		DSP->Suspend();
 

@@ -29,7 +29,7 @@ namespace JDI
 
 		void AddCmd(std::string name, CmdDelegate command);
 
-		void AddNode(std::wstring filename, JdiReflector reflector);
+		void AddNode(std::wstring filename, const char *jsonText, JdiReflector reflector);
 		void RemoveNode(std::wstring filename);
 
 		void Help();
