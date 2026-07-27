@@ -150,5 +150,8 @@ enum ELF_IDENT
 
 // Loader API
 
+/// <summary>
+/// Load any supported file
+/// </summary>
+/// <param name="filename"></param>
 void LoadFile(const std::wstring& filename);
-

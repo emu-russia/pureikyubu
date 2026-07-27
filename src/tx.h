@@ -277,12 +277,8 @@ namespace GFX
 		uint8_t      row[4];
 	};
 
-	class TextureEngine
+	struct TXState
 	{
-		friend GFXCore;
-		friend Rasterizer;		// TODO: Remove
-		GFXCore* gfx = nullptr;
-
 		LoadTlut0 loadtlut0;		// 0x64
 		LoadTlut1 loadtlut1;		// 0x65
 		TexMode0 texmode0[8];		// 0x80-0x83, 0xA0-0xA3
@@ -292,7 +288,15 @@ namespace GFX
 		TexImage2 teximg2[8];		// 0x90-0x93, 0xB0-0xB3
 		TexImage3 teximg3[8];		// 0x94-0x97, 0xB4-0xB7
 		SetTlut settlut[8];			// 0x98-0x9B, 0xB8-0xBB
-		bool texvalid[4][8];
+	};
+
+	class TextureEngine
+	{
+		friend GFXCore;
+		friend Rasterizer;		// TODO: Remove
+		GFXCore* gfx = nullptr;
+
+		TXState tx{};
 
 		#define GFX_MAX_TEXTURES 32
 

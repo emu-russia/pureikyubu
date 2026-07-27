@@ -269,7 +269,7 @@ void EMUOpen(const std::wstring& filename)
 
 	// open other sub-systems
 	Core->Reset();
-	HWConfig hwconfig{};
+	static HWConfig hwconfig{};
 	EMUGetHwConfig(&hwconfig);
 	Flipper::HW = new Flipper::Flipper(&hwconfig);
 
@@ -441,6 +441,7 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 		if (!f)
 		{
 			Report(Channel::Error, "Failed to create file: %s\n", args[1].c_str());
+			return nullptr;
 		}
 
 		for (auto it = input->children.begin(); it != input->children.end(); ++it)
@@ -760,7 +761,7 @@ uint32_t LoadDOL(const std::wstring& dolname)
 		}
 	}
 
-	HWConfig config{};
+	static HWConfig config{};
 	EMUGetHwConfig(&config);
 	BootROM(&config, false, false);
 
@@ -1068,7 +1069,6 @@ void GetDiskId(std::wstring& diskId)
 	diskId = std::wstring(diskIdWchar);
 }
 
-/* Load any supported file */
 void LoadFile(const std::wstring& filename)
 {
 	uint32_t entryPoint = 0;
@@ -1116,7 +1116,7 @@ void LoadFile(const std::wstring& filename)
 		throw "Cannot load file!";
 	}
 
-	HWConfig config{};
+	static HWConfig config{};
 	EMUGetHwConfig(&config);
 
 	// simulate bootrom
