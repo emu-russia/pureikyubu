@@ -727,7 +727,7 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	{
 		if(dh.textOffset[i])    /* If offset is 0, then section is empty */
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.textAddress[i]);
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.textAddress[i] & 0x03ff'ffff);
 			char* addr = (char*)ptr;
 
 			dol.seekg(dh.textOffset[i]);
@@ -746,7 +746,7 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	{
 		if (dh.dataOffset[i])    /* If offset is 0, then section is empty */
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.dataAddress[i]);
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.dataAddress[i] & 0x03ff'ffff);
 			char* addr = (char*)ptr;
 
 			dol.seekg(dh.dataOffset[i]);
@@ -792,7 +792,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 	{
 		if(dol->textOffset[i])  // if offset is 0, then section is empty
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->textAddress[i]);
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->textAddress[i] & 0x03ff'ffff);
 			uint8_t* addr = ptr;
 			memcpy(addr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
 
@@ -809,7 +809,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 	{
 		if(dol->dataOffset[i])  // if offset is 0, then section is empty
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->dataAddress[i]);
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->dataAddress[i] & 0x03ff'ffff);
 			uint8_t *addr = ptr;
 			memcpy(addr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
 
@@ -975,7 +975,7 @@ uint32_t LoadELF(const std::wstring& elfname)
 				vend = vaddr + size;
 
 				file.seekg(Elf_SwapOff(phdr.p_offset));
-				uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(vaddr);
+				uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(vaddr & 0x03ff'ffff);
 				file.read((char*)ptr, vend - vaddr);
 			}
 		}
