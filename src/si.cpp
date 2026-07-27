@@ -482,7 +482,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// init
 
-	SerialInterface::SerialInterface(HWConfig* config)
+	SerialInterface::SerialInterface(Flipper* flipper, HWConfig* config)
 	{
 		Debug::Report(Debug::Channel::SI, "Serial interface driver\n");
 
@@ -512,45 +512,45 @@ namespace Flipper
 		}
 
 		// joypads in/out command buffer
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF, si_rd_out0_hi, si_wr_out0_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF + 2, si_rd_out0_lo, si_wr_out0_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH, si_inh0_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH + 2, si_inh0_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL, si_inl0_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL + 2, si_inl0_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF, si_rd_out1_hi, si_wr_out1_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF + 2, si_rd_out1_lo, si_wr_out1_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH, si_inh1_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH + 2, si_inh1_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL, si_inl1_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL + 2, si_inl1_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF, si_rd_out2_hi, si_wr_out2_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF + 2, si_rd_out2_lo, si_wr_out2_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH, si_inh2_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH + 2, si_inh2_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL, si_inl2_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL + 2, si_inl2_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF, si_rd_out3_hi, si_wr_out3_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF + 2, si_rd_out3_lo, si_wr_out3_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH, si_inh3_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH + 2, si_inh3_lo, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL, si_inl3_hi, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL + 2, si_inl3_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF, si_rd_out0_hi, si_wr_out0_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_OUTBUF + 2, si_rd_out0_lo, si_wr_out0_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH, si_inh0_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFH + 2, si_inh0_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL, si_inl0_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN0_INBUFL + 2, si_inl0_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF, si_rd_out1_hi, si_wr_out1_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_OUTBUF + 2, si_rd_out1_lo, si_wr_out1_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH, si_inh1_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFH + 2, si_inh1_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL, si_inl1_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN1_INBUFL + 2, si_inl1_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF, si_rd_out2_hi, si_wr_out2_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_OUTBUF + 2, si_rd_out2_lo, si_wr_out2_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH, si_inh2_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFH + 2, si_inh2_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL, si_inl2_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN2_INBUFL + 2, si_inl2_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF, si_rd_out3_hi, si_wr_out3_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_OUTBUF + 2, si_rd_out3_lo, si_wr_out3_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH, si_inh3_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFH + 2, si_inh3_lo, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL, si_inl3_hi, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_CHAN3_INBUFL + 2, si_inl3_lo, nullptr, this);
 
 		// si control registers
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_POLL, read_poll_hi, write_poll_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_POLL + 2, read_poll_lo, write_poll_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_COMCSR, read_commcsr_hi, write_commcsr_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_COMCSR + 2, read_commcsr_lo, write_commcsr_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_SR, read_sisr_hi, write_sisr_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_SR + 2, read_sisr_lo, write_sisr_lo, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk_hi, write_exilk_hi, this);
-		HW->pi->PISetTrap(PI_REGSPACE_SI | SI_EXILK + 2, read_exilk_lo, write_exilk_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_POLL, read_poll_hi, write_poll_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_POLL + 2, read_poll_lo, write_poll_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_COMCSR, read_commcsr_hi, write_commcsr_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_COMCSR + 2, read_commcsr_lo, write_commcsr_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_SR, read_sisr_hi, write_sisr_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_SR + 2, read_sisr_lo, write_sisr_lo, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_EXILK, read_exilk_hi, write_exilk_hi, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_SI | SI_EXILK + 2, read_exilk_lo, write_exilk_lo, this);
 
 		// serial communcation buffer
 		for (unsigned ofs = 0; ofs < 128; ofs += 2)
 		{
-			HW->pi->PISetTrap((PI_REGSPACE_SI | SI_COMBUF) + ofs, read_sicom, write_sicom, this);
+			flipper->pi->PISetTrap((PI_REGSPACE_SI | SI_COMBUF) + ofs, read_sicom, write_sicom, this);
 		}
 	}
 

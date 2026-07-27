@@ -2,9 +2,8 @@
 
 #pragma once
 
-#define GEKKO_CORE_JDI_JSON L"./Data/Json/GekkoCoreJdi.json"
-
 namespace Debug
 {
+	extern const char* GekkoCoreJdi;
 	void gekko_init_handlers();
 }

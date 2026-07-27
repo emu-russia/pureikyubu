@@ -29,7 +29,7 @@ namespace DSP
 
 	extern  DspAIControl dsp_ai;
 
-	void    DspAIOpen(HWConfig* config);
+	void    DspAIOpen(Flipper::Flipper *flipper, HWConfig* config);
 	void    DspAIClose();
 
 	// Used by DspCore

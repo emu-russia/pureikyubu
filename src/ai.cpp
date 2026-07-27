@@ -223,7 +223,7 @@ namespace Flipper
 		}
 	}
 
-	AudioInterface::AudioInterface(HWConfig* config)
+	AudioInterface::AudioInterface(Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::AI, "Audio interface (DSP AI/DVD Audio mixer)\n");
 
@@ -235,7 +235,7 @@ namespace Flipper
 		ai.log = config->ai_log;
 
 		for (uint32_t i = 0; i < AIS_REG_MAX; i+=2) {
-			HW->pi->PISetTrap(PI_REGSPACE_AI + i, AIReadReg, AIWriteReg, this);
+			flipper->pi->PISetTrap(PI_REGSPACE_AI + i, AIReadReg, AIWriteReg, this);
 		}
 	}
 

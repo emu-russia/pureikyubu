@@ -477,7 +477,7 @@ namespace GFX
 		static void PERegWrite(uint32_t addr, uint32_t data, void* context);
 
 	public:
-		PixelEngine(HWConfig *config, GFXCore *parent_gfx);
+		PixelEngine(Flipper::Flipper* flipper, HWConfig *config, GFXCore *parent_gfx);
 		~PixelEngine();
 
 		uint32_t EfbPeek(uint32_t addr);

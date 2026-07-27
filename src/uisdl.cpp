@@ -699,8 +699,8 @@ static int ui_main()
 	UI::Jdi = new UI::JdiClient;
 
 	// Add UI methods
-	JdiAddNode(UI_JDI_JSON, UIReflector);
-	JdiAddNode(DEBUG_UI_JDI_JSON, Debug::DebugUIReflector);
+	JdiAddNode("UI_JDI_JSON", UIReflector);
+	JdiAddNode("DEBUG_UI_JDI_JSON", Debug::DebugUIReflector);
 
 	// Start the user interface
 
@@ -865,8 +865,8 @@ static int ui_main()
 
 	UI::Jdi->Unload();
 
-	JdiRemoveNode(UI_JDI_JSON);
-	JdiRemoveNode(DEBUG_UI_JDI_JSON);
+	JdiRemoveNode("UI_JDI_JSON");
+	JdiRemoveNode("DEBUG_UI_JDI_JSON");
 
 	if (Debug::debugger) {
 		delete Debug::debugger;

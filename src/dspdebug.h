@@ -2,9 +2,8 @@
 
 #pragma once
 
-#define DSP_JDI_JSON L"./Data/Json/DspJdi.json"
-
 namespace DSP
 {
+	extern const char* DspJdi;
 	void dsp_init_handlers();
 }

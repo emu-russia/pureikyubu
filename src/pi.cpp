@@ -658,7 +658,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// init
 
-	ProcessorInterface::ProcessorInterface(HWConfig* config)
+	ProcessorInterface::ProcessorInterface(Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::PI, "Processor interface\n");
 
