@@ -134,10 +134,9 @@ namespace Debug
 
 // Debugger Jdi
 
-#define DEBUGGER_JDI_JSON L"./Data/Json/DebuggerJdi.json"
-
 namespace Debug
 {
+	extern const char* DebuggerJdi;
 	void Reflector();
 }
 

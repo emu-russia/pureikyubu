@@ -84,7 +84,7 @@ namespace Flipper
 		static void DIRegWrite(uint32_t addr, uint32_t data, void* context);
 
 	public:
-		DiskInterface(HWConfig* config);
+		DiskInterface(Flipper* flipper, HWConfig* config);
 		~DiskInterface();
 	};
 }

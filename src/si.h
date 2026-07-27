@@ -174,7 +174,7 @@ namespace Flipper
 		static void read_exilk_lo(uint32_t addr, uint32_t* reg, void* ctx);
 
 	public:
-		SerialInterface(HWConfig* config);
+		SerialInterface(Flipper* flipper, HWConfig* config);
 		~SerialInterface();
 
 		void SIPoll();

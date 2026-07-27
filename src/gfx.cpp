@@ -6,7 +6,7 @@ using namespace Debug;
 
 namespace GFX
 {
-	GFXCore::GFXCore(HWConfig* config)
+	GFXCore::GFXCore(Flipper::Flipper* flipper, HWConfig* config)
 	{
 #if GFX_USE_SDL_WINDOW
 		render_window = (SDL_Window*)config->renderTarget;
@@ -23,7 +23,7 @@ namespace GFX
 		xf = new TransformUnit(config, this);
 		su = new SetupUnit(config, this);
 		ras = new Rasterizer(config, this);			// TODO: For now, only single instance; will be developed for software rendering.
-		pe = new PixelEngine(config, this);
+		pe = new PixelEngine(flipper, config, this);
 		bump = new BumpMappingUnit(config, this);
 		tx = new TextureEngine(config, this);
 		tev = new TextureEnvironmentUnit(config, this);

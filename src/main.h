@@ -30,8 +30,6 @@ extern  Emulator emu;
 
 // Emu debug commands
 
-#define EMU_JDI_JSON L"./Data/Json/EmuJdi.json"
-
 void EmuReflector();
 
 

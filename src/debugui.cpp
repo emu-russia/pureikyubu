@@ -2,6 +2,40 @@
 
 namespace Debug
 {
+	const char* DebugUiJdi = R"json(
+{
+  "info": {
+    "description": "Debug UI Jey-Dai specs.",
+    "helpGroup": "Debug UI Commands"
+  },
+
+  "can": {
+
+    "d": {
+      "help": "Set memory address to view in debugger.",
+      "args": 1,
+      "hints": "<address>",
+      "usage": [
+        "Syntax: d <address>\n",
+        "Example: d 0x80003000\n"
+      ]
+    },
+
+    "u": {
+      "help": "Set memory address for viewing disassembled Gekko/DSP code.",
+      "args": 1,
+      "hints": "<address>",
+      "usage": [
+        "Syntax: u <address>\n",
+        "Example: u 0x80003000\n"
+      ]
+    }
+
+  }
+
+}
+)json";
+
 	Debugger* debugger;
 }
 

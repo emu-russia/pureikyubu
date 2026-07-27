@@ -558,7 +558,7 @@ namespace Flipper
 		void CpWriteReg(uint32_t addr, uint16_t value);
 
 	public:
-		CommandProcessor(HWConfig* config);
+		CommandProcessor(Flipper* flipper, HWConfig* config);
 		~CommandProcessor();
 
 		// Streaming FIFO burst write notification from PI

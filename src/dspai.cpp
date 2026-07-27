@@ -297,7 +297,7 @@ namespace DSP
 		}
 	}
 
-	void DspAIOpen(HWConfig* config)
+	void DspAIOpen(Flipper::Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::AI, "DSP AI DMA\n");
 
@@ -313,17 +313,17 @@ namespace DSP
 		AIStopDMA();
 
 		// set register traps
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AI_DCR, read_aidcr, write_aidcr);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AI_DCR, read_aidcr, write_aidcr);
 
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
 
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_MADRH, read_dmah, write_dmah);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_MADRL, read_dmal, write_dmal);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_LEN, read_len, write_len);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AID_CNT, read_dcnt, nullptr);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AID_MADRH, read_dmah, write_dmah);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AID_MADRL, read_dmal, write_dmal);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AID_LEN, read_len, write_len);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AID_CNT, read_dcnt, nullptr);
 	}
 
 	void DspAIClose()

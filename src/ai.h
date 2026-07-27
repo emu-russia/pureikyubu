@@ -54,7 +54,7 @@ namespace Flipper
 		static void AIStreamCallback(uint16_t l, uint16_t r, void* ctx);
 
 	public:
-		AudioInterface(HWConfig* config);
+		AudioInterface(Flipper *flipper, HWConfig* config);
 		~AudioInterface();
 	};
 }

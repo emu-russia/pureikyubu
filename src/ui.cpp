@@ -214,7 +214,46 @@ void UIReflector()
 
 namespace UI
 {
-	// Open file/directory dialog
+	const char* UiJdi = R"json(
+{
+  "info": {
+    "description": "UI Jey-Dai specs.",
+    "helpGroup": "UI Commands"
+  },
+
+  "can": {
+
+    "UIError": {
+      "help": "Display UI error message",
+      "args": 1,
+      "hints": "<text>",
+      "usage": [
+        "Syntax: UIError <text>\n",
+        "Example: UIError \"Error message!\"\n"
+      ]
+    },
+
+    "UIReport": {
+      "help": "Display UI message",
+      "args": 1,
+      "hints": "<text>",
+      "usage": [
+        "Syntax: UIReport <text>\n",
+        "Example: UIReport \"Hello, world!\"\n"
+      ]
+    },
+
+    "GetRenderTarget": {
+      "internal": true,
+      "help": "Return UI Render Target object (example: HWND). Flipper GFX will use to output graphics",
+      "output": "Int"
+    }
+
+  }
+
+}
+)json";
+
 	const wchar_t* FileOpenDialog(FileType type)
 	{
 		HWND hwnd = wnd.hMainWindow;
@@ -4094,8 +4133,8 @@ static void OnMainWindowCreate(HWND hwnd)
 	DragAcceptFiles(wnd.hMainWindow, TRUE);
 
 	// Add UI methods
-	JdiAddNode(UI_JDI_JSON, UIReflector);
-	JdiAddNode(DEBUG_UI_JDI_JSON, Debug::DebugUIReflector);
+	JdiAddNode("UI_JDI_JSON", UI::UiJdi, UIReflector);
+	JdiAddNode("DEBUG_UI_JDI_JSON", Debug::DebugUiJdi, Debug::DebugUIReflector);
 
 	// simulate close operation, like we just stopped emu
 	OnMainWindowClosed();
@@ -4106,8 +4145,8 @@ static void OnMainWindowDestroy()
 {
 	UI::Jdi->Unload();
 
-	JdiRemoveNode(UI_JDI_JSON);
-	JdiRemoveNode(DEBUG_UI_JDI_JSON);
+	JdiRemoveNode("UI_JDI_JSON");
+	JdiRemoveNode("DEBUG_UI_JDI_JSON");
 
 	// disable drop operation
 	DragAcceptFiles(wnd.hMainWindow, FALSE);

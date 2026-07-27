@@ -18,7 +18,7 @@ bool
 CallJdiReturnBool(const char* request, bool* valueOut);
 
 void
-JdiAddNode(const char* filename, JDI::JdiReflector reflector);
+JdiAddNode(const char* filename, const char *jsonText, JDI::JdiReflector reflector);
 
 void
 JdiRemoveNode(const char* filename);

@@ -169,7 +169,7 @@ namespace Flipper
 		}
 	}
 
-	MemoryInterface::MemoryInterface(HWConfig* config)
+	MemoryInterface::MemoryInterface(Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::MI, "Flipper memory interface\n");
 
@@ -191,41 +191,41 @@ namespace Flipper
 
 		for (uint32_t ofs = 0; ofs < MEM_REG_MAX; ofs += 2)
 		{
-			HW->pi->PISetTrap(PI_REGSPACE_MEM | ofs, mi_no_read, mi_no_write, this);
+			flipper->pi->PISetTrap(PI_REGSPACE_MEM | ofs, mi_no_read, mi_no_write, this);
 		}
 
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR1_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR2_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR3_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR1_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR2_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR3_START, MEM_ReadMarrStart, MEM_WriteMarrStart, this);
 
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR1_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR2_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR3_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR0_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR1_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR2_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR3_END, MEM_ReadMarrEnd, MEM_WriteMarrEnd, this);
 
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR_CONTROL, MEM_ReadMarrControl, MEM_WriteMarrControl, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_MARR_CONTROL, MEM_ReadMarrControl, MEM_WriteMarrControl, this);
 
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_INT_ENABLE, MEM_ReadIntEnable, MEM_WriteIntEnable, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_INT_STATUS, MEM_ReadIntStatus, nullptr, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_INT_CLR, nullptr, MEM_WriteIntClear, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_INT_ENABLE, MEM_ReadIntEnable, MEM_WriteIntEnable, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_INT_STATUS, MEM_ReadIntStatus, nullptr, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_INT_CLR, nullptr, MEM_WriteIntClear, this);
 
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_CP_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_CP_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_TC_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_TC_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_READ_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_READ_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_WRITE_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_WRITE_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_DSP_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_DSP_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_IO_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_IO_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_VI_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_VI_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PE_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
-		HW->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PE_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_CP_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_CP_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_TC_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_TC_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_READ_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_READ_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_WRITE_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PI_WRITE_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_DSP_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_DSP_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_IO_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_IO_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_VI_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_VI_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PE_COUNTERH, MEM_ReadCounter, MEM_WriteCounter, this);
+		flipper->pi->PISetTrap(PI_REGSPACE_MEM | MEM_PE_COUNTERL, MEM_ReadCounter, MEM_WriteCounter, this);
 	}
 
 	MemoryInterface::~MemoryInterface()

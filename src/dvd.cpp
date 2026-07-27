@@ -184,7 +184,7 @@ namespace DVD
 
 	void InitSubsystem()
 	{
-		JDI::Hub.AddNode(DDU_JDI_JSON, DvdCommandsReflector);
+		JDI::Hub.AddNode(L"DDU_JDI_JSON", DduJdi, DvdCommandsReflector);
 
 		DDU = new DduCore;
 	}
@@ -192,7 +192,7 @@ namespace DVD
 	void ShutdownSubsystem()
 	{
 		Unmount();
-		JDI::Hub.RemoveNode(DDU_JDI_JSON);
+		JDI::Hub.RemoveNode(L"DDU_JDI_JSON");
 		delete DDU;
 	}
 
@@ -207,26 +207,213 @@ All the necessary data (BI2, Appldr, some DOL executable, we take from the SDK).
 
 namespace DVD
 {
+	const char* dvdDataInfoText = R"json(
+
+{
+	"audio":
+	{
+		"tracks":
+		{
+			"dtk_car.adp": {},
+			"dtk_gs.adp": {},
+			"dtk_spl.adp": {}
+		}
+	},
+	
+	"axdemo":
+	{
+		"axart":
+		{
+			"axartdemo.spd": {},
+			"axartdemo.spt": {}
+		},
+		"midi":
+		{
+			"2nd_time.mid": {},
+			"annie.mid": {},
+			"autumnal.mid": {},
+			"candy.mid": {},
+			"j_cycle.mid": {},
+			"worm.mid": {}
+		},
+		"stream":
+		{
+			"left.adpcm": {},
+			"left.pcm16": {},
+			"left.pcm8": {},
+			"right.adpcm": {},
+			"right.pcm16": {},
+			"right.pcm8": {}
+		},
+		"synth":
+		{
+			"gm16adpcm.pcm": {},
+			"gm16adpcm.wt": {},
+			"gm16pcm.pcm": {},
+			"gm16pcm.wt": {}
+		},
+		"tests":
+		{
+			"heli_60.pcm8": {},
+			"sine_64.pcm16": {},
+			"siren.adpcm": {}
+		}
+	},
+
+	"carddemo":
+	{
+		"banner.tpl": {},
+		"gamecube.tpl": {},
+		"heiho.tpl": {},
+		"heihoC8.tpl": {},
+		"icon.tpl": {},
+		"luigi.tpl": {},
+		"marioCI.tpl": {},
+		"yoshi.tpl": {}
+	},
+
+	"constitu":
+	{
+		"article1":
+		{
+			"section1": {},
+			"section2": {},
+			"section3": {},
+			"section4": {},
+			"section5": {},
+			"section6": {},
+			"section7": {},
+			"section8": {},
+			"section9": {},
+			"sectionA": {}
+		},
+		"article2":
+		{
+			"section1": {},
+			"section2": {},
+			"section3": {},
+			"section4": {}
+		},
+		"article3":
+		{
+			"section1": {},
+			"section2": {},
+			"section3": {}
+		}
+	},
+
+	"gddemo":
+	{
+		"gdInit.gdl": {},
+		"gdLight.gdl": {},
+		"gdMatrix.gdl": {},
+		"gdTev.gdl": {},
+		"gdTextr.gdl": {}
+	},
+
+	"gxTests":
+	{
+		"dnt-02.tpl": {},
+		"dnt-03.tpl": {},
+		"frb-00.tpl": {},
+		"g2d-00.tpl": {},
+		"geo-00.tpl": {},
+		"lit-06.tpl": {},
+		"lit-10.tpl": {},
+		"pseudo.tpl": {},
+		"tev-00.tpl": {},
+		"tev-01.tpl": {},
+		"tev-02.tpl": {},
+		"tev-03.tpl": {},
+		"tev-04.tpl": {},
+		"tex-01.tpl": {},
+
+		"tex-02":
+		{
+			"ci8_1.tpl": {},
+			"ci8_2.tpl": {},
+			"cmp_1.tpl": {},
+			"cmp_1mm.tpl": {},
+			"cmp_even.tpl": {},
+			"i4_1.tpl": {},
+			"i4_1mm.tpl": {},
+			"i4_odd.tpl": {},
+			"i8_1.tpl": {},
+			"i8_1mm.tpl": {},
+			"i8_odd.tpl": {},
+			"ia4_1.tpl": {},
+			"ia4_1mm.tpl": {},
+			"ia4_odd.tpl": {},
+			"ia8_1.tpl": {},
+			"ia8_1mm.tpl": {},
+			"ia8_odd.tpl": {},
+			"rgb565mm.tpl": {},
+			"rgb565od.tpl": {},
+			"rgb565_1.tpl": {},
+			"rgb5a3mm.tpl": {},
+			"rgb5a3od.tpl": {},
+			"rgb5a3_1.tpl": {},
+			"rgba8mm.tpl": {},
+			"rgba8od.tpl": {},
+			"rgba8_1.tpl": {}
+		},
+
+		"tex-03.tpl": {},
+		"tex-05.tpl": {},
+		"tex-06.tpl": {},
+		"tex-07.tpl": {},
+		"tex-08.tpl": {},
+		"tf-02.tpl": {},
+		"tg-01.tpl": {},
+		"tg-02.tpl": {},
+		"tg-cube.tpl": {},
+		"tg-cube1.tpl": {},
+		"tg-dual.tpl": {},
+		"tg-pc.tpl": {}
+	},
+
+	"gxTextrs.tpl": {},	
+
+	"opening.bnr": {},	
+
+	"pictures":
+	{
+		"clrbars7.BMP": {},
+		"dump.bmp": {},
+		"gray256b.BMP": {},
+		"gray3.BMP": {},
+		"marina2.BMP": {},
+		"rainbow.BMP": {},
+		"venice3.BMP": {}
+	},
+
+	"spdemo":
+	{
+		"spdemo.spd": {},
+		"spdemo.spt": {}
+	},
+
+	"texts":
+	{
+		"test1.txt": {},
+		"test2.txt": {}
+	}
+
+}
+
+)json";
+
 	MountDolphinSdk::MountDolphinSdk(const wchar_t* DolphinSDKPath)
 	{
 		wcscpy(directory, DolphinSDKPath);
 
-		// Load dvddata structure.
-		// TODO: Generate Json dynamically
-		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
-		if (dvdDataInfoText.empty())
-		{
-			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::WstringToString(DvdDataJson).c_str());
-			return;
-		}
-
 		try
 		{
-			DvdDataInfo.Deserialize(dvdDataInfoText.data(), dvdDataInfoText.size());
+			DvdDataInfo.Deserialize((void *)dvdDataInfoText, strlen(dvdDataInfoText));
 		}
 		catch (...)
 		{
-			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::WstringToString(DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json\n");
 			return;
 		}
 

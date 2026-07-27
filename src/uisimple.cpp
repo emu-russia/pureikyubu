@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 
 	// Add UI methods
 
-	JdiAddNode(UI_JDI_JSON, UIReflector);
+	JdiAddNode("UI_JDI_JSON", UIReflector);
 
 	// Say hello
 
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 	// Unload
 
 	UI::Jdi->Unload();
-	JdiRemoveNode(UI_JDI_JSON);
+	JdiRemoveNode("UI_JDI_JSON");
 	delete UI::Jdi;
 	delete Debug::debugger;
 	EMUDtor();

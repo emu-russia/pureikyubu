@@ -438,7 +438,7 @@ namespace DSP
 	// ---------------------------------------------------------------------------
 	// init
 
-	void AROpen()
+	void AROpen(Flipper::Flipper* flipper)
 	{
 		Report(Channel::AR, "Aux. memory (ARAM) driver\n");
 
@@ -454,17 +454,17 @@ namespace DSP
 		aram.log = true;
 
 		// set traps to aram registers
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
 
 		// hacks
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_SIZE, ar_hack_size_r, ar_hack_size_w);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_MODE, ar_hack_mode, no_write);
-		Flipper::HW->pi->PISetTrap(PI_REGSPACE_DSP | AR_REFRESH, no_read, no_write);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_SIZE, ar_hack_size_r, ar_hack_size_w);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_MODE, ar_hack_mode, no_write);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AR_REFRESH, no_read, no_write);
 
 		aram.dmaThread = EMUCreateThread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
 	}

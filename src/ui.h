@@ -20,7 +20,10 @@ In short, the current controller settings are strongly tied to the PadSimpleWin3
 
 // The UI needs to implement a small number of methods that are used in the emulator core.
 
-#define UI_JDI_JSON "./Data/Json/UIJdi.json"
+namespace UI
+{
+	extern const char* UiJdi;
+}
 
 void UIReflector();
 
