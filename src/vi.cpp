@@ -287,7 +287,7 @@ namespace Flipper
 		}
 
 		// set traps to VI registers
-		for (uint32_t ofs = 0; ofs < VI_REG_MAX; ofs += 2)
+		for (uint32_t ofs = 0; ofs < 0x100; ofs += 2)
 		{
 			flipper->pi->PISetTrap(PI_REGSPACE_VI + ofs, VIRegRead, VIRegWrite, this);
 		}
