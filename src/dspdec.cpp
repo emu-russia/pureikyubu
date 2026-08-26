@@ -954,11 +954,11 @@ namespace DSP
 			}
 			else
 			{
-				// lsf
+				// lsf (0x3C80: source b1 with d=a, source a1 with d=b)
 				info.parallelInstr = DspParallelInstruction::lsf;
 				int d = (instrBits >> 8) & 1;
 				AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
-				AddParam(info, d == 0 ? DspParameter::x1 : DspParameter::y1);
+				AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
 			}
 			break;
 		}
@@ -974,11 +974,11 @@ namespace DSP
 			}
 			else
 			{
-				// asf
+				// asf (0x3E80: source b1 with d=a, source a1 with d=b)
 				info.parallelInstr = DspParallelInstruction::asf;
 				int d = (instrBits >> 8) & 1;
 				AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
-				AddParam(info, d == 0 ? DspParameter::x1 : DspParameter::y1);
+				AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
 			}
 			break;
 		}
