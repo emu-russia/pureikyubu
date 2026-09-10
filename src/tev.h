@@ -1,10 +1,14 @@
 // Texture Environment Unit (TEV)
-#pragma once
 
-// TEV cannot be emulated by "simple" OpenGL, it requires more advanced pixel shaders.
+// The TEV is emulated by a fragment shader that is generated on the fly from the register state.
+// See specs: gfx-tev.md (registers 0xC0-0xFD, RAS1_TREF bindings from gfx-ras1.md).
+
+#pragma once
 
 namespace GFX
 {
+	class GLProgram;
+
 	// TEV Regs
 	#define TEV_COLOR_ENV_0_ID 0xC0
 	#define TEV_ALPHA_ENV_0_ID 0xC1
@@ -89,7 +93,7 @@ namespace GFX
 		uint32_t bits;
 	};
 
-	// 0xC0..0xDF
+	// 0xC1..0xDF
 	union TEV_AlphaEnv
 	{
 		struct
@@ -124,7 +128,7 @@ namespace GFX
 		uint32_t bits;
 	};
 
-	// 0xE0
+	// 0xE1
 	union TEV_RegisterH
 	{
 		struct
@@ -312,9 +316,9 @@ namespace GFX
 	struct TEVState
 	{
 		TEV_ColorEnv color_env[16]{};		// 0xC0..0xDF
-		TEV_AlphaEnv alpha_env[16]{};		// 0xC0..0xDF
-		TEV_RegisterL regl[4]{};		// 0xE0
-		TEV_RegisterH regh[4]{};		// 0xE0
+		TEV_AlphaEnv alpha_env[16]{};		// 0xC1..0xDF
+		TEV_RegisterL regl[4]{};		// 0xE0,0xE2,0xE4,0xE6
+		TEV_RegisterH regh[4]{};		// 0xE1,0xE3,0xE5,0xE7
 		TEV_RangeAdj_Contol rangeadj_control{};	// 0xE8
 		TEV_RangeAdj range_adj[5]{};	// 0xE9...0xED
 		TEV_FogParam0 fog_param0{};		// 0xEE
@@ -331,13 +335,25 @@ namespace GFX
 	class TextureEnvironmentUnit
 	{
 		friend GFXCore;
+		friend Rasterizer;
 		GFXCore* gfx = nullptr;
+
 		TEVState tev{};
+
+		GLProgram* program = nullptr;		//!< Static TEV (fragment) program; created once
 
 	public:
 		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEnvironmentUnit();
 
 		void loadTEVReg(size_t index, uint32_t value);
+
+		//! Bind (creating on first use) the TEV fragment program.
+		GLProgram* GetTevProgram();
+
+		//! Upload the whole TEV register state to the program.
+		void UploadUniforms(GLProgram& program);
+
+		void DisposePrograms();
 	};
 }

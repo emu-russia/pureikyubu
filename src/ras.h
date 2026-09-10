@@ -4,6 +4,10 @@
 // - RAS0: edge rasterization
 // - RAS1: texture coordinate rasterization
 // - RAS2: color rasterization
+//
+// In this emulator the rasterizers are not emulated geometrically: the primitives are handed to the
+// OpenGL backend as-is. What *is* emulated here is the register state that the rasterizers own and
+// that the rest of the pipeline (mainly TEV) needs - the per-stage texture bindings (RAS1_TREF).
 
 namespace GFX
 {
@@ -32,15 +36,72 @@ namespace GFX
 		RAS_POINT,
 	};
 
+	// Texture coordinate scale (RAS1_SS0/SS1). Only the scale factors are used (for texcoord scale emulation).
+	union RAS1_SS
+	{
+		struct
+		{
+			unsigned ss0 : 16;
+			unsigned ts0 : 16;
+		};
+		uint32_t bits;
+	};
+
+	// Texture coordinate / colour source reference (RAS1_TREF0..7). One register per pair of TEV stages.
+	union RAS1_TREF
+	{
+		struct
+		{
+			unsigned ti0 : 3;		// Texture image id for the even stage
+			unsigned tc0 : 3;		// Texture coordinate for the even stage
+			unsigned te0 : 1;		// Texture enable for the even stage
+			unsigned cc0 : 3;		// Colour source for the even stage (ras1_cc)
+			unsigned pad0 : 2;
+			unsigned ti1 : 3;		// Texture image id for the odd stage
+			unsigned tc1 : 3;		// Texture coordinate for the odd stage
+			unsigned te1 : 1;		// Texture enable for the odd stage
+			unsigned cc1 : 3;		// Colour source for the odd stage
+			unsigned pad1 : 2;
+			unsigned rid : 8;
+		};
+		uint32_t bits;
+	};
+
+	// Colour source of a TEV stage (ras1_cc)
+	enum RasColorSource : unsigned
+	{
+		RAS1_CC_0 = 0,
+		RAS1_CC_1,
+		RAS1_CC_2,
+		RAS1_CC_3,
+		RAS2_CC_UNUSED,
+		RAS1_CC_BUMP,
+		RAS1_CC_BUMP_NRM,
+		RAS1_CC_ZERO,
+	};
+
+	class TextureEnvironmentUnit;
+	class GFXCore;
+
 	class Rasterizer
 	{
 		friend GFXCore;
+		friend TextureEnvironmentUnit;
 		GFXCore* gfx = nullptr;
 
-		bool ras_wireframe = false;			//!< Enable wireframe drawing of primitives (DEBUG)
-		bool ras_use_texture = false;
+		RAS_Primitive current_prim = RAS_QUAD;
+		size_t vertex_count = 0;
+
+		RAS1_TREF tref[8]{};		// 0x28-0x2F
+		RAS1_SS ss[2]{};			// 0x25, 0x26
+		uint32_t iref = 0;			// 0x27
+
+		void SetUpPipeline();
+		void DrawPrimitive();
 
 	public:
+		bool ras_wireframe = false;			//!< Enable wireframe drawing of primitives (DEBUG)
+
 		Rasterizer(HWConfig* config, GFXCore* parent_gfx);
 		~Rasterizer();
 
@@ -49,5 +110,8 @@ namespace GFX
 		void RAS_SendVertex(const Vertex* v);
 		
 		void loadRASReg(size_t index, uint32_t value);
+
+		//! Texture binding of a TEV stage (0..15), as programmed through RAS1_TREF0..7
+		const RAS1_TREF* GetTref(int stage) const { return &tref[(stage >> 1) & 7]; }
 	};
 }

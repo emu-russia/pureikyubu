@@ -136,10 +136,29 @@ namespace Debug
 
 		va_list arg;
 		char buf[0x1000] = { 0, };
+		static FILE* logFile = nullptr;
+		static bool logChecked = false;
 
 		va_start(arg, text);
 		vsprintf(buf, text, arg);
 		va_end(arg);
+
+		// Optional debug log (useful when no debugger window is open)
+		if (!logChecked)
+		{
+			logChecked = true;
+			const char* logName = getenv("EMU_LOG");
+			if (logName != nullptr && logName[0] != 0)
+			{
+				logFile = fopen(logName, "w");
+			}
+		}
+
+		if (logFile != nullptr)
+		{
+			fprintf(logFile, "[%s] %s", Msgs.DebugChannelToString(chan).c_str(), buf);
+			fflush(logFile);
+		}
 
 		Msgs.AddReport(chan, false, buf);
 	}

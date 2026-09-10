@@ -1,4 +1,4 @@
-// CP - command processor
+﻿// CP - command processor
 #include "pch.h"
 
 // TODO: It's a bit crooked right now after refactoring, but will settle with time
@@ -1841,9 +1841,6 @@ namespace Flipper
 
 	void CommandProcessor::GxCommand(FifoProcessor* gxfifo)
 	{
-#if GFX_BLACKJACK_AND_SHADERS
-		GLenum gl_error;
-#endif
 
 		HW->gfx->GPFrameBegin();
 
@@ -2076,17 +2073,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					tris += (vtxnum / 4) / 2;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_QUADS, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_QUAD, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2095,7 +2081,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2120,17 +2105,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					tris += (vtxnum / 2 - 1) / 2;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_QUAD_STRIP, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_QUAD: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_QUAD_STRIP, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2139,7 +2113,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2164,17 +2137,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					tris += vtxnum / 3;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_TRIANGLES, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_TRIANGLE: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2183,7 +2145,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2208,17 +2169,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					tris += vtxnum - 2;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_TRIANGLE_STRIP, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_STRIP: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE_STRIP, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2227,7 +2177,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2252,17 +2201,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					tris += vtxnum - 2;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_TRIANGLE_FAN, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_FAN: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE_FAN, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2271,7 +2209,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2296,17 +2233,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					lines += vtxnum / 2;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_LINES, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_LINE: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_LINE, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2315,7 +2241,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2340,17 +2265,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					lines += vtxnum - 1;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_LINE_STRIP, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_LINESTRIP: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_LINE_STRIP, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2359,7 +2273,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}
@@ -2384,17 +2297,6 @@ namespace Flipper
 				if (vtxnum != 0) {
 					pts += vtxnum;
 
-#if GFX_BLACKJACK_AND_SHADERS
-					for (unsigned i = 0; i < vtxnum; i++) {
-						FifoWalk(vatnum, &vertex_data[i], gxfifo);
-					}
-					glBufferData(GL_ARRAY_BUFFER, vtxnum * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-					glDrawArrays(GL_POINTS, 0, vtxnum);
-					gl_error = glGetError();
-					if (gl_error != GL_NO_ERROR) {
-						Halt("GL Error CP_CMD_DRAW_POINT: %x\n", gl_error);
-					}
-#else
 					HW->gfx->ras->RAS_Begin(GFX::RAS_POINT, vtxnum);
 					GFX::Vertex vtx;
 					while (vtxnum--) {
@@ -2403,7 +2305,6 @@ namespace Flipper
 						HW->gfx->ras->RAS_SendVertex(&vtx);
 					}
 					HW->gfx->ras->RAS_End();
-#endif
 				}
 				break;
 			}

@@ -1,11 +1,105 @@
 #include "pch.h"
 
 // There are still some parts of old sources with attempts to "abstract" the backend. It is absolutely hopeless, just use core OpenGL and don't worry about it.
+//
+// The backend is a modern OpenGL 3.3 (GLSL 330) shader pipeline:
+// - the XF (Transform Unit) is emulated by a vertex shader (see xf.cpp);
+// - the TEV (Texture Environment Unit) is emulated by a fragment shader (see tev.cpp).
+//
+// This module owns the GL context, the frame loop and the geometry buffers; the shaders themselves
+// live with the pipeline blocks they emulate.
 
 using namespace Debug;
 
 namespace GFX
 {
+	int gfx_frame_counter = 0;
+
+	// -------------------------------------------------------------------------------------------
+	// GL object helpers
+
+	GLuint CompileShaderStage(GLenum type, const char* source, const char* label)
+	{
+		GLuint shader = glCreateShader(type);
+		glShaderSource(shader, 1, &source, nullptr);
+		glCompileShader(shader);
+
+		GLint success = 0;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			char infoLog[0x10000] = { 0, };
+			glGetShaderInfoLog(shader, sizeof(infoLog) - 1, nullptr, infoLog);
+			Report(Channel::GP, "%s SHADER COMPILE ERROR:\n%s\n", label, infoLog);
+			glDeleteShader(shader);
+			return 0;
+		}
+
+		return shader;
+	}
+
+	GLProgram::~GLProgram()
+	{
+		Destroy();
+	}
+
+	bool GLProgram::Link(GLuint vertShader, const char* fragSource, const char* label)
+	{
+		if (!vertShader || !fragSource)
+			return false;
+
+		GLuint fragShader = CompileShaderStage(GL_FRAGMENT_SHADER, fragSource, label);
+		if (!fragShader)
+			return false;
+
+		prog = glCreateProgram();
+		glAttachShader(prog, vertShader);
+		glAttachShader(prog, fragShader);
+		glLinkProgram(prog);
+
+		glDeleteShader(fragShader);
+
+		GLint success = 0;
+		glGetProgramiv(prog, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			char infoLog[0x10000] = { 0, };
+			glGetProgramInfoLog(prog, sizeof(infoLog) - 1, nullptr, infoLog);
+			Report(Channel::GP, "%s SHADER LINK ERROR:\n%s\n", label, infoLog);
+			glDeleteProgram(prog);
+			prog = 0;
+			return false;
+		}
+
+		return true;
+	}
+
+	void GLProgram::Destroy()
+	{
+		if (prog)
+		{
+			glDeleteProgram(prog);
+			prog = 0;
+		}
+		locations.clear();
+	}
+
+	GLint GLProgram::Uniform(const char* name)
+	{
+		if (!prog)
+			return -1;
+
+		auto it = locations.find(name);
+		if (it != locations.end())
+			return it->second;
+
+		GLint loc = glGetUniformLocation(prog, name);
+		locations[name] = loc;
+		return loc;
+	}
+
+	// -------------------------------------------------------------------------------------------
+
 	GFXCore::GFXCore(Flipper::Flipper* flipper, HWConfig* config)
 	{
 #if GFX_USE_SDL_WINDOW
@@ -19,6 +113,25 @@ namespace GFX
 
 		// reset pipeline
 		frame_done = true;
+
+		vertex_data = new Vertex[GFX_MAX_VERTICES];
+		memset(vertex_data, 0, sizeof(Vertex) * GFX_MAX_VERTICES);
+		index_data = new uint32_t[GFX_MAX_INDICES];
+
+		// Frame dump
+		const char* dumpVar = getenv("GFX_DUMP");
+		if (dumpVar != nullptr && dumpVar[0] != 0)
+		{
+			dump_enabled = true;
+			dump_path = dumpVar;
+			const char* everyVar = getenv("GFX_DUMP_EVERY");
+			if (everyVar != nullptr && everyVar[0] != 0)
+			{
+				dump_every = atoi(everyVar);
+				if (dump_every < 1)
+					dump_every = 1;
+			}
+		}
 
 		xf = new TransformUnit(config, this);
 		su = new SetupUnit(config, this);
@@ -40,6 +153,16 @@ namespace GFX
 		delete bump;
 		delete tx;
 		delete tev;
+
+		delete[] vertex_data;
+		vertex_data = nullptr;
+		delete[] index_data;
+		index_data = nullptr;
+	}
+
+	bool GFXCore::GL_LazyOpenSubsystem()
+	{
+		return true;
 	}
 
 #ifdef _WINDOWS
@@ -74,18 +197,24 @@ namespace GFX
 	}
 #endif
 
-	bool GFXCore::GL_LazyOpenSubsystem()
-	{
-		return true;
-	}
-
 	bool GFXCore::GL_OpenSubsystem()
 	{
 		if (backend_started)
 			return true;
 
 #if GFX_USE_SDL_WINDOW
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
 		context = SDL_GL_CreateContext(render_window);
+		if (context == nullptr)
+		{
+			Report(Channel::GP, "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+			return false;
+		}
 #else
 		hdcgl = GetDC(hwndMain);
 
@@ -107,7 +236,28 @@ namespace GFX
 		wglMakeCurrent(hdcgl, hglrc);
 #endif
 
-		Report(Channel::GP, "OpenGL version: %s\n", (char*)glGetString(GL_VERSION));
+		glewExperimental = GL_TRUE;
+		GLenum err = glewInit();
+		if (GLEW_OK != err)
+		{
+			Report(Channel::GP, "Error: %s\n", glewGetErrorString(err));
+			return false;
+		}
+
+		Report(Channel::GP, "OpenGL version: %s\n", (const char*)glGetString(GL_VERSION));
+		Report(Channel::GP, "OpenGL renderer: %s\n", (const char*)glGetString(GL_RENDERER));
+		Report(Channel::GP, "GLSL version: %s\n", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+		if (!xf->CreateShader())
+		{
+			Report(Channel::GP, "Cannot create the XF vertex shader\n");
+			return false;
+		}
+
+		InitGeometryBuffers();
+
+		// Texture objects can only be created once a context is current
+		tx->TexInit();
 
 		//
 		// change some GL drawing rules
@@ -120,25 +270,6 @@ namespace GFX
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_SCISSOR_TEST);
-
-#if GFX_BLACKJACK_AND_SHADERS
-		glewExperimental = GL_TRUE;
-		GLenum err = glewInit();
-		if (GLEW_OK != err)
-		{
-			/* Problem: glewInit failed, something is seriously wrong. */
-			Report(Channel::GP, "Error: %s\n", glewGetErrorString(err));
-			return false;
-		}
-
-		auto vert_shader_source = Util::FileLoad("Data/gfx.vert");
-		vert_shader_source.push_back(0);
-		auto frag_shader_source = Util::FileLoad("Data/gfx.frag");
-		frag_shader_source.push_back(0);
-		UploadShaders((const char *)vert_shader_source.data(), (const char*)frag_shader_source.data());
-
-		InitVBO();
-#endif
 
 		// clear frame counter
 		pe->frames = 0;
@@ -156,15 +287,16 @@ namespace GFX
 		if (!backend_started)
 			return;
 
-		//if(frameReady) GL_EndFrame();
+		xf->DisposeShader();
+		tev->DisposePrograms();
+		tx->TexFree();
+		DisposeGeometryBuffers();
 
-#if GFX_BLACKJACK_AND_SHADERS
-		DisposeShaders();
-		DisposeVBO();
-#endif
+		//if(frameReady) GL_EndFrame();
 
 #if GFX_USE_SDL_WINDOW
 		SDL_GL_DeleteContext(context);
+		context = nullptr;
 #else
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hglrc);
@@ -173,14 +305,86 @@ namespace GFX
 		backend_started = false;
 	}
 
+	void GFXCore::InitGeometryBuffers()
+	{
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)sizeof(Vertex) * GFX_MAX_VERTICES, vertex_data, GL_DYNAMIC_DRAW);
+
+		glGenBuffers(1, &ibo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)sizeof(uint32_t) * GFX_MAX_INDICES, index_data, GL_DYNAMIC_DRAW);
+
+		GLsizei stride = sizeof(Vertex);
+
+		glEnableVertexAttribArray(Flipper::VTX_POS);
+		glVertexAttribPointer(Flipper::VTX_POS, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, Position)));
+		glEnableVertexAttribArray(Flipper::VTX_NRM);
+		glVertexAttribPointer(Flipper::VTX_NRM, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, Normal)));
+		glEnableVertexAttribArray(Flipper::VTX_BINRM);
+		glVertexAttribPointer(Flipper::VTX_BINRM, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, Binormal)));
+		glEnableVertexAttribArray(Flipper::VTX_TANGENT);
+		glVertexAttribPointer(Flipper::VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, Tangent)));
+
+		// Colours are kept in GFX::Color, whose bytes are laid out as (A, B, G, R);
+		// the vertex shader puts them back into (R, G, B, A) order.
+		glEnableVertexAttribArray(Flipper::VTX_COLOR0);
+		glVertexAttribPointer(Flipper::VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (GLvoid*)(offsetof(Vertex, Col[0])));
+		glEnableVertexAttribArray(Flipper::VTX_COLOR1);
+		glVertexAttribPointer(Flipper::VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (GLvoid*)(offsetof(Vertex, Col[1])));
+
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD0);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[0])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD1);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[1])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD2);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[2])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD3);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[3])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD4);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[4])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD5);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[5])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD6);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[6])));
+		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD7);
+		glVertexAttribPointer(Flipper::VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(offsetof(Vertex, TexCoord[7])));
+
+		glEnableVertexAttribArray(Flipper::VTX_MATIDX0);
+		glVertexAttribIPointer(Flipper::VTX_MATIDX0, 1, GL_UNSIGNED_INT, stride, (GLvoid*)(offsetof(Vertex, matIdx0)));
+		glEnableVertexAttribArray(Flipper::VTX_MATIDX1);
+		glVertexAttribIPointer(Flipper::VTX_MATIDX1, 1, GL_UNSIGNED_INT, stride, (GLvoid*)(offsetof(Vertex, matIdx1)));
+
+		glBindVertexArray(0);
+	}
+
+	void GFXCore::DisposeGeometryBuffers()
+	{
+		if (vao)
+		{
+			glDeleteVertexArrays(1, &vao);
+			vao = 0;
+		}
+		if (vbo)
+		{
+			glDeleteBuffers(1, &vbo);
+			vbo = 0;
+		}
+		if (ibo)
+		{
+			glDeleteBuffers(1, &ibo);
+			ibo = 0;
+		}
+	}
+
 	// init rendering (call before drawing FIFO primitives)
 	void GFXCore::GL_BeginFrame()
 	{
 		if (frameReady) return;
 
-#if !GFX_USE_SDL_WINDOW
-		BeginPaint(hwndMain, &psFrame);
-#endif
 		glDrawBuffer(GL_BACK);
 
 		glClearColor(
@@ -199,30 +403,12 @@ namespace GFX
 	// done rendering (call when frame is ready)
 	void GFXCore::GL_EndFrame()
 	{
-		bool showPerf = false;
 		if (!frameReady) return;
 
 		glFlush();
 
-		/*/
-			if(glGetError() != GL_NO_ERROR)
-			{
-				MessageBox(
-					hwndMain,
-					"Error, during GL frame rendering.",
-					"We have big problem here!",
-					MB_OK | MB_TOPMOST
-				);
-				ExitProcess(0);
-			}
-		/*/
-
-		// do snapshot
-		if (make_shot)
-		{
-			make_shot = false;
-			pe->GL_DoSnapshot(false, snap_file, NULL, snap_w, snap_h);
-		}
+		if (dump_enabled)
+			DumpFrame();
 
 		glFinish();
 
@@ -230,13 +416,51 @@ namespace GFX
 		SDL_GL_SwapWindow(render_window);
 #else
 		SwapBuffers(hdcgl);
-		EndPaint(hwndMain, &psFrame);
 #endif
 
 		frameReady = false;
-		//Report(Channel::GP, "gfx frame: %d\n", frames);
 		pe->frames++;
+		gfx_frame_counter++;
 		Flipper::HW->cp->ResetFrameStats();
+	}
+
+	void GFXCore::DumpFrame()
+	{
+		if ((gfx_frame_counter % dump_every) != 0)
+			return;
+
+		uint32_t w = scr_w, h = scr_h;
+
+		std::vector<uint8_t> pixels((size_t)w * h * 3);
+		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+
+		// BMP is bottom-up, exactly like the GL framebuffer, so no flip is needed
+		uint8_t hdr[54] = { 0 };
+		uint32_t dataSize = w * h * 3;
+		uint32_t fileSize = 54 + dataSize;
+
+		hdr[0] = 'B'; hdr[1] = 'M';
+		memcpy(&hdr[2], &fileSize, 4);
+		hdr[10] = 54;
+		hdr[14] = 40;
+		memcpy(&hdr[18], &w, 4);
+		memcpy(&hdr[22], &h, 4);
+		hdr[26] = 1;
+		hdr[28] = 24;
+		memcpy(&hdr[34], &dataSize, 4);
+
+		char name[0x400];
+		sprintf(name, "%s_%06d.bmp", dump_path.c_str(), gfx_frame_counter);
+
+		FILE* f = fopen(name, "wb");
+		if (f == nullptr)
+			return;
+
+		fwrite(hdr, 1, sizeof(hdr), f);
+		fwrite(pixels.data(), 1, dataSize, f);
+		fclose(f);
+
+		Report(Channel::GP, "Frame dumped to %s\n", name);
 	}
 
 	void GFXCore::GPFrameBegin()
@@ -262,233 +486,6 @@ namespace GFX
 			scr_w = (uint32_t)width;
 			scr_h = (uint32_t)height;
 			glViewport(0, 0, scr_w, scr_h);
-		}
-	}
-
-	void GFXCore::UploadShaders(const char* vert_source, const char* frag_source)
-	{
-		char infoLog[0x1000]{};
-		int success;
-
-		// Perform magic spells to compile the vertex shader program
-
-		vert_shader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vert_shader, 1, &vert_source, nullptr);
-		glCompileShader(vert_shader);
-
-		glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			glGetShaderInfoLog(vert_shader, sizeof(infoLog), nullptr, infoLog);
-			Report(Channel::GP, "VERTEX SHADER COMPILE ERROR: %s\n", infoLog);
-			Halt("Halted.\n");
-		};
-
-		// Perform magic spells to compile the frag shader program
-
-		frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(frag_shader, 1, &frag_source, nullptr);
-		glCompileShader(frag_shader);
-
-		glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			glGetShaderInfoLog(frag_shader, sizeof(infoLog), nullptr, infoLog);
-			Report(Channel::GP, "FRAGMENT SHADER COMPILE ERROR: %s\n", infoLog);
-			Halt("Halted.\n");
-		};
-
-		// Perform magic spells to "link" shader programs and further use them instead of a fixed pipeline
-
-		shader_prog = glCreateProgram();
-		glAttachShader(shader_prog, vert_shader);
-		glAttachShader(shader_prog, frag_shader);
-		
-		BindShadersWithVBO();
-		
-		glLinkProgram(shader_prog);
-
-		GLenum gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL glLinkProgram Error: %x\n", gl_error);
-		}
-
-		glGetProgramiv(shader_prog, GL_LINK_STATUS, &success);
-		if (!success)
-		{
-			glGetProgramInfoLog(shader_prog, sizeof(infoLog), nullptr, infoLog);
-			Report(Channel::GP, "SHADER LINK ERROR: %s\n", infoLog);
-			Halt("Halted.\n");
-		}
-
-		glDeleteShader(vert_shader);
-		glDeleteShader(frag_shader);
-
-		glUseProgram(shader_prog);
-
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL UploadShaders Error: %x\n", gl_error);
-		}
-
-		Report(Channel::GP, "Shader program is uploaded to GPU\n");
-	}
-
-	void GFXCore::DisposeShaders()
-	{
-		glFinish();
-
-		// TODO: For some reason, it's falling down.
-		return;
-
-		// TODO: Is that enough?
-		glUseProgram(0);
-		glDeleteProgram(shader_prog);
-	}
-
-	void GFXCore::BindShadersWithVBO()
-	{
-		GLenum gl_error;
-
-		glBindAttribLocation(shader_prog, Flipper::VTX_POS, "in_Position");
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL glBindAttribLocation VTX_POS Error: %x\n", gl_error);
-		}
-
-		glBindAttribLocation(shader_prog, Flipper::VTX_NRM, "in_Normal");
-		glBindAttribLocation(shader_prog, Flipper::VTX_BINRM, "in_Binormal");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TANGENT, "in_Tangent");
-
-		glBindAttribLocation(shader_prog, Flipper::VTX_COLOR0, "in_Color0");
-		glBindAttribLocation(shader_prog, Flipper::VTX_COLOR1, "in_Color1");
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL glBindAttribLocation VTX_COLOR1 Error: %x\n", gl_error);
-		}
-
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD0, "in_TexCoord0");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD1, "in_TexCoord1");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD2, "in_TexCoord2");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD3, "in_TexCoord3");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD4, "in_TexCoord4");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD5, "in_TexCoord5");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD6, "in_TexCoord6");
-		glBindAttribLocation(shader_prog, Flipper::VTX_TEXCOORD7, "in_TexCoord7");
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL glBindAttribLocation VTX_TEXCOORD7 Error: %x\n", gl_error);
-		}
-
-		glBindAttribLocation(shader_prog, Flipper::VTX_MATIDX0, "MatrixIndex0");
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL glBindAttribLocation VTX_MATIDX0 Error: %x\n", gl_error);
-		}
-		glBindAttribLocation(shader_prog, Flipper::VTX_MATIDX1, "MatrixIndex1");
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL glBindAttribLocation VTX_MATIDX1 Error: %x\n", gl_error);
-		}
-	}
-
-	void GFXCore::InitVBO()
-	{
-		GLenum gl_error;
-
-		vertex_data = new Vertex[vbo_size];
-		memset(vertex_data, 0, sizeof(Vertex) * vbo_size);
-
-		vao = 0;
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		vbo = 0;
-		glGenBuffers(1, &vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-		// TODO: Map/Unmap VBO
-		//glBufferData(GL_ARRAY_BUFFER, vbo_size * sizeof(Vertex), vertex_data, GL_STATIC_DRAW);
-
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL InitVBO after glBufferData Error: %x\n", gl_error);
-		}
-
-		GLsizei attr_stride = sizeof(Vertex);
-
-		glEnableVertexAttribArray(Flipper::VTX_POS);
-		glVertexAttribPointer(Flipper::VTX_POS, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Position)));
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL InitVBO after glVertexAttribPointer VTX_POS Error: %x\n", gl_error);
-		}
-
-		glEnableVertexAttribArray(Flipper::VTX_NRM);
-		glVertexAttribPointer(Flipper::VTX_NRM, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Normal)));
-		glEnableVertexAttribArray(Flipper::VTX_BINRM);
-		glVertexAttribPointer(Flipper::VTX_BINRM, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Binormal)));
-		glEnableVertexAttribArray(Flipper::VTX_TANGENT);
-		glVertexAttribPointer(Flipper::VTX_TANGENT, 3, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Tangent)));
-
-		glEnableVertexAttribArray(Flipper::VTX_COLOR0);
-		glVertexAttribPointer(Flipper::VTX_COLOR0, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[0])));
-		glEnableVertexAttribArray(Flipper::VTX_COLOR1);
-		glVertexAttribPointer(Flipper::VTX_COLOR1, 4, GL_UNSIGNED_BYTE, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, Col[1])));
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL InitVBO after glVertexAttribPointer VTX_COLOR1 Error: %x\n", gl_error);
-		}
-
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD0);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[0])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD1);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD1, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[1])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD2);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD2, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[2])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD3);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD3, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[3])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD4);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD4, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[4])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD5);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD5, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[5])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD6);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD6, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[6])));
-		glEnableVertexAttribArray(Flipper::VTX_TEXCOORD7);
-		glVertexAttribPointer(Flipper::VTX_TEXCOORD7, 2, GL_FLOAT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, TexCoord[7])));
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL InitVBO after glVertexAttribPointer VTX_TEXCOORD7 Error: %x\n", gl_error);
-		}
-
-		glEnableVertexAttribArray(Flipper::VTX_MATIDX0);
-		glVertexAttribPointer(Flipper::VTX_MATIDX0, 1, GL_UNSIGNED_INT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, matIdx0)));
-		glEnableVertexAttribArray(Flipper::VTX_MATIDX1);
-		glVertexAttribPointer(Flipper::VTX_MATIDX1, 1, GL_UNSIGNED_INT, GL_FALSE, attr_stride, (GLvoid*)(offsetof(Vertex, matIdx1)));
-		gl_error = glGetError();
-		if (gl_error != GL_NO_ERROR) {
-			Halt("GL InitVBO after glVertexAttribPointer VTX_MATIDX1 Error: %x\n", gl_error);
-		}
-	}
-
-	void GFXCore::DisposeVBO()
-	{
-		glFinish();
-
-		// TODO: For some reason, it's falling down.
-		return;
-
-		glBindVertexArray(0);
-		glDeleteVertexArrays(1, &vao);
-		vao = 0;
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glDeleteBuffers(1, &vbo);
-		vbo = 0;
-
-		if (vertex_data != nullptr) {
-			delete[] vertex_data;
-			vertex_data = nullptr;
 		}
 	}
 }

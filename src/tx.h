@@ -1,5 +1,9 @@
 // This module deals with everything related to textures: from Flipper's point of view (loading into TMEM, conversion),
 // and from the point of view of graphics backend (texture upload to the real graphics device, bindings).
+//
+// The Flipper has 8 texture maps. Every map is decoded from main memory into an RGBA image and kept
+// in its own GL texture object, so that a TEV configuration that uses several maps can bind them all
+// at once (the per-stage bindings come from RAS1_TREF, see ras.h).
 #pragma once
 
 namespace GFX
@@ -74,12 +78,6 @@ namespace GFX
 	#define TX_SETTLUT_I6_ID 0xBA
 	#define TX_SETTLUT_I7_ID 0xBB
 
-	// Texture offset
-
-	// Texture Culling mode
-
-	// Texture Clip mode
-
 	// Texture Wrap mode
 	enum TexWrapMode
 	{
@@ -87,8 +85,6 @@ namespace GFX
 		TX_WRAP_REPEAT,
 		TX_WRAP_MIRROR,
 	};
-
-	// Texture filter
 
 	// Texture format
 	enum TexFormat : size_t
@@ -113,19 +109,6 @@ namespace GFX
 		TLUT_RGB565,
 		TLUT_RGB5A3,
 	};
-
-	// Tlut size
-
-	// Indirect texture format
-
-	// Indirect texture bias select
-
-	// Indirect texture alpha select
-
-	// Indirect texture wrap
-
-	// Indirect texture scale
-
 
 	// texture params
 	union TexImage0
@@ -250,26 +233,6 @@ namespace GFX
 		uint32_t     bits;
 	};
 
-
-	// TODO: Old implementation, will be redone nicely.
-
-	// texture entry
-	struct TexEntry
-	{
-		uint32_t  ramAddr;
-		uint8_t* rawData;
-		Color* rgbaData;      // allocated
-		int fmt, tfmt;
-		int w, h, dw, dh;
-		float ds, dt;
-		uint32_t bind;
-	};
-
-	struct S3TC_TEX
-	{
-		unsigned    t : 2;
-	};
-
 	struct S3TC_BLK
 	{
 		uint16_t     rgb0;       // color 2
@@ -290,36 +253,63 @@ namespace GFX
 		SetTlut settlut[8];			// 0x98-0x9B, 0xB8-0xBB
 	};
 
+	// Texture map (one of the 8 hardware texture maps)
+	struct TexMap
+	{
+		GLuint glTexture = 0;
+
+		bool valid = false;			//!< A texture has been decoded for this map
+		bool dirty = false;			//!< Needs decoding before the next draw
+		bool paramsDirty = false;	//!< Needs (re)applying the sampler parameters
+
+		// Geometry of the decoded image
+		int width = 0, height = 0;		//!< Real texture size
+		int dw = 0, dh = 0;				//!< Size of the GL image (power of two)
+		float ds = 1.0f, dt = 1.0f;		//!< Texture coordinate scale (real / stored)
+
+		// What the current GL image was decoded from
+		uint32_t keyAddr = 0;
+		int keyFmt = -1, keyWidth = 0, keyHeight = 0;
+		uint32_t keyTlut = 0xFFFFFFFF;
+
+		uint32_t appliedMode0 = 0xFFFFFFFF;	//!< TexMode0 value the sampler parameters were set from
+	};
+
 	class TextureEngine
 	{
 		friend GFXCore;
-		friend Rasterizer;		// TODO: Remove
+		friend Rasterizer;
 		GFXCore* gfx = nullptr;
 
 		TXState tx{};
 
-		#define GFX_MAX_TEXTURES 32
+		#define GFX_MAX_TEXTURES 8
 
-		TexEntry* tID[8];
+		TexMap texMap[GFX_MAX_TEXTURES];
 		Color rgbabuf[1024 * 1024];
-		TexEntry tcache[GFX_MAX_TEXTURES];
-		unsigned tptr;
-		GLuint texlist[GFX_MAX_TEXTURES + 1];     // gl texture list (0 entry reserved)
-		uint8_t tlut[1024 * 1024];  // temporary TLUT buffer
+		uint8_t tlut[1024 * 1024];  // TLUT buffer
+
+		bool active = false;
 
 		void TexInit();
 		void TexFree();
-		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
-		void tryLoadTex(int id);
 		void GetTlutCol(Color* c, unsigned id, unsigned entry);
-		void RebindTexture(unsigned id);
-		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
+		bool DecodeTexture(int id);
+		void UploadTexture(int id);
+		void ApplyTextureParams(int id);
 		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
+		void InvalidatePalettedTextures();
 
 	public:
 		TextureEngine(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEngine();
 
 		void loadTXReg(size_t index, uint32_t value);
+
+		//! Decode and upload all dirty texture maps and bind them to their texture units.
+		void UpdateAndBindTextures();
+
+		//! Upload the per-map texture coordinate scales to the TEV program.
+		void UploadTexScales(class GLProgram& program);
 	};
 }
