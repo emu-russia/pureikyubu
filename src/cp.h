@@ -470,6 +470,17 @@ namespace Flipper
 
 	#pragma pack(pop)
 
+	//! The CP counters of the current frame (they are cleared by ResetFrameStats at every frame end).
+	struct CommandProcessorStats
+	{
+		size_t cpLoads = 0;			// CP register loads
+		size_t xfLoads = 0;			// XF register words
+		size_t bpLoads = 0;			// bypass (BP) register loads
+		size_t tris = 0;			// triangles
+		size_t points = 0;
+		size_t lines = 0;
+	};
+
 	class FifoProcessor
 	{
 		size_t fifoSize = 1024 * 1024;
@@ -580,5 +591,12 @@ namespace Flipper
 		void CPAbortFifo();
 
 		void ResetFrameStats();
+
+		//! The frame counters, for the debug interface (`gxframes`, `gxregs cp`).
+		void GetStats(CommandProcessorStats* stats) const;
+
+		//! Drain the graphics FIFO once: exactly the work the CP thread does on one tick. The unit
+		//! tests use it to run the command stream deterministically, without the emulator threads.
+		void PumpFifo();
 	};
 }

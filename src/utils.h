@@ -152,6 +152,11 @@ namespace Util
 
 	bool IsDirectory(std::wstring path);
 
+	// Save a 24-bit RGB image as a PNG file (the GFX screenshots and the unit test report use it).
+	// `rgb` holds width * height triplets, top row first.
+
+	bool SavePng(const char* filename, const uint8_t* rgb, size_t width, size_t height);
+
 }
 
 #if defined(_WINDOWS)

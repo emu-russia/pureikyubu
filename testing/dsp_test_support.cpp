@@ -18,6 +18,7 @@
 // Nothing here implements DSP behaviour: it only replaces the surrounding hardware.
 
 #include "pch.h"
+#include "gfx_test_common.h"
 
 namespace
 {
@@ -105,7 +106,9 @@ namespace
 
 Thread* EMUCreateThread(ThreadProc threadProc, bool suspended, void* context, const char* name)
 {
-	Thread* thread = new Thread(threadProc, suspended, context, name);
+	// The unit tests drive the devices by hand, so every emulator thread starts suspended: a
+	// running CP / DMA thread would spin on the emulated clock and make the tests non-deterministic.
+	Thread* thread = new Thread(threadProc, true, context, name);
 	testThreads.push_back(thread);
 	return thread;
 }
@@ -269,7 +272,102 @@ namespace Flipper
 
 	// PI interrupt line, so that tests can observe the DSP -> CPU interrupt.
 	uint32_t TestPIAssertedInts = 0;
+}
 
+// ----------------------------------------------------------------------
+// The CPU-visible register window.
+//
+// The emulator's ProcessorInterface routes CPU reads and writes to the device blocks through
+// traps installed with PISetTrap. The test double keeps them in a map instead of decoding a
+// physical address, so a test can drive a device exactly the way the CPU does (see PIRegWrite /
+// PIRegRead in gfx_test_common.h). The DSP tests never install or use traps.
+// ----------------------------------------------------------------------
+
+namespace
+{
+	struct TestPITrap
+	{
+		void (*rd)(uint32_t, uint32_t*, void*) = nullptr;
+		void (*wr)(uint32_t, uint32_t, void*) = nullptr;
+		void* context = nullptr;
+	};
+
+	std::map<uint32_t, TestPITrap> testPITraps;
+}
+
+namespace GfxUnitTest
+{
+	bool PIRegWrite(uint32_t addr, uint32_t value)
+	{
+		auto it = testPITraps.find(addr);
+
+		if (it == testPITraps.end() || it->second.wr == nullptr)
+		{
+			return false;
+		}
+
+		it->second.wr(addr, value, it->second.context);
+		return true;
+	}
+
+	bool PIRegRead(uint32_t addr, uint32_t* value)
+	{
+		auto it = testPITraps.find(addr);
+
+		if (it == testPITraps.end() || it->second.rd == nullptr)
+		{
+			return false;
+		}
+
+		it->second.rd(addr, value, it->second.context);
+		return true;
+	}
+
+	void PIClearTraps()
+	{
+		testPITraps.clear();
+	}
+
+	uint32_t PIAssertedInterrupts()
+	{
+		return Flipper::TestPIAssertedInts;
+	}
+
+	void PIClearAssertedInterrupts()
+	{
+		Flipper::TestPIAssertedInts = 0;
+	}
+
+	// The debug output capture is shared with the GFX tests, which prefer these neutral names.
+
+	void EnableTestLog(bool enable)
+	{
+		DspTestLogEnable(enable);
+	}
+
+	void ClearTestLog()
+	{
+		DspTestLogClear();
+	}
+
+	std::string TestLogText()
+	{
+		return DspTestLogText();
+	}
+
+	std::string TestLastHalt()
+	{
+		return DspTestLastHalt();
+	}
+
+	int TestHaltCount()
+	{
+		return DspTestHaltCount();
+	}
+}
+
+namespace Flipper
+{
 	void ProcessorInterface::PIAssertInt(uint32_t mask)
 	{
 		TestPIAssertedInts |= mask;
@@ -286,7 +384,10 @@ namespace Flipper
 		void (*wrTrap)(uint32_t, uint32_t, void*),
 		void* context)
 	{
-		// The DSP tests do not go through the CPU register window.
+		TestPITrap& trap = testPITraps[addr];
+		trap.rd = rdTrap;
+		trap.wr = wrTrap;
+		trap.context = context;
 	}
 
 	void* MemoryInterface::MIGetMemoryPointerForDSP(uint32_t phys_addr)

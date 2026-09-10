@@ -530,6 +530,158 @@ namespace Util
 
 
 
+	// -------------------------------------------------------------------------------------------
+	// PNG images
+	//
+	// A small, dependency-free PNG writer: the pixel data is stored in uncompressed ("stored")
+	// deflate blocks, which is a perfectly valid zlib stream, so no compressor is needed. The
+	// files are larger than with a real deflate, but they are only used for debug screenshots
+	// and for the unit test report.
+
+	namespace
+	{
+		uint32_t PngCrc32(const uint8_t* data, size_t len)
+		{
+			static uint32_t table[256];
+			static bool tableReady = false;
+
+			if (!tableReady)
+			{
+				for (uint32_t n = 0; n < 256; n++)
+				{
+					uint32_t c = n;
+					for (int k = 0; k < 8; k++)
+					{
+						c = (c & 1) ? (0xedb88320u ^ (c >> 1)) : (c >> 1);
+					}
+					table[n] = c;
+				}
+				tableReady = true;
+			}
+
+			uint32_t c = 0xffffffffu;
+			for (size_t i = 0; i < len; i++)
+			{
+				c = table[(c ^ data[i]) & 0xff] ^ (c >> 8);
+			}
+			return c ^ 0xffffffffu;
+		}
+
+		uint32_t PngAdler32(const uint8_t* data, size_t len)
+		{
+			uint32_t a = 1, b = 0;
+			for (size_t i = 0; i < len; i++)
+			{
+				a = (a + data[i]) % 65521;
+				b = (b + a) % 65521;
+			}
+			return (b << 16) | a;
+		}
+
+		void PngPut32(std::vector<uint8_t>& out, uint32_t value)
+		{
+			out.push_back((uint8_t)(value >> 24));
+			out.push_back((uint8_t)(value >> 16));
+			out.push_back((uint8_t)(value >> 8));
+			out.push_back((uint8_t)value);
+		}
+
+		void PngChunk(std::vector<uint8_t>& out, const char* type, const uint8_t* data, size_t len)
+		{
+			PngPut32(out, (uint32_t)len);
+
+			size_t crcStart = out.size();
+			out.insert(out.end(), type, type + 4);
+			if (len != 0 && data != nullptr)
+			{
+				out.insert(out.end(), data, data + len);
+			}
+
+			PngPut32(out, PngCrc32(out.data() + crcStart, out.size() - crcStart));
+		}
+
+		// Wrap the raw image bytes into a zlib stream of stored deflate blocks.
+		void PngZlibStored(const std::vector<uint8_t>& raw, std::vector<uint8_t>& out)
+		{
+			out.push_back(0x78);		// CM = 8 (deflate), CINFO = 7 (32K window)
+			out.push_back(0x01);		// FCHECK so that the header is a multiple of 31
+
+			size_t offset = 0;
+			do
+			{
+				size_t blockLen = raw.size() - offset;
+				if (blockLen > 65535)
+				{
+					blockLen = 65535;
+				}
+
+				bool last = (offset + blockLen) >= raw.size();
+
+				out.push_back(last ? 1 : 0);
+				out.push_back((uint8_t)blockLen);
+				out.push_back((uint8_t)(blockLen >> 8));
+				out.push_back((uint8_t)~blockLen);
+				out.push_back((uint8_t)(~blockLen >> 8));
+
+				out.insert(out.end(), raw.begin() + offset, raw.begin() + offset + blockLen);
+				offset += blockLen;
+
+			} while (offset < raw.size());
+
+			PngPut32(out, PngAdler32(raw.data(), raw.size()));
+		}
+	}
+
+	bool SavePng(const char* filename, const uint8_t* rgb, size_t width, size_t height)
+	{
+		if (filename == nullptr || rgb == nullptr || width == 0 || height == 0)
+		{
+			return false;
+		}
+
+		// PNG scanlines are prefixed with a filter byte; filter 0 (None) is used here.
+		std::vector<uint8_t> raw;
+		raw.reserve((width * 3 + 1) * height);
+
+		for (size_t y = 0; y < height; y++)
+		{
+			raw.push_back(0);
+			const uint8_t* row = rgb + y * width * 3;
+			raw.insert(raw.end(), row, row + width * 3);
+		}
+
+		std::vector<uint8_t> png = { 0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a };
+
+		uint8_t ihdr[13];
+		ihdr[0] = (uint8_t)(width >> 24); ihdr[1] = (uint8_t)(width >> 16);
+		ihdr[2] = (uint8_t)(width >> 8);  ihdr[3] = (uint8_t)width;
+		ihdr[4] = (uint8_t)(height >> 24); ihdr[5] = (uint8_t)(height >> 16);
+		ihdr[6] = (uint8_t)(height >> 8);  ihdr[7] = (uint8_t)height;
+		ihdr[8] = 8;		// bit depth
+		ihdr[9] = 2;		// colour type: truecolour
+		ihdr[10] = 0;		// compression
+		ihdr[11] = 0;		// filter
+		ihdr[12] = 0;		// interlace
+
+		PngChunk(png, "IHDR", ihdr, sizeof(ihdr));
+
+		std::vector<uint8_t> zlib;
+		PngZlibStored(raw, zlib);
+		PngChunk(png, "IDAT", zlib.data(), zlib.size());
+		PngChunk(png, "IEND", nullptr, 0);
+
+		FILE* f = fopen(filename, "wb");
+		if (f == nullptr)
+		{
+			return false;
+		}
+
+		size_t written = fwrite(png.data(), 1, png.size(), f);
+		fclose(f);
+
+		return written == png.size();
+	}
+
 #if 0
 
 	void BuildTreeDemo()

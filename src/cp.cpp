@@ -155,48 +155,55 @@ namespace Flipper
 		}
 		cp->updateTbrValue = ticks + cp->tickPerFifo;
 
+		cp->PumpFifo();
+	}
+
+	// One burst of the graphics FIFO: this is what the CP does on a tick, and what the unit tests
+	// drive by hand to run a display list deterministically.
+	void CommandProcessor::PumpFifo()
+	{
 		// Calculate count
-		if (cp->cpregs.wrptr >= cp->cpregs.rdptr)
+		if (cpregs.wrptr >= cpregs.rdptr)
 		{
-			cp->cpregs.cnt = cp->cpregs.wrptr - cp->cpregs.rdptr;
+			cpregs.cnt = cpregs.wrptr - cpregs.rdptr;
 		}
 		else
 		{
-			cp->cpregs.cnt = (cp->cpregs.top - cp->cpregs.rdptr) + (cp->cpregs.wrptr - cp->cpregs.base);
+			cpregs.cnt = (cpregs.top - cpregs.rdptr) + (cpregs.wrptr - cpregs.base);
 		}
 
 		// Watermarks logic. Active only in linked-mode (?).
-		if (cp->cpregs.cnt > cp->cpregs.himark)
+		if (cpregs.cnt > cpregs.himark)
 		{
-			cp->CP_OVF();
+			CP_OVF();
 		}
-		if (cp->cpregs.cnt < cp->cpregs.lomark)
+		if (cpregs.cnt < cpregs.lomark)
 		{
-			cp->CP_UVF();
+			CP_UVF();
 		}
 
 		// Breakpoint
-		if ((cp->cpregs.rdptr & ~0x1f) == (cp->cpregs.bpptr & ~0x1f))
+		if ((cpregs.rdptr & ~0x1f) == (cpregs.bpptr & ~0x1f))
 		{
-			cp->CP_BREAK();
+			CP_BREAK();
 		}
 
 		// Advance read pointer.
-		if (cp->cpregs.cnt != 0 && cp->cpregs.cr & CP_CR_RDEN && (cp->cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+		if (cpregs.cnt != 0 && cpregs.cr & CP_CR_RDEN && (cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
 		{
-			cp->cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
-			cp->GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cp->cpregs.rdptr) );
+			GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr) );
 
-			cp->cpregs.rdptr += 32;
-			if (cp->cpregs.rdptr == cp->cpregs.top)
+			cpregs.rdptr += 32;
+			if (cpregs.rdptr == cpregs.top)
 			{
-				cp->cpregs.rdptr = cp->cpregs.base;
+				cpregs.rdptr = cpregs.base;
 			}
 		}
 		else
 		{
-			cp->cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 		}
 	}
 
@@ -2253,5 +2260,20 @@ namespace Flipper
 	{
 		tris = pts = lines = 0;
 		cpLoads = bpLoads = xfLoads = 0;
+	}
+
+	void CommandProcessor::GetStats(CommandProcessorStats* stats) const
+	{
+		if (stats == nullptr)
+		{
+			return;
+		}
+
+		stats->cpLoads = cpLoads;
+		stats->xfLoads = xfLoads;
+		stats->bpLoads = bpLoads;
+		stats->tris = tris;
+		stats->points = pts;
+		stats->lines = lines;
 	}
 }

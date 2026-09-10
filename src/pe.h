@@ -461,6 +461,9 @@ namespace GFX
 		size_t frames = 0;
 		size_t pe_done_num = 0;   // number of drawdone (PE_FINISH) events
 
+		//! A PE_COPY_CMD with the clear bit set was issued and its clear has not been performed yet.
+		bool copy_clear_pending = false;
+
 		PERegs peregs{};	// PE PI regs
 
 		PEState pe{};		// Internal PE state
@@ -470,12 +473,31 @@ namespace GFX
 
 		void PE_DONE_INT();
 		void PE_TOKEN_INT();
-		
+
+		//! The bounds of the copy operation, in EFB pixels.
+		void CopyBounds(int* x, int* y, int* width, int* height);
+
 		// Pixel Engine mapped regs
 		static void PERegRead(uint32_t addr, uint32_t* reg, void* context);
 		static void PERegWrite(uint32_t addr, uint32_t data, void* context);
 
 	public:
+		//! Apply the depth state that PE_ZMODE, PE_CONTROL and GEN_MODE.zfreeze describe. The Setup
+		//! Unit calls it as well, because zfreeze lives in the shared GEN_MODE register.
+		void ApplyZMode();
+
+		//! Apply the blending, logic-op, write-mask and dither state of PE_CMODE0 / PE_CMODE1.
+		void ApplyColorMode();
+
+		//! The copy engine's clear operation (PE_COPY_CMD with the clear bit set).
+		void ApplyCopyClear();
+
+		//! Take the pending copy-clear flag (see the PE_COPY_CMD handling). The clear itself is
+		//! performed by the frame begin, because the clear prepares the EFB for the frame that
+		//! follows the copy: doing it the moment the copy command arrives would wipe the frame that
+		//! is about to be displayed (the swap happens on PE_FINISH, after the copy).
+		bool TakePendingCopyClear();
+
 		PixelEngine(Flipper::Flipper* flipper, HWConfig *config, GFXCore *parent_gfx);
 		~PixelEngine();
 
@@ -483,5 +505,13 @@ namespace GFX
 		void EfbPoke(uint32_t addr, uint32_t value);
 
 		void loadPEReg(size_t index, uint32_t value);
+
+		//! Put the PE register state back into the reset state and restore the GL state it owns.
+		void Reset();
+
+		//! The PE register state (read-only; used by the debugger and the unit tests).
+		const PEState& State() const { return pe; }
+		const PERegs& Regs() const { return peregs; }
+		size_t Frames() const { return frames; }
 	};
 }
