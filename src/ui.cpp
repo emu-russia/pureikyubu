@@ -678,6 +678,8 @@ int WINAPI WinMain(
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(nShowCmd);
 
+	EMUParseCmdLine(lpCmdLine);
+
 	DWORD attribs = GetFileAttributes(L"Data");
 	if (attribs == INVALID_FILE_ATTRIBUTES || (attribs & FILE_ATTRIBUTE_DIRECTORY) == 0) {
 		UI::Error(L"Application data not found", L"The emulator stores all important data in the Data folder, which is not found. Verify that the executable file is in the correct location. If you are running the emulator from Visual Studio, ensure that Debugging->Working Directory is set to $(ProjectDir)../../build");
@@ -690,6 +692,14 @@ int WINAPI WinMain(
 
 	UI::Jdi = new UI::JdiClient;
 
+	// The command line may ask for an empty drive (the IPL then takes its "no disk" path,
+	// which is the one that shows the cube animation).
+
+	if (cmdline.noDisc)
+	{
+		UI::Jdi->DvdOpenCover();
+	}
+
 	// Allow only one instance of application to run at once?
 	if (UI::Jdi->GetConfigBool(USER_RUNONCE, USER_UI))
 	{
@@ -700,6 +710,14 @@ int WINAPI WinMain(
 
 	// Start the emulator and user interface
 	CreateMainWindow(hInstance);
+
+	// The command line may ask to start the IPL right away (as if File -> Run Bootrom was clicked).
+	// The window is already created, so the same handler is used via a queued command message.
+
+	if (cmdline.ipl)
+	{
+		PostMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_IPLMENU, 0);
+	}
 
 	// Main loop
 	MSG msg = { 0 };

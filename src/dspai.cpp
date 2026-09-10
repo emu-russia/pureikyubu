@@ -9,82 +9,82 @@ namespace DSP
 	DspAIControl dsp_ai;
 
 	// ---------------------------------------------------------------------------
-	// AIDCR
+	// CDCR
 
-	static void write_aidcr(uint32_t addr, uint32_t data, void* ctx)
+	static void write_cdcr(uint32_t addr, uint32_t data, void* ctx)
 	{
 		if (dsp_ai.log)
 		{
-			Report(Channel::AI, "AIDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n",
+			Report(Channel::AI, "CDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n",
 				data,
-				data & AIDCR_RESETMOD ? 1 : 0,
-				data & AIDCR_DSPINTMSK ? 1 : 0,
-				data & AIDCR_DSPINT ? 1 : 0,
-				data & AIDCR_ARINTMSK ? 1 : 0,
-				data & AIDCR_ARINT ? 1 : 0,
-				data & AIDCR_AIINTMSK ? 1 : 0,
-				data & AIDCR_AIINT ? 1 : 0,
-				data & AIDCR_HALT ? 1 : 0,
-				data & AIDCR_DINT ? 1 : 0,
-				data & AIDCR_RES ? 1 : 0);
+				data & CDCR_RESETMOD ? 1 : 0,
+				data & CDCR_DSPINTMSK ? 1 : 0,
+				data & CDCR_DSPINT ? 1 : 0,
+				data & CDCR_ARINTMSK ? 1 : 0,
+				data & CDCR_ARINT ? 1 : 0,
+				data & CDCR_AIINTMSK ? 1 : 0,
+				data & CDCR_AIINT ? 1 : 0,
+				data & CDCR_HALT ? 1 : 0,
+				data & CDCR_DINT ? 1 : 0,
+				data & CDCR_RES ? 1 : 0);
 		}
 
 		// set mask
-		if (data & AIDCR_DSPINTMSK)
+		if (data & CDCR_DSPINTMSK)
 		{
-			AIDCR |= AIDCR_DSPINTMSK;
+			CDCR |= CDCR_DSPINTMSK;
 		}
 		else
 		{
-			AIDCR &= ~AIDCR_DSPINTMSK;
+			CDCR &= ~CDCR_DSPINTMSK;
 		}
-		if (data & AIDCR_ARINTMSK)
+		if (data & CDCR_ARINTMSK)
 		{
-			AIDCR |= AIDCR_ARINTMSK;
-		}
-		else
-		{
-			AIDCR &= ~AIDCR_ARINTMSK;
-		}
-		if (data & AIDCR_AIINTMSK)
-		{
-			AIDCR |= AIDCR_AIINTMSK;
+			CDCR |= CDCR_ARINTMSK;
 		}
 		else
 		{
-			AIDCR &= ~AIDCR_AIINTMSK;
+			CDCR &= ~CDCR_ARINTMSK;
+		}
+		if (data & CDCR_AIINTMSK)
+		{
+			CDCR |= CDCR_AIINTMSK;
+		}
+		else
+		{
+			CDCR &= ~CDCR_AIINTMSK;
 		}
 
 		// clear pending interrupts
-		if (data & AIDCR_DSPINT)
+		if (data & CDCR_DSPINT)
 		{
-			AIDCR &= ~AIDCR_DSPINT;
+			CDCR &= ~CDCR_DSPINT;
 		}
-		if (data & AIDCR_ARINT)
+		if (data & CDCR_ARINT)
 		{
-			AIDCR &= ~AIDCR_ARINT;
+			CDCR &= ~CDCR_ARINT;
 		}
-		if (data & AIDCR_AIINT)
+		if (data & CDCR_AIINT)
 		{
-			AIDCR &= ~AIDCR_AIINT;
+			CDCR &= ~CDCR_AIINT;
 		}
 
-		if ((AIDCR & AIDCR_DSPINT) == 0 && (AIDCR & AIDCR_ARINT) == 0 && (AIDCR & AIDCR_AIINT) == 0)
+		if ((CDCR & CDCR_DSPINT) == 0 && (CDCR & CDCR_ARINT) == 0 && (CDCR & CDCR_AIINT) == 0)
 		{
 			Flipper::HW->pi->PIClearInt(PI_INTERRUPT_DSP);
 		}
 
 		// DSP DMA always ready
-		AIDCR &= ~AIDCR_DSPDMA;
+		CDCR &= ~CDCR_DSPDMA;
 
 		// Reset modifier bit
-		if (data & AIDCR_RESETMOD)
+		if (data & CDCR_RESETMOD)
 		{
-			AIDCR |= AIDCR_RESETMOD;
+			CDCR |= CDCR_RESETMOD;
 		}
 		else
 		{
-			AIDCR &= ~AIDCR_RESETMOD;
+			CDCR &= ~CDCR_RESETMOD;
 		}
 
 		// DSP controls
@@ -93,15 +93,15 @@ namespace DSP
 		Flipper::DSP->SetHaltBit((data >> 2) & 1);
 	}
 
-	static void read_aidcr(uint32_t addr, uint32_t* reg, void* ctx)
+	static void read_cdcr(uint32_t addr, uint32_t* reg, void* ctx)
 	{
 		// DSP controls
-		AIDCR &= ~7;
-		AIDCR |= Flipper::DSP->GetResetBit() << 0;
-		AIDCR |= Flipper::DSP->GetIntBit() << 1;
-		AIDCR |= Flipper::DSP->GetHaltBit() << 2;
+		CDCR &= ~7;
+		CDCR |= Flipper::DSP->GetResetBit() << 0;
+		CDCR |= Flipper::DSP->GetIntBit() << 1;
+		CDCR |= Flipper::DSP->GetHaltBit() << 2;
 
-		*reg = AIDCR;
+		*reg = CDCR;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -110,8 +110,8 @@ namespace DSP
 	// dma transfer complete (when AIDCNT == 0)
 	void AIDINT()
 	{
-		AIDCR |= AIDCR_AIINT;
-		if (AIDCR & AIDCR_AIINTMSK)
+		CDCR |= CDCR_AIINT;
+		if (CDCR & CDCR_AIINTMSK)
 		{
 			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
 			if (dsp_ai.log)
@@ -247,8 +247,8 @@ namespace DSP
 			Report(Channel::AI, "DSPAssertInt\n");
 		}
 
-		AIDCR |= AIDCR_DSPINT;
-		if (AIDCR & AIDCR_DSPINTMSK)
+		CDCR |= CDCR_DSPINT;
+		if (CDCR & CDCR_DSPINTMSK)
 		{
 			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
 		}
@@ -256,12 +256,12 @@ namespace DSP
 
 	bool DSPGetInterruptStatus()
 	{
-		return (AIDCR & AIDCR_DSPINT) != 0;
+		return (CDCR & CDCR_DSPINT) != 0;
 	}
 
 	bool DSPGetResetModifier()
 	{
-		return (AIDCR & AIDCR_RESETMOD) != 0;
+		return (CDCR & CDCR_RESETMOD) != 0;
 	}
 
 	// Update audio DMA thread
@@ -313,7 +313,7 @@ namespace DSP
 		AIStopDMA();
 
 		// set register traps
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AI_DCR, read_aidcr, write_aidcr);
+		flipper->pi->PISetTrap(PI_REGSPACE_DSP | CDCR_OFF, read_cdcr, write_cdcr);
 
 		flipper->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
 		flipper->pi->PISetTrap(PI_REGSPACE_DSP | DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);

@@ -28,6 +28,27 @@ struct Emulator
 
 extern  Emulator emu;
 
+// Command line options (parsed once, at the very start of the application)
+
+struct CmdLineOptions
+{
+	bool    ipl = false;        // `--ipl`: start the Bootrom (IPL) immediately, without going through the UI
+	bool    noDisc = false;     // `--no-disc`: start with the DVD lid open (no disk), so that the IPL takes its "no disk" path
+};
+
+extern  CmdLineOptions cmdline;
+
+/// <summary>
+/// Parse the raw command line of the application (`lpCmdLine` on Windows, `argv` joined by spaces elsewhere).
+/// </summary>
+/// <param name="commandLine">Raw command line, without the executable name. May be nullptr.</param>
+void EMUParseCmdLine(const char* commandLine);
+
+/// <summary>
+/// Same as EMUParseCmdLine, but for the `argv`/`argc` pair of the portable entry point.
+/// </summary>
+void EMUParseCmdLine(int argc, char** argv);
+
 // Emu debug commands
 
 void EmuReflector();

@@ -102,6 +102,16 @@ namespace DSP
 	{
 		DspCore* core;
 
+		// Both halves of a packed word execute in one cycle: they sample the register file at the
+		// start of the cycle and write their results at the end of it. The interpreter runs the
+		// ALU half first, so any register the memory half *reads* (the store data of `st`/`ls` or
+		// the source of `mv`) is latched by `LatchPackedMemoryOperand` before that, and the memory
+		// half then stores the latched value. The pipelined block moves of the shipped microcode
+		// (`amv a,s` together with `ls ...,a`, which stores the word sampled one iteration
+		// earlier) depend on this: without the latch every such copy comes out shifted by one word.
+		uint16_t packedMemoryData = 0;
+		bool packedMemoryDataLatched = false;
+
 		// Regular instructions (single-word)
 
 		void jmp();
@@ -191,6 +201,7 @@ namespace DSP
 
 		// Helpers
 
+		void LatchPackedMemoryOperand();
 		void FetchMpyParams(DspParameter s1p, DspParameter s2p, int64_t& s1, int64_t& s2, bool checkDp);
 		void AdvanceAddress(int r, DspParameter param);
 		bool ConditionTrue(ConditionCode cc);

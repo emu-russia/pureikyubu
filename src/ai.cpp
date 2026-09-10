@@ -173,14 +173,15 @@ namespace Flipper
 	// AI DMA and DVD Audio are played uncompetitively from different streams.
 	// All work on Sample Rate Conversion and sound mixing for convenience is done in Mixer (audio.cpp).
 
+	// The streaming (auxiliary) channel passes through the volume stage before it is added to the DSP
+	// output: an 8-bit multiplier built by the SRC from AIVR scales the sample by volume/256, where
+	// 0x00 mutes the stream and 0xFF is full scale (audio-interface.md sections 3.3 and 8.2). The
+	// samples are signed, so the scaling is done on the signed value.
+
 	uint16_t AudioInterface::AdjustVolume(uint16_t sampleValue, int volume)
 	{
-		// Let's try how this conversion will behave on a float, if it slows down, then translate it to ints.
-		// In theory, on modern processors, float is fast.
-		float value = (float)sampleValue / (float)0xFFFF;
-		float volumeF = (float)volume / (float)0xFF;
-		float adjusted = value * volumeF;
-		return (uint16_t)(adjusted * (float)0xFFFF);
+		int32_t scaled = ((int32_t)(int16_t)sampleValue * (volume & 0xFF)) >> 8;
+		return (uint16_t)scaled;
 	}
 
 	// Called from DDU Core when DVD Audio decodes the next sample
@@ -201,8 +202,8 @@ namespace Flipper
 		int rightVolume = (uint8_t)(ai->ai.vr >> 8);
 		l = _BYTESWAP_UINT16(l);
 		r = _BYTESWAP_UINT16(r);
-		//l = AdjustVolume(l, leftVolume);
-		//r = AdjustVolume(r, rightVolume);
+		l = ai->AdjustVolume(l, leftVolume);
+		r = ai->AdjustVolume(r, rightVolume);
 
 		// Put sample in FIFO
 		uint16_t* ptr = (uint16_t*)&ai->ai.streamFifo[ai->ai.streamFifoPtr];

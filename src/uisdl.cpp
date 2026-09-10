@@ -523,6 +523,23 @@ void OnMainWindowClosed()
 	ResetStatusBar();
 }
 
+// Start the IPL (Bootrom) - the same thing that the "File -> Run Bootrom" menu item does.
+static void ui_load_bootrom()
+{
+	CreateRenderTarget();
+	UI::Jdi->LoadFile("Bootrom");
+	OnMainWindowOpened(L"Bootrom");
+	if (Debug::debugger == nullptr)
+	{
+		UI::Jdi->Run();
+	}
+	else
+	{
+		Debug::debugger->SetDisasmCursor(0xfff0'0100);
+		UI::Jdi->ExecuteCommand("echo \"Bootrom is started in Suspended state for debugging purposes. Press F5 to continue.\"");
+	}
+}
+
 static void ui_main_menu()
 {
 	// Menu Bar
@@ -544,18 +561,7 @@ static void ui_main_menu()
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Run Bootrom", NULL)) {		// Load bootrom
-				CreateRenderTarget();
-				UI::Jdi->LoadFile("Bootrom");
-				OnMainWindowOpened(L"Bootrom");
-				if (Debug::debugger == nullptr)
-				{
-					UI::Jdi->Run();
-				}
-				else
-				{
-					Debug::debugger->SetDisasmCursor(0xfff0'0100);
-					UI::Jdi->ExecuteCommand("echo \"Bootrom is started in Suspended state for debugging purposes. Press F5 to continue.\"");
-				}
+				ui_load_bootrom();
 			}
 			if (ImGui::BeginMenu("Swap Disk"))
 			{
@@ -698,6 +704,14 @@ static int ui_main()
 	// Create an interface for communicating with the emulator core
 	UI::Jdi = new UI::JdiClient;
 
+	// The command line may ask for an empty drive (the IPL then takes its "no disk" path,
+	// which is the one that shows the cube animation).
+
+	if (cmdline.noDisc)
+	{
+		UI::Jdi->DvdOpenCover();
+	}
+
 	// Add UI methods
 	JdiAddNode("UI_JDI_JSON", UI::UiJdi, UIReflector);
 	JdiAddNode("DEBUG_UI_JDI_JSON", Debug::DebugUiJdi, Debug::DebugUIReflector);
@@ -748,6 +762,13 @@ static int ui_main()
 	ImGui_ImplSDLRenderer2_Init(renderer);
 
 	ui_active = true;
+
+	// The command line may ask to start the IPL right away (as if File -> Run Bootrom was clicked).
+
+	if (cmdline.ipl)
+	{
+		ui_load_bootrom();
+	}
 
 	// Main loop
 
@@ -888,6 +909,7 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd )
 {
+	EMUParseCmdLine(lpCmdLine);
 	return ui_main();
 }
 
@@ -895,6 +917,7 @@ int WINAPI WinMain(
 
 int main(int argc, char** argv)
 {
+	EMUParseCmdLine(argc, argv);
 	return ui_main();
 }
 

@@ -78,7 +78,8 @@ void DspTestInitAram()
 	DSP::aram.mmaddr = 0;
 	DSP::aram.araddr = 0;
 	DSP::aram.cnt = 0;
-	DSP::aram.size = 0x5000;
+	DSP::aram.amcr = 0x43;			// 16 MB internal ARAM, no expansion
+	DSP::aram.masked = false;
 }
 
 void DspTestSetGekkoTicks(int64_t ticks)
@@ -311,17 +312,17 @@ namespace DSP
 
 	void DSPAssertInt()
 	{
-		dsp_ai.dcr |= AIDCR_DSPINT;
+		dsp_ai.cdcr |= CDCR_DSPINT;
 	}
 
 	bool DSPGetInterruptStatus()
 	{
-		return (dsp_ai.dcr & AIDCR_DSPINT) != 0;
+		return (dsp_ai.cdcr & CDCR_DSPINT) != 0;
 	}
 
 	bool DSPGetResetModifier()
 	{
-		return (dsp_ai.dcr & AIDCR_RESETMOD) != 0;
+		return (dsp_ai.cdcr & CDCR_RESETMOD) != 0;
 	}
 
 	void DspSetAiDmaSampleRate(int32_t rate)

@@ -1427,6 +1427,11 @@ namespace DSP
 		}
 		else
 		{
+			// Both halves sample the register file at the start of the cycle, so the memory half's
+			// read operand is latched before the ALU half writes its result (see dspcore.h).
+
+			LatchPackedMemoryOperand();
+
 			switch (info.parallelInstr)
 			{
 				case DspParallelInstruction::add: p_add(); break;
@@ -1734,7 +1739,7 @@ namespace DSP
 		AdvanceAddress(r, info.paramsEx[2]);
 
 		r = (int)info.paramsEx[3];
-		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info.paramsEx[5]));
+		core->dsp->WriteDMem(core->regs.r[r], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info.paramsEx[5]));
 		AdvanceAddress(r, info.paramsEx[4]);
 	}
 
@@ -1750,14 +1755,14 @@ namespace DSP
 	void DspInterpreter::p_st()
 	{
 		int r = (int)info.paramsEx[0];
-		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info.paramsEx[2]));
+		core->dsp->WriteDMem(core->regs.r[r], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info.paramsEx[2]));
 		AdvanceAddress(r, info.paramsEx[1]);
 	}
 
 	// mv d,s
 	void DspInterpreter::p_mv()
 	{
-		core->MoveToReg((int)info.paramsEx[0], core->MoveFromReg((int)info.paramsEx[1]));
+		core->MoveToReg((int)info.paramsEx[0], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info.paramsEx[1]));
 	}
 
 	// mr rn,mn
@@ -1765,6 +1770,35 @@ namespace DSP
 	{
 		int r = (int)info.paramsEx[0];
 		AdvanceAddress(r, info.paramsEx[1]);
+	}
+
+	// Latch the value the memory half of the current packed word reads from the register file.
+	// It has to happen before the ALU half runs: both halves are clocked by the same cycle and
+	// see the register contents as they were at its start.
+	void DspInterpreter::LatchPackedMemoryOperand()
+	{
+		packedMemoryDataLatched = false;
+
+		switch (info.parallelMemInstr)
+		{
+			case DspParallelMemInstruction::ls:
+				packedMemoryData = core->MoveFromReg((int)info.paramsEx[5]);
+				packedMemoryDataLatched = true;
+				break;
+
+			case DspParallelMemInstruction::st:
+				packedMemoryData = core->MoveFromReg((int)info.paramsEx[2]);
+				packedMemoryDataLatched = true;
+				break;
+
+			case DspParallelMemInstruction::mv:
+				packedMemoryData = core->MoveFromReg((int)info.paramsEx[1]);
+				packedMemoryDataLatched = true;
+				break;
+
+			default:
+				break;
+		}
 	}
 
 }

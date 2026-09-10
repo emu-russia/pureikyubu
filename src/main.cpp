@@ -175,6 +175,84 @@ const char* EmuJdi = R"json(
 // Emulator state
 Emulator emu;
 
+// Command line options
+
+CmdLineOptions cmdline;
+
+static void ParseCmdLineArg(const std::string& arg)
+{
+	if (arg == "--ipl")
+	{
+		cmdline.ipl = true;
+	}
+	else if (arg == "--no-disc")
+	{
+		cmdline.noDisc = true;
+	}
+	else
+	{
+		Report(Channel::Norm, "Unknown command line argument: %s\n", arg.c_str());
+	}
+}
+
+void EMUParseCmdLine(const char* commandLine)
+{
+	if (commandLine == nullptr)
+	{
+		return;
+	}
+
+	// Split into arguments, honouring the quotes (arguments are not allowed to contain spaces otherwise).
+
+	std::string arg;
+	bool quoted = false;
+
+	for (const char* p = commandLine; *p != 0; p++)
+	{
+		char c = *p;
+
+		if (c == '\"' || c == '\'')
+		{
+			quoted = !quoted;
+		}
+		else if (!quoted && (c == ' ' || c == '\t'))
+		{
+			if (!arg.empty())
+			{
+				ParseCmdLineArg(arg);
+				arg.clear();
+			}
+		}
+		else
+		{
+			arg.push_back(c);
+		}
+	}
+
+	if (!arg.empty())
+	{
+		ParseCmdLineArg(arg);
+	}
+}
+
+void EMUParseCmdLine(int argc, char** argv)
+{
+	std::string commandLine;
+
+	// Skip argv[0] (the executable itself)
+
+	for (int i = 1; i < argc; i++)
+	{
+		if (i > 1)
+		{
+			commandLine.push_back(' ');
+		}
+		commandLine += argv[i];
+	}
+
+	EMUParseCmdLine(commandLine.c_str());
+}
+
 Gekko::GekkoCore *Core;
 
 std::list<Thread*> emu_threads;

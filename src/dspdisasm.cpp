@@ -280,22 +280,24 @@ namespace DSP
 			case DspHardwareRegs::DSCR: text = "DSCR"; break;
 			case DspHardwareRegs::DSBL: text = "DSBL"; break;
 
-			case DspHardwareRegs::ACDAT2: text = "ACDAT2"; break;
+			case DspHardwareRegs::ACDL: text = "ACDL"; break;
 			case DspHardwareRegs::ACSAH: text = "ACSAH"; break;
 			case DspHardwareRegs::ACSAL: text = "ACSAL"; break;
 			case DspHardwareRegs::ACEAH: text = "ACEAH"; break;
 			case DspHardwareRegs::ACEAL: text = "ACEAL"; break;
 			case DspHardwareRegs::ACCAH: text = "ACCAH"; break;
 			case DspHardwareRegs::ACCAL: text = "ACCAL"; break;
-			case DspHardwareRegs::ACDAT: text = "ACDAT"; break;
+			case DspHardwareRegs::ACYN: text = "ACYN"; break;
 
 			case DspHardwareRegs::DIRQ: text = "DIRQ"; break;
 
-			case DspHardwareRegs::ACFMT: text = "ACFMT"; break;
+			case DspHardwareRegs::ADM: text = "ADM"; break;
 			case DspHardwareRegs::ACPDS: text = "ACPDS"; break;
 			case DspHardwareRegs::ACYN1: text = "ACYN1"; break;
 			case DspHardwareRegs::ACYN2: text = "ACYN2"; break;
 			case DspHardwareRegs::ACGAN: text = "ACGAN"; break;
+			case DspHardwareRegs::ACXN: text = "ACXN"; break;
+			case DspHardwareRegs::AMDM: text = "AMDM"; break;
 
 			case DspHardwareRegs::ADPCM_A00: text = "ADPCM_A00"; break;
 			case DspHardwareRegs::ADPCM_A10: text = "ADPCM_A10"; break;

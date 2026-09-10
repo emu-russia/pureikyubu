@@ -408,8 +408,8 @@ namespace Gekko
 		void callvm();
 
 		uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-		float       ldScale[64];        // for paired-single loads
-		float       stScale[64];        // for paired-single stores
+		// The quantized load/store conversion scales are computed on demand by
+		// Gekko::GqrScaleFactor (src/gqr.h), which is covered by testing/gqr_test.cpp.
 
 		float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
 		uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
