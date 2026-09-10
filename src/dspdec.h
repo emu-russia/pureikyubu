@@ -302,6 +302,13 @@ namespace DSP
 
 		ConditionCode cc;		// Some instructions has condition code
 
+		// Set by `lsf`/`asf` when the source operand is one of the negated forms
+		// (-x1, -y1, -(other accumulator half)). dsp-isa.md section 4.6 defines these as
+		// shifting "by the sign of the negated value", so both the direction and the count
+		// are those of the negated operand.
+
+		bool negatedSource;
+
 	};
 
 	class Decoder

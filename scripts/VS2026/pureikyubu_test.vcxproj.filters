@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Emulator Sources">
+      <UniqueIdentifier>{F5A2B1C0-3D44-4E71-9C2A-1B7E6D4A5C10}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\testing\pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\pureikyubu_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_test_support.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_core_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_parallel_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_flags_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_control_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_mailbox_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_irom_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_golden_alu_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dsp.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspcore.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspdec.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspdisasm.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspdma.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dsparam.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\jdi.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\json.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\testing\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\testing\dsp_test_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\testing\dsp_golden_alu_vectors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dsp.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspai.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dsparam.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspcore.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspdec.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspdisasm.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspdma.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\pch.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\utils.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\testing\DspIrom.md" />
+    <None Include="..\..\testing\Readme.md" />
+  </ItemGroup>
+</Project>
