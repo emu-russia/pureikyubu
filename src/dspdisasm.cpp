@@ -390,6 +390,11 @@ namespace DSP
 				{
 					text += ", ";
 				}
+				// lsf/asf have negated source forms (dsp-isa.md section 4.6): lsf d,-x1 etc.
+				if (info.negatedSource && i + 1 == info.numParameters)
+				{
+					text += "-";
+				}
 				text += ParameterToString(info.params[i], info);
 				firstParam = false;
 			}

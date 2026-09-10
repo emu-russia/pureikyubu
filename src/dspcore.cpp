@@ -64,38 +64,80 @@ namespace DSP
 
 	// Circular addressing logic
 
+	// Circular addressing (r / m / l)
+	//
+	// A buffer is described by three registers: the current address r, the buffer length l
+	// and the signed modifier m. The buffer holds l + 1 entries, and `l = 0xFFFF` selects
+	// plain linear addressing.
+	//
+	// The buffer is *not* aligned to its own length. The address unit places it in the top
+	// (l + 1) entries of the 2^n-aligned block that contains the current address, where n is
+	// the position of the highest set bit of l plus one (so 2^(n-1) <= l < 2^n):
+	//
+	//     block top     = r | (2^n - 1)
+	//     buffer bottom = block top - l
+	//
+	// For a length register of 2^k - 1 - the only kind that wraps cleanly, and the one real
+	// microcode uses - the buffer is exactly the whole aligned block, and this reduces to the
+	// familiar "keep the pointer inside [base, base + l]" rule (dsp.md section 2.4). Other
+	// lengths have the odd but deterministic behaviour of the hardware reproduced here.
+	//
+	// One step is a plain 16-bit addition of the modifier, which the address unit negates by
+	// adding its complement with a carry-in of one. If the addition carries out of bit n-1
+	// the address has left the aligned block and is corrected by -(l+1) when stepping
+	// forward, or +(l+1) when stepping backward. Only one correction is applied per update,
+	// so |m| <= l is required.
+
 	uint16_t DspCore::CircularAddress(uint16_t r, uint16_t l, int16_t m)
 	{
-		if (m == 0 || l == 0)
+		if (m == 0)
 		{
 			return r;
 		}
 
-		if (l == 0xffff)
+		if (l == 0xFFFF)
 		{
 			return (uint16_t)((int16_t)r + m);
 		}
-		else
+
+		// n = the position of the highest set bit of l, plus one (n = 1 when l <= 1).
+		int n = 1;
+		for (int bit = 15; bit >= 1; bit--)
 		{
-			int16_t abs_m = m > 0 ? m : -m;
-			int16_t mm = abs_m % (l + 1);
-			uint16_t base = (r / (l + 1)) * (l + 1);
-			uint16_t next = 0;
-			uint32_t sum = 0;
-
-			if (m > 0)
+			if ((l >> bit) & 1)
 			{
-				sum = (uint32_t)((uint32_t)r + mm);
+				n = bit + 1;
+				break;
 			}
-			else
-			{
-				sum = (uint32_t)((uint32_t)r + l + 1 - mm);
-			}
-
-			next = base + (uint16_t)(sum % (l + 1));
-
-			return next;
 		}
+
+		uint32_t mask = (1u << n) - 1;
+		bool backwards = (m < 0);
+
+		// The modifier reaches the adder as a plain value (forward) or as its complement
+		// with a carry-in of one (backward), that is, as -|m|.
+		uint32_t operand = backwards ? ((~(uint32_t)(-(int32_t)m)) & 0xFFFF) : (uint32_t)(uint16_t)m;
+		uint32_t carryIn = backwards ? 1u : 0u;
+
+		uint32_t sum = ((uint32_t)r + operand + carryIn) & 0xFFFF;
+		uint32_t carryStep = ((((uint32_t)r & mask) + (operand & mask) + carryIn) >> n) & 1;
+
+		// The correction is +(l+1) when the operand is negative in the 16-bit sense (a
+		// backward step whose complement still has bit 15 set) and -(l+1) otherwise, which is
+		// "add l with a carry-in of one" or "add ~l".
+		uint32_t negative = (operand >> 15) & 1;
+		uint32_t correction = negative ? (uint32_t)l : ((~(uint32_t)l) & 0xFFFF);
+		uint32_t correctionCarryIn = negative;
+
+		uint32_t carryCorrection = ((((sum & mask) + (correction & mask) + correctionCarryIn) >> n) & 1);
+		uint32_t corrected = (sum + correction + correctionCarryIn) & 0xFFFF;
+
+		// Forward: wrap exactly when the step left the block. Backward: the correction is
+		// skipped when the step *and* the correction both carried out of the block, which
+		// means the address was already below the buffer.
+		bool wrap = negative ? ((carryStep & carryCorrection) == 0) : (carryStep != 0);
+
+		return (uint16_t)(wrap ? corrected : sum);
 	}
 
 	void DspCore::ArAdvance(int r, int16_t step)
@@ -107,6 +149,16 @@ namespace DSP
 
 	void DspCore::ModifyFlags(uint64_t d, uint64_t s, uint64_t r, CFlagRules cf, VFlagRules vf, ZFlagRules zf, NFlagRules nf, EFlagRules ef, UFlagRules uf)
 	{
+		// The accumulators are 40 bits wide, so the flags always describe the truncated
+		// result: a handler may pass a wider intermediate (a 41-bit sum, a left shift that
+		// pushed bits out of bit 39), and the value the programmer can read back is the
+		// 40-bit one. Every rule below looks at bits 39..0 only, so masking here cannot
+		// change any of them for a value that was already 40 bits wide.
+		const uint64_t mask = 0x0000'00ff'ffff'ffffULL;
+		d &= mask;
+		s &= mask;
+		r &= mask;
+
 		// Carry
 
 		switch (cf)
@@ -315,6 +367,12 @@ namespace DSP
 					}
 					regs.psr.et = 0;
 
+					// All vectors are offsets relative to the active program base, which is
+					// selected by the CDCR reset-vector bit: 0x8000 (IROM) after a hardware
+					// reset, 0x0000 (IRAM) once the CPU has cleared the bit and downloaded the
+					// microcode (dsp.md section 2.7).
+					DspAddress programBase = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;
+
 					if (i == (size_t)DspInterrupt::Reset)
 					{
 						regs.pcs->clear();
@@ -322,11 +380,11 @@ namespace DSP
 						regs.eas->clear();
 						regs.lcs->clear();
 
-						regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
+						regs.pc = programBase;
 					}
 					else
 					{
-						regs.pc = (DspAddress)i * 2;
+						regs.pc = programBase + (DspAddress)i * 2;
 					}
 
 					if (dsp->logDspInterrupts)
@@ -1176,55 +1234,72 @@ namespace DSP
 
 	void DspInterpreter::FetchMpyParams(DspParameter s1p, DspParameter s2p, int64_t& s1, int64_t& s2, bool checkDp)
 	{
+		// Both operands are signed 16-bit values that are fed to the multiplier through its
+		// fraction-alignment input: in integer mode the product is S1*S2, in fraction mode it
+		// is S1*(2*S2), the Q1.15 -> Q2.30 alignment described by dsp.md sections 2.3 and 2.10
+		// (the reference model there defaults to md_signed = mr_signed = 1).
+		//
+		// When the DP mode bit is set, the mixed forms take one unsigned half:
+		//
+		//   x1*y0 -> sign  * unsign
+		//   x0*y1 -> unsign * sign
+		//   x1*y1 -> sign  * sign
+		//   x0*y0 -> unsign * unsign when the DP mode bit is set, otherwise sign * sign
+		//
+		// so both halves are SIGNED by default and DP is the exception, not the rule.
+
 		switch (s1p)
 		{
 			case DspParameter::x0:
-				s1 = core->regs.x.l;
+				s1 = DspCore::SignExtend16((int16_t)core->regs.x.l);
 				break;
 			case DspParameter::x1:
-				s1 = core->regs.x.h;
+				s1 = DspCore::SignExtend16((int16_t)core->regs.x.h);
 				break;
 			case DspParameter::y1:
-				s1 = core->regs.y.h;
+				s1 = DspCore::SignExtend16((int16_t)core->regs.y.h);
 				break;
 			case DspParameter::a1:
-				s1 = core->regs.a.m;
+				s1 = DspCore::SignExtend16((int16_t)core->regs.a.m);
 				break;
 			case DspParameter::b1:
-				s1 = core->regs.b.m;
+				s1 = DspCore::SignExtend16((int16_t)core->regs.b.m);
 				break;
 		}
 
 		switch (s2p)
 		{
 			case DspParameter::x0:
-				s2 = core->regs.x.l;
+				s2 = DspCore::SignExtend16((int16_t)core->regs.x.l);
 				break;
 			case DspParameter::x1:
-				s2 = core->regs.x.h;
+				s2 = DspCore::SignExtend16((int16_t)core->regs.x.h);
 				break;
 			case DspParameter::y0:
-				s2 = core->regs.y.l;
+				s2 = DspCore::SignExtend16((int16_t)core->regs.y.l);
 				break;
 			case DspParameter::y1:
-				s2 = core->regs.y.h;
+				s2 = DspCore::SignExtend16((int16_t)core->regs.y.h);
 				break;
 		}
 
 		if (core->regs.psr.dp && checkDp)
 		{
-			if (s1p == DspParameter::x0 && s2p == DspParameter::y1)
+			// dsp.md sections 2.3 and 2.10: the DP mode bit selects the signed/unsigned
+			// interpretation of the halves of the mixed (high x low) forms. While DP is clear
+			// every half is signed, which is the ordinary case.
+			if (s1p == DspParameter::x1 && s2p == DspParameter::y0)
 			{
-				s2 = DspCore::SignExtend16((uint16_t)s2);
+				s2 = (uint16_t)s2;				// x1*y0 -> sign * unsign
 			}
-			else if (s1p == DspParameter::x1 && s2p == DspParameter::y0)
+			else if (s1p == DspParameter::x0 && s2p == DspParameter::y1)
 			{
-				s1 = DspCore::SignExtend16((uint16_t)s1);
+				s1 = (uint16_t)s1;				// x0*y1 -> unsign * sign
 			}
-			else if (s1p == DspParameter::x1 && s2p == DspParameter::y1)
+			else if (s1p == DspParameter::x0 && s2p == DspParameter::y0)
 			{
-				s1 = DspCore::SignExtend16((uint16_t)s1);
-				s2 = DspCore::SignExtend16((uint16_t)s2);
+				s1 = (uint16_t)s1;				// x0*y0 -> unsign * unsign
+				s2 = (uint16_t)s2;
 			}
 		}
 
@@ -1864,6 +1939,14 @@ namespace DSP
 				break;
 		}
 
+		// The product source reports the borrow itself (C = 1 while D < P) instead of the
+		// complemented borrow that the C2 rule of the ordinary sources produces.
+		if (info.params[1] == DspParameter::prod)
+		{
+			const uint64_t mask = 0x0000'00ff'ffff'ffffULL;
+			core->regs.psr.c = (((uint64_t)d & mask) < ((uint64_t)s & mask)) ? 1 : 0;
+		}
+
 		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
@@ -1906,6 +1989,8 @@ namespace DSP
 		}
 
 		r = d + s;
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{
@@ -2048,7 +2133,11 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V8, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+		// `dec` subtracts one, so its carry is the carry of a full-width subtraction with the
+		// operand 1: C2 computes Ds(39) | ~Dd(39), which is set for every non-zero operand,
+		// including negative ones. (The C4 rule used by `neg` is the carry of 0 - D and only
+		// agrees while the operand is positive.)
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V8, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::p_abs()
@@ -2130,15 +2219,33 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+		// C4/V3 describe the negation of the operand: Ds is the negated value itself, not 0.
+		core->ModifyFlags((uint64_t)s, (uint64_t)0, (uint64_t)r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+
+		// Negating the product registers reports the borrow of 0 - P itself rather than the
+		// C4 pattern: the carry is set while the product is not zero (checked against the
+		// hardware for the whole operand sweep).
+		if (info.numParameters == 2 && info.params[1] == DspParameter::prod)
+		{
+			core->regs.psr.c = (s != 0) ? 1 : 0;
+		}
 	}
 
 	void DspInterpreter::p_clr()
 	{
 		switch (info.params[0])
 		{
-			case DspParameter::a: core->regs.a.bits = 0; break;
-			case DspParameter::b: core->regs.b.bits = 0; break;
+			case DspParameter::a:
+				core->regs.a.bits = 0;
+				// `clr d` is a data path write of zero: it forces C=0 V=0 Z=1 N=0 E=0 U=1.
+				core->ModifyFlags(0, 0, 0, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1,
+					NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = 0;
+				core->ModifyFlags(0, 0, 0, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1,
+					NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+				break;
 
 			case DspParameter::prod:
 				core->regs.prod.l = 0x0000;
@@ -2246,7 +2353,10 @@ namespace DSP
 			}
 		}
 
-		r = d + s;
+		// The product partials are a redundant representation of a 40-bit value: fold them
+		// (ps2:ps1:ps0 + pc1<<16) and keep 40 bits, so that the documented `clr p` pattern
+		// reads back as a zero product.
+		r = (d + s) & 0x0000'00ff'ffff'ffff;
 
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
@@ -2267,7 +2377,9 @@ namespace DSP
 				break;
 		}
 
-		r = (uint64_t)d << 16;
+		// The accumulator is 40 bits wide: bits shifted beyond bit 39 are lost, and the flags
+		// must be computed on the truncated result.
+		r = ((uint64_t)d << 16) & 0x0000'00ff'ffff'ffff;
 
 		switch (info.params[0])
 		{
@@ -2300,6 +2412,8 @@ namespace DSP
 
 		r = (uint64_t)d >> 16;
 
+		r &= 0x0000'00ff'ffff'ffffULL;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a:
@@ -2331,6 +2445,8 @@ namespace DSP
 
 		r = d >> 16;		// Arithmetic
 
+		r &= 0x0000'00ff'ffff'ffffULL;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a:
@@ -2361,7 +2477,8 @@ namespace DSP
 		}
 
 		core->PackProd(core->regs.prod);
-		s = DspCore::SignExtend32((uint32_t)core->regs.prod.bitsPacked);
+		// The folded product is a full 40-bit value (dsp.md section 2.10); C8/V7 inspect P(39).
+		s = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 
 		r = d + s;
 
@@ -2406,17 +2523,29 @@ namespace DSP
 
 		r = ~d;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::p_xor()
@@ -2453,17 +2582,29 @@ namespace DSP
 
 		r = d ^ s;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::p_and()
@@ -2500,17 +2641,29 @@ namespace DSP
 
 		r = d & s;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::p_or()
@@ -2547,17 +2700,69 @@ namespace DSP
 
 		r = d | s;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
+	}
+
+	// -------------------------------------------------------------------------------
+	// Shift helpers for the lsf/asf family.
+	//
+	// The count is the low byte of the source read as a signed 8-bit value, so a source
+	// of 0xFFFF shifts right by one while a source of 0x0100 does not shift at all. A
+	// positive count shifts left, a negative one shifts right by its magnitude, and
+	// shifting a 40-bit accumulator by 40 or more leaves zero (or, for the arithmetic
+	// form, the sign fill alone).
+	// -------------------------------------------------------------------------------
+
+	static uint64_t DspShiftBy(uint64_t d, int32_t count, bool arithmetic)
+	{
+		const uint64_t mask = 0x0000'00ff'ffff'ffffULL;
+
+		d &= mask;
+
+		if (count >= 0)
+		{
+			return ((uint32_t)count >= 40) ? 0 : ((d << (uint32_t)count) & mask);
+		}
+
+		uint32_t magnitude = (uint32_t)(-(int32_t)count);
+
+		if (magnitude >= 40)
+		{
+			if (!arithmetic) return 0;
+			return (d & (1ULL << 39)) ? mask : 0;
+		}
+
+		int64_t value = arithmetic ? DspCore::SignExtend40((int64_t)d) : (int64_t)d;
+		return (uint64_t)(value >> magnitude) & mask;
+	}
+
+	/// <summary>Signed 8-bit shift count carried by a register source.</summary>
+	static int32_t DspShiftCount(int16_t source, bool negated)
+	{
+		int32_t count = (int8_t)(source & 0xFF);
+		return negated ? -count : count;
 	}
 
 	void DspInterpreter::p_lsf()
@@ -2592,14 +2797,9 @@ namespace DSP
 				break;
 		}
 
-		if (s < 0)
-		{
-			r = (uint64_t)d << (~s + 1);
-		}
-		else
-		{
-			r = (uint64_t)d >> s;
-		}
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), false);
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{
@@ -2646,14 +2846,9 @@ namespace DSP
 				break;
 		}
 
-		if (s < 0)
-		{
-			r = d << (~s + 1);
-		}
-		else
-		{
-			r = d >> s;		// Arithmetic
-		}
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), true);
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{
@@ -2773,6 +2968,11 @@ namespace DSP
 
 	void DspInterpreter::trap()
 	{
+		// `trap` is a one-word instruction. The interrupt is taken at the next instruction
+		// boundary, where CheckInterrupts pushes the PC onto pcs and pss, so the PC has to be
+		// advanced here: otherwise the pushed return address is the trap's own address and a
+		// handler ending in `reti` would re-execute the trap forever.
+		core->regs.pc++;
 		core->AssertInterrupt(DspInterrupt::Trap);
 	}
 
@@ -2904,7 +3104,7 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::adli()
@@ -2937,7 +3137,7 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::cmpsi()
@@ -2960,7 +3160,7 @@ namespace DSP
 
 		r = d - s;
 
-		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::cmpli()
@@ -2983,13 +3183,13 @@ namespace DSP
 
 		r = d - s;
 
-		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::lsfi()
 	{
 		int64_t d = 0;
-		uint16_t s = 0;
+		int16_t s = 0;
 		int64_t r = 0;
 
 		switch (info.params[0])
@@ -3002,16 +3202,15 @@ namespace DSP
 				break;
 		}
 
+		// The immediate is a signed 7-bit shift count (dsp-isa.md section 4.5): a negative
+		// shifts right by its magnitude, a positive one shifts left. The magnitude is formed
+		// explicitly - computing it as `~s + 1` on an unsigned operand yields a negative
+		// shift count, which is undefined behaviour.
 		s = (int16_t)info.ImmOperand.SignedByte;
 
-		if (s & 0x8000)
-		{
-			r = (uint64_t)d >> (~s + 1);
-		}
-		else
-		{
-			r = (uint64_t)d << s;
-		}
+		r = DspShiftBy((uint64_t)d, (int8_t)info.ImmOperand.SignedByte, false);
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{
@@ -3029,7 +3228,7 @@ namespace DSP
 	void DspInterpreter::asfi()
 	{
 		int64_t d = 0;
-		uint16_t s = 0;
+		int16_t s = 0;
 		int64_t r = 0;
 
 		switch (info.params[0])
@@ -3042,16 +3241,13 @@ namespace DSP
 				break;
 		}
 
+		// See lsfi: the signed 7-bit immediate is the shift count, the magnitude is formed
+		// without relying on the shift of a negative count.
 		s = (int16_t)info.ImmOperand.SignedByte;
 
-		if (s & 0x8000)
-		{
-			r = d >> (~s + 1);
-		}
-		else
-		{
-			r = d << s;		// Arithmetic
-		}
+		r = DspShiftBy((uint64_t)d, (int8_t)info.ImmOperand.SignedByte, true);
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{
@@ -3084,17 +3280,29 @@ namespace DSP
 
 		r = d ^ s;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::anli()
@@ -3115,17 +3323,29 @@ namespace DSP
 
 		r = d & s;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::orli()
@@ -3146,27 +3366,187 @@ namespace DSP
 
 		r = d | s;
 
+		// The logic family operates on the a1/b1 half at bits 31-16; Z, N, E and U follow the
+		// written accumulator: Z looks at the 31-16 half and N at bit 31, while E and U always
+		// take bits 39-31 and 31-30 of the whole value, so the untouched extension byte still
+		// takes part in E.
+
+		const uint16_t result16 = (uint16_t)r;
+		int64_t flagsResult = 0;
+
 		switch (info.params[0])
 		{
 			case DspParameter::a1:
-				core->regs.a.m = r;
+				core->regs.a.m = result16;
+				flagsResult = (int64_t)(core->regs.a.bits & 0x0000'00ff'ffff'ffff);
 				break;
 			case DspParameter::b1:
-				core->regs.b.m = r;
+				core->regs.b.m = result16;
+				flagsResult = (int64_t)(core->regs.b.bits & 0x0000'00ff'ffff'ffff);
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)d << 16, (uint64_t)s << 16, (uint64_t)flagsResult,
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2,
+			EFlagRules::E1, UFlagRules::U1);
 	}
+
+	// Normalisation step (`norm`, dsp-isa.md section 4.6):
+	//
+	//   IF E = 1                    -> D arithmetic shift right by 1, rn = rn + 1
+	//   ELSE IF E = 0, U = 1, Z = 0 -> D arithmetic shift left by 1,  rn = rn - 1
+	//   ELSE                        -> NOP (rn unchanged)
+	//
+	// Flags: Z <- Dd == 0, N <- Dd(39), E <- Dd(39-31) not all zero / all one,
+	//        U <- Dd(31) xnor Dd(30), V <- 0, C <- 0.
+	//
+	// A right shift counts down the exponent, so rn is incremented; the left shift counts in
+	// the other direction and decrements rn. Both steps go through the circular address
+	// generator, so the rn update wraps like any other address step.
 
 	void DspInterpreter::norm()
 	{
-		Halt("DspInterpreter::norm\n");
+		int64_t d = 0;
+		int r = (int)info.params[1];
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		bool shiftRight = core->regs.psr.e != 0;
+		bool shiftLeft = !core->regs.psr.e && core->regs.psr.u && !core->regs.psr.z;
+
+		if (shiftRight)
+		{
+			d >>= 1;
+		}
+		else if (shiftLeft)
+		{
+			d = (d << 1) & 0x0000'00ff'ffff'ffff;
+		}
+
+		if (shiftRight || shiftLeft)
+		{
+			switch (info.params[0])
+			{
+				case DspParameter::a:
+					core->regs.a.bits = (uint64_t)d & 0x0000'00ff'ffff'ffff;
+					break;
+				case DspParameter::b:
+					core->regs.b.bits = (uint64_t)d & 0x0000'00ff'ffff'ffff;
+					break;
+			}
+
+			core->ArAdvance(r, shiftLeft ? -1 : +1);
+		}
+
+		core->ModifyFlags(0, 0, (uint64_t)(d & 0x0000'00ff'ffff'ffff),
+			CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1,
+			EFlagRules::E1, UFlagRules::U1);
 	}
+
+	// One step of non-restoring division (`div`, dsp-isa.md section 4.6):
+	//
+	//   IF D(39) xor S(15) = 1 -> D = (D + S) * 2 + (CO ^ S15)
+	//   IF D(39) xor S(15) = 0 -> D = (D - S) * 2 + (CO ^ S15)
+	//
+	// `S` is the 16-bit divisor, sign extended and aligned to the high half of the 40-bit
+	// operand, which is where the data path reads its sign from. CO is the carry out of bit 39
+	// of the addition, and the bit shifted in at the bottom is the new quotient bit. Only bits
+	// 31-0 take part in the shift; the extension byte is carried through unchanged, so after
+	// `rep 16` the quotient sits in a0/b0 and the remainder in a1/b1 (dsp-isa.md section 7.2).
+	//
+	// Flags: C <- C3, V <- 0, Z <- the whole 40-bit result is zero, N <- Dd(39),
+	//        E <- Dd(39-31) not all zero / all one, U <- Dd(31) xnor Dd(30).
 
 	void DspInterpreter::div()
 	{
-		Halt("DspInterpreter::div\n");
+		int64_t d = 0;
+		uint16_t divisor = 0;
+		const uint64_t MASK40 = 0x0000'00ff'ffff'ffffULL;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		switch (info.params[1])
+		{
+			case DspParameter::x0:
+				divisor = core->regs.x.l;
+				break;
+			case DspParameter::y0:
+				divisor = core->regs.y.l;
+				break;
+			case DspParameter::x1:
+				divisor = core->regs.x.h;
+				break;
+			case DspParameter::y1:
+				divisor = core->regs.y.h;
+				break;
+		}
+
+		int divisorSign = (divisor >> 15) & 1;
+		int accumulatorSign = (int)(((uint64_t)d >> 39) & 1);
+
+		int64_t operand = DspCore::SignExtend16((int16_t)divisor) << 16;
+		bool subtract = (accumulatorSign == divisorSign);
+
+		uint64_t ua = (uint64_t)d & MASK40;
+		uint64_t ub = (uint64_t)operand & MASK40;
+		uint64_t sum = 0;
+		int co = 0;
+
+		if (subtract)
+		{
+			// The divisor is subtracted by adding its complement with a carry-in of one, and
+			// the carry out of bit 39 becomes the carry flag.
+			uint64_t wide = ua + ((~ub) & MASK40) + 1;
+			co = (int)((wide >> 40) & 1);
+			sum = wide & MASK40;
+		}
+		else
+		{
+			uint64_t wide = ua + ub;
+			co = (int)((wide >> 40) & 1);
+			sum = wide & MASK40;
+		}
+
+		int quotientBit = divisorSign ^ co;
+
+		// Bits 31-0 are shifted left with the new quotient bit shifted in; the extension byte
+		// is carried through unchanged.
+		uint64_t low = ((sum & 0xFFFF'FFFFULL) << 1) & 0xFFFF'FFFFULL;
+		low = (low & ~1ULL) | (uint64_t)quotientBit;
+
+		int64_t r = (int64_t)((sum & 0xFF'0000'0000ULL) | low);
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = (uint64_t)r & MASK40;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = (uint64_t)r & MASK40;
+				break;
+		}
+
+		// The C3 rule reads the divisor sign from bit 15, so the flag helper is handed the
+		// plain 16-bit divisor rather than its aligned form.
+		core->ModifyFlags((uint64_t)d, (uint64_t)(int64_t)(int16_t)divisor, (uint64_t)r,
+			CFlagRules::C3, VFlagRules::Zero, ZFlagRules::Z3, NFlagRules::N1,
+			EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::addc()
@@ -3207,7 +3587,7 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::subc()
@@ -3248,7 +3628,7 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::negc()
@@ -3279,7 +3659,8 @@ namespace DSP
 				break;
 		}
 
-		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		// See `neg`: the negated value is the accumulator itself.
+		core->ModifyFlags((uint64_t)s, (uint64_t)0, (uint64_t)r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::_max()
@@ -3314,13 +3695,27 @@ namespace DSP
 				break;
 		}
 
-		// abs
+		// `max` compares magnitudes and does NOT store its result: it subtracts the absolute
+		// value of the source from the absolute value of the destination and leaves only the
+		// flags behind, which is what block floating point magnitude searches need. The carry
+		// is the carry out of that magnitude subtraction, i.e. it is set while |D| >= |S|.
+		const int64_t ds = d;
+		const int64_t src = s;
+
 		if (d < 0) d = -d;
 		if (s < 0) s = -s;
 
 		r = d - s;
 
-		core->ModifyFlags(d, s, r, CFlagRules::C5, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
+		core->ModifyFlags((uint64_t)ds, (uint64_t)src, (uint64_t)r, CFlagRules::None, VFlagRules::Zero,
+			ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
+
+		// Both operands are negated before being subtracted, so the carry is simply the carry
+		// out of |D| - |S|: it is set while that difference is non-negative. The C5 rule of
+		// dsp-isa.md section 4.13 describes the same operation with the pre-negation signs and
+		// does not reproduce the result (it is wrong for two operands of equal sign, which is
+		// the common case).
+		core->regs.psr.c = (r >= 0) ? 1 : 0;
 	}
 
 	void DspInterpreter::lsf()
@@ -3355,14 +3750,9 @@ namespace DSP
 				break;
 		}
 
-		if (-s < 0)
-		{
-			r = (uint64_t)d >> s;
-		}
-		else
-		{
-			r = (uint64_t)d << (~s + 1);
-		}
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), false);
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{
@@ -3409,14 +3799,9 @@ namespace DSP
 				break;
 		}
 
-		if (-s < 0)
-		{
-			r = d >> s;		// Arithmetic
-		}
-		else
-		{
-			r = d << (~s + 1);
-		}
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), true);
+
+		r &= 0x0000'00ff'ffff'ffffULL;
 
 		switch (info.params[0])
 		{

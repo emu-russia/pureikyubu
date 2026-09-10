@@ -15,6 +15,8 @@ namespace DSP
 		info.numParametersEx = 0;
 
 		info.flowControl = false;
+
+		info.negatedSource = false;
 	}
 
 	void Decoder::AddParam(DecoderInfo& info, DspParameter param)
@@ -153,8 +155,14 @@ namespace DSP
 					}
 					break;
 				}
-				case 1:		// trap, wait
+				case 1:		// trap (0x0020), wait (0x0021)
 				{
+					// 0x0022-0x003F is the packed `st` half-word, which can never appear as a
+					// whole word (a move-only word is encoded with a 0x8000 ALU field).
+					if ((instrBits & 0x1e) != 0)
+					{
+						break;
+					}
 					info.instr = (instrBits & 1) == 0 ? DspRegularInstruction::trap : DspRegularInstruction::wait;
 					info.flowControl = true;
 					break;
@@ -387,18 +395,20 @@ namespace DSP
 					AddParam(info, topreg[s]);
 					break;
 				}
-				case 0xa:		// lsf
+				case 0xa:		// lsf d,-x1 (0x024A) or lsf d,-y1 (0x026A)
 				{
 					info.instr = DspRegularInstruction::lsf;
+					info.negatedSource = true;
 					int d = (instrBits & 0x100) ? 1 : 0;
 					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 					int s = (instrBits & 0x20) ? 1 : 0;
 					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
 					break;
 				}
-				case 0xb:		// asf
+				case 0xb:		// asf d,-x1 (0x024B) or asf d,-y1 (0x026B)
 				{
 					info.instr = DspRegularInstruction::asf;
+					info.negatedSource = true;
 					int d = (instrBits & 0x100) ? 1 : 0;
 					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 					int s = (instrBits & 0x20) ? 1 : 0;
@@ -438,18 +448,20 @@ namespace DSP
 					AddParam(info, topreg[s]);
 					break;
 				}
-				case 0xa:		// lsf
+				case 0xa:		// lsf d,-x1 (0x024A) or lsf d,-y1 (0x026A)
 				{
 					info.instr = DspRegularInstruction::lsf;
+					info.negatedSource = true;
 					int d = (instrBits & 0x100) ? 1 : 0;
 					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 					int s = (instrBits & 0x20) ? 1 : 0;
 					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
 					break;
 				}
-				case 0xb:		// asf
+				case 0xb:		// asf d,-x1 (0x024B) or asf d,-y1 (0x026B)
 				{
 					info.instr = DspRegularInstruction::asf;
+					info.negatedSource = true;
 					int d = (instrBits & 0x100) ? 1 : 0;
 					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 					int s = (instrBits & 0x20) ? 1 : 0;
@@ -461,6 +473,12 @@ namespace DSP
 
 			case 7:		// exec
 			{
+				// Bit 8 is fixed to 0 for this instruction (it has no a/b selector), so the
+				// whole 0x0300-0x03FF mirror of this opcode is reserved.
+				if ((instrBits & 0x100) != 0)
+				{
+					break;
+				}
 				info.instr = DspRegularInstruction::exec;
 				info.flowControl = true;
 				info.cc = (ConditionCode)(instrBits & 0xf);
@@ -501,6 +519,12 @@ namespace DSP
 				break;
 			case 9:		// jmp
 			{
+				// Bit 8 is fixed to 0 for this instruction (it has no a/b selector), so the
+				// whole 0x0300-0x03FF mirror of this opcode is reserved.
+				if ((instrBits & 0x100) != 0)
+				{
+					break;
+				}
 				info.instr = DspRegularInstruction::jmp;
 				info.flowControl = true;
 				info.cc = (ConditionCode)(instrBits & 0xf);
@@ -544,6 +568,12 @@ namespace DSP
 				break;
 			case 0xb:	// call
 			{
+				// Bit 8 is fixed to 0 for this instruction (it has no a/b selector), so the
+				// whole 0x0300-0x03FF mirror of this opcode is reserved.
+				if ((instrBits & 0x100) != 0)
+				{
+					break;
+				}
 				info.instr = DspRegularInstruction::call;
 				info.flowControl = true;
 				info.cc = (ConditionCode)(instrBits & 0xf);
@@ -565,17 +595,19 @@ namespace DSP
 					AddImmOperand(info, DspParameter::UnsignedShort, imm);
 					break;
 				}
-				case 0xa:		// lsf
+				case 0xa:		// lsf d,-b1 (0x02CA) / lsf d,-a1
 				{
 					info.instr = DspRegularInstruction::lsf;
+					info.negatedSource = true;
 					int d = (instrBits & 0x100) ? 1 : 0;
 					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 					AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
 					break;
 				}
-				case 0xb:		// asf
+				case 0xb:		// asf d,-b1 (0x02CB) / asf d,-a1
 				{
 					info.instr = DspRegularInstruction::asf;
+					info.negatedSource = true;
 					int d = (instrBits & 0x100) ? 1 : 0;
 					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 					AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
@@ -585,6 +617,12 @@ namespace DSP
 				break;
 			case 0xd:	// rets
 			{
+				// Bit 8 is fixed to 0 for this instruction (it has no a/b selector), so the
+				// whole 0x0300-0x03FF mirror of this opcode is reserved.
+				if ((instrBits & 0x100) != 0)
+				{
+					break;
+				}
 				info.instr = DspRegularInstruction::rets;
 				info.flowControl = true;
 				info.cc = (ConditionCode)(instrBits & 0xf);
@@ -595,6 +633,12 @@ namespace DSP
 				break;
 			case 0xf:	// reti
 			{
+				// Bit 8 is fixed to 0 for this instruction (it has no a/b selector), so the
+				// whole 0x0300-0x03FF mirror of this opcode is reserved.
+				if ((instrBits & 0x100) != 0)
+				{
+					break;
+				}
 				info.instr = DspRegularInstruction::reti;
 				info.flowControl = true;
 				info.cc = (ConditionCode)(instrBits & 0xf);
@@ -701,20 +745,21 @@ namespace DSP
 			AddImmOperand(info, DspParameter::Address2, addr);
 			break;
 		}
-		case 2:		// clr
+		case 2:		// clr tb/sv/te0..te3/et (0x1200-0x1206)
 		{
+			// Only selectors 0..6 exist and bits 7:3 of the word are fixed to 0.
 			int b = instrBits & 7;
-			if (b != 7)
+			if ((instrBits & 0xf8) == 0 && b != 7)
 			{
 				info.instr = DspRegularInstruction::clr;
 				AddParam(info, (DspParameter)((int)DspParameter::psr_tb + b));
 			}
 			break;
 		}
-		case 3:		// set
+		case 3:		// set tb/sv/te0..te3/et (0x1300-0x1306)
 		{
 			int b = instrBits & 7;
-			if (b != 7)
+			if ((instrBits & 0xf8) == 0 && b != 7)
 			{
 				info.instr = DspRegularInstruction::set;
 				AddParam(info, (DspParameter)((int)DspParameter::psr_tb + b));

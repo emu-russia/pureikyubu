@@ -7,6 +7,15 @@
 #ifndef PCH_H
 #define PCH_H
 
-// add headers that you want to pre-compile here
+// The unit tests reuse the emulator precompiled header verbatim.
+// The emulator sources are pulled into this project as links (see pureikyubu_test.vcxproj),
+// so they must see exactly the same environment as in the main emulator project.
+
+#include "../src/pch.h"
+
+#include "CppUnitTest.h"
+
+// All test translation units use the Microsoft CppUnitTest assertions.
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 #endif //PCH_H

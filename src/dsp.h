@@ -184,11 +184,21 @@ namespace DSP
 
 		DspAccel Accel{};
 
+		// Each mailbox is a 32-bit message made of two 16-bit halves that are written and
+		// read one at a time. A single lock per mailbox serialises the whole pair, and the
+		// low word is snapshotted together with the high word so that a receiver which
+		// reads the high word and then the low word can never pick up a mixture of two
+		// messages (the sender may post the next message between those two reads).
+
 		volatile uint16_t DspToCpuMailbox[2]{};		// DMBH, DMBL
-		SpinLock DspToCpuLock[2];
-		
+		SpinLock DspToCpuLock;
+		volatile uint16_t DspToCpuSnapshot = 0;		// DMBL latched with the last valid DMBH read
+		volatile bool DspToCpuSnapshotValid = false;
+
 		volatile uint16_t CpuToDspMailbox[2]{};		// CMBH, CMBL
-		SpinLock CpuToDspLock[2];
+		SpinLock CpuToDspLock;
+		volatile uint16_t CpuToDspSnapshot = 0;		// CMBL latched with the last valid CMBH read
+		volatile bool CpuToDspSnapshotValid = false;
 
 		void ResetIfx();
 		void DoDma();

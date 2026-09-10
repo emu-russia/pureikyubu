@@ -340,8 +340,12 @@ namespace DSP
 	{
 		DspToCpuMailbox[0] = 0;
 		DspToCpuMailbox[1] = 0;
+		DspToCpuSnapshot = 0;
+		DspToCpuSnapshotValid = false;
 		CpuToDspMailbox[0] = 0;
 		CpuToDspMailbox[1] = 0;
+		CpuToDspSnapshot = 0;
+		CpuToDspSnapshotValid = false;
 
 		memset(&DmaRegs, 0, sizeof(DmaRegs));
 		memset(&Accel, 0, sizeof(Accel));
@@ -739,6 +743,20 @@ namespace DSP
 }
 
 // DSP Mailbox processing
+//
+// The mailbox protocol is defined by dsp.md section 4.1: both halves of a 32-bit message are
+// transferred high word first and low word second; writing the high word clears the valid
+// flag (bit 15 of the high word register), writing the low word sets it, and the receiver
+// clears it again by reading the low word.
+//
+// Two properties follow from that and are implemented below:
+//
+//   1. The two halves of one mailbox are protected by a single lock, so a sender can never
+//      update the low word of a pair while a receiver is picking up the pair.
+//   2. Reading the high word also snapshots the low word. The receiver reads the high word
+//      first and the low word second; if the sender posts its next message in between, the
+//      receiver must still get the low word that belongs to the message whose valid flag it
+//      observed, not a mixture of two messages.
 
 namespace DSP
 {
@@ -748,7 +766,7 @@ namespace DSP
 
 	void Dsp16::CpuToDspWriteHi(uint16_t value)
 	{
-		CpuToDspLock[0].Lock();
+		CpuToDspLock.Lock();
 
 		if (logInsaneMailbox)
 		{
@@ -757,13 +775,15 @@ namespace DSP
 
 		core->delay_mailbox_reasons = 4;
 
+		// Bit 15 carries the valid flag, so the sender's bit 15 is discarded here
+		// (writing the high word clears the flag).
 		CpuToDspMailbox[0] = value & 0x7FFF;
-		CpuToDspLock[0].Unlock();
+		CpuToDspLock.Unlock();
 	}
 
 	void Dsp16::CpuToDspWriteLo(uint16_t value)
 	{
-		CpuToDspLock[1].Lock();
+		CpuToDspLock.Lock();
 
 		if (logInsaneMailbox)
 		{
@@ -779,7 +799,7 @@ namespace DSP
 		{
 			Report(Channel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
 		}
-		CpuToDspLock[1].Unlock();
+		CpuToDspLock.Unlock();
 	}
 
 	uint16_t Dsp16::CpuToDspReadHi(bool ReadByDsp)
@@ -789,9 +809,17 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspReadHi\n");
 		}
 
-		CpuToDspLock[0].Lock();
+		CpuToDspLock.Lock();
 		uint16_t value = CpuToDspMailbox[0];
-		CpuToDspLock[0].Unlock();
+		// A high word with the valid flag set is the head of a complete message: latch its
+		// low word so that the following low word read returns that message, even when the
+		// sender has posted the next one in the meantime.
+		CpuToDspSnapshotValid = (value & 0x8000) != 0;
+		if (CpuToDspSnapshotValid)
+		{
+			CpuToDspSnapshot = CpuToDspMailbox[1];
+		}
+		CpuToDspLock.Unlock();
 		return value;
 	}
 
@@ -802,8 +830,9 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspReadLo\n");
 		}
 
-		CpuToDspLock[1].Lock();
-		uint16_t value = CpuToDspMailbox[1];
+		CpuToDspLock.Lock();
+		uint16_t value = CpuToDspSnapshotValid ? CpuToDspSnapshot : CpuToDspMailbox[1];
+		CpuToDspSnapshotValid = false;
 		if (ReadByDsp)
 		{
 			if (logMailbox)
@@ -812,7 +841,7 @@ namespace DSP
 			}
 			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
 		}
-		CpuToDspLock[1].Unlock();
+		CpuToDspLock.Unlock();
 		return value;
 	}
 
@@ -822,7 +851,7 @@ namespace DSP
 
 	void Dsp16::DspToCpuWriteHi(uint16_t value)
 	{
-		DspToCpuLock[0].Lock();
+		DspToCpuLock.Lock();
 
 		if (logInsaneMailbox)
 		{
@@ -830,12 +859,12 @@ namespace DSP
 		}
 
 		DspToCpuMailbox[0] = value & 0x7FFF;
-		DspToCpuLock[0].Unlock();
+		DspToCpuLock.Unlock();
 	}
 
 	void Dsp16::DspToCpuWriteLo(uint16_t value)
 	{
-		DspToCpuLock[1].Lock();
+		DspToCpuLock.Lock();
 
 		if (logInsaneMailbox)
 		{
@@ -850,21 +879,27 @@ namespace DSP
 			Report(Channel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
 		}
 
-		DspToCpuLock[1].Unlock();
+		DspToCpuLock.Unlock();
 	}
 
 	uint16_t Dsp16::DspToCpuReadHi(bool ReadByDsp)
 	{
-		DspToCpuLock[0].Lock();
+		DspToCpuLock.Lock();
 		uint16_t value = DspToCpuMailbox[0];
-		DspToCpuLock[0].Unlock();
+		DspToCpuSnapshotValid = (value & 0x8000) != 0;
+		if (DspToCpuSnapshotValid)
+		{
+			DspToCpuSnapshot = DspToCpuMailbox[1];
+		}
+		DspToCpuLock.Unlock();
 		return value;
 	}
 
 	uint16_t Dsp16::DspToCpuReadLo(bool ReadByDsp)
 	{
-		DspToCpuLock[1].Lock();
-		uint16_t value = DspToCpuMailbox[1];
+		DspToCpuLock.Lock();
+		uint16_t value = DspToCpuSnapshotValid ? DspToCpuSnapshot : DspToCpuMailbox[1];
+		DspToCpuSnapshotValid = false;
 		if (!ReadByDsp)
 		{
 			if (logMailbox)
@@ -873,7 +908,7 @@ namespace DSP
 			}
 			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
 		}
-		DspToCpuLock[1].Unlock();
+		DspToCpuLock.Unlock();
 		return value;
 	}
 }
