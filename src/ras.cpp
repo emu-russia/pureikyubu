@@ -41,6 +41,41 @@ namespace GFX
 		gfx->tev->UploadUniforms(*program);
 	}
 
+	// The line width and the point size are programmed through SU_LPSIZE (gfx-su.md 4.1, 5.2): both
+	// fields hold the size in 1/16 pixel increments (GX_SetLineWidth / GX_SetPointSize), so the size
+	// in pixels is the register value divided by 16. A register value of zero would be a zero-width
+	// line (which GL rejects), so the request is floored at one pixel, and the GL limit of the
+	// context (the aliased line width range is as low as [1, 1] on some drivers) caps it.
+	static void ApplyLineWidth(float width)
+	{
+		GLfloat range[2] = { 1.0f, 1.0f };
+		glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, range);
+
+		if (width < 1.0f)
+			width = 1.0f;
+		if (width > range[1])
+			width = range[1];
+		if (width < range[0])
+			width = range[0];
+
+		glLineWidth(width);
+	}
+
+	static void ApplyPointSize(float size)
+	{
+		GLfloat range[2] = { 1.0f, 1.0f };
+		glGetFloatv(GL_POINT_SIZE_RANGE, range);
+
+		if (size < 1.0f)
+			size = 1.0f;
+		if (size > range[1])
+			size = range[1];
+		if (size < range[0])
+			size = range[0];
+
+		glPointSize(size);
+	}
+
 	void Rasterizer::DrawPrimitive()
 	{
 		glBindVertexArray(gfx->vao);
@@ -122,6 +157,18 @@ namespace GFX
 		}
 		else
 		{
+			// The line and point size of the setup unit (SU_LPSIZE) only applies to the primitives
+			// that are rasterized as lines or points; the triangles keep the GL default of the
+			// pipeline.
+			if (mode == GL_LINES || mode == GL_LINE_STRIP)
+			{
+				ApplyLineWidth((float)gfx->su->State().lpsize.lsize / 16.0f);
+			}
+			else if (mode == GL_POINTS)
+			{
+				ApplyPointSize((float)gfx->su->State().lpsize.psize / 16.0f);
+			}
+
 			glDrawArrays(mode, 0, (GLsizei)vertex_count);
 		}
 	}
@@ -146,10 +193,16 @@ namespace GFX
 	{
 	}
 
+	// One word of the BP register space that RAS1 owns (0x24-0x2F). Everything else is passed on to
+	// the Pixel Engine, which continues the walk down the bypass chain.
 	void Rasterizer::loadRASReg(size_t index, uint32_t value)
 	{
 		switch (index)
 		{
+			// The performance/break register is owned by RAS1 (gfx-ras1.md 4.1) but does not drive
+			// the GL backend: the counter events and the break control have no host equivalent.
+			case RAS1_PERF_ID: break;
+
 			case RAS1_SS0_ID: ss[0].bits = value; break;
 			case RAS1_SS1_ID: ss[1].bits = value; break;
 			case RAS1_IREF_ID: iref = value; break;
@@ -169,5 +222,19 @@ namespace GFX
 				gfx->pe->loadPEReg(index, value);
 				break;
 		}
+	}
+
+	void Rasterizer::Reset()
+	{
+		current_prim = RAS_QUAD;
+		vertex_count = 0;
+
+		for (int i = 0; i < 8; i++)
+		{
+			tref[i].bits = 0;
+		}
+		ss[0].bits = 0;
+		ss[1].bits = 0;
+		iref = 0;
 	}
 }

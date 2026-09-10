@@ -341,6 +341,8 @@ namespace GFX
 
 		//! Compiled XF (vertex) shader stage. The TEV fragment programs are linked against it.
 		GLuint vert_shader = 0;
+		//! The same stage with the `flat` colour varyings, for GEN_MODE.flat_en (compiled on demand).
+		GLuint vert_shader_flat = 0;
 
 		// CP -> XF interface state
 
@@ -368,6 +370,17 @@ namespace GFX
 
 		//! The compiled vertex shader stage (0 when it is not available)
 		GLuint VertexShader() const { return vert_shader; }
+
+		//! The vertex shader stage of one colour-interpolation variant: `flat` selects the variant
+		//! whose rasterized colour varyings are flat-shaded (GEN_MODE.flat_en). Compiled on demand, so
+		//! a GL context has to be current.
+		GLuint VertexShader(bool flat);
+
+		//! The source text of the XF vertex shader (the debugger can write it to a file).
+		static const char* VertexShaderSource();
+
+		//! The source text of one colour-interpolation variant of the vertex shader.
+		static std::string VertexShaderSource(bool flat);
 
 		//! Upload the whole XF register state to the XF vertex program.
 		void UploadUniforms(GLProgram& program);
@@ -415,5 +428,8 @@ namespace GFX
 
 		TransformUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TransformUnit();
+
+		//! Put the XF register state and the CP interface back into the reset state.
+		void Reset();
 	};
 }

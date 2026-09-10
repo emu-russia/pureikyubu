@@ -395,6 +395,42 @@ void main()
 
 	// -------------------------------------------------------------------------------------------
 
+	const char* TransformUnit::VertexShaderSource()
+	{
+		return XFVertexShader;
+	}
+
+	// The vertex shader of one colour-interpolation variant. GEN_MODE.flat_en asks for flat shading,
+	// which the hardware implements by giving the colour planes zero gradients (gfx-ras2.md 3.1), so
+	// the rasterized colour of the primitive is constant. GL expresses the same thing with the `flat`
+	// qualifier on the colour varyings: the fragment shader receives the value of the provoking
+	// vertex instead of an interpolated one. The qualifier has to appear on both sides of the link
+	// (the vertex shader declares the varyings, the fragment shader consumes them), which is why both
+	// programs have a flat variant. The texture coordinates stay interpolated.
+	//
+	// The provoking vertex is GL's default, the last vertex of the primitive; the available
+	// specification does not state which vertex's colour the hardware's zero-gradient plane carries.
+	std::string TransformUnit::VertexShaderSource(bool flat)
+	{
+		std::string src = XFVertexShader;
+
+		if (flat)
+		{
+			const char* names[] = { "out vec4 v_Color0;", "out vec4 v_Color1;" };
+
+			for (const char* name : names)
+			{
+				size_t pos = src.find(name);
+				if (pos != std::string::npos)
+				{
+					src.replace(pos, strlen(name), std::string("flat ") + name);
+				}
+			}
+		}
+
+		return src;
+	}
+
 	bool TransformUnit::CreateShader()
 	{
 		if (vert_shader != 0)
@@ -408,12 +444,37 @@ void main()
 		return true;
 	}
 
+	GLuint TransformUnit::VertexShader(bool flat)
+	{
+		if (!flat)
+		{
+			if (vert_shader == 0 && !CreateShader())
+				return 0;
+
+			return vert_shader;
+		}
+
+		if (vert_shader_flat == 0)
+		{
+			std::string source = VertexShaderSource(true);
+			vert_shader_flat = CompileShaderStage(GL_VERTEX_SHADER, source.c_str(), "XF VERTEX (flat)");
+		}
+
+		return vert_shader_flat;
+	}
+
 	void TransformUnit::DisposeShader()
 	{
 		if (vert_shader != 0)
 		{
 			glDeleteShader(vert_shader);
 			vert_shader = 0;
+		}
+
+		if (vert_shader_flat != 0)
+		{
+			glDeleteShader(vert_shader_flat);
+			vert_shader_flat = 0;
 		}
 	}
 
@@ -1010,6 +1071,25 @@ void main()
 
 	TransformUnit::~TransformUnit()
 	{
+	}
+
+	void TransformUnit::Reset()
+	{
+		xf = XFState{};
+
+		xfLoadIdx = 0;
+		xfLoadAmount = 0;
+		xfRdData = 0;
+		xfRdValid = false;
+
+		// Before the first XF load the projection is an identity transform (like the GL default it
+		// replaces), see the constructor.
+		xf.projectionParam[0] = 1.0f;
+		xf.projectionParam[2] = 1.0f;
+		xf.projectionParam[4] = 1.0f;
+
+		// The GL viewport is not refreshed here: the zeroed viewport registers do not describe one.
+		// It is restored by GFXCore::ApplyDefaultGLState().
 	}
 }
 

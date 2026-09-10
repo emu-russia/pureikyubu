@@ -24,13 +24,21 @@ namespace GFX
 	#define RAS1_TREF6_ID 0x2E
 	#define RAS1_TREF7_ID 0x2F
 
-	// Texture coordinate scale (RAS1_SS0/SS1). Only the scale factors are used (for texcoord scale emulation).
+	// Texture coordinate shift scale of the indirect stages (RAS1_SS0/SS1, gfx-ras1.md 4.2). The four
+	// 4-bit fields are the S and T shift scales of two indirect stages: RAS1_SS0 holds the shifts of
+	// the indirect stages 0 and 1 (GX_SetIndTexCoordScale of the stages 0/1) and RAS1_SS1 those of
+	// the stages 2 and 3. A field value of 0..8 means "divide the coordinate by 2^value"; 9..15 are
+	// unused (there is no entry for them in the RTL mask table).
 	union RAS1_SS
 	{
 		struct
 		{
-			unsigned ss0 : 16;
-			unsigned ts0 : 16;
+			unsigned ss0 : 4;		// s shift scale of the first indirect stage of the pair
+			unsigned ts0 : 4;		// t shift scale of the first indirect stage of the pair
+			unsigned ss1 : 4;		// s shift scale of the second indirect stage of the pair
+			unsigned ts1 : 4;		// t shift scale of the second indirect stage of the pair
+			unsigned unused : 8;
+			unsigned rid : 8;
 		};
 		uint32_t bits;
 	};
@@ -101,5 +109,29 @@ namespace GFX
 
 		//! Texture binding of a TEV stage (0..15), as programmed through RAS1_TREF0..7
 		const RAS1_TREF* GetTref(int stage) const { return &tref[(stage >> 1) & 7]; }
+
+		//! The raw RAS1 register state (read-only; used by the debugger and the unit tests).
+		const RAS1_TREF& Tref(int pair) const { return tref[pair & 7]; }
+		const RAS1_SS& SS(int pair) const { return ss[pair & 1]; }
+		uint32_t Iref() const { return iref; }
+
+		//! The multiplier the coordinate shift scale of indirect stage `stage` (0..3) stands for:
+		//! `ras1_sts` 0..8 divides the fetch coordinate by 2^value (gfx-ras1.md 4.2), the unused
+		//! encodings 9..15 divide by 256 like the largest defined one.
+		float IndirectScale(int stage, bool t) const
+		{
+			stage &= 3;
+
+			const RAS1_SS& s = ss[(stage >> 1) & 1];
+
+			unsigned shift = ((stage & 1) == 0) ? (t ? s.ts0 : s.ss0) : (t ? s.ts1 : s.ss1);
+			if (shift > 8)
+				shift = 8;
+
+			return 1.0f / (float)(1u << shift);
+		}
+
+		//! Put the RAS register state back into the reset state.
+		void Reset();
 	};
 }

@@ -115,6 +115,9 @@ namespace GFX
 
 		void DumpFrame();
 
+		//! Restore the OpenGL state that the GFX registers are applied on top of.
+		void ApplyDefaultGLState();
+
 	public:
 		GFXCore(Flipper::Flipper* flipper, HWConfig* config);
 		~GFXCore();
@@ -128,6 +131,18 @@ namespace GFX
 		void GPFrameDone();
 
 		void ResizeRenderTarget(size_t width, size_t height);
+
+		//! True when the OpenGL backend has been started (a context is current).
+		bool BackendStarted() const { return backend_started; }
+
+		//! The size of the render target (the EFB window the pipeline draws into).
+		size_t RenderWidth() const { return scr_w; }
+		size_t RenderHeight() const { return scr_h; }
+
+		//! Put every pipeline block back into its reset state (the software equivalent of a GX
+		//! reset). The emulator calls it when the console is reset, the debugger with `gxreset`,
+		//! and the unit tests to get a known starting point.
+		void ResetPipelineState();
 
 		// Geometry buffers
 		GLuint vao = 0;

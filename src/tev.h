@@ -341,6 +341,7 @@ namespace GFX
 		TEVState tev{};
 
 		GLProgram* program = nullptr;		//!< Static TEV (fragment) program; created once
+		bool programFlat = false;			//!< Whether that program is the flat-shaded variant
 
 	public:
 		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
@@ -348,11 +349,28 @@ namespace GFX
 
 		void loadTEVReg(size_t index, uint32_t value);
 
+		//! The TEV register state (read-only; used by the debugger and the unit tests).
+		const TEVState& State() const { return tev; }
+
 		//! Bind (creating on first use) the TEV fragment program.
 		GLProgram* GetTevProgram();
 
+		//! The TEV fragment program when it has already been created (the debugger must not create GL
+		//! objects just to report the state).
+		GLProgram* GetTevProgramNoCreate() const { return program; }
+
+		//! The source text of the TEV fragment shader (the debugger can write it to a file).
+		static const char* FragmentShaderSource();
+
+		//! The source text of one colour-interpolation variant of the fragment shader (see
+		//! TransformUnit::VertexShaderSource(bool)).
+		static std::string FragmentShaderSource(bool flat);
+
 		//! Upload the whole TEV register state to the program.
 		void UploadUniforms(GLProgram& program);
+
+		//! Put the TEV register state back into the reset state.
+		void Reset();
 
 		void DisposePrograms();
 	};
