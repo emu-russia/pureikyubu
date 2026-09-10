@@ -24,18 +24,6 @@ namespace GFX
 	#define RAS1_TREF6_ID 0x2E
 	#define RAS1_TREF7_ID 0x2F
 
-	enum RAS_Primitive : size_t
-	{
-		RAS_QUAD = 0,
-		RAS_QUAD_STRIP,
-		RAS_TRIANGLE,
-		RAS_TRIANGLE_STRIP,
-		RAS_TRIANGLE_FAN,
-		RAS_LINE,
-		RAS_LINE_STRIP,
-		RAS_POINT,
-	};
-
 	// Texture coordinate scale (RAS1_SS0/SS1). Only the scale factors are used (for texcoord scale emulation).
 	union RAS1_SS
 	{
