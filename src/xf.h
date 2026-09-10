@@ -3,7 +3,8 @@
 // This module deals with geometric transformation and lighting of vertices that come from CP.
 // All parameters (matrices) are stored in a special memory (XF).
 // In the real Flipper XF is made from microcode ROM, but is still part of a fixed pipeline.
-// In an emulator, XF can be done entirely programmatically (as in the current old and crooked implementation), or using vertex shaders.
+// In this emulator the XF is emulated by a vertex shader: this module only holds the register state
+// and uploads it to the shader (see gfx.cpp for the shader source).
 
 #pragma once
 
@@ -15,6 +16,7 @@ namespace Flipper
 namespace GFX
 {
 	class Rasterizer;
+	class GLProgram;
 
 	// XF Registers
 
@@ -265,12 +267,6 @@ namespace GFX
 		uint32_t bits;
 	};
 
-	// TODO: Old implementation, will be redone nicely.
-	struct TexGenOut
-	{
-		float   out[4];
-	};
-
 	struct XFState
 	{
 		// Matrix memory
@@ -327,21 +323,22 @@ namespace GFX
 		friend Rasterizer;		// TODO: Remove
 		GFXCore* gfx = nullptr;
 
+		//! Compiled XF (vertex) shader stage. The TEV fragment programs are linked against it.
+		GLuint vert_shader = 0;
+
 	public:
 
 		XFState xf{};
 
-		TexGenOut tgout[8]{};
-		Color colora[2]{};	// lighting stage output colors (COLOR0A0 / COLOR1A1)
+		//! Compile the XF vertex shader. A GL context must be current.
+		bool CreateShader();
+		void DisposeShader();
 
-		bool XF_LightColorEnabled(int chan, int light);
-		bool XF_LightAlphaEnabled(int chan, int light);
-		void XF_DoLights(const Vertex* v);
-		void XF_DoTexGen(const Vertex* v);
-		void VECNormalize(float vec[3]);
-		void XF_ApplyModelview(const Vertex* v, float* out, const float* in);
-		void NormalTransform(const Vertex* v, float* out, const float* in);
-		void GL_SetProjection(float* mtx);
+		//! The compiled vertex shader stage (0 when it is not available)
+		GLuint VertexShader() const { return vert_shader; }
+
+		//! Upload the whole XF register state to the XF vertex program.
+		void UploadUniforms(GLProgram& program);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
 		void loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo);
 

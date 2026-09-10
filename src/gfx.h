@@ -2,19 +2,28 @@
 
 /*
 
-Very limited Flipper GFXEngine emulation. Basic OpenGL 1.2 is used as a backend.
+Flipper GFX subsystem emulation on top of a modern OpenGL (3.3 / GLSL 330) shader backend.
 
-This code is out-of-phase because the graphical subsystem has been substantially redesigned. So there is now a mixture of new developments and old code.
+The fixed-function pipeline is gone. The two programmable stages of the original hardware are
+mapped directly onto the two programmable stages of OpenGL:
+
+- The Transform Unit (XF) is emulated by a vertex shader: geometry and texture matrix multiplies,
+  the projection combine, per-vertex lighting (up to 2 channels x 8 lights) and texture coordinate
+  generation (regular / colour / dual transform).
+- The Texture Environment Unit (TEV) is emulated by a generated fragment shader: up to 16 combine
+  stages, fog and the final alpha function. The shader source is generated from the TEV register
+  state and cached, because the number of stages and the per-stage selectors are static per material.
 
 What's supported:
-- Software implementation of transform unit (XF). Very inaccurate - lighting is partially supported. The transformation of texture coordinates is not completed yet.
-- All texture formats are supported, but TLUT versions may be buggy
+- XF: geometry/normal transforms, projection, viewport, texgen (regular + colour), dual transform,
+  lighting (material/ambient sources, N.L diffuse, cosine + distance attenuation, spotlight/specular)
+- TEV: all 16 stages, all colour/alpha operand selects, K constants (Rev B), fog, alpha test
+- All texture formats, up to 8 texture maps bound simultaneously through RAS1_TREF
 
-What's not supported:
-- The main drawback is the lack of TEV support. Because of this, complex scenes with effects are drawn with bugs or not drawn at all.
-- Emulation of Advanced GX features such as Bump-mapping, indirect texturing, Z-textures not supported
-- No texture caching
-- There is no emulation of direct access to the EFB
+What's not supported (yet):
+- Bump mapping and indirect texturing
+- Z-texture environment (TEV_Z_ENV is stored but not applied)
+- Direct access to the EFB (Cpu2Efb)
 
 */
 
@@ -33,8 +42,6 @@ namespace GFX
 #include "bump.h"
 #include "tx.h"
 
-#define GFX_BLACKJACK_AND_SHADERS 0			// 1: Use modern OpenGL (VBO + Shaders). Under development, do not enable
-
 // 1: Use SDL_Window as a render target; the appropriate SDL API calls are invoked to service it
 #ifdef _LINUX
 #define GFX_USE_SDL_WINDOW 1
@@ -45,6 +52,36 @@ namespace GFX
 
 namespace GFX
 {
+	// Maximum number of vertices in a single draw command
+	#define GFX_MAX_VERTICES 0x10000
+	// Maximum number of indices for a single draw command (quads are expanded into triangles)
+	#define GFX_MAX_INDICES 0x40000
+
+	// Current emulated GFX frame (for frame dump file names)
+	extern int gfx_frame_counter;
+
+	GLuint CompileShaderStage(GLenum type, const char* source, const char* label);
+
+	/// <summary>
+	/// A linked GL program with a cache of uniform locations.
+	/// </summary>
+	class GLProgram
+	{
+		std::unordered_map<std::string, GLint> locations;
+
+	public:
+		GLuint prog = 0;
+
+		~GLProgram();
+
+		//! Link a fragment shader (given as source) with an already compiled vertex shader stage.
+		bool Link(GLuint vertShader, const char* fragSource, const char* label);
+		void Destroy();
+
+		void Use() const { glUseProgram(prog); }
+		GLint Uniform(const char* name);
+	};
+
 	class GFXCore
 	{
 		friend TransformUnit;
@@ -56,7 +93,6 @@ namespace GFX
 		friend TextureEnvironmentUnit;
 
 		bool frame_done = true;
-		bool disableDraw = false;
 		bool frameReady = false;
 		bool backend_started = false;
 
@@ -65,18 +101,19 @@ namespace GFX
 		SDL_GLContext context{};
 #else
 		// Windows OpenGL stuff
-		HWND hwndMain;
+		HWND hwndMain = nullptr;
 		HGLRC hglrc = 0;
 		HDC hdcgl = 0;
-		PAINTSTRUCT psFrame{};
 #endif
 
-		bool make_shot = false;
-		FILE* snap_file = nullptr;
-		uint32_t snap_w, snap_h;
-
-		// optionable
 		uint32_t scr_w = 640, scr_h = 480;
+
+		// Frame dump (debug). Configured by the GFX_DUMP / GFX_DUMP_EVERY environment variables.
+		bool dump_enabled = false;
+		std::string dump_path;
+		int dump_every = 1;
+
+		void DumpFrame();
 
 	public:
 		GFXCore(Flipper::Flipper* flipper, HWConfig* config);
@@ -91,21 +128,16 @@ namespace GFX
 		void GPFrameDone();
 
 		void ResizeRenderTarget(size_t width, size_t height);
-		
-		GLuint vert_shader;
-		GLuint frag_shader;
-		GLuint shader_prog;
 
-		GLuint vao;
-		GLuint vbo;
-		size_t vbo_size = 0x10000;		// Maximum number of vertices that can be used in Draw primitive parameters
+		// Geometry buffers
+		GLuint vao = 0;
+		GLuint vbo = 0;
+		GLuint ibo = 0;
 		Vertex* vertex_data = nullptr;
+		uint32_t* index_data = nullptr;
 
-		void UploadShaders(const char* vert_source, const char* frag_source);
-		void DisposeShaders();
-		void InitVBO();
-		void DisposeVBO();
-		void BindShadersWithVBO();
+		void InitGeometryBuffers();
+		void DisposeGeometryBuffers();
 
 		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
 

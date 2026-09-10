@@ -113,21 +113,6 @@ namespace GFX
 		free(buf);
 	}
 
-	void PixelEngine::GL_MakeSnapshot(char* path)
-	{
-		if (gfx->make_shot) return;
-		gfx->snap_w = gfx->scr_w;
-		gfx->snap_h = gfx->scr_h;
-		// create new file    
-		if (gfx->snap_file)
-		{
-			fclose(gfx->snap_file);
-			gfx->snap_file = NULL;
-		}
-		gfx->snap_file = fopen(path, "wb");
-		if (gfx->snap_file) gfx->make_shot = true;
-	}
-
 	// make small snapshot for savestate
 	// new size 160x120
 	void PixelEngine::GL_SaveBitmap(uint8_t* buf)

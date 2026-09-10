@@ -466,7 +466,6 @@ namespace GFX
 		PEState pe{};		// Internal PE state
 
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
-		void GL_MakeSnapshot(char* path);
 		void GL_SaveBitmap(uint8_t* buf);
 
 		void PE_DONE_INT();

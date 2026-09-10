@@ -3,533 +3,565 @@
 
 using namespace Debug;
 
-#define NO_VIEWPORT
-
 namespace GFX
 {
-	bool TransformUnit::XF_LightColorEnabled(int chan, int light)
+
+	// -------------------------------------------------------------------------------------------
+	// The XF vertex shader
+	//
+	// The XF is the geometry part of the Flipper GFX pipeline: it transforms the vertices that come
+	// from the CP (geometry and texture matrix multiplies, the projection combine), lights them and
+	// generates the texture coordinates. In this emulator all of that is done by the vertex shader
+	// below; the register state is passed as uniforms (see UploadUniforms), so the shader never has
+	// to be recompiled.
+	//
+	// See specs: gfx-xf.md (registers 0x0000-0x1057).
+
+	static const char* XFVertexShader =
+R"glsl(#version 330 core
+
+layout(location = 0)  in vec3 in_Position;
+layout(location = 1)  in vec3 in_Normal;
+layout(location = 2)  in vec3 in_Binormal;
+layout(location = 3)  in vec3 in_Tangent;
+layout(location = 4)  in vec4 in_Color0;
+layout(location = 5)  in vec4 in_Color1;
+layout(location = 6)  in vec2 in_TexCoord0;
+layout(location = 7)  in vec2 in_TexCoord1;
+layout(location = 8)  in vec2 in_TexCoord2;
+layout(location = 9)  in vec2 in_TexCoord3;
+layout(location = 10) in vec2 in_TexCoord4;
+layout(location = 11) in vec2 in_TexCoord5;
+layout(location = 12) in vec2 in_TexCoord6;
+layout(location = 13) in vec2 in_TexCoord7;
+layout(location = 14) in uint in_MatIdx0;
+layout(location = 15) in uint in_MatIdx1;
+
+// Vertex shader stage outputs. Explicit output locations are not available in GLSL 330,
+// so the varyings are matched to the fragment shader by name.
+out vec2 v_TexCoord0;
+out vec2 v_TexCoord1;
+out vec2 v_TexCoord2;
+out vec2 v_TexCoord3;
+out vec2 v_TexCoord4;
+out vec2 v_TexCoord5;
+out vec2 v_TexCoord6;
+out vec2 v_TexCoord7;
+out vec4 v_Color0;
+out vec4 v_Color1;
+
+#define MAX_LIGHTS 8
+
+// ------------------------------------------------------------------ XF register state
+
+uniform float matrixMem[256];           // 0x0000-0x00FF: 64 rows x 4 words (geometry / texture matrices)
+uniform float nrmMatrixMem[96];         // 0x0400-0x045F: 32 rows x 3 words (normal matrices)
+uniform float dualTexMatrixMem[256];    // 0x0500-0x05FF: 64 rows x 4 words (dual texture matrices)
+
+uniform vec4 lightRgba[MAX_LIGHTS];     // 0x0603 + n*0x10 : light colour (normalized RGBA)
+uniform vec4 lightA[MAX_LIGHTS];        // .xyz = cosine attenuation a0,a1,a2
+uniform vec4 lightK[MAX_LIGHTS];        // .xyz = distance attenuation k0,k1,k2
+uniform vec4 lightLpx[MAX_LIGHTS];      // .xyz = light position (or infinite light direction)
+uniform vec4 lightDhx[MAX_LIGHTS];      // .xyz = light direction (normalized)
+
+uniform vec4 xfAmbient[2];              // 0x100A,0x100B
+uniform vec4 xfMaterial[2];             // 0x100C,0x100D
+uniform vec4 colorCtl[2];               // 0x100E,0x100F: x=material source, y=lightfunc, z=ambient source, w=diffuse attenuation
+uniform vec4 colorAtten[2];             // 0x100E,0x100F: x=attenuation enable, y=attenuation select
+uniform int  colorLightMask[2];         // 0x100E,0x100F: bit n = light n is used for colour
+uniform vec4 alphaCtl[2];               // 0x1010,0x1011
+uniform vec4 alphaAtten[2];
+uniform int  alphaLightMask[2];
+
+uniform int   xfNumColors;              // 0x1009
+uniform int   xfNumTex;                 // 0x103F
+uniform float xfProjParam[6];           // 0x1020-0x1025
+uniform int   xfProjOrtho;              // 0x1026
+uniform int   xfDualTexTran;            // 0x1012
+uniform uvec4 xfTexGen[8];              // 0x1040-0x1047 (raw TexGenParam bits)
+uniform uint  xfDualGen[8];             // 0x1050-0x1057 (raw DualGenParam bits)
+
+// ------------------------------------------------------------------ helpers
+
+vec4 MatrixRow(int base, int row)
+{
+    int o = base + row * 4;
+    return vec4(matrixMem[o], matrixMem[o + 1], matrixMem[o + 2], matrixMem[o + 3]);
+}
+
+vec3 NormalMatrixRow(int base, int row)
+{
+    int o = base + row * 3;
+    return vec3(nrmMatrixMem[o], nrmMatrixMem[o + 1], nrmMatrixMem[o + 2]);
+}
+
+// Cosine attenuation fraction for one light (gfx-xf.md 3.3).
+// spec: cos = N.H (specular) or L.Ldir (spotlight), shaped by a0 + a1*cos + a2*cos^2.
+float CosineAttenuation(int ch, vec3 n, vec3 ldir, bool isAlpha, int i)
+{
+    vec4 att = isAlpha ? alphaAtten[ch] : colorAtten[ch];
+    if (att.x < 0.5)
+        return 1.0;
+
+    float cosAtten;
+    if (att.y < 0.5)
+        cosAtten = clamp(dot(n, lightDhx[i].xyz), 0.0, 1.0);
+    else
+        cosAtten = clamp(dot(ldir, -lightDhx[i].xyz), 0.0, 1.0);
+
+    return clamp(lightA[i].x + lightA[i].y * cosAtten + lightA[i].z * cosAtten * cosAtten, 0.0, 1.0);
+}
+
+float DistanceAttenuation(int ch, float dist, bool isAlpha, int i)
+{
+    float d = lightK[i].x + lightK[i].y * dist + lightK[i].z * dist * dist;
+    return clamp(1.0 / max(d, 0.00001), 0.0, 1.0);
+}
+
+vec3 IlluminateColor(int ch, vec3 vpos, vec3 n, vec3 hostColor)
+{
+    vec3 amb = (colorCtl[ch].z < 0.5) ? xfAmbient[ch].rgb : hostColor;
+    vec3 illum = vec3(0.0);
+    int mask = colorLightMask[ch];
+
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        if (((mask >> i) & 1) == 0)
+            continue;
+
+        vec3 v = lightLpx[i].xyz - vpos;
+        float dist = length(v);
+        vec3 ldir = (dist > 0.00001) ? v / dist : vec3(0.0, 0.0, 1.0);
+
+        float diff = 1.0;
+        if (colorCtl[ch].w > 0.5)
+        {
+            float dp = dot(n, ldir);
+            if (colorCtl[ch].w > 1.5)
+                dp = clamp(dp, 0.0, 1.0);
+            diff = dp;
+        }
+
+        float attn = CosineAttenuation(ch, n, ldir, false, i);
+        if (colorAtten[ch].x > 0.5)
+            attn *= DistanceAttenuation(ch, dist, false, i);
+
+        illum += lightRgba[i].rgb * (diff * attn);
+    }
+
+    return clamp(clamp(illum, -1.0, 1.0) + amb, 0.0, 1.0);
+}
+
+float IlluminateAlpha(int ch, vec3 vpos, vec3 n, float hostAlpha)
+{
+    float amb = (alphaCtl[ch].z < 0.5) ? xfAmbient[ch].a : hostAlpha;
+    float illum = 0.0;
+    int mask = alphaLightMask[ch];
+
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        if (((mask >> i) & 1) == 0)
+            continue;
+
+        vec3 v = lightLpx[i].xyz - vpos;
+        float dist = length(v);
+        vec3 ldir = (dist > 0.00001) ? v / dist : vec3(0.0, 0.0, 1.0);
+
+        float diff = 1.0;
+        if (alphaCtl[ch].w > 0.5)
+        {
+            float dp = dot(n, ldir);
+            if (alphaCtl[ch].w > 1.5)
+                dp = clamp(dp, 0.0, 1.0);
+            diff = dp;
+        }
+
+        float attn = CosineAttenuation(ch, n, ldir, true, i);
+        if (alphaAtten[ch].x > 0.5)
+            attn *= DistanceAttenuation(ch, dist, true, i);
+
+        illum += lightRgba[i].a * (diff * attn);
+    }
+
+    return clamp(clamp(illum, -1.0, 1.0) + amb, 0.0, 1.0);
+}
+
+vec4 LightChannel(int ch, vec3 vpos, vec3 n, vec4 host)
+{
+    vec4 ctl = colorCtl[ch];
+    vec4 actl = alphaCtl[ch];
+
+    vec3 matC = (ctl.x < 0.5) ? xfMaterial[ch].rgb : host.rgb;
+    float matA = (actl.x < 0.5) ? xfMaterial[ch].a : host.a;
+
+    vec3 illumC = vec3(1.0);
+    if (ctl.y > 0.5)
+        illumC = IlluminateColor(ch, vpos, n, host.rgb);
+
+    float illumA = 1.0;
+    if (actl.y > 0.5)
+        illumA = IlluminateAlpha(ch, vpos, n, host.a);
+
+    return vec4(clamp(matC * illumC, 0.0, 1.0), clamp(matA * illumA, 0.0, 1.0));
+}
+
+// ------------------------------------------------------------------ main
+
+void main()
+{
+    vec2 rawTex[8];
+    rawTex[0] = in_TexCoord0;  rawTex[1] = in_TexCoord1;
+    rawTex[2] = in_TexCoord2;  rawTex[3] = in_TexCoord3;
+    rawTex[4] = in_TexCoord4;  rawTex[5] = in_TexCoord5;
+    rawTex[6] = in_TexCoord6;  rawTex[7] = in_TexCoord7;
+
+    vec4 hostCol[2];
+    // GFX::Color keeps its bytes in (A, B, G, R) order, so the attribute arrives reversed
+    hostCol[0] = in_Color0.wzyx;
+    hostCol[1] = in_Color1.wzyx;
+
+    // ---- geometry transform ----
+
+    int geomIdx = int(in_MatIdx0 & 0x3Fu);
+    int mbase = geomIdx * 4;
+    vec4 p = vec4(in_Position, 1.0);
+    vec3 eye = vec3(
+        dot(MatrixRow(mbase, 0), p),
+        dot(MatrixRow(mbase, 1), p),
+        dot(MatrixRow(mbase, 2), p));
+
+    // ---- normal transform (inverse transpose matrix supplied by the host) ----
+
+    int nbase = (geomIdx & 31) * 3;
+    vec3 nrm = vec3(
+        dot(NormalMatrixRow(nbase, 0), in_Normal),
+        dot(NormalMatrixRow(nbase, 1), in_Normal),
+        dot(NormalMatrixRow(nbase, 2), in_Normal));
+
+    if (dot(nrm, nrm) > 0.0000001)
+        nrm = normalize(nrm);
+    else
+        nrm = vec3(0.0, 0.0, 1.0);
+
+    // ---- per-channel colour / alpha ----
+
+    vec4 outCol[2];
+    outCol[0] = hostCol[0];
+    outCol[1] = hostCol[1];
+
+    for (int ch = 0; ch < 2; ch++)
+    {
+        if (ch < xfNumColors)
+            outCol[ch] = LightChannel(ch, eye, nrm, hostCol[ch]);
+    }
+
+    v_Color0 = outCol[0];
+    v_Color1 = outCol[1];
+
+    // ---- texture coordinate generation ----
+
+    int texMatIdx[8];
+    texMatIdx[0] = int((in_MatIdx0 >> 6) & 0x3Fu);
+    texMatIdx[1] = int((in_MatIdx0 >> 12) & 0x3Fu);
+    texMatIdx[2] = int((in_MatIdx0 >> 18) & 0x3Fu);
+    texMatIdx[3] = int((in_MatIdx0 >> 24) & 0x3Fu);
+    texMatIdx[4] = int((in_MatIdx1 >> 0) & 0x3Fu);
+    texMatIdx[5] = int((in_MatIdx1 >> 6) & 0x3Fu);
+    texMatIdx[6] = int((in_MatIdx1 >> 12) & 0x3Fu);
+    texMatIdx[7] = int((in_MatIdx1 >> 18) & 0x3Fu);
+
+    vec2 texOut[8];
+    texOut[0] = rawTex[0];  texOut[1] = rawTex[1];
+    texOut[2] = rawTex[2];  texOut[3] = rawTex[3];
+    texOut[4] = rawTex[4];  texOut[5] = rawTex[5];
+    texOut[6] = rawTex[6];  texOut[7] = rawTex[7];
+
+    for (int i = 0; i < 8; i++)
+    {
+        if (i >= xfNumTex)
+            continue;
+
+        uint tp = xfTexGen[i].x;
+        uint ttype = (tp >> 4) & 7u;        // texgen type
+        uint srcRow = (tp >> 7) & 31u;      // source row
+        uint projection = (tp >> 1) & 1u;
+        uint inForm = (tp >> 2) & 1u;
+
+        if (ttype == 0u)
+        {
+            // Regular transformation
+            vec4 src;
+            if (srcRow == 0u)
+                src = vec4(in_Position, 1.0);
+            else if (srcRow == 1u)
+                src = vec4(in_Normal, 1.0);
+            else if (srcRow == 2u)
+                src = vec4(hostCol[0].rgb, 1.0);
+            else if (srcRow == 3u)
+                src = vec4(in_Binormal, 1.0);
+            else if (srcRow == 4u)
+                src = vec4(in_Tangent, 1.0);
+            else
+            {
+                int trow = clamp(int(srcRow) - 5, 0, 7);
+                src = vec4(rawTex[trow], 1.0, 1.0);
+            }
+
+            // input_form: ab01 -> (A, B, 1.0, 1.0), abc1 -> (A, B, C, 1.0)
+            vec4 in4 = (inForm == 0u) ? vec4(src.x, src.y, 1.0, 1.0) : src;
+
+            int mb = texMatIdx[i] * 4;
+            float s = dot(MatrixRow(mb, 0), in4);
+            float t = dot(MatrixRow(mb, 1), in4);
+
+            if (projection != 0u)
+            {
+                float q = dot(MatrixRow(mb, 2), in4);
+                if (abs(q) > 0.0000001)
+                {
+                    s /= q;
+                    t /= q;
+                }
+            }
+
+            texOut[i] = vec2(s, t);
+        }
+        else if (ttype == 2u || ttype == 3u)
+        {
+            // Colour texgen: (s,t) = (r, g:b concatenated)
+            vec4 c = (ttype == 2u) ? hostCol[0] : hostCol[1];
+            texOut[i] = vec2(c.r, (c.g * 256.0 + c.b) / 257.0);
+        }
+        // ttype == 1 (bump mapping) is not emulated: the incoming coordinate is passed through
+    }
+
+    // ---- dual texture transform (Rev B) ----
+
+    if (xfDualTexTran != 0)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (i >= xfNumTex)
+                continue;
+
+            uint dp = xfDualGen[i];
+            int dbase = int(dp & 0x3Fu) * 4;
+            vec2 c = texOut[i];
+
+            if (((dp >> 6) & 1u) != 0u)
+            {
+                float len = length(c);
+                if (len > 0.0001)
+                    c /= len;
+            }
+
+            vec4 in4 = vec4(c.x, c.y, 1.0, 1.0);
+
+            vec4 r0 = vec4(dualTexMatrixMem[dbase + 0], dualTexMatrixMem[dbase + 1], dualTexMatrixMem[dbase + 2], dualTexMatrixMem[dbase + 3]);
+            vec4 r1 = vec4(dualTexMatrixMem[dbase + 4], dualTexMatrixMem[dbase + 5], dualTexMatrixMem[dbase + 6], dualTexMatrixMem[dbase + 7]);
+
+            texOut[i] = vec2(dot(r0, in4), dot(r1, in4));
+        }
+    }
+
+    v_TexCoord0 = texOut[0];  v_TexCoord1 = texOut[1];
+    v_TexCoord2 = texOut[2];  v_TexCoord3 = texOut[3];
+    v_TexCoord4 = texOut[4];  v_TexCoord5 = texOut[5];
+    v_TexCoord6 = texOut[6];  v_TexCoord7 = texOut[7];
+
+    // ---- projection combine (gfx-xf.md 3.2) ----
+
+    vec4 clip;
+    if (xfProjOrtho != 0)
+    {
+        clip = vec4(
+            xfProjParam[0] * eye.x + xfProjParam[1],
+            xfProjParam[2] * eye.y + xfProjParam[3],
+            xfProjParam[4] * eye.z + xfProjParam[5],
+            1.0);
+    }
+    else
+    {
+        clip = vec4(
+            xfProjParam[0] * eye.x + xfProjParam[1] * eye.z,
+            xfProjParam[2] * eye.y + xfProjParam[3] * eye.z,
+            xfProjParam[4] * eye.z + xfProjParam[5],
+            -eye.z);
+    }
+
+    gl_Position = clip;
+}
+)glsl";
+
+	// -------------------------------------------------------------------------------------------
+
+	bool TransformUnit::CreateShader()
 	{
-		switch (light)
+		if (vert_shader != 0)
+			return true;
+
+		vert_shader = CompileShaderStage(GL_VERTEX_SHADER, XFVertexShader, "XF VERTEX");
+		if (vert_shader == 0)
+			return false;
+
+		Report(Channel::GP, "XF vertex shader compiled\n");
+		return true;
+	}
+
+	void TransformUnit::DisposeShader()
+	{
+		if (vert_shader != 0)
 		{
-			case 0: return xf.colorControl[chan].Light0;
-			case 1: return xf.colorControl[chan].Light1;
-			case 2: return xf.colorControl[chan].Light2;
-			case 3: return xf.colorControl[chan].Light3;
-			case 4: return xf.colorControl[chan].Light4;
-			case 5: return xf.colorControl[chan].Light5;
-			case 6: return xf.colorControl[chan].Light6;
-			case 7: return xf.colorControl[chan].Light7;
-			default: return false;
+			glDeleteShader(vert_shader);
+			vert_shader = 0;
 		}
 	}
 
-	bool TransformUnit::XF_LightAlphaEnabled(int chan, int light)
+	// Upload the XF register state to the XF (vertex) program.
+	// The layout matches the declarations in the XF vertex shader above.
+
+	void TransformUnit::UploadUniforms(GLProgram& p)
 	{
-		switch (light)
+		// --- matrices ---
+
+		glUniform1fv(p.Uniform("matrixMem"), (GLsizei)XF_MATRIX_MEMORY_SIZE, xf.mvTexMtx);
+		glUniform1fv(p.Uniform("nrmMatrixMem"), (GLsizei)XF_NORMAL_MATRIX_MEMORY_SIZE, xf.nrmMtx);
+		glUniform1fv(p.Uniform("dualTexMatrixMem"), (GLsizei)XF_DUALTEX_MATRIX_MEMORY_SIZE, xf.dualTexMtx);
+
+		// --- lights ---
+
+		float rgba[8][4], a[8][4], k[8][4], lpx[8][4], dhx[8][4];
+
+		for (int i = 0; i < 8; i++)
 		{
-			case 0: return xf.alphaControl[chan].Light0;
-			case 1: return xf.alphaControl[chan].Light1;
-			case 2: return xf.alphaControl[chan].Light2;
-			case 3: return xf.alphaControl[chan].Light3;
-			case 4: return xf.alphaControl[chan].Light4;
-			case 5: return xf.alphaControl[chan].Light5;
-			case 6: return xf.alphaControl[chan].Light6;
-			case 7: return xf.alphaControl[chan].Light7;
-			default: return false;
+			Light* l = &xf.light[i];
+
+			rgba[i][0] = (float)l->rgba.R / 255.0f;
+			rgba[i][1] = (float)l->rgba.G / 255.0f;
+			rgba[i][2] = (float)l->rgba.B / 255.0f;
+			rgba[i][3] = (float)l->rgba.A / 255.0f;
+
+			for (int j = 0; j < 3; j++)
+			{
+				a[i][j] = l->a[j];
+				k[i][j] = l->k[j];
+				lpx[i][j] = l->lpx[j];
+				dhx[i][j] = l->dhx[j];
+			}
+			a[i][3] = k[i][3] = lpx[i][3] = dhx[i][3] = 0.0f;
+
+			// The light direction / half angle is used as a normalized vector
+			float len = (float)sqrt(dhx[i][0] * dhx[i][0] + dhx[i][1] * dhx[i][1] + dhx[i][2] * dhx[i][2]);
+			if (len > 0.00001f)
+			{
+				dhx[i][0] /= len;
+				dhx[i][1] /= len;
+				dhx[i][2] /= len;
+			}
+
+			// Distance attenuation must not divide by zero
+			if (fabs(k[i][0]) < 0.00001f && fabs(k[i][1]) < 0.00001f && fabs(k[i][2]) < 0.00001f)
+				k[i][0] = 0.00001f;
 		}
-	}
 
-	// normalize (clamp vector to 1.0 length)
-	void TransformUnit::VECNormalize(float vec[3])
-	{
-		float d = (float)sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+		glUniform4fv(p.Uniform("lightRgba[0]"), 8, (float*)rgba);
+		glUniform4fv(p.Uniform("lightA[0]"), 8, (float*)a);
+		glUniform4fv(p.Uniform("lightK[0]"), 8, (float*)k);
+		glUniform4fv(p.Uniform("lightLpx[0]"), 8, (float*)lpx);
+		glUniform4fv(p.Uniform("lightDhx[0]"), 8, (float*)dhx);
 
-		vec[0] /= d;
-		vec[1] /= d;
-		vec[2] /= d;
-	}
+		// --- colours and channel controls ---
 
-	// perform position transform
-	void TransformUnit::XF_ApplyModelview(const Vertex* v, float* out, const float* in)
-	{
-		float* mx = &xf.mvTexMtx[v->matIdx0.PosNrmMatIdx * 4];
+		float clr[8][4];
+		int idx = 0;
 
-		out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
-		out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
-		out[2] = in[0] * mx[8] + in[1] * mx[9] + in[2] * mx[10] + mx[11];
-	}
-
-	// perform normal transform
-	// matrix must be the inverse transpose of the modelview matrix
-	void TransformUnit::NormalTransform(const Vertex* v, float* out, const float* in)
-	{
-		float* mx = &xf.nrmMtx[v->matIdx0.PosNrmMatIdx * 3];
-
-		out[0] = in[0];
-		out[1] = in[1];
-		out[2] = in[2];
-
-		//out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2];
-		//out[1] = in[0] * mx[3] + in[1] * mx[4] + in[2] * mx[5];
-		//out[2] = in[0] * mx[6] + in[1] * mx[7] + in[2] * mx[8];
-
-		VECNormalize(out);
-	}
-
-	#define CLAMP(n)                \
-	{                               \
-		if(n <-1.0f) n =-1.0f;      \
-		if(n > 1.0f) n = 1.0f;      \
-	}
-
-	#define CLAMP0(n)               \
-	{                               \
-		if(n < 0.0f) n = 0.0f;      \
-		if(n > 1.0f) n = 1.0f;      \
-	}
-
-	// color0 only calculation
-	void TransformUnit::XF_DoLights(const Vertex* v)
-	{
-		float vpos[3], vnrm[3];
-		float col[3], res[3];
-		float mat[3], amb[3];
-		float illum[3];
-
-		// TODO: Second time? :/
-		XF_ApplyModelview(v, vpos, v->Position);
-
-		for (uint32_t ncol = 0; ncol < xf.numColors; ncol++) {
-
-			// -------------------------------------------------------------------
-
-			//
-			// calculate color for channel 0
-			//
-
-			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->Col[ncol].R / 255.0f;
-			col[1] = (float)v->Col[ncol].G / 255.0f;
-			col[2] = (float)v->Col[ncol].B / 255.0f;
-
-			// select material color
-			if (xf.colorControl[ncol].MatSrc == 0)
-			{
-				mat[0] = (float)xf.material[ncol].R / 255.0f;
-				mat[1] = (float)xf.material[ncol].G / 255.0f;
-				mat[2] = (float)xf.material[ncol].B / 255.0f;
-			}
-			else
-			{
-				mat[0] = col[0];
-				mat[1] = col[1];
-				mat[2] = col[2];
-			}
-
-			// calculate light function
-			if (xf.colorControl[ncol].LightFunc)
-			{
-				int n;
-
-				// select ambient color
-				if (xf.colorControl[ncol].AmbSrc == 0)
-				{
-					amb[0] = (float)xf.ambient[ncol].R / 255.0f;
-					amb[1] = (float)xf.ambient[ncol].G / 255.0f;
-					amb[2] = (float)xf.ambient[ncol].B / 255.0f;
-				}
-				else
-				{
-					amb[0] = col[0];
-					amb[1] = col[1];
-					amb[2] = col[2];
-				}
-
-				illum[0] = illum[1] = illum[2] = 0.0f;
-
-				// calculate lights
-				for (n = 0; n < 8; n++)
-				{
-					// check light mask
-					if (XF_LightColorEnabled(ncol, n))
-					{
-						// light color
-						col[0] = (float)xf.light[n].rgba.R / 255.0f;
-						col[1] = (float)xf.light[n].rgba.G / 255.0f;
-						col[2] = (float)xf.light[n].rgba.B / 255.0f;
-
-						// calculate diffuse lighting
-						switch (xf.colorControl[ncol].DiffuseAtten)
-						{
-							case 0:         // identity
-								illum[0] += col[0];
-								illum[1] += col[1];
-								illum[2] += col[2];
-								break;
-
-							case 1:         // signed
-							case 2:         // clamped
-							{
-								float dp, dir[3];
-
-								// light direction vector
-								dir[0] = xf.light[n].lpx[0] - vpos[0];
-								dir[1] = xf.light[n].lpx[1] - vpos[1];
-								dir[2] = xf.light[n].lpx[2] - vpos[2];
-
-								// normalize light direction vector
-								VECNormalize(dir);
-
-								// normal transformation
-								NormalTransform(v, vnrm, v->Normal);
-
-								// dot product of normal and light
-								dp = vnrm[0] * dir[0] +
-									vnrm[1] * dir[1] +
-									vnrm[2] * dir[2];
-
-								// clamp dot product
-								if (xf.colorControl[ncol].DiffuseAtten == 2)
-								{
-									CLAMP0(dp);
-								}
-
-								// multiply by light color
-								illum[0] += dp * col[0];
-								illum[1] += dp * col[1];
-								illum[2] += dp * col[2];
-								break;
-							}
-						}
-
-						// diffuse angle and distance attenuation
-						// NOT Implemented !!
-
-						// specular
-						// NOT Implemented !!
-					}
-				}
-
-				// clamp to [-1, 1] interval
-				CLAMP(illum[0]);
-				CLAMP(illum[1]);
-				CLAMP(illum[2]);
-
-				// add ambient color
-				illum[0] += amb[0];
-				illum[1] += amb[1];
-				illum[2] += amb[2];
-
-				// clamp total illum to [0, 1]
-				CLAMP0(illum[0]);
-				CLAMP0(illum[1]);
-				CLAMP0(illum[2]);
-			}
-			else
-			{
-				// no light function, use material color
-				illum[0] = illum[1] = illum[2] = 1.0f;
-			}
-
-			// finalize
-			res[0] = mat[0] * illum[0];
-			res[1] = mat[1] * illum[1];
-			res[2] = mat[2] * illum[2];
-
-			// clamp result to [0, 1]
-			CLAMP0(res[0]);
-			CLAMP0(res[1]);
-			CLAMP0(res[2]);
-
-			// write back result
-			colora[ncol].R = (uint8_t)(res[0] * 255.0f);
-			colora[ncol].G = (uint8_t)(res[1] * 255.0f);
-			colora[ncol].B = (uint8_t)(res[2] * 255.0f);
-
-			// -------------------------------------------------------------------
-
-			//
-			// calculate alpha for channel 0
-			//
-
-			// convert vertex color to [0, 1] interval
-			col[0] = (float)v->Col[ncol].A / 255.0f;
-
-			// select material color
-			if (xf.alphaControl[ncol].MatSrc == 0)
-			{
-				mat[0] = (float)xf.material[ncol].A / 255.0f;
-			}
-			else
-			{
-				mat[0] = col[0];
-			}
-
-			// calculate light function
-			if (xf.alphaControl[ncol].LightFunc)
-			{
-				int n;
-
-				// select ambient color
-				if (xf.alphaControl[ncol].AmbSrc == 0)
-				{
-					amb[0] = (float)xf.ambient[ncol].A / 255.0f;
-				}
-				else
-				{
-					amb[0] = col[0];
-				}
-
-				illum[0] = 0.0f;
-
-				// calculate lights
-				for (n = 0; n < 8; n++)
-				{
-					// check light mask
-					if (XF_LightAlphaEnabled(ncol, n))
-					{
-						// light color
-						col[0] = (float)xf.light[n].rgba.A / 255.0f;
-
-						// calculate diffuse lighting
-						switch (xf.alphaControl[ncol].DiffuseAtten)
-						{
-							case 0:         // identity
-								illum[0] += col[0];
-								break;
-
-							case 1:         // signed
-							case 2:         // clamped
-							{
-								float dp, dir[3];
-
-								// light direction vector
-								dir[0] = xf.light[n].lpx[0] - vpos[0];
-								dir[1] = xf.light[n].lpx[1] - vpos[1];
-								dir[2] = xf.light[n].lpx[2] - vpos[2];
-
-								// normalize light direction vector
-								VECNormalize(dir);
-
-								// normal transformation
-								NormalTransform(v, vnrm, v->Normal);
-
-								// dot product of normal and light
-								dp = vnrm[0] * dir[0] +
-									vnrm[1] * dir[1] +
-									vnrm[2] * dir[2];
-
-								// clamp dot product
-								if (xf.alphaControl[ncol].DiffuseAtten == 2)
-								{
-									CLAMP0(dp);
-								}
-
-								// multiply by light color
-								illum[0] += dp * col[0];
-								break;
-							}
-						}
-
-						// diffuse angle and distance attenuation
-						// NOT Implemented !!
-
-						// specular
-						// NOT Implemented !!
-					}
-				}
-
-				// clamp to [-1, 1] interval
-				CLAMP(illum[0]);
-
-				// add ambient color
-				illum[0] += amb[0];
-
-				// clamp total illum to [0, 1]
-				CLAMP0(illum[0]);
-			}
-			else
-			{
-				// no light function, use material color
-				illum[0] = 1.0f;
-			}
-
-			// finalize
-			res[0] = mat[0] * illum[0];
-
-			// clamp result to [0, 1]
-			CLAMP0(res[0]);
-
-			// write back result
-			colora[ncol].A = (uint8_t)(res[0] * 255.0f);
-		}
-	}
-
-	// generate NUMTEX coordinates
-	void TransformUnit::XF_DoTexGen(const Vertex* v)
-	{
-		float   in[4], q;
-		float* mx = nullptr;
-
-		if (xf.numTex == 0)
+		for (int i = 0; i < 2; i++)
 		{
-			mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
-			in[0] = v->TexCoord[0][0];
-			in[1] = v->TexCoord[0][1];
-			in[2] = 1.0f;
-			in[3] = 1.0f;
+			clr[idx][0] = (float)xf.ambient[i].R / 255.0f;
+			clr[idx][1] = (float)xf.ambient[i].G / 255.0f;
+			clr[idx][2] = (float)xf.ambient[i].B / 255.0f;
+			clr[idx][3] = (float)xf.ambient[i].A / 255.0f;
+			idx++;
 		}
+		glUniform4fv(p.Uniform("xfAmbient[0]"), 2, (float*)clr);
 
-		for (unsigned n = 0; n < xf.numTex; n++)
+		idx = 0;
+		for (int i = 0; i < 2; i++)
 		{
-			if (xf.tex[n].type == 0)
-			{
-				// select inrow
-				switch (xf.tex[n].src_row)
-				{
-					case XF_TEXGEN_INROW_POSMTX:
-					{
-						in[0] = v->Position[0];
-						in[1] = v->Position[1];
-						in[2] = v->Position[2];
-						in[3] = 1.0f;
-					}
-					break;
+			clr[idx][0] = (float)xf.material[i].R / 255.0f;
+			clr[idx][1] = (float)xf.material[i].G / 255.0f;
+			clr[idx][2] = (float)xf.material[i].B / 255.0f;
+			clr[idx][3] = (float)xf.material[i].A / 255.0f;
+			idx++;
+		}
+		glUniform4fv(p.Uniform("xfMaterial[0]"), 2, (float*)clr);
 
-					case XF_TEXGEN_INROW_NORMAL:
-					{
-						in[0] = v->Normal[0];
-						in[1] = v->Normal[1];
-						in[2] = v->Normal[2];
-						in[3] = 1.0f;
-					}
-					break;
+		float cctl[2][4], catten[2][4], actl[2][4], aatten[2][4];
+		int cmask[2], amask[2];
 
-					case XF_TEXGEN_INROW_TEX0:
-					{
-						mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
-						in[0] = v->TexCoord[0][0];
-						in[1] = v->TexCoord[0][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
+		for (int i = 0; i < 2; i++)
+		{
+			ColorAlphaControl* cc = &xf.colorControl[i];
+			ColorAlphaControl* ac = &xf.alphaControl[i];
 
-					case XF_TEXGEN_INROW_TEX1:
-					{
-						mx = &xf.mvTexMtx[v->matIdx0.Tex1MatIdx * 4];
-						in[0] = v->TexCoord[1][0];
-						in[1] = v->TexCoord[1][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
+			cctl[i][0] = (float)cc->MatSrc;
+			cctl[i][1] = (float)cc->LightFunc;
+			cctl[i][2] = (float)cc->AmbSrc;
+			cctl[i][3] = (float)cc->DiffuseAtten;
 
-					case XF_TEXGEN_INROW_TEX2:
-					{
-						mx = &xf.mvTexMtx[v->matIdx0.Tex2MatIdx * 4];
-						in[0] = v->TexCoord[2][0];
-						in[1] = v->TexCoord[2][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
+			catten[i][0] = (float)cc->Atten;
+			catten[i][1] = (float)cc->AttenSelect;
+			catten[i][2] = catten[i][3] = 0.0f;
 
-					case XF_TEXGEN_INROW_TEX3:
-					{
-						mx = &xf.mvTexMtx[v->matIdx0.Tex3MatIdx * 4];
-						in[0] = v->TexCoord[3][0];
-						in[1] = v->TexCoord[3][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
+			actl[i][0] = (float)ac->MatSrc;
+			actl[i][1] = (float)ac->LightFunc;
+			actl[i][2] = (float)ac->AmbSrc;
+			actl[i][3] = (float)ac->DiffuseAtten;
 
-					case XF_TEXGEN_INROW_TEX4:
-					{
-						mx = &xf.mvTexMtx[v->matIdx1.Tex4MatIdx * 4];
-						in[0] = v->TexCoord[4][0];
-						in[1] = v->TexCoord[4][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
+			aatten[i][0] = (float)ac->Atten;
+			aatten[i][1] = (float)ac->AttenSelect;
+			aatten[i][2] = aatten[i][3] = 0.0f;
 
-					case XF_TEXGEN_INROW_TEX5:
-					{
-						mx = &xf.mvTexMtx[v->matIdx1.Tex5MatIdx * 4];
-						in[0] = v->TexCoord[5][0];
-						in[1] = v->TexCoord[5][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
+			cmask[i] = (cc->Light0 ? 1 : 0) | (cc->Light1 ? 2 : 0) | (cc->Light2 ? 4 : 0) | (cc->Light3 ? 8 : 0) |
+				(cc->Light4 ? 0x10 : 0) | (cc->Light5 ? 0x20 : 0) | (cc->Light6 ? 0x40 : 0) | (cc->Light7 ? 0x80 : 0);
 
-					case XF_TEXGEN_INROW_TEX6:
-					{
-						mx = &xf.mvTexMtx[v->matIdx1.Tex6MatIdx * 4];
-						in[0] = v->TexCoord[6][0];
-						in[1] = v->TexCoord[6][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
-
-					case XF_TEXGEN_INROW_TEX7:
-					{
-						mx = &xf.mvTexMtx[v->matIdx1.Tex7MatIdx * 4];
-						in[0] = v->TexCoord[7][0];
-						in[1] = v->TexCoord[7][1];
-						in[2] = 1.0f;
-						in[3] = 1.0f;
-					}
-					break;
-				}
-
-				// Hmmm :/
-				if (mx == nullptr) {
-					mx = &xf.mvTexMtx[v->matIdx0.Tex0MatIdx * 4];
-				}
-
-				// st or stq ?
-				if (xf.tex[n].projection)
-				{
-					tgout[n].out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
-					tgout[n].out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
-					q = in[0] * mx[8] + in[1] * mx[9] + in[2] * mx[10] + mx[11];
-					tgout[n].out[0] /= q;
-					tgout[n].out[1] /= q;
-				}
-				else
-				{
-					tgout[n].out[0] = in[0] * mx[0] + in[1] * mx[1] + mx[2] + mx[3];
-					tgout[n].out[1] = in[0] * mx[4] + in[1] * mx[5] + mx[6] + mx[7];
-				}
-
-				// dual-transform
-			}
+			amask[i] = (ac->Light0 ? 1 : 0) | (ac->Light1 ? 2 : 0) | (ac->Light2 ? 4 : 0) | (ac->Light3 ? 8 : 0) |
+				(ac->Light4 ? 0x10 : 0) | (ac->Light5 ? 0x20 : 0) | (ac->Light6 ? 0x40 : 0) | (ac->Light7 ? 0x80 : 0);
 		}
 
-		//tgout[0].out[1] /= 1.33333;
-	}
+		glUniform4fv(p.Uniform("colorCtl[0]"), 2, (float*)cctl);
+		glUniform4fv(p.Uniform("colorAtten[0]"), 2, (float*)catten);
+		glUniform1iv(p.Uniform("colorLightMask[0]"), 2, cmask);
+		glUniform4fv(p.Uniform("alphaCtl[0]"), 2, (float*)actl);
+		glUniform4fv(p.Uniform("alphaAtten[0]"), 2, (float*)aatten);
+		glUniform1iv(p.Uniform("alphaLightMask[0]"), 2, amask);
 
+		// --- scalars ---
 
+		glUniform1i(p.Uniform("xfNumColors"), (GLint)(xf.numColors > 2 ? 2 : xf.numColors));
+		glUniform1i(p.Uniform("xfNumTex"), (GLint)(xf.numTex > 8 ? 8 : xf.numTex));
+		glUniform1fv(p.Uniform("xfProjParam"), 6, xf.projectionParam);
+		glUniform1i(p.Uniform("xfProjOrtho"), xf.projectOrtho ? 1 : 0);
+		glUniform1i(p.Uniform("xfDualTexTran"), xf.dualTexTran ? 1 : 0);
 
-	// load projection matrix
-	void TransformUnit::GL_SetProjection(float* mtx)
-	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf((GLfloat*)mtx);
-		glMatrixMode(GL_MODELVIEW);
+		uint32_t texgen[8][4];
+		uint32_t dualgen[8];
+
+		for (int i = 0; i < 8; i++)
+		{
+			texgen[i][0] = xf.tex[i].bits;
+			texgen[i][1] = texgen[i][2] = texgen[i][3] = 0;
+			dualgen[i] = xf.dualTex[i].bits;
+		}
+
+		glUniform4uiv(p.Uniform("xfTexGen[0]"), 8, (GLuint*)texgen);
+		glUniform1uiv(p.Uniform("xfDualGen[0]"), 8, (GLuint*)dualgen);
 	}
 
 	void TransformUnit::GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
 	{
-		//h += 32;
-//#ifndef NO_VIEWPORT
 		glViewport(x, gfx->scr_h - (h + y), w, h);
 		glDepthRange(znear, zfar);
-//#endif
 	}
 
 	// index range = 0000..FFFF
@@ -606,61 +638,17 @@ namespace GFX
 
 			case XF_PROJECTION_A_ID:
 			{
-				float pMatrix[7];
-
 				if (amount != 7) {
 					Halt("Partial loading of the projection matrix is not implemented\n");
 				}
 
-				pMatrix[0] = gxfifo->ReadFloat();
-				pMatrix[1] = gxfifo->ReadFloat();
-				pMatrix[2] = gxfifo->ReadFloat();
-				pMatrix[3] = gxfifo->ReadFloat();
-				pMatrix[4] = gxfifo->ReadFloat();
-				pMatrix[5] = gxfifo->ReadFloat();
-				pMatrix[6] = gxfifo->ReadFloat();
-
-				float Matrix[4][4];
-				if (pMatrix[6] == 0)
-				{
-					Matrix[0][0] = pMatrix[0];
-					Matrix[1][0] = 0.0f;
-					Matrix[2][0] = pMatrix[1];
-					Matrix[3][0] = 0.0f;
-					Matrix[0][1] = 0.0f;
-					Matrix[1][1] = pMatrix[2];
-					Matrix[2][1] = pMatrix[3];
-					Matrix[3][1] = 0.0f;
-					Matrix[0][2] = 0.0f;
-					Matrix[1][2] = 0.0f;
-					Matrix[2][2] = pMatrix[4];
-					Matrix[3][2] = pMatrix[5];
-					Matrix[0][3] = 0.0f;
-					Matrix[1][3] = 0.0f;
-					Matrix[2][3] = -1.0f;
-					Matrix[3][3] = 0.0f;
-				}
-				else
-				{
-					Matrix[0][0] = pMatrix[0];
-					Matrix[1][0] = 0.0f;
-					Matrix[2][0] = 0.0f;
-					Matrix[3][0] = pMatrix[1];
-					Matrix[0][1] = 0.0f;
-					Matrix[1][1] = pMatrix[2];
-					Matrix[2][1] = 0.0f;
-					Matrix[3][1] = pMatrix[3];
-					Matrix[0][2] = 0.0f;
-					Matrix[1][2] = 0.0f;
-					Matrix[2][2] = pMatrix[4];
-					Matrix[3][2] = pMatrix[5];
-					Matrix[0][3] = 0.0f;
-					Matrix[1][3] = 0.0f;
-					Matrix[2][3] = 0.0f;
-					Matrix[3][3] = 1.0f;
-				}
-
-				GL_SetProjection((float*)Matrix);
+				xf.projectionParam[0] = gxfifo->ReadFloat();
+				xf.projectionParam[1] = gxfifo->ReadFloat();
+				xf.projectionParam[2] = gxfifo->ReadFloat();
+				xf.projectionParam[3] = gxfifo->ReadFloat();
+				xf.projectionParam[4] = gxfifo->ReadFloat();
+				xf.projectionParam[5] = gxfifo->ReadFloat();
+				xf.projectOrtho = gxfifo->ReadFloat() != 0.0f;
 			}
 			return;
 
@@ -699,7 +687,6 @@ namespace GFX
 				zf = xf.viewportOffset[2] / 16777215.0f;
 				zn = -((xf.viewportScale[2] / 16777215.0f) - zf);
 
-				//GFXError("viewport (%.2f, %.2f)-(%.2f, %.2f), %f, %f", x, y, w, h, zn, zf);
 				GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
 			}
 			return;
@@ -799,7 +786,6 @@ namespace GFX
 			case XF_DUALTEX_ID:
 			{
 				xf.dualTexTran = gxfifo->Read32();
-				//GFXError("dual texgen : %s", (regData[0]) ? ("on") : ("off"));
 			}
 			return;
 
@@ -813,25 +799,7 @@ namespace GFX
 			case XF_DUALGEN7_ID:
 			{
 				size_t n = startIdx - XF_DUALGEN0_ID;
-
-				gxfifo->Read32();
-
-				//ASSERT(amount != 1);
-
-				//xfRegs.dual[n].hex = regData[0];
-
-	/*/
-				GFXError(
-					"set dual for %i:\n"
-					"raw: %08X\n"
-					"index: %i\n"
-					"normalize: %s",
-					n,
-					regData[0],
-					xfRegs.dual[n].dualidx,
-					(xfRegs.dual[n].norm) ? ("yes") : ("no")
-				);
-	/*/
+				xf.dualTex[n].bits = gxfifo->Read32();
 			}
 			return;
 
@@ -865,27 +833,6 @@ namespace GFX
 			case XF_TEXGEN7_ID:
 			{
 				unsigned num = startIdx & 7;
-
-				static  const char* prj[] = { "2x4", "3x4" };
-				static  const char* inf[] = { "ab11", "abc1" };
-				static  const char* type[] = { "regular", "bump", "toon0", "toon1" };
-				static  const char* srcrow[] = {
-					"xyz",
-					"normal",
-					"colors",
-					"binormal t",
-					"binormal b",
-					"tex0",
-					"tex1",
-					"tex2",
-					"tex3",
-					"tex4",
-					"tex5",
-					"tex6",
-					"tex7",
-					"", "", ""
-				};
-
 				xf.tex[num].bits = gxfifo->Read32();
 			}
 			return;
@@ -909,6 +856,11 @@ namespace GFX
 	TransformUnit::TransformUnit(HWConfig* config, GFXCore* parent_gfx)
 	{
 		gfx = parent_gfx;
+
+		// Before the first XF load the projection is an identity transform (like the GL default it replaces)
+		xf.projectionParam[0] = 1.0f;
+		xf.projectionParam[2] = 1.0f;
+		xf.projectionParam[4] = 1.0f;
 	}
 
 	TransformUnit::~TransformUnit()

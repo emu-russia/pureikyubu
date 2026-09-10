@@ -1,96 +1,42 @@
 // Flipper Texture Engine + TMEM
 #include "pch.h"
 
-#define TEXMODE     GL_MODULATE
+using namespace Debug;
 
 namespace GFX
 {
+	static int NextPowerOfTwo(int v)
+	{
+		int p = 1;
+		while (p < v)
+			p <<= 1;
+		return p;
+	}
 
 	void TextureEngine::TexInit()
 	{
-		memset(tcache, 0, sizeof(tcache));
-		tptr = 1;
+		memset(texMap, 0, sizeof(texMap));
 
-		glGenTextures(GFX_MAX_TEXTURES, texlist);
-		for (unsigned n = 1; n < GFX_MAX_TEXTURES; n++)
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
-			tcache[n].bind = n;
+			glGenTextures(1, &texMap[i].glTexture);
+			texMap[i].dirty = false;
+			texMap[i].paramsDirty = true;
 		}
+
+		active = true;
 	}
 
 	void TextureEngine::TexFree()
 	{
-		for (unsigned n = 0; n < GFX_MAX_TEXTURES; n++)
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
-			//if(tcache[n].rgbaData)
-			//{
-			//    free(tcache[n].rgbaData);
-			//    tcache[n].rgbaData = NULL;
-			//}
-		}
-	}
-
-	void TextureEngine::DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height)
-	{
-#ifdef _WINDOWS
-		char    path[256];
-		FILE* f;
-		uint8_t      hdr[14 + 40];   // bmp header
-		uint16_t* phdr;
-		int     s, t;
-		Color* base = rgbaBuf;
-
-		CreateDirectoryA(".\\TEX", NULL);
-		sprintf(path, ".\\TEX\\tex_%08X_%i.bmp", addr, fmt);
-
-		// create new file    
-		f = fopen(path, "wb");
-
-		// write hardcoded header
-		memset(hdr, 0, sizeof(hdr));
-		hdr[0] = 'B'; hdr[1] = 'M'; hdr[2] = 0x36;
-		hdr[4] = 0x20; hdr[10] = 0x36;
-		hdr[14] = 40;
-		phdr = (uint16_t*)(&hdr[0x12]); *phdr = (uint16_t)width;
-		phdr = (uint16_t*)(&hdr[0x16]); *phdr = (uint16_t)height;
-		hdr[26] = 1; hdr[28] = 24; hdr[36] = 0x20;
-		fwrite(hdr, 1, sizeof(hdr), f);
-
-		// write texture image
-		// fuck microsoft with their flipped bitmaps
-		for (s = 0; s < height; s++)
-		{
-			for (t = 0; t < width; t++)
+			if (texMap[i].glTexture)
 			{
-				rgbaBuf = &base[(height - s - 1) * width + t];
-				uint8_t  rgb[3];     // RGB triplet
-				{
-					Color c;
-					c.RGBA = _BYTESWAP_UINT32(rgbaBuf->RGBA);
-					rgb[0] = c.B;   // B
-					rgb[1] = c.G;   // G
-					rgb[2] = c.R;   // R
-					rgbaBuf++;
-					fwrite(rgb, 1, 3, f);
-				}
+				glDeleteTextures(1, &texMap[i].glTexture);
+				texMap[i].glTexture = 0;
 			}
 		}
-
-		fclose(f);
-#endif // _WINDOWS
-	}
-
-	void TextureEngine::tryLoadTex(int id)
-	{
-#ifndef WIREFRAME
-			LoadTexture(
-				tx.teximg3[id].base << 5,
-				id,
-				tx.teximg0[id].fmt,
-				tx.teximg0[id].width + 1,
-				tx.teximg0[id].height + 1
-			);
-#endif
 	}
 
 	void TextureEngine::GetTlutCol(Color* c, unsigned id, unsigned entry)
@@ -155,117 +101,63 @@ namespace GFX
 
 			default:
 			{
-				Debug::Halt("GX: Unknown TLUT format: %i\n", fmt);
+				Halt("GX: Unknown TLUT format: %i\n", fmt);
 				break;
 			}
 		}
 	}
 
-	void TextureEngine::RebindTexture(unsigned id)
+	void TextureEngine::LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
 	{
-		glBindTexture(GL_TEXTURE_2D, tID[id]->bind);
+		assert(tmem < sizeof(tlut));
+		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
+		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
 
-		// parameters
-		// check for extension ?
-#ifndef GL_MIRRORED_REPEAT_ARB
-#define GL_MIRRORED_REPEAT_ARB          0x8370
-#endif
-		static uint32_t wrap[4] = { GL_CLAMP, GL_REPEAT, GL_MIRRORED_REPEAT_ARB, GL_REPEAT };
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap[tx.texmode0[id].wrap_s]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap[tx.texmode0[id].wrap_t]);
-
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TEXMODE);
-
-		static uint32_t filt[] = {
-			GL_NEAREST,
-			GL_LINEAR,
-			GL_NEAREST_MIPMAP_NEAREST,
-			GL_NEAREST_MIPMAP_LINEAR,
-			GL_LINEAR_MIPMAP_NEAREST,
-			GL_LINEAR_MIPMAP_LINEAR
-		};
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[tx.texmode0[id].min_filter]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[tx.texmode0[id].mag_filter]);
-
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			GL_RGBA,
-			tID[id]->dw, tID[id]->dh,
-			0,
-			GL_RGBA, GL_UNSIGNED_BYTE,
-			tID[id]->rgbaData
-		);
+		InvalidatePalettedTextures();
 	}
 
-	void TextureEngine::LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
+	void TextureEngine::InvalidatePalettedTextures()
 	{
-		bool doDump = false;
-		Color* texbuf;
-		int oldw, oldh;
-		uint32_t w, h;
-		unsigned n;
-
-		// check cache entries for coincidence
-	/*/
-		for(n=1; n<MAX; n++)
+		// Paletted formats are expanded through the TLUT, so a palette load invalidates them
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
-			if(fmt >= 8) break;
-			if(
-				(tcache[n].ramAddr == addr) &&
-				(tcache[n].fmt == fmt     ) &&
-				(tcache[n].w == width     ) &&
-				(tcache[n].h == height    ) )
-			{
-				tID[id] = &tcache[n];
-				return;
-			}
+			int fmt = tx.teximg0[i].fmt;
+			if (fmt == TF_C4 || fmt == TF_C8 || fmt == TF_C14)
+				texMap[i].dirty = true;
 		}
-	/*/
-		n = 1;
+	}
 
-		// free
-	/*/
-		if(tcache[n].rgbaData)
-		{
-			free(tcache[n].rgbaData);
-			tcache[n].rgbaData = NULL;
-		}
-	/*/
+	// Decode one texture map from main memory into rgbabuf. Returns false if the map is not usable.
+	bool TextureEngine::DecodeTexture(int id)
+	{
+		TexMap* m = &texMap[id];
 
-		// new
-		n = tptr;
-		tcache[n].ramAddr = addr;
-		tcache[n].rawData = (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForTX (addr);
-		tcache[n].fmt = fmt;
+		int fmt = tx.teximg0[id].fmt;
+		int oldw = tx.teximg0[id].width + 1;
+		int oldh = tx.teximg0[id].height + 1;
+		uint32_t addr = tx.teximg3[id].base << 5;
 
-		// aspect
-		tcache[n].ds = tcache[n].dt = 1.0f;
-		w = 31 - CNTLZ(width);
-		if (width & ((1 << w) - 1)) w = 1 << (w + 1);
-		else w = width;
-		tcache[n].ds = (float)width / (float)w;
-		h = 31 - CNTLZ(height);
-		if (height & ((1 << h) - 1)) h = 1 << (h + 1);
-		else h = height;
-		tcache[n].dt = (float)height / (float)h;
+		if (oldw == 0 || oldh == 0)
+			return false;
 
-		oldw = width;
-		oldh = height;
-		tcache[n].w = oldw;
-		width = tcache[n].dw = w;
-		tcache[n].h = oldh;
-		height = tcache[n].dh = h;
+		int width = NextPowerOfTwo(oldw);
+		int height = NextPowerOfTwo(oldh);
 
-		// allocate
-	/*/
-		tcache[n].rgbaData = (Color *)malloc(width * height * 4);
-		ASSERT(tcache[n].rgbaData == NULL);
-	/*/
-		tcache[n].rgbaData = rgbabuf;
-		texbuf = tcache[n].rgbaData;
+		if ((size_t)width * height > _countof(rgbabuf))
+			return false;
+
+		uint8_t* rawData = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
+		if (rawData == nullptr)
+			return false;
+
+		Color* texbuf = rgbabuf;
+
+		m->ds = (float)oldw / (float)width;
+		m->dt = (float)oldh / (float)height;
+		m->width = oldw;
+		m->height = oldh;
+		m->dw = width;
+		m->dh = height;
 
 		// convert texture
 		switch (fmt)
@@ -274,9 +166,8 @@ namespace GFX
 			case TF_I4:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 8)
 					for (s = 0; s < oldw; s += 8)
 						for (v = 0; v < 8; v++)
@@ -301,7 +192,7 @@ namespace GFX
 			case TF_I8:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 8)
@@ -317,13 +208,12 @@ namespace GFX
 				break;
 			}
 
-			// intesity / alpha 4. one texels per byte
+			// intesity / alpha 4. one texel per byte
 			case TF_IA4:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 
-				// TODO : unroll
 				for (s = 0; s < (oldw / 4); s++)  // tile hor
 					for (t = 0; t < (oldh / 8); t++) // tile ver
 						for (u = 0; u < 4; u++)  // texel hor
@@ -343,9 +233,8 @@ namespace GFX
 			case TF_IA8:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 4)
 						for (v = 0; v < 4; v++)
@@ -364,9 +253,8 @@ namespace GFX
 			case TF_RGB565:
 			{
 				int s, t, u, v;
-				uint16_t* ptr = (uint16_t*)tcache[n].rawData;
+				uint16_t* ptr = (uint16_t*)rawData;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 4)
 						for (v = 0; v < 4; v++)
@@ -391,9 +279,8 @@ namespace GFX
 			case TF_RGB5A3:
 			{
 				int s, t, u, v;
-				uint16_t* ptr = (uint16_t*)tcache[n].rawData;
+				uint16_t* ptr = (uint16_t*)rawData;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 4)
 						for (v = 0; v < 4; v++)
@@ -434,9 +321,8 @@ namespace GFX
 			case TF_RGBA8:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 4)
 					{
@@ -463,10 +349,9 @@ namespace GFX
 			case TF_C4:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 				Color rgba;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 8)
 					for (s = 0; s < oldw; s += 8)
 						for (v = 0; v < 8; v++)
@@ -486,10 +371,9 @@ namespace GFX
 			case TF_C8:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 				Color rgba;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 8)
 						for (v = 0; v < 4; v++)
@@ -506,10 +390,9 @@ namespace GFX
 			case TF_C14:
 			{
 				int s, t, u, v;
-				uint16_t* ptr = (uint16_t*)tcache[n].rawData;
+				uint16_t* ptr = (uint16_t*)rawData;
 				Color rgba;
 
-				// TODO : unroll
 				for (t = 0; t < oldh; t += 4)
 					for (s = 0; s < oldw; s += 4)
 						for (v = 0; v < 4; v++)
@@ -526,7 +409,7 @@ namespace GFX
 			case TF_CMPR:
 			{
 				int s, t, u, v;
-				uint8_t* ptr = tcache[n].rawData;
+				uint8_t* ptr = rawData;
 				Color rgb[4];   // color look-up
 				uint8_t r, g, b;
 				uint8_t tnum;
@@ -590,8 +473,8 @@ namespace GFX
 							for (u = 0, shft = 6; u < 4; u++, shft -= 2)
 							{
 								unsigned ofs = width * (t + v) + s + u;
-								uint8_t p = (texel >> shft) & 3;
-								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
+								uint8_t pi = (texel >> shft) & 3;
+								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[pi].RGBA);
 							}
 						}
 
@@ -618,7 +501,6 @@ namespace GFX
 							rgb[1].G = (g << 2) | (g >> 4);
 							rgb[1].B = (b << 3) | (b >> 2);
 
-							// interpolate two other
 							if (blk.rgb0 > blk.rgb1)
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
@@ -647,8 +529,8 @@ namespace GFX
 							for (u = 4, shft = 6; u < 8; u++, shft -= 2)
 							{
 								unsigned ofs = width * (t + v) + s + u;
-								uint8_t p = (texel >> shft) & 3;
-								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
+								uint8_t pi = (texel >> shft) & 3;
+								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[pi].RGBA);
 							}
 						}
 
@@ -675,7 +557,6 @@ namespace GFX
 							rgb[1].G = (g << 2) | (g >> 4);
 							rgb[1].B = (b << 3) | (b >> 2);
 
-							// interpolate two other
 							if (blk.rgb0 > blk.rgb1)
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
@@ -704,8 +585,8 @@ namespace GFX
 							for (u = 0, shft = 6; u < 4; u++, shft -= 2)
 							{
 								unsigned ofs = width * (t + v) + s + u;
-								uint8_t p = (texel >> shft) & 3;
-								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
+								uint8_t pi = (texel >> shft) & 3;
+								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[pi].RGBA);
 							}
 						}
 
@@ -734,7 +615,6 @@ namespace GFX
 							rgb[1].B = (b << 3) | (b >> 2);
 							rgb[1].A = 255;
 
-							// interpolate two other
 							if (blk.rgb0 > blk.rgb1)
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
@@ -763,226 +643,225 @@ namespace GFX
 							for (u = 4, shft = 6; u < 8; u++, shft -= 2)
 							{
 								unsigned ofs = width * (t + v) + s + u;
-								uint8_t p = (texel >> shft) & 3;
-								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
+								uint8_t pi = (texel >> shft) & 3;
+								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[pi].RGBA);
 							}
 						}
 					}
 				break;
 			};
 
-			//default:
-				//GFXError("Unknown texture format : %i\n", fmt);
+			default:
+				Report(Channel::GP, "Unknown texture format: %i (map %i)\n", fmt, id);
+				return false;
 		}
 
-		// dump
-		if (doDump)
-		{
-			DumpTexture(
-				texbuf,
-				addr,
-				fmt,
-				width,
-				height
-			);
-		}
+		// Remember what the GL image was decoded from
+		m->keyAddr = addr;
+		m->keyFmt = fmt;
+		m->keyWidth = m->width;
+		m->keyHeight = m->height;
+		m->keyTlut = tx.settlut[id].tmem;
+		m->valid = true;
 
-		// save
-		tID[id] = &tcache[n];
-		/*/
-			tptr++;
-			if(tptr >= MAX)
-			{
-				tptr = 1;
-				tcache[tptr].ramAddr = 0;
-			}
-		/*/
-
-		RebindTexture(id);
+		return true;
 	}
 
-	void TextureEngine::LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
+	void TextureEngine::UploadTexture(int id)
 	{
-		assert(tmem < sizeof(tlut));
-		uint8_t* ptr = (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
-		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
+		TexMap* m = &texMap[id];
+
+		glBindTexture(GL_TEXTURE_2D, m->glTexture);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m->dw, m->dh, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbabuf);
+
+		m->paramsDirty = true;
+	}
+
+	void TextureEngine::ApplyTextureParams(int id)
+	{
+		TexMap* m = &texMap[id];
+		TexMode0& mode = tx.texmode0[id];
+
+		glBindTexture(GL_TEXTURE_2D, m->glTexture);
+
+		static const GLint wrap[4] = { GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT, GL_REPEAT };
+		static const GLint magfilt[2] = { GL_NEAREST, GL_LINEAR };
+		static const GLint minfilt[8] = {
+			GL_NEAREST,
+			GL_LINEAR,
+			GL_NEAREST_MIPMAP_NEAREST,
+			GL_NEAREST_MIPMAP_LINEAR,
+			GL_LINEAR_MIPMAP_NEAREST,
+			GL_LINEAR_MIPMAP_LINEAR,
+			GL_LINEAR,
+			GL_LINEAR
+		};
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap[mode.wrap_s & 3]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap[mode.wrap_t & 3]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magfilt[mode.mag_filter & 1]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilt[mode.min_filter & 7]);
+
+		// The Flipper can sample mip levels; the emulator only has level 0, so the chain is built here
+		if ((mode.min_filter & 7) >= 2)
+			glGenerateMipmap(GL_TEXTURE_2D);
+
+		m->appliedMode0 = mode.bits;
+		m->paramsDirty = false;
+	}
+
+	void TextureEngine::UpdateAndBindTextures()
+	{
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		{
+			TexMap* m = &texMap[i];
+
+			if (m->dirty)
+			{
+				m->dirty = false;
+
+				if (DecodeTexture(i))
+				{
+					UploadTexture(i);
+				}
+				else
+				{
+					m->valid = false;
+				}
+			}
+
+			if (m->valid && (m->paramsDirty || m->appliedMode0 != tx.texmode0[i].bits))
+				ApplyTextureParams(i);
+
+			glActiveTexture(GL_TEXTURE0 + i);
+
+			if (m->valid)
+				glBindTexture(GL_TEXTURE_2D, m->glTexture);
+			else
+				glBindTexture(GL_TEXTURE_2D, 0);
+		}
+
+		glActiveTexture(GL_TEXTURE0);
+	}
+
+	void TextureEngine::UploadTexScales(GLProgram& program)
+	{
+		float scale[8][2];
+
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		{
+			scale[i][0] = texMap[i].valid ? texMap[i].ds : 1.0f;
+			scale[i][1] = texMap[i].valid ? texMap[i].dt : 1.0f;
+		}
+
+		glUniform2fv(program.Uniform("texScale[0]"), 8, (float*)scale);
 	}
 
 	TextureEngine::TextureEngine(HWConfig* config, GFXCore* parent_gfx)
 	{
 		gfx = parent_gfx;
-		TexInit();
+		memset(rgbabuf, 0, sizeof(rgbabuf));
+		memset(tlut, 0, sizeof(tlut));
+		// GL objects are created in TexInit(), which is called once the backend has a context
 	}
 
 	TextureEngine::~TextureEngine()
 	{
-		TexFree();
+		// The GL context is already gone by now; TexFree() is called from GFXCore::GL_CloseSubsystem
+		active = false;
+	}
+
+	// Map a texture register index to a texture map id. Returns -1 for non-texture registers.
+	static bool DecodeTexIndex(size_t index, int* id, int* kind)
+	{
+		// kind: 0 = SETMODE0, 1 = SETMODE1, 2 = SETIMAGE0, 3 = SETIMAGE1, 4 = SETIMAGE2, 5 = SETIMAGE3, 6 = SETTLUT
+		struct Range { size_t lo, hi; int kind; };
+		static const Range ranges[] = {
+			{ TX_SETMODE0_I0_ID,  TX_SETMODE0_I3_ID,  0 },
+			{ TX_SETMODE1_I0_ID,  TX_SETMODE1_I3_ID,  1 },
+			{ TX_SETIMAGE0_I0_ID, TX_SETIMAGE0_I3_ID, 2 },
+			{ TX_SETIMAGE1_I0_ID, TX_SETIMAGE1_I3_ID, 3 },
+			{ TX_SETIMAGE2_I0_ID, TX_SETIMAGE2_I3_ID, 4 },
+			{ TX_SETIMAGE3_I0_ID, TX_SETIMAGE3_I3_ID, 5 },
+			{ TX_SETTLUT_I0_ID,   TX_SETTLUT_I3_ID,   6 },
+			{ TX_SETMODE0_I4_ID,  TX_SETMODE0_I7_ID,  0 },
+			{ TX_SETMODE1_I4_ID,  TX_SETMODE1_I7_ID,  1 },
+			{ TX_SETIMAGE0_I4_ID, TX_SETIMAGE0_I7_ID, 2 },
+			{ TX_SETIMAGE1_I4_ID, TX_SETIMAGE1_I7_ID, 3 },
+			{ TX_SETIMAGE2_I4_ID, TX_SETIMAGE2_I7_ID, 4 },
+			{ TX_SETIMAGE3_I4_ID, TX_SETIMAGE3_I7_ID, 5 },
+			{ TX_SETTLUT_I4_ID,   TX_SETTLUT_I7_ID,   6 },
+		};
+
+		for (const Range& r : ranges)
+		{
+			if (index >= r.lo && index <= r.hi)
+			{
+				// Both the I0-I3 block (0x80) and the I4-I7 block (0xA0) are laid out identically,
+				// so the map id is simply the offset inside the block.
+				*id = (int)(index - r.lo);
+				*kind = r.kind;
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	void TextureEngine::loadTXReg(size_t index, uint32_t value)
 	{
+		int id = 0, kind = 0;
+
+		if (DecodeTexIndex(index, &id, &kind))
+		{
+			TexMap* m = &texMap[id];
+
+			switch (kind)
+			{
+				case 0: tx.texmode0[id].bits = value; m->paramsDirty = true; break;
+				case 1: tx.texmode1[id].bits = value; break;
+				case 2:
+					tx.teximg0[id].bits = value;
+					// The format or the size changed: the image has to be decoded again
+					if (m->keyFmt != (int)tx.teximg0[id].fmt ||
+						m->keyWidth != (int)(tx.teximg0[id].width + 1) ||
+						m->keyHeight != (int)(tx.teximg0[id].height + 1))
+						m->dirty = true;
+					break;
+				case 3: tx.teximg1[id].bits = value; break;
+				case 4: tx.teximg2[id].bits = value; break;
+				case 5:
+					tx.teximg3[id].bits = value;
+					// The texture base may point at new data even if the address is unchanged
+					m->dirty = true;
+					break;
+				case 6:
+					tx.settlut[id].bits = value;
+					m->dirty = true;
+					break;
+			}
+
+			return;
+		}
+
 		switch (index)
 		{
-			//
-			// SetImage0. texture image width, height, format
-			//
-
-			case TX_SETIMAGE0_I0_ID:
-			{
-				tx.teximg0[0].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I1_ID:
-			{
-				tx.teximg0[1].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I2_ID:
-			{
-				tx.teximg0[2].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I3_ID:
-			{
-				tx.teximg0[3].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I4_ID:
-			{
-				tx.teximg0[4].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I5_ID:
-			{
-				tx.teximg0[5].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I6_ID:
-			{
-				tx.teximg0[6].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE0_I7_ID:
-			{
-				tx.teximg0[7].bits = value;
-			}
-			break;
-
-			// SetImage1
-
-			// SetImage2
-
-			//
-			// SetImage3. texture image base
-			//
-
-			case TX_SETIMAGE3_I0_ID:
-			{
-				tx.teximg3[0].bits = value;
-				tryLoadTex(0);
-			}
-			break;
-
-			case TX_SETIMAGE3_I1_ID:
-			{
-				tx.teximg3[1].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE3_I2_ID:
-			{
-				tx.teximg3[2].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE3_I3_ID:
-			{
-				tx.teximg3[3].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE3_I4_ID:
-			{
-				tx.teximg3[4].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE3_I5_ID:
-			{
-				tx.teximg3[5].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE3_I6_ID:
-			{
-				tx.teximg3[6].bits = value;
-			}
-			break;
-
-			case TX_SETIMAGE3_I7_ID:
-			{
-				tx.teximg3[7].bits = value;
-			}
-			break;
-
-			//
-			// load tlut
-			//
-
 			case TX_LOADTLUT0_ID:
-			{
 				tx.loadtlut0.bits = value;
-
-				LoadTlut(
-					(tx.loadtlut0.base << 5),   // ram address
-					(tx.loadtlut1.tmem << 9),   // tlut offset
-					tx.loadtlut1.count          // tlut size
-				);
-			}
-			break;
+				LoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem << 9, tx.loadtlut1.count);
+				return;
 
 			case TX_LOADTLUT1_ID:
-			{
 				tx.loadtlut1.bits = value;
-
-				LoadTlut(
-					(tx.loadtlut0.base << 5),   // ram address
-					(tx.loadtlut1.tmem << 9),   // tlut offset
-					tx.loadtlut1.count          // tlut size
-				);
-			}
-			break;
-
-			//
-			// set tlut
-			//
-
-			case TX_SETTLUT_I0_ID:
-			{
-				tx.settlut[0].bits = value;
-			}
-			break;
-
-			//
-			// set texture modes
-			//
-
-			case TX_SETMODE0_I0_ID:
-			{
-				tx.texmode0[0].bits = value;
-			}
-			break;
+				LoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem << 9, tx.loadtlut1.count);
+				return;
 
 			default:
+				// The sequence of bypassing blocks for register load is as follows: TEV -> Unknown reg load
 				gfx->tev->loadTEVReg(index, value);
-				break;
+				return;
 		}
 	}
 }
