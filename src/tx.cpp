@@ -82,27 +82,21 @@ namespace GFX
 
 	void TextureEngine::tryLoadTex(int id)
 	{
-		if (texvalid[0][id] && texvalid[3][id])
-		{
-			texvalid[0][id] =
-				texvalid[3][id] = false;
-
 #ifndef WIREFRAME
 			LoadTexture(
-				teximg3[id].base << 5,
+				tx.teximg3[id].base << 5,
 				id,
-				teximg0[id].fmt,
-				teximg0[id].width + 1,
-				teximg0[id].height + 1
+				tx.teximg0[id].fmt,
+				tx.teximg0[id].width + 1,
+				tx.teximg0[id].height + 1
 			);
 #endif
-		}
 	}
 
 	void TextureEngine::GetTlutCol(Color* c, unsigned id, unsigned entry)
 	{
-		uint16_t* tptr = (uint16_t*)(&tlut[(settlut[id].tmem << 9) + 2 * entry]);
-		int fmt = settlut[id].fmt;
+		uint16_t* tptr = (uint16_t*)(&tlut[(tx.settlut[id].tmem << 9) + 2 * entry]);
+		int fmt = tx.settlut[id].fmt;
 
 		switch (fmt)
 		{
@@ -177,8 +171,8 @@ namespace GFX
 #define GL_MIRRORED_REPEAT_ARB          0x8370
 #endif
 		static uint32_t wrap[4] = { GL_CLAMP, GL_REPEAT, GL_MIRRORED_REPEAT_ARB, GL_REPEAT };
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap[texmode0[id].wrap_s]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap[texmode0[id].wrap_t]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap[tx.texmode0[id].wrap_s]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap[tx.texmode0[id].wrap_t]);
 
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TEXMODE);
 
@@ -190,8 +184,8 @@ namespace GFX
 			GL_LINEAR_MIPMAP_NEAREST,
 			GL_LINEAR_MIPMAP_LINEAR
 		};
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[texmode0[id].min_filter]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[texmode0[id].mag_filter]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[tx.texmode0[id].min_filter]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[tx.texmode0[id].mag_filter]);
 
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
@@ -835,65 +829,49 @@ namespace GFX
 
 			case TX_SETIMAGE0_I0_ID:
 			{
-				teximg0[0].bits = value;
-				texvalid[0][0] = true;
-				tryLoadTex(0);
+				tx.teximg0[0].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I1_ID:
 			{
-				teximg0[1].bits = value;
-				texvalid[0][1] = true;
-				//tryLoadTex(1);
+				tx.teximg0[1].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I2_ID:
 			{
-				teximg0[2].bits = value;
-				texvalid[0][2] = true;
-				//tryLoadTex(2);
+				tx.teximg0[2].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I3_ID:
 			{
-				teximg0[3].bits = value;
-				texvalid[0][3] = true;
-				//tryLoadTex(3);
+				tx.teximg0[3].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I4_ID:
 			{
-				teximg0[4].bits = value;
-				texvalid[0][4] = true;
-				//tryLoadTex(4);
+				tx.teximg0[4].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I5_ID:
 			{
-				teximg0[5].bits = value;
-				texvalid[0][5] = true;
-				//tryLoadTex(5);
+				tx.teximg0[5].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I6_ID:
 			{
-				teximg0[6].bits = value;
-				texvalid[0][6] = true;
-				//tryLoadTex(6);
+				tx.teximg0[6].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE0_I7_ID:
 			{
-				teximg0[7].bits = value;
-				texvalid[0][7] = true;
-				//tryLoadTex(7);
+				tx.teximg0[7].bits = value;
 			}
 			break;
 
@@ -907,65 +885,50 @@ namespace GFX
 
 			case TX_SETIMAGE3_I0_ID:
 			{
-				teximg3[0].bits = value;
-				texvalid[3][0] = true;
+				tx.teximg3[0].bits = value;
 				tryLoadTex(0);
 			}
 			break;
 
 			case TX_SETIMAGE3_I1_ID:
 			{
-				teximg3[1].bits = value;
-				texvalid[3][1] = true;
-				//tryLoadTex(1);
+				tx.teximg3[1].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE3_I2_ID:
 			{
-				teximg3[2].bits = value;
-				texvalid[3][2] = true;
-				//tryLoadTex(2);
+				tx.teximg3[2].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE3_I3_ID:
 			{
-				teximg3[3].bits = value;
-				texvalid[3][3] = true;
-				//tryLoadTex(3);
+				tx.teximg3[3].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE3_I4_ID:
 			{
-				teximg3[4].bits = value;
-				texvalid[3][4] = true;
-				//tryLoadTex(4);
+				tx.teximg3[4].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE3_I5_ID:
 			{
-				teximg3[5].bits = value;
-				texvalid[3][5] = true;
-				//tryLoadTex(5);
+				tx.teximg3[5].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE3_I6_ID:
 			{
-				teximg3[6].bits = value;
-				texvalid[3][6] = true;
-				//tryLoadTex(6);
+				tx.teximg3[6].bits = value;
 			}
 			break;
 
 			case TX_SETIMAGE3_I7_ID:
 			{
-				teximg3[7].bits = value;
-				texvalid[3][7] = true;
-				//tryLoadTex(7);
+				tx.teximg3[7].bits = value;
 			}
 			break;
 
@@ -975,24 +938,24 @@ namespace GFX
 
 			case TX_LOADTLUT0_ID:
 			{
-				loadtlut0.bits = value;
+				tx.loadtlut0.bits = value;
 
 				LoadTlut(
-					(loadtlut0.base << 5),   // ram address
-					(loadtlut1.tmem << 9),   // tlut offset
-					loadtlut1.count          // tlut size
+					(tx.loadtlut0.base << 5),   // ram address
+					(tx.loadtlut1.tmem << 9),   // tlut offset
+					tx.loadtlut1.count          // tlut size
 				);
 			}
 			break;
 
 			case TX_LOADTLUT1_ID:
 			{
-				loadtlut1.bits = value;
+				tx.loadtlut1.bits = value;
 
 				LoadTlut(
-					(loadtlut0.base << 5),   // ram address
-					(loadtlut1.tmem << 9),   // tlut offset
-					loadtlut1.count          // tlut size
+					(tx.loadtlut0.base << 5),   // ram address
+					(tx.loadtlut1.tmem << 9),   // tlut offset
+					tx.loadtlut1.count          // tlut size
 				);
 			}
 			break;
@@ -1003,7 +966,7 @@ namespace GFX
 
 			case TX_SETTLUT_I0_ID:
 			{
-				settlut[0].bits = value;
+				tx.settlut[0].bits = value;
 			}
 			break;
 
@@ -1013,7 +976,7 @@ namespace GFX
 
 			case TX_SETMODE0_I0_ID:
 			{
-				texmode0[0].bits = value;
+				tx.texmode0[0].bits = value;
 			}
 			break;
 
