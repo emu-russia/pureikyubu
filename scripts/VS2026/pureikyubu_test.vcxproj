@@ -27,6 +27,22 @@
     </ClCompile>
     <ClCompile Include="..\..\testing\pureikyubu_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_test_support.cpp" />
+    <ClCompile Include="..\..\testing\gfx_test_support.cpp" />
+    <ClCompile Include="..\..\testing\gfx_rig_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_su_ras_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_tev_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_pe_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_bp_map_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_xf_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_cp_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_cp_array_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_su_features_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_bump_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_texture_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_report_texture_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_report_pipeline_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_report_raster_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_report_xf_cp_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_core_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_parallel_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_flags_test.cpp" />
@@ -68,10 +84,47 @@
     <ClCompile Include="..\..\src\utils.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <!--
+      The GFX pipeline itself: the command processor, the pipeline root (GFXCore) and every
+      pipeline block. testing/gfx_test_support.cpp supplies the surrounding Flipper devices.
+    -->
+    <ClCompile Include="..\..\src\cp.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gfx.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\xf.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\su.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ras.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tx.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\tev.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\pe.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\bump.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <!-- The OpenGL function loader (the emulator compiles GLEW from source as well) -->
+    <ClCompile Include="..\..\thirdparty\glew-2.2.0\src\glew.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\testing\pch.h" />
     <ClInclude Include="..\..\testing\dsp_test_common.h" />
+    <ClInclude Include="..\..\testing\gfx_test_common.h" />
+    <ClInclude Include="..\..\testing\gfx_report_common.h" />
     <ClInclude Include="..\..\testing\dsp_golden_alu_vectors.h" />
     <ClInclude Include="..\..\src\gqr.h" />
     <ClInclude Include="..\..\src\dsp.h" />
@@ -83,6 +136,15 @@
     <ClInclude Include="..\..\src\dspdma.h" />
     <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\utils.h" />
+    <ClInclude Include="..\..\src\gfx.h" />
+    <ClInclude Include="..\..\src\cp.h" />
+    <ClInclude Include="..\..\src\xf.h" />
+    <ClInclude Include="..\..\src\su.h" />
+    <ClInclude Include="..\..\src\ras.h" />
+    <ClInclude Include="..\..\src\tx.h" />
+    <ClInclude Include="..\..\src\tev.h" />
+    <ClInclude Include="..\..\src\pe.h" />
+    <ClInclude Include="..\..\src\bump.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
@@ -171,6 +233,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -195,6 +258,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -215,6 +279,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -239,6 +304,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -5,13 +5,12 @@
 // In the real Flipper XF is made from microcode ROM, but is still part of a fixed pipeline.
 // In this emulator the XF is emulated by a vertex shader: this module only holds the register state
 // and uploads it to the shader (see gfx.cpp for the shader source).
+//
+// The XF is the entry point of the graphics pipeline: the CP pushes the command stream (register
+// loads, register reads and the vertex rows of every draw command) into it, and what the XF
+// produces leaves it towards the Setup Unit and the rasterizers (gfx-xf.md 2.1, 2.2).
 
 #pragma once
-
-namespace Flipper
-{
-	class FifoProcessor;
-}
 
 namespace GFX
 {
@@ -137,6 +136,23 @@ namespace GFX
 		XF_DUALGEN5_ID = 0x1055,
 		XF_DUALGEN6_ID = 0x1056,
 		XF_DUALGEN7_ID = 0x1057,
+	};
+
+	// The primitive that a draw command renders. The CP passes it to the XF with the draw
+	// command (gfx-xf.md 2.1), and the XF hands it to the Setup Unit and the rasterizers on its
+	// output stream (gfx-xf.md 2.2). It is defined here because the XF is the entry point of the
+	// pipeline, and the SU/RAS consume what the XF produces.
+
+	enum RAS_Primitive : size_t
+	{
+		RAS_QUAD = 0,
+		RAS_QUAD_STRIP,
+		RAS_TRIANGLE,
+		RAS_TRIANGLE_STRIP,
+		RAS_TRIANGLE_FAN,
+		RAS_LINE,
+		RAS_LINE_STRIP,
+		RAS_POINT,
 	};
 
 #pragma pack(push, 1)
@@ -325,6 +341,24 @@ namespace GFX
 
 		//! Compiled XF (vertex) shader stage. The TEV fragment programs are linked against it.
 		GLuint vert_shader = 0;
+		//! The same stage with the `flat` colour varyings, for GEN_MODE.flat_en (compiled on demand).
+		GLuint vert_shader_flat = 0;
+
+		// CP -> XF interface state
+
+		size_t xfLoadIdx = 0;			// Register address of the current block write
+		size_t xfLoadAmount = 0;		// Register words still expected by the current block write
+		uint32_t xfRdData = 0;			// XFrdData: register read-back value
+		bool xfRdValid = false;			// XFrdValid: XFrdData holds a value for the CP
+
+		//! Write one word of the XF register space (gfx-xf.md 4)
+		void WriteXFReg(size_t index, uint32_t value);
+
+		//! Read one word of the XF register space out of the current register state (gfx-xf.md 4)
+		uint32_t ReadXFReg(size_t index);
+
+		//! Recalculate the emulator viewport from the XF viewport registers (0x101A-0x101F)
+		void ApplyViewport();
 
 	public:
 
@@ -337,12 +371,65 @@ namespace GFX
 		//! The compiled vertex shader stage (0 when it is not available)
 		GLuint VertexShader() const { return vert_shader; }
 
+		//! The vertex shader stage of one colour-interpolation variant: `flat` selects the variant
+		//! whose rasterized colour varyings are flat-shaded (GEN_MODE.flat_en). Compiled on demand, so
+		//! a GL context has to be current.
+		GLuint VertexShader(bool flat);
+
+		//! The source text of the XF vertex shader (the debugger can write it to a file).
+		static const char* VertexShaderSource();
+
+		//! The source text of one colour-interpolation variant of the vertex shader.
+		static std::string VertexShaderSource(bool flat);
+
 		//! Upload the whole XF register state to the XF vertex program.
 		void UploadUniforms(GLProgram& program);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
-		void loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo);
+
+		// -------------------------------------------------------------------------------------
+		// CP -> XF interface (gfx-xf.md 2.1)
+		//
+		// The CP is the source of the graphics command stream: it pushes register loads, register
+		// read requests and the vertex rows of every draw command into the XF, which is the entry
+		// point of the pipeline. The XF reports on the XFready line whether it can take another
+		// word, and answers register read requests on XFrdValid/XFrdData. The vertex stream that
+		// the XF produces goes to the Setup Unit (gfx-xf.md 2.2).
+		// -------------------------------------------------------------------------------------
+
+		//! XFready: the XF can accept another word from the CP.
+		bool CPReady();
+
+		//! xf_cmd_regload: begin a block write of `amount` words at XF register `startIdx`.
+		void CPRegLoadBegin(size_t startIdx, size_t amount);
+
+		//! xf_cmd_regdata: one data word of the block write in progress.
+		void CPRegLoadData(uint32_t value);
+
+		//! xf_cmd_regread: request XF register `index`. The XF answers on the read-back line,
+		//! see CPTakeReadData.
+		void CPRegRead(size_t index);
+
+		//! XFrdValid / XFrdData: take the value requested with CPRegRead.
+		//! Returns false when the XF has no read-back data for the CP.
+		bool CPTakeReadData(uint32_t* data);
+
+		//! xf_su_cmds: an SU (bypass) register load. The XF does not interpret these words, it
+		//! forwards them to the Setup Unit verbatim.
+		void CPSuCommand(size_t index, uint32_t value);
+
+		//! The first vertex of a primitive of which `vtx_num` vertices follow.
+		void CPDrawBegin(RAS_Primitive prim, size_t vtx_num);
+
+		//! One vertex row of the vertex stream.
+		void CPVertex(const Vertex* v);
+
+		//! All vertices of the current primitive have been pushed.
+		void CPDrawEnd();
 
 		TransformUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TransformUnit();
+
+		//! Put the XF register state and the CP interface back into the reset state.
+		void Reset();
 	};
 }

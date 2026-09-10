@@ -16,6 +16,805 @@ namespace GFX
 	int gfx_frame_counter = 0;
 
 	// -------------------------------------------------------------------------------------------
+	// GX debug interface (JDI)
+	//
+	// The commands below are the GX half of the Json Debug Interface (issue #87): they report the
+	// state of the whole GFX pipeline, the generated shaders, the texture cache, the frame
+	// statistics and the contents of the emulated EFB. The command descriptions live in the JSON
+	// node right here, so a new command only has to be added in one file.
+	//
+	// Address conventions:
+	//   * XF registers are the 16-bit XF register space (0x0000..0x1057, see xf.h);
+	//   * BP registers are the 8-bit bypass space (0x00..0xFF, see gfx.md 10.1);
+	//   * EFB coordinates are in EFB pixels, the origin is the top left corner.
+	// -------------------------------------------------------------------------------------------
+
+	static const char* GfxJdi = R"json(
+{
+	"info":
+	{
+		"description": "Flipper GFX (GX) JDI",
+		"helpGroup": "GFX Debug Commands"
+	},
+
+	"can": {
+		"gx":
+		{
+			"help": "Show the state of the whole GFX pipeline",
+			"output": "Object with one member per pipeline block and the frame counters"
+		},
+
+		"gxframes":
+		{
+			"help": "Show the GFX frame statistics",
+			"output": "Object with the frame counters and the draw command counters of the CP"
+		},
+
+		"gxregs":
+		{
+			"help": "Dump the register state of one GFX block",
+			"args": 1,
+			"hints": "<block>",
+			"usage": [
+				"Syntax: gxregs <block>\n",
+				"Blocks: xf, su, ras, tx, tev, pe, bump, cp, all\n",
+				"Example of use: gxregs tev\n"
+			],
+			"output": "Object with the raw register fields of the block"
+		},
+
+		"gxshader":
+		{
+			"help": "Write the GLSL shaders the pipeline uses into files",
+			"args": 1,
+			"hints": "<basename>",
+			"usage": [
+				"Syntax: gxshader <basename>\n",
+				"Writes <basename>.vert.glsl and <basename>.frag.glsl\n",
+				"Example of use: gxshader gfx_shader\n"
+			],
+			"output": "Object with the file names and their sizes"
+		},
+
+		"gxtex":
+		{
+			"help": "Show the texture cache: what every one of the eight texture maps holds",
+			"output": "Array of 8 objects (one per texture map) with the decoded image and its registers"
+		},
+
+		"gxshot":
+		{
+			"help": "Save a screenshot of the emulated EFB as a PNG file",
+			"args": 1,
+			"hints": "<filename.png> [x y width height]",
+			"usage": [
+				"Syntax: gxshot <filename.png> [x y width height]\n",
+				"Without the optional rectangle the whole render target is saved.\n",
+				"Example of use: gxshot frame.png\n"
+			],
+			"output": "Object with the file name and the size of the saved image"
+		},
+
+		"gxpixel":
+		{
+			"help": "Read one EFB pixel",
+			"args": 2,
+			"hints": "<x> <y>",
+			"usage": [
+				"Syntax: gxpixel <x> <y>\n",
+				"Reads the colour and the depth of one EFB pixel (origin: top left).\n",
+				"Example of use: gxpixel 320 240\n"
+			],
+			"output": "Object with r, g, b, a and z"
+		},
+
+		"gxreset":
+		{
+			"help": "Reset the GFX pipeline register state (the software equivalent of a GX reset)"
+		},
+
+		"gxtexdump":
+		{
+			"help": "Save the image of one texture map as a PNG file",
+			"args": 2,
+			"hints": "<map 0-7> <filename.png>",
+			"usage": [
+				"Syntax: gxtexdump <map> <filename.png>\n",
+				"Example of use: gxtexdump 0 map0.png\n"
+			],
+			"output": "Object with the file name and the size of the saved image"
+		}
+	}
+}
+)json";
+
+	GFXCore* gfx_jdi_instance = nullptr;
+
+	static Json::Value* CmdGxState(std::vector<std::string>& args);
+	static Json::Value* CmdGxFrames(std::vector<std::string>& args);
+	static Json::Value* CmdGxRegs(std::vector<std::string>& args);
+	static Json::Value* CmdGxShader(std::vector<std::string>& args);
+	static Json::Value* CmdGxTex(std::vector<std::string>& args);
+	static Json::Value* CmdGxShot(std::vector<std::string>& args);
+	static Json::Value* CmdGxPixel(std::vector<std::string>& args);
+	static Json::Value* CmdGxReset(std::vector<std::string>& args);
+	static Json::Value* CmdGxTexDump(std::vector<std::string>& args);
+
+	static void gfx_init_handlers()
+	{
+		JDI::Hub.AddCmd("gx", CmdGxState);
+		JDI::Hub.AddCmd("gxframes", CmdGxFrames);
+		JDI::Hub.AddCmd("gxregs", CmdGxRegs);
+		JDI::Hub.AddCmd("gxshader", CmdGxShader);
+		JDI::Hub.AddCmd("gxtex", CmdGxTex);
+		JDI::Hub.AddCmd("gxshot", CmdGxShot);
+		JDI::Hub.AddCmd("gxpixel", CmdGxPixel);
+		JDI::Hub.AddCmd("gxreset", CmdGxReset);
+		JDI::Hub.AddCmd("gxtexdump", CmdGxTexDump);
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// JDI helpers
+	// -------------------------------------------------------------------------------------------
+
+	//! The pipeline the debug commands talk to (the emulator has exactly one GFXCore).
+	static GFXCore* Gfx()
+	{
+		return gfx_jdi_instance;
+	}
+
+	static Json::Value* MakeObject()
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Object;
+		return output;
+	}
+
+	static Json::Value* MakeArray()
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+		return output;
+	}
+
+	static void AddHex(Json::Value* obj, const char* name, uint32_t value)
+	{
+		// The Json engine only carries signed 64-bit integers, so an unsigned 32-bit register value
+		// is reported as an unsigned decimal number and, for convenience, as a hex string.
+		char hex[16];
+		sprintf(hex, "0x%X", value);
+		obj->AddUInt32(name, value);
+		obj->AddAnsiString((std::string(name) + "Hex").c_str(), hex);
+	}
+
+	// A GL context is only current on the thread that drives the frame loop; the copy commands below
+	// must not be issued from anywhere else (the JDI server and the debugger UI can run on another
+	// thread).
+	static bool GLContextCurrent()
+	{
+#ifdef _WINDOWS
+		return wglGetCurrentContext() != 0;
+#else
+		return true;
+#endif
+	}
+
+	static Json::Value* GLErrorValue(const wchar_t* text)
+	{
+		Json::Value* output = MakeObject();
+		output->AddAnsiString("error", Util::WstringToString(text).c_str());
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gx - the whole pipeline state
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxState(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		Json::Value* output = MakeObject();
+
+		Json::Value* common = output->AddObject("common");
+		AddHex(common, "genmode", gfx->genmode.bits);
+		common->AddInt("ntex", (int)gfx->genmode.ntex);
+		common->AddInt("ncol", (int)gfx->genmode.ncol);
+		common->AddInt("ntev", (int)gfx->genmode.ntev);
+		common->AddInt("nbmp", (int)gfx->genmode.nbmp);
+		common->AddBool("zfreeze", gfx->genmode.zfreeze != 0);
+		common->AddInt("reject", (int)gfx->genmode.reject_en);
+		common->AddBool("ms_en", gfx->genmode.ms_en != 0);
+		common->AddBool("flat_en", gfx->genmode.flat_en != 0);
+		common->AddInt("backend_started", gfx->BackendStarted() ? 1 : 0);
+		common->AddInt("scr_w", (int)gfx->RenderWidth());
+		common->AddInt("scr_h", (int)gfx->RenderHeight());
+
+		Json::Value* xf = output->AddObject("xf");
+		AddHex(xf, "numTex", gfx->xf->xf.numTex);
+		AddHex(xf, "numColors", gfx->xf->xf.numColors);
+		xf->AddBool("projectOrtho", gfx->xf->xf.projectOrtho);
+		xf->AddBool("dualTexTran", gfx->xf->xf.dualTexTran != 0);
+		xf->AddBool("vertexShader", gfx->xf->VertexShader() != 0);
+		{
+			Json::Value* proj = xf->AddArray("projection");
+			for (int i = 0; i < 6; i++)
+			{
+				proj->AddFloat(nullptr, gfx->xf->xf.projectionParam[i]);
+			}
+			Json::Value* vp = xf->AddArray("viewport");
+			for (int i = 0; i < 3; i++)
+			{
+				vp->AddFloat(nullptr, gfx->xf->xf.viewportScale[i]);
+			}
+			for (int i = 0; i < 3; i++)
+			{
+				vp->AddFloat(nullptr, gfx->xf->xf.viewportOffset[i]);
+			}
+			Json::Value* tg = xf->AddArray("texgen");
+			for (int i = 0; i < 8; i++)
+			{
+				tg->AddUInt32(nullptr, gfx->xf->xf.tex[i].bits);
+			}
+		}
+
+		Json::Value* su = output->AddObject("su");
+		AddHex(su, "scis0", gfx->su->State().scis0.bits);
+		AddHex(su, "scis1", gfx->su->State().scis1.bits);
+		{
+			Json::Value* size = su->AddArray("texSize");
+			for (int i = 0; i < 8; i++)
+			{
+				size->AddUInt32(nullptr, gfx->su->State().ssize[i].bits);
+				size->AddUInt32(nullptr, gfx->su->State().tsize[i].bits);
+			}
+		}
+
+		Json::Value* ras = output->AddObject("ras");
+		AddHex(ras, "iref", gfx->ras->Iref());
+		{
+			Json::Value* tref = ras->AddArray("tref");
+			for (int i = 0; i < 8; i++)
+			{
+				tref->AddUInt32(nullptr, gfx->ras->Tref(i).bits);
+			}
+			Json::Value* ss = ras->AddArray("ss");
+			ss->AddUInt32(nullptr, gfx->ras->SS(0).bits);
+			ss->AddUInt32(nullptr, gfx->ras->SS(1).bits);
+		}
+
+		Json::Value* tev = output->AddObject("tev");
+		AddHex(tev, "alphaFunc", gfx->tev->State().alpha_func.bits);
+		AddHex(tev, "fogParam3", gfx->tev->State().fog_param3.bits);
+		AddHex(tev, "zenv0", gfx->tev->State().zenv0.bits);
+		AddHex(tev, "zenv1", gfx->tev->State().zenv1.bits);
+		tev->AddBool("program", gfx->tev->GetTevProgramNoCreate() != nullptr);
+
+		Json::Value* pe = output->AddObject("pe");
+		AddHex(pe, "zmode", gfx->pe->State().zmode.bits);
+		AddHex(pe, "cmode0", gfx->pe->State().cmode0.bits);
+		AddHex(pe, "cmode1", gfx->pe->State().cmode1.bits);
+		AddHex(pe, "control", gfx->pe->State().control.bits);
+		AddHex(pe, "clearAR", gfx->pe->State().copy_clear_ar.bits);
+		AddHex(pe, "clearGB", gfx->pe->State().copy_clear_gb.bits);
+		AddHex(pe, "clearZ", gfx->pe->State().copy_clear_z.bits);
+
+		Json::Value* bump = output->AddObject("bump");
+		bump->AddBool("indirectActive", gfx->bump->IndirectActive());
+		{
+			Json::Value* cmd = bump->AddArray("cmd");
+			for (int i = 0; i < 16; i++)
+			{
+				cmd->AddUInt32(nullptr, gfx->bump->State().cmd[i].bits);
+			}
+			Json::Value* mtx = bump->AddArray("matrix");
+			for (int i = 0; i < 3; i++)
+			{
+				mtx->AddUInt32(nullptr, gfx->bump->State().matrix[i].a.bits);
+				mtx->AddUInt32(nullptr, gfx->bump->State().matrix[i].b.bits);
+				mtx->AddUInt32(nullptr, gfx->bump->State().matrix[i].c.bits);
+			}
+		}
+
+		Json::Value* frames = output->AddObject("frames");
+		frames->AddInt("pe_frames", (int)gfx->pe->Frames());
+		frames->AddInt("gfx_frame_counter", gfx_frame_counter);
+
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gxframes - the frame and command statistics
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxFrames(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		Json::Value* output = MakeObject();
+
+		output->AddInt("gfx_frame_counter", gfx_frame_counter);
+		output->AddInt("pe_frames", (int)gfx->pe->Frames());
+
+		if (Flipper::HW != nullptr && Flipper::HW->cp != nullptr)
+		{
+			Flipper::CommandProcessorStats stats{};
+			Flipper::HW->cp->GetStats(&stats);
+
+			Json::Value* cp = output->AddObject("cp");
+			cp->AddInt("bp_loads", (int)stats.bpLoads);
+			cp->AddInt("xf_loads", (int)stats.xfLoads);
+			cp->AddInt("cp_loads", (int)stats.cpLoads);
+			cp->AddInt("triangles", (int)stats.tris);
+			cp->AddInt("points", (int)stats.points);
+			cp->AddInt("lines", (int)stats.lines);
+		}
+
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gxregs - the register state of one block
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxRegs(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		std::string block = args.size() > 1 ? args[1] : "all";
+		Json::Value* output = MakeObject();
+
+		if (block == "xf" || block == "all")
+		{
+			Json::Value* xf = output->AddObject("xf");
+			for (size_t i = 0; i < 16; i++)
+			{
+				char name[32];
+				sprintf(name, "mvTexMtx%zu", i);
+				xf->AddFloat(name, gfx->xf->xf.mvTexMtx[i]);
+			}
+			for (int i = 0; i < 8; i++)
+			{
+				char name[32];
+				sprintf(name, "light%d_rgba", i);
+				AddHex(xf, name, gfx->xf->xf.light[i].rgba.RGBA);
+				sprintf(name, "light%d_a0", i);
+				xf->AddFloat(name, gfx->xf->xf.light[i].a[0]);
+				sprintf(name, "light%d_k0", i);
+				xf->AddFloat(name, gfx->xf->xf.light[i].k[0]);
+			}
+		}
+
+		if (block == "pe" || block == "all")
+		{
+			Json::Value* pe = output->AddObject("pe");
+			const char* names[] = {
+				"zmode", "cmode0", "cmode1", "control", "field_mask", "finish", "refresh",
+				"token", "token_int", "copy_src_addr", "copy_src_size", "copy_dst_base0",
+				"copy_dst_base1", "copy_dst_stride", "copy_scale", "copy_clear_ar", "copy_clear_gb",
+				"copy_clear_z", "copy_cmd", "vfilter0", "vfilter1", "xbound", "ybound", "perfmode",
+				"chicken", "quad_offset"
+			};
+			const uint32_t* regs = (const uint32_t*)&gfx->pe->State();
+			for (int i = 0; i < (int)(sizeof(names) / sizeof(names[0])); i++)
+			{
+				AddHex(pe, names[i], regs[i]);
+			}
+			AddHex(pe, "sr", gfx->pe->Regs().sr);
+		}
+
+		if (block == "tev" || block == "all")
+		{
+			Json::Value* tev = output->AddObject("tev");
+			{
+				Json::Value* env = tev->AddArray("colorEnv");
+				for (int i = 0; i < 16; i++)
+				{
+					env->AddUInt32(nullptr, gfx->tev->State().color_env[i].bits);
+				}
+				Json::Value* aenv = tev->AddArray("alphaEnv");
+				for (int i = 0; i < 16; i++)
+				{
+					aenv->AddUInt32(nullptr, gfx->tev->State().alpha_env[i].bits);
+				}
+				Json::Value* reg = tev->AddArray("colorReg");
+				for (int i = 0; i < 4; i++)
+				{
+					reg->AddUInt32(nullptr, gfx->tev->State().regl[i].bits);
+					reg->AddUInt32(nullptr, gfx->tev->State().regh[i].bits);
+				}
+				Json::Value* ksel = tev->AddArray("ksel");
+				for (int i = 0; i < 8; i++)
+				{
+					ksel->AddUInt32(nullptr, gfx->tev->State().ksel[i].bits);
+				}
+			}
+			AddHex(tev, "fogParam0", gfx->tev->State().fog_param0.bits);
+			AddHex(tev, "fogParam1", gfx->tev->State().fog_param1.bits);
+			AddHex(tev, "fogParam2", gfx->tev->State().fog_param2.bits);
+			AddHex(tev, "fogParam3", gfx->tev->State().fog_param3.bits);
+			AddHex(tev, "fogColor", gfx->tev->State().fog_color.bits);
+			AddHex(tev, "alphaFunc", gfx->tev->State().alpha_func.bits);
+			AddHex(tev, "zenv0", gfx->tev->State().zenv0.bits);
+			AddHex(tev, "zenv1", gfx->tev->State().zenv1.bits);
+		}
+
+		if (block == "bump" || block == "all")
+		{
+			Json::Value* bump = output->AddObject("bump");
+			AddHex(bump, "imask", gfx->bump->State().imask.bits);
+			for (int i = 0; i < 16; i++)
+			{
+				char name[32];
+				sprintf(name, "cmd%d", i);
+				AddHex(bump, name, gfx->bump->State().cmd[i].bits);
+			}
+			for (int i = 0; i < 3; i++)
+			{
+				char name[32];
+				sprintf(name, "matrix%d_a", i);
+				AddHex(bump, name, gfx->bump->State().matrix[i].a.bits);
+				sprintf(name, "matrix%d_b", i);
+				AddHex(bump, name, gfx->bump->State().matrix[i].b.bits);
+				sprintf(name, "matrix%d_c", i);
+				AddHex(bump, name, gfx->bump->State().matrix[i].c.bits);
+			}
+		}
+
+		if (block == "tx" || block == "all")
+		{
+			Json::Value* tx = output->AddObject("tx");
+			Json::Value* maps = tx->AddArray("map");
+			for (int i = 0; i < 8; i++)
+			{
+				const GFX::TexMap& m = gfx->tx->Map(i);
+				Json::Value* item = maps->AddObject(nullptr);
+				item->AddInt("valid", m.valid ? 1 : 0);
+				item->AddInt("width", m.width);
+				item->AddInt("height", m.height);
+				item->AddInt("glWidth", m.dw);
+				item->AddInt("glHeight", m.dh);
+				item->AddUInt32("base", gfx->tx->State().teximg3[i].base << 5);
+				AddHex(item, "image0", gfx->tx->State().teximg0[i].bits);
+				AddHex(item, "mode0", gfx->tx->State().texmode0[i].bits);
+			}
+		}
+
+		if (block == "su" || block == "all")
+		{
+			Json::Value* su = output->AddObject("su");
+			AddHex(su, "scis0", gfx->su->State().scis0.bits);
+			AddHex(su, "scis1", gfx->su->State().scis1.bits);
+		}
+
+		if (block == "ras" || block == "all")
+		{
+			Json::Value* ras = output->AddObject("ras");
+			Json::Value* tref = ras->AddArray("tref");
+			for (int i = 0; i < 8; i++)
+			{
+				tref->AddUInt32(nullptr, gfx->ras->Tref(i).bits);
+			}
+			AddHex(ras, "iref", gfx->ras->Iref());
+		}
+
+		if (block == "cp" || block == "all")
+		{
+			if (Flipper::HW != nullptr && Flipper::HW->cp != nullptr)
+			{
+				Flipper::CommandProcessorStats stats{};
+				Flipper::HW->cp->GetStats(&stats);
+
+				Json::Value* cp = output->AddObject("cp");
+				cp->AddInt("bp_loads", (int)stats.bpLoads);
+				cp->AddInt("xf_loads", (int)stats.xfLoads);
+				cp->AddInt("cp_loads", (int)stats.cpLoads);
+				cp->AddInt("triangles", (int)stats.tris);
+				cp->AddInt("points", (int)stats.points);
+				cp->AddInt("lines", (int)stats.lines);
+			}
+		}
+
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gxshader - write the generated shaders to files
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxShader(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		std::string base = args.size() > 1 ? args[1] : "gfx_shader";
+		std::string vertName = base + ".vert.glsl";
+		std::string fragName = base + ".frag.glsl";
+
+		auto writeText = [](const std::string& name, const char* text) -> size_t
+		{
+			if (text == nullptr)
+			{
+				return 0;
+			}
+
+			FILE* f = fopen(name.c_str(), "wb");
+			if (f == nullptr)
+			{
+				return 0;
+			}
+
+			size_t len = strlen(text);
+			fwrite(text, 1, len, f);
+			fclose(f);
+			return len;
+		};
+
+		size_t vertSize = writeText(vertName, gfx->xf->VertexShaderSource());
+		size_t fragSize = writeText(fragName, gfx->tev->FragmentShaderSource());
+
+		Json::Value* output = MakeObject();
+		output->AddAnsiString("vertexShader", vertName.c_str());
+		output->AddInt("vertexShaderSize", (int)vertSize);
+		output->AddAnsiString("fragmentShader", fragName.c_str());
+		output->AddInt("fragmentShaderSize", (int)fragSize);
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gxtex - the texture cache
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxTex(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		Json::Value* output = MakeArray();
+
+		for (int i = 0; i < 8; i++)
+		{
+			const TexMap& m = gfx->tx->Map(i);
+
+			Json::Value* item = output->AddObject(nullptr);
+			item->AddInt("map", i);
+			item->AddInt("valid", m.valid ? 1 : 0);
+			item->AddInt("dirty", m.dirty ? 1 : 0);
+			item->AddUInt32("base", gfx->tx->State().teximg3[i].base << 5);
+			AddHex(item, "image0", gfx->tx->State().teximg0[i].bits);
+			item->AddInt("width", gfx->tx->State().teximg0[i].width + 1);
+			item->AddInt("height", gfx->tx->State().teximg0[i].height + 1);
+			item->AddInt("format", (int)gfx->tx->State().teximg0[i].fmt);
+			AddHex(item, "mode0", gfx->tx->State().texmode0[i].bits);
+			AddHex(item, "mode1", gfx->tx->State().texmode1[i].bits);
+			AddHex(item, "tlut", gfx->tx->State().settlut[i].bits);
+			item->AddInt("decodedWidth", m.width);
+			item->AddInt("decodedHeight", m.height);
+			item->AddInt("glWidth", m.dw);
+			item->AddInt("glHeight", m.dh);
+			item->AddBool("glObject", m.glTexture != 0);
+		}
+
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gxshot / gxpixel / gxtexdump - reading the EFB back
+	// -------------------------------------------------------------------------------------------
+
+	//! Parse the optional "x y width height" tail of a command.
+	static bool ParseRect(std::vector<std::string>& args, size_t first, GFXCore* gfx,
+		int* x, int* y, int* width, int* height)
+	{
+		*x = 0;
+		*y = 0;
+		*width = (int)gfx->RenderWidth();
+		*height = (int)gfx->RenderHeight();
+
+		if (args.size() >= first + 4)
+		{
+			*x = atoi(args[first + 0].c_str());
+			*y = atoi(args[first + 1].c_str());
+			*width = atoi(args[first + 2].c_str());
+			*height = atoi(args[first + 3].c_str());
+		}
+
+		if (*width <= 0 || *height <= 0)
+		{
+			return false;
+		}
+
+		if (*x < 0 || *y < 0 || (*x + *width) > (int)gfx->RenderWidth() || (*y + *height) > (int)gfx->RenderHeight())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	//! Read a rectangle of the EFB into an RGB buffer, top row first.
+	static bool ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgb)
+	{
+		rgb.resize((size_t)width * height * 3);
+
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
+
+		// glReadPixels returns the bottom row first
+		std::vector<uint8_t> flipped(rgb.size());
+		for (int row = 0; row < height; row++)
+		{
+			memcpy(&flipped[(size_t)row * width * 3],
+				&rgb[(size_t)(height - 1 - row) * width * 3], (size_t)width * 3);
+		}
+		rgb.swap(flipped);
+
+		return true;
+	}
+
+	static Json::Value* CmdGxShot(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		if (args.size() < 2)
+		{
+			return GLErrorValue(L"gxshot: the file name is missing");
+		}
+
+		if (!GLContextCurrent())
+		{
+			return GLErrorValue(L"gxshot: no OpenGL context on the calling thread "
+				L"(call it from the emulator thread while a frame is being rendered)");
+		}
+
+		int x, y, width, height;
+		if (!ParseRect(args, 2, gfx, &x, &y, &width, &height))
+		{
+			return GLErrorValue(L"gxshot: the rectangle is outside the render target");
+		}
+
+		std::vector<uint8_t> rgb;
+		ReadEfb(x, y, width, height, rgb);
+
+		std::string filename = args[1];
+		bool saved = Util::SavePng(filename.c_str(), rgb.data(), (size_t)width, (size_t)height);
+
+		Json::Value* output = MakeObject();
+		output->AddAnsiString("file", filename.c_str());
+		output->AddInt("x", x);
+		output->AddInt("y", y);
+		output->AddInt("width", width);
+		output->AddInt("height", height);
+		output->AddBool("saved", saved);
+		return output;
+	}
+
+	static Json::Value* CmdGxPixel(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		if (args.size() < 3)
+		{
+			return GLErrorValue(L"gxpixel: x and y are required");
+		}
+
+		if (!GLContextCurrent())
+		{
+			return GLErrorValue(L"gxpixel: no OpenGL context on the calling thread");
+		}
+
+		// The command uses EFB coordinates with the origin at the top left; GL reads bottom-up.
+		int x = atoi(args[1].c_str());
+		int y = atoi(args[2].c_str());
+
+		if (x < 0 || y < 0 || x >= (int)gfx->RenderWidth() || y >= (int)gfx->RenderHeight())
+		{
+			return GLErrorValue(L"gxpixel: the coordinates are outside the render target");
+		}
+
+		uint8_t rgba[4] = { 0 };
+		GLfloat depth = 0.0f;
+
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(x, (int)gfx->RenderHeight() - 1 - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+		glReadPixels(x, (int)gfx->RenderHeight() - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
+		Json::Value* output = MakeObject();
+		output->AddInt("x", x);
+		output->AddInt("y", y);
+		output->AddInt("r", rgba[0]);
+		output->AddInt("g", rgba[1]);
+		output->AddInt("b", rgba[2]);
+		output->AddInt("a", rgba[3]);
+		output->AddInt("z24", (int)(depth * 16777215.0f));
+		output->AddFloat("z", depth);
+		return output;
+	}
+
+	static Json::Value* CmdGxTexDump(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		if (args.size() < 3)
+		{
+			return GLErrorValue(L"gxtexdump: the map id and the file name are required");
+		}
+
+		int id = atoi(args[1].c_str()) & 7;
+		std::string filename = args[2];
+
+		if (!GLContextCurrent())
+		{
+			return GLErrorValue(L"gxtexdump: no OpenGL context on the calling thread");
+		}
+
+		Json::Value* output = MakeObject();
+		output->AddInt("map", id);
+		output->AddAnsiString("file", filename.c_str());
+
+		// The image is decoded from main memory on demand, which is what the draw path does as well
+		std::vector<uint8_t> rgb;
+		int width = 0, height = 0;
+
+		if (!gfx->tx->DumpTexture(id, rgb, &width, &height))
+		{
+			output->AddBool("saved", false);
+			output->AddAnsiString("reason", "the texture map is not valid");
+			return output;
+		}
+
+		output->AddBool("saved", Util::SavePng(filename.c_str(), rgb.data(), (size_t)width, (size_t)height));
+		output->AddInt("width", width);
+		output->AddInt("height", height);
+		return output;
+	}
+
+	static Json::Value* CmdGxReset(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		gfx->ResetPipelineState();
+
+		Json::Value* output = MakeObject();
+		output->AddBool("reset", true);
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
 	// GL object helpers
 
 	GLuint CompileShaderStage(GLenum type, const char* source, const char* label)
@@ -140,10 +939,18 @@ namespace GFX
 		bump = new BumpMappingUnit(config, this);
 		tx = new TextureEngine(config, this);
 		tev = new TextureEnvironmentUnit(config, this);
+
+		// The GX debug commands (issue #87). The node is registered from here so that the commands
+		// exist exactly as long as the GFX subsystem does.
+		gfx_jdi_instance = this;
+		JDI::Hub.AddNode(L"GFX_JDI_JSON", GfxJdi, gfx_init_handlers);
 	}
 
 	GFXCore::~GFXCore()
 	{
+		JDI::Hub.RemoveNode(L"GFX_JDI_JSON");
+		gfx_jdi_instance = nullptr;
+
 		GL_CloseSubsystem();
 
 		delete xf;
@@ -259,17 +1066,7 @@ namespace GFX
 		// Texture objects can only be created once a context is current
 		tx->TexInit();
 
-		//
-		// change some GL drawing rules
-		//
-
-		glScissor(0, 0, scr_w, scr_h);
-		glViewport(0, 0, scr_w, scr_h);
-
-		glFrontFace(GL_CW);
-
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_SCISSOR_TEST);
+		ApplyDefaultGLState();
 
 		// clear frame counter
 		pe->frames = 0;
@@ -280,6 +1077,60 @@ namespace GFX
 
 		backend_started = true;
 		return true;
+	}
+
+	// The GL state that the GFX register loads are applied on top of. It is also what
+	// ResetPipelineState() restores, so that a reset pipeline does not inherit the GL state of the
+	// scene that was rendered before it.
+	void GFXCore::ApplyDefaultGLState()
+	{
+		glScissor(0, 0, scr_w, scr_h);
+		glViewport(0, 0, scr_w, scr_h);
+
+		glFrontFace(GL_CW);
+
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_SCISSOR_TEST);
+
+		glDepthFunc(GL_LESS);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ZERO);
+		glDisable(GL_COLOR_LOGIC_OP);
+		glLogicOp(GL_COPY);
+		glDisable(GL_CULL_FACE);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glDepthRange(0.0, 1.0);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDisable(GL_ALPHA_TEST);
+	}
+
+	// Put every pipeline block back into its reset state.
+	void GFXCore::ResetPipelineState()
+	{
+		genmode.bits = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			msloc[i].bits = 0;
+		}
+
+		xf->Reset();
+		su->Reset();
+		ras->Reset();
+		bump->Reset();
+		tx->Reset();
+		tev->Reset();
+		pe->Reset();
+
+		if (backend_started)
+		{
+			ApplyDefaultGLState();
+
+			if (ras->ras_wireframe)
+			{
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+		}
 	}
 
 	void GFXCore::GL_CloseSubsystem()
@@ -387,16 +1238,38 @@ namespace GFX
 
 		glDrawBuffer(GL_BACK);
 
-		glClearColor(
-			(float)(pe->pe.copy_clear_ar.red / 255.0f),
-			(float)(pe->pe.copy_clear_gb.green / 255.0f),
-			(float)(pe->pe.copy_clear_gb.blue / 255.0f),
-			(float)(pe->pe.copy_clear_ar.alpha / 255.0f)
-		);
+		if (pe->TakePendingCopyClear())
+		{
+			// A copy command of the previous frame asked for the EFB to be cleared. It is the copy
+			// engine's clear, so it honours the PE_COPY_CMD bounds and restores the PE state itself.
+			pe->ApplyCopyClear();
+		}
+		else
+		{
+			// The frame clear is the copy engine's clear, not a draw call: it must not be affected by
+			// the blending, logic op, write mask or depth state the previous scene left behind.
+			glDisable(GL_BLEND);
+			glDisable(GL_COLOR_LOGIC_OP);
+			glDisable(GL_DEPTH_TEST);
+			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+			glDepthMask(GL_TRUE);
 
-		glClearDepth((double)(pe->pe.copy_clear_z.value / 16777215.0));
+			glClearColor(
+				(float)(pe->pe.copy_clear_ar.red / 255.0f),
+				(float)(pe->pe.copy_clear_gb.green / 255.0f),
+				(float)(pe->pe.copy_clear_gb.blue / 255.0f),
+				(float)(pe->pe.copy_clear_ar.alpha / 255.0f)
+			);
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClearDepth((double)(pe->pe.copy_clear_z.value / 16777215.0));
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
+
+		// ... and the state the registers describe is put back, so that the scene draws with it.
+		pe->ApplyZMode();
+		pe->ApplyColorMode();
+
 		frameReady = true;
 	}
 
@@ -486,6 +1359,10 @@ namespace GFX
 			scr_w = (uint32_t)width;
 			scr_h = (uint32_t)height;
 			glViewport(0, 0, scr_w, scr_h);
+
+			// The scissor box of the setup unit is expressed in screen coordinates, so it has to be
+			// recomputed against the new target height (see SetupUnit::ResizeScissor).
+			su->ResizeScissor((int)scr_w, (int)scr_h);
 		}
 	}
 }

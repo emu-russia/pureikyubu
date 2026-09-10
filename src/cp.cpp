@@ -1,4 +1,4 @@
-﻿// CP - command processor
+// CP - command processor
 #include "pch.h"
 
 // TODO: It's a bit crooked right now after refactoring, but will settle with time
@@ -155,48 +155,55 @@ namespace Flipper
 		}
 		cp->updateTbrValue = ticks + cp->tickPerFifo;
 
+		cp->PumpFifo();
+	}
+
+	// One burst of the graphics FIFO: this is what the CP does on a tick, and what the unit tests
+	// drive by hand to run a display list deterministically.
+	void CommandProcessor::PumpFifo()
+	{
 		// Calculate count
-		if (cp->cpregs.wrptr >= cp->cpregs.rdptr)
+		if (cpregs.wrptr >= cpregs.rdptr)
 		{
-			cp->cpregs.cnt = cp->cpregs.wrptr - cp->cpregs.rdptr;
+			cpregs.cnt = cpregs.wrptr - cpregs.rdptr;
 		}
 		else
 		{
-			cp->cpregs.cnt = (cp->cpregs.top - cp->cpregs.rdptr) + (cp->cpregs.wrptr - cp->cpregs.base);
+			cpregs.cnt = (cpregs.top - cpregs.rdptr) + (cpregs.wrptr - cpregs.base);
 		}
 
 		// Watermarks logic. Active only in linked-mode (?).
-		if (cp->cpregs.cnt > cp->cpregs.himark)
+		if (cpregs.cnt > cpregs.himark)
 		{
-			cp->CP_OVF();
+			CP_OVF();
 		}
-		if (cp->cpregs.cnt < cp->cpregs.lomark)
+		if (cpregs.cnt < cpregs.lomark)
 		{
-			cp->CP_UVF();
+			CP_UVF();
 		}
 
 		// Breakpoint
-		if ((cp->cpregs.rdptr & ~0x1f) == (cp->cpregs.bpptr & ~0x1f))
+		if ((cpregs.rdptr & ~0x1f) == (cpregs.bpptr & ~0x1f))
 		{
-			cp->CP_BREAK();
+			CP_BREAK();
 		}
 
 		// Advance read pointer.
-		if (cp->cpregs.cnt != 0 && cp->cpregs.cr & CP_CR_RDEN && (cp->cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+		if (cpregs.cnt != 0 && cpregs.cr & CP_CR_RDEN && (cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
 		{
-			cp->cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
-			cp->GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cp->cpregs.rdptr) );
+			GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr) );
 
-			cp->cpregs.rdptr += 32;
-			if (cp->cpregs.rdptr == cp->cpregs.top)
+			cpregs.rdptr += 32;
+			if (cpregs.rdptr == cpregs.top)
 			{
-				cp->cpregs.rdptr = cp->cpregs.base;
+				cpregs.rdptr = cpregs.base;
 			}
 		}
 		else
 		{
-			cp->cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 		}
 	}
 
@@ -285,11 +292,11 @@ namespace Flipper
 			case CP_FRCLK_CNTH:
 				return 0;
 			case CP_XF_ADDR:
-				return 0;
+				return (uint16_t)cpregs.xfAddr;
 			case CP_XF_DATAL:
-				return 0;
+				return (uint16_t)cpregs.xfData;
 			case CP_XF_DATAH:
-				return 0;
+				return (uint16_t)(cpregs.xfData >> 16);
 		}
 
 		return 0;
@@ -416,10 +423,14 @@ namespace Flipper
 			case CP_FRCLK_CNTH:
 				break;
 			case CP_XF_ADDR:
+				// Writing the register address starts a read of the XF register space over the
+				// CP -> XF read-back path; the answer is left in CP_XF_DATAL / CP_XF_DATAH.
+				cpregs.xfAddr = value;
+				ReadXFReg(value);
 				break;
 			case CP_XF_DATAL:
-				break;
 			case CP_XF_DATAH:
+				// Read-back data, read-only.
 				break;
 		}
 	}
@@ -591,6 +602,38 @@ namespace Flipper
 				Report(Channel::GP, "Unknown CP load, index: 0x%02X\n", index);
 			}
 		}
+	}
+
+	// The CP -> XF handshake (gfx-xf.md 2.1). The CP may only push a word into the XF while the XF
+	// is ready; the only thing that makes the XF busy in this emulator is a read-back word that the
+	// CP has not taken yet, and taking it (XFrdValid / XFrdData) releases the XF again. The word
+	// that the CP takes this way is latched in CP_XF_DATAL / CP_XF_DATAH, where the CPU sees it.
+
+	void CommandProcessor::XFSync()
+	{
+		while (!HW->gfx->xf->CPReady())
+		{
+			uint32_t value;
+
+			if (!HW->gfx->xf->CPTakeReadData(&value))
+			{
+				break;
+			}
+
+			cpregs.xfData = value;
+		}
+	}
+
+	// Read an XF register over the CP -> XF read-back path (xf_cmd_regread). The XF puts the value
+	// of its own register state on the read-back line, and the CP latches it.
+
+	uint32_t CommandProcessor::ReadXFReg(size_t index)
+	{
+		XFSync();									// wait for XFready, then request the register
+		HW->gfx->xf->CPRegRead(index);
+		XFSync();									// take the value the XF answered with
+
+		return cpregs.xfData;
 	}
 
 	#pragma endregion "Dealing with registers"
@@ -1612,18 +1655,11 @@ namespace Flipper
 	}
 
 	// collect vertex data
-	void CommandProcessor::FifoWalk(unsigned vatnum, GFX::Vertex* vtx, FifoProcessor* gxfifo)
+	void CommandProcessor::FifoWalk(unsigned vatnum, GFX::Vertex* vtx, FifoProcessor* gxfifo, const GFX::MatrixIndex0& matIdx0, const GFX::MatrixIndex1& matIdx1)
 	{
-		// overrided by 'mtxidx' attributes
-		vtx->matIdx0.PosNrmMatIdx = HW->gfx->xf->xf.matIdxA.PosNrmMatIdx;
-		vtx->matIdx0.Tex0MatIdx = HW->gfx->xf->xf.matIdxA.Tex0MatIdx;
-		vtx->matIdx0.Tex1MatIdx = HW->gfx->xf->xf.matIdxA.Tex1MatIdx;
-		vtx->matIdx0.Tex2MatIdx = HW->gfx->xf->xf.matIdxA.Tex2MatIdx;
-		vtx->matIdx0.Tex3MatIdx = HW->gfx->xf->xf.matIdxA.Tex3MatIdx;
-		vtx->matIdx1.Tex4MatIdx = HW->gfx->xf->xf.matIdxB.Tex4MatIdx;
-		vtx->matIdx1.Tex5MatIdx = HW->gfx->xf->xf.matIdxB.Tex5MatIdx;
-		vtx->matIdx1.Tex6MatIdx = HW->gfx->xf->xf.matIdxB.Tex6MatIdx;
-		vtx->matIdx1.Tex7MatIdx = HW->gfx->xf->xf.matIdxB.Tex7MatIdx;
+		// The XF matrix index registers hold the defaults; the 'mtxidx' attributes override them.
+		vtx->matIdx0 = matIdx0;
+		vtx->matIdx1 = matIdx1;
 
 		// Matrix Index
 
@@ -1804,6 +1840,57 @@ namespace Flipper
 			ArrayId::Tex7Coord);
 	}
 
+	// Execute one draw command. The CP owns the vertex fetch (VCD/VAT and the attribute arrays), so
+	// it unpacks the vertex data and pushes the resulting vertex rows into the XF, which is the
+	// entry point of the graphics pipeline.
+
+	void CommandProcessor::DrawPrimitive(uint8_t command, FifoProcessor* gxfifo, GFX::RAS_Primitive prim)
+	{
+		unsigned vatnum = command & 7;
+		unsigned vtxnum = gxfifo->Read16();
+
+		if (logDrawCommands)
+		{
+			Report(Channel::GP, "Draw: cmd: 0x%02X, vtxnum: %i, vat: %i\n", command, vtxnum, vatnum);
+		}
+
+		if (vtxnum == 0)
+			return;
+
+		switch (prim)
+		{
+			case GFX::RAS_QUAD:				tris += (vtxnum / 4) / 2; break;
+			case GFX::RAS_QUAD_STRIP:		tris += (vtxnum / 2 - 1) / 2; break;
+			case GFX::RAS_TRIANGLE:			tris += vtxnum / 3; break;
+			case GFX::RAS_TRIANGLE_STRIP:	tris += vtxnum - 2; break;
+			case GFX::RAS_TRIANGLE_FAN:		tris += vtxnum - 2; break;
+			case GFX::RAS_LINE:				lines += vtxnum / 2; break;
+			case GFX::RAS_LINE_STRIP:		lines += vtxnum - 1; break;
+			case GFX::RAS_POINT:			pts += vtxnum; break;
+		}
+
+		// The default matrix indexes live in the XF; read them over the CP -> XF read-back path.
+
+		GFX::MatrixIndex0 matIdx0{};
+		matIdx0.bits = ReadXFReg(GFX::XF_MATINDEX_A_ID);
+
+		GFX::MatrixIndex1 matIdx1{};
+		matIdx1.bits = ReadXFReg(GFX::XF_MATINDEX_B_ID);
+
+		XFSync();
+		HW->gfx->xf->CPDrawBegin(prim, vtxnum);
+
+		GFX::Vertex vtx;
+
+		while (vtxnum--)
+		{
+			FifoWalk(vatnum, &vtx, gxfifo, matIdx0, matIdx1);
+			HW->gfx->xf->CPVertex(&vtx);
+		}
+
+		HW->gfx->xf->CPDrawEnd();
+	}
+
 	void CommandProcessor::GxBadFifo(uint8_t command)
 	{
 		Halt(
@@ -1934,7 +2021,9 @@ namespace Flipper
 					Report(Channel::GP, "Load reg: index: 0x%02X, data: 0x%08X\n", index, value);
 				}
 
-				HW->gfx->su->loadSUReg(index, value);
+				// The bypass load goes through the XF, which forwards it to the SU.
+				XFSync();
+				HW->gfx->xf->CPSuCommand(index, value);
 				break;
 			}
 
@@ -1974,7 +2063,14 @@ namespace Flipper
 					Report(Channel::GP, "XF load, start index: %04X, n : %i\n", index, len);
 				}
 
-				HW->gfx->xf->loadXFRegs(index, len, gxfifo);
+				// Push the block write into the XF: the load header, then one word per register.
+				XFSync();
+				HW->gfx->xf->CPRegLoadBegin(index, len);
+
+				for (size_t i = 0; i < len; i++)
+				{
+					HW->gfx->xf->CPRegLoadData(gxfifo->Read32());
+				}
 				break;
 			}
 
@@ -2062,28 +2158,8 @@ namespace Flipper
 			case CP_CMD_DRAW_QUAD | 5:
 			case CP_CMD_DRAW_QUAD | 6:
 			case CP_CMD_DRAW_QUAD | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					tris += (vtxnum / 4) / 2;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_QUAD, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_QUAD);
 				break;
-			}
 
 			// 0x88
 			case CP_CMD_DRAW_QUAD_STRIP | 0:
@@ -2094,28 +2170,8 @@ namespace Flipper
 			case CP_CMD_DRAW_QUAD_STRIP | 5:
 			case CP_CMD_DRAW_QUAD_STRIP | 6:
 			case CP_CMD_DRAW_QUAD_STRIP | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_QUAD_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					tris += (vtxnum / 2 - 1) / 2;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_QUAD_STRIP, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_QUAD_STRIP);
 				break;
-			}
 
 			// 0x90
 			case CP_CMD_DRAW_TRIANGLE | 0:
@@ -2126,28 +2182,8 @@ namespace Flipper
 			case CP_CMD_DRAW_TRIANGLE | 5:
 			case CP_CMD_DRAW_TRIANGLE | 6:
 			case CP_CMD_DRAW_TRIANGLE | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					tris += vtxnum / 3;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_TRIANGLE);
 				break;
-			}
 
 			// 0x98 
 			case CP_CMD_DRAW_STRIP | 0:
@@ -2158,28 +2194,8 @@ namespace Flipper
 			case CP_CMD_DRAW_STRIP | 5:
 			case CP_CMD_DRAW_STRIP | 6:
 			case CP_CMD_DRAW_STRIP | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					tris += vtxnum - 2;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE_STRIP, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_TRIANGLE_STRIP);
 				break;
-			}
 
 			// 0xA0
 			case CP_CMD_DRAW_FAN | 0:
@@ -2190,28 +2206,8 @@ namespace Flipper
 			case CP_CMD_DRAW_FAN | 5:
 			case CP_CMD_DRAW_FAN | 6:
 			case CP_CMD_DRAW_FAN | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					tris += vtxnum - 2;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_TRIANGLE_FAN, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_TRIANGLE_FAN);
 				break;
-			}
 
 			// 0xA8
 			case CP_CMD_DRAW_LINE | 0:
@@ -2222,28 +2218,8 @@ namespace Flipper
 			case CP_CMD_DRAW_LINE | 5:
 			case CP_CMD_DRAW_LINE | 6:
 			case CP_CMD_DRAW_LINE | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					lines += vtxnum / 2;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_LINE, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_LINE);
 				break;
-			}
 
 			// 0xB0
 			case CP_CMD_DRAW_LINESTRIP | 0:
@@ -2254,28 +2230,8 @@ namespace Flipper
 			case CP_CMD_DRAW_LINESTRIP | 5:
 			case CP_CMD_DRAW_LINESTRIP | 6:
 			case CP_CMD_DRAW_LINESTRIP | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					lines += vtxnum - 1;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_LINE_STRIP, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_LINE_STRIP);
 				break;
-			}
 
 			// 0xB8
 			case CP_CMD_DRAW_POINT | 0:
@@ -2286,28 +2242,8 @@ namespace Flipper
 			case CP_CMD_DRAW_POINT | 5:
 			case CP_CMD_DRAW_POINT | 6:
 			case CP_CMD_DRAW_POINT | 7:
-			{
-				unsigned vatnum = cmd & 7;
-				unsigned vtxnum = gxfifo->Read16();
-				if (logDrawCommands)
-				{
-					Report(Channel::GP, "CP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
-				}
-
-				if (vtxnum != 0) {
-					pts += vtxnum;
-
-					HW->gfx->ras->RAS_Begin(GFX::RAS_POINT, vtxnum);
-					GFX::Vertex vtx;
-					while (vtxnum--) {
-
-						FifoWalk(vatnum, &vtx, gxfifo);
-						HW->gfx->ras->RAS_SendVertex(&vtx);
-					}
-					HW->gfx->ras->RAS_End();
-				}
+				DrawPrimitive(cmd, gxfifo, GFX::RAS_POINT);
 				break;
-			}
 
 			// ---------------------------------------------------------------
 			// Unknown/unsupported fifo command
@@ -2324,5 +2260,20 @@ namespace Flipper
 	{
 		tris = pts = lines = 0;
 		cpLoads = bpLoads = xfLoads = 0;
+	}
+
+	void CommandProcessor::GetStats(CommandProcessorStats* stats) const
+	{
+		if (stats == nullptr)
+		{
+			return;
+		}
+
+		stats->cpLoads = cpLoads;
+		stats->xfLoads = xfLoads;
+		stats->bpLoads = bpLoads;
+		stats->tris = tris;
+		stats->points = pts;
+		stats->lines = lines;
 	}
 }

@@ -242,8 +242,15 @@ namespace GFX
 
 	struct TXState
 	{
+		uint32_t loadblock[4]{};	// 0x60-0x63. The emulator decodes textures from main memory on
+									// demand, so a preload into TMEM has nothing to do; the register
+									// words are kept so that the register file is complete.
 		LoadTlut0 loadtlut0;		// 0x64
 		LoadTlut1 loadtlut1;		// 0x65
+		uint32_t invtags{};			// 0x66
+		uint32_t perfmode{};		// 0x67
+		uint32_t misc{};			// 0x68
+		uint32_t refresh{};			// 0x69
 		TexMode0 texmode0[8];		// 0x80-0x83, 0xA0-0xA3
 		TexMode1 texmode1[8];		// 0x84-0x87, 0xA4-0xA7
 		TexImage0 teximg0[8];		// 0x88-0x8B, 0xA8-0xAB
@@ -273,6 +280,7 @@ namespace GFX
 		uint32_t keyTlut = 0xFFFFFFFF;
 
 		uint32_t appliedMode0 = 0xFFFFFFFF;	//!< TexMode0 value the sampler parameters were set from
+		uint32_t appliedMode1 = 0xFFFFFFFF;	//!< TexMode1 value the LOD limits were set from
 	};
 
 	class TextureEngine
@@ -306,10 +314,23 @@ namespace GFX
 
 		void loadTXReg(size_t index, uint32_t value);
 
+		//! The TX register state (read-only; used by the debugger and the unit tests).
+		const TXState& State() const { return tx; }
+
+		//! The decoded state of a texture map (read-only).
+		const TexMap& Map(int id) const { return texMap[id & 7]; }
+
 		//! Decode and upload all dirty texture maps and bind them to their texture units.
 		void UpdateAndBindTextures();
 
 		//! Upload the per-map texture coordinate scales to the TEV program.
 		void UploadTexScales(class GLProgram& program);
+
+		//! Decode one texture map into an RGB image (used by the debugger's `gxtexdump` command).
+		bool DumpTexture(int id, std::vector<uint8_t>& rgb, int* width, int* height);
+
+		//! Put the TX register state back into the reset state (the GL texture objects survive, the
+		//! decoded images are marked as stale).
+		void Reset();
 	};
 }

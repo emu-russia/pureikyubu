@@ -178,6 +178,8 @@ namespace Flipper
 			};
 			volatile uint32_t     bpptr;
 		};
+		uint32_t     xfAddr;     // XF register address (CP_XF_ADDR) for the CP -> XF read-back path
+		uint32_t     xfData;     // XF register read-back data (CP_XF_DATAL / CP_XF_DATAH)
 	};
 
 	#pragma pack(pop)
@@ -468,6 +470,17 @@ namespace Flipper
 
 	#pragma pack(pop)
 
+	//! The CP counters of the current frame (they are cleared by ResetFrameStats at every frame end).
+	struct CommandProcessorStats
+	{
+		size_t cpLoads = 0;			// CP register loads
+		size_t xfLoads = 0;			// XF register words
+		size_t bpLoads = 0;			// bypass (BP) register loads
+		size_t tris = 0;			// triangles
+		size_t points = 0;
+		size_t lines = 0;
+	};
+
 	class FifoProcessor
 	{
 		size_t fifoSize = 1024 * 1024;
@@ -546,9 +559,20 @@ namespace Flipper
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
 		GFX::Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
-		void FifoWalk(unsigned vatnum, GFX::Vertex* vtx, FifoProcessor* gxfifo);
+		void FifoWalk(unsigned vatnum, GFX::Vertex* vtx, FifoProcessor* gxfifo, const GFX::MatrixIndex0& matIdx0, const GFX::MatrixIndex1& matIdx1);
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
+
+		//! The CP -> XF handshake: every word the CP pushes into the XF goes through here, which
+		//! picks up XF read-back data while the XF is busy (see xf.h)
+		void XFSync();
+
+		//! Read an XF register over the CP -> XF read-back path. The value is also latched in
+		//! CP_XF_DATAL / CP_XF_DATAH, where the CPU can pick it up
+		uint32_t ReadXFReg(size_t index);
+
+		//! Execute one draw command: unpack its vertices and push them into the XF
+		void DrawPrimitive(uint8_t command, FifoProcessor* gxfifo, GFX::RAS_Primitive prim);
 
 		static void CPRegRead(uint32_t addr, uint32_t* reg, void* context);
 		static void CPRegWrite(uint32_t addr, uint32_t data, void* context);
@@ -567,5 +591,12 @@ namespace Flipper
 		void CPAbortFifo();
 
 		void ResetFrameStats();
+
+		//! The frame counters, for the debug interface (`gxframes`, `gxregs cp`).
+		void GetStats(CommandProcessorStats* stats) const;
+
+		//! Drain the graphics FIFO once: exactly the work the CP thread does on one tick. The unit
+		//! tests use it to run the command stream deterministically, without the emulator threads.
+		void PumpFifo();
 	};
 }

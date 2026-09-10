@@ -182,12 +182,29 @@ namespace GFX
 	#define GEN_REJECT_BACK 2
 	#define GEN_REJECT_ALL 3
 
+	// The screen-space origin of the scissor rectangle: the programmed values carry a bias of this
+	// constant, i.e. register = screen coordinate + 342 (gfx-su.md 4.1, GX_SetScissor).
+	#define SU_SCISSOR_ORIGIN 342
+
 	struct SUState
 	{
 		SU_SCIS0 scis0;		// 0x20
 		SU_SCIS1 scis1;		// 0x21
+		SU_LinePointSize lpsize;	// 0x22
 		SU_TS0 ssize[8];	// 0x3n
 		SU_TS1 tsize[8];	// 0x3n
+
+		// Whether a coordinate size register has ever been written. The hardware has no "manual
+		// scale" bit: the GX API writes the size of the texture bound to the coordinate (GX_LoadTexObj
+		// -> __SetSURegs) or the value given to GX_SetTexCoordScaleManually. When neither has
+		// happened the emulator keeps the automatic scale (the real size of the texture, which the
+		// sampler already applies through its padding correction), see SetupUnit::CoordScale.
+		bool ssizeSet[8]{};
+		bool tsizeSet[8]{};
+
+		//! Whether the scissor rectangle has been programmed. The reset rectangle (the whole render
+		//! target) follows a change of the render target size, a programmed one does not.
+		bool scissorSet = false;
 	};
 
 	class SetupUnit
@@ -200,10 +217,39 @@ namespace GFX
 		void GL_SetScissor(int x, int y, int w, int h);
 		void GL_SetCullMode(int mode);
 
+		//! Program the GL scissor box from SU_SCIS0/SU_SCIS1.
+		void ApplyScissor();
+
 	public:
 		SetupUnit(HWConfig* config, GFXCore* parent_gfx);
 		~SetupUnit();
 
 		void loadSUReg(size_t index, uint32_t value);
+
+		//! The SU register state (read-only; used by the debugger and the unit tests).
+		const SUState& State() const { return su; }
+
+		//! The scissor rectangle in screen coordinates (the origin is the top left corner of the EFB).
+		void Scissor(int* x, int* y, int* w, int* h) const;
+
+		//! The render target changed size: the reset rectangle follows it, a programmed one is only
+		//! converted again (both end up in the GL scissor box).
+		void ResizeScissor(int width, int height);
+
+		//! The coordinate scale of texture-coordinate pair `pair` (0..7), in texels, as programmed
+		//! through SU_SSIZE/SU_TSIZE (`ssize`/`tsize` hold size - 1). A component of 0 means "no
+		//! manual scale programmed": the automatic scale, i.e. the real size of the texture the
+		//! coordinate is bound to.
+		void CoordScale(int pair, float* s, float* t) const;
+
+		// The vertex stream that the XF produces (gfx-xf.md 2.2): the SU parses it and drives the
+		// rasterizers with it.
+
+		void BeginPrimitive(RAS_Primitive prim, size_t vtx_num);
+		void SendVertex(const Vertex* v);
+		void EndPrimitive();
+
+		//! Put the SU register state back into the reset state.
+		void Reset();
 	};
 }

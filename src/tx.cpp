@@ -214,16 +214,24 @@ namespace GFX
 				int s, t, u, v;
 				uint8_t* ptr = rawData;
 
-				for (s = 0; s < (oldw / 4); s++)  // tile hor
-					for (t = 0; t < (oldh / 8); t++) // tile ver
-						for (u = 0; u < 4; u++)  // texel hor
-							for (v = 0; v < 8; v++)  // texel ver
+				// An IA4 tile is 8 texels wide and 4 tall, like every other 8-bit format (the tile
+				// shapes follow the tile geometry of the format, see gfx-tc.md 5.3). The intensity is
+				// the LOW nibble of the byte and the alpha the HIGH one,
+				// and each nibble is repeated to fill 8 bits.
+				for (s = 0; s < (oldw / 8); s++)  // tile hor
+					for (t = 0; t < (oldh / 4); t++) // tile ver
+						for (v = 0; v < 4; v++)  // texel ver
+							for (u = 0; u < 8; u++)  // texel hor
 							{
-								int ofs = width * (u + 4 * s) + 8 * t + v;
+								int ofs = width * (4 * t + v) + 8 * s + u;
+
+								uint8_t i = *ptr & 0xf;
+								uint8_t a = (*ptr >> 4) & 0xf;
+
 								texbuf[ofs].R =
 								texbuf[ofs].G =
-								texbuf[ofs].B = *ptr << 4;
-								texbuf[ofs].A = *ptr >> 4;
+								texbuf[ofs].B = (uint8_t)((i << 4) | i);
+								texbuf[ofs].A = (uint8_t)((a << 4) | a);
 								texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
 								ptr++;
 							}
@@ -311,7 +319,9 @@ namespace GFX
 									texbuf[ofs].R = (r << 4) | r;
 									texbuf[ofs].G = (g << 4) | g;
 									texbuf[ofs].B = (b << 4) | b;
-									texbuf[ofs].A = a | (a << 3) | ((a << 9) & 3);
+									// The three alpha bits repeat to fill 8 bits ({a, a, a[2:1]}),
+									// i.e. the 3-bit alpha repeated to fill 8 bits
+									texbuf[ofs].A = (uint8_t)((a << 5) | (a << 2) | ((a >> 1) & 3));
 								}
 								texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
 							}
@@ -410,7 +420,7 @@ namespace GFX
 			{
 				int s, t, u, v;
 				uint8_t* ptr = rawData;
-				Color rgb[4];   // color look-up
+				Color rgb[4] = {};   // color look-up (only the entries a texel really uses are filled)
 				uint8_t r, g, b;
 				uint8_t tnum;
 				uint16_t p;
@@ -445,7 +455,16 @@ namespace GFX
 							rgb[1].B = (b << 3) | (b >> 2);
 
 							// interpolate two other
-							if (blk.rgb0 > blk.rgb1)
+							// A CMPR endpoint carries no alpha of its own: both endpoints are opaque,
+							// and only the fourth colour of the 3-colour mode is not.
+							rgb[0].A = 255;
+							rgb[1].A = 255;
+
+							// The mode is selected by comparing the two *packed* RGB565 endpoints
+							// (col0 > col1 in the packed format), so the big-endian words have to
+							// be swapped before the comparison; comparing the raw little-endian reads
+							// picks the other mode for a few endpoint pairs.
+							if (_BYTESWAP_UINT16(blk.rgb0) > _BYTESWAP_UINT16(blk.rgb1))
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
 								rgb[2].G = (2 * rgb[0].G + rgb[1].G) / 3;
@@ -462,10 +481,11 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								rgb[3].R = (2 * rgb[1].R + rgb[0].R) / 3;
-								rgb[3].G = (2 * rgb[1].G + rgb[0].G) / 3;
-								rgb[3].B = (2 * rgb[1].B + rgb[0].B) / 3;
-								rgb[3].A = (2 * rgb[1].A + rgb[0].A) / 3;
+								// The fourth colour of the 3-colour mode is the transparent texel
+								rgb[3].R = 0;
+								rgb[3].G = 0;
+								rgb[3].B = 0;
+								rgb[3].A = 0;
 							}
 
 							uint8_t texel = blk.row[tnum++];
@@ -501,7 +521,16 @@ namespace GFX
 							rgb[1].G = (g << 2) | (g >> 4);
 							rgb[1].B = (b << 3) | (b >> 2);
 
-							if (blk.rgb0 > blk.rgb1)
+							// A CMPR endpoint carries no alpha of its own: both endpoints are opaque,
+							// and only the fourth colour of the 3-colour mode is not.
+							rgb[0].A = 255;
+							rgb[1].A = 255;
+
+							// The mode is selected by comparing the two *packed* RGB565 endpoints
+							// (col0 > col1 in the packed format), so the big-endian words have to
+							// be swapped before the comparison; comparing the raw little-endian reads
+							// picks the other mode for a few endpoint pairs.
+							if (_BYTESWAP_UINT16(blk.rgb0) > _BYTESWAP_UINT16(blk.rgb1))
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
 								rgb[2].G = (2 * rgb[0].G + rgb[1].G) / 3;
@@ -518,10 +547,11 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								rgb[3].R = (2 * rgb[1].R + rgb[0].R) / 3;
-								rgb[3].G = (2 * rgb[1].G + rgb[0].G) / 3;
-								rgb[3].B = (2 * rgb[1].B + rgb[0].B) / 3;
-								rgb[3].A = (2 * rgb[1].A + rgb[0].A) / 3;
+								// The fourth colour of the 3-colour mode is the transparent texel
+								rgb[3].R = 0;
+								rgb[3].G = 0;
+								rgb[3].B = 0;
+								rgb[3].A = 0;
 							}
 
 							uint8_t texel = blk.row[tnum++];
@@ -557,7 +587,16 @@ namespace GFX
 							rgb[1].G = (g << 2) | (g >> 4);
 							rgb[1].B = (b << 3) | (b >> 2);
 
-							if (blk.rgb0 > blk.rgb1)
+							// A CMPR endpoint carries no alpha of its own: both endpoints are opaque,
+							// and only the fourth colour of the 3-colour mode is not.
+							rgb[0].A = 255;
+							rgb[1].A = 255;
+
+							// The mode is selected by comparing the two *packed* RGB565 endpoints
+							// (col0 > col1 in the packed format), so the big-endian words have to
+							// be swapped before the comparison; comparing the raw little-endian reads
+							// picks the other mode for a few endpoint pairs.
+							if (_BYTESWAP_UINT16(blk.rgb0) > _BYTESWAP_UINT16(blk.rgb1))
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
 								rgb[2].G = (2 * rgb[0].G + rgb[1].G) / 3;
@@ -574,10 +613,11 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								rgb[3].R = (2 * rgb[1].R + rgb[0].R) / 3;
-								rgb[3].G = (2 * rgb[1].G + rgb[0].G) / 3;
-								rgb[3].B = (2 * rgb[1].B + rgb[0].B) / 3;
-								rgb[3].A = (2 * rgb[1].A + rgb[0].A) / 3;
+								// The fourth colour of the 3-colour mode is the transparent texel
+								rgb[3].R = 0;
+								rgb[3].G = 0;
+								rgb[3].B = 0;
+								rgb[3].A = 0;
 							}
 
 							uint8_t texel = blk.row[tnum++];
@@ -615,7 +655,16 @@ namespace GFX
 							rgb[1].B = (b << 3) | (b >> 2);
 							rgb[1].A = 255;
 
-							if (blk.rgb0 > blk.rgb1)
+							// A CMPR endpoint carries no alpha of its own: both endpoints are opaque,
+							// and only the fourth colour of the 3-colour mode is not.
+							rgb[0].A = 255;
+							rgb[1].A = 255;
+
+							// The mode is selected by comparing the two *packed* RGB565 endpoints
+							// (col0 > col1 in the packed format), so the big-endian words have to
+							// be swapped before the comparison; comparing the raw little-endian reads
+							// picks the other mode for a few endpoint pairs.
+							if (_BYTESWAP_UINT16(blk.rgb0) > _BYTESWAP_UINT16(blk.rgb1))
 							{
 								rgb[2].R = (2 * rgb[0].R + rgb[1].R) / 3;
 								rgb[2].G = (2 * rgb[0].G + rgb[1].G) / 3;
@@ -632,10 +681,11 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								rgb[3].R = (2 * rgb[1].R + rgb[0].R) / 3;
-								rgb[3].G = (2 * rgb[1].G + rgb[0].G) / 3;
-								rgb[3].B = (2 * rgb[1].B + rgb[0].B) / 3;
-								rgb[3].A = (2 * rgb[1].A + rgb[0].A) / 3;
+								// The fourth colour of the 3-colour mode is the transparent texel
+								rgb[3].R = 0;
+								rgb[3].G = 0;
+								rgb[3].B = 0;
+								rgb[3].A = 0;
 							}
 
 							uint8_t texel = blk.row[tnum++];
@@ -708,7 +758,33 @@ namespace GFX
 		if ((mode.min_filter & 7) >= 2)
 			glGenerateMipmap(GL_TEXTURE_2D);
 
+		//
+		// The mip selection of the sampler (gfx-tc.md 3.3, 4.3, 4.4).
+		//
+		// TX_SETMODE0.lodbias is an 8-bit signed s2.5 value added to the computed LOD before it is
+		// clamped (GX_InitTexObjLOD stores 32*lodbias there, so the value is `bias * 32`), and
+		// TX_SETMODE1.minlod/maxlod are unsigned 4.4 values the biased LOD is clamped between
+		// (GX_InitTexObjLOD stores 16*lod there). GL applies GL_TEXTURE_LOD_BIAS to the computed level
+		// of detail and then clamps it between GL_TEXTURE_MIN_LOD and GL_TEXTURE_MAX_LOD, i.e. the
+		// same order, so the three registers map onto the three GL parameters directly.
+		//
+
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, (float)(int8_t)(mode.lodbias & 0xFF) / 32.0f);
+
+		TexMode1& mode1 = tx.texmode1[id];
+
+		float minlod = (float)mode1.minlod / 16.0f;
+		float maxlod = (float)mode1.maxlod / 16.0f;
+
+		// The hardware requires minlod <= maxlod; GL rejects the other order outright.
+		if (minlod > maxlod)
+			minlod = maxlod;
+
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, minlod);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, maxlod);
+
 		m->appliedMode0 = mode.bits;
+		m->appliedMode1 = mode1.bits;
 		m->paramsDirty = false;
 	}
 
@@ -717,6 +793,14 @@ namespace GFX
 		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
 			TexMap* m = &texMap[i];
+
+			// Every map lives on its own texture unit, and the decode, the upload and the sampler
+			// parameters all act on the texture of the *active* unit (glTexImage2D and glTexParameteri
+			// address what is bound there). The unit therefore has to be selected before the map is
+			// touched: with the switch at the end of the loop the work of map i landed on the unit of
+			// map i-1, and the unit of the last map kept the binding of the one after it, which made
+			// several programmed maps sample the same texture.
+			glActiveTexture(GL_TEXTURE0 + i);
 
 			if (m->dirty)
 			{
@@ -732,10 +816,9 @@ namespace GFX
 				}
 			}
 
-			if (m->valid && (m->paramsDirty || m->appliedMode0 != tx.texmode0[i].bits))
+			if (m->valid && (m->paramsDirty || m->appliedMode0 != tx.texmode0[i].bits ||
+				m->appliedMode1 != tx.texmode1[i].bits))
 				ApplyTextureParams(i);
-
-			glActiveTexture(GL_TEXTURE0 + i);
 
 			if (m->valid)
 				glBindTexture(GL_TEXTURE_2D, m->glTexture);
@@ -749,14 +832,30 @@ namespace GFX
 	void TextureEngine::UploadTexScales(GLProgram& program)
 	{
 		float scale[8][2];
+		float size[8][2];
+		float coordScale[8][2];
 
 		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
 			scale[i][0] = texMap[i].valid ? texMap[i].ds : 1.0f;
 			scale[i][1] = texMap[i].valid ? texMap[i].dt : 1.0f;
+
+			// The real size in texels: the indirect texturing works in texel units
+			size[i][0] = texMap[i].valid ? (float)texMap[i].width : 1.0f;
+			size[i][1] = texMap[i].valid ? (float)texMap[i].height : 1.0f;
+		}
+
+		// The coordinate scale of the setup unit (SU_SSIZE/SU_TSIZE), one pair per texture coordinate.
+		// It is uploaded alongside the padding correction of the sampler (`scale` above) instead of
+		// replacing it: the fragment program composes the two (see CoordScale in tev.cpp).
+		for (int i = 0; i < 8; i++)
+		{
+			gfx->su->CoordScale(i, &coordScale[i][0], &coordScale[i][1]);
 		}
 
 		glUniform2fv(program.Uniform("texScale[0]"), 8, (float*)scale);
+		glUniform2fv(program.Uniform("texSize[0]"), 8, (float*)size);
+		glUniform2fv(program.Uniform("suScale[0]"), 8, (float*)coordScale);
 	}
 
 	TextureEngine::TextureEngine(HWConfig* config, GFXCore* parent_gfx)
@@ -777,31 +876,32 @@ namespace GFX
 	static bool DecodeTexIndex(size_t index, int* id, int* kind)
 	{
 		// kind: 0 = SETMODE0, 1 = SETMODE1, 2 = SETIMAGE0, 3 = SETIMAGE1, 4 = SETIMAGE2, 5 = SETIMAGE3, 6 = SETTLUT
-		struct Range { size_t lo, hi; int kind; };
+		// base: the first texture map of the block (the I4-I7 block programs the maps 4-7)
+		struct Range { size_t lo, hi; int kind; int base; };
 		static const Range ranges[] = {
-			{ TX_SETMODE0_I0_ID,  TX_SETMODE0_I3_ID,  0 },
-			{ TX_SETMODE1_I0_ID,  TX_SETMODE1_I3_ID,  1 },
-			{ TX_SETIMAGE0_I0_ID, TX_SETIMAGE0_I3_ID, 2 },
-			{ TX_SETIMAGE1_I0_ID, TX_SETIMAGE1_I3_ID, 3 },
-			{ TX_SETIMAGE2_I0_ID, TX_SETIMAGE2_I3_ID, 4 },
-			{ TX_SETIMAGE3_I0_ID, TX_SETIMAGE3_I3_ID, 5 },
-			{ TX_SETTLUT_I0_ID,   TX_SETTLUT_I3_ID,   6 },
-			{ TX_SETMODE0_I4_ID,  TX_SETMODE0_I7_ID,  0 },
-			{ TX_SETMODE1_I4_ID,  TX_SETMODE1_I7_ID,  1 },
-			{ TX_SETIMAGE0_I4_ID, TX_SETIMAGE0_I7_ID, 2 },
-			{ TX_SETIMAGE1_I4_ID, TX_SETIMAGE1_I7_ID, 3 },
-			{ TX_SETIMAGE2_I4_ID, TX_SETIMAGE2_I7_ID, 4 },
-			{ TX_SETIMAGE3_I4_ID, TX_SETIMAGE3_I7_ID, 5 },
-			{ TX_SETTLUT_I4_ID,   TX_SETTLUT_I7_ID,   6 },
+			{ TX_SETMODE0_I0_ID,  TX_SETMODE0_I3_ID,  0, 0 },
+			{ TX_SETMODE1_I0_ID,  TX_SETMODE1_I3_ID,  1, 0 },
+			{ TX_SETIMAGE0_I0_ID, TX_SETIMAGE0_I3_ID, 2, 0 },
+			{ TX_SETIMAGE1_I0_ID, TX_SETIMAGE1_I3_ID, 3, 0 },
+			{ TX_SETIMAGE2_I0_ID, TX_SETIMAGE2_I3_ID, 4, 0 },
+			{ TX_SETIMAGE3_I0_ID, TX_SETIMAGE3_I3_ID, 5, 0 },
+			{ TX_SETTLUT_I0_ID,   TX_SETTLUT_I3_ID,   6, 0 },
+			{ TX_SETMODE0_I4_ID,  TX_SETMODE0_I7_ID,  0, 4 },
+			{ TX_SETMODE1_I4_ID,  TX_SETMODE1_I7_ID,  1, 4 },
+			{ TX_SETIMAGE0_I4_ID, TX_SETIMAGE0_I7_ID, 2, 4 },
+			{ TX_SETIMAGE1_I4_ID, TX_SETIMAGE1_I7_ID, 3, 4 },
+			{ TX_SETIMAGE2_I4_ID, TX_SETIMAGE2_I7_ID, 4, 4 },
+			{ TX_SETIMAGE3_I4_ID, TX_SETIMAGE3_I7_ID, 5, 4 },
+			{ TX_SETTLUT_I4_ID,   TX_SETTLUT_I7_ID,   6, 4 },
 		};
 
 		for (const Range& r : ranges)
 		{
 			if (index >= r.lo && index <= r.hi)
 			{
-				// Both the I0-I3 block (0x80) and the I4-I7 block (0xA0) are laid out identically,
-				// so the map id is simply the offset inside the block.
-				*id = (int)(index - r.lo);
+				// Both blocks are laid out the same way - four maps of seven registers each - but the
+				// I4-I7 block at 0xA0 programs the maps 4-7, not 0-3.
+				*id = r.base + (int)(index - r.lo);
 				*kind = r.kind;
 				return true;
 			}
@@ -848,6 +948,36 @@ namespace GFX
 
 		switch (index)
 		{
+			//
+			// The global texture registers (gfx-tc.md 4.2). The preload commands (TX_LOADBLOCK and
+			// TX_LOADTLUT) fill TMEM on the hardware; this emulator decodes a texture from main memory
+			// whenever the draw path needs it, so the block loads have nothing to do - but they are
+			// decoded here so that the register file is complete and the debugger can show them.
+			//
+
+			case TX_LOADBLOCK0_ID:
+			case TX_LOADBLOCK1_ID:
+			case TX_LOADBLOCK2_ID:
+			case TX_LOADBLOCK3_ID:
+				tx.loadblock[index - TX_LOADBLOCK0_ID] = value;
+				return;
+
+			case TX_INVTAGS_ID:
+				tx.invtags = value;
+				return;
+
+			case TX_PERFMODE_ID:
+				tx.perfmode = value;
+				return;
+
+			case TX_MISC_ID:
+				tx.misc = value;
+				return;
+
+			case TX_REFRESH_ID:
+				tx.refresh = value;
+				return;
+
 			case TX_LOADTLUT0_ID:
 				tx.loadtlut0.bits = value;
 				LoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem << 9, tx.loadtlut1.count);
@@ -859,9 +989,64 @@ namespace GFX
 				return;
 
 			default:
-				// The sequence of bypassing blocks for register load is as follows: TEV -> Unknown reg load
+				// The sequence of bypassing blocks for register load is follows: TEV -> Unknown reg load
 				gfx->tev->loadTEVReg(index, value);
 				return;
+		}
+	}
+
+	// Decode a texture map and hand the real (unpadded) image back as RGB. The debugger uses it for
+	// the `gxtexdump` command; the decoded buffer is the same one the draw path uploads.
+	bool TextureEngine::DumpTexture(int id, std::vector<uint8_t>& rgb, int* width, int* height)
+	{
+		id &= (GFX_MAX_TEXTURES - 1);
+
+		if (!DecodeTexture(id))
+		{
+			return false;
+		}
+
+		const TexMap* m = &texMap[id];
+
+		*width = m->width;
+		*height = m->height;
+
+		rgb.resize((size_t)m->width * m->height * 3);
+
+		for (int y = 0; y < m->height; y++)
+		{
+			for (int x = 0; x < m->width; x++)
+			{
+				const Color& c = rgbabuf[(size_t)y * m->dw + x];
+				uint8_t* p = &rgb[((size_t)y * m->width + x) * 3];
+				p[0] = c.R;
+				p[1] = c.G;
+				p[2] = c.B;
+			}
+		}
+
+		return true;
+	}
+
+	void TextureEngine::Reset()
+	{		tx = TXState{};
+
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		{
+			TexMap* m = &texMap[i];
+
+			m->valid = false;
+			m->dirty = false;
+			m->paramsDirty = false;
+			m->width = m->height = 0;
+			m->dw = m->dh = 0;
+			m->ds = m->dt = 1.0f;
+			m->keyAddr = 0;
+			m->keyFmt = -1;
+			m->keyWidth = m->keyHeight = 0;
+			m->keyTlut = 0xFFFFFFFF;
+			m->appliedMode0 = 0xFFFFFFFF;
+			m->appliedMode1 = 0xFFFFFFFF;
 		}
 	}
 }

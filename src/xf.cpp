@@ -395,6 +395,42 @@ void main()
 
 	// -------------------------------------------------------------------------------------------
 
+	const char* TransformUnit::VertexShaderSource()
+	{
+		return XFVertexShader;
+	}
+
+	// The vertex shader of one colour-interpolation variant. GEN_MODE.flat_en asks for flat shading,
+	// which the hardware implements by giving the colour planes zero gradients (gfx-ras2.md 3.1), so
+	// the rasterized colour of the primitive is constant. GL expresses the same thing with the `flat`
+	// qualifier on the colour varyings: the fragment shader receives the value of the provoking
+	// vertex instead of an interpolated one. The qualifier has to appear on both sides of the link
+	// (the vertex shader declares the varyings, the fragment shader consumes them), which is why both
+	// programs have a flat variant. The texture coordinates stay interpolated.
+	//
+	// The provoking vertex is GL's default, the last vertex of the primitive; the available
+	// specification does not state which vertex's colour the hardware's zero-gradient plane carries.
+	std::string TransformUnit::VertexShaderSource(bool flat)
+	{
+		std::string src = XFVertexShader;
+
+		if (flat)
+		{
+			const char* names[] = { "out vec4 v_Color0;", "out vec4 v_Color1;" };
+
+			for (const char* name : names)
+			{
+				size_t pos = src.find(name);
+				if (pos != std::string::npos)
+				{
+					src.replace(pos, strlen(name), std::string("flat ") + name);
+				}
+			}
+		}
+
+		return src;
+	}
+
 	bool TransformUnit::CreateShader()
 	{
 		if (vert_shader != 0)
@@ -408,12 +444,37 @@ void main()
 		return true;
 	}
 
+	GLuint TransformUnit::VertexShader(bool flat)
+	{
+		if (!flat)
+		{
+			if (vert_shader == 0 && !CreateShader())
+				return 0;
+
+			return vert_shader;
+		}
+
+		if (vert_shader_flat == 0)
+		{
+			std::string source = VertexShaderSource(true);
+			vert_shader_flat = CompileShaderStage(GL_VERTEX_SHADER, source.c_str(), "XF VERTEX (flat)");
+		}
+
+		return vert_shader_flat;
+	}
+
 	void TransformUnit::DisposeShader()
 	{
 		if (vert_shader != 0)
 		{
 			glDeleteShader(vert_shader);
 			vert_shader = 0;
+		}
+
+		if (vert_shader_flat != 0)
+		{
+			glDeleteShader(vert_shader_flat);
+			vert_shader_flat = 0;
 		}
 	}
 
@@ -564,230 +625,154 @@ void main()
 		glDepthRange(znear, zfar);
 	}
 
-	// index range = 0000..FFFF
-	// reg size = 32 bit
-	void TransformUnit::loadXFRegs(size_t startIdx, size_t amount, Flipper::FifoProcessor* gxfifo)
+	// -------------------------------------------------------------------------------------------
+	// The XF register space (gfx-xf.md 4)
+	//
+	// The CP addresses the XF registers one word at a time over the CP -> XF interface. The matrix
+	// RAMs and the light records are addressed word by word, so both a block write and a write of a
+	// single register work on any register of the space.
+	// -------------------------------------------------------------------------------------------
+
+	// Write one word of the XF register space.
+	void TransformUnit::WriteXFReg(size_t index, uint32_t value)
 	{
-		// load geometry matrix
-		if ((startIdx >= XF_MATRIX_MEMORY_ID) && (startIdx < (XF_MATRIX_MEMORY_ID + XF_MATRIX_MEMORY_SIZE)))
+		//
+		// ModelView / Texture matrix RAM (0x0000-0x00FF)
+		//
+
+		if (index < XF_MATRIX_MEMORY_SIZE)
 		{
-			for (size_t i = 0; i < amount; i++)
-			{
-				xf.mvTexMtx[(startIdx - XF_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
-			}
+			xf.mvTexMtx[index] = *(float*)&value;
+			return;
 		}
-		// load normal matrix
-		else if ((startIdx >= XF_NORMAL_MATRIX_MEMORY_ID) && (startIdx < (XF_NORMAL_MATRIX_MEMORY_ID + XF_NORMAL_MATRIX_MEMORY_SIZE)))
+
+		//
+		// Normal matrix RAM (0x0400-0x045F)
+		//
+
+		if (index >= XF_NORMAL_MATRIX_MEMORY_ID && index < (XF_NORMAL_MATRIX_MEMORY_ID + XF_NORMAL_MATRIX_MEMORY_SIZE))
 		{
-			for (size_t i = 0; i < amount; i++)
-			{
-				xf.nrmMtx[(startIdx - XF_NORMAL_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
-			}
+			xf.nrmMtx[index - XF_NORMAL_MATRIX_MEMORY_ID] = *(float*)&value;
+			return;
 		}
-		// load post-trans matrix
-		else if ((startIdx >= XF_DUALTEX_MATRIX_MEMORY_ID) && (startIdx < (XF_DUALTEX_MATRIX_MEMORY_ID + XF_DUALTEX_MATRIX_MEMORY_SIZE)))
+
+		//
+		// Dual texture transform matrix RAM (0x0500-0x05FF)
+		//
+
+		if (index >= XF_DUALTEX_MATRIX_MEMORY_ID && index < (XF_DUALTEX_MATRIX_MEMORY_ID + XF_DUALTEX_MATRIX_MEMORY_SIZE))
 		{
-			for (size_t i = 0; i < amount; i++)
-			{
-				xf.dualTexMtx[(startIdx - XF_DUALTEX_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
-			}
+			xf.dualTexMtx[index - XF_DUALTEX_MATRIX_MEMORY_ID] = *(float*)&value;
+			return;
 		}
-		else switch (startIdx)
+
+		//
+		// Light records (0x0600-0x067F), XF_LIGHT_DATA_SIZE words per light
+		//
+
+		if (index >= XF_LIGHT_MEMORY_ID && index < (XF_LIGHT_MEMORY_ID + XF_LIGHT_MEMORY_SIZE))
 		{
-			case XF_ERROR_ID:
-				xf.error = gxfifo->Read32();
-				break;
-			case XF_DIAGNOSTICS_ID:
-				xf.diagnostics = gxfifo->Read32();
-				break;
-			case XF_STATE0_ID:
-				xf.state[0] = gxfifo->Read32();
-				break;
-			case XF_STATE1_ID:
-				xf.state[1] = gxfifo->Read32();
-				break;
-			case XF_CLOCK_ID:
-				xf.clock = gxfifo->Read32();
-				break;
+			Light* light = &xf.light[(index - XF_LIGHT_MEMORY_ID) / XF_LIGHT_DATA_SIZE];
+			size_t ofs = (index - XF_LIGHT_MEMORY_ID) % XF_LIGHT_DATA_SIZE;
+
+			if (ofs < 3)
+				light->Reserved[ofs] = value;
+			else if (ofs == 3)
+				light->rgba.RGBA = value;
+			else if (ofs < 7)
+				light->a[ofs - 4] = *(float*)&value;
+			else if (ofs < 0xa)
+				light->k[ofs - 7] = *(float*)&value;
+			else if (ofs < 0xd)
+				light->lpx[ofs - 0xa] = *(float*)&value;
+			else
+				light->dhx[ofs - 0xd] = *(float*)&value;
+
+			return;
+		}
+
+		switch (index)
+		{
+			case XF_ERROR_ID:			xf.error = value; break;
+			case XF_DIAGNOSTICS_ID:		xf.diagnostics = value; break;
+			case XF_STATE0_ID:			xf.state[0] = value; break;
+			case XF_STATE1_ID:			xf.state[1] = value; break;
+			case XF_CLOCK_ID:			xf.clock = value; break;
+
 			case XF_CLIP_DISABLE_ID:
 				// TODO: How does this affect Culling in the Setup Unit?
-				xf.clipDisable.bits = gxfifo->Read32();
+				xf.clipDisable.bits = value;
 				break;
-			case XF_PERF0_ID:
-				xf.perf[0] = gxfifo->Read32();
-				break;
-			case XF_PERF1_ID:
-				xf.perf[1] = gxfifo->Read32();
-				break;
+
+			case XF_PERF0_ID:			xf.perf[0] = value; break;
+			case XF_PERF1_ID:			xf.perf[1] = value; break;
 
 			//
 			// set matrix index
 			//
 
-			case XF_MATINDEX_A_ID:
-				xf.matIdxA.bits = gxfifo->Read32();
+			case XF_MATINDEX_A_ID:		xf.matIdxA.bits = value; break;
+			case XF_MATINDEX_B_ID:		xf.matIdxB.bits = value; break;
+
+			//
+			// viewport configuration. The emulator viewport is refreshed on every word, so a
+			// viewport programmed with several block writes also ends up correct.
+			//
+
+			case XF_VIEWPORT_SCALE_X_ID:
+			case XF_VIEWPORT_SCALE_Y_ID:
+			case XF_VIEWPORT_SCALE_Z_ID:
+				xf.viewportScale[index - XF_VIEWPORT_SCALE_X_ID] = *(float*)&value;
+				ApplyViewport();
 				break;
 
-			case XF_MATINDEX_B_ID:
-				xf.matIdxB.bits = gxfifo->Read32();
+			case XF_VIEWPORT_OFFSET_X_ID:
+			case XF_VIEWPORT_OFFSET_Y_ID:
+			case XF_VIEWPORT_OFFSET_Z_ID:
+				xf.viewportOffset[index - XF_VIEWPORT_OFFSET_X_ID] = *(float*)&value;
+				ApplyViewport();
 				break;
 
 			//
-			// load projection matrix (TODO: unaligned writes)
+			// projection matrix
 			//
 
 			case XF_PROJECTION_A_ID:
-			{
-				if (amount != 7) {
-					Halt("Partial loading of the projection matrix is not implemented\n");
-				}
+			case XF_PROJECTION_B_ID:
+			case XF_PROJECTION_C_ID:
+			case XF_PROJECTION_D_ID:
+			case XF_PROJECTION_E_ID:
+			case XF_PROJECTION_F_ID:
+				xf.projectionParam[index - XF_PROJECTION_A_ID] = *(float*)&value;
+				break;
 
-				xf.projectionParam[0] = gxfifo->ReadFloat();
-				xf.projectionParam[1] = gxfifo->ReadFloat();
-				xf.projectionParam[2] = gxfifo->ReadFloat();
-				xf.projectionParam[3] = gxfifo->ReadFloat();
-				xf.projectionParam[4] = gxfifo->ReadFloat();
-				xf.projectionParam[5] = gxfifo->ReadFloat();
-				xf.projectOrtho = gxfifo->ReadFloat() != 0.0f;
-			}
-			return;
-
-			//
-			// load viewport configuration (TODO: unaligned writes)
-			// 
-
-			case XF_VIEWPORT_SCALE_X_ID:
-			{
-				float w, h, x, y, zf, zn;
-
-				if (amount != 6) {
-					Halt("Partial loading of the viewport settings is not implemented\n");
-				}
-
-				//
-				// read coefficients
-				//
-
-				xf.viewportScale[0] = gxfifo->ReadFloat();   // w / 2
-				xf.viewportScale[1] = gxfifo->ReadFloat();   // -h / 2
-				xf.viewportScale[2] = gxfifo->ReadFloat();   // ZMAX * (zfar - znear)
-
-				xf.viewportOffset[0] = gxfifo->ReadFloat();    // x + w/2 + 342
-				xf.viewportOffset[1] = gxfifo->ReadFloat();    // y + h/2 + 342
-				xf.viewportOffset[2] = gxfifo->ReadFloat();    // ZMAX * zfar
-
-				//
-				// convert them to human usable form
-				//
-
-				w = xf.viewportScale[0] * 2;
-				h = -xf.viewportScale[1] * 2;
-				x = xf.viewportOffset[0] - xf.viewportScale[0] - 342;
-				y = xf.viewportOffset[1] + xf.viewportScale[1] - 342;
-				zf = xf.viewportOffset[2] / 16777215.0f;
-				zn = -((xf.viewportScale[2] / 16777215.0f) - zf);
-
-				GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
-			}
-			return;
-
-			//
-			// load light object (TODO: unaligned writes not supported)
-			//
-
-			case XF_LIGHT0_ID:
-			case XF_LIGHT1_ID:
-			case XF_LIGHT2_ID:
-			case XF_LIGHT3_ID:
-			case XF_LIGHT4_ID:
-			case XF_LIGHT5_ID:
-			case XF_LIGHT6_ID:
-			case XF_LIGHT7_ID:
-			{
-				unsigned lnum = (startIdx >> 4) & 7;
-
-				if (amount != 16) {
-					Halt("Partial loading of the light object memory is not implemented\n");
-				}
-
-				xf.light[lnum].Reserved[0] = gxfifo->Read32();
-				xf.light[lnum].Reserved[1] = gxfifo->Read32();
-				xf.light[lnum].Reserved[2] = gxfifo->Read32();
-				xf.light[lnum].rgba.RGBA = gxfifo->Read32();
-
-				xf.light[lnum].a[0] = gxfifo->ReadFloat();
-				xf.light[lnum].a[1] = gxfifo->ReadFloat();
-				xf.light[lnum].a[2] = gxfifo->ReadFloat();
-
-				xf.light[lnum].k[0] = gxfifo->ReadFloat();
-				xf.light[lnum].k[1] = gxfifo->ReadFloat();
-				xf.light[lnum].k[2] = gxfifo->ReadFloat();
-
-				xf.light[lnum].lpx[0] = gxfifo->ReadFloat();
-				xf.light[lnum].lpx[1] = gxfifo->ReadFloat();
-				xf.light[lnum].lpx[2] = gxfifo->ReadFloat();
-
-				xf.light[lnum].dhx[0] = gxfifo->ReadFloat();
-				xf.light[lnum].dhx[1] = gxfifo->ReadFloat();
-				xf.light[lnum].dhx[2] = gxfifo->ReadFloat();
-			}
-			return;
-
-			case XF_INVTXSPEC_ID:
-			{
-				xf.vtxSpec.bits = gxfifo->Read32();
-			}
-			return;
+			case XF_PROJECT_ORTHO_ID:
+				xf.projectOrtho = (*(float*)&value) != 0.0f;
+				break;
 
 			//
 			// channel constant color registers
 			//
 
-			case XF_AMBIENT0_ID:
-				xf.ambient[0].RGBA = gxfifo->Read32();
-				break;
-
-			case XF_AMBIENT1_ID:
-				xf.ambient[1].RGBA = gxfifo->Read32();
-				break;
-
-			case XF_MATERIAL0_ID:
-				xf.material[0].RGBA = gxfifo->Read32();
-				break;
-
-			case XF_MATERIAL1_ID:
-				xf.material[1].RGBA = gxfifo->Read32();
-				break;
+			case XF_AMBIENT0_ID:		xf.ambient[0].RGBA = value; break;
+			case XF_AMBIENT1_ID:		xf.ambient[1].RGBA = value; break;
+			case XF_MATERIAL0_ID:		xf.material[0].RGBA = value; break;
+			case XF_MATERIAL1_ID:		xf.material[1].RGBA = value; break;
 
 			//
 			// channel control registers
 			//
 
-			case XF_COLOR0CNTL_ID:
-				xf.colorControl[0].bits = gxfifo->Read32();
-				break;
-
-			case XF_COLOR1CNTL_ID:
-				xf.colorControl[1].bits = gxfifo->Read32();
-				break;
-
-			case XF_ALPHA0CNTL_ID:
-				xf.alphaControl[0].bits = gxfifo->Read32();
-				break;
-
-			case XF_ALPHA1CNTL_ID:
-				xf.alphaControl[1].bits = gxfifo->Read32();
-				break;
+			case XF_COLOR0CNTL_ID:		xf.colorControl[0].bits = value; break;
+			case XF_COLOR1CNTL_ID:		xf.colorControl[1].bits = value; break;
+			case XF_ALPHA0CNTL_ID:		xf.alphaControl[0].bits = value; break;
+			case XF_ALPHA1CNTL_ID:		xf.alphaControl[1].bits = value; break;
 
 			//
 			// set dualtex enable / disable
 			//
 
-			case XF_DUALTEX_ID:
-			{
-				xf.dualTexTran = gxfifo->Read32();
-			}
-			return;
+			case XF_DUALTEX_ID:			xf.dualTexTran = value; break;
 
 			case XF_DUALGEN0_ID:
 			case XF_DUALGEN1_ID:
@@ -797,29 +782,24 @@ void main()
 			case XF_DUALGEN5_ID:
 			case XF_DUALGEN6_ID:
 			case XF_DUALGEN7_ID:
-			{
-				size_t n = startIdx - XF_DUALGEN0_ID;
-				xf.dualTex[n].bits = gxfifo->Read32();
-			}
-			return;
+				xf.dualTex[index - XF_DUALGEN0_ID].bits = value;
+				break;
+
+			case XF_INVTXSPEC_ID:		xf.vtxSpec.bits = value; break;
 
 			//
 			// number of output colors
 			//
 
-			case XF_NUMCOLS_ID:
-				xf.numColors = gxfifo->Read32();
-				break;
+			case XF_NUMCOLS_ID:			xf.numColors = value; break;
 
 			//
 			// set number of texgens
 			//
 
-			case XF_NUMTEX_ID:
-				xf.numTex = gxfifo->Read32();
-				break;
+			case XF_NUMTEX_ID:			xf.numTex = value; break;
 
-			// 
+			//
 			// set texgen configuration
 			//
 
@@ -831,26 +811,252 @@ void main()
 			case XF_TEXGEN5_ID:
 			case XF_TEXGEN6_ID:
 			case XF_TEXGEN7_ID:
-			{
-				unsigned num = startIdx & 7;
-				xf.tex[num].bits = gxfifo->Read32();
-			}
-			return;
+				xf.tex[index - XF_TEXGEN0_ID].bits = value;
+				break;
 
 			//
 			// not implemented
 			//
 
 			default:
-			{
-				Report(Channel::GP, "Unknown XF load, start index: 0x%04X, count: %i\n", startIdx, amount);
-
-				while (amount--)
-				{
-					gxfifo->Read32();
-				}
-			}
+				Report(Channel::GP, "Unknown XF load, index: 0x%04X\n", index);
+				break;
 		}
+	}
+
+	// Read one word of the XF register space out of the current register state.
+	// The emulator keeps the matrix words as floats, so a read returns exactly what was written
+	// (in the hardware the normal matrix and the light parameters are 20-bit words).
+	uint32_t TransformUnit::ReadXFReg(size_t index)
+	{
+		float value;
+
+		//
+		// ModelView / Texture matrix RAM (0x0000-0x00FF)
+		//
+
+		if (index < XF_MATRIX_MEMORY_SIZE)
+		{
+			return *(uint32_t*)&xf.mvTexMtx[index];
+		}
+
+		//
+		// Normal matrix RAM (0x0400-0x045F)
+		//
+
+		if (index >= XF_NORMAL_MATRIX_MEMORY_ID && index < (XF_NORMAL_MATRIX_MEMORY_ID + XF_NORMAL_MATRIX_MEMORY_SIZE))
+		{
+			return *(uint32_t*)&xf.nrmMtx[index - XF_NORMAL_MATRIX_MEMORY_ID];
+		}
+
+		//
+		// Dual texture transform matrix RAM (0x0500-0x05FF)
+		//
+
+		if (index >= XF_DUALTEX_MATRIX_MEMORY_ID && index < (XF_DUALTEX_MATRIX_MEMORY_ID + XF_DUALTEX_MATRIX_MEMORY_SIZE))
+		{
+			return *(uint32_t*)&xf.dualTexMtx[index - XF_DUALTEX_MATRIX_MEMORY_ID];
+		}
+
+		//
+		// Light records (0x0600-0x067F), XF_LIGHT_DATA_SIZE words per light
+		//
+
+		if (index >= XF_LIGHT_MEMORY_ID && index < (XF_LIGHT_MEMORY_ID + XF_LIGHT_MEMORY_SIZE))
+		{
+			const Light* light = &xf.light[(index - XF_LIGHT_MEMORY_ID) / XF_LIGHT_DATA_SIZE];
+			size_t ofs = (index - XF_LIGHT_MEMORY_ID) % XF_LIGHT_DATA_SIZE;
+
+			if (ofs < 3)
+				return light->Reserved[ofs];
+			if (ofs == 3)
+				return light->rgba.RGBA;
+
+			if (ofs < 7)
+				value = light->a[ofs - 4];
+			else if (ofs < 0xa)
+				value = light->k[ofs - 7];
+			else if (ofs < 0xd)
+				value = light->lpx[ofs - 0xa];
+			else
+				value = light->dhx[ofs - 0xd];
+
+			return *(uint32_t*)&value;
+		}
+
+		switch (index)
+		{
+			case XF_ERROR_ID:			return xf.error;
+			case XF_DIAGNOSTICS_ID:		return xf.diagnostics;
+			case XF_STATE0_ID:			return xf.state[0];
+			case XF_STATE1_ID:			return xf.state[1];
+			case XF_CLOCK_ID:			return xf.clock;
+			case XF_CLIP_DISABLE_ID:	return xf.clipDisable.bits;
+			case XF_PERF0_ID:			return xf.perf[0];
+			case XF_PERF1_ID:			return xf.perf[1];
+			case XF_MATINDEX_A_ID:		return xf.matIdxA.bits;
+			case XF_MATINDEX_B_ID:		return xf.matIdxB.bits;
+
+			case XF_VIEWPORT_SCALE_X_ID:
+			case XF_VIEWPORT_SCALE_Y_ID:
+			case XF_VIEWPORT_SCALE_Z_ID:
+				return *(uint32_t*)&xf.viewportScale[index - XF_VIEWPORT_SCALE_X_ID];
+
+			case XF_VIEWPORT_OFFSET_X_ID:
+			case XF_VIEWPORT_OFFSET_Y_ID:
+			case XF_VIEWPORT_OFFSET_Z_ID:
+				return *(uint32_t*)&xf.viewportOffset[index - XF_VIEWPORT_OFFSET_X_ID];
+
+			case XF_PROJECTION_A_ID:
+			case XF_PROJECTION_B_ID:
+			case XF_PROJECTION_C_ID:
+			case XF_PROJECTION_D_ID:
+			case XF_PROJECTION_E_ID:
+			case XF_PROJECTION_F_ID:
+				return *(uint32_t*)&xf.projectionParam[index - XF_PROJECTION_A_ID];
+
+			case XF_PROJECT_ORTHO_ID:
+				value = xf.projectOrtho ? 1.0f : 0.0f;
+				return *(uint32_t*)&value;
+
+			case XF_AMBIENT0_ID:		return xf.ambient[0].RGBA;
+			case XF_AMBIENT1_ID:		return xf.ambient[1].RGBA;
+			case XF_MATERIAL0_ID:		return xf.material[0].RGBA;
+			case XF_MATERIAL1_ID:		return xf.material[1].RGBA;
+
+			case XF_COLOR0CNTL_ID:		return xf.colorControl[0].bits;
+			case XF_COLOR1CNTL_ID:		return xf.colorControl[1].bits;
+			case XF_ALPHA0CNTL_ID:		return xf.alphaControl[0].bits;
+			case XF_ALPHA1CNTL_ID:		return xf.alphaControl[1].bits;
+
+			case XF_DUALTEX_ID:			return xf.dualTexTran;
+
+			case XF_DUALGEN0_ID:
+			case XF_DUALGEN1_ID:
+			case XF_DUALGEN2_ID:
+			case XF_DUALGEN3_ID:
+			case XF_DUALGEN4_ID:
+			case XF_DUALGEN5_ID:
+			case XF_DUALGEN6_ID:
+			case XF_DUALGEN7_ID:
+				return xf.dualTex[index - XF_DUALGEN0_ID].bits;
+
+			case XF_INVTXSPEC_ID:		return xf.vtxSpec.bits;
+			case XF_NUMCOLS_ID:			return xf.numColors;
+			case XF_NUMTEX_ID:			return xf.numTex;
+
+			case XF_TEXGEN0_ID:
+			case XF_TEXGEN1_ID:
+			case XF_TEXGEN2_ID:
+			case XF_TEXGEN3_ID:
+			case XF_TEXGEN4_ID:
+			case XF_TEXGEN5_ID:
+			case XF_TEXGEN6_ID:
+			case XF_TEXGEN7_ID:
+				return xf.tex[index - XF_TEXGEN0_ID].bits;
+		}
+
+		Report(Channel::GP, "Unknown XF read, index: 0x%04X\n", index);
+		return 0;
+	}
+
+	// The XF viewport registers hold hardware units; convert them into a GL viewport and depth
+	// range. Called whenever one of 0x101A-0x101F is written.
+	void TransformUnit::ApplyViewport()
+	{
+		float w, h, x, y, zf, zn;
+
+		//
+		// convert the coefficients to human usable form
+		//
+
+		w = xf.viewportScale[0] * 2;									// w / 2
+		h = -xf.viewportScale[1] * 2;									// -h / 2
+		x = xf.viewportOffset[0] - xf.viewportScale[0] - 342;			// x + w/2 + 342
+		y = xf.viewportOffset[1] + xf.viewportScale[1] - 342;			// y + h/2 + 342
+		zf = xf.viewportOffset[2] / 16777215.0f;						// ZMAX * zfar
+		zn = -((xf.viewportScale[2] / 16777215.0f) - zf);				// ZMAX * (zfar - znear)
+
+		GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// CP -> XF interface (gfx-xf.md 2.1)
+	//
+	// The CP pushes register loads, register read requests and vertex rows into the XF, and the XF
+	// answers register reads on the read-back line. The XF is the entry point of the graphics
+	// pipeline: the vertex stream that it produces leaves it towards the Setup Unit.
+	// -------------------------------------------------------------------------------------------
+
+	bool TransformUnit::CPReady()
+	{
+		// The XF takes a word every cycle; only a read-back value that the CP has not taken yet
+		// holds it off (XFready is deasserted while XFrdValid is asserted).
+		return !xfRdValid;
+	}
+
+	void TransformUnit::CPRegLoadBegin(size_t startIdx, size_t amount)
+	{
+		xfLoadIdx = startIdx;
+		xfLoadAmount = amount;
+	}
+
+	void TransformUnit::CPRegLoadData(uint32_t value)
+	{
+		if (xfLoadAmount == 0)
+		{
+			// The block write is over; further data words would spill into the register space.
+			Report(Channel::GP, "XF: unexpected register data word (address: 0x%04X)\n", xfLoadIdx);
+			return;
+		}
+
+		xfLoadAmount--;
+		WriteXFReg(xfLoadIdx++, value);
+	}
+
+	void TransformUnit::CPRegRead(size_t index)
+	{
+		xfRdData = ReadXFReg(index);
+		xfRdValid = true;
+	}
+
+	bool TransformUnit::CPTakeReadData(uint32_t* data)
+	{
+		if (!xfRdValid)
+			return false;
+
+		*data = xfRdData;
+		xfRdValid = false;
+		return true;
+	}
+
+	void TransformUnit::CPSuCommand(size_t index, uint32_t value)
+	{
+		// The XF does not interpret the bypass words: they are forwarded to the SU verbatim.
+		gfx->su->loadSUReg(index, value);
+	}
+
+	//
+	// XF -> SU: the vertex stream (gfx-xf.md 2.2)
+	//
+	// The transform itself is done by the XF vertex shader (the register state is uploaded to it as
+	// uniforms, see UploadUniforms), so the XF hands the vertex rows over to the Setup Unit, which
+	// drives the rasterizers with them.
+	//
+
+	void TransformUnit::CPDrawBegin(RAS_Primitive prim, size_t vtx_num)
+	{
+		gfx->su->BeginPrimitive(prim, vtx_num);
+	}
+
+	void TransformUnit::CPVertex(const Vertex* v)
+	{
+		gfx->su->SendVertex(v);
+	}
+
+	void TransformUnit::CPDrawEnd()
+	{
+		gfx->su->EndPrimitive();
 	}
 
 	TransformUnit::TransformUnit(HWConfig* config, GFXCore* parent_gfx)
@@ -866,4 +1072,24 @@ void main()
 	TransformUnit::~TransformUnit()
 	{
 	}
+
+	void TransformUnit::Reset()
+	{
+		xf = XFState{};
+
+		xfLoadIdx = 0;
+		xfLoadAmount = 0;
+		xfRdData = 0;
+		xfRdValid = false;
+
+		// Before the first XF load the projection is an identity transform (like the GL default it
+		// replaces), see the constructor.
+		xf.projectionParam[0] = 1.0f;
+		xf.projectionParam[2] = 1.0f;
+		xf.projectionParam[4] = 1.0f;
+
+		// The GL viewport is not refreshed here: the zeroed viewport registers do not describe one.
+		// It is restored by GFXCore::ApplyDefaultGLState().
+	}
 }
+
