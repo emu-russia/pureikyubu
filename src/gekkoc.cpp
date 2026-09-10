@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "gqr.h"
 
 using namespace Debug;
 
@@ -3266,69 +3267,33 @@ namespace Gekko
 
 namespace Gekko
 {
-#define LD_SCALE(n) ((core->regs.spr[SPR::GQRs + n] >> 24) & 0x3f)
-#define LD_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[SPR::GQRs + n] >> 16) & 7)
-#define ST_SCALE(n) ((core->regs.spr[SPR::GQRs + n] >>  8) & 0x3f)
-#define ST_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[SPR::GQRs + n]      ) & 7)
+	// GQR field extraction lives in src/gqr.h (Gekko::GqrDecode), together with the
+	// conversion rules it feeds; testing/gqr_test.cpp pins both to the manual.
+#define LD_SCALE(n) (Gekko::GqrDecode(core->regs.spr[SPR::GQRs + n]).ldScale)
+#define LD_TYPE(n)  (GEKKO_QUANT_TYPE)(int)Gekko::GqrDecode(core->regs.spr[SPR::GQRs + n]).ldType
+#define ST_SCALE(n) (Gekko::GqrDecode(core->regs.spr[SPR::GQRs + n]).stScale)
+#define ST_TYPE(n)  (GEKKO_QUANT_TYPE)(int)Gekko::GqrDecode(core->regs.spr[SPR::GQRs + n]).stType
 
 	// INT -> float (F = I * 2 ** -S)
+	// The conversion rules themselves live in src/gqr.h so that they can be unit tested
+	// without the CPU core; these two wrappers only adapt the register representation.
+
 	float Interpreter::dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale)
 	{
-		float flt;
-
-		switch (type)
-		{
-			case GEKKO_QUANT_TYPE::U8: flt = (float)(uint8_t)data; break;
-			case GEKKO_QUANT_TYPE::U16: flt = (float)(uint16_t)data; break;
-			case GEKKO_QUANT_TYPE::S8:
-				if (data & 0x80) data |= 0xffffff00;
-				flt = (float)(int8_t)data; break;
-			case GEKKO_QUANT_TYPE::S16:
-				if (data & 0x8000) data |= 0xffff0000;
-				flt = (float)(int16_t)data; break;
-			case GEKKO_QUANT_TYPE::SINGLE_FLOAT:
-			default: flt = *((float*)&data); break;
-		}
-
-		return flt * core->interp->ldScale[scale];
+		return Gekko::GqrDequantize(data, (Gekko::QuantType)(int)type, scale);
 	}
 
-	// float -> INT (I = ROUND(F * 2 ** S))
+	// float -> INT (I = ROUND(F * 2 ** S)), saturating, rounding toward zero
 	uint32_t Interpreter::quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale)
 	{
-		uint32_t uval;
-
-		data *= core->interp->stScale[scale];
-
-		switch (type)
-		{
-			case GEKKO_QUANT_TYPE::U8:
-				if (data < 0) data = 0;
-				if (data > 255) data = 255;
-				uval = (uint8_t)(uint32_t)data; break;
-			case GEKKO_QUANT_TYPE::U16:
-				if (data < 0) data = 0;
-				if (data > 65535) data = 65535;
-				uval = (uint16_t)(uint32_t)data; break;
-			case GEKKO_QUANT_TYPE::S8:
-				if (data < -128) data = -128;
-				if (data > 127) data = 127;
-				uval = (int8_t)(uint8_t)(int32_t)(uint32_t)data; break;
-			case GEKKO_QUANT_TYPE::S16:
-				if (data < -32768) data = -32768;
-				if (data > 32767) data = 32767;
-				uval = (int16_t)(uint16_t)(int32_t)(uint32_t)data; break;
-			case GEKKO_QUANT_TYPE::SINGLE_FLOAT:
-			default: *((float*)&uval) = data; break;
-		}
-
-		return uval;
+		return Gekko::GqrQuantize(data, (Gekko::QuantType)(int)type, scale);
 	}
 
 	void Interpreter::psq_lx()
 	{
-		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
+		// The indexed quantized forms are gated by HID2[PSE] alone; HID2[LSQE]
+		// additionally gates the non-indexed forms (gekko-isa.md section 5.2).
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::EXCEPTION_PROGRAM);
@@ -3381,8 +3346,9 @@ namespace Gekko
 
 	void Interpreter::psq_stx()
 	{
-		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
+		// The indexed quantized forms are gated by HID2[PSE] alone; HID2[LSQE]
+		// additionally gates the non-indexed forms (gekko-isa.md section 5.2).
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::EXCEPTION_PROGRAM);
@@ -3427,8 +3393,8 @@ namespace Gekko
 
 	void Interpreter::psq_lux()
 	{
+		// Indexed forms: HID2[PSE] alone (LSQE gates only the non-indexed forms).
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
@@ -3483,8 +3449,8 @@ namespace Gekko
 
 	void Interpreter::psq_stux()
 	{
+		// Indexed forms: HID2[PSE] alone (LSQE gates only the non-indexed forms).
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
@@ -4658,35 +4624,6 @@ namespace Gekko
 			}
 		}
 
-		// build paired-single load scale
-		for (uint8_t scale = 0; scale < 64; scale++)
-		{
-			int factor;
-			if (scale & 0x20)    // -32 ... -1
-			{
-				factor = -32 + (scale & 0x1f);
-			}
-			else                // 0 ... 31
-			{
-				factor = 0 + (scale & 0x1f);
-			}
-			ldScale[scale] = powf(2, -1.0f * (float)factor);
-		}
-
-		// build paired-single store scale
-		for (uint8_t scale = 0; scale < 64; scale++)
-		{
-			int factor;
-			if (scale & 0x20)    // -32 ... -1
-			{
-				factor = -32 + (scale & 0x1f);
-			}
-			else                // 0 ... 31
-			{
-				factor = 0 + (scale & 0x1f);
-			}
-			stScale[scale] = powf(2, +1.0f * (float)factor);
-		}
 	}
 
 	/// <summary>

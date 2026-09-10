@@ -83,6 +83,56 @@ namespace DspUnitTest
 			Assert::AreEqual((uint16_t)0x0101, m.core->regs.r[2]);
 		}
 
+		TEST_METHOD(Packed_MemoryHalfReadsItsOperandAtTheStartOfTheCycle)
+		{
+			// `amv a, x1`  +  `ls x1, r0, +, r3, +, a`
+			//
+			// Both halves of a packed word are clocked by the same cycle: they sample the register
+			// file at its start, and only write their results at its end. A store therefore still
+			// sees the value the accumulator had before the compute half moved x1 into it.
+			//
+			// The shipped microcodes are built on this: their block moves are pipelined, one word
+			// behind (`amv` prepares the word for the *next* store while the same cycle's `ls`
+			// stores the previous one). The IPL audio microcode fills its voice state structure
+			// that way, and getting it wrong shifts every copied word -- and therefore every
+			// pointer read out of that structure -- by one word.
+			m.core->regs.a.m = 0x1111;			// the word this cycle must store
+			m.core->regs.x.h = 0x2222;			// the word the compute half moves into `a`
+			m.core->regs.r[0] = 0x0010;
+			m.core->regs.l[0] = 0xFFFF;
+			m.core->regs.r[3] = 0x0020;
+			m.core->regs.l[3] = 0xFFFF;
+
+			RunOne(Enc::Amv(0, R8P_X1, Enc::PLs(R4XY_X1, 0, 0, R4AB0_A)));
+
+			Assert::AreEqual((uint16_t)0x1111, m.DMem(0x0020), L"the store uses the accumulator value from the start of the cycle");
+			Assert::AreEqual((uint16_t)0x2222, m.core->regs.a.m, L"the compute half still moves x1 into a");
+			Assert::AreEqual((uint16_t)0x0011, m.core->regs.r[0], L"the load half post-increments its address register");
+			Assert::AreEqual((uint16_t)0x0021, m.core->regs.r[3], L"the store half post-increments its address register");
+		}
+
+		TEST_METHOD(Packed_MemoryHalfLatchDoesNotLeakIntoTheNextWord)
+		{
+			// A packed word without a memory read (or a single-word instruction) must not reuse the
+			// value latched by the previous word.
+			m.core->regs.a.m = 0x1111;
+			m.core->regs.x.h = 0x2222;
+			m.core->regs.r[0] = 0x0010;
+			m.core->regs.l[0] = 0xFFFF;
+			m.core->regs.r[3] = 0x0020;
+			m.core->regs.l[3] = 0xFFFF;
+
+			RunOne(Enc::Amv(0, R8P_X1, Enc::PLs(R4XY_X1, 0, 0, R4AB0_A)));
+
+			// The next word stores `a` through the standalone `st`, which reads the register file
+			// directly and must see the value the compute half left there.
+			m.core->regs.a.m = 0x3333;
+			m.core->regs.r[3] = 0x0030;
+			RunOne(Enc::St(REG_R3, MOD_INC, REG_A1));
+
+			Assert::AreEqual((uint16_t)0x3333, m.DMem(0x0030), L"a standalone store reads the live register");
+		}
+
 		TEST_METHOD(Packed_FlagsComeFromTheComputeHalfOnly)
 		{
 			// The move half never updates the arithmetic flags (dsp-isa.md 4.13).

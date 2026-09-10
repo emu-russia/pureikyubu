@@ -7,7 +7,7 @@ namespace DSP
 	struct DspAIControl
 	{
 		// AI DMA regs
-		volatile uint16_t dcr;			// AI/DSP control register
+		volatile uint16_t cdcr;			// AI/DSP control register
 		volatile uint16_t madr_hi;		// DMA start address hi
 		volatile uint16_t madr_lo;		// DMA start address lo
 		volatile uint16_t len;			// DMA control/DMA length (length of audio data)

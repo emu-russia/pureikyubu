@@ -219,13 +219,13 @@ namespace DspUnitTest
 			Assert::AreEqual(5u, m.core->regs.pc, L"the trap vector is 0x0004 while running from IRAM");
 
 			m.Reset();
-			dsp_ai.dcr |= AIDCR_RESETMOD;
+			dsp_ai.cdcr |= CDCR_RESETMOD;
 			m.Run({ Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Trap(), Enc::Nop(),
 				Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Nop() }, 4);
 			m.Step();
 			Assert::AreEqual(0x8005u, m.core->regs.pc,
 				L"the same vector is 0x8004 while the program base is the IROM");
-			dsp_ai.dcr &= ~AIDCR_RESETMOD;
+			dsp_ai.cdcr &= ~CDCR_RESETMOD;
 		}
 
 		TEST_METHOD(Wait_DoesNotAdvancePc)
@@ -561,9 +561,26 @@ namespace DspUnitTest
 			// dsp-isa.md section 4.12: stli writes to 0xFF || sa.
 			// The 0xFF page holds the DSP control/accelerator registers, which is exactly
 			// what the instruction is for ("useful for I/O register setting").
-			// 0xFFD4 is ACSAH (the ARAM accelerator start address, high word).
-			m.Run({ Enc::Stli(0xD4), 0x1357 }, 1);
-			Assert::AreEqual((uint16_t)0x1357, m.DMem(0xFFD4), L"stli must target 0xFF00 | sa");
+			// 0xFFDE is GAIN, the 16-bit decoder gain register (soundhw_revb.pdf).
+			m.Run({ Enc::Stli(0xDE), 0x1357 }, 1);
+			Assert::AreEqual((uint16_t)0x1357, m.DMem(0xFFDE), L"stli must target 0xFF00 | sa");
+		}
+
+		TEST_METHOD(AcceleratorAddressRegistersKeepOnlyTheirDocumentedBits)
+		{
+			// soundhw_revb.pdf, accelerator parameter registers: ACSAH/ACEAH hold address bits
+			// 26:16 in bits 10:0, bits 15:11 are reserved and read as zero. ACCAH additionally
+			// carries the direction bit 15.
+			m.Run({ Enc::Stli(0xD4), 0xF800 }, 1);		// ACSAH
+			Assert::AreEqual((uint16_t)0x0000, m.DMem(0xFFD4), L"ACSAH bits 15:11 are reserved");
+
+			m.core->regs.pc = 0;
+			m.Run({ Enc::Stli(0xD4), 0x07FF }, 1);
+			Assert::AreEqual((uint16_t)0x07FF, m.DMem(0xFFD4), L"ACSAH bits 10:0 are the address");
+
+			m.core->regs.pc = 0;
+			m.Run({ Enc::Stli(0xD8), 0xF7FF }, 1);		// ACCAH
+			Assert::AreEqual((uint16_t)0x87FF, m.DMem(0xFFD8), L"ACCAH keeps the direction bit and bits 10:0 only");
 		}
 
 		TEST_METHOD(Mvsi_SignExtendsShortImmediate)

@@ -69,17 +69,19 @@ The debugging interface specification provided by this component can be found in
 #define DSP_OUTMBOXL        0x02
 #define DSP_INMBOXH         0x04      // DSP->CPU mailbox
 #define DSP_INMBOXL         0x06
-#define AI_DCR              0x0A      // AI/DSP control register (the real name of this register is CDCR. Well, we almost guessed :))
-// known ARAM controller registers (not sure about AR_SIZE, AR_MODE and AR_REFRESH)
-#define AR_SIZE             0x12
-#define AR_MODE             0x16
-#define AR_REFRESH          0x1A
-#define AR_DMA_MMADDR_H     0x20
-#define AR_DMA_MMADDR_L     0x22
-#define AR_DMA_ARADDR_H     0x24
-#define AR_DMA_ARADDR_L     0x26
-#define AR_DMA_CNT_H        0x28
-#define AR_DMA_CNT_L        0x2A
+#define CDCR_OFF            0x0A      // CPU <-> DSP control register (CDCR)
+// ARAM (auxiliary SDRAM) controller registers. Names follow the hardware documentation
+// (see dsp.md 5.4 / 6.4 and aram.md 5); the OS AR driver uses its own aliases, which are
+// mentioned in the comments where they differ.
+#define AMCR                0x12      // ARAM memory configuration (driver: "AR_SIZE"; 0x43 = 16 MB internal, no expansion)
+#define AMNF                0x16      // ARAM normal-state flag: set when the SDRAM controller is initialised and ready
+#define AMCT                0x1A      // SDRAM refresh period / controller control
+#define AMMAH               0x20      // ARAM-DMA main memory address, high word (bits 25:16)
+#define AMMAL               0x22      // ARAM-DMA main memory address, low word (bits 15:5)
+#define AMAAH               0x24      // ARAM-DMA ARAM address, high word (bits 25:16)
+#define AMAAL               0x26      // ARAM-DMA ARAM address, low word (bits 15:5)
+#define AMBLH               0x28      // ARAM-DMA block length, high word (bit 15 = direction: 0 RAM->ARAM, 1 ARAM->RAM)
+#define AMBLL               0x2A      // ARAM-DMA block length, low word (a write to it starts the transfer)
 // AI DMA
 #define AID_MADRH           0x30      // DMA start address (High)
 #define AID_MADRL           0x32      // DMA start address (Low)
@@ -93,21 +95,21 @@ The debugging interface specification provided by this component can be found in
 // enable bit in AIDLEN register
 #define AID_EN              (1 << 15)
 
-// AI/DSP Control Register mask
-#define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
-#define AIDCR_DSPDMA        (1 << 10)       // DSP dma in progress
-#define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress
-#define AIDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
-#define AIDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
-#define AIDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)
-#define AIDCR_ARINT         (1 << 5)        // ARAM DMA interrupt status (RWC)
-#define AIDCR_AIINTMSK      (1 << 4)        // AI DMA interrupt mask (RW)
-#define AIDCR_AIINT         (1 << 3)        // AI DMA interrupt status (RWC)
-#define AIDCR_HALT          (1 << 2)        // halt DSP (stop ucoding)
-#define AIDCR_DINT          (1 << 1)        // CPU->DSP interrupt
-#define AIDCR_RES           (1 << 0)        // reset DSP (waits for 0)
+// CDCR mask
+#define CDCR_RESETMOD       (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
+#define CDCR_DSPDMA        (1 << 10)       // DSP dma in progress
+#define CDCR_ARDMA         (1 << 9)        // ARAM dma in progress
+#define CDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
+#define CDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
+#define CDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)
+#define CDCR_ARINT         (1 << 5)        // ARAM DMA interrupt status (RWC)
+#define CDCR_AIINTMSK      (1 << 4)        // AI DMA interrupt mask (RW)
+#define CDCR_AIINT         (1 << 3)        // AI DMA interrupt status (RWC)
+#define CDCR_HALT          (1 << 2)        // halt DSP (stop ucoding)
+#define CDCR_DINT          (1 << 1)        // CPU->DSP interrupt
+#define CDCR_RES           (1 << 0)        // reset DSP (waits for 0)
 
-#define AIDCR               dsp_ai.dcr
+#define CDCR               dsp_ai.cdcr
 
 // GAMECUBE DSP Interface.
 // In the previous version, the DSPcore implementation was mixed with the hardware binding (IFX) implementation. In this version, these entities are separated.
@@ -129,20 +131,21 @@ namespace DSP
 		DSCR = 0xFFC9,		// DMA control 
 		DSBL = 0xFFCB,		// Block size 
 
-		ACDAT2 = 0xFFD3,	// RAW accelerator data (R/W)
-		ACSAH = 0xFFD4,		// Accelerator start address H 
-		ACSAL = 0xFFD5,		// Accelerator start address L 
-		ACEAH = 0xFFD6,		// Accelerator end address H 
-		ACEAL = 0xFFD7,		// Accelerator end address L 
-		ACCAH = 0xFFD8,		// Accelerator current address H  +  Acc Direction
-		ACCAL = 0xFFD9,		// Accelerator current address L 
-		AMDM = 0xFFEF,		// ARAM DMA Request Mask
-		ACFMT = 0xFFD1,			// sample format used
-		ACPDS = 0xFFDA,			// predictor / scale combination
+		ACDL = 0xFFD3,			// Accelerator data lines port (read in a read window, write in a write window)
+		ACSAH = 0xFFD4,			// Accelerator start address H
+		ACSAL = 0xFFD5,			// Accelerator start address L
+		ACEAH = 0xFFD6,			// Accelerator end address H
+		ACEAL = 0xFFD7,			// Accelerator end address L
+		ACCAH = 0xFFD8,			// Accelerator current address H + accelerator direction (bit 15)
+		ACCAL = 0xFFD9,			// Accelerator current address L
+		AMDM = 0xFFEF,			// ARAM-DMA request mask (bit 0: 1 = ARAM dedicated to the accelerator)
+		ADM = 0xFFD1,			// Audio/decoder mode: 5:4 y(n) format, 3:2 decoder mode, 1:0 read addressing mode
+		ACPDS = 0xFFDA,			// PS: predictor / scale (deADPCM)
 		ACYN1 = 0xFFDB,			// y[n - 1]
 		ACYN2 = 0xFFDC,			// y[n - 2]
-		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
-		ACGAN = 0xFFDE,			// gain to be applied (PCM mode only)
+		ACYN = 0xFFDD,			// y[n] - decoder output (read only)
+		ACGAN = 0xFFDE,			// GAIN: 16-bit gain (General IIR / PCM IIR)
+		ACXN = 0xFFDF,			// x[n] - decoder input sample (General IIR)
 		// ADPCM coef table. Coefficient selected by Adpcm Predictor
 		ADPCM_A00 = 0xFFA0,		// Coef * Yn1[0]
 		ADPCM_A10 = 0xFFA1,		// Coef * Yn2[0]
@@ -242,7 +245,7 @@ namespace DSP
 
 #pragma region "Flipper interface"
 
-		// AIDCR bits
+		// CDCR bits
 		void SetResetBit(bool val);
 		bool GetResetBit();
 		void SetIntBit(bool val);

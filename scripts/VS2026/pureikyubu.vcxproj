@@ -76,6 +76,7 @@
     <ClInclude Include="..\..\src\flipper.h" />
     <ClInclude Include="..\..\src\flipperdebug.h" />
     <ClInclude Include="..\..\src\gekko.h" />
+    <ClInclude Include="..\..\src\gqr.h" />
     <ClInclude Include="..\..\src\gekkoc.h" />
     <ClInclude Include="..\..\src\gekkodebug.h" />
     <ClInclude Include="..\..\src\gekkodec.h" />

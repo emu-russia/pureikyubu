@@ -415,7 +415,7 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::ACCAL:
 					return Accel.CurrAddress.l;
 
-				case (DspAddress)DspHardwareRegs::ACFMT:
+				case (DspAddress)DspHardwareRegs::ADM:
 					return Accel.Fmt;
 				case (DspAddress)DspHardwareRegs::ACPDS:
 					return Accel.AdpcmPds;
@@ -426,9 +426,15 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::ACGAN:
 					return Accel.AdpcmGan;
 
-				case (DspAddress)DspHardwareRegs::ACDAT2:
+				case (DspAddress)DspHardwareRegs::ACXN:
+					return Accel.AdpcmXn;
+
+				case (DspAddress)DspHardwareRegs::AMDM:
+					return aram.masked ? 1 : 0;
+
+				case (DspAddress)DspHardwareRegs::ACDL:
 					return AccelReadData(true);
-				case (DspAddress)DspHardwareRegs::ACDAT:
+				case (DspAddress)DspHardwareRegs::ACYN:
 					return AccelReadData(false);
 
 				default:
@@ -532,7 +538,7 @@ namespace DSP
 					break;
 
 				case (DspAddress)DspHardwareRegs::ACSAH:
-					Accel.StartAddress.h = value;
+					Accel.StartAddress.h = value & 0x07ff;
 					if (logAccel)
 					{
 						Report(Channel::DSP, "ACSAH = 0x%04X\n", value);
@@ -546,7 +552,7 @@ namespace DSP
 					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACEAH:
-					Accel.EndAddress.h = value;
+					Accel.EndAddress.h = value & 0x07ff;
 					if (logAccel)
 					{
 						Report(Channel::DSP, "ACEAH = 0x%04X\n", value);
@@ -560,7 +566,7 @@ namespace DSP
 					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACCAH:
-					Accel.CurrAddress.h = value;
+					Accel.CurrAddress.h = value & 0x87ff;		// bit 15 = direction, bits 10:0 = address
 					if (logAccel)
 					{
 						Report(Channel::DSP, "ACCAH = 0x%04X\n", value);
@@ -573,19 +579,28 @@ namespace DSP
 						Report(Channel::DSP, "ACCAL = 0x%04X\n", value);
 					}
 					break;
-				case (DspAddress)DspHardwareRegs::ACDAT2:
+				case (DspAddress)DspHardwareRegs::ACDL:
 					AccelWriteData(value);
 					if (logAccel)
 					{
-						Report(Channel::DSP, "ACDAT2 = 0x%04X\n", value);
+						Report(Channel::DSP, "ACDL = 0x%04X\n", value);
 					}
 					break;
 
-				case (DspAddress)DspHardwareRegs::ACFMT:
+				case (DspAddress)DspHardwareRegs::ADM:
 					Accel.Fmt = value;
 					if (logAccel || logAdpcm)
 					{
-						Report(Channel::DSP, "ACFMT = 0x%04X\n", value);
+						Report(Channel::DSP, "ADM = 0x%04X\n", value);
+					}
+					break;
+
+				case (DspAddress)DspHardwareRegs::AMDM:
+					// The DSP can mask ARAM-DMA requests, dedicating ARAM to the accelerator
+					aram.masked = (value & 1) != 0;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "AMDM = 0x%04X\n", value);
 					}
 					break;
 
@@ -608,6 +623,13 @@ namespace DSP
 					if (logAdpcm)
 					{
 						Report(Channel::DSP, "ACYN2 = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACXN:
+					Accel.AdpcmXn = value;
+					if (logAdpcm)
+					{
+						Report(Channel::DSP, "ACXN = 0x%04X\n", value);
 					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACGAN:

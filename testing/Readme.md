@@ -79,7 +79,7 @@ stops reproducing, so the list can only shrink.
 
 * **ARAM accelerator and the hardware deADPCM/IIR decoder.** `src/dsparam.cpp` is linked into
   the test DLL (so its code is compiled and linked against the test doubles), but the tests do
-  not drive `ACDAT`/`ACDAT2`/`ACFMT`/`ACPDS`, because those registers need the ARAM SDRAM
+  not drive `ACYN`/`ACDL`/`ADM`/`ACPDS`, because those registers need the ARAM SDRAM
   controller and the Flipper memory interface rather than the DSP core. The DSP-DMA path *is*
   covered: `src/dspdma.cpp` runs against a simulated console main memory.
 * **`ld d,*a1,m` / `st *a1,m,s` (opcodes `0x2A00`/`0x2B00`).** dsp-isa.md section 4.12 lists

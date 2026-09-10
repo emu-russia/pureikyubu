@@ -17,6 +17,7 @@ namespace DSP
 		uint16_t Fmt;					// Sample format
 		uint16_t AdpcmCoef[16];
 		uint16_t AdpcmPds;				// predictor / scale combination
+		uint16_t AdpcmXn;				// x[n], the decoder input sample of the General IIR mode
 		uint16_t AdpcmYn1;				// y[n - 1]
 		uint16_t AdpcmYn2;				// y[n - 2]
 		uint16_t AdpcmGan;				// gain to be applied
@@ -55,9 +56,10 @@ namespace DSP
 	struct ARControl
 	{
 		uint8_t* mem;                // aux. memory buffer (size is ARAMSIZE)
-		volatile uint32_t    mmaddr, araddr;     // DMA address
-		volatile uint32_t    cnt;                // count + transfer type (bit31)
-		uint16_t    size;               // "AR_SIZE" (0x5012) register
+		volatile uint32_t    mmaddr, araddr;     // AMMAH/L and AMAAH/L - the DMA window
+		volatile uint32_t    cnt;                // AMBLH/L - block length (bit 31 = direction)
+		volatile bool        masked;             // AMDM - ARAM-DMA requests masked by the DSP (ARAM dedicated to the accelerator)
+		uint16_t    amcr;               // AMCR (0x12) - the AR driver stores the ARAM size code here
 		Thread* dmaThread;
 		int64_t gekkoTicks;
 		size_t gekkoTicksPerSlice;

@@ -50,6 +50,7 @@
     <ClCompile Include="..\..\testing\dsp_mailbox_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_irom_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_golden_alu_test.cpp" />
+    <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
       The DSP core, its decoder, its disassembler and the DSP device (memory engine + mailboxes)
@@ -125,6 +126,7 @@
     <ClInclude Include="..\..\testing\gfx_test_common.h" />
     <ClInclude Include="..\..\testing\gfx_report_common.h" />
     <ClInclude Include="..\..\testing\dsp_golden_alu_vectors.h" />
+    <ClInclude Include="..\..\src\gqr.h" />
     <ClInclude Include="..\..\src\dsp.h" />
     <ClInclude Include="..\..\src\dspai.h" />
     <ClInclude Include="..\..\src\dsparam.h" />
