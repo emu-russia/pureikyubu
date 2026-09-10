@@ -699,8 +699,8 @@ static int ui_main()
 	UI::Jdi = new UI::JdiClient;
 
 	// Add UI methods
-	JdiAddNode("UI_JDI_JSON", UIReflector);
-	JdiAddNode("DEBUG_UI_JDI_JSON", Debug::DebugUIReflector);
+	JdiAddNode("UI_JDI_JSON", UI::UiJdi, UIReflector);
+	JdiAddNode("DEBUG_UI_JDI_JSON", Debug::DebugUiJdi, Debug::DebugUIReflector);
 
 	// Start the user interface
 
