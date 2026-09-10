@@ -2999,12 +2999,19 @@ void NotifySelector(LPNMHDR pnmh)
 // set selected item, by first letter key pressed
 void ScrollSelector(int letter)
 {
-	letter = tolower(letter);
+	// opened ?
+	if (!usel.opened) return;
+
+	// Case folding is limited to the ASCII range on purpose: the locale dependent
+	// tolower() is undefined for characters outside of that range.
+	auto lower = [](wchar_t c) { return (c >= L'A' && c <= L'Z') ? (wchar_t)(c - L'A' + L'a') : c; };
+
+	letter = lower((wchar_t)letter);
+
 	for (size_t n = 0; n < usel.files.size(); n++)
 	{
 		UserFile* file = usel.files[n].get();
-		int c = tolower(file->title[0]);
-		if (c == letter)
+		if (lower(file->title[0]) == letter)
 		{
 			SelectorSetSelected(n);
 			break;
@@ -3127,6 +3134,23 @@ void SortSelector(SELECTOR_SORT sortBy)
 // need to check "active" flags for other calls, because if it is not "active"
 // it cannot be "opened".
 
+// A letter, typed over the filelist, sets the cursor to the first file whose
+// title begins with that letter. The listview cannot do it by itself, because
+// its first (Icon) column is filled with a stub text and the whole item is
+// drawn by DrawSelectorItem().
+static WNDPROC listViewProc;
+
+static LRESULT CALLBACK SelectorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (msg == WM_CHAR && (wchar_t)wParam >= L' ')
+	{
+		ScrollSelector((int)wParam);
+		return 0;
+	}
+
+	return CallWindowProc(listViewProc, hwnd, msg, wParam, lParam);
+}
+
 void CreateSelector()
 {
 	// allowed ?
@@ -3156,6 +3180,9 @@ void CreateSelector()
 	EnableWindow(usel.hSelectorWindow, TRUE);
 	ShowWindow(usel.hSelectorWindow, SW_SHOW);
 	SetFocus(usel.hSelectorWindow);
+
+	// intercept letters, typed over the filelist (see SelectorProc)
+	listViewProc = (WNDPROC)SetWindowLongPtr(usel.hSelectorWindow, GWLP_WNDPROC, (LONG_PTR)SelectorProc);
 
 	// retrieve icon size
 	bool iconSize = UI::Jdi->GetConfigBool(USER_SMALLICONS, USER_UI);
