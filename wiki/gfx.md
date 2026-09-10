@@ -17,6 +17,22 @@ The graphics backend no longer uses the fixed-function OpenGL pipeline. The two 
 
 Both shaders are **static**: the whole register state of the corresponding block is passed as uniforms, so nothing has to be recompiled when the game reconfigures the GFX registers. The TEV shader walks up to 16 combine stages in a loop that is bounded by a `tevStages` uniform.
 
+### Command path
+
+The CP produces the command stream and owns the vertex fetch; the XF is the entry point of the pipeline, so
+every word the CP emits goes through it:
+
+```
+Gekko --PI FIFO--> CP --commands + vertex rows--> XF --> SU --> RAS --> TEV --> PE
+```
+
+The CP pushes the XF register block loads (`xf_cmd_regload` + `regdata`), register read requests
+(`xf_cmd_regread`), SU bypass register words and the vertex rows of every draw command into the XF
+(`xf.h`, the "CP -> XF interface" section), and observes the `XFready` line before each word. A register
+read is answered by the XF out of its own register state and latched in `CP_XF_DATAL` / `CP_XF_DATAH`,
+where the CPU sees it. The CP does not reach past the XF: the vertex stream leaves the XF towards the SU,
+which drives the rasterizers.
+
 ### XF (vertex shader)
 
 - geometry (modelview) and texture matrix multiplies against the matrix RAM (`matrixMem`, 64 rows x 4 words) and

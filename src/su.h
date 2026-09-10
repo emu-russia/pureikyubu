@@ -205,5 +205,12 @@ namespace GFX
 		~SetupUnit();
 
 		void loadSUReg(size_t index, uint32_t value);
+
+		// The vertex stream that the XF produces (gfx-xf.md 2.2): the SU parses it and drives the
+		// rasterizers with it.
+
+		void BeginPrimitive(RAS_Primitive prim, size_t vtx_num);
+		void SendVertex(const Vertex* v);
+		void EndPrimitive();
 	};
 }

@@ -157,4 +157,25 @@ namespace GFX
 	SetupUnit::~SetupUnit()
 	{
 	}
+
+	//
+	// The vertex stream coming from the XF. In this emulator the setup work (the primitive
+	// assembly) happens in the GL backend, so the SU just drives the rasterizers with the
+	// primitives and vertex rows the XF hands over.
+	//
+
+	void SetupUnit::BeginPrimitive(RAS_Primitive prim, size_t vtx_num)
+	{
+		gfx->ras->RAS_Begin(prim, vtx_num);
+	}
+
+	void SetupUnit::SendVertex(const Vertex* v)
+	{
+		gfx->ras->RAS_SendVertex(v);
+	}
+
+	void SetupUnit::EndPrimitive()
+	{
+		gfx->ras->RAS_End();
+	}
 }
