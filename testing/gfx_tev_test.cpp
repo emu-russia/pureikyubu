@@ -288,6 +288,23 @@ namespace pureikyubutest
 				Assert::AreEqual<unsigned>(0x200 + i, tev.regl[i].a, L"REGISTERL.a");
 				Assert::AreEqual<unsigned>(0x300 + i, tev.regh[i].b, L"REGISTERH.b");
 				Assert::AreEqual<unsigned>(0x400 + i, tev.regh[i].g, L"REGISTERH.g");
+
+				// The Rev B K form of the same ids lands in its own storage
+				uint32_t kl = (0x11 + i) | ((0x22 + i) << 12) | 0x800000;
+				uint32_t kh = (0x33 + i) | ((0x44 + i) << 12) | 0x800000;
+				m.BpLoad(TEV_REGISTERL_0_ID + i * 2, kl);
+				m.BpLoad(TEV_REGISTERH_0_ID + i * 2, kh);
+
+				Assert::AreEqual<unsigned>(0x11 + i, tev.kregl[i].r, L"K REGISTERL.r");
+				Assert::AreEqual<unsigned>(0x22 + i, tev.kregl[i].a, L"K REGISTERL.a");
+				Assert::AreEqual<unsigned>(0x33 + i, tev.kregh[i].b, L"K REGISTERH.b");
+				Assert::AreEqual<unsigned>(0x44 + i, tev.kregh[i].g, L"K REGISTERH.g");
+
+				// ...and leaves the colour registers alone
+				Assert::AreEqual<unsigned>(0x100 + i, tev.regl[i].r, L"REGISTERL.r stays");
+				Assert::AreEqual<unsigned>(0x200 + i, tev.regl[i].a, L"REGISTERL.a stays");
+				Assert::AreEqual<unsigned>(0x300 + i, tev.regh[i].b, L"REGISTERH.b stays");
+				Assert::AreEqual<unsigned>(0x400 + i, tev.regh[i].g, L"REGISTERH.g stays");
 			}
 		}
 
@@ -570,7 +587,8 @@ namespace pureikyubutest
 		}
 
 		// kcsel values 16..31 name a single channel of K0..K3; for a colour operand that channel is
-		// replicated into r, g and b.
+		// replicated into r, g and b. The four groups of that range are the channels - 16..19 red,
+		// 20..23 green, 24..27 blue, 28..31 alpha - and the low two bits pick the K register.
 		TEST_METHOD(Tev_KonstChannelSelectorsReplicateTheChannel)
 		{
 			RequireGL();
@@ -586,8 +604,8 @@ namespace pureikyubutest
 			m.BpLoad(TEV_REGISTERL_1_ID, 0x55 | (0x88u << 12) | 0x800000);
 			m.BpLoad(TEV_REGISTERH_1_ID, 0x77 | (0x66u << 12) | 0x800000);
 
-			// kcsel = 21 -> K1 green (0x66), kasel = 19 -> K1 red (0x55)
-			m.BpLoad(TEV_KSEL_0_ID, PackKsel(21, 19, 0, 0));
+			// kcsel = 21 -> K1 green (0x66), kasel = 28 -> K0 alpha (0x44)
+			m.BpLoad(TEV_KSEL_0_ID, PackKsel(21, 28, 0, 0));
 			m.BpLoad(TEV_COLOR_ENV_0_ID, PackColorEnv(14, 15, 15, 15, 0, 0, 1, 0, 0));
 			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(6, 7, 7, 7, 0, 0, 1, 0, 0));
 
@@ -600,6 +618,41 @@ namespace pureikyubutest
 			Assert::AreEqual<int>(0x66, rgb[0], L"the selected K channel is replicated into red");
 			Assert::AreEqual<int>(0x66, rgb[1], L"... green");
 			Assert::AreEqual<int>(0x66, rgb[2], L"... blue");
+		}
+
+		// The Rev B K constants and the 11-bit colour registers share the register ids but not the
+		// storage: the write path routes a write by the payload tag (bit 23 set, bit 11 clear is the
+		// 8-bit K form), so a later K write must not disturb the colour register written before it.
+		TEST_METHOD(Tev_KonstWriteDoesNotOverwriteTheColourRegister)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+
+			SetupPassThroughXF(m);
+			SetupRasterColorSource(m);
+			SetupDefaultPixelState(m);
+
+			// Colour form first: c0 = (0x40, 0x00, 0xc0, 0x80)
+			m.BpLoad(TEV_REGISTERL_0_ID, 0x040 | (0x080u << 12));
+			m.BpLoad(TEV_REGISTERH_0_ID, 0x0c0 | (0x000u << 12));
+
+			// ...then the K form of the same ids: K0 = (0x10, 0x40, 0x30, 0x20)
+			m.BpLoad(TEV_REGISTERL_0_ID, 0x10 | (0x20u << 12) | 0x800000);
+			m.BpLoad(TEV_REGISTERH_0_ID, 0x30 | (0x40u << 12) | 0x800000);
+
+			// Stage 0: colour = c0 (seld = 0), the blend inputs are zero, so the register is output
+			m.BpLoad(TEV_COLOR_ENV_0_ID, PackColorEnv(15, 15, 15, 0, 0, 0, 1, 0, 0));
+			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(7, 7, 7, 0, 0, 0, 1, 0, 0));
+
+			m.BeginFrame();
+			DrawFullScreenQuad(m, 0, 0, 0, 0xff);
+
+			uint8_t rgb[3];
+			m.ReadColorPixel(320, 240, rgb);
+
+			Assert::AreEqual<int>(0x40, rgb[0], L"the colour register keeps its red");
+			Assert::AreEqual<int>(0x00, rgb[1], L"... green");
+			Assert::AreEqual<int>(0xc0, rgb[2], L"... blue");
 		}
 
 		// =========================================================================================

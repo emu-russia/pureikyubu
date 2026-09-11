@@ -208,10 +208,12 @@ float TevSat(float v, bool low)
 // Component of a K constant (gfx-tev.md 3.4). component: 0 = r, 1 = g, 2 = b, 3 = a.
 //
 // The 5-bit selector is decoded as documented: 0..7 are the fixed 1.0..1/8 fractions, 8..11 are
-// black, 12..15 select a whole K register and 16..31 select one *channel* of K0..K3 (the channel is
-// picked by the low two bits of the selector, the register by the next two). Because a single
-// channel is what those selectors name, the value is the same for every `component`: the colour
-// operand replicates it into r, g and b, and the alpha operand uses it as is.
+// black, 12..15 select a whole K register and 16..31 select one *channel* of K0..K3. The four
+// groups of the single-channel range are the channels (16..19 red, 20..23 green, 24..27 blue,
+// 28..31 alpha) and the low two bits of the selector pick the K register, so the channel is the
+// high part of `sel - 16` and the register the low part. Because a single channel is what those
+// selectors name, the value is the same for every `component`: the colour operand replicates it
+// into r, g and b, and the alpha operand uses it as is.
 float KonstComponent(uint sel, int component)
 {
     if (sel < 8u)
@@ -224,8 +226,8 @@ float KonstComponent(uint sel, int component)
     if (sel < 16u)
         return tevKReg[int(sel) - 12][component];
 
-    uint channel = (sel - 16u) & 3u;
-    uint reg = (sel - 16u) >> 2;
+    uint channel = (sel - 16u) >> 2;
+    uint reg = (sel - 16u) & 3u;
     return tevKReg[int(reg)][int(channel)];
 }
 
@@ -850,10 +852,10 @@ void main()
 			reg[i][2] = sign11(tev.regh[i].b);
 			reg[i][3] = sign11(tev.regl[i].a);
 
-			kreg[i][0] = (float)((tev.regl[i].bits & 0x800000) ? (tev.regl[i].bits & 0xFF) : tev.regl[i].r);
-			kreg[i][1] = (float)((tev.regh[i].bits & 0x800000) ? ((tev.regh[i].bits >> 12) & 0xFF) : tev.regh[i].g);
-			kreg[i][2] = (float)((tev.regh[i].bits & 0x800000) ? (tev.regh[i].bits & 0xFF) : tev.regh[i].b);
-			kreg[i][3] = (float)((tev.regl[i].bits & 0x800000) ? ((tev.regl[i].bits >> 12) & 0xFF) : tev.regl[i].a);
+			kreg[i][0] = (float)tev.kregl[i].r;
+			kreg[i][1] = (float)tev.kregh[i].g;
+			kreg[i][2] = (float)tev.kregh[i].b;
+			kreg[i][3] = (float)tev.kregl[i].a;
 		}
 
 		glUniform4fv(p.Uniform("tevReg[0]"), 4, (float*)reg);
@@ -985,6 +987,35 @@ void main()
 		tev.alpha_func.logic = 0;		// and
 	}
 
+	// A write to TEV_REGISTERL/H belongs to the Rev B 8-bit K form when payload bit 23 is set and
+	// bit 11 is clear (gfx-tev.md 4.4); otherwise it is the original 11-bit colour register. The
+	// K form keeps its components in different places than the colour form (r/b in [7:0], a/g in
+	// [19:12]), so each form is unpacked into its own storage.
+	static bool TEVIsKonstForm(uint32_t value)
+	{
+		return ((value & 0x800000) != 0) && ((value & 0x800) == 0);
+	}
+
+	static void TEVLoadRegisterL(TEV_RegisterL* colour, TEV_KonstRegisterL* konst, uint32_t value)
+	{
+		if (TEVIsKonstForm(value))
+		{
+			konst->r = value & 0xFF;
+			konst->a = (value >> 12) & 0xFF;
+		}
+		else colour->bits = value;
+	}
+
+	static void TEVLoadRegisterH(TEV_RegisterH* colour, TEV_KonstRegisterH* konst, uint32_t value)
+	{
+		if (TEVIsKonstForm(value))
+		{
+			konst->b = value & 0xFF;
+			konst->g = (value >> 12) & 0xFF;
+		}
+		else colour->bits = value;
+	}
+
 	void TextureEnvironmentUnit::loadTEVReg(size_t index, uint32_t value)
 	{
 		switch (index)
@@ -1022,14 +1053,18 @@ void main()
 			case TEV_COLOR_ENV_F_ID: tev.color_env[0xf].bits = value; break;
 			case TEV_ALPHA_ENV_F_ID: tev.alpha_env[0xf].bits = value; break;
 
-			case TEV_REGISTERL_0_ID: tev.regl[0].bits = value; break;
-			case TEV_REGISTERH_0_ID: tev.regh[0].bits = value; break;
-			case TEV_REGISTERL_1_ID: tev.regl[1].bits = value; break;
-			case TEV_REGISTERH_1_ID: tev.regh[1].bits = value; break;
-			case TEV_REGISTERL_2_ID: tev.regl[2].bits = value; break;
-			case TEV_REGISTERH_2_ID: tev.regh[2].bits = value; break;
-			case TEV_REGISTERL_3_ID: tev.regl[3].bits = value; break;
-			case TEV_REGISTERH_3_ID: tev.regh[3].bits = value; break;
+			// The colour registers and the Rev B K constants share the register ids; the RTL routes
+			// the write by the tag bit of the payload: bit 23 set with bit 11 clear means the 8-bit
+			// K form, everything else is the original 11-bit colour form (gfx-tev.md 4.4). The two
+			// forms are separate storages, so a K write does not disturb the colour registers.
+			case TEV_REGISTERL_0_ID: TEVLoadRegisterL(&tev.regl[0], &tev.kregl[0], value); break;
+			case TEV_REGISTERH_0_ID: TEVLoadRegisterH(&tev.regh[0], &tev.kregh[0], value); break;
+			case TEV_REGISTERL_1_ID: TEVLoadRegisterL(&tev.regl[1], &tev.kregl[1], value); break;
+			case TEV_REGISTERH_1_ID: TEVLoadRegisterH(&tev.regh[1], &tev.kregh[1], value); break;
+			case TEV_REGISTERL_2_ID: TEVLoadRegisterL(&tev.regl[2], &tev.kregl[2], value); break;
+			case TEV_REGISTERH_2_ID: TEVLoadRegisterH(&tev.regh[2], &tev.kregh[2], value); break;
+			case TEV_REGISTERL_3_ID: TEVLoadRegisterL(&tev.regl[3], &tev.kregl[3], value); break;
+			case TEV_REGISTERH_3_ID: TEVLoadRegisterH(&tev.regh[3], &tev.kregh[3], value); break;
 			case TEV_RANGE_ADJ_C_ID: tev.rangeadj_control.bits = value; break;
 			case TEV_RANGE_ADJ_0_ID: tev.range_adj[0].bits = value; break;
 			case TEV_RANGE_ADJ_1_ID: tev.range_adj[1].bits = value; break;
