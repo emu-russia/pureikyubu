@@ -197,8 +197,7 @@ namespace GfxUnitTest
 	void PIClearAssertedInterrupts();
 
 	// -------------------------------------------------------------------------------------------
-	// Debug output capture (the doubles for Debug::Report / Debug::Halt live in
-	// dsp_test_support.cpp)
+	// Debug output capture (the doubles for Debug::Report / Debug::Halt live in dsp_test_support.cpp)
 	// -------------------------------------------------------------------------------------------
 
 	/// <summary>Start collecting Debug::Report messages (they are dropped by default).</summary>

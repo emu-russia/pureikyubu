@@ -68,19 +68,16 @@ uint8_t* DspTestMainMemoryBase()
 /// </summary>
 void DspTestInitAram()
 {
-	if (DSP::aram.mem == nullptr)
-	{
-		DSP::aram.mem = new uint8_t[ARAMSIZE];
-		memset(DSP::aram.mem, 0, ARAMSIZE);
-	}
+	// AROpen installs the ARAM register traps on the Flipper PI. The tests never dereference the
+	// Flipper instance (PISetTrap only records the registration in the test double), so a
+	// zero-initialised shell is enough - the same trick the GFX tests use for their Flipper.
+	// ARAM itself is a flat buffer, so a fresh image is just as cheap.
+	static uint8_t flipperShell[sizeof(Flipper::Flipper)] = { 0 };
 
-	// The ARAM driver normally owns this thread; it is not started in unit tests.
-	DSP::aram.dmaThread = nullptr;
-	DSP::aram.mmaddr = 0;
-	DSP::aram.araddr = 0;
-	DSP::aram.cnt = 0;
-	DSP::aram.amcr = 0x43;			// 16 MB internal ARAM, no expansion
-	DSP::aram.masked = false;
+	Flipper::HW = (Flipper::Flipper*)flipperShell;		// the ARAM DMA engine reaches main memory through it
+
+	DSP::ARClose();
+	DSP::AROpen((Flipper::Flipper*)flipperShell);
 }
 
 void DspTestSetGekkoTicks(int64_t ticks)
@@ -366,6 +363,10 @@ namespace GfxUnitTest
 		return DspTestHaltCount();
 	}
 }
+
+// The DSP tests drive the Flipper register window through the same trap map.
+bool PIRegWrite(uint32_t addr, uint32_t value) { return GfxUnitTest::PIRegWrite(addr, value); }
+bool PIRegRead(uint32_t addr, uint32_t* value) { return GfxUnitTest::PIRegRead(addr, value); }
 
 namespace Flipper
 {

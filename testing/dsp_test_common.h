@@ -31,6 +31,14 @@ std::string DspTestLogText();
 std::string DspTestLastHalt();
 int DspTestHaltCount();
 
+// The CPU-visible Flipper register window (implemented in dsp_test_support.cpp).
+
+/// <summary>Write a 32-bit word into the emulated PI register space (invokes the block traps).</summary>
+bool PIRegWrite(uint32_t addr, uint32_t value);
+
+/// <summary>Read a 32-bit word from the emulated PI register space.</summary>
+bool PIRegRead(uint32_t addr, uint32_t* value);
+
 namespace Flipper
 {
 	extern uint32_t TestPIAssertedInts;

@@ -307,20 +307,28 @@ namespace DSP
 		}
 	}
 
-	static void ARAMDmaThread(void* Parameter)
+	// Perform the whole ARAM transfer. The hardware streams the block through the ARAM controller
+	// and raises CDCR_ARINT when the last byte has been written; the emulator performs it in one go,
+	// like the other transfer engines (SI, EXI, DVD).
+	//
+	// The transfer used to be sliced into 32-byte steps driven by a worker thread. That conflicts
+	// with the CPU, which is the only other initiator of an ARAM DMA: a driver that starts the next
+	// block before the worker had finished the previous one hit the thread guard (Halt) and had its
+	// request dropped, so it waited for a completion interrupt that never came. Metroid Prime hung
+	// that way right after its intro movie, while the audio kept streaming.
+	static void ARAMDmaRun()
 	{
-		if (Core->GetTicks() < aram.gekkoTicks)
-			return;
-		aram.gekkoTicks = Core->GetTicks() + aram.gekkoTicksPerSlice;
+		int type = aram.cnt >> 31;
+		uint32_t cnt = aram.cnt & 0x03FF'FFE0;
 
-		// The DSP can mask ARAM-DMA requests, dedicating ARAM to the accelerator
+		// The DSP can mask ARAM-DMA requests, dedicating ARAM to the accelerator. The request is
+		// only held back if the DMA has not been started at all (a masked request while a transfer
+		// runs would deadlock the driver); the emulator completes the block at once, so the mask
+		// can only be seen before the first slice.
 		if (aram.masked)
 			return;
 
-		int type = aram.cnt >> 31;
-		uint32_t cnt = aram.cnt & 0x3FF'FFE0;
-
-		// blast data
+		// Main memory can be seen only through the DSP window.
 		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
 		bool beyondAram = aram.araddr >= ARAMSIZE;
 
@@ -328,41 +336,28 @@ namespace DSP
 		{
 			// No expansion module is installed: a read returns zeros, a write is discarded
 			if (type == ARAM_TO_RAM && ptr != nullptr)
-				memset(ptr, 0, 32);
+				memset(ptr, 0, cnt);
 		}
-		else if (type == RAM_TO_ARAM)
+		else if (ptr != nullptr)
 		{
-			memcpy(&ARAM[aram.araddr], ptr, 32);
-		}
-		else
-		{
-			memcpy(ptr, &ARAM[aram.araddr], 32);
+			if (type == RAM_TO_ARAM)
+				memcpy(&ARAM[aram.araddr], ptr, cnt);
+			else
+				memcpy(ptr, &ARAM[aram.araddr], cnt);
 		}
 
-		aram.araddr += 32;
-		aram.mmaddr += 32;
-		cnt -= 32;
-		aram.cnt = cnt | (type << 31);
+		aram.araddr += cnt;
+		aram.mmaddr += cnt;
+		aram.cnt = 0;
 
-		if ((aram.cnt & ~0x8000'0000) == 0)
-		{
-			CDCR &= ~CDCR_ARDMA;
-			ARINT();                    // invoke aram TC interrupt
-			//if (aram.dspRunningBeforeAramDma)
-			//{
-			//    Flipper::HW->DSP->Run();
-			//}
-			if (aram.log) {
-				Report(Channel::AR, "Suspending ARAM DMA Thread\n");
-			}
-			aram.dmaThread->Suspend();
-		}
+		CDCR &= ~CDCR_ARDMA;
+		ARINT();                    // invoke aram DMA completion interrupt
 	}
 
 	static void ARDMA()
 	{
 		int type = aram.cnt >> 31;
-		int cnt = aram.cnt & 0x3FF'FFE0;
+		int cnt = aram.cnt & 0x03FF'FFE0;
 		bool specialAramDspDma = aram.mmaddr == 0x0100'0000 && aram.araddr == 0;
 
 		// inform developer about aram transfers
@@ -400,57 +395,7 @@ namespace DSP
 		// console, so such a transfer reads zeros / discards the written data - but it still has
 		// to run to completion and raise the completion interrupt, otherwise a driver that polls
 		// the busy flag (AMBL counter) or waits for the interrupt would hang.
-		if (aram.araddr >= ARAMSIZE)
-		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
-
-			if (type == ARAM_TO_RAM && ptr != nullptr)
-				memset(ptr, 0, cnt);
-
-			aram.cnt = 0;
-			CDCR &= ~CDCR_ARDMA;
-			ARINT();                    // invoke aram DMA completion interrupt
-			return;
-		}
-
-		// For fast transactions, complete the DMA immediately because interthreading takes longer than the DMA readiness check in ar.a::__ARCheckSize..
-
-		if (cnt <= 32) {
-
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
-			if (type == RAM_TO_ARAM) {
-				memcpy(&ARAM[aram.araddr], ptr, 32);
-			}
-			else {
-				memcpy(ptr, &ARAM[aram.araddr], 32);
-			}
-
-			aram.araddr += 32;
-			aram.mmaddr += 32;
-			aram.cnt = 0;
-
-			CDCR &= ~CDCR_ARDMA;
-			ARINT();	// invoke aram TC interrupt
-			return;
-		}
-
-		// For other cases - delegate job to thread
-
-		if (aram.dmaThread->IsRunning()) {
-			Halt("There is some nonsense going on: the ARAM DMA Thread needs to be started while it is still running.\n");
-		}
-
-		CDCR |= CDCR_ARDMA;
-		aram.gekkoTicks = Core->GetTicks() + aram.gekkoTicksPerSlice;
-		aram.dspRunningBeforeAramDma = Flipper::DSP->IsRunning();
-		//if (aram.dspRunningBeforeAramDma)
-		//{
-		//    Flipper::HW->DSP->Suspend();
-		//}
-		if (aram.log) {
-			Report(Channel::AR, "Resuming ARAM DMA Thread\n");
-		}
-		aram.dmaThread->Resume();
+		ARAMDmaRun();
 	}
 
 	// ---------------------------------------------------------------------------
@@ -541,29 +486,28 @@ namespace DSP
 		aram.mmaddr = aram.araddr = aram.cnt = 0;
 		aram.amcr = 0x43;			// 16 MB internal ARAM, no expansion
 		aram.masked = false;
-		aram.gekkoTicksPerSlice = 4;
 		aram.log = true;
 
 		// set traps to aram registers
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMMAH, am_read_mmah, am_write_mmah);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMMAL, am_read_mmal, am_write_mmal);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMAAH, am_read_amaah, am_write_amaah);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMAAL, am_read_amaal, am_write_amaal);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMBLH, am_read_amblh, am_write_amblh);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMBLL, am_read_ambll, am_write_ambll);
+		// (the unit tests initialise the controller without a Flipper instance)
+		if (flipper != nullptr)
+		{
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMMAH, am_read_mmah, am_write_mmah);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMMAL, am_read_mmal, am_write_mmal);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMAAH, am_read_amaah, am_write_amaah);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMAAL, am_read_amaal, am_write_amaal);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMBLH, am_read_amblh, am_write_amblh);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMBLL, am_read_ambll, am_write_ambll);
 
-		// controller configuration registers
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMCR, am_read_amcr, am_write_amcr);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMNF, am_read_amnf, no_write);
-		flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMCT, no_read, no_write);
-
-		aram.dmaThread = EMUCreateThread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
+			// controller configuration registers
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMCR, am_read_amcr, am_write_amcr);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMNF, am_read_amnf, no_write);
+			flipper->pi->PISetTrap(PI_REGSPACE_DSP | AMCT, no_read, no_write);
+		}
 	}
 
 	void ARClose()
 	{
-		EMUJoinThread(aram.dmaThread);
-		aram.dmaThread = nullptr;
 
 		// destroy ARAM
 		if (ARAM)
