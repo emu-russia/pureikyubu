@@ -1595,8 +1595,8 @@ namespace Gekko
 
 	void Decoder::CrmsFast(uint32_t instr, DecoderInfo* info)
 	{
-		info->paramBits[0] = DIS_RD;
-		info->paramBits[1] = DIS_CRM;
+		info->paramBits[0] = DIS_CRM;
+		info->paramBits[1] = DIS_RD;
 	}
 
 	void Decoder::Crbd(uint32_t instr, DecoderInfo* info)

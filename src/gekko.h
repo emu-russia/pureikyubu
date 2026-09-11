@@ -618,6 +618,12 @@ namespace Gekko
 
 		uint32_t EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG);
 
+		// The hardware hash table walk is coherent with the data cache, so the page table entries
+		// must be accessed through it. A plain bus access would not see the PTEs written by the CPU.
+
+		void ReadHashPte(uint32_t pa, uint32_t* reg);
+		void WriteHashPte(uint32_t pa, uint32_t data);
+
 		volatile bool decreq = false;       // decrementer exception request
 		volatile bool intFlag = false;      // INT signal
 		volatile bool exception = false;    // exception pending
