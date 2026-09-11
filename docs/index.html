@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — Nintendo GameCube emulator</title>
+<meta name="description" content="pureikyubu is a work-in-progress Nintendo GameCube emulator for research and reverse engineering. Landing page, digest of the work after release 1.6 and release notes 1.7.">
+<link rel="icon" href="imgstore/pureikyubu.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="release_notes_1.7.html">Release Notes 1.7</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="index.html" class="active" hreflang="en">EN</a>
+      <a href="index_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <img class="hero-logo" src="imgstore/pureikyubu.png" alt="pureikyubu logo">
+    <h1>A work-in-progress Nintendo GameCube emulator</h1>
+    <p class="lead">
+      pureikyubu (プレイキューブ) is an emulator of the Nintendo GameCube built to research the
+      hardware of the console and to reverse engineer the technologies the games were made with.
+      The GameCube is a masterpiece of the Nintendo/ArtX engineers — this project is a way to take
+      it apart and understand it.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="release_notes_1.7.html">Release Notes 1.7</a>
+      <a class="btn secondary" href="digest.html">What changed after 1.6</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu">Source on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>What is new</h2>
+      <p class="sub">
+        Release 1.6 shipped on 17 August 2023. Since then the emulator has grown a second user
+        interface, a shader-based graphics pipeline, a unit-test rig for the graphics and DSP cores,
+        a working Ethernet-enabled Linux boot and a long list of game fixes — including the
+        <em>Metroid Prime</em> intro movie.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <span class="badge">Graphics</span>
+          <h3>XF/TEV shaders</h3>
+          <p>The fixed-function OpenGL pipeline is gone. The Flipper Transform Unit and Texture
+             Environment Unit now run as GLSL 3.30 shaders fed by the whole register state.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Testing</span>
+          <h3>340 graphics tests</h3>
+          <p>A test rig runs the real CP → XF → SU → RAS → TX → TEV → PE pipeline against an OpenGL
+             context and publishes an HTML report with hundreds of rendered reference pictures.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Audio</span>
+          <h3>DSP against golden vectors</h3>
+          <p>The DSP core is checked against 1822 vectors captured from the hardware, and the
+             ARAM/AI behaviour now follows the hardware documentation.</p>
+        </div>
+        <div class="card">
+          <span class="badge">CPU</span>
+          <h3>GC-Linux boots</h3>
+          <p>GQR/paired-single decoding, the MMU hash-table walk, the decrementer, <code>mtcrf</code>
+             and <code>lswi</code> were fixed, and a 2004 GC-Linux kernel reaches its console.</p>
+        </div>
+        <div class="card">
+          <span class="badge">UI</span>
+          <h3>Game selector everywhere</h3>
+          <p>The Win32 game selector was ported to the SDL build: banners, Game IDs, sorting,
+             filters and jump-to-letter navigation.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Compatibility</span>
+          <h3>More games boot</h3>
+          <p>The Metroid Prime intro FMV plays, Zelda: The Wind Waker gets past its boot, Ikaruga's
+             THP title movie has correct colours and PONG runs again.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Screenshots</h2>
+      <p class="sub">Captured from the current development build (release 1.7 line).</p>
+      <div class="shots">
+        <figure>
+          <img src="imgstore/luigis_mansion.png" alt="Luigi's Mansion running in pureikyubu">
+          <figcaption><strong>Luigi's Mansion</strong>Running with the XF/TEV shader pipeline; the
+            built-in statistics show the Gekko and DSP speeds.</figcaption>
+        </figure>
+        <figure>
+          <img src="imgstore/ipl_menu.png" alt="GameCube IPL menu rendered by pureikyubu">
+          <figcaption><strong>GameCube IPL menu</strong>The new <code>--ipl</code> option boots the
+            console menu directly, without a disc image.</figcaption>
+        </figure>
+        <figure>
+          <img src="imgstore/game_selector.png" alt="pureikyubu game selector listing GameCube games">
+          <figcaption><strong>Game selector</strong>Banners, Game IDs, sizes, comments and the SDL
+            build's sort and filter options.</figcaption>
+        </figure>
+        <figure>
+          <img src="imgstore/ikaruga_thp.png" alt="Ikaruga THP title movie">
+          <figcaption><strong>Ikaruga</strong>The THP title movie after the GQR/TEV fixes: the
+            colours match the reference decoder.</figcaption>
+        </figure>
+        <figure>
+          <img src="imgstore/gc_linux_console.png" alt="GC-Linux kernel booting to the gcnfb console">
+          <figcaption><strong>GC-Linux</strong>A 2004 Linux kernel boots to the <code>gcnfb</code>
+            console with the Broadband Adapter and SI drivers loaded.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>Build it</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Windows</h3>
+          <p>Open <code>scripts/VS2022/pureikyubu.sln</code> in Visual Studio 2022 or 2026 and
+             press Build. Debug and Release configurations exist for both the Win32 and the SDL
+             front end.</p>
+        </div>
+        <div class="card">
+          <h3>Linux</h3>
+          <p>CMake + SDL2 build, verified under WSL2 as well:</p>
+          <pre><code>sudo apt install libglew-dev
+git clone https://github.com/emu-russia/pureikyubu.git
+cd pureikyubu &amp;&amp; git submodule update --init
+cd build &amp;&amp; cmake .. &amp;&amp; make
+./pureikyubu pong.dol</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Documentation</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Digest since 1.6</h3>
+          <p><a href="digest.html">English digest</a> · <a href="digest_ru.html">Дайджест на русском</a></p>
+        </div>
+        <div class="card">
+          <h3>Release Notes 1.7</h3>
+          <p><a href="release_notes_1.7.html">English release notes</a> ·
+             <a href="release_notes_1.7_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.7.md">Markdown</a></p>
+        </div>
+        <div class="card">
+          <h3>Wiki</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/tree/master/wiki">Emulator internals</a>:
+             Flipper, GFX, Gekko, Debug UI and the DSP IROM analysis.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Nintendo GameCube is a trademark of Nintendo; this emulator is not affiliated with Nintendo.</div>
+    <div><a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>
