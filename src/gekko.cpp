@@ -1629,7 +1629,7 @@ namespace Gekko
 
 		// The translation cache has already been probed by EffectiveToPhysical().
 
-		// First, try the block translation, if it doesn’t work, try the Page Table.
+		// First, try the block translation, if it doesnâ€™t work, try the Page Table.
 
 		if (!BlockAddressTranslation(ea, pa, type, WIMG))
 		{
