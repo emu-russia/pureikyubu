@@ -36,9 +36,12 @@
 
 namespace Gekko
 {
+	class Jit;
+
 	class Interpreter
 	{
 		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
+		friend Jit;
 
 		GekkoCore* core = nullptr;
 
@@ -411,15 +414,46 @@ namespace Gekko
 		// The quantized load/store conversion scales are computed on demand by
 		// Gekko::GqrScaleFactor (src/gqr.h), which is covered by testing/gqr_test.cpp.
 
+		// Decoded instruction cache.
+
+		// Decoding is a large part of the interpreter's per-instruction cost and the code
+		// of a game is executed over and over, so the outcome of the decoder is remembered.
+		//
+		// There is deliberately no invalidation hook anywhere: the instruction word is
+		// always re-fetched (through the emulated instruction cache) before the entry is
+		// used, and an entry is accepted only when both the pc and that freshly fetched
+		// word match what was decoded. Any change of the code - by a store, by a DMA or
+		// by the debugger - therefore re-decodes by itself, and a missed invalidation is
+		// not possible. If the instruction cache still holds the old line (which is what
+		// the hardware would execute too), the old decode matches it and is used.
+
+		struct DecodeEntry
+		{
+			uint32_t pc;
+			uint32_t instrBits;
+			uint32_t instr;
+			uint32_t imm;
+			uint32_t paramBits[5];
+		};
+
+		// 8192 entries keep the hot loops of a game resident without aliasing; the entry
+		// is deliberately small so that the table stays cheap to touch.
+		static const size_t DecodeCacheSize = 8192;
+		static const size_t DecodeCacheMask = DecodeCacheSize - 1;
+
+		DecodeEntry decodeCache[DecodeCacheSize];
+
 		float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
 		uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
 		void BranchCheck();
 		bool BcTest();
+		bool BcTest(uint32_t bo, uint32_t bi);
 		bool BctrTest();
+		bool BctrTest(uint32_t bo, uint32_t bi);
 
 		template <typename T>
-		inline void CmpCommon(size_t crfd, T a, T b);
+		GEKKO_INLINE void CmpCommon(size_t crfd, T a, T b);
 
 		void Dispatch();
 
@@ -447,6 +481,11 @@ namespace Gekko
 		~Interpreter() {}
 
 		void ExecuteOpcode();
+
+		// Decode (from the decode cache) and execute a single instruction. Shared with
+		// the recompiler so that an instruction it does not translate goes through
+		// exactly the same decode/dispatch path as the interpreter.
+		void ExecuteDecoded(uint32_t pc, uint32_t instr);
 
 		uint32_t GetRotMask(int mb, int me);
 	};

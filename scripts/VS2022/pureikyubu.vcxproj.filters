@@ -118,6 +118,9 @@
     <ClInclude Include="..\..\src\gekkoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gekkojit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\gekkodebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -283,6 +286,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gekkoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gekkojit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gekkodebug.cpp">

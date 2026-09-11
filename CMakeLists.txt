@@ -50,6 +50,7 @@ add_executable (pureikyubu
 	src/flipperdebug.cpp
 	src/gekko.cpp
 	src/gekkoc.cpp
+	src/gekkojit.cpp
 	src/gekkodebug.cpp
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
