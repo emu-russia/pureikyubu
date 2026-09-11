@@ -93,7 +93,9 @@ namespace Gekko
 
 		regs.tb.uval = 0;
 		regs.spr[SPR::HID1] = 0x8000'0000;
-		regs.spr[SPR::DEC] = 0;
+		// The decrementer produces an exception on underflow, so it starts out negative:
+		// the program has to reload it with a positive value to arm the first exception.
+		regs.spr[SPR::DEC] = 0xffff'ffff;
 		regs.spr[SPR::CTR] = 0;
 
 		gatherBuffer->Reset();
@@ -113,13 +115,23 @@ namespace Gekko
 
 		uint32_t old = regs.spr[SPR::DEC];
 		regs.spr[SPR::DEC] -= DecrementerStep;          // decrementer
-		if ((old ^ regs.spr[SPR::DEC]) & 0x80000000)
+
+		if (regs.spr[SPR::DEC] & 0x8000'0000)
 		{
-			if (regs.msr & MSR_EE)
+			// Underflow. The request is latched, so that it is not lost while MSR[EE] is cleared,
+			// but it is generated only once per underflow: the decrementer has to be reloaded with
+			// a positive value before the next exception can be requested.
+
+			if (!(old & 0x8000'0000))
 			{
 				decreq = 1;
-				Report(Channel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
 			}
+		}
+		else
+		{
+			// A positive decrementer clears a pending underflow request.
+
+			decreq = 0;
 		}
 	}
 
@@ -1748,6 +1760,32 @@ namespace Gekko
 		return false;
 	}
 
+	// The hash table walk (unlike DMA traffic) is coherent with the data cache.
+
+	void GekkoCore::ReadHashPte(uint32_t pa, uint32_t* reg)
+	{
+		if (cache->IsEnabled())
+		{
+			cache->ReadWord(pa, reg);
+		}
+		else
+		{
+			Flipper::HW->pi->PIReadWord(pa, reg);
+		}
+	}
+
+	void GekkoCore::WriteHashPte(uint32_t pa, uint32_t data)
+	{
+		if (cache->IsEnabled())
+		{
+			cache->WriteWord(pa, data);
+		}
+		else
+		{
+			Flipper::HW->pi->PIWriteWord(pa, data);
+		}
+	}
+
 	uint32_t GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG)
 	{
 		int ptegUpper;
@@ -1810,8 +1848,8 @@ namespace Gekko
 
 			uint32_t pte[2];
 
-			Flipper::HW->pi->PIReadWord(primaryPteAddr, &pte[0]);
-			Flipper::HW->pi->PIReadWord(primaryPteAddr + 4, &pte[1]);
+			ReadHashPte(primaryPteAddr, &pte[0]);
+			ReadHashPte(primaryPteAddr + 4, &pte[1]);
 
 			// Check Hash Bit
 
@@ -1852,7 +1890,7 @@ namespace Gekko
 				{
 					pte[1] |= 0x80;     // Changed
 				}
-				Flipper::HW->pi->PIWriteWord(primaryPteAddr + 4, pte[1]);
+				WriteHashPte(primaryPteAddr + 4, pte[1]);
 
 				if (protectViolation)
 				{
@@ -1893,7 +1931,7 @@ namespace Gekko
 			{
 				// Referenced
 				pte[1] |= 0x100;
-				Flipper::HW->pi->PIWriteWord(primaryPteAddr + 4, pte[1]);
+				WriteHashPte(primaryPteAddr + 4, pte[1]);
 			}
 
 			primaryPteAddr += 8;
@@ -1907,8 +1945,8 @@ namespace Gekko
 
 			uint32_t pte[2];
 
-			Flipper::HW->pi->PIReadWord(secondaryPteAddr, &pte[0]);
-			Flipper::HW->pi->PIReadWord(secondaryPteAddr + 4, &pte[1]);
+			ReadHashPte(secondaryPteAddr, &pte[0]);
+			ReadHashPte(secondaryPteAddr + 4, &pte[1]);
 
 			// Check Hash Bit
 
@@ -1950,7 +1988,7 @@ namespace Gekko
 				{
 					pte[1] |= 0x80;
 				}
-				Flipper::HW->pi->PIWriteWord(secondaryPteAddr + 4, pte[1]);
+				WriteHashPte(secondaryPteAddr + 4, pte[1]);
 
 				if (protectViolation)
 				{
@@ -1991,7 +2029,7 @@ namespace Gekko
 			{
 				// Referenced
 				pte[1] |= 0x100;
-				Flipper::HW->pi->PIWriteWord(secondaryPteAddr + 4, pte[1]);
+				WriteHashPte(secondaryPteAddr + 4, pte[1]);
 			}
 
 			secondaryPteAddr += 8;

@@ -2318,15 +2318,14 @@ namespace Gekko
 			n--;
 		}
 
-		if (i != 0)
+		// The last word (possibly incomplete) is still accumulated in r.
+
+		while (i)
 		{
-			while (i)
-			{
-				r <<= 8;
-				i--;
-			}
-			core->regs.gpr[rd] = r;
+			r <<= 8;
+			i--;
 		}
+		core->regs.gpr[rd] = r;
 
 		core->regs.pc += 4;
 	}
@@ -2369,15 +2368,14 @@ namespace Gekko
 			n--;
 		}
 
-		if (i != 0)
+		// The last word (possibly incomplete) is still accumulated in r.
+
+		while (i)
 		{
-			while (i)
-			{
-				r <<= 8;
-				i--;
-			}
-			core->regs.gpr[rd] = r;
+			r <<= 8;
+			i--;
 		}
+		core->regs.gpr[rd] = r;
 
 		core->regs.pc += 4;
 	}
