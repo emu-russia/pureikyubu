@@ -186,7 +186,19 @@ namespace Gekko
 		static bool BctrTest(GekkoCore* core, uint32_t bo, uint32_t bi);
 		static void BranchCheck(GekkoCore* core);
 
+		// The quantised Paired-Single load and store helpers, defined in
+		// gekkojit_ps.cpp and called from generated code. Static members for the
+		// same reason as the four above.
+		static void PsqLoad(GekkoCore* core, uint32_t ea, uint32_t packed);
+		static void PsqStore(GekkoCore* core, uint32_t ea, uint32_t packed);
+
 	public:
+		// Addresses of the two Paired-Single quantised helpers, for the generated
+		// code in gekkojit_ps.cpp. The helpers stay private so that nothing else
+		// calls them.
+		static uint64_t PsqLoadEntry() { return (uint64_t)(void*)&PsqLoad; }
+		static uint64_t PsqStoreEntry() { return (uint64_t)(void*)&PsqStore; }
+
 		Jit(GekkoCore* core);
 		~Jit();
 

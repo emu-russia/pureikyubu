@@ -1022,7 +1022,7 @@ namespace Gekko
 
 		if (crf == 0)
 		{
-			// When FPSCR[0–3] is specified, bits 0 (FX) and 3 (OX) are set to the values of IMM[0] and IMM[3]
+			// When FPSCR[0â€“3] is specified, bits 0 (FX) and 3 (OX) are set to the values of IMM[0] and IMM[3]
 			core->regs.fpscr |= ((imm & 0b1001) << (7 - crf));
 			core->regs.fpscr |= oldFpscr & 0x60000000;
 		}
