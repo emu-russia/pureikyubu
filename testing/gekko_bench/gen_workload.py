@@ -156,6 +156,14 @@ class Code:
     def ps_merge10(self, d, a, b, rc=0): self.ps(d, a, b, 0, 592, rc)
     def ps_merge11(self, d, a, b, rc=0): self.ps(d, a, b, 0, 624, rc)
 
+    # ---- Paired single quantised load / store (opcodes 56 / 60) -----------
+    # frt, ra, W, I(GQR index), DQ. GQR0 is left at its reset value, which is
+    # the single-float type, so the workload needs no setup for these.
+    def psq_l(self, frt, ra, w, i, dq):
+        self.emit((56 << 26) | (frt << 21) | (ra << 16) | (w << 15) | (i << 12) | (dq & 0xFFF))
+    def psq_st(self, frs, ra, w, i, dq):
+        self.emit((60 << 26) | (frs << 21) | (ra << 16) | (w << 15) | (i << 12) | (dq & 0xFFF))
+
     # ---- misc -------------------------------------------------------------
     def sync(self): self.emit(0x7C0004AC)
     def nop(self):  self.emit(0x60000000)
@@ -193,6 +201,13 @@ def generate(body_instrs, seed, mix="full", window_mb=4):
     c.addi(30, 0, 0)                # loop counter / cratch
     c.add(27, 31, 28)               # ptr = base + offset
 
+    if mix in ("ps", "psq"):
+        # HID2[PSE] | HID2[LSQE] gate the paired-single instructions; the raw
+        # harness leaves HID2 clear, and without them the guest takes an illegal
+        # instruction exception on the first psq_*.
+        c.addis(29, 0, -0x6000)     # 0xA0000000
+        c.mtspr(920, 29)            # HID2
+
     body_start = len(c.words)
 
     if mix == "one":
@@ -206,6 +221,12 @@ def generate(body_instrs, seed, mix="full", window_mb=4):
         # compiles to: almost all PS arithmetic, with the loop's integer
         # bookkeeping and its loads and stores around it.
         weights = [("ps", 76), ("load", 6), ("store", 4), ("alu", 6), ("branch", 8)]
+    elif mix == "psq":
+        # The quantised paired loads and stores, with only the arithmetic that
+        # cannot manufacture a NaN out of zeroed registers - so the bit-exact
+        # state comparison stays meaningful where the "ps" mix turns into a NaN
+        # storm (see the Paired-Single section of the Readme).
+        weights = [("psq", 70), ("alu", 8), ("load", 6), ("store", 6), ("branch", 10)]
     else:
         weights = [
             ("alu",      34),
@@ -279,7 +300,7 @@ def generate(body_instrs, seed, mix="full", window_mb=4):
             elif choice == 6: c.frsp(d, f())
             else:             c.fcmpu(rnd.randrange(0, 8), f(), f())
         elif k == "ps":
-            choice = rnd.randrange(0, 16)
+            choice = rnd.randrange(0, 20)
             d = f()
             if choice == 0:    c.ps_add(d, f(), f())
             elif choice == 1:  c.ps_sub(d, f(), f())
@@ -296,7 +317,20 @@ def generate(body_instrs, seed, mix="full", window_mb=4):
             elif choice == 12: c.ps_merge00(d, f(), f())
             elif choice == 13: c.ps_neg(d, f())
             elif choice == 14: c.ps_abs(d, f())
-            else:              c.ps_nabs(d, f())
+            elif choice == 15: c.ps_nabs(d, f())
+            elif choice == 16: c.psq_l(d, 27, 0, 0, mem_disp(8) & ~7)
+            elif choice == 17: c.psq_l(d, 27, 1, 0, mem_disp(4) & ~3)
+            elif choice == 18: c.psq_st(d, 27, 0, 0, mem_disp(8) & ~7)
+            else:              c.psq_st(d, 27, 1, 0, mem_disp(4) & ~3)
+        elif k == "psq":
+            choice = rnd.randrange(0, 6)
+            d = f()
+            if choice == 0:   c.psq_l(d, 27, 0, 0, mem_disp(8) & ~7)
+            elif choice == 1: c.psq_l(d, 27, 1, 0, mem_disp(4) & ~3)
+            elif choice == 2: c.psq_st(d, 27, 0, 0, mem_disp(8) & ~7)
+            elif choice == 3: c.ps_mul(d, f(), f())
+            elif choice == 4: c.ps_add(d, f(), f())
+            else:             c.ps_merge00(d, f(), f())
         elif k == "branch":
             choice = rnd.randrange(0, 8)
             if choice <= 4:   c.bc(4, rnd.randrange(0, 32), 8)     # branch if CR bit clear

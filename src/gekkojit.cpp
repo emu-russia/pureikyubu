@@ -993,9 +993,18 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 			// Paired-Single instructions live in their own module (gekkojit_ps.cpp)
 			// so that the SSE translations can be built out with GEKKO_JIT_PS=0.
 			// When it declines the instruction, the interpreter runs it below.
-			if (!JitPs::Translate(e, core, di))
+			switch (JitPs::Translate(e, core, di))
 			{
+			case JitPs::PsResult::NotHandled:
 				handled = false;
+				break;
+			case JitPs::PsResult::DoneMayExcept:
+				// The helper may have raised a memory exception, so the block must
+				// not run another instruction before the check.
+				emitExcCheck(exceptionExits);
+				break;
+			default:
+				break;
 			}
 			break;
 		}

@@ -142,20 +142,37 @@ BENCH_FUZZ_PS=1 BENCH_FUZZ=600 BENCH_FUZZ_N=96 ./build/bench pong.dol
 # A PS-dominated workload (the shape of an SDK matrix kernel).
 python3 gen_workload.py workload_ps.bin --body 2000 --mix ps
 ./check.sh workload_ps.bin 20000000   # for the MIPS figures, see below
+
+# The quantised paired loads and stores, with only the arithmetic that cannot
+# make a NaN out of zeroed registers, so the bit-exact comparison holds.
+python3 gen_workload.py workload_psq.bin --body 2000 --mix psq
+./check.sh workload_psq.bin 20000000
 ```
 
-That workload is a *performance* benchmark and a smoke test, not a correctness
-one. It runs random PS operations over registers that the raw mode starts at
-zero, so division and rsqrt against zero produce infinities, `inf - inf` turns
-them into NaNs and the state ends up full of them - at which point the bit-exact
-`check.sh` comparison reports the same NaN-payload difference described below.
-The authoritative PS correctness tests are `BENCH_PS_TEST` and `BENCH_FUZZ_PS`.
+Both mixes program HID2[PSE] (and LSQE) themselves with an mtspr in their
+prologue: the raw harness leaves HID2 clear, and without those bits the guest
+takes an illegal-instruction exception on the first `psq_*`.
 
-Measured on that workload, 20M instructions: 59 MIPS for the interpreter, 114
-with the recompiler and PS built out, 435 with PS translated. The gap between
-the last two is the point of the module - a PS instruction left on the fallback
-also ends the basic block, so it costs a block cache lookup on top of the decode
-and the dispatch.
+The arithmetic workload is a *performance* benchmark and a smoke test, not a
+correctness one. It runs random PS operations over registers that the raw mode
+starts at zero, so division and rsqrt against zero produce infinities, `inf -
+inf` turns them into NaNs and the state ends up full of them - at which point the
+bit-exact `check.sh` comparison reports the same NaN-payload difference described
+below. The `psq` mix stays finite and its hash does match. The authoritative PS
+correctness tests are `BENCH_PS_TEST` and `BENCH_FUZZ_PS`, which now also covers
+the quantised forms.
+
+Measured at 20M instructions: 59 MIPS for the interpreter, 114 with the
+recompiler and PS built out and 435 with PS translated on the arithmetic mix; 57,
+105 and 191 on the `psq` mix. The gap between the last two of each pair is the
+point of the module - a PS instruction left on the fallback also ends the basic
+block, so it costs a block cache lookup on top of the decode and the dispatch.
+
+The quantised forms call into a C++ helper (`Jit::PsqLoad` / `Jit::PsqStore`)
+instead of emitting the conversion in machine code: the generated code computes
+the effective address and makes one call, which is still far cheaper than the
+fallback. The GQR is read by the helper at run time, so writing one does not have
+to invalidate any compiled block.
 
 `BENCH_PS_TEST` reports a second number next to the failures: NaN payload cases.
 When both operands of an operation are NaN, which one gets propagated is not

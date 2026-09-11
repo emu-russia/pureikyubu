@@ -93,10 +93,24 @@ namespace Gekko
 
 	namespace JitPs
 	{
+		// What the caller has to do after the instruction was translated.
+		enum class PsResult
+		{
+			// Not translated: run the instruction through the interpreter.
+			NotHandled,
+
+			// Translated and complete; the block can continue with the next one.
+			Done,
+
+			// Translated, but a helper ran and may have raised a memory exception.
+			// The caller has to emit its exception check before the block executes
+			// anything else, exactly as it does for its own load and store
+			// translations.
+			DoneMayExcept,
+		};
+
 		// Emit the translation of one Paired-Single instruction into the block being
-		// compiled. Returns false when the instruction is not translated - it is not
-		// a PS instruction, MSR[FP] is clear, or it is one of the forms left to the
-		// interpreter - in which case the caller runs it through the interpreter.
-		bool Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di);
+		// compiled.
+		PsResult Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di);
 	}
 }

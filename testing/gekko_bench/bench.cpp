@@ -155,6 +155,8 @@ static bool FuzzUnsafe(Gekko::Instruction i)
         case Instruction::ps_abs: case Instruction::ps_abs_d: case Instruction::ps_nabs: case Instruction::ps_nabs_d:
         case Instruction::ps_merge00: case Instruction::ps_merge00_d: case Instruction::ps_merge01: case Instruction::ps_merge01_d:
         case Instruction::ps_merge10: case Instruction::ps_merge10_d: case Instruction::ps_merge11: case Instruction::ps_merge11_d:
+        case Instruction::psq_l: case Instruction::psq_lx: case Instruction::psq_lu: case Instruction::psq_lux:
+        case Instruction::psq_st: case Instruction::psq_stx: case Instruction::psq_stu: case Instruction::psq_stux:
             return false;
         default:
             break;
@@ -291,9 +293,17 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
 
         auto init = [&](bool jit)
         {
-            // Cover every address the random registers can reach, not just the base:
-            // the two engines must start from byte-identical memory.
-            memset(ram + 0x70000, 0, 0x130000 - 0x70000);
+            // Both engines must start from byte-identical memory. The whole of RAM
+            // is cleared rather than a window around the data area: a random
+            // program can store outside any window and the second pass would then
+            // read what the first one left behind.
+            //
+            // This is not enough on its own - about one program in five hundred at
+            // 32 instructions still diverges with the *interpreter on both sides*
+            // of the comparison, so a failure there is not evidence against the
+            // recompiler. Run the same iteration with BENCH_FUZZ_NOJIT=1 before
+            // blaming a translation.
+            memset(ram, 0, Flipper::ProcessorInterface::ramSize);
             for (int v = 0; v < 16; v++)
             {
                 uint32_t vec = (uint32_t)v * 0x100;
@@ -327,6 +337,12 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
                     Core->regs.ps1[i].uval = FuzzNext(s2);
                 }
                 Core->regs.fpscr = (uint32_t)FuzzNext(s2);
+                // The quantised paired forms need paired-single and load/store
+                // quantisation enabled, and a spread of GQR types so that the
+                // integer, scaled and single-float paths are all reached.
+                Core->regs.spr[(int)Gekko::SPR::HID2] = HID2_PSE | HID2_LSQE;
+                for (int i = 0; i < 8; i++)
+                    Core->regs.spr[(int)Gekko::SPR::GQRs + i] = (uint32_t)FuzzNext(s2);
             }
             Core->regs.pc = codeBase + (uint32_t)it * 0x1000;
             // Branches through LR/CTR must land inside the program.

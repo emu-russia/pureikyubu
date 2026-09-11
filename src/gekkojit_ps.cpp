@@ -16,6 +16,7 @@ with p1/p2/p3 named after the paramBits index rather than after a role.
 
 #if GEKKO_JIT_SUPPORTED && GEKKO_JIT_PS
 
+#include "gqr.h"
 #include "gekkojit_x64.h"
 
 namespace Gekko
@@ -121,14 +122,159 @@ static void Negate(X64::Emitter& e, uint8_t x)
 	e.xorpd_rr(x, V3);
 }
 
-bool Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
+// ---------------------------------------------------------------------------
+// Quantised paired loads and stores.
+//
+// These touch memory, the MMU and possibly the exception machinery, and the
+// amount of work per element (GQR decode, scale, saturation, byte swapping) is
+// not worth reimplementing in machine code, so the generated code computes the
+// effective address and calls straight into the C++ helper below. That still
+// skips the decode, the dispatch and - the expensive part - the block exit that
+// the interpreter fallback would cost.
+//
+// The helper reads the GQR at run time rather than baking it into the block, so
+// writing a GQR does not have to invalidate anything.
+
+// One element, in the width the GQR's type asks for.
+static void PsqReadElement(GekkoCore* core, uint32_t ea, QuantType type, uint32_t* out)
+{
+	if (type == QuantType::U8 || type == QuantType::S8)
+	{
+		core->ReadByte(ea, out);
+	}
+	else if (type == QuantType::U16 || type == QuantType::S16)
+	{
+		core->ReadHalf(ea, out);
+	}
+	else
+	{
+		core->ReadWord(ea, out);
+	}
+}
+
+static void PsqWriteElement(GekkoCore* core, uint32_t ea, QuantType type, uint32_t data)
+{
+	if (type == QuantType::U8 || type == QuantType::S8)
+	{
+		core->WriteByte(ea, data);
+	}
+	else if (type == QuantType::U16 || type == QuantType::S16)
+	{
+		core->WriteHalf(ea, data);
+	}
+	else
+	{
+		core->WriteWord(ea, data);
+	}
+}
+
+// The fields of the instruction, packed into the one argument the generated code
+// has left after core and the effective address.
+static const uint32_t PsqD = 0;
+static const uint32_t PsqGqr = 5;
+static const uint32_t PsqW = 8;
+static const uint32_t PsqRa = 9;
+static const uint32_t PsqUpdate = 14;
+
+}	// namespace JitPs - the two helpers below are Jit members
+
+// psq_l, psq_lx, psq_lu, psq_lux. Mirrors Interpreter::psq_l: on a fault the
+// register file is left alone, including the update form's RA.
+void Jit::PsqLoad(GekkoCore* core, uint32_t ea, uint32_t packed)
+{
+	uint32_t d = (packed >> JitPs::PsqD) & 31;
+	uint32_t gqr = (packed >> JitPs::PsqGqr) & 7;
+	bool w = ((packed >> JitPs::PsqW) & 1) != 0;
+	uint32_t ra = (packed >> JitPs::PsqRa) & 31;
+	bool update = ((packed >> JitPs::PsqUpdate) & 1) != 0;
+
+	GqrFields f = GqrDecode(core->regs.spr[SPR::GQRs + gqr]);
+	uint32_t data0 = 0, data1 = 0;
+
+	JitPs::PsqReadElement(core, ea, f.ldType, &data0);
+	if (core->exception) return;
+
+	if (w)
+	{
+		core->regs.fpr[d].dbl = (double)GqrDequantize(data0, f.ldType, f.ldScale);
+		core->regs.ps1[d].dbl = 1.0f;
+	}
+	else
+	{
+		JitPs::PsqReadElement(core, ea + GqrElementSize(f.ldType), f.ldType, &data1);
+		if (core->exception) return;
+
+		core->regs.fpr[d].dbl = (double)GqrDequantize(data0, f.ldType, f.ldScale);
+		core->regs.ps1[d].dbl = (double)GqrDequantize(data1, f.ldType, f.ldScale);
+	}
+
+	if (update) core->regs.gpr[ra] = ea;
+}
+
+// psq_st, psq_stx, psq_stu, psq_stux.
+void Jit::PsqStore(GekkoCore* core, uint32_t ea, uint32_t packed)
+{
+	uint32_t d = (packed >> JitPs::PsqD) & 31;
+	uint32_t gqr = (packed >> JitPs::PsqGqr) & 7;
+	bool w = ((packed >> JitPs::PsqW) & 1) != 0;
+	uint32_t ra = (packed >> JitPs::PsqRa) & 31;
+	bool update = ((packed >> JitPs::PsqUpdate) & 1) != 0;
+
+	GqrFields f = GqrDecode(core->regs.spr[SPR::GQRs + gqr]);
+
+	JitPs::PsqWriteElement(core, ea, f.stType, GqrQuantize((float)core->regs.fpr[d].dbl, f.stType, f.stScale));
+	if (core->exception) return;
+
+	if (!w)
+	{
+		JitPs::PsqWriteElement(core, ea + GqrElementSize(f.stType), f.stType,
+			GqrQuantize((float)core->regs.ps1[d].dbl, f.stType, f.stScale));
+		if (core->exception) return;
+	}
+
+	if (update) core->regs.gpr[ra] = ea;
+}
+
+namespace JitPs
+{
+
+// Effective address of a quantised form, into RAX. The non-indexed forms take a
+// signed 12 bit displacement, which the interpreter extracts from the low bits
+// of the immediate, so the same extraction is done here at compile time.
+static void EmitPsqAddress(X64::Emitter& e, bool indexed, uint32_t ra, uint32_t rb, int32_t disp)
+{
+	auto gprOff = [](uint32_t n) { return GprOff + (int32_t)n * 4; };
+
+	if (indexed)
+	{
+		e.mov_r32_m(X64::RAX, RegRegs, gprOff(rb));
+		if (ra != 0)
+		{
+			e.alu_r32_m(X64::AluAdd, X64::RAX, RegRegs, gprOff(ra));
+		}
+	}
+	else
+	{
+		if (ra != 0)
+		{
+			e.mov_r32_m(X64::RAX, RegRegs, gprOff(ra));
+		}
+		else
+		{
+			e.xor_r32_r32_same(X64::RAX);
+		}
+		e.add_r32_imm(X64::RAX, (uint32_t)disp);
+	}
+}
+
+PsResult Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
 {
 	// Every PS instruction raises the FP-unavailable exception when MSR[FP] is
 	// clear. MSR is constant within a block (see gekkojit_ps.h), so it is decided
 	// here and the interpreter keeps that case.
 	if ((core->regs.msr & MSR_FP) == 0)
 	{
-		return false;
+		return PsResult::NotHandled;
 	}
 
 	uint32_t rd = (uint32_t)di.paramBits[0];		// frD
@@ -407,10 +553,65 @@ bool Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
 		Scatter(e, rd, V2);
 		break;
 
-	// Everything else - the comparison forms and the quantised loads and stores -
-	// is left to the interpreter fallback.
+	// ---- quantised paired loads and stores -------------------------------
+	// The generated code only computes the effective address and calls the
+	// helper; the GQR is read by the helper at run time, so writing one does not
+	// have to invalidate any compiled block.
+
+	case Instruction::psq_l:
+	case Instruction::psq_lu:
+	case Instruction::psq_lx:
+	case Instruction::psq_lux:
+	case Instruction::psq_st:
+	case Instruction::psq_stu:
+	case Instruction::psq_stx:
+	case Instruction::psq_stux:
+	{
+		bool indexed = (di.instr == Instruction::psq_lx || di.instr == Instruction::psq_lux ||
+			di.instr == Instruction::psq_stx || di.instr == Instruction::psq_stux);
+		bool store = (di.instr == Instruction::psq_st || di.instr == Instruction::psq_stu ||
+			di.instr == Instruction::psq_stx || di.instr == Instruction::psq_stux);
+		bool update = (di.instr == Instruction::psq_lu || di.instr == Instruction::psq_lux ||
+			di.instr == Instruction::psq_stu || di.instr == Instruction::psq_stux);
+
+		uint32_t base = (uint32_t)di.paramBits[1];					// RA
+		uint32_t index = indexed ? (uint32_t)di.paramBits[2] : 0;	// RB
+		uint32_t w = indexed ? (uint32_t)di.paramBits[3] : (uint32_t)di.paramBits[2];
+		uint32_t gqr = indexed ? (uint32_t)di.paramBits[4] : (uint32_t)di.paramBits[3];
+
+		// The gating the interpreter applies first. HID2 is constant within a
+		// block - writing it invalidates every block - so a clear bit means the
+		// interpreter has to raise the program exception, and an update form with
+		// RA = 0 is an illegal instruction there as well.
+		uint32_t hid2 = core->regs.spr[SPR::HID2];
+		if ((hid2 & HID2_PSE) == 0) return PsResult::NotHandled;
+		if (!indexed && (hid2 & HID2_LSQE) == 0) return PsResult::NotHandled;
+		if (update && base == 0) return PsResult::NotHandled;
+
+		// The interpreter takes the displacement from the low 12 bits.
+		uint32_t raw = (uint32_t)di.Imm.Signed & 0xfff;
+		int32_t disp = (raw & 0x800) ? (int32_t)(raw | 0xffff'f000u) : (int32_t)raw;
+
+		EmitPsqAddress(e, indexed, base, index, disp);
+
+		// regs.pc has to be current before the helper runs: a fault makes it
+		// raise the exception, which stores regs.pc into SRR0.
+		e.mov_m32_r(RegRegs, PcOff, RegPc);
+
+		uint32_t packed = ((uint32_t)di.paramBits[0] << JitPs::PsqD) | (gqr << JitPs::PsqGqr) |
+			(w << JitPs::PsqW) | (base << JitPs::PsqRa) | ((update ? 1u : 0u) << JitPs::PsqUpdate);
+
+		e.mov_r64_r64(Arg0, RegCore);
+		e.mov_r32_r32(Arg1, X64::RAX);
+		e.mov_r32_imm(Arg2, packed);
+		e.call_abs((uint64_t)(void*)(store ? Jit::PsqStoreEntry() : Jit::PsqLoadEntry()));
+
+		return PsResult::DoneMayExcept;
+	}
+
+	// Everything else - the comparison forms - is left to the interpreter.
 	default:
-		return false;
+		return PsResult::NotHandled;
 	}
 
 	if (IsRecordForm(di.instr))
@@ -418,7 +619,7 @@ bool Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
 		EmitComputeCr1(e);
 	}
 
-	return true;
+	return PsResult::Done;
 }
 
 }
@@ -433,7 +634,7 @@ namespace Gekko
 {
 	namespace JitPs
 	{
-		bool Translate(X64::Emitter&, GekkoCore*, const DecoderInfo&) { return false; }
+		PsResult Translate(X64::Emitter&, GekkoCore*, const DecoderInfo&) { return PsResult::NotHandled; }
 	}
 }
 
