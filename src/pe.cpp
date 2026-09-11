@@ -244,6 +244,8 @@ namespace GFX
 			// draw done
 			case PE_FINISH_ID:
 			{
+				// GXDrawDone marks the end of the frame and is how most titles present: the copied
+				// picture is complete by now.
 				gfx->GPFrameDone();
 
 				pe_done_num++;
@@ -314,20 +316,38 @@ namespace GFX
 				break;
 
 			// The copy command is the trigger of the whole copy engine. Of its operations only the
-			// clear is something the OpenGL backend can honour: the copy to main memory (display copy
-			// and texture copy) needs the EFB to be readable as a texture, which the emulator does not
-			// emulate (it renders to the back buffer, see gfx.cpp).
+			// clear and the hand-over to the display are something the OpenGL backend can honour:
+			// the copy to main memory (display copy and texture copy) needs the EFB to be readable
+			// as a texture, which the emulator does not emulate.
 			//
-			// The clear is only *recorded* here, it is performed by the frame begin. The copy command
-			// is issued at the end of a frame (to hand the finished EFB over to the display and to
-			// prepare it for the next one), while the presented frame is swapped on PE_FINISH, which
-			// comes later. Clearing right away would therefore erase the frame that is still to be
-			// displayed.
+			// The clear is only *recorded* here, it is performed by the frame begin: it belongs to
+			// the end of the frame (the finished EFB is handed over and prepared for the next one),
+			// so clearing right away would erase the frame that is still to be displayed. The swap
+			// itself happens right here, on the display copy - that is where the XFB the video
+			// interface shows is written (see GFXCore::GPDisplayCopy).
 			case PE_COPY_CMD_ID:
 				pe.copy_cmd.bits = value;
 				if (pe.copy_cmd.clear)
 				{
 					copy_clear_pending = true;
+				}
+
+				// A display copy hands the finished EFB over to the video interface as the XFB
+				// (gfx-pe.md 5.6), so the full-frame ones are a frame boundary of their own. The
+				// backend displays the EFB instead of the XFB, so the picture has to be swapped
+				// here for the titles whose movie player presents through the copy engine and waits
+				// for the retrace without ever calling GXDrawDone (the SDK THP player does that; its
+				// frames stayed on an unpresented back buffer, issue #349).
+				//
+				// A partial display copy is not a frame boundary: the bootrom and the 2D front ends
+				// write the picture in several passes (one copy per display-list buffer) and call
+				// PE_FINISH when the frame is complete. Presenting those would flicker the picture.
+				//
+				// A texture copy is an intermediate render target and never presents.
+				if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY &&
+					pe.copy_src_addr.x == 0 && pe.copy_src_size.x + 1 >= gfx->RenderWidth())
+				{
+					gfx->GPDisplayCopy();
 				}
 				break;
 

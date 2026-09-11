@@ -178,6 +178,10 @@ namespace GFX
 		if (vertex_count == 0)
 			return;
 
+		// The frame now holds content: the display copy that closes it presents this picture
+		// (see GFXCore::GPDisplayCopy).
+		gfx->GPFrameDrawn();
+
 		SetUpPipeline();
 		DrawPrimitive();
 

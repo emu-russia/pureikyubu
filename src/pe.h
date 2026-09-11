@@ -295,6 +295,13 @@ namespace GFX
 		uint32_t bits;
 	};
 
+	// PE_COPY_CMD.opcode: where the copy engine writes the EFB rectangle (gfx-pe.md 5.6, 5.7).
+	enum PE_COPY_CMD_KIND
+	{
+		PE_COPY_CMD_TEXTURE = 0,		// the rectangle becomes a texture in main memory
+		PE_COPY_CMD_DISPLAY = 1,		// the rectangle becomes the XFB the video interface shows
+	};
+
 	// 0x52
 	union PE_COPY_CMD
 	{

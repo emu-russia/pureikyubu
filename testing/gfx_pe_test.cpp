@@ -483,5 +483,65 @@ namespace pureikyubutest
 			Assert::IsFalse(right[0] == 0xff && right[1] == 0 && right[2] == 0,
 				L"the pixel outside the bounds must not be cleared");
 		}
+
+		// PE_COPY_CMD.opcode decides what the copy engine does with the EFB rectangle (gfx-pe.md 5.6,
+		// 5.7). A full-frame *display* copy writes the XFB that the video interface scans out, so it is
+		// a point at which the frame becomes visible and the emulator has to swap the EFB it displays.
+		// A *texture* copy is an intermediate render target, and a partial display copy is one pass of
+		// a picture the title finishes with PE_FINISH (the bootrom writes the logo that way), so
+		// neither of them presents: swapping there flickered the picture.
+		//
+		// This is the frame boundary the SDK THP movie player relies on: it draws a frame, copies it
+		// to the XFB and waits for the retrace without ever calling GXDrawDone (PE_FINISH). Without
+		// the swap on the full-frame display copy the Metroid Prime FMV stayed black (issue #349).
+		TEST_METHOD(Pe_OnlyAFullFrameDisplayCopyPresentsTheFrame)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+
+			m.BpLoad(PE_ZMODE_ID, 0);
+			m.BpLoad(PE_CMODE0_ID, 0x18);
+
+			m.BeginFrame();
+			DrawQuad(m, 0xff, 0xff, 0xff);
+
+			uint8_t rgb[3];
+			m.ReadColorPixel(320, 240, rgb);
+			Assert::AreEqual<int>(0xff, rgb[0], L"the quad must be in the EFB before the copy");
+
+			size_t frames = m.gfx->pe->Frames();
+
+			// The copy rectangle covers the whole render target, like the movie players' copy does.
+			m.BpLoad(PE_COPY_SRC_ADDR_ID, 0);
+			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() - 1) | ((m.gfx->RenderHeight() - 1) << 10));
+
+			GFX::PE_COPY_CMD copy{};
+
+			// A texture copy leaves the frame on the EFB: no swap.
+			copy.opcode = GFX::PE_COPY_CMD_TEXTURE;
+			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
+			Assert::AreEqual<size_t>(frames, m.gfx->pe->Frames(), L"a texture copy must not present");
+
+			// A partial display copy is one pass of a frame the title finishes with PE_FINISH.
+			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() / 2 - 1) | ((m.gfx->RenderHeight() / 2 - 1) << 10));
+			copy.opcode = GFX::PE_COPY_CMD_DISPLAY;
+			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
+			Assert::AreEqual<size_t>(frames, m.gfx->pe->Frames(), L"a partial display copy must not present");
+
+			// Drawing into the frame arms the next present again, and the full-frame display copy
+			// presents it: this is how the titles that never call GXDrawDone show their picture.
+			DrawQuad(m, 0x40, 0x40, 0x40);
+			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() - 1) | ((m.gfx->RenderHeight() - 1) << 10));
+			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
+			Assert::AreEqual<size_t>(frames + 1, m.gfx->pe->Frames(), L"a full-frame display copy must present");
+
+			// A second copy of a frame that has not been drawn into again must not present: that is
+			// what wiped the picture between frames before.
+			m.gfx->GPFrameBegin();
+			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
+			Assert::AreEqual<size_t>(frames + 1, m.gfx->pe->Frames(),
+				L"a copy of a frame with no drawing must not present");
+		}
 	};
 }
