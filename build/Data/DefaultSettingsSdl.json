@@ -1,27 +1,15 @@
 {
 	"info":
 	{
-		"description": "Default configuration. Loaded before Settings.json"
+		"description": "Default configuration for the SDL build. Loaded before SettingsSdl.json"
 	},
 
 	"ui":
 	{
 		"DOLDEBUG": false,
 		"FILTER": 4294967295,
-		"LASTDIR_ALL": "./",
-		"LASTDIR_DVD": "./",
-		"LASTDIR_MAP": "./Data",
-		"LASTDIR_PATCH": "./Data",
 		"LASTFILE": "",
-		"ONTOP": false,
 		"PATH": "./",
-		"RECENT0": "",
-		"RECENT1": "",
-		"RECENT2": "",
-		"RECENT3": "",
-		"RECENT4": "",
-		"RECENTNUM": 0,
-		"RUNONCE": true,
 		"SELECTOR": true,
 		"SMALLICONS": true,
 		"SORTVIEW": 1
@@ -49,7 +37,7 @@
 		"CP_LOG": false,
 		"BOOTROM": "Data/gc-ntsc-11.bin",
 		"DSP_DROM": "Data/dsp_drom.bin",
-		"DSP_IROM": "Data/dsp_irom.bin",
+		"DSP_IROM": "Data/dsp_irom.bin"
 	},
 
 	"hle":

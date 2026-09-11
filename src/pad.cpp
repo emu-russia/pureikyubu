@@ -8,7 +8,7 @@ Will be gradually superseded by DirectInput/SDL implementation.
 
 The code relies on polling the state of the keyboard using the Win32 GetAsyncKeyState method.
 
-The binding of VK codes to the buttons of the GameCube controller is in the configuration (Settings.json).
+The binding of VK codes to the buttons of the GameCube controller is in the configuration (SettingsWin.json).
 
 The configuration (dialog box for the user) is handled by the code in the UI.
 
