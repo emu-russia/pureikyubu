@@ -319,6 +319,8 @@ namespace GFX
 		TEV_AlphaEnv alpha_env[16]{};		// 0xC1..0xDF
 		TEV_RegisterL regl[4]{};		// 0xE0,0xE2,0xE4,0xE6
 		TEV_RegisterH regh[4]{};		// 0xE1,0xE3,0xE5,0xE7
+		TEV_KonstRegisterL kregl[4]{};	// Rev B K constants, same register ids as the colour registers
+		TEV_KonstRegisterH kregh[4]{};
 		TEV_RangeAdj_Contol rangeadj_control{};	// 0xE8
 		TEV_RangeAdj range_adj[5]{};	// 0xE9...0xED
 		TEV_FogParam0 fog_param0{};		// 0xEE

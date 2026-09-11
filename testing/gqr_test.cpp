@@ -34,48 +34,64 @@ namespace GekkoUnitTest
 
 		TEST_METHOD(Decode_FieldsSitAtTheDocumentedBitPositions)
 		{
-			// LD_SCALE in bits 2-7 (least significant numbering, as the manual's worked
-			// example 0xE000E000 = "s16 in/out, scale 0" confirms)
+			// The manual numbers the bits of the GQR figure from the most significant end (bit 0
+			// is the leftmost bit), so "LD_SCALE 2:7" is the field at the top of the word. With
+			// the usual least-significant-first numbering the fields are LD_SCALE 24:29,
+			// LD_TYPE 16:18, ST_SCALE 8:13 and ST_TYPE 0:2.
 			for (int s = -32; s <= 31; s++)
 			{
-				uint32_t gqr = ((uint32_t)S(s) << 2);
+				uint32_t gqr = ((uint32_t)S(s) << 24);
 				Assert::AreEqual((int)S(s), (int)Gekko::GqrDecode(gqr).ldScale);
 				Assert::AreEqual((int)QuantType::SingleFloat, (int)Gekko::GqrDecode(gqr).ldType);
 				Assert::AreEqual(0, (int)Gekko::GqrDecode(gqr).stScale);
 				Assert::AreEqual((int)QuantType::SingleFloat, (int)Gekko::GqrDecode(gqr).stType);
 			}
 
-			// LD_TYPE in bits 13-15
+			// LD_TYPE in bits 16-18
 			for (int t = 0; t < 8; t++)
 			{
-				uint32_t gqr = ((uint32_t)t << 13);
+				uint32_t gqr = ((uint32_t)t << 16);
 				Assert::AreEqual(t, (int)Gekko::GqrDecode(gqr).ldType);
 			}
 
-			// ST_SCALE in bits 18-23
+			// ST_SCALE in bits 8-13
 			for (int s = -32; s <= 31; s++)
 			{
-				uint32_t gqr = ((uint32_t)S(s) << 18);
+				uint32_t gqr = ((uint32_t)S(s) << 8);
 				Assert::AreEqual((int)S(s), (int)Gekko::GqrDecode(gqr).stScale);
 			}
 
-			// ST_TYPE in bits 29-31
+			// ST_TYPE in bits 0-2
 			for (int t = 0; t < 8; t++)
 			{
-				uint32_t gqr = ((uint32_t)t << 29);
+				uint32_t gqr = ((uint32_t)t);
 				Assert::AreEqual(t, (int)Gekko::GqrDecode(gqr).stType);
 			}
 		}
 
-		TEST_METHOD(Decode_TypicalS16InS16OutGqr)
+		TEST_METHOD(Decode_TypicalQuantizedVertexFormatGqrs)
 		{
-			// The manual's example configuration "s16 loads & stores, scale 0"
-			uint32_t gqr = 0xE000E000;
+			// The values the SDK packs for the quantized vertex formats (u8, u16, s8, s16, all
+			// with scale 0) - the packer puts the type in the top field of each half.
+			uint32_t gqr = 0x00040004;
 			Gekko::GqrFields f = Gekko::GqrDecode(gqr);
-			Assert::AreEqual((int)QuantType::S16, (int)f.ldType);
-			Assert::AreEqual((int)QuantType::S16, (int)f.stType);
+			Assert::AreEqual((int)QuantType::U8, (int)f.ldType);
+			Assert::AreEqual((int)QuantType::U8, (int)f.stType);
 			Assert::AreEqual(0, (int)f.ldScale);
 			Assert::AreEqual(0, (int)f.stScale);
+
+			gqr = 0x00070007;
+			f = Gekko::GqrDecode(gqr);
+			Assert::AreEqual((int)QuantType::S16, (int)f.ldType);
+			Assert::AreEqual((int)QuantType::S16, (int)f.stType);
+
+			// A nonzero scale on both halves (u8, scale -3)
+			gqr = 0x3D043D04;
+			f = Gekko::GqrDecode(gqr);
+			Assert::AreEqual((int)QuantType::U8, (int)f.ldType);
+			Assert::AreEqual((int)QuantType::U8, (int)f.stType);
+			Assert::AreEqual(-3, Gekko::GqrScaleExponent(f.ldScale));
+			Assert::AreEqual(-3, Gekko::GqrScaleExponent(f.stScale));
 		}
 
 		TEST_METHOD(Decode_ScaleFieldIsSixBitTwosComplement)

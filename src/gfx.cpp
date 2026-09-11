@@ -435,6 +435,12 @@ namespace GFX
 					reg->AddUInt32(nullptr, gfx->tev->State().regl[i].bits);
 					reg->AddUInt32(nullptr, gfx->tev->State().regh[i].bits);
 				}
+				Json::Value* konst = tev->AddArray("konstReg");
+				for (int i = 0; i < 4; i++)
+				{
+					konst->AddUInt32(nullptr, gfx->tev->State().kregl[i].bits);
+					konst->AddUInt32(nullptr, gfx->tev->State().kregh[i].bits);
+				}
 				Json::Value* ksel = tev->AddArray("ksel");
 				for (int i = 0; i < 8; i++)
 				{
@@ -1306,6 +1312,12 @@ namespace GFX
 
 		std::vector<uint8_t> pixels((size_t)w * h * 3);
 		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+
+		// glReadPixels returns RGB triplets, while a 24-bit BMP stores them as BGR.
+		for (size_t i = 0; i < (size_t)w * h; i++)
+		{
+			std::swap(pixels[i * 3 + 0], pixels[i * 3 + 2]);
+		}
 
 		// BMP is bottom-up, exactly like the GL framebuffer, so no flip is needed
 		uint8_t hdr[54] = { 0 };

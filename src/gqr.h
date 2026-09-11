@@ -29,11 +29,12 @@ namespace Gekko
 		S16 = 7,			// signed 16-bit integer
 	};
 
-	// GQR bit fields (table 2-16). The table numbers bits from the least significant one:
-	// LD_SCALE 2:7, LD_TYPE 13:15, ST_SCALE 18:23, ST_TYPE 29:31. The manual's own worked
-	// example confirms this reading - GQR0 = 0xE000E000 is documented as "s16 loads and
-	// stores, scale 0", which is what this decoding produces (and the mirror-image reading
-	// would call it "float, scale -32").
+	// GQR bit fields (table 2-16). The manual numbers the bits of a register from the
+	// most significant one (bit 0 is the leftmost bit of Figure 2-15), so LD_SCALE in
+	// "bits 2:7" is the field at the top of the word: with the usual LSB numbering the
+	// layout is LD_SCALE 24:29, LD_TYPE 16:18, ST_SCALE 8:13, ST_TYPE 0:2. The SDK's own
+	// GQR values confirm it - the vertex formats pack to 0x00040004 (u8), 0x00050005 (u16),
+	// 0x00060006 (s8) and 0x00070007 (s16), all with scale 0.
 	struct GqrFields
 	{
 		uint8_t ldScale;			// 6-bit two's complement (-32..+31)
@@ -46,10 +47,10 @@ namespace Gekko
 	{
 
 		GqrFields f;
-		f.ldScale = (uint8_t)((gqr >> 2) & 0x3F);
-		f.ldType = (QuantType)((gqr >> 13) & 7);
-		f.stScale = (uint8_t)((gqr >> 18) & 0x3F);
-		f.stType = (QuantType)((gqr >> 29) & 7);
+		f.ldScale = (uint8_t)((gqr >> 24) & 0x3F);
+		f.ldType = (QuantType)((gqr >> 16) & 7);
+		f.stScale = (uint8_t)((gqr >> 8) & 0x3F);
+		f.stType = (QuantType)(gqr & 7);
 		return f;
 	}
 
