@@ -1120,6 +1120,8 @@ namespace GFX
 			msloc[i].bits = 0;
 		}
 
+		frame_dirty = false;
+
 		xf->Reset();
 		su->Reset();
 		ras->Reset();
@@ -1244,11 +1246,13 @@ namespace GFX
 
 		glDrawBuffer(GL_BACK);
 
-		if (pe->TakePendingCopyClear())
+		PixelEngine::CopyClearState clear{};
+
+		if (pe->TakePendingCopyClear(&clear))
 		{
 			// A copy command of the previous frame asked for the EFB to be cleared. It is the copy
-			// engine's clear, so it honours the PE_COPY_CMD bounds and restores the PE state itself.
-			pe->ApplyCopyClear();
+			// engine's clear, so it restores the PE state itself.
+			pe->ApplyCopyClear(clear);
 		}
 		else
 		{
@@ -1361,7 +1365,35 @@ namespace GFX
 	// rendering complete, swap buffers, sync to vretrace
 	void GFXCore::GPFrameDone()
 	{
-		GL_EndFrame();
+		// PE_FINISH / PE_TOKEN (GXDrawDone and friends) are the frame boundary most titles use: the
+		// picture is complete by then. A frame that a full-frame display copy has already presented
+		// (the movie players) holds nothing new, so it is not swapped a second time.
+		if (frame_dirty)
+		{
+			GL_EndFrame();
+			frame_dirty = false;
+		}
+
+		frame_done = true;
+	}
+
+	// A full-frame display copy (PE_COPY_CMD.opcode = display) makes the finished EFB the XFB that
+	// the video interface scans out (gfx-pe.md 5.6), so it is the moment the frame becomes visible:
+	// the copy engine hands the picture over to the display. The backend displays the EFB itself
+	// instead of a real XFB, which is why the swap happens here.
+	//
+	// This is what drives the titles whose movie player draws a frame, copies it to the XFB and
+	// waits for the retrace without ever calling GXDrawDone: without the swap their frames would
+	// stay on an unpresented back buffer, which is what kept the Metroid Prime FMV black (#349).
+	// See the PE copy command for why only the full-frame copies present.
+	void GFXCore::GPDisplayCopy()
+	{
+		if (frame_dirty)
+		{
+			GL_EndFrame();
+			frame_dirty = false;
+		}
+
 		frame_done = true;
 	}
 

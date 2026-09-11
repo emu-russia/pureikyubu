@@ -94,6 +94,13 @@ namespace GFX
 
 		bool frame_done = true;
 		bool frameReady = false;
+
+		// The frame holds content that has not been handed to the display yet. A display copy only
+		// presents such a frame: the copy engine may be asked to write the XFB several times per
+		// frame (init sequences, two XFB buffers), and swapping for every copy would show the
+		// cleared EFB of the next frame in between (a flicker).
+		bool frame_dirty = false;
+
 		bool backend_started = false;
 
 #if GFX_USE_SDL_WINDOW
@@ -129,6 +136,12 @@ namespace GFX
 		void GL_EndFrame();
 		void GPFrameBegin();
 		void GPFrameDone();
+
+		//! A full-frame display copy handed the finished EFB over to the display (PE_COPY_CMD.opcode).
+		void GPDisplayCopy();
+
+		//! A primitive was rasterized: the frame now holds content the display has not seen yet.
+		void GPFrameDrawn() { frame_dirty = true; }
 
 		void ResizeRenderTarget(size_t width, size_t height);
 

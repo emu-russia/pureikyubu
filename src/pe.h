@@ -295,6 +295,13 @@ namespace GFX
 		uint32_t bits;
 	};
 
+	// PE_COPY_CMD.opcode: where the copy engine writes the EFB rectangle (gfx-pe.md 5.6, 5.7).
+	enum PE_COPY_CMD_KIND
+	{
+		PE_COPY_CMD_TEXTURE = 0,		// the rectangle becomes a texture in main memory
+		PE_COPY_CMD_DISPLAY = 1,		// the rectangle becomes the XFB the video interface shows
+	};
+
 	// 0x52
 	union PE_COPY_CMD
 	{
@@ -461,8 +468,20 @@ namespace GFX
 		size_t frames = 0;
 		size_t pe_done_num = 0;   // number of drawdone (PE_FINISH) events
 
-		//! A PE_COPY_CMD with the clear bit set was issued and its clear has not been performed yet.
-		bool copy_clear_pending = false;
+		//! The clear values of the last PE_COPY_CMD that asked for one, captured when the command was
+		//! issued. The clear itself runs at the next frame begin (it prepares the EFB for the frame
+		//! that follows the copy, and doing it on arrival would wipe the frame that is still to be
+		//! displayed), and by then the game may already have programmed the registers for its next
+		//! copy: reading the live registers there used the wrong Z, which left the depth buffer of
+		//! Metroid Prime at Z=0 and made its LEQUAL depth test reject every draw (issue #349).
+		struct CopyClearState
+		{
+			PE_COPY_CLEAR_AR ar{};
+			PE_COPY_CLEAR_GB gb{};
+			PE_COPY_CLEAR_Z z{};
+			bool pending = false;
+		};
+		CopyClearState copy_clear{};
 
 		PERegs peregs{};	// PE PI regs
 
@@ -473,9 +492,6 @@ namespace GFX
 
 		void PE_DONE_INT();
 		void PE_TOKEN_INT();
-
-		//! The bounds of the copy operation, in EFB pixels.
-		void CopyBounds(int* x, int* y, int* width, int* height);
 
 		// Pixel Engine mapped regs
 		static void PERegRead(uint32_t addr, uint32_t* reg, void* context);
@@ -490,13 +506,13 @@ namespace GFX
 		void ApplyColorMode();
 
 		//! The copy engine's clear operation (PE_COPY_CMD with the clear bit set).
-		void ApplyCopyClear();
+		void ApplyCopyClear(const CopyClearState& clear);
 
-		//! Take the pending copy-clear flag (see the PE_COPY_CMD handling). The clear itself is
-		//! performed by the frame begin, because the clear prepares the EFB for the frame that
-		//! follows the copy: doing it the moment the copy command arrives would wipe the frame that
-		//! is about to be displayed (the swap happens on PE_FINISH, after the copy).
-		bool TakePendingCopyClear();
+		//! Take the pending copy clear (see the PE_COPY_CMD handling). It is performed by the frame
+		//! begin, because it prepares the EFB for the frame that follows the copy: doing it the moment
+		//! the copy command arrives would wipe the frame that is about to be displayed (the swap
+		//! happens later, on PE_FINISH or on a full-frame display copy).
+		bool TakePendingCopyClear(CopyClearState* state);
 
 		PixelEngine(Flipper::Flipper* flipper, HWConfig *config, GFXCore *parent_gfx);
 		~PixelEngine();

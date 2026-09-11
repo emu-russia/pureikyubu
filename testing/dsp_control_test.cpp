@@ -583,6 +583,101 @@ namespace DspUnitTest
 			Assert::AreEqual((uint16_t)0x87FF, m.DMem(0xFFD8), L"ACCAH keeps the direction bit and bits 10:0 only");
 		}
 
+		// ---------------------------------------------------------------
+		// ARAM DMA (issue #349 / #111)
+		// ---------------------------------------------------------------
+
+		/// <summary>
+		/// Program a whole ARAM transfer through the AM* registers. The low word of the block
+		/// length starts the transfer, exactly as the AR driver does it: the length field is a
+		/// byte count stored in bits 25:5 (dsp.md section 5.4), so the driver writes the
+		/// 32-byte aligned byte count straight into it.
+		/// </summary>
+		void StartAramCopy(uint32_t mmaddr, uint32_t araddr, uint32_t length, bool aramToRam)
+		{
+			// The ARAM registers live in the Flipper PI DSP register space, not in DSP data
+			// memory: the AR driver reaches them through the PI traps that AROpen installs.
+			PIRegWrite(PI_REGSPACE_DSP | AMMAH, mmaddr >> 16);
+			PIRegWrite(PI_REGSPACE_DSP | AMMAL, mmaddr & 0xFFFF);
+			PIRegWrite(PI_REGSPACE_DSP | AMAAH, araddr >> 16);
+			PIRegWrite(PI_REGSPACE_DSP | AMAAL, araddr & 0xFFFF);
+			// Bit 15 of AMBLH is the direction; the block length is counted in 32-byte units,
+			// so its bit 5 is bit 0 of the low word (dsp.md section 7.2).
+			PIRegWrite(PI_REGSPACE_DSP | AMBLH, (aramToRam ? 0x8000u : 0x0000u) | ((length >> 16) & 0x03FFu));
+			PIRegWrite(PI_REGSPACE_DSP | AMBLL, length & 0xFFFFu);		// starts the transfer
+		}
+
+		TEST_METHOD(AramDma_MovesTheWholeBlockAndRaisesTheCompletionInterrupt)
+		{
+			// The transfer engine streams the whole block through the ARAM controller and raises
+			// ARINT when the last byte has been written (dsp.md section 7, CDCR bit 5).
+			uint8_t* ram = DspTestMainMemoryBase();
+
+			for (uint32_t i = 0; i < 0x60; i++)
+			{
+				ram[0x1000 + i] = (uint8_t)(i + 1);
+			}
+
+			StartAramCopy(0x00001000, 0x00001000, 0x60, false);
+
+
+			for (uint32_t i = 0; i < 0x60; i++)
+			{
+				Assert::AreEqual((uint8_t)(i + 1), DSP::aram.mem[0x1000 + i], L"RAM->ARAM must copy the whole block");
+			}
+
+			Assert::AreEqual(0u, (uint32_t)DSP::aram.cnt, L"the block counter must be drained");
+			Assert::IsTrue((DSP::dsp_ai.cdcr & CDCR_ARINT) != 0, L"the completion interrupt must have been raised");
+			Assert::IsTrue((DSP::dsp_ai.cdcr & CDCR_ARDMA) == 0, L"the DMA-in-progress bit must be clear after the transfer");
+		}
+
+		TEST_METHOD(AramDma_SecondRequestWhileBusyIsNotDropped)
+		{
+			// Issue #349: Metroid Prime issues the next block before the previous transfer engine
+			// has finished. The emulator used to hit its "the thread is still running" guard, drop
+			// the request and then wait forever for a completion interrupt that never came, which
+			// hung the game right after the intro movie. A request must complete, and it must
+			// complete *after* the one it is queued behind, without dropping either block.
+			uint8_t* ram = DspTestMainMemoryBase();
+
+			for (uint32_t i = 0; i < 0x60; i++)
+			{
+				ram[0x2000 + i] = 0x80;
+				ram[0x3000 + i] = 0x40;
+			}
+
+			StartAramCopy(0x00002000, 0x00002000, 0x60, false);
+
+			// The driver already knows the DMA register is free again as soon as it has been read
+			// back as idle, so a second block must go through as well.
+			StartAramCopy(0x00003000, 0x00003000, 0x60, false);
+
+			for (uint32_t i = 0; i < 0x60; i++)
+			{
+				Assert::AreEqual((uint8_t)0x80, DSP::aram.mem[0x2000 + i], L"the first block must survive");
+				Assert::AreEqual((uint8_t)0x40, DSP::aram.mem[0x3000 + i], L"the second block must not be dropped");
+			}
+
+			Assert::AreEqual(0, DspTestHaltCount(), L"a busy transfer engine must never Halt");
+		}
+
+		TEST_METHOD(AramDma_CopiesBackToMainMemory)
+		{
+			uint8_t* ram = DspTestMainMemoryBase();
+
+			for (uint32_t i = 0; i < 0x60; i++)
+			{
+				DSP::aram.mem[0x4000 + i] = (uint8_t)(0xA0 + i);
+			}
+
+			StartAramCopy(0x00004000, 0x00004000, 0x60, true);
+
+			for (uint32_t i = 0; i < 0x60; i++)
+			{
+				Assert::AreEqual((uint8_t)(0xA0 + i), ram[0x4000 + i], L"ARAM->RAM must copy the whole block");
+			}
+		}
+
 		TEST_METHOD(Mvsi_SignExtendsShortImmediate)
 		{
 			m.Run({ Enc::Mvsi(R8A_A0, (int8_t)0x80) }, 1);

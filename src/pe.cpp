@@ -244,6 +244,8 @@ namespace GFX
 			// draw done
 			case PE_FINISH_ID:
 			{
+				// GXDrawDone marks the end of the frame and is how most titles present: the copied
+				// picture is complete by now.
 				gfx->GPFrameDone();
 
 				pe_done_num++;
@@ -314,20 +316,43 @@ namespace GFX
 				break;
 
 			// The copy command is the trigger of the whole copy engine. Of its operations only the
-			// clear is something the OpenGL backend can honour: the copy to main memory (display copy
-			// and texture copy) needs the EFB to be readable as a texture, which the emulator does not
-			// emulate (it renders to the back buffer, see gfx.cpp).
+			// clear and the hand-over to the display are something the OpenGL backend can honour:
+			// the copy to main memory (display copy and texture copy) needs the EFB to be readable
+			// as a texture, which the emulator does not emulate.
 			//
-			// The clear is only *recorded* here, it is performed by the frame begin. The copy command
-			// is issued at the end of a frame (to hand the finished EFB over to the display and to
-			// prepare it for the next one), while the presented frame is swapped on PE_FINISH, which
-			// comes later. Clearing right away would therefore erase the frame that is still to be
-			// displayed.
+			// The clear is only *recorded* here, it is performed by the frame begin: it belongs to
+			// the end of the frame (the finished EFB is handed over and prepared for the next one),
+			// so clearing right away would erase the frame that is still to be displayed. The swap
+			// itself happens right here, on the display copy - that is where the XFB the video
+			// interface shows is written (see GFXCore::GPDisplayCopy).
 			case PE_COPY_CMD_ID:
 				pe.copy_cmd.bits = value;
 				if (pe.copy_cmd.clear)
 				{
-					copy_clear_pending = true;
+					// Capture the clear values now: the clear runs at the next frame begin, and the
+					// game may have programmed the registers for its next copy by then.
+					copy_clear.ar = pe.copy_clear_ar;
+					copy_clear.gb = pe.copy_clear_gb;
+					copy_clear.z = pe.copy_clear_z;
+					copy_clear.pending = true;
+				}
+
+				// A display copy hands the finished EFB over to the video interface as the XFB
+				// (gfx-pe.md 5.6), so the full-frame ones are a frame boundary of their own. The
+				// backend displays the EFB instead of the XFB, so the picture has to be swapped
+				// here for the titles whose movie player presents through the copy engine and waits
+				// for the retrace without ever calling GXDrawDone (the SDK THP player does that; its
+				// frames stayed on an unpresented back buffer, issue #349).
+				//
+				// A partial display copy is not a frame boundary: the bootrom and the 2D front ends
+				// write the picture in several passes (one copy per display-list buffer) and call
+				// PE_FINISH when the frame is complete. Presenting those would flicker the picture.
+				//
+				// A texture copy is an intermediate render target and never presents.
+				if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY &&
+					pe.copy_src_addr.x == 0 && pe.copy_src_size.x + 1 >= gfx->RenderWidth())
+				{
+					gfx->GPDisplayCopy();
 				}
 				break;
 
@@ -472,36 +497,15 @@ namespace GFX
 			glDisable(GL_DITHER);
 	}
 
-	// The copy bounds come from PE_XBOUND / PE_YBOUND (gfx-pe.md 6.17). The clamp bits of
-	// PE_COPY_CMD belong to the vertical filter and not to the bounds, so they are not consulted.
-	void PixelEngine::CopyBounds(int* x, int* y, int* width, int* height)
-	{
-		int left = (int)pe.xbound.left;
-		int right = (int)pe.xbound.right;
-		int top = (int)pe.ybound.top;
-		int bottom = (int)pe.ybound.bottom;
-
-		if (right < left)
-		{
-			int t = left; left = right; right = t;
-		}
-		if (bottom < top)
-		{
-			int t = top; top = bottom; bottom = t;
-		}
-
-		*x = left;
-		*y = top;
-		*width = right - left + 1;
-		*height = bottom - top + 1;
-	}
-
-	// The copy engine's clear fills the (optionally bounded) EFB region with the PE clear colour and
-	// the clear Z, without depth testing or blending.
-	void PixelEngine::ApplyCopyClear()
+	// The copy engine's clear fills the EFB with the PE clear colour and the clear Z, without depth
+	// testing or blending, using the values the copy that asked for it was programmed with (see
+	// CopyClearState). The hardware clears only the rectangle the copy read, but the backend displays
+	// the whole EFB (a real console shows the scaled XFB instead), so the whole render target is
+	// cleared here: leaving the rest of it alone smeared the previous frame into the part of the
+	// picture the copy does not cover.
+	void PixelEngine::ApplyCopyClear(const CopyClearState& clear)
 	{
 		int x = 0, y = 0, w = (int)gfx->scr_w, h = (int)gfx->scr_h;
-		CopyBounds(&x, &y, &w, &h);
 
 		glScissor(x, (int)gfx->scr_h - (y + h), w, h);
 		glDisable(GL_BLEND);
@@ -515,11 +519,11 @@ namespace GFX
 		glDepthMask(GL_TRUE);
 
 		glClearColor(
-			(float)pe.copy_clear_ar.red / 255.0f,
-			(float)pe.copy_clear_gb.green / 255.0f,
-			(float)pe.copy_clear_gb.blue / 255.0f,
-			(float)pe.copy_clear_ar.alpha / 255.0f);
-		glClearDepth((double)(pe.copy_clear_z.value / 16777215.0));
+			(float)clear.ar.red / 255.0f,
+			(float)clear.gb.green / 255.0f,
+			(float)clear.gb.blue / 255.0f,
+			(float)clear.ar.alpha / 255.0f);
+		glClearDepth((double)(clear.z.value / 16777215.0));
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// The clear bypassed the GL state the registers describe, so it is re-applied
@@ -529,18 +533,23 @@ namespace GFX
 		glScissor(0, 0, (GLsizei)gfx->scr_w, (GLsizei)gfx->scr_h);
 	}
 
-	bool PixelEngine::TakePendingCopyClear()
+	bool PixelEngine::TakePendingCopyClear(CopyClearState* state)
 	{
-		bool pending = copy_clear_pending;
-		copy_clear_pending = false;
-		return pending;
+		if (!copy_clear.pending)
+		{
+			return false;
+		}
+
+		*state = copy_clear;
+		copy_clear.pending = false;
+		return true;
 	}
 
 	void PixelEngine::Reset()
 	{
 		pe = PEState{};
 		peregs = PERegs{};
-		copy_clear_pending = false;
+		copy_clear = CopyClearState{};
 
 		// The hardware reset values that the specification states (gfx-pe.md 6.5, 6.8, 6.20)
 		pe.field_mask.bits = 0x3;

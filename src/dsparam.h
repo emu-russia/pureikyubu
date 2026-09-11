@@ -60,10 +60,6 @@ namespace DSP
 		volatile uint32_t    cnt;                // AMBLH/L - block length (bit 31 = direction)
 		volatile bool        masked;             // AMDM - ARAM-DMA requests masked by the DSP (ARAM dedicated to the accelerator)
 		uint16_t    amcr;               // AMCR (0x12) - the AR driver stores the ARAM size code here
-		Thread* dmaThread;
-		int64_t gekkoTicks;
-		size_t gekkoTicksPerSlice;
-		bool dspRunningBeforeAramDma;
 		bool log;
 	};
 

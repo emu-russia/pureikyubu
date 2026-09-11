@@ -59,6 +59,47 @@ namespace pureikyubutest
 		// The register file and the CP interface
 		// =========================================================================================
 
+		// The hardware reset values of the matrix RAM and the colour registers are undefined, so the
+		// emulator starts from the state the GX SDK's GXInit establishes. A title may rely on it:
+		// Metroid Prime and Zelda select the SDK's identity texture matrix (GX_IDENTITY = 60) by
+		// index without ever loading it - a zero matrix collapses every texture coordinate to (0, 0)
+		// and the title draws one texel stretched over the screen (issue #349) - and they leave the
+		// material and the channel controls alone, which the pixel engine's alpha blend needs to be
+		// opaque.
+		TEST_METHOD(Xf_ResetInstallsTheGxInitState)
+		{
+			GfxTestMachine& m = M();
+
+			const GFX::XFState& xf = m.gfx->xf->xf;
+
+			// The identity geometry matrix (GX_PNMTX0) and the identity normal matrix.
+			Assert::AreEqual(1.0f, xf.mvTexMtx[0], L"geometry matrix [0][0]");
+			Assert::AreEqual(1.0f, xf.mvTexMtx[5], L"geometry matrix [1][1]");
+			Assert::AreEqual(1.0f, xf.mvTexMtx[10], L"geometry matrix [2][2]");
+			Assert::AreEqual(0.0f, xf.mvTexMtx[1], L"geometry matrix off-diagonal");
+			Assert::AreEqual(1.0f, xf.nrmMtx[0], L"normal matrix [0][0]");
+			Assert::AreEqual(1.0f, xf.nrmMtx[4], L"normal matrix [1][1]");
+			Assert::AreEqual(1.0f, xf.nrmMtx[8], L"normal matrix [2][2]");
+
+			// The identity texture matrix the SDK reserves at GX_IDENTITY (60) and the dual-texture
+			// one at GX_DTTIDENTITY (61), both 3x4 rows of four words.
+			for (int i = 0; i < 12; i++)
+			{
+				float expected = ((i % 5) == 0) ? 1.0f : 0.0f;		// [0][0], [1][1], [2][2]
+				Assert::AreEqual(expected, xf.mvTexMtx[60 * 4 + i], L"GX_IDENTITY texture matrix");
+				Assert::AreEqual(expected, xf.dualTexMtx[61 * 4 + i], L"GX_DTTIDENTITY dual texture matrix");
+			}
+
+			// GXSetChanAmbColor(BLACK) / GXSetChanMatColor(WHITE) and the channel controls that take
+			// the colour from the vertex.
+			Assert::AreEqual<unsigned>(0x00000000, xf.ambient[0].RGBA, L"ambient 0");
+			Assert::AreEqual<unsigned>(0xFFFFFFFF, xf.material[0].RGBA, L"material 0");
+			Assert::AreEqual<unsigned>(0xFFFFFFFF, xf.material[1].RGBA, L"material 1");
+			Assert::AreEqual<unsigned>(0x401, xf.colorControl[0].bits, L"colour 0 control");
+			Assert::AreEqual<unsigned>(0x401, xf.alphaControl[0].bits, L"alpha 0 control");
+			Assert::AreEqual<unsigned>(0x401, xf.alphaControl[1].bits, L"alpha 1 control");
+		}
+
 		TEST_METHOD(Xf_MatrixRamIsWrittenInBlocksAndReadBack)
 		{
 			GfxTestMachine& m = M();
