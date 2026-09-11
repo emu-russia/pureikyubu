@@ -93,7 +93,9 @@ namespace Gekko
 
 		regs.tb.uval = 0;
 		regs.spr[SPR::HID1] = 0x8000'0000;
-		regs.spr[SPR::DEC] = 0;
+		// The decrementer produces an exception on underflow, so it starts out negative:
+		// the program has to reload it with a positive value to arm the first exception.
+		regs.spr[SPR::DEC] = 0xffff'ffff;
 		regs.spr[SPR::CTR] = 0;
 
 		gatherBuffer->Reset();
@@ -111,13 +113,26 @@ namespace Gekko
 	{
 		regs.tb.uval += CounterStep;         // timer
 
+		uint32_t old = regs.spr[SPR::DEC];
 		regs.spr[SPR::DEC] -= DecrementerStep;          // decrementer
 
-		// The decrementer exception request is level-sensitive: it stays pending until the
-		// decrementer is reloaded with a positive value, so it must not be lost (as it would
-		// be with an edge-triggered request) while MSR[EE] is cleared.
+		if (regs.spr[SPR::DEC] & 0x8000'0000)
+		{
+			// Underflow. The request is latched, so that it is not lost while MSR[EE] is cleared,
+			// but it is generated only once per underflow: the decrementer has to be reloaded with
+			// a positive value before the next exception can be requested.
 
-		decreq = (regs.spr[SPR::DEC] & 0x8000'0000) != 0;
+			if (!(old & 0x8000'0000))
+			{
+				decreq = 1;
+			}
+		}
+		else
+		{
+			// A positive decrementer clears a pending underflow request.
+
+			decreq = 0;
+		}
 	}
 
 	int64_t GekkoCore::GetTicks()
