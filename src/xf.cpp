@@ -1067,10 +1067,53 @@ void main()
 		xf.projectionParam[0] = 1.0f;
 		xf.projectionParam[2] = 1.0f;
 		xf.projectionParam[4] = 1.0f;
+
+		SetGxInitDefaults();
 	}
 
 	TransformUnit::~TransformUnit()
 	{
+	}
+
+	// The state the GX SDK's GXInit establishes in the XF before a title draws anything. The hardware
+	// reset values are undefined (gfx-xf.md 4.6.7), the SDK's are not, and a title may rely on them:
+	// Metroid Prime and Zelda select the SDK's identity texture matrix by index without ever loading
+	// it, and they leave the material and the channel controls alone. Without the identity matrices
+	// the texture coordinates of every draw collapse to (0, 0) - one texel stretched over the whole
+	// screen - and without the white material the lighting alpha is zero, which the pixel engine's
+	// SRCALPHA / INVSRCALPHA blend then turns into an invisible draw. The values below are the ones
+	// the real IPL's GXInit leaves in the registers (verified by tracing a bootrom run).
+	void TransformUnit::SetGxInitDefaults()
+	{
+		// GX_PNMTX0 - the geometry and normal identity matrices. Rows are four / three words wide.
+		const float mtx3x4[12] = { 1,0,0,0, 0,1,0,0, 0,0,1,0 };
+		const float mtx3x3[9] = { 1,0,0, 0,1,0, 0,0,1 };
+
+		for (int i = 0; i < 12; i++)
+			xf.mvTexMtx[i] = mtx3x4[i];
+		for (int i = 0; i < 9; i++)
+			xf.nrmMtx[i] = mtx3x3[i];
+
+		// GX_IDENTITY (60) and GX_DTTIDENTITY (61): the identity texture and dual-texture matrices.
+		for (int i = 0; i < 12; i++)
+		{
+			xf.mvTexMtx[GX_IDENTITY * 4 + i] = mtx3x4[i];
+			xf.dualTexMtx[GX_DTTIDENTITY * 4 + i] = mtx3x4[i];
+		}
+
+		// GXSetChanAmbColor(BLACK) / GXSetChanMatColor(WHITE) for both channels.
+		xf.ambient[0].RGBA = 0;
+		xf.ambient[1].RGBA = 0;
+		xf.material[0].RGBA = 0xFFFFFFFF;
+		xf.material[1].RGBA = 0xFFFFFFFF;
+
+		// GXSetChanCtrl(..., GX_SRC_REG, GX_SRC_VTX, ...) for the four colour/alpha controls:
+		// the material comes from the vertex colour and the lighting is the constant 1.0.
+		for (int i = 0; i < 2; i++)
+		{
+			xf.colorControl[i].bits = 0x401;
+			xf.alphaControl[i].bits = 0x401;
+		}
 	}
 
 	void TransformUnit::Reset()
@@ -1087,6 +1130,8 @@ void main()
 		xf.projectionParam[0] = 1.0f;
 		xf.projectionParam[2] = 1.0f;
 		xf.projectionParam[4] = 1.0f;
+
+		SetGxInitDefaults();
 
 		// The GL viewport is not refreshed here: the zeroed viewport registers do not describe one.
 		// It is restored by GFXCore::ApplyDefaultGLState().

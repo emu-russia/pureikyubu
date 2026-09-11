@@ -333,6 +333,11 @@ namespace GFX
 
 #pragma pack(pop)
 
+	// The texture matrix slots the GX SDK reserves for the identity matrices. GXInit loads them
+	// there and a title selects them by index (the GX SDK calls them GX_IDENTITY and GX_DTTIDENTITY).
+	#define GX_IDENTITY     60
+	#define GX_DTTIDENTITY  61
+
 	class TransformUnit
 	{
 		friend GFXCore;
@@ -431,5 +436,9 @@ namespace GFX
 
 		//! Put the XF register state and the CP interface back into the reset state.
 		void Reset();
+
+		//! Put the matrix RAM, the material/ambient colours and the channel controls at the values
+		//! the GX SDK's GXInit programs.
+		void SetGxInitDefaults();
 	};
 }

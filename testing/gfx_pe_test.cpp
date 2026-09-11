@@ -438,14 +438,16 @@ namespace pureikyubutest
 		// The copy engine
 		// =========================================================================================
 
-		// PE_COPY_CMD with the clear bit set asks the copy engine to clear the EFB region bounded by
-		// PE_XBOUND / PE_YBOUND with the PE clear values (gfx-pe.md 6.15, 6.17).
+		// PE_COPY_CMD with the clear bit set asks the copy engine to clear the EFB with the PE clear
+		// values while it copies the finished frame out (gfx-pe.md 5.6).
 		//
 		// A copy command is issued at the end of a frame: the finished EFB is handed over to the
-		// display and is prepared for the next frame. The displayed frame is swapped on PE_FINISH,
-		// which comes after the copy, so the clear must not run when the command arrives - it would
-		// erase the frame that is still to be shown (that is what turned the bootrom screen black).
-		// The clear is performed by the frame begin, which keeps the bounds.
+		// display and is prepared for the next frame. The clear must not run when the command arrives
+		// - it would erase the frame that is still to be shown (that is what turned the bootrom screen
+		// black) - so the frame begin performs it, with the values this copy was programmed with. The
+		// live registers cannot be used there: by then the game may have programmed them for its next
+		// copy, and Metroid Prime left the clear Z at 0 that way, which made its LEQUAL depth test
+		// reject every draw (issue #349).
 		TEST_METHOD(Pe_CopyClearKeepsTheCopiedFrameAndClearsTheNextOne)
 		{
 			RequireGL();
@@ -458,30 +460,28 @@ namespace pureikyubutest
 			m.BeginFrame();
 			DrawQuad(m, 0x80, 0x80, 0x80);
 
-			// Clear the left half to red
+			// The clear colour of this copy, and the depth it must leave behind.
 			m.BpLoad(PE_COPY_CLEAR_AR_ID, 0xff);			// red = 0xff, alpha = 0
 			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0);				// blue = 0, green = 0
-			m.BpLoad(PE_XBOUND_ID, (0u << 0) | (319u << 10));
-			m.BpLoad(PE_YBOUND_ID, (0u << 0) | (479u << 10));
+			m.BpLoad(PE_COPY_CLEAR_Z_ID, 0x800000);
 			m.BpLoad(PE_COPY_CMD_ID, 1u << 11);				// clear
 
-			uint8_t left[3], right[3];
-			m.ReadColorPixel(100, 240, left);
-			m.ReadColorPixel(500, 240, right);
+			uint8_t rgb[3];
+			m.ReadColorPixel(320, 240, rgb);
+			Assert::AreEqual<int>(0x80, rgb[0], L"the copy clear must not wipe the frame it copies");
 
-			// The frame the copy belongs to is left alone, both inside and outside the clear bounds.
-			Assert::AreEqual<int>(0x80, left[0], L"the copy clear must not wipe the frame it copies");
-			Assert::AreEqual<int>(0x80, right[0], L"...");
+			// Reprogram the clear registers, as a game does for its next copy.
+			m.BpLoad(PE_COPY_CLEAR_AR_ID, 0);
+			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0);
+			m.BpLoad(PE_COPY_CLEAR_Z_ID, 0);
 
-			// The next frame starts with the cleared region.
+			// The next frame starts cleared with the values of the copy that asked for the clear.
 			m.BeginFrame();
-			m.ReadColorPixel(100, 240, left);
-			m.ReadColorPixel(500, 240, right);
-
-			Assert::AreEqual<int>(0xff, left[0], L"the cleared half must be the clear colour");
-			Assert::AreEqual<int>(0, left[1], L"...");
-			Assert::IsFalse(right[0] == 0xff && right[1] == 0 && right[2] == 0,
-				L"the pixel outside the bounds must not be cleared");
+			m.ReadColorPixel(320, 240, rgb);
+			Assert::AreEqual<int>(0xff, rgb[0], L"the clear colour is the colour of that copy");
+			Assert::AreEqual<int>(0, rgb[1], L"...");
+			Assert::AreEqual(0.5f, m.ReadDepthPixel(320, 240), 0.01f,
+				L"the clear Z is the Z of that copy, not the one programmed later");
 		}
 
 		// PE_COPY_CMD.opcode decides what the copy engine does with the EFB rectangle (gfx-pe.md 5.6,

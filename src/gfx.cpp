@@ -1246,11 +1246,13 @@ namespace GFX
 
 		glDrawBuffer(GL_BACK);
 
-		if (pe->TakePendingCopyClear())
+		PixelEngine::CopyClearState clear{};
+
+		if (pe->TakePendingCopyClear(&clear))
 		{
 			// A copy command of the previous frame asked for the EFB to be cleared. It is the copy
-			// engine's clear, so it honours the PE_COPY_CMD bounds and restores the PE state itself.
-			pe->ApplyCopyClear();
+			// engine's clear, so it restores the PE state itself.
+			pe->ApplyCopyClear(clear);
 		}
 		else
 		{
