@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Notes 1.7 — pureikyubu</title>
+<meta name="description" content="Release notes for pureikyubu 1.7: shader graphics pipeline, GFX and DSP unit tests, GC-Linux boot, SDL user interface and a long list of game fixes.">
+<link rel="icon" href="imgstore/pureikyubu.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="release_notes_1.7.html" aria-current="page">Release Notes 1.7</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="release_notes_1.7.html" class="active" hreflang="en">EN</a>
+      <a href="release_notes_1.7_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<main class="article">
+  <div class="wrap">
+
+    <div class="article-header">
+      <h1>pureikyubu 1.7 — Release Notes</h1>
+      <div class="meta">
+        September 2026 · previous release 1.6 (17 August 2023) ·
+        <a href="RELEASE_NOTES_1.7.md">Markdown version</a>
+      </div>
+    </div>
+
+    <p>
+      Version 1.7 is the largest update since the project started. The graphics backend was rebuilt
+      around the two programmable stages of Flipper, the emulator finally has automated tests for its
+      two most complex subsystems, the SDL build became a first-class front end with sound and a game
+      selector, and a set of CPU and memory bugs was cleared that lets a Linux kernel boot on the
+      emulated console.
+    </p>
+
+    <div class="toc">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#highlights">Highlights</a></li>
+        <li><a href="#added">Added</a></li>
+        <li><a href="#changed">Changed</a></li>
+        <li><a href="#fixed">Fixed</a></li>
+        <li><a href="#known">Known issues</a></li>
+        <li><a href="#build">Building</a></li>
+      </ol>
+    </div>
+
+    <h2 id="highlights">Highlights</h2>
+    <ul>
+      <li><strong>Shader-based graphics.</strong> The Flipper Transform Unit and Texture Environment
+        Unit are emulated by GLSL 3.30 vertex and fragment shaders on the OpenGL 3.3 core profile; the
+        fixed-function pipeline is gone. The Command Processor now feeds the XF instead of reaching
+        into the graphics blocks.</li>
+      <li><strong>The GFX pipeline is tested.</strong> 340 unit tests run the real
+        CP → XF → SU → RAS → TX → TEV → PE pipeline against an OpenGL context and publish an HTML
+        report with 262 rendered reference pictures. The suite found and fixed a large batch of
+        long-standing rendering bugs.</li>
+      <li><strong>The DSP core is tested against the hardware.</strong> 177 tests, 1822 golden ALU
+        vectors and 435 circular-buffer vectors; the DSP IROM is fully disassembled and analysed.</li>
+      <li><strong>GC-Linux boots.</strong> Fixed GQR/paired-single decoding, the cache-coherent MMU
+        hash-table walk, the decrementer model, <code>mtcrf</code>, <code>lswi</code>/<code>lswx</code>
+        and the SI registers. A 2004 kernel reaches the <code>gcnfb</code> console with the Broadband
+        Adapter driver loaded.</li>
+      <li><strong>Games.</strong> The Metroid Prime intro movie plays and the game reaches its title
+        screen; Zelda: The Wind Waker gets past its boot; Ikaruga's THP title movie has correct
+        colours; PONG runs again.</li>
+      <li><strong>SDL front end.</strong> Sound, an integrated file browser, message boxes and the
+        full game selector (banners, Game IDs, sorting, filters, jump-to-letter) are available in the
+        cross-platform build.</li>
+    </ul>
+
+    <h2 id="added">Added</h2>
+
+    <h3>Graphics</h3>
+    <ul>
+      <li>GLSL 3.30 vertex shader emulating the XF: geometry and texture matrix multiplies, the
+        projection combine, per-vertex lighting for both colour channels and all texture coordinate
+        generation modes.</li>
+      <li>GLSL 3.30 fragment shader emulating the TEV: up to 16 combine stages, the full
+        operand/bias/sub/clamp/shift datapath, Rev-B K constants, fog and the final alpha function.
+        Both shaders are static and receive the register state as uniforms.</li>
+      <li>Independent decoding and binding of all eight texture maps, mip-level generation and the
+        corrected sampler wrap/filter modes.</li>
+      <li>Full XF register read-back over <code>CP_XF_ADDR</code>/<code>CP_XF_DATAL</code>/
+        <code>CP_XF_DATAH</code>, and the CP → XF → SU → RAS command path.</li>
+      <li><code>GFX_DUMP</code> dumps every n-th rendered frame to a BMP; <code>EMU_LOG=&lt;file&gt;</code>
+        writes <code>Debug::Report</code> output to a file.</li>
+    </ul>
+
+    <h3>Audio</h3>
+    <ul>
+      <li>SDL audio backend (<code>audiosdl.cpp</code>) for the cross-platform build.</li>
+      <li>ARAM and AI behaviour brought in line with the hardware documentation (ACRS/ACWE register
+        names, the 32-byte block transfer, address masks, CDCR, the AIVR streaming volume, the ARAM
+        DMA performed to completion inside the AMBL write).</li>
+    </ul>
+
+    <h3>CPU and memory</h3>
+    <ul>
+      <li>GQR and paired-single extensions decoded with the ISA-manual bit numbering, with the
+        conversion math factored into <code>src/gqr.h</code>.</li>
+      <li>Cache-coherent MMU hash-table access (<code>ReadHashPte</code>/<code>WriteHashPte</code>).</li>
+      <li>Hardware-accurate decrementer: one exception per underflow, the request latched across
+        <code>MSR[EE]</code>, a positive value clearing a pending request, a negative value at
+        reset.</li>
+      <li>Command-line options <code>--ipl</code> (boot the IPL menu without a disc) and
+        <code>--no-disc</code> (start with the DVD lid open).</li>
+      <li>Typed register views for every Flipper block; the Command Processor is a standalone Flipper
+        entity; memory reset (<code>MemRst</code>).</li>
+    </ul>
+
+    <h3>User interface and debugger</h3>
+    <ul>
+      <li>Game selector in the SDL build: DOL/ELF/ISO discovery from <code>PATH</code>, banner
+        decoding (RGB5A3 with alpha, SJIS titles), Game IDs, the Icon/Title/Size/Game ID/Comment
+        columns, all Win32 sort rules, small icons, file filters and Add Directory.</li>
+      <li>Jump-to-letter navigation in the selector (issue #92).</li>
+      <li>Independent video-output window with filtered events so that a covered selector ignores
+        clicks meant for the game.</li>
+      <li>JDI (JSON Debugger Interface) server, its UI view and the Flipper instance passed through
+        the debug tree.</li>
+      <li>ImGui file browser and message boxes in the SDL UI.</li>
+    </ul>
+
+    <h3>Testing and tooling</h3>
+    <ul>
+      <li>GFX unit-test rig with a real OpenGL context, transform-feedback probing and an HTML report
+        (<code>gfx_report.html</code>) with rendered pictures; 340 tests.</li>
+      <li>DSP unit tests: instruction coverage, an independent flag reference model, 1822 golden ALU
+        vectors, 435 circular-buffer vectors, the mailbox protocol and the IROM boot path; 177
+        tests.</li>
+      <li>GQR tests (17 cases) and the published IROM disassembly in <code>testing/DspIrom.md</code>.</li>
+      <li>Visual Studio 2026 projects (MSVC v145); the test project references the emulator sources
+        instead of copying them.</li>
+      <li>JSON tables embedded into the source, so no external data files are required (PR #332).</li>
+    </ul>
+
+    <h2 id="changed">Changed</h2>
+    <ul>
+      <li>The graphics backend no longer uses the fixed-function OpenGL pipeline; the immediate-mode
+        draw paths were removed and quads are expanded into triangles.</li>
+      <li>Vertices are accumulated into a VBO and drawn with <code>glDrawArrays</code>/
+        <code>glDrawElements</code>.</li>
+      <li>The CP pushes command words into the XF and polls it for readiness instead of driving the
+        rasterizers itself; register loads are word-wise, so a partial load no longer halts.</li>
+      <li>The Flipper register access was refactored so every block owns a typed register view; the
+        PI FIFO moved into <code>pi.cpp</code>; 8-bit hardware access was removed.</li>
+      <li><code>VI_DISP_POS</code> is read-only; the PI CONFIG register reflects the memory and DVD
+        reset state correctly.</li>
+      <li>XF matrix and colour registers start from the state <code>GXInit</code> establishes
+        (verified against a real bootrom run).</li>
+      <li>A whole-frame display copy is a frame boundary of its own; partial copies and texture copies
+        are not.</li>
+      <li>The <code>imgstore</code> folder moved into <code>wiki</code>; the wiki was extended and
+        reorganised.</li>
+      <li>The project adopted Karpathy-style behavioural guidelines in <code>.clinerules</code>.</li>
+    </ul>
+
+    <h2 id="fixed">Fixed</h2>
+
+    <h3>Graphics</h3>
+    <ul>
+      <li>Black bootrom screen: the copy-engine clear erased the frame that was still to be
+        displayed.</li>
+      <li>Metroid Prime: the intro FMV stayed black because movie frames were never presented
+        (the display copy is now a frame boundary); whole frames stayed black because the frame-begin
+        clear used the live <code>PE_COPY_CLEAR_*</code> registers (now captured when the copy command
+        is issued) and because <code>GX_IDENTITY</code>/<code>GX_DTTIDENTITY</code> were never
+        initialised.</li>
+      <li>Ikaruga THP movie: garbled colours from the wrong GQR field numbering, the shared
+        K-constant/colour register storage and the swapped channel/register fields of the
+        single-channel K selectors.</li>
+      <li>CMPR decoding (uninitialised colour table, endpoint alpha, the transparent fourth colour of
+        the 3-colour mode).</li>
+      <li>Texture maps 4–7 could never be programmed (the I4–I7 register block was decoded as I0–I3),
+        and multi-texture applied each map to the previous texture unit.</li>
+      <li>The SU scissor was compiled out; <code>TexMode0.lodbias</code>,
+        <code>TexMode1.minlod/maxlod</code>, <code>SU_LPSIZE</code>, <code>SU_SSIZE/SU_TSIZE</code>,
+        <code>RAS1_SS0/SS1</code> and <code>GEN_MODE.flat_en</code> are now applied; TEV fog F-select
+        1 and 3 gained their law; the PE colour/alpha update bits are applied as documented.</li>
+      <li>R and B are swapped correctly when dumping a frame to BMP.</li>
+      <li>A draw command is no longer stalled by a partial register load.</li>
+    </ul>
+
+    <h3>CPU</h3>
+    <ul>
+      <li><code>mtcrf</code> used the RS field as the CR mask and the CRM field as the register number
+        (out-of-bounds <code>gpr[128]</code> access), which crashed the Linux kernel in
+        <code>ip_auto_config_setup</code>.</li>
+      <li>The MMU hash-table walk was incoherent with the write-back data cache, so freshly created
+        PTEs were invisible and the kernel looped on the same DSI fault.</li>
+      <li>The decrementer request was edge-triggered and lost with interrupts disabled; a fully
+        level-sensitive variant livelocked the Bootrom. It is now a latched per-underflow request.</li>
+      <li><code>lswi</code>/<code>lswx</code> dropped the last accumulated word when the byte count was
+        a multiple of four, corrupting GCC struct copies.</li>
+      <li>Every non-zero GQR was decoded with the wrong bit numbering; the paired-single conversion
+        rules and the HID2 gating were corrected.</li>
+    </ul>
+
+    <h3>Audio / DSP</h3>
+    <ul>
+      <li>The sliced ARAM DMA dropped Metroid Prime's audio DMA requests and hung the game right after
+        the intro movie; the block is now performed to completion inside the AMBL low-word write.</li>
+      <li><code>div</code> lost the low quotient bit; <code>norm</code> and <code>div</code> were
+        stubs.</li>
+      <li><code>lsf</code>/<code>asf</code> shifted in the wrong direction in every register form.</li>
+      <li><code>ModifyFlags</code> did not mask to 40 bits; <code>neg p</code>, unsigned multiplies,
+        the logic-family flags, accumulator/immediate rules, <code>clr</code>,
+        <code>neg</code>/<code>negc</code>, <code>addp</code>, <code>lsl16</code>, <code>tst p</code>
+        and the multiply/accumulate family were corrected.</li>
+      <li><code>trap</code> did not advance the PC (<code>reti</code> re-trapped forever) and the
+        interrupt vectors ignored the program base.</li>
+      <li>Circular addressing wrapped at the modifier length instead of the 2<sup>n</sup> aligned
+        block; the decoder accepted reserved words; the mailbox could tear a message pair; packed
+        memory accesses latched the wrong operand.</li>
+    </ul>
+
+    <h3>Interface and platform</h3>
+    <ul>
+      <li>Writes to the SI input buffer registers no longer halt the emulation (the Linux
+        <code>gcn-si</code> driver resets them during initialisation).</li>
+      <li>The DOL/ELF loader was fixed; PONG runs again.</li>
+      <li>The PI FIFO wrap bit, the pad stick, the DVD banner loading on Linux and the Linux build
+        were fixed.</li>
+      <li>Project files migrated to Visual Studio 2026; warnings cleaned up; a conflicting copy of
+        <code>fmt</code> removed.</li>
+    </ul>
+
+    <h2 id="known">Known issues</h2>
+    <ul>
+      <li>Bump mapping, indirect texturing, the Z-texture environment and Cpu2Efb are not emulated
+        yet.</li>
+      <li>PE dither and a few <code>SU</code> flag fields are deliberately unimplemented and documented
+        in <code>wiki/gfx.md</code>.</li>
+      <li>Full JAudio microcode support (issue #71) is still in progress; the remaining DSP
+        divergences from the hardware are recorded in <code>testing/Readme.md</code>.</li>
+      <li>The Linux build has no sound and no input yet.</li>
+      <li>Some titles still fail to render or hang; compatibility is a work in progress.</li>
+    </ul>
+
+    <h2 id="build">Building</h2>
+    <p><strong>Windows.</strong> Open <code>scripts/VS2022/pureikyubu.sln</code> in Visual Studio 2022
+      or 2026 and build. SDL and Win32 front ends both have Debug and Release configurations.</p>
+    <p><strong>Linux.</strong></p>
+    <pre><code>sudo apt install libglew-dev
+git clone https://github.com/emu-russia/pureikyubu.git
+cd pureikyubu
+git submodule update --init
+cd build &amp;&amp; cmake .. &amp;&amp; make
+./pureikyubu pong.dol</code></pre>
+    <p><strong>Tests.</strong></p>
+    <pre><code>MSBuild scripts/VS2026/pureikyubu_test.slnx -p:Configuration=Release -p:Platform=x64
+vstest.console.exe scripts/VS2026/x64/Release/pureikyubu_test.dll /Platform:x64</code></pre>
+
+    <p class="note">
+      The full story behind these changes, with a timeline and screenshots, is in the
+      <a href="digest.html">digest of the work after release 1.6</a>.
+    </p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Nintendo GameCube is a trademark of Nintendo; this emulator is not affiliated with Nintendo.</div>
+    <div><a href="index.html">Home</a> · <a href="digest.html">Digest</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>
