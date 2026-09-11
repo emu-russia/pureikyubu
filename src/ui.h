@@ -4,7 +4,7 @@
 
 At the heart of the interface is the "Selector" - a custom ListView with a list of executable files (DOL/ELF) and disk images (GCM).
 
-The emulator settings dialog is used only for modifying Settings.json.
+The emulator settings dialog is used only for modifying the settings Json (SettingsWin.json).
 
 ## Controller Settings Dialog (PAD)
 

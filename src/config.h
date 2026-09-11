@@ -2,8 +2,20 @@
 
 #pragma once
 
-constexpr auto EMU_DEFAULT_SETTINGS = L"./Data/DefaultSettings.json";		// Must exist
-constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
+// The Windows and SDL builds keep their settings apart, so that both can be run from the
+// same directory without overwriting each other's configuration.
+
+// The SDL build is the one that renders into an SDL window: either the Linux port (_LINUX,
+// see CMakeLists.txt) or the "SDL" Visual Studio configurations (GFX_USE_SDL_WINDOW, see gfx.h,
+// which is included before this header).
+
+#if defined(_LINUX) || GFX_USE_SDL_WINDOW
+constexpr auto EMU_DEFAULT_SETTINGS = L"./Data/DefaultSettingsSdl.json";	// Must exist
+constexpr auto EMU_SETTINGS = L"./Data/SettingsSdl.json";
+#else
+constexpr auto EMU_DEFAULT_SETTINGS = L"./Data/DefaultSettingsWin.json";	// Must exist
+constexpr auto EMU_SETTINGS = L"./Data/SettingsWin.json";
+#endif
 
 // Sections
 #define USER_UI "ui"
