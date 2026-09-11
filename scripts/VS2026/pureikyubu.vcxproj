@@ -79,6 +79,8 @@
     <ClInclude Include="..\..\src\gqr.h" />
     <ClInclude Include="..\..\src\gekkoc.h" />
     <ClInclude Include="..\..\src\gekkojit.h" />
+    <ClInclude Include="..\..\src\gekkojit_ps.h" />
+    <ClInclude Include="..\..\src\gekkojit_x64.h" />
     <ClInclude Include="..\..\src\gekkodebug.h" />
     <ClInclude Include="..\..\src\gekkodec.h" />
     <ClInclude Include="..\..\src\gekkodisasm.h" />
@@ -182,6 +184,7 @@
     <ClCompile Include="..\..\src\gekko.cpp" />
     <ClCompile Include="..\..\src\gekkoc.cpp" />
     <ClCompile Include="..\..\src\gekkojit.cpp" />
+    <ClCompile Include="..\..\src\gekkojit_ps.cpp" />
     <ClCompile Include="..\..\src\gekkodebug.cpp" />
     <ClCompile Include="..\..\src\gekkodec.cpp" />
     <ClCompile Include="..\..\src\gekkodisasm.cpp" />

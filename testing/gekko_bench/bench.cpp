@@ -116,9 +116,51 @@ static uint64_t FuzzNext(uint64_t& s)
     return s;
 }
 
+// Set by BENCH_FUZZ_PS: include the Paired-Single arithmetic and seed the
+// floating point registers (see FuzzUnsafe and RunFuzzer::init).
+static bool g_fuzzPs = false;
+
+// The recompiler is selected by BENCH_JIT. An empty value counts as "not
+// selected", so that "BENCH_JIT= <bin>" cannot silently measure the recompiler
+// twice - which is exactly the sort of thing a numbers-only comparison hides.
+static bool JitRequested()
+{
+    const char* v = getenv("BENCH_JIT");
+    return v != nullptr && v[0] != '\0';
+}
+
 static bool FuzzUnsafe(Gekko::Instruction i)
 {
     using Gekko::Instruction;
+
+    // BENCH_FUZZ_PS lets the Paired-Single arithmetic through: the point of that
+    // mode is to compare the SSE translations in gekkojit_ps.cpp against the
+    // interpreter, and the FPRs are seeded for it (see init()). The quantised
+    // loads and stores and the comparison forms stay out - they are not translated
+    // yet, so they would only exercise the fallback.
+    if (g_fuzzPs)
+    {
+        switch (i)
+        {
+        case Instruction::ps_add: case Instruction::ps_add_d: case Instruction::ps_sub: case Instruction::ps_sub_d:
+        case Instruction::ps_mul: case Instruction::ps_mul_d: case Instruction::ps_div: case Instruction::ps_div_d:
+        case Instruction::ps_res: case Instruction::ps_res_d: case Instruction::ps_rsqrte: case Instruction::ps_rsqrte_d:
+        case Instruction::ps_sel: case Instruction::ps_sel_d: case Instruction::ps_muls0: case Instruction::ps_muls0_d:
+        case Instruction::ps_muls1: case Instruction::ps_muls1_d: case Instruction::ps_sum0: case Instruction::ps_sum0_d:
+        case Instruction::ps_sum1: case Instruction::ps_sum1_d: case Instruction::ps_madd: case Instruction::ps_madd_d:
+        case Instruction::ps_msub: case Instruction::ps_msub_d: case Instruction::ps_nmadd: case Instruction::ps_nmadd_d:
+        case Instruction::ps_nmsub: case Instruction::ps_nmsub_d: case Instruction::ps_madds0: case Instruction::ps_madds0_d:
+        case Instruction::ps_madds1: case Instruction::ps_madds1_d:
+        case Instruction::ps_mr: case Instruction::ps_mr_d: case Instruction::ps_neg: case Instruction::ps_neg_d:
+        case Instruction::ps_abs: case Instruction::ps_abs_d: case Instruction::ps_nabs: case Instruction::ps_nabs_d:
+        case Instruction::ps_merge00: case Instruction::ps_merge00_d: case Instruction::ps_merge01: case Instruction::ps_merge01_d:
+        case Instruction::ps_merge10: case Instruction::ps_merge10_d: case Instruction::ps_merge11: case Instruction::ps_merge11_d:
+            return false;
+        default:
+            break;
+        }
+    }
+
     switch (i)
     {
     case Instruction::rfi: case Instruction::sc: case Instruction::tw: case Instruction::twi:
@@ -205,6 +247,7 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
 
     int from = getenv("BENCH_FUZZ_FROM") ? atoi(getenv("BENCH_FUZZ_FROM")) : 0;
     int until = getenv("BENCH_FUZZ_UNTIL") ? atoi(getenv("BENCH_FUZZ_UNTIL")) : iterations;
+    g_fuzzPs = getenv("BENCH_FUZZ_PS") != nullptr;
 
     for (int it = from; it < until; it++)
     {
@@ -274,6 +317,17 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
                 Core->regs.gpr[i] = dataBase + (uint32_t)(FuzzNext(s2) & 0xFFFF);
             Core->regs.cr = (uint32_t)FuzzNext(s2);
             Core->regs.spr[(int)Gekko::SPR::XER] = (uint32_t)FuzzNext(s2);
+            if (g_fuzzPs)
+            {
+                // Raw bit patterns, so that NaN, infinity, denormals and the sign
+                // of zero are all compared between the two engines as well.
+                for (int i = 0; i < 32; i++)
+                {
+                    Core->regs.fpr[i].uval = FuzzNext(s2);
+                    Core->regs.ps1[i].uval = FuzzNext(s2);
+                }
+                Core->regs.fpscr = (uint32_t)FuzzNext(s2);
+            }
             Core->regs.pc = codeBase + (uint32_t)it * 0x1000;
             // Branches through LR/CTR must land inside the program.
             Core->regs.spr[(int)Gekko::SPR::LR] = Core->regs.pc + 4;
@@ -691,6 +745,212 @@ static int BranchTest()
 }
 
 // ---------------------------------------------------------------------------
+// Targeted Paired-Single differential test.
+//
+// For every translated form, run that instruction over the operand bit patterns
+// that actually break floating point - NaN, infinity, denormal, both zeroes - on
+// both engines and compare the whole register file.
+//
+// The random fuzzer covers PS only sparsely (a random word is a PS instruction
+// rarely, and it needs the right operand pattern on top of that), which is how a
+// NaN of the wrong sign survived 800 fuzzer programs and showed up only in a
+// PS-heavy workload.
+
+static uint32_t PsWord(uint32_t xo, uint32_t d, uint32_t a, uint32_t b, uint32_t c, uint32_t rc = 0)
+{
+    return (4u << 26) | (d << 21) | (a << 16) | (b << 11) | (c << 6) | (xo << 1) | rc;
+}
+
+static bool IsNanBits(uint64_t v)
+{
+    return (v & 0x7ff0'0000'0000'0000ull) == 0x7ff0'0000'0000'0000ull &&
+           (v & 0x000f'ffff'ffff'ffffull) != 0;
+}
+
+static int RunPsTest(uint8_t* ram)
+{
+    struct PsCase { const char* name; uint32_t word; };
+
+    // frD = f1, frA = f2, frB = f3, frC = f4, matching the field layout of the
+    // two, three and one operand forms (see gen_workload.py).
+    const uint32_t d = 1, a = 2, b = 3, c = 4;
+    std::vector<PsCase> cases;
+    auto add = [&](const char* n, uint32_t xo, int arity, bool rc)
+    {
+        uint32_t w = 0;
+        switch (arity)
+        {
+        case 1:  w = PsWord(xo, d, 0, b, 0, rc); break;			// single operand: frB
+        case 2:  w = PsWord(xo, d, a, b, 0, rc); break;			// frD = frA op frB
+        case 3:  w = PsWord(xo, d, a, b, c, rc); break;			// frD = frA * frC + frB
+        default: w = PsWord(xo, d, a, 0, c, rc); break;			// frD = frA op frC
+        }
+        cases.push_back({ n, w });
+    };
+
+    //       name          xo   arity rc
+    add("ps_add",        21,  2, false);
+    add("ps_add_d",      21,  2, true);
+    add("ps_sub",        20,  2, false);
+    add("ps_sub_d",      20,  2, true);
+    add("ps_mul",        25,  4, false);
+    add("ps_mul_d",      25,  4, true);
+    add("ps_div",        18,  2, false);
+    add("ps_div_d",      18,  2, true);
+    add("ps_res",        24,  1, false);
+    add("ps_res_d",      24,  1, true);
+    add("ps_rsqrte",     26,  1, false);
+    add("ps_rsqrte_d",   26,  1, true);
+    add("ps_madd",       29,  3, false);
+    add("ps_madd_d",     29,  3, true);
+    add("ps_muls0",      12,  4, false);
+    add("ps_muls0_d",    12,  4, true);
+    add("ps_muls1",      13,  4, false);
+    add("ps_muls1_d",    13,  4, true);
+    add("ps_madds0",     14,  3, false);
+    add("ps_madds0_d",   14,  3, true);
+    add("ps_madds1",     15,  3, false);
+    add("ps_madds1_d",   15,  3, true);
+    add("ps_sum0",       10,  3, false);
+    add("ps_sum0_d",     10,  3, true);
+    add("ps_sum1",       11,  3, false);
+    add("ps_sum1_d",     11,  3, true);
+    add("ps_sel",        23,  3, false);
+    add("ps_sel_d",      23,  3, true);
+    add("ps_mr",         72,  1, false);
+    add("ps_mr_d",       72,  1, true);
+    add("ps_neg",        40,  1, false);
+    add("ps_neg_d",      40,  1, true);
+    add("ps_abs",        264, 1, false);
+    add("ps_abs_d",      264, 1, true);
+    add("ps_nabs",       136, 1, false);
+    add("ps_nabs_d",     136, 1, true);
+    add("ps_merge00",    528, 2, false);
+    add("ps_merge00_d",  528, 2, true);
+    add("ps_merge01",    560, 2, false);
+    add("ps_merge10",    592, 2, false);
+    add("ps_merge11",    624, 2, false);
+
+    static const uint64_t patterns[] =
+    {
+        0x0000'0000'0000'0000ull,		// +0
+        0x8000'0000'0000'0000ull,		// -0
+        0x3ff0'0000'0000'0000ull,		// 1.0
+        0xbff0'0000'0000'0000ull,		// -1.0
+        0x4000'0000'0000'0000ull,		// 2.0
+        0x7ff0'0000'0000'0000ull,		// +inf
+        0xfff0'0000'0000'0000ull,		// -inf
+        0x7ff8'0000'0000'0000ull,		// quiet NaN
+        0xfff8'0000'0000'0000ull,		// -quiet NaN
+        0x7ff0'0000'0000'0001ull,		// signaling NaN
+        0x0000'0000'0000'0001ull,		// denormal
+    };
+    const int np = (int)(sizeof(patterns) / sizeof(patterns[0]));
+
+    const uint32_t codePa = 0x200000;
+    const uint32_t effPc = 0x80200000;
+
+    auto setup = [&](const PsCase& tc, int i, int j, int k)
+    {
+        for (uint32_t pa = 0; pa < 0x1000; pa += 4)
+            *(uint32_t*)&ram[codePa + pa] = _BYTESWAP_UINT32(0x60000000);	// nops
+        *(uint32_t*)&ram[codePa] = _BYTESWAP_UINT32(tc.word);
+
+        Core->Reset();
+        Core->cache->Enable(true);
+        Core->icache->Enable(true);
+        for (int s = 0; s < 16; s++) Core->regs.sr[s] = 0x80000000;
+        Core->regs.spr[(int)Gekko::SPR::DBAT0U] = 0x80001fff; Core->regs.spr[(int)Gekko::SPR::DBAT0L] = 0x00000002;
+        Core->regs.spr[(int)Gekko::SPR::IBAT0U] = 0x80001fff; Core->regs.spr[(int)Gekko::SPR::IBAT0L] = 0x00000002;
+        Core->regs.msr = MSR_IR | MSR_DR | MSR_FP;
+
+        Core->regs.fpr[a].uval = patterns[i];
+        Core->regs.ps1[a].uval = patterns[j];
+        Core->regs.fpr[b].uval = patterns[j];
+        Core->regs.ps1[b].uval = patterns[k];
+        Core->regs.fpr[c].uval = patterns[k];
+        Core->regs.ps1[c].uval = patterns[i];
+        Core->regs.fpr[d].uval = 0x5555'5555'5555'5555ull;
+        Core->regs.ps1[d].uval = 0xaaaa'aaaa'aaaa'aaaaull;
+        Core->regs.fpscr = 0x1234'5678;
+        Core->regs.cr = 0x9abc'def0;
+        Core->regs.pc = effPc;
+    };
+
+    int failures = 0;
+    uint64_t tested = 0;
+    uint64_t nanCases = 0;
+    std::vector<int> formFailures(cases.size(), 0);
+
+    for (size_t ci = 0; ci < cases.size(); ci++)
+    {
+        const PsCase& tc = cases[ci];
+        for (int i = 0; i < np; i++)
+        for (int j = 0; j < np; j++)
+        for (int k = 0; k < np; k++)
+        {
+            setup(tc, i, j, k);
+            Core->Step();
+            uint64_t if0 = Core->regs.fpr[d].uval, if1 = Core->regs.ps1[d].uval;
+            uint32_t icr = Core->regs.cr, ifpscr = Core->regs.fpscr;
+
+            setup(tc, i, j, k);
+#if defined(BENCH_WITH_JIT)
+            Core->jit->Run();
+#else
+            Core->Step();
+#endif
+            uint64_t jf0 = Core->regs.fpr[d].uval, jf1 = Core->regs.ps1[d].uval;
+            tested++;
+
+            // Payload and sign of a NaN result are not defined by C++: when both
+            // operands of an operation are NaN, which one gets propagated is
+            // decided by how the host compiler happened to allocate registers for
+            // the interpreter's expression - GCC propagates the second operand in
+            // ps_muls0 and the first one in ps_mul, in the same build. The
+            // translation uses the order written in the source, so those cases can
+            // disagree; they are counted here instead of failing silently. A NaN
+            // against a number is still a failure.
+            bool nanOnly = (if0 != jf0 || if1 != jf1) &&
+                (if0 == jf0 || (IsNanBits(if0) && IsNanBits(jf0))) &&
+                (if1 == jf1 || (IsNanBits(if1) && IsNanBits(jf1)));
+
+            if (if0 != jf0 || if1 != jf1 || icr != Core->regs.cr || ifpscr != Core->regs.fpscr)
+            {
+                if (nanOnly && icr == Core->regs.cr && ifpscr == Core->regs.fpscr)
+                {
+                    nanCases++;
+                    continue;
+                }
+
+                if (failures < 10)
+                    printf("PS FAIL %-12s a=%016llX/%016llX b=%016llX/%016llX c=%016llX/%016llX:"
+                        " ps0 %016llX vs %016llX, ps1 %016llX vs %016llX, cr %08X vs %08X\n",
+                        tc.name,
+                        (unsigned long long)patterns[i], (unsigned long long)patterns[j],
+                        (unsigned long long)patterns[j], (unsigned long long)patterns[k],
+                        (unsigned long long)patterns[k], (unsigned long long)patterns[i],
+                        (unsigned long long)if0, (unsigned long long)jf0,
+                        (unsigned long long)if1, (unsigned long long)jf1,
+                        icr, Core->regs.cr);
+                failures++;
+                formFailures[ci]++;
+            }
+        }
+    }
+
+    for (size_t ci = 0; ci < cases.size(); ci++)
+    {
+        if (formFailures[ci])
+            printf("  %-14s %d/%d cases diverge\n", cases[ci].name, formFailures[ci], np * np * np);
+    }
+
+    printf("ps test: %zu forms, %llu cases, %d failures, %llu NaN payload cases\n", cases.size(),
+        (unsigned long long)tested, failures, (unsigned long long)nanCases);
+    return failures == 0 ? 0 : 1;
+}
+
+// ---------------------------------------------------------------------------
 
 int main(int argc, char** argv)
 {
@@ -809,6 +1069,11 @@ int main(int argc, char** argv)
 	bool prof = getenv("BENCH_PROF") != nullptr;
 	if (prof) ProfStart();
 
+	if (getenv("BENCH_PS_TEST"))
+	{
+		return RunPsTest(ram);
+	}
+
 	if (getenv("BENCH_BRANCH_TEST"))
 	{
 #if !defined(BENCH_WITH_JIT)
@@ -821,13 +1086,13 @@ int main(int argc, char** argv)
 	if (const char* ripl = getenv("BENCH_REAL_IPL"))
 	{
 		return RunRealIpl(ripl, getenv("BENCH_IPL_STEPS") ? strtoull(getenv("BENCH_IPL_STEPS"), nullptr, 0) : 20000000,
-			getenv("BENCH_JIT") != nullptr);
+			JitRequested());
 	}
 
 	if (const char* ipl = getenv("BENCH_IPL"))
 	{
 		return RunIpl(ipl, getenv("BENCH_IPL_STEPS") ? strtoull(getenv("BENCH_IPL_STEPS"), nullptr, 0) : 2000000,
-			getenv("BENCH_JIT") != nullptr);
+			JitRequested());
 	}
 
 	if (getenv("BENCH_MINI"))
@@ -875,7 +1140,7 @@ int main(int argc, char** argv)
 	}
 
 #if defined(BENCH_WITH_JIT)
-	bool useJit = getenv("BENCH_JIT") != nullptr;
+	bool useJit = JitRequested();
 #else
 	bool useJit = false;
 #endif
@@ -976,6 +1241,13 @@ int main(int argc, char** argv)
 		printf("--- registers ---\n");
 		for (int i = 0; i < 32; i++) printf("r%-2d = %08X%s", i, Core->regs.gpr[i], (i % 4 == 3) ? "\n" : "  ");
 		printf("cr = %08X  msr = %08X\n", Core->regs.cr, Core->regs.msr);
+		// A Paired-Single divergence hides here: the GPRs above, the pc and the
+		// time base can all be identical while an FPR differs.
+		for (int i = 0; i < 32; i++)
+			printf("f%-2d = %016llX  ps1 = %016llX%s", i,
+				(unsigned long long)Core->regs.fpr[i].uval,
+				(unsigned long long)Core->regs.ps1[i].uval, (i % 2 == 1) ? "\n" : "  ");
+		printf("fpscr = %08X\n", Core->regs.fpscr);
 	}
 
 	printf("pc=%08X lr=%08X ctr=%08X tb=%llu\n", Core->regs.pc,

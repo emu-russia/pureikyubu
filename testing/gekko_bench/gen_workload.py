@@ -136,9 +136,25 @@ class Code:
     def ps_add(self, d, a, b, rc=0):    self.ps(d, a, b, 0, 21, rc)
     def ps_sub(self, d, a, b, rc=0):    self.ps(d, a, b, 0, 20, rc)
     def ps_mul(self, d, a, c, rc=0):    self.ps(d, a, 0, c, 25, rc)
+    def ps_div(self, d, a, b, rc=0):    self.ps(d, a, b, 0, 18, rc)
+    def ps_res(self, d, b, rc=0):       self.ps(d, 0, b, 0, 24, rc)
+    def ps_rsqrte(self, d, b, rc=0):    self.ps(d, 0, b, 0, 26, rc)
     def ps_madd(self, d, a, c, b, rc=0): self.ps(d, a, b, c, 29, rc)
-    def ps_merge00(self, d, a, b, rc=0): self.ps(d, a, b, 0, 528, rc)
+    def ps_muls0(self, d, a, c, rc=0):  self.ps(d, a, 0, c, 12, rc)
+    def ps_muls1(self, d, a, c, rc=0):  self.ps(d, a, 0, c, 13, rc)
+    def ps_madds0(self, d, a, c, b, rc=0): self.ps(d, a, b, c, 14, rc)
+    def ps_madds1(self, d, a, c, b, rc=0): self.ps(d, a, b, c, 15, rc)
     def ps_sum0(self, d, a, b, c, rc=0): self.ps(d, a, b, c, 10, rc)
+    def ps_sum1(self, d, a, b, c, rc=0): self.ps(d, a, b, c, 11, rc)
+    def ps_sel(self, d, a, b, c, rc=0): self.ps(d, a, b, c, 23, rc)
+    def ps_mr(self, d, b, rc=0):        self.ps(d, 0, b, 0, 72, rc)
+    def ps_neg(self, d, b, rc=0):       self.ps(d, 0, b, 0, 40, rc)
+    def ps_abs(self, d, b, rc=0):       self.ps(d, 0, b, 0, 264, rc)
+    def ps_nabs(self, d, b, rc=0):      self.ps(d, 0, b, 0, 136, rc)
+    def ps_merge00(self, d, a, b, rc=0): self.ps(d, a, b, 0, 528, rc)
+    def ps_merge01(self, d, a, b, rc=0): self.ps(d, a, b, 0, 560, rc)
+    def ps_merge10(self, d, a, b, rc=0): self.ps(d, a, b, 0, 592, rc)
+    def ps_merge11(self, d, a, b, rc=0): self.ps(d, a, b, 0, 624, rc)
 
     # ---- misc -------------------------------------------------------------
     def sync(self): self.emit(0x7C0004AC)
@@ -185,6 +201,11 @@ def generate(body_instrs, seed, mix="full", window_mb=4):
         weights = [("alu", 70), ("cmp", 14), ("branch", 14), ("misc", 2)]
     elif mix == "mem":
         weights = [("alu", 20), ("load", 30), ("store", 20), ("branch", 14), ("cmp", 8), ("misc", 8)]
+    elif mix == "ps":
+        # A Paired-Single kernel of the shape the SDK's matrix and vector code
+        # compiles to: almost all PS arithmetic, with the loop's integer
+        # bookkeeping and its loads and stores around it.
+        weights = [("ps", 76), ("load", 6), ("store", 4), ("alu", 6), ("branch", 8)]
     else:
         weights = [
             ("alu",      34),
@@ -258,14 +279,24 @@ def generate(body_instrs, seed, mix="full", window_mb=4):
             elif choice == 6: c.frsp(d, f())
             else:             c.fcmpu(rnd.randrange(0, 8), f(), f())
         elif k == "ps":
-            choice = rnd.randrange(0, 6)
+            choice = rnd.randrange(0, 16)
             d = f()
-            if choice == 0:   c.ps_add(d, f(), f())
-            elif choice == 1: c.ps_sub(d, f(), f())
-            elif choice == 2: c.ps_mul(d, f(), f())
-            elif choice == 3: c.ps_madd(d, f(), f(), f())
-            elif choice == 4: c.ps_merge00(d, f(), f())
-            else:             c.ps_sum0(d, f(), f(), f())
+            if choice == 0:    c.ps_add(d, f(), f())
+            elif choice == 1:  c.ps_sub(d, f(), f())
+            elif choice == 2:  c.ps_mul(d, f(), f())
+            elif choice == 3:  c.ps_div(d, f(), f())
+            elif choice == 4:  c.ps_madd(d, f(), f(), f())
+            elif choice == 5:  c.ps_muls0(d, f(), f())
+            elif choice == 6:  c.ps_muls1(d, f(), f())
+            elif choice == 7:  c.ps_madds0(d, f(), f(), f())
+            elif choice == 8:  c.ps_madds1(d, f(), f(), f())
+            elif choice == 9:  c.ps_sum0(d, f(), f(), f())
+            elif choice == 10: c.ps_sum1(d, f(), f(), f())
+            elif choice == 11: c.ps_sel(d, f(), f(), f())
+            elif choice == 12: c.ps_merge00(d, f(), f())
+            elif choice == 13: c.ps_neg(d, f())
+            elif choice == 14: c.ps_abs(d, f())
+            else:              c.ps_nabs(d, f())
         elif k == "branch":
             choice = rnd.randrange(0, 8)
             if choice <= 4:   c.bc(4, rnd.randrange(0, 32), 8)     # branch if CR bit clear

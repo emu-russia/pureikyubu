@@ -51,6 +51,7 @@ add_executable (pureikyubu
 	src/gekko.cpp
 	src/gekkoc.cpp
 	src/gekkojit.cpp
+	src/gekkojit_ps.cpp
 	src/gekkodebug.cpp
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
