@@ -233,6 +233,15 @@ namespace Debug
       ]
     },
 
+    "jit": {
+      "help": "Enables or disables the Gekko basic block recompiler (0: interpreter only, 1: recompiler). Reports the current state when called without an argument",
+      "args": 1,
+      "output": "Bool",
+      "usage": [
+        "Syntax: jit <0|1>"
+      ]
+    },
+
     "EnableOpcodeStats": {
       "help": "Enables or disables the maintenance of opcode usage statistics",
       "args": 1,
@@ -1053,6 +1062,26 @@ namespace Debug
 	}
 
 	// Enables or disables the maintenance of opcode usage statistics
+	// Enable or disable the Gekko basic block recompiler. With no argument the current
+	// state is reported; the recompiler is also dropped (all blocks recompiled) when
+	// it is switched back on.
+	static Json::Value* CmdJit(std::vector<std::string>& args)
+	{
+		if (args.size() > 1)
+		{
+			Core->JitEnabled = strtoul(args[1].c_str(), nullptr, 0) != 0;
+			if (Core->JitEnabled && Core->jit != nullptr)
+			{
+				Core->jit->InvalidateAll();
+			}
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Bool;
+		output->value.AsBool = Core->JitEnabled;
+		return output;
+	}
+
 	static Json::Value* CmdEnableOpcodeStats(std::vector<std::string>& args)
 	{
 		bool enable = strtoul(args[1].c_str(), nullptr, 0) != 0 ? true : false;
@@ -1225,6 +1254,7 @@ namespace Debug
 		JDI::Hub.AddCmd("bw", CmdBreakWrite);
 		JDI::Hub.AddCmd("bc", CmdBreakClearAll);
 		JDI::Hub.AddCmd("CacheLog", CmdCacheLog);
+		JDI::Hub.AddCmd("jit", CmdJit);
 
 		JDI::Hub.AddCmd("IsRunning", CmdIsRunning);
 		JDI::Hub.AddCmd("GekkoRun", CmdGekkoRun);

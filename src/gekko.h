@@ -364,34 +364,104 @@ namespace GekkoCoreUnitTest
 #define __FASTCALL __fastcall
 #endif
 
+// The hot helpers below (address translation, the tick, the compare) are marked with
+// this so that they really end up inside their callers. Plain `inline` is only a hint:
+// both MSVC and GCC keep an out-of-line copy around and then call it, which on this
+// interpreter costs more than the body of the function itself.
+
+#if defined(_MSC_VER)
+#define GEKKO_INLINE __forceinline
+#else
+#define GEKKO_INLINE inline __attribute__((always_inline))
+#endif
+
 
 namespace Gekko
 {
 	class GekkoCore;
+	class Jit;
 }
 
 
 // This module is used to simulate Gekko TLB.
 
+// The translation cache sits on the hot path of every instruction fetch and every
+// memory access, so it is a direct-mapped array of 4 KB page translations rather
+// than a hash map. A miss simply falls through to the BAT/page-table walk, which
+// refills the entry - evicting a conflicting page is never a correctness problem.
+
 namespace Gekko
 {
 	struct TLBEntry
 	{
-		uint32_t addressTag;
-		int8_t wimg;
+		uint32_t eaTag;		// Effective page number (ea >> 12), or the empty marker
+		uint32_t addressTag;	// Physical page number (pa >> 12)
+		int WIMG;
 		uint32_t pc;		// PC value when the record was added to the TLB so that it can be tracked
 	};
 
 	class TLB
 	{
-		std::unordered_map<int, TLBEntry*> tlb;
+	public:
+		// The number of entries is a trade-off between the coverage (an aliasing
+		// translation is only a refill, never a correctness problem) and the size of
+		// the array, which is probed on every fetch and every memory access.
+#ifndef GEKKOCORE_TLB_SIZE
+#define GEKKOCORE_TLB_SIZE 2048
+#endif
+		static constexpr size_t Size = GEKKOCORE_TLB_SIZE;
+		static constexpr size_t IndexMask = Size - 1;
+		static constexpr uint32_t EmptyTag = 0xffff'ffff;
+
+	private:
+		TLBEntry entries[Size];
 
 	public:
-		bool Exists(uint32_t ea, uint32_t& pa, int& WIMG);
-		void Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG);
+		TLB() { InvalidateAll(); }
 
-		void Invalidate(uint32_t ea);
-		void InvalidateAll();
+		GEKKO_INLINE bool Exists(uint32_t ea, uint32_t& pa, int& WIMG)
+		{
+			uint32_t page = ea >> 12;
+			const TLBEntry& entry = entries[page & IndexMask];
+
+			if (entry.eaTag != page)
+			{
+				return false;
+			}
+
+			pa = (entry.addressTag << 12) | (ea & 0xfff);
+			WIMG = entry.WIMG;
+			return true;
+		}
+
+		GEKKO_INLINE void Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG)
+		{
+			TLBEntry& entry = entries[(ea >> 12) & IndexMask];
+
+			entry.eaTag = ea >> 12;
+			entry.addressTag = pa >> 12;
+			entry.WIMG = WIMG;
+			entry.pc = pc;
+		}
+
+		void Invalidate(uint32_t ea)
+		{
+			uint32_t page = ea >> 12;
+			TLBEntry& entry = entries[page & IndexMask];
+
+			if (entry.eaTag == page)
+			{
+				entry.eaTag = EmptyTag;
+			}
+		}
+
+		void InvalidateAll()
+		{
+			for (size_t n = 0; n < Size; n++)
+			{
+				entries[n].eaTag = EmptyTag;
+			}
+		}
 
 		void Dump();
 	};
@@ -581,6 +651,7 @@ namespace Gekko
 	{
 		friend Interpreter;
 		friend GatherBuffer;
+		friend Jit;
 		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
 		// How many ticks Gekko takes to execute one instruction. 
@@ -671,6 +742,12 @@ namespace Gekko
 
 		GekkoRegs regs;
 
+		// Basic block recompiler (see gekkojit.h). It is created by the constructor;
+		// when the host does not support it (or the user switched it off), execution
+		// stays on the interpreter.
+		Jit* jit = nullptr;
+		bool JitEnabled = true;
+
 		GekkoCore();
 		~GekkoCore();
 
@@ -680,7 +757,61 @@ namespace Gekko
 
 		void Reset();
 
-		void Tick();
+		// The tick is advanced at least once per instruction (and a second time by
+		// branches), so it is kept inline - a call here costs more than the work.
+		GEKKO_INLINE void Tick()
+		{
+			regs.tb.uval += CounterStep;         // timer
+
+			uint32_t old = regs.spr[SPR::DEC];
+			regs.spr[SPR::DEC] -= DecrementerStep;          // decrementer
+
+			if (regs.spr[SPR::DEC] & 0x8000'0000)
+			{
+				// Underflow. The request is latched, so that it is not lost while MSR[EE] is cleared,
+				// but it is generated only once per underflow: the decrementer has to be reloaded with
+				// a positive value before the next exception can be requested.
+
+				if (!(old & 0x8000'0000))
+				{
+					decreq = 1;
+				}
+			}
+			else
+			{
+				// A positive decrementer clears a pending underflow request.
+
+				decreq = 0;
+			}
+		}
+
+		// Apply n ticks at once. Identical to n calls of Tick(), which is what the
+		// recompiler uses for a whole basic block.
+		void TickN(uint32_t n)
+		{
+			if (n == 0)
+			{
+				return;
+			}
+
+			regs.tb.uval += (uint64_t)CounterStep * n;
+
+			uint32_t old = regs.spr[SPR::DEC];
+			regs.spr[SPR::DEC] -= DecrementerStep * n;
+
+			if (regs.spr[SPR::DEC] & 0x8000'0000)
+			{
+				if (!(old & 0x8000'0000))
+				{
+					decreq = 1;
+				}
+			}
+			else
+			{
+				decreq = 0;
+			}
+		}
+
 		int64_t GetTicks();
 		int64_t OneSecond();
 
@@ -704,8 +835,21 @@ namespace Gekko
 		void WriteDouble(uint32_t addr, uint64_t* data);
 		void Fetch(uint32_t addr, uint32_t* reg);
 
-		// Translate address by Mmu
-		uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG);
+		// Translate address by Mmu.
+		// A translation cache hit is by far the common case, so the probe is inline here;
+		// the BAT / page table walk lives in EffectiveToPhysicalMmu (see gekko.cpp).
+		GEKKO_INLINE uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
+		{
+			TLB* tlb = (type == MmuAccess::Execute) ? &itlb : &dtlb;
+
+			uint32_t pa;
+			if (tlb->Exists(ea, pa, WIMG))
+			{
+				return pa;
+			}
+
+			return EffectiveToPhysicalMmu(ea, type, WIMG);
+		}
 
 		static void SwapArea(uint32_t* addr, int count);
 		static void SwapAreaHalf(uint16_t* addr, int count);

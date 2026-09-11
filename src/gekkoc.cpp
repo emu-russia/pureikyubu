@@ -62,8 +62,12 @@ namespace Gekko
 	// calculation of conditional branch
 	bool Interpreter::BcTest()
 	{
+		return BcTest((uint32_t)info.paramBits[0], (uint32_t)info.paramBits[1]);
+	}
+
+	bool Interpreter::BcTest(uint32_t bo, uint32_t bi)
+	{
 		bool ctr_ok, cond_ok;
-		size_t bo = info.paramBits[0], bi = info.paramBits[1];
 
 		if (BO(2) == 0)
 		{
@@ -150,8 +154,12 @@ namespace Gekko
 	// calculation of conditional to count register branch
 	bool Interpreter::BctrTest()
 	{
+		return BctrTest((uint32_t)info.paramBits[0], (uint32_t)info.paramBits[1]);
+	}
+
+	bool Interpreter::BctrTest(uint32_t bo, uint32_t bi)
+	{
 		bool cond_ok;
-		size_t bo = info.paramBits[0], bi = info.paramBits[1];
 
 		if (BO(0) == 0)
 		{
@@ -3968,6 +3976,10 @@ namespace Gekko
 	// return from exception
 	void Interpreter::rfi()
 	{
+		// SRR1 can flip MSR[IR]/[DR], which changes what every effective address in
+		// the compiled blocks translates to.
+		if (core->jit != nullptr) core->jit->InvalidateAll();
+
 		core->regs.msr &= ~(0x87C0FF73 | 0x00040000);
 		core->regs.msr |= core->regs.spr[SPR::SRR1] & 0x87C0FF73;
 		core->regs.pc = core->regs.spr[SPR::SRR0] & ~3;
@@ -4133,6 +4145,7 @@ namespace Gekko
 
 		uint32_t oldMsr = core->regs.msr;
 		core->regs.msr = core->regs.gpr[info.paramBits[0]];
+		if (core->jit != nullptr) core->jit->InvalidateAll();
 
 		if ((oldMsr & MSR_IR) != (core->regs.msr & MSR_IR))
 		{
@@ -4151,6 +4164,14 @@ namespace Gekko
 	void Interpreter::mtspr()
 	{
 		size_t spr = info.paramBits[0];
+
+		// Any SPR that changes address translation or the caches invalidates the
+		// compiled blocks.
+		if (spr == SPR::SDR1 || spr == SPR::HID0 || spr == SPR::HID2 ||
+			(spr >= SPR::IBAT0U && spr <= SPR::DBAT3L))
+		{
+			if (core->jit != nullptr) core->jit->InvalidateAll();
+		}
 
 		// Diagnostic output when the BAT registers are changed.
 
@@ -4512,6 +4533,7 @@ namespace Gekko
 		if (pa != Gekko::BadAddress)
 		{
 			core->icache->Invalidate(pa);
+			if (core->jit != nullptr) core->jit->InvalidateAll();
 		}
 		else
 		{
@@ -4581,6 +4603,7 @@ namespace Gekko
 
 	void Interpreter::tlbie()
 	{
+		if (core->jit != nullptr) core->jit->InvalidateAll();
 		core->dtlb.Invalidate(core->regs.gpr[info.paramBits[0]]);
 		core->itlb.Invalidate(core->regs.gpr[info.paramBits[0]]);
 		core->regs.pc += 4;
@@ -4588,6 +4611,7 @@ namespace Gekko
 
 	void Interpreter::tlbsync()
 	{
+		if (core->jit != nullptr) core->jit->InvalidateAll();
 		core->regs.pc += 4;
 	}
 
@@ -4663,9 +4687,46 @@ namespace Gekko
 	}
 
 
+	// Decode one instruction (through the decode cache) and run it. The recompiler
+	// calls this for every instruction it does not translate itself, so those
+	// instructions see exactly the same decoder state as they would in the
+	// interpreter.
+	void Interpreter::ExecuteDecoded(uint32_t pc, uint32_t instr)
+	{
+		DecodeEntry* entry = &decodeCache[(pc >> 2) & DecodeCacheMask];
+
+		if (entry->pc == pc && entry->instrBits == instr)
+		{
+			info.instr = (Instruction)entry->instr;
+			info.Imm.Address = entry->imm;
+			info.paramBits[0] = entry->paramBits[0];
+			info.paramBits[1] = entry->paramBits[1];
+			info.paramBits[2] = entry->paramBits[2];
+			info.paramBits[3] = entry->paramBits[3];
+			info.paramBits[4] = entry->paramBits[4];
+		}
+		else
+		{
+			Decoder::DecodeFast(pc, instr, &info);
+
+			entry->pc = pc;
+			entry->instrBits = instr;
+			entry->instr = (uint32_t)info.instr;
+			entry->imm = info.Imm.Address;
+			entry->paramBits[0] = (uint32_t)info.paramBits[0];
+			entry->paramBits[1] = (uint32_t)info.paramBits[1];
+			entry->paramBits[2] = (uint32_t)info.paramBits[2];
+			entry->paramBits[3] = (uint32_t)info.paramBits[3];
+			entry->paramBits[4] = (uint32_t)info.paramBits[4];
+		}
+
+		Dispatch();
+	}
+
 	// parse and execute single opcode
 	void Interpreter::ExecuteOpcode()
 	{
+		uint32_t pc = core->regs.pc;
 		uint32_t instr = 0;
 
 		// Hack for the first time.
@@ -4673,13 +4734,13 @@ namespace Gekko
 		// So when entering BS2, you just need to invalidate the DCache.
 		// Need to figure out why this is happening / come up with a better place to do it
 
-		if (core->regs.pc == 0x81300000) {
+		if (pc == 0x81300000) {
 			Core->cache->FlashInvalidate();
 		}
 
 		// Fetch instruction
 
-		core->Fetch(core->regs.pc, &instr);
+		core->Fetch(pc, &instr);
 		// ISI
 		if (core->exception)
 		{
@@ -4687,10 +4748,7 @@ namespace Gekko
 			return;
 		}
 
-		// Decode instruction and dispatch
-
-		Decoder::DecodeFast(core->regs.pc, instr, &info);
-		Dispatch();
+		ExecuteDecoded(pc, instr);
 		core->ops++;
 
 		if (core->resetInstructionCounter)

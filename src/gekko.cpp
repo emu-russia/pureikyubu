@@ -23,6 +23,14 @@ namespace Gekko
 			}
 		}
 
+		// Breakpoints and single stepping stay on the interpreter, so that the
+		// debugger sees every instruction.
+		if (core->JitEnabled && core->jit != nullptr && core->jit->IsSupported() && !core->EnableTestBreakpoints)
+		{
+			core->jit->Run();
+			return;
+		}
+
 		core->interp->ExecuteOpcode();
 	}
 
@@ -39,6 +47,8 @@ namespace Gekko
 
 		interp = new Interpreter(this);
 
+		jit = new Jit(this);
+
 		gekkoThread = EMUCreateThread(GekkoThreadProc, false, this, "GekkoCore");
 
 		Reset();
@@ -48,6 +58,7 @@ namespace Gekko
 	{
 		StopOpcodeStatsThread();
 		EMUJoinThread(gekkoThread);
+		delete jit;
 		delete interp;
 		delete gatherBuffer;
 	}
@@ -100,6 +111,11 @@ namespace Gekko
 
 		gatherBuffer->Reset();
 
+		if (jit != nullptr)
+		{
+			jit->InvalidateAll();
+		}
+
 		dtlb.InvalidateAll();
 		itlb.InvalidateAll();
 		cache->Reset();
@@ -109,31 +125,7 @@ namespace Gekko
 	}
 
 	// Modify CPU counters
-	void GekkoCore::Tick()
-	{
-		regs.tb.uval += CounterStep;         // timer
-
-		uint32_t old = regs.spr[SPR::DEC];
-		regs.spr[SPR::DEC] -= DecrementerStep;          // decrementer
-
-		if (regs.spr[SPR::DEC] & 0x8000'0000)
-		{
-			// Underflow. The request is latched, so that it is not lost while MSR[EE] is cleared,
-			// but it is generated only once per underflow: the decrementer has to be reloaded with
-			// a positive value before the next exception can be requested.
-
-			if (!(old & 0x8000'0000))
-			{
-				decreq = 1;
-			}
-		}
-		else
-		{
-			// A positive decrementer clears a pending underflow request.
-
-			decreq = 0;
-		}
-	}
+	// (GekkoCore::Tick is defined inline in gekko.h - it is on the hot path.)
 
 	int64_t GekkoCore::GetTicks()
 	{
@@ -295,6 +287,7 @@ namespace Gekko
 		}
 
 		// disable address translation
+		if (jit != nullptr) jit->InvalidateAll();
 		regs.msr &= ~(MSR_IR | MSR_DR);
 
 		regs.msr &= ~MSR_RI;
@@ -304,11 +297,6 @@ namespace Gekko
 		// change PC and set exception flag
 		regs.pc = (uint32_t)code;
 		exception = true;
-	}
-
-	uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
-	{
-		return EffectiveToPhysicalMmu(ea, type, WIMG);
 	}
 }
 
@@ -621,54 +609,19 @@ namespace Gekko
 
 namespace Gekko
 {
-	bool TLB::Exists(uint32_t ea, uint32_t& pa, int& WIMG)
-	{
-		auto it = tlb.find(ea >> 12);
-		if (it != tlb.end())
-		{
-			TLBEntry* entry = it->second;
-			pa = (entry->addressTag << 12) | (ea & 0xfff);
-			WIMG = entry->wimg;
-			return true;
-		}
-		return false;
-	}
-
-	void TLB::Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG)
-	{
-		TLBEntry* entry = new TLBEntry;
-		entry->addressTag = pa >> 12;
-		entry->wimg = WIMG;
-		entry->pc = pc;
-		tlb[ea >> 12] = entry;
-	}
-
-	void TLB::Invalidate(uint32_t ea)
-	{
-		auto it = tlb.find(ea >> 12);
-		if (it != tlb.end())
-		{
-			delete it->second;
-			tlb.erase(it);
-		}
-	}
-
-	void TLB::InvalidateAll()
-	{
-		for (auto it = tlb.begin(); it != tlb.end(); ++it)
-		{
-			delete it->second;
-		}
-		tlb.clear();
-	}
-
 	void TLB::Dump()
 	{
-		for (auto it = tlb.begin(); it != tlb.end(); ++it)
+		for (size_t n = 0; n < Size; n++)
 		{
-			uint32_t ea = it->first << 12;
-			TLBEntry* entry = it->second;
-			Report(Channel::CPU, "EA 0x%08X -> PA 0x%08X (wimg: %d, pc: 0x%08X)\n", ea, entry->addressTag << 12, entry->wimg, entry->pc);
+			TLBEntry* entry = &entries[n];
+
+			if (entry->eaTag == EmptyTag)
+			{
+				continue;
+			}
+
+			uint32_t ea = entry->eaTag << 12;
+			Report(Channel::CPU, "EA 0x%08X -> PA 0x%08X (wimg: %d, pc: 0x%08X)\n", ea, entry->addressTag << 12, entry->WIMG, entry->pc);
 		}
 	}
 }
@@ -1009,6 +962,15 @@ namespace Gekko
 
 	void Cache::FlashInvalidate()
 	{
+		// A flash invalidate also drops every compiled block: it is used both for the
+		// data cache (the 0x81300000 hack in ExecuteOpcode, which exists precisely
+		// because IPL2 is DMA'ed into memory behind the CPU's back) and for the
+		// instruction cache (HID0[ICFI]).
+		if (core->jit != nullptr)
+		{
+			core->jit->InvalidateAll();
+		}
+
 		size_t blocks_num = cacheSize >> 5;
 		for (size_t n = 0; n < blocks_num; n++) {
 			modifiedBlocks[n] = false;
@@ -1665,16 +1627,7 @@ namespace Gekko
 
 		WIMG = 0;
 
-		// Try TLB
-
-#if GEKKOCORE_USE_TLB
-		TLB* tlb = (type == MmuAccess::Execute) ? &itlb : &dtlb;
-
-		if (tlb->Exists(ea, pa, WIMG))
-		{
-			return pa;
-		}
-#endif
+		// The translation cache has already been probed by EffectiveToPhysical().
 
 		// First, try the block translation, if it doesn’t work, try the Page Table.
 

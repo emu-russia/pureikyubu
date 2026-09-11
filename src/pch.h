@@ -63,6 +63,7 @@
 #include "gekkodec.h"
 #include "gekko.h"
 #include "gekkoc.h"
+#include "gekkojit.h"
 #include "gekkodisasm.h"
 #include "gekkodebug.h"
 
