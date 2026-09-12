@@ -99,19 +99,17 @@ namespace Flipper
 	class ProcessorInterface;
 	class VideoInterface;
 
+	// The granularity at which the VI scan-out and the serial poll see the time base. It has to stay
+	// well below one VI line (`vi.one_frame / vi.vcount`, about 2570 ticks on NTSC), and 100 ticks
+	// is 50 interpreter instructions or a couple of basic blocks.
+	static const int64_t FlipperTickStep = 100;
+
 	/// <summary>
 	/// Global class for driving Flipper ASIC.
 	/// </summary>
 	class Flipper
 	{
-		static void HwUpdateThread(void* Parameter);
-
 		int64_t hwUpdateTbrValue = 0;
-
-		Thread* hwUpdateThread = nullptr;
-		static const size_t ticksToHwUpdate = 100;
-
-		void Update();
 
 		AudioInterface* ai = nullptr;
 		DiskInterface* di = nullptr;
@@ -122,6 +120,16 @@ namespace Flipper
 	public:
 		Flipper(HWConfig* config);
 		~Flipper();
+
+		/// <summary>
+		/// The periodic Flipper-side work (the VI scan-out and the serial interface poll).
+		/// It is driven by the CPU thread from the tick the emulated CPU advances, at the ticks
+		/// where it is due. It used to live on a thread of its own that polled the shared time base
+		/// in a tight loop; that thread made every write of the time base transfer the cache line
+		/// between the cores and cost more than the work it performed (see the benchmark notes in
+		/// `testing/gekko_bench`). `ticks` is the current value of the emulated time base.
+		/// </summary>
+		void Update(int64_t ticks);
 
 		AudioMixer* Mixer = nullptr;
 

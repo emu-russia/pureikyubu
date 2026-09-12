@@ -27,6 +27,32 @@ Supported file formats:
 
 Instead of calling `Thread` class directly from utils.cpp, `EMUCreateThread` / `EMUJoinThread` calls are used for threads. They are in essence wrappers and are needed to keep statistics of active threads of the emulator.
 
+### Periodic hardware work
+
+The time base (TBR) is advanced by the Gekko thread, and every periodic piece of
+Flipper work hangs off it. The VI scan-out and the serial poll are therefore
+executed *by the Gekko thread itself*, at the ticks where they are due
+(`GekkoCore::Tick`/`TickN` call `Flipper::Update`). The threads that cannot move
+there - the CP, because it owns the OpenGL context; the AI DMA and the DSP core,
+because they are heavy - are woken through an `Event` when their next deadline
+passes (`CommandProcessor::TickSync`, `DSP::AITickSync`, `DspCore::TickSync`)
+and then drain a batch of work.
+
+This is not a detail. A device thread that waits for its deadline by reading
+`Core->GetTicks()` in a tight loop makes every write of the time base transfer
+that cache line between the cores, and it costs far more than the work the
+thread performs - on the order of 2x for the emulator as a whole. Waiting
+threads have to block (see `Event` in utils.h, and the benchmark notes and
+measurements in `testing/gekko_bench/Readme.md`).
+
+## Command line
+
+| Option | Meaning |
+|---|---|
+| `--ipl` | Start the Bootrom (IPL) right away, without going through the UI |
+| `--no-disc` | Start with the DVD lid open, so that the IPL takes its "no disc" path |
+| `--bench <file> [seconds]` | Run the file unattended for the given number of seconds (30 by default) and print the measured throughput and the CPU statistics to the debug log (`EMU_LOG=<file>`). `BENCH_PROFILE=1` adds the host cycle breakdown, `BENCH_STATS=1` the guest instruction histogram |
+
 ## HWConfig
 
 To avoid using configuration from the HW component, all Flipper hardware emulation settings are aggregated

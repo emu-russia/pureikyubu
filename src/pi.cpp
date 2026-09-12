@@ -24,6 +24,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadByte(uint32_t pa, uint32_t* reg)
 	{
+		Gekko::stats.piReads++;
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -55,6 +56,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteByte(uint32_t pa, uint32_t data)
 	{
+		Gekko::stats.piWrites++;
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -76,6 +78,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadHalf(uint32_t pa, uint32_t* reg)
 	{
+		Gekko::stats.piReads++;
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -95,6 +98,7 @@ namespace Flipper
 		// hardware trap
 		if (pa >= HW_BASE)
 		{
+			Gekko::stats.mmioReads++;
 			pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffe];
 			trap->read(pa, reg, trap->context);
 			return;
@@ -115,6 +119,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteHalf(uint32_t pa, uint32_t data)
 	{
+		Gekko::stats.piWrites++;
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -125,6 +130,7 @@ namespace Flipper
 		// hardware trap
 		if (pa >= HW_BASE)
 		{
+			Gekko::stats.mmioWrites++;
 			pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffe];
 			trap->write(pa, data, trap->context);
 			return;
@@ -144,6 +150,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadWord(uint32_t pa, uint32_t* reg)
 	{
+		Gekko::stats.piReads++;
 		uint8_t* ptr;
 
 		// bus load word
@@ -171,6 +178,7 @@ namespace Flipper
 		// hardware trap
 		if (pa >= HW_BASE)
 		{
+			Gekko::stats.mmioReads++;
 			pi_reg_trap* trap;
 			uint32_t temp_hi, temp_lo;
 			trap = &hw_reg_traps[pa & 0xffff];
@@ -194,6 +202,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteWord(uint32_t pa, uint32_t data)
 	{
+		Gekko::stats.piWrites++;
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -204,6 +213,7 @@ namespace Flipper
 		// hardware trap
 		if (pa >= HW_BASE)
 		{
+			Gekko::stats.mmioWrites++;
 			pi_reg_trap* trap = &hw_reg_traps[pa & 0xffff];
 			trap->write(pa, data >> 16, trap->context);
 			trap = &hw_reg_traps[(pa + 2) & 0xffff];
@@ -236,6 +246,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadDouble(uint32_t pa, uint64_t* reg)
 	{
+		Gekko::stats.piReads++;
 		if (pa >= PI_MEMSPACE_BOOTROM)
 		{
 			Halt("PI: Attempting to read uint64_t from BootROM\n");
@@ -258,6 +269,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteDouble(uint32_t pa, uint64_t* data)
 	{
+		Gekko::stats.piWrites++;
 		if (pa >= PI_MEMSPACE_BOOTROM)
 		{
 			Halt("PI: Attempting to write uint64_t to BootROM\n");

@@ -440,9 +440,37 @@ namespace DSP
 		/// <summary>
 		/// In a real Flipper 2 writes to CPU->DSP Mailbox cannot be interrupted in the middle by a read from the DSP side.
 		/// If this happens - Deadlock can happen.
-		/// We solve this problem by artificially delaying the DspCore execution thread.
+		/// We solve this problem by holding the DSP off for a few ticks after each mailbox write.
+		///
+		/// This is a tick, not a number of Update() calls: Update() now drains a whole batch, so
+		/// counting calls would hold the DSP off for a whole batch (thousands of ticks) instead of
+		/// the few instructions the two mailbox writes are apart.
 		/// </summary>
-		int delay_mailbox_reasons = 0;
+		int64_t mailboxHoldTick = 0;
+		static const int64_t MailboxHoldTicks = 100;
+
+		/// <summary>
+		/// Called by the CPU side after a mailbox half-write: hold the DSP off for a few ticks so
+		/// that it cannot read the mailbox between the two halves of a message (see mailboxHoldTick).
+		/// Tolerates a null Core, which is what the DSP unit tests have (they drive the mailbox
+		/// directly, without a Gekko core behind it).
+		/// </summary>
+		void HoldMailbox();
+
+		// The DSP thread is woken through this event at the ticks where it has a batch of
+		// instructions' worth of time to execute (see TickSync), instead of polling the Gekko time
+		// base in a tight loop (see the benchmark notes in `testing/gekko_bench`).
+		Event workEvent;
+		int64_t wakeTick = 0;
+
+		/// <summary>
+		/// How many Gekko ticks one wakeup covers. The DSP wants one instruction every
+		/// `GekkoTicksPerDspInstruction` ticks, so a wakeup carries
+		/// `DspWakeTicks / GekkoTicksPerDspInstruction` instructions. Waking up once per Flipper tick
+		/// step would mean roughly a million scheduler wakeups per second, which costs more than the
+		/// DSP work itself.
+		/// </summary>
+		static const int64_t DspWakeTicks = 1000;
 
 	public:
 
@@ -466,6 +494,17 @@ namespace DSP
 		void HardReset();
 
 		void Update();
+
+		/// <summary>
+		/// Called by the CPU thread (through Flipper::Update) every Flipper tick step, so that the
+		/// DSP thread is woken once per `DspWakeTicks`.
+		/// </summary>
+		void TickSync(int64_t ticks);
+
+		/// <summary>
+		/// Block until the next batch of DSP time is due (see TickSync).
+		/// </summary>
+		void WaitForWork();
 
 		// Debug methods
 

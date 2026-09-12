@@ -34,6 +34,14 @@ struct CmdLineOptions
 {
 	bool    ipl = false;        // `--ipl`: start the Bootrom (IPL) immediately, without going through the UI
 	bool    noDisc = false;     // `--no-disc`: start with the DVD lid open (no disk), so that the IPL takes its "no disk" path
+
+	// `--bench <file> [seconds]`: load the file, run it for the given number of seconds (30 by
+	// default) without a user interface and print the measured emulation throughput and the
+	// performance counters. This is the measurement tool for the "find the bottleneck" work:
+	// the counters say where the emulated CPU time actually goes.
+	bool    bench = false;
+	std::wstring benchFile;
+	uint32_t    benchSeconds = 30;
 };
 
 extern  CmdLineOptions cmdline;

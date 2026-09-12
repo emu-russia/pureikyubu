@@ -25,6 +25,19 @@ namespace DSP
 
 		Thread* audioThread;    // The main AI thread that receives samples from AI DMA FIFO.
 		// When FIFOs overflow - AudioThread Feed Mixer.
+
+		// The AI thread is woken through this event at the ticks where the next DMA block is due
+		// (see AITickSync). It used to poll the Gekko time base in a tight loop, which made every
+		// write of that time base transfer the cache line between the cores and cost far more than
+		// the DMA work itself (see the benchmark notes in `testing/gekko_bench`).
+		Event audioEvent;
+
+		/// <summary>
+		/// Put the AI DMA state back to its power-on value. This exists because the block used to be
+		/// cleared with a plain memset, which also wiped the Event above (a wait on a zeroed handle
+		/// returns immediately, so the AI thread silently went back to spinning).
+		/// </summary>
+		void Reset();
 	};
 
 	extern  DspAIControl dsp_ai;
@@ -39,4 +52,10 @@ namespace DSP
 	bool    DSPGetResetModifier();
 
 	void	DspSetAiDmaSampleRate(int32_t rate);
+
+	/// <summary>
+	/// Called by the CPU thread (through Flipper::Update) every Flipper tick step, so that the AI
+	/// thread wakes up when the next DMA block is due.
+	/// </summary>
+	void	AITickSync(int64_t ticks);
 }

@@ -247,6 +247,11 @@ Gekko::GekkoCore* Core = nullptr;
 
 namespace Gekko
 {
+	// The DSP sources bump the DSP counters in `stats` (see Gekko::CpuStats); the test DLL does not
+	// link gekko.cpp, so the block is supplied here like the other emulator-wide entities.
+	CpuStats stats;
+	bool cycleProfile = false;
+
 	int64_t GekkoCore::GetTicks()
 	{
 		return testGekkoTicks;

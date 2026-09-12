@@ -21,7 +21,75 @@ void SpinLock::Unlock()
 
 #endif
 
-#ifdef _WINDOWS
+Event::Event()
+{
+#if defined(_WINDOWS)
+	handle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	assert(handle != nullptr);
+#else
+	pthread_mutex_init(&mutex, nullptr);
+	pthread_cond_init(&cond, nullptr);
+	signaled = false;
+#endif
+}
+
+Event::~Event()
+{
+#if defined(_WINDOWS)
+	if (handle != nullptr)
+	{
+		CloseHandle(handle);
+		handle = nullptr;
+	}
+#else
+	pthread_cond_destroy(&cond);
+	pthread_mutex_destroy(&mutex);
+#endif
+}
+
+void Event::Signal()
+{
+#if defined(_WINDOWS)
+	SetEvent(handle);
+#else
+	pthread_mutex_lock(&mutex);
+	signaled = true;
+	pthread_cond_signal(&cond);
+	pthread_mutex_unlock(&mutex);
+#endif
+}
+
+bool Event::Wait(size_t timeoutMs)
+{
+#if defined(_WINDOWS)
+	return WaitForSingleObject(handle, (DWORD)timeoutMs) == WAIT_OBJECT_0;
+#else
+	struct timespec until;
+	clock_gettime(CLOCK_REALTIME, &until);
+	until.tv_sec += timeoutMs / 1000;
+	until.tv_nsec += (long)(timeoutMs % 1000) * 1000000L;
+	if (until.tv_nsec >= 1000000000L)
+	{
+		until.tv_sec++;
+		until.tv_nsec -= 1000000000L;
+	}
+
+	pthread_mutex_lock(&mutex);
+	while (!signaled)
+	{
+		if (pthread_cond_timedwait(&cond, &mutex, &until) != 0)
+		{
+			break;		// timed out
+		}
+	}
+	bool was = signaled;
+	signaled = false;
+	pthread_mutex_unlock(&mutex);
+	return was;
+#endif
+}
+
+#if defined(_WINDOWS)
 
 DWORD WINAPI Thread::RingleaderThreadProc(LPVOID lpParameter)
 {

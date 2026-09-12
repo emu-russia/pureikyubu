@@ -179,19 +179,51 @@ Emulator emu;
 
 CmdLineOptions cmdline;
 
-static void ParseCmdLineArg(const std::string& arg)
+// Arguments that carry their own parameters (`--bench <file> [seconds]`) need a lookahead, so the
+// raw command line is first split into a token list and then walked here.
+static void ParseCmdLineArgs(const std::vector<std::string>& args)
 {
-	if (arg == "--ipl")
+	for (size_t i = 0; i < args.size(); i++)
 	{
-		cmdline.ipl = true;
-	}
-	else if (arg == "--no-disc")
-	{
-		cmdline.noDisc = true;
-	}
-	else
-	{
-		Report(Channel::Norm, "Unknown command line argument: %s\n", arg.c_str());
+		const std::string& arg = args[i];
+
+		if (arg == "--ipl")
+		{
+			cmdline.ipl = true;
+		}
+		else if (arg == "--no-disc")
+		{
+			cmdline.noDisc = true;
+		}
+		else if (arg == "--bench")
+		{
+			if (i + 1 < args.size())
+			{
+				cmdline.bench = true;
+				cmdline.benchFile = Util::StringToWstring(args[++i]);
+
+				// An optional second parameter is the duration in seconds. A file name can start
+				// with a digit too, so the parameter is only taken when the *whole* token is a number.
+				if (i + 1 < args.size())
+				{
+					char* end = nullptr;
+					unsigned long seconds = strtoul(args[i + 1].c_str(), &end, 0);
+					if (end != nullptr && *end == 0 && seconds > 0)
+					{
+						cmdline.benchSeconds = (uint32_t)seconds;
+						i++;
+					}
+				}
+			}
+			else
+			{
+				Report(Channel::Norm, "--bench needs an image file (and an optional duration in seconds)\n");
+			}
+		}
+		else
+		{
+			Report(Channel::Norm, "Unknown command line argument: %s\n", arg.c_str());
+		}
 	}
 }
 
@@ -204,6 +236,7 @@ void EMUParseCmdLine(const char* commandLine)
 
 	// Split into arguments, honouring the quotes (arguments are not allowed to contain spaces otherwise).
 
+	std::vector<std::string> args;
 	std::string arg;
 	bool quoted = false;
 
@@ -219,7 +252,7 @@ void EMUParseCmdLine(const char* commandLine)
 		{
 			if (!arg.empty())
 			{
-				ParseCmdLineArg(arg);
+				args.push_back(arg);
 				arg.clear();
 			}
 		}
@@ -231,8 +264,10 @@ void EMUParseCmdLine(const char* commandLine)
 
 	if (!arg.empty())
 	{
-		ParseCmdLineArg(arg);
+		args.push_back(arg);
 	}
+
+	ParseCmdLineArgs(args);
 }
 
 void EMUParseCmdLine(int argc, char** argv)

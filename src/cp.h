@@ -545,6 +545,16 @@ namespace Flipper
 		size_t	tickPerFifo = 0;
 		int64_t	updateTbrValue = 0;
 
+		// The CP thread must not busy-wait on the CPU's time base: it is woken instead, every
+		// `FifoBatch` FIFO entries' worth of emulated ticks, through this event (see CPThread).
+		// `lastDrainTick` is the tick the thread last drained the FIFO at, so that the drain stays
+		// at the emulated CP rate even when the thread was not scheduled for a while.
+		static const size_t FifoBatch = 16;
+
+		Event fifoEvent;
+		int64_t lastDrainTick = 0;
+		bool HasFifoWork();
+
 		// Stats
 		size_t cpLoads = 0;
 		size_t xfLoads = 0;
@@ -587,6 +597,12 @@ namespace Flipper
 
 		// Streaming FIFO burst write notification from PI
 		void FifoWriteBurst();
+
+		/// <summary>
+		/// Called by the CPU thread (through Flipper::Update) every Flipper tick step, so that the
+		/// CP thread is woken when the emulated CP has a batch of FIFO entries to consume.
+		/// </summary>
+		void TickSync(int64_t ticks);
 
 		void CPAbortFifo();
 

@@ -55,6 +55,32 @@ public:
 
 typedef void (*ThreadProc)(void* param);
 
+// A waitable one-shot event: the portable counterpart of the wakeups between the emulator's
+// worker threads. Waiting on it blocks the thread, which is the point: a thread that busy-waits
+// on a location another core writes makes every write of that location transfer a cache line
+// between the cores (and keeps two cores hot), which costs far more than the work the waiting
+// thread performs. See the benchmark notes in `testing/gekko_bench`.
+class Event
+{
+#if defined(_WINDOWS)
+	HANDLE handle = nullptr;
+#else
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	bool signaled = false;
+#endif
+
+public:
+	Event();
+	~Event();
+
+	// Wake one waiter (or leave the event signaled until somebody waits).
+	void Signal();
+
+	// Wait for the event or the timeout. Returns true when it was signaled.
+	bool Wait(size_t timeoutMs);
+};
+
 class Thread
 {
 	struct WrappedContext

@@ -5,6 +5,9 @@ using namespace Debug;
 
 namespace Gekko
 {
+	CpuStats stats;
+	bool cycleProfile = false;
+
 	// The main driving force behind the entire emulator. All other threads are based on changing the TBR Gekko register.
 	void GekkoCore::GekkoThreadProc(void* Parameter)
 	{
@@ -37,7 +40,7 @@ namespace Gekko
 	GekkoCore::GekkoCore()
 	{
 		cache = new Cache(this);
-		icache = new Cache(this);
+		icache = new Cache(this, true);
 		
 		// DEBUG
 		//cache->SetLogLevel(CacheLogLevel::MemOps);
@@ -103,6 +106,7 @@ namespace Gekko
 		regs.msr &= ~(MSR_DR | MSR_IR);
 
 		regs.tb.uval = 0;
+		flipperDeadline = 0;
 		regs.spr[SPR::HID1] = 0x8000'0000;
 		// The decrementer produces an exception on underflow, so it starts out negative:
 		// the program has to reload it with a positive value to arm the first exception.
@@ -165,6 +169,18 @@ namespace Gekko
 	void GekkoCore::Step()
 	{
 		interp->ExecuteOpcode();
+	}
+
+	// The Flipper-side periodic work is due: let the ASIC run it and arm the next deadline. The
+	// hook lives here rather than in the header because the inline Tick/TickN cannot see Flipper.
+	void GekkoCore::SyncFlipper()
+	{
+		flipperDeadline = regs.tb.sval + Flipper::FlipperTickStep;
+
+		if (Flipper::HW != nullptr)
+		{
+			Flipper::HW->Update(regs.tb.sval);
+		}
 	}
 
 	void GekkoCore::AssertInterrupt()
@@ -287,6 +303,7 @@ namespace Gekko
 		}
 
 		// disable address translation
+		stats.invException++;
 		if (jit != nullptr) jit->InvalidateAll();
 		regs.msr &= ~(MSR_IR | MSR_DR);
 
@@ -828,9 +845,10 @@ namespace Gekko
 
 namespace Gekko
 {
-	Cache::Cache(GekkoCore* core)
+	Cache::Cache(GekkoCore* core, bool instruction)
 	{
 		this->core = core;
+		this->instruction = instruction;
 
 		cacheData = new uint8_t[cacheSize];
 
@@ -966,6 +984,7 @@ namespace Gekko
 		// data cache (the 0x81300000 hack in ExecuteOpcode, which exists precisely
 		// because IPL2 is DMA'ed into memory behind the CPU's back) and for the
 		// instruction cache (HID0[ICFI]).
+		stats.invFlash++;
 		if (core->jit != nullptr)
 		{
 			core->jit->InvalidateAll();
@@ -1064,6 +1083,13 @@ namespace Gekko
 
 		if (frozen)
 			return;
+
+		CycleScope cycles(&stats.castInCycles);
+
+		if (instruction)
+			stats.icacheFills++;
+		else
+			stats.dcacheFills++;
 
 		if (log >= CacheLogLevel::MemOps)
 		{

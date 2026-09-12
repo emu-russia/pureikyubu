@@ -501,6 +501,10 @@ namespace Gekko
 		bool enabled = false;
 		bool frozen = false;
 
+		// The instruction cache is the same class as the data cache; the flag only decides which of
+		// the two fill counters `CastIn` bumps.
+		bool instruction = false;
+
 		CacheLogLevel log = CacheLogLevel::None;
 
 		void CastIn(uint32_t pa);		// Mem -> Cache
@@ -515,7 +519,7 @@ namespace Gekko
 		GekkoCore* core;
 
 	public:
-		Cache(GekkoCore* core);
+		Cache(GekkoCore* core, bool instruction = false);
 		~Cache();
 
 		void Reset();
@@ -647,6 +651,89 @@ namespace Gekko
 		Trap,
 	};
 
+	// CPU-side performance counters. They answer the "where does the emulated CPU time actually go"
+	// question that the `--bench` mode asks: how much of the work is done by translated code and how
+	// much by the interpreter, how long the average basic block is, how often a block has to be
+	// translated again, and how many memory accesses leave the emulated cache for the PI/MEM.
+	//
+	// The counters are plain increments on cold paths (a block entry, a cache line fill, an access
+	// that reaches the PI), so leaving them on costs nothing measurable. The cycle counters are the
+	// exception: `rdtsc` is cheap but not free, so they only update while `cycleProfile` is set,
+	// which is what the benchmark's BENCH_PROFILE switch turns on.
+	struct CpuStats
+	{
+		uint64_t jitBlocks = 0;			// Basic blocks run by the recompiler
+		uint64_t jitInstrs = 0;			// Instructions retired inside those blocks
+		uint64_t jitCompiles = 0;		// Basic blocks translated
+		uint64_t jitInvalidations = 0;		// Times the whole block cache was dropped
+		uint64_t invException = 0;		// ... on an exception entry
+		uint64_t invRfi = 0;			// ... on rfi
+		uint64_t invMtmsr = 0;			// ... on mtmsr
+		uint64_t invMtspr = 0;			// ... on mtspr of a BAT/SDR1/HID0/HID2
+		uint64_t invIcbi = 0;			// ... on icbi
+		uint64_t invTlb = 0;			// ... on tlbie/tlbsync
+		uint64_t invFlash = 0;			// ... on a cache flash invalidate
+		uint64_t jitFallbacks = 0;		// Instructions handed back to the interpreter from a block
+		uint64_t interpInstrs = 0;		// Instructions run by the interpreter proper
+		uint64_t dcacheFills = 0;		// Data cache line fills (CPU -> PI -> MEM)
+		uint64_t icacheFills = 0;		// Instruction cache line fills
+		uint64_t piReads = 0;			// Single-beat CPU reads that reached the PI
+		uint64_t piWrites = 0;			// Single-beat CPU writes that reached the PI
+		uint64_t mmioReads = 0;			// ... of those, the ones that hit the register space
+		uint64_t mmioWrites = 0;
+		uint64_t dspInstrs = 0;			// DSP instructions executed
+		uint64_t dspWakes = 0;			// Times the DSP thread was woken
+		uint64_t aiFeeds = 0;			// AI DMA blocks pushed into the mixer
+		uint64_t aiInts = 0;			// AIDINT (DMA complete) interrupts
+
+		// Host cycles (only while `cycleProfile` is on).
+		uint64_t jitRunCycles = 0;		// Time inside Jit::Run, including the generated blocks
+		uint64_t blockCallCycles = 0;		// ... of which spent inside a generated block
+		uint64_t compileCycles = 0;		// ... of which spent translating a block
+		uint64_t fallbackCycles = 0;		// ... of which spent in the interpreter fallback
+		uint64_t memHelperCycles = 0;		// ... of which spent in the JIT memory helpers
+		uint64_t memHelperCalls = 0;		// Number of calls into those helpers
+		uint64_t castInCycles = 0;		// Time spent filling cache lines
+		uint64_t interpCycles = 0;		// Time inside one interpreted instruction
+
+		void Reset()
+		{
+			*this = CpuStats{};
+		}
+	};
+
+	extern CpuStats stats;
+
+	// When set, the hot paths also accumulate host cycle counts into `stats`.
+	extern bool cycleProfile;
+
+	GEKKO_INLINE uint64_t ReadCycleCounter()
+	{
+#if defined(_MSC_VER)
+		return __rdtsc();
+#else
+		return __builtin_ia32_rdtsc();
+#endif
+	}
+
+	// A scoped cycle accumulator. When `cycleProfile` is off the whole thing is a load and a branch.
+	class CycleScope
+	{
+		uint64_t* target;
+		uint64_t start;
+
+	public:
+		explicit CycleScope(uint64_t* t) : target(t), start(cycleProfile ? ReadCycleCounter() : 0) {}
+
+		~CycleScope()
+		{
+			if (cycleProfile)
+			{
+				*target += ReadCycleCounter() - start;
+			}
+		}
+	};
+
 	class GekkoCore
 	{
 		friend Interpreter;
@@ -763,6 +850,15 @@ namespace Gekko
 		{
 			regs.tb.uval += CounterStep;         // timer
 
+			// The Flipper-side periodic work (the VI scan-out and the serial poll) hangs off the
+			// time base, so it is driven from here, where the time base is already in hand. A
+			// thread that polled the same counter instead made every write of it transfer the
+			// cache line between the cores (see Flipper::Update).
+			if (regs.tb.sval >= flipperDeadline)
+			{
+				SyncFlipper();
+			}
+
 			uint32_t old = regs.spr[SPR::DEC];
 			regs.spr[SPR::DEC] -= DecrementerStep;          // decrementer
 
@@ -796,6 +892,11 @@ namespace Gekko
 
 			regs.tb.uval += (uint64_t)CounterStep * n;
 
+			if (regs.tb.sval >= flipperDeadline)
+			{
+				SyncFlipper();
+			}
+
 			uint32_t old = regs.spr[SPR::DEC];
 			regs.spr[SPR::DEC] -= DecrementerStep * n;
 
@@ -820,6 +921,10 @@ namespace Gekko
 		void AssertInterrupt();
 		void ClearInterrupt();
 		void Exception(Gekko::Exception code);
+
+		// The tick at which the Flipper-side periodic work is next due (see Flipper::Update).
+		int64_t flipperDeadline = 0;
+		void SyncFlipper();
 
 #pragma region "Memory interface"
 
