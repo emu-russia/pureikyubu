@@ -307,10 +307,14 @@ namespace DSP
 // external-interrupt handler on every rfi and never returned to the guest.
 void DSPUpdateInt()
 {
-	uint16_t pending = CDCR & (CDCR_DSPINT | CDCR_ARINT | CDCR_AIINT);
-	uint16_t unmasked = CDCR & (CDCR_DSPINTMSK | CDCR_ARINTMSK | CDCR_AIINTMSK);
+	// Every cause has its own mask bit, and the two are not placed next to each other in CDCR, so
+	// the line is the OR of the three (cause && its own mask) pairs. ANDing the group of cause
+	// bits with the group of mask bits would always give zero.
+	bool dsp = (CDCR & CDCR_DSPINT) != 0 && (CDCR & CDCR_DSPINTMSK) != 0;
+	bool ar = (CDCR & CDCR_ARINT) != 0 && (CDCR & CDCR_ARINTMSK) != 0;
+	bool ai = (CDCR & CDCR_AIINT) != 0 && (CDCR & CDCR_AIINTMSK) != 0;
 
-	if ((pending & unmasked) != 0)
+	if (dsp || ar || ai)
 	{
 		Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
 	}

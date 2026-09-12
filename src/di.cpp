@@ -22,19 +22,15 @@ namespace Flipper
 	// disk driver.
 	void DiskInterface::DIUpdateInt()
 	{
-		uint16_t pending = di.sr & (DI_SR_BRKINT | DI_SR_TCINT | DI_SR_DEINT);
-		uint16_t unmasked = di.sr & (DI_SR_BRKINTMSK | DI_SR_TCINTMSK | DI_SR_DEINTMSK);
+		// Each cause has its own mask bit (DI_SR_BRKINT/DI_SR_BRKINTMSK and so on), so the line is
+		// the OR of the four (cause && its own mask) pairs. The cause bits and their masks are not
+		// adjacent, so the two groups cannot be ANDed with each other.
+		bool brk = (di.sr & DI_SR_BRKINT) != 0 && (di.sr & DI_SR_BRKINTMSK) != 0;
+		bool tc = (di.sr & DI_SR_TCINT) != 0 && (di.sr & DI_SR_TCINTMSK) != 0;
+		bool de = (di.sr & DI_SR_DEINT) != 0 && (di.sr & DI_SR_DEINTMSK) != 0;
+		bool cvr = (di.cvr & DI_CVR_CVRINT) != 0 && (di.cvr & DI_CVR_CVRINTMSK) != 0;
 
-		if (di.cvr & DI_CVR_CVRINT)
-		{
-			pending |= DI_CVR_CVRINT;
-			if (di.cvr & DI_CVR_CVRINTMSK)
-			{
-				unmasked |= DI_CVR_CVRINT;
-			}
-		}
-
-		if ((pending & unmasked) != 0)
+		if (brk || tc || de || cvr)
 		{
 			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
 		}
