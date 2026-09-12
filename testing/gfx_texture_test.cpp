@@ -208,6 +208,73 @@ namespace pureikyubutest
 			Assert::AreEqual<int>(0x00, rgb[0], L"alpha 0x55 must be discarded");
 		}
 
+		// The 8x4 tiles of an IA4 image are stored row by row: every tile of the first tile row
+		// comes first, then the tiles of the second one. With the tile columns as the outer loop
+		// the decoder reads a column of tiles and any image wider than one tile comes out
+		// transposed. Tag the first texel of each of the four tiles of a 16x8 image (the low
+		// nibble is the intensity, the high one keeps the texel opaque) and read them back.
+		TEST_METHOD(Tex_IA4ReadsTheTileGridInRowOrder)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+			SetupStage0(m);
+
+			uint8_t raw[128] = { 0 };
+			raw[0 * 32] = 0xF1;				// tile (0, 0)
+			raw[1 * 32] = 0xF2;				// tile (1, 0), the other tile of the first tile row
+			raw[2 * 32] = 0xF3;				// tile (0, 1), the first tile of the second tile row
+			raw[3 * 32] = 0xF4;				// tile (1, 1)
+
+			SetupTexture(m, 16, 8, GFX::TF_IA4, raw, sizeof(raw));
+
+			uint8_t rgb[3];
+
+			DrawTexel(m, 16, 8, 0, 0, rgb);
+			Assert::AreEqual<int>(0x11, rgb[0], L"tile (0, 0)");
+
+			DrawTexel(m, 16, 8, 8, 0, rgb);
+			Assert::AreEqual<int>(0x22, rgb[0], L"tile (1, 0) follows it in memory");
+
+			DrawTexel(m, 16, 8, 0, 4, rgb);
+			Assert::AreEqual<int>(0x33, rgb[0], L"tile (0, 1) starts the second tile row");
+
+			DrawTexel(m, 16, 8, 8, 4, rgb);
+			Assert::AreEqual<int>(0x44, rgb[0], L"tile (1, 1)");
+		}
+
+		// The texels of the 8x8 tiles of a 4-bit image are laid out the same way. I4 has two
+		// texels per byte (the high nibble first), so the tag goes into the high nibble.
+		TEST_METHOD(Tex_I4ReadsTheTileGridInRowOrder)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+			SetupStage0(m);
+
+			uint8_t raw[128] = { 0 };
+			raw[0 * 32] = 0x10;				// tile (0, 0)
+			raw[1 * 32] = 0x20;				// tile (1, 0)
+			raw[2 * 32] = 0x30;				// tile (0, 1)
+			raw[3 * 32] = 0x40;				// tile (1, 1)
+
+			SetupTexture(m, 16, 16, GFX::TF_I4, raw, sizeof(raw));
+
+			uint8_t rgb[3];
+
+			DrawTexel(m, 16, 16, 0, 0, rgb);
+			Assert::AreEqual<int>(0x11, rgb[0], L"tile (0, 0)");
+
+			DrawTexel(m, 16, 16, 8, 0, rgb);
+			Assert::AreEqual<int>(0x22, rgb[0], L"tile (1, 0)");
+
+			DrawTexel(m, 16, 16, 0, 8, rgb);
+			Assert::AreEqual<int>(0x33, rgb[0], L"tile (0, 1)");
+
+			DrawTexel(m, 16, 16, 8, 8, rgb);
+			Assert::AreEqual<int>(0x44, rgb[0], L"tile (1, 1)");
+		}
+
 		// IA8: 8 bits of intensity and 8 bits of alpha, intensity in the high byte.
 		TEST_METHOD(Tex_IA8SplitsIntensityAndAlpha)
 		{
@@ -590,6 +657,100 @@ namespace pureikyubutest
 			Assert::AreEqual<int>(0x00, rgb[0], L"red");
 			Assert::AreEqual<int>(0xFF, rgb[1], L"green from palette entry 2");
 			Assert::AreEqual<int>(0x00, rgb[2], L"blue");
+		}
+
+		// =========================================================================================
+		// Decoding on demand: what invalidates a decoded image, and what the debugger gets back
+		// =========================================================================================
+
+		// The debugger's texture dump (the `gxtexdump` command) must hand the colour channels back
+		// in R,G,B order. The decoder serialises every texel into the byte order the GL upload
+		// wants (R,G,B,A), which is the reverse of the Color field order, so a dump that read the
+		// union fields used to rotate the channels of every non-grey format.
+		TEST_METHOD(Tex_DumpReturnsTheColourChannelsInOrder)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+			SetupStage0(m);
+
+			uint8_t raw[64] = { 0 };
+			raw[0] = 0xAA;					// alpha
+			raw[1] = 0x11;					// red
+			raw[32] = 0x22;					// green
+			raw[33] = 0x33;					// blue
+
+			SetupTexture(m, 4, 4, GFX::TF_RGBA8, raw, sizeof(raw));
+
+			std::vector<uint8_t> rgb;
+			int width = 0, height = 0;
+			Assert::IsTrue(m.gfx->tx->DumpTexture(0, rgb, &width, &height));
+
+			Assert::AreEqual<int>(4, width, L"width");
+			Assert::AreEqual<int>(4, height, L"height");
+			Assert::AreEqual<int>(0x11, rgb[0], L"red");
+			Assert::AreEqual<int>(0x22, rgb[1], L"green");
+			Assert::AreEqual<int>(0x33, rgb[2], L"blue");
+		}
+
+		// GXLoadTexObj programs the whole map on every draw, so the draw path asks for a decode all
+		// the time; the decoder keeps the image it already has when the description *and* the
+		// texture bytes are the same, but a title that edits the texels in place (and programs the
+		// same map again) must still get the new bytes. Rewriting the same registers with other
+		// data at the same address is exactly that case.
+		TEST_METHOD(Tex_AnInPlaceEditOfTheTexelsIsPickedUp)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+			SetupStage0(m);
+
+			uint8_t raw[32] = { 0 };
+			raw[0] = 0x20;
+
+			SetupTexture(m, 4, 4, GFX::TF_I8, raw, sizeof(raw));
+
+			uint8_t rgb[3];
+			DrawTexel(m, 4, 4, 0, 0, rgb);
+			Assert::AreEqual<int>(0x20, rgb[0], L"the first image");
+
+			// The same map (same address, format and size) with other texels behind it
+			raw[0] = 0x80;
+			SetupTexture(m, 4, 4, GFX::TF_I8, raw, sizeof(raw));
+
+			DrawTexel(m, 4, 4, 0, 0, rgb);
+			Assert::AreEqual<int>(0x80, rgb[0], L"the edited texel");
+		}
+
+		// The same holds for a palette: rebinding the same TLUT after its entries changed has to
+		// re-expand the indices, even though the texture bytes did not move.
+		TEST_METHOD(Tex_AReloadedPaletteIsPickedUp)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+			SetupStage0(m);
+
+			const uint16_t red[4] = { 0xF800, 0xF800, 0xF800, 0xF800 };
+			SetupRgb565Tlut(m, red, 4);
+
+			uint8_t raw[32] = { 0 };
+			raw[0] = 0;						// texel (0, 0) uses the first entry
+
+			SetupTexture(m, 4, 4, GFX::TF_C8, raw, sizeof(raw));
+
+			uint8_t rgb[3];
+			DrawTexel(m, 4, 4, 0, 0, rgb);
+			Assert::AreEqual<int>(0xFF, rgb[0], L"red from the first palette");
+			Assert::AreEqual<int>(0x00, rgb[2], L"...");
+
+			// Load another palette into the same TMEM slot and bind it again
+			const uint16_t blue[4] = { 0x001F, 0x001F, 0x001F, 0x001F };
+			SetupRgb565Tlut(m, blue, 4);
+
+			DrawTexel(m, 4, 4, 0, 0, rgb);
+			Assert::AreEqual<int>(0x00, rgb[0], L"the texture bytes did not change");
+			Assert::AreEqual<int>(0xFF, rgb[2], L"the new palette entries appear");
 		}
 	};
 }

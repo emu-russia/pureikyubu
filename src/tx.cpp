@@ -13,6 +13,23 @@ namespace GFX
 		return p;
 	}
 
+	// FNV-1a over the raw texture bytes. GXLoadTexObj programs the map of a draw on every draw, so
+	// the draw path asks for a decode all the time; the hash is what lets it tell "the same image
+	// again" from "a title edited the texels in place" without a byte-by-byte comparison of a
+	// working copy it would have to keep.
+	static uint64_t HashTextureData(const uint8_t* data, size_t size)
+	{
+		uint64_t hash = 14695981039346656037ull;
+
+		for (size_t i = 0; i < size; i++)
+		{
+			hash ^= data[i];
+			hash *= 1099511628211ull;
+		}
+
+		return hash;
+	}
+
 	void TextureEngine::TexInit()
 	{
 		memset(texMap, 0, sizeof(texMap));
@@ -113,6 +130,11 @@ namespace GFX
 		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
 		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
 
+		// The decoded image of a paletted texture is a function of the palette bytes as well:
+		// remember that the palettes changed so that DecodeTexture converts those maps again even
+		// when the texture bytes themselves did not move.
+		tlutGeneration++;
+
 		InvalidatePalettedTextures();
 	}
 
@@ -127,8 +149,93 @@ namespace GFX
 		}
 	}
 
-	// Decode one texture map from main memory into rgbabuf. Returns false if the map is not usable.
-	bool TextureEngine::DecodeTexture(int id)
+	// The number of bytes the decoder reads for the image of a map. The tile geometry packs the
+	// texels of a format into 32-byte units, but the total is the nominal size of the image.
+	size_t TextureEngine::TextureDataSize(int id)
+	{
+		size_t texels = (size_t)(tx.teximg0[id].width + 1) * (tx.teximg0[id].height + 1);
+
+		switch (tx.teximg0[id].fmt)
+		{
+			case TF_I4:
+			case TF_C4:
+			case TF_CMPR:
+				return texels / 2;		// 4 bits per texel
+
+			case TF_I8:
+			case TF_IA4:
+			case TF_C8:
+				return texels;			// 8 bits per texel
+
+			case TF_IA8:
+			case TF_RGB565:
+			case TF_RGB5A3:
+			case TF_C14:
+				return texels * 2;		// 16 bits per texel
+
+			case TF_RGBA8:
+				return texels * 4;		// 32 bits per texel
+
+			default:
+				return 0;
+		}
+	}
+
+	// Decode a texture map on demand. The conversion is skipped while the GL image already holds
+	// exactly the image the map describes: the address, the format, the size, the palette binding
+	// and the texture bytes (plus the palette bytes, through the TLUT generation) all have to
+	// match. This is what keeps a title that programs the same map on every draw from redoing the
+	// conversion and the upload.
+	TextureEngine::DecodeResult TextureEngine::DecodeTexture(int id)
+	{
+		TexMap* m = &texMap[id];
+
+		int fmt = tx.teximg0[id].fmt;
+		int oldw = tx.teximg0[id].width + 1;
+		int oldh = tx.teximg0[id].height + 1;
+		uint32_t addr = tx.teximg3[id].base << 5;
+		size_t size = TextureDataSize(id);
+
+		if (oldw == 0 || oldh == 0 || size == 0)
+			return DecodeResult::Failed;
+
+		// Do not hash an image that could not be decoded in the first place
+		if ((size_t)NextPowerOfTwo(oldw) * NextPowerOfTwo(oldh) > _countof(rgbabuf))
+			return DecodeResult::Failed;
+
+		const uint8_t* rawData = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
+		if (rawData == nullptr)
+			return DecodeResult::Failed;
+
+		uint64_t hash = HashTextureData(rawData, size);
+
+		if (m->valid &&
+			m->keyAddr == addr && m->keyFmt == fmt &&
+			m->keyWidth == oldw && m->keyHeight == oldh &&
+			m->keyTlut == tx.settlut[id].tmem && m->keyTlutGen == tlutGeneration &&
+			m->keyHash == hash)
+		{
+			return DecodeResult::Unchanged;
+		}
+
+		if (!ConvertTexture(id))
+			return DecodeResult::Failed;
+
+		// Remember what the GL image now holds
+		m->keyAddr = addr;
+		m->keyFmt = fmt;
+		m->keyWidth = oldw;
+		m->keyHeight = oldh;
+		m->keyTlut = tx.settlut[id].tmem;
+		m->keyTlutGen = tlutGeneration;
+		m->keyHash = hash;
+		m->valid = true;
+
+		return DecodeResult::Decoded;
+	}
+
+	// Convert one texture map from main memory into rgbabuf. Returns false if the map is not usable.
+	bool TextureEngine::ConvertTexture(int id)
 	{
 		TexMap* m = &texMap[id];
 
@@ -218,8 +325,13 @@ namespace GFX
 				// shapes follow the tile geometry of the format, see gfx-tc.md 5.3). The intensity is
 				// the LOW nibble of the byte and the alpha the HIGH one,
 				// and each nibble is repeated to fill 8 bits.
-				for (s = 0; s < (oldw / 8); s++)  // tile hor
-					for (t = 0; t < (oldh / 4); t++) // tile ver
+				//
+				// The tiles of a texture are stored row by row: every tile of the first tile row
+				// comes first, then the tiles of the second one, and so on. The tile rows therefore
+				// have to be the outer loop; with the tile columns outer the decoder reads the tiles
+				// of a column and an image wider than one tile comes out transposed.
+				for (t = 0; t < (oldh / 4); t++) // tile ver
+					for (s = 0; s < (oldw / 8); s++)  // tile hor
 						for (v = 0; v < 4; v++)  // texel ver
 							for (u = 0; u < 8; u++)  // texel hor
 							{
@@ -409,7 +521,8 @@ namespace GFX
 							for (u = 0; u < 4; u++)
 							{
 								unsigned ofs = width * (t + v) + s + u;
-								uint16_t idx = _BYTESWAP_UINT16(*ptr++) & 0x3ff;
+								// C14X2 carries a 14-bit index into a palette of up to 16384 entries
+								uint16_t idx = _BYTESWAP_UINT16(*ptr++) & 0x3fff;
 								GetTlutCol(&rgba, id, idx);
 								texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgba.RGBA);
 							}
@@ -481,10 +594,12 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								// The fourth colour of the 3-colour mode is the transparent texel
-								rgb[3].R = 0;
-								rgb[3].G = 0;
-								rgb[3].B = 0;
+								// The fourth colour of the 3-colour mode is the transparent texel: the
+								// hardware stores the average of the endpoints there and only clears
+								// its alpha, so the RGB still takes part in a blend that uses it.
+								rgb[3].R = (rgb[0].R + rgb[1].R) / 2;
+								rgb[3].G = (rgb[0].G + rgb[1].G) / 2;
+								rgb[3].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[3].A = 0;
 							}
 
@@ -547,10 +662,12 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								// The fourth colour of the 3-colour mode is the transparent texel
-								rgb[3].R = 0;
-								rgb[3].G = 0;
-								rgb[3].B = 0;
+								// The fourth colour of the 3-colour mode is the transparent texel: the
+								// hardware stores the average of the endpoints there and only clears
+								// its alpha, so the RGB still takes part in a blend that uses it.
+								rgb[3].R = (rgb[0].R + rgb[1].R) / 2;
+								rgb[3].G = (rgb[0].G + rgb[1].G) / 2;
+								rgb[3].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[3].A = 0;
 							}
 
@@ -613,10 +730,12 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								// The fourth colour of the 3-colour mode is the transparent texel
-								rgb[3].R = 0;
-								rgb[3].G = 0;
-								rgb[3].B = 0;
+								// The fourth colour of the 3-colour mode is the transparent texel: the
+								// hardware stores the average of the endpoints there and only clears
+								// its alpha, so the RGB still takes part in a blend that uses it.
+								rgb[3].R = (rgb[0].R + rgb[1].R) / 2;
+								rgb[3].G = (rgb[0].G + rgb[1].G) / 2;
+								rgb[3].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[3].A = 0;
 							}
 
@@ -681,10 +800,12 @@ namespace GFX
 								rgb[2].G = (rgb[0].G + rgb[1].G) / 2;
 								rgb[2].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[2].A = 255;
-								// The fourth colour of the 3-colour mode is the transparent texel
-								rgb[3].R = 0;
-								rgb[3].G = 0;
-								rgb[3].B = 0;
+								// The fourth colour of the 3-colour mode is the transparent texel: the
+								// hardware stores the average of the endpoints there and only clears
+								// its alpha, so the RGB still takes part in a blend that uses it.
+								rgb[3].R = (rgb[0].R + rgb[1].R) / 2;
+								rgb[3].G = (rgb[0].G + rgb[1].G) / 2;
+								rgb[3].B = (rgb[0].B + rgb[1].B) / 2;
 								rgb[3].A = 0;
 							}
 
@@ -706,14 +827,6 @@ namespace GFX
 				return false;
 		}
 
-		// Remember what the GL image was decoded from
-		m->keyAddr = addr;
-		m->keyFmt = fmt;
-		m->keyWidth = m->width;
-		m->keyHeight = m->height;
-		m->keyTlut = tx.settlut[id].tmem;
-		m->valid = true;
-
 		return true;
 	}
 
@@ -724,7 +837,19 @@ namespace GFX
 		glBindTexture(GL_TEXTURE_2D, m->glTexture);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m->dw, m->dh, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbabuf);
+
+		// A texture object that already has the same size only needs its texels replaced;
+		// glTexImage2D would throw the storage away and allocate it again.
+		if (m->glWidth == m->dw && m->glHeight == m->dh)
+		{
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m->dw, m->dh, GL_RGBA, GL_UNSIGNED_BYTE, rgbabuf);
+		}
+		else
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m->dw, m->dh, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbabuf);
+			m->glWidth = m->dw;
+			m->glHeight = m->dh;
+		}
 
 		m->paramsDirty = true;
 	}
@@ -806,13 +931,19 @@ namespace GFX
 			{
 				m->dirty = false;
 
-				if (DecodeTexture(i))
+				switch (DecodeTexture(i))
 				{
-					UploadTexture(i);
-				}
-				else
-				{
-					m->valid = false;
+					case DecodeResult::Decoded:
+						UploadTexture(i);
+						break;
+
+					case DecodeResult::Unchanged:
+						// The GL texture already holds this image
+						break;
+
+					default:
+						m->valid = false;
+						break;
 				}
 			}
 
@@ -920,7 +1051,15 @@ namespace GFX
 
 			switch (kind)
 			{
-				case 0: tx.texmode0[id].bits = value; m->paramsDirty = true; break;
+				case 0:
+					// GXLoadTexObj programs the mode on every draw, and the sampler parameters
+					// (which may rebuild the mip chain) only change with the value.
+					if (tx.texmode0[id].bits != value)
+					{
+						tx.texmode0[id].bits = value;
+						m->paramsDirty = true;
+					}
+					break;
 				case 1: tx.texmode1[id].bits = value; break;
 				case 2:
 					tx.teximg0[id].bits = value;
@@ -934,7 +1073,10 @@ namespace GFX
 				case 4: tx.teximg2[id].bits = value; break;
 				case 5:
 					tx.teximg3[id].bits = value;
-					// The texture base may point at new data even if the address is unchanged
+					// The texture base may point at new data even if the address is unchanged, and
+					// a title may edit the texels in place, so the map has to be looked at again.
+					// DecodeTexture compares the description and the texture bytes and keeps the
+					// decoded image when neither changed.
 					m->dirty = true;
 					break;
 				case 6:
@@ -964,6 +1106,11 @@ namespace GFX
 
 			case TX_INVTAGS_ID:
 				tx.invtags = value;
+				// The hardware's "the texture bytes changed" command (GXInvalidateTexAll). The
+				// backend decodes from main memory on demand and otherwise keeps the decoded image,
+				// so every map has to be decoded again.
+				for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+					texMap[i].dirty = true;
 				return;
 
 			case TX_PERFMODE_ID:
@@ -1001,7 +1148,9 @@ namespace GFX
 	{
 		id &= (GFX_MAX_TEXTURES - 1);
 
-		if (!DecodeTexture(id))
+		// The dump wants the pixels, not the cache: rgbabuf is shared by all maps and may hold the
+		// image of another one, so the map has to be converted into it unconditionally.
+		if (!ConvertTexture(id))
 		{
 			return false;
 		}
@@ -1017,11 +1166,16 @@ namespace GFX
 		{
 			for (int x = 0; x < m->width; x++)
 			{
-				const Color& c = rgbabuf[(size_t)y * m->dw + x];
+				// The decoder serialises every texel into the R,G,B,A byte order the GL upload
+				// wants, which is the reverse of the Color field order (Color is A,B,G,R). Read
+				// the bytes, not the fields: after the serialisation the `R` field holds the
+				// alpha, the `G` field the blue one and so on, which is why reading the fields
+				// dumped every non-grey format with the channels rotated.
+				const uint8_t* c = (const uint8_t*)&rgbabuf[(size_t)y * m->dw + x];
 				uint8_t* p = &rgb[((size_t)y * m->width + x) * 3];
-				p[0] = c.R;
-				p[1] = c.G;
-				p[2] = c.B;
+				p[0] = c[0];
+				p[1] = c[1];
+				p[2] = c[2];
 			}
 		}
 
@@ -1030,6 +1184,7 @@ namespace GFX
 
 	void TextureEngine::Reset()
 	{		tx = TXState{};
+		tlutGeneration = 0;
 
 		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
@@ -1045,6 +1200,8 @@ namespace GFX
 			m->keyFmt = -1;
 			m->keyWidth = m->keyHeight = 0;
 			m->keyTlut = 0xFFFFFFFF;
+			m->keyTlutGen = 0;
+			m->keyHash = 0;
 			m->appliedMode0 = 0xFFFFFFFF;
 			m->appliedMode1 = 0xFFFFFFFF;
 		}

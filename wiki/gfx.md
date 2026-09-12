@@ -194,6 +194,37 @@ The tile shapes come from the texture unit (gfx-tc.md 5.3): 4-bit formats are
 AR unit first, then the GB one). CMPR sub-blocks sit in the 8x8 tile in the order TL, TR, BL, BR at
 byte offsets 0/8/16/24.
 
+The tiles of an image are stored **row by row**: every tile of the first tile row comes first, then
+the tiles of the second one, and so on. An image that is wider than one tile therefore needs the
+tile row as the outer walk of the decoder; with the tile columns outer the map is read column by
+column and everything but the first tile column is transposed. This is what happened to the IA4
+decoder (8-wide tiles) and it is why a 32x32 IA4 map came out as noise while the same map was
+correct in the gallery - the gallery encoder mirrored the decoder's walk. Both walks are row-first
+now, and `gfx_texture_test.cpp` samples the first texel of every tile of a 2x2 tile grid for the
+8x8 (I4), 8x4 (IA4) and 16-bit/RGBA8 formats so the order is pinned.
+
+The C14X2 palette index is 14 bits wide (the register field passes all of them through), and the
+transparent fourth colour of the CMPR three-colour mode keeps the average of its two endpoints with
+a cleared alpha, which is what the hardware puts there (the RGB takes part in a blend that uses it,
+only the alpha makes the texel invisible).
+
+### Decoding on demand
+
+A draw programs the whole texture map (`GXLoadTexObj`) every time it uses it, so the backend is
+asked for a decode constantly. `DecodeTexture` only converts and uploads when the map really
+changed: it compares the description (base address, format, size, palette binding) and an FNV-1a
+hash of the raw texture bytes it would read against what the GL texture was decoded from
+(`TexMap::key*`). A palette lives outside the texture bytes, so every TLUT load bumps a generation
+counter that is part of the check as well (`gfx-tc.md` palettes are shared by the maps that bind
+them). Titles that edit a texture in place are still picked up, because the hash covers the bytes,
+not just the registers; `Tex_AnInPlaceEditOfTheTexelsIsPickedUp` and
+`Tex_AReloadedPaletteIsPickedUp` pin that down.
+
+`TX_INVTAGS` (`GXInvalidateTexAll`) marks every map for a decode again. The upload reuses the GL
+image storage (`glTexSubImage2D`) while the image size is unchanged, and the sampler parameters
+(including the mip chain of a mipmapped map) are only re-applied when `TX_SETMODE0/1` really
+changes, not on every write of the same value.
+
 **Open item (CMPR).** The format definition available to the project describes the two interpolated
 endpoints as thirds (`(2*A + B) / 3`), which is what the decoder implements, while a second
 description of the same decoder gives `A*(frac+1) + B*(8-frac-1)` shifted right by three, i.e. 3/8

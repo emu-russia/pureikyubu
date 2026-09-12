@@ -274,10 +274,16 @@ namespace GFX
 		int dw = 0, dh = 0;				//!< Size of the GL image (power of two)
 		float ds = 1.0f, dt = 1.0f;		//!< Texture coordinate scale (real / stored)
 
+		// Size the GL image was last allocated with, so that a re-decode can upload into the
+		// existing storage (glTexSubImage2D) instead of reallocating it (glTexImage2D)
+		int glWidth = 0, glHeight = 0;
+
 		// What the current GL image was decoded from
 		uint32_t keyAddr = 0;
 		int keyFmt = -1, keyWidth = 0, keyHeight = 0;
 		uint32_t keyTlut = 0xFFFFFFFF;
+		uint32_t keyTlutGen = 0;		//!< TLUT generation the image was decoded with
+		uint64_t keyHash = 0;			//!< Content hash of the texture bytes the image was decoded from
 
 		uint32_t appliedMode0 = 0xFFFFFFFF;	//!< TexMode0 value the sampler parameters were set from
 		uint32_t appliedMode1 = 0xFFFFFFFF;	//!< TexMode1 value the LOD limits were set from
@@ -297,12 +303,28 @@ namespace GFX
 		Color rgbabuf[1024 * 1024];
 		uint8_t tlut[1024 * 1024];  // TLUT buffer
 
+		//! Bumped by every palette load. A paletted texture is a function of the palette bytes as
+		//! well as of its own, so a decoded image is only current while this counter is unchanged.
+		uint32_t tlutGeneration = 0;
+
 		bool active = false;
+
+		//! What DecodeTexture did with a map.
+		enum class DecodeResult
+		{
+			Failed,			//!< The map is not usable (bad address or unknown format)
+			Decoded,		//!< rgbabuf holds a new image that has to be uploaded
+			Unchanged,		//!< The GL texture already holds exactly this image
+		};
 
 		void TexInit();
 		void TexFree();
 		void GetTlutCol(Color* c, unsigned id, unsigned entry);
-		bool DecodeTexture(int id);
+		DecodeResult DecodeTexture(int id);
+		//! Decode unconditionally into rgbabuf (the debugger dump and the caching decode above).
+		bool ConvertTexture(int id);
+		//! The byte size of the raw image of a map, as the decoder reads it.
+		size_t TextureDataSize(int id);
 		void UploadTexture(int id);
 		void ApplyTextureParams(int id);
 		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
