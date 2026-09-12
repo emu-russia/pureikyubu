@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Notes 1.8 — pureikyubu</title>
+<meta name="description" content="Заметки о релизе pureikyubu 1.8: рекомпилятор Gekko для x86-64, Paired-Single на SSE, событийные потоки устройств, исправления агрегатных линий прерываний, из-за которых загружаются Zelda: The Wind Waker и Animal Crossing, образы RVZ и настройка контроллеров в SDL-сборке.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index_ru.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index_ru.html">Главная</a>
+      <a href="digest_ru.html">Дайджест</a>
+      <a href="release_notes_1.8_ru.html" aria-current="page">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Язык">
+      <a href="release_notes_1.8.html" hreflang="en">EN</a>
+      <a href="release_notes_1.8_ru.html" class="active" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Светлая</button>
+  </div>
+</header>
+
+<main class="article">
+  <div class="wrap">
+
+    <div class="article-header">
+      <h1>pureikyubu 1.8 — заметки о релизе</h1>
+      <div class="meta">
+        Сентябрь 2026 · предыдущий релиз 1.7 (сентябрь 2026) ·
+        <a href="RELEASE_NOTES_1.8.md">Версия в Markdown</a>
+      </div>
+    </div>
+
+    <p>
+      Версия 1.8 — релиз производительности, и большая часть прироста получилась не добавлением
+      работы, а её устранением. У Gekko появился рекомпилятор в x86-64, поднимающий эмулируемый
+      процессор выше 150 MIPS; периодические потоки устройств перестали крутиться в ожидании на
+      тайм-базе, а агрегатные линии прерываний DSP, дискового интерфейса и последовательного порта
+      были переписаны по документации на железо. Последнее важнее цифр: вместе с грозой прерываний
+      ушли в прошлое чёрные экраны — Zelda: The Wind Waker доходит до титульного экрана, а Animal
+      Crossing наконец покидает свой обработчик исключений. В релизе также появились сжатые образы
+      дисков RVZ, полноценное окно настройки контроллеров в SDL-сборке и новая иконка приложения.
+    </p>
+
+    <figure>
+      <img src="imgstore/zelda_wind_waker.png" alt="Титульный экран The Legend of Zelda: The Wind Waker в pureikyubu">
+      <figcaption><strong>The Legend of Zelda: The Wind Waker</strong>Доходит до титульного экрана
+        после исправления векторов прерываний DSP и защёлкивания запроса через почтовый ящик.</figcaption>
+    </figure>
+
+    <div class="toc">
+      <h2>На этой странице</h2>
+      <ol>
+        <li><a href="#highlights">Главное</a></li>
+        <li><a href="#added">Добавлено</a></li>
+        <li><a href="#changed">Изменено</a></li>
+        <li><a href="#fixed">Исправлено</a></li>
+        <li><a href="#known">Известные проблемы</a></li>
+        <li><a href="#build">Сборка</a></li>
+      </ol>
+    </div>
+
+    <h2 id="highlights">Главное</h2>
+    <ul>
+      <li><strong>Рекомпилятор Gekko.</strong> Новый компилятор базовых блоков Gekko в x86-64
+        (<code>src/gekkojit.*</code>) держит гостевые GPR в регистрах хоста и использует общий с
+        интерпретатором кэш декодирования для всего, что не транслируется. Замеры на
+        дифференциальном стенде: 39.7 MIPS у исходного интерпретатора, 58.6 у интерпретатора с
+        настоящим инлайном и 155.9 с рекомпилятором; на коде, насыщенном АЛУ, выигрыш 8.6x.
+        Команды отладчика <code>jit 0</code> / <code>jit 1</code> переключают движки на ходу.</li>
+      <li><strong>Paired-Single на SSE.</strong> Все арифметические инструкции PS и обе
+        квантизованные загрузки/сохранения (<code>psq_l</code> / <code>psq_st</code>)
+        транслируются в SSE/SSE2. Нагрузка с преобладанием PS растёт с 59 MIPS (интерпретатор) до
+        435 MIPS, нагрузка из квантизованных загрузок — с 57 до 191.</li>
+      <li><strong>Больше никакого активного ожидания.</strong> Развёртка VI и опрос последовательного
+        порта теперь выполняются потоком процессора на том же тике, который он и так продвигает, а
+        потоки CP, AI DMA и DSP блокируются на событиях вместо вращения на
+        <code>Core-&gt;GetTicks()</code>. <code>pong.dol</code> вырос с 1.47x до 3.66x реального
+        времени, Ikaruga — с 2.16x до 4.58x, Luigi's Mansion — с 0.62x (полная остановка) до
+        4.26x.</li>
+      <li><strong>Агрегатные линии прерываний заработали.</strong> Линии Processor Interface у DSP и
+        дискового интерфейса объединяли биты причин со своими же битами масок по И, а это всегда
+        ноль; теперь обе следуют ИЛИ защёлкнутых и немаскированных причин. Последовательный порт
+        опрашивается по расписанию видеолиний вместо фиксированного тика, что убирает шторм
+        прерываний, запирающий игры внутри обработчика.</li>
+      <li><strong>Игры.</strong> Zelda: The Wind Waker доходит до титульного экрана, Metroid Prime
+        показывает титульный экран; Animal Crossing проходит рукопожатие ARQ в звуковом драйвере,
+        читает диск и показывает логотип Nintendo.</li>
+      <li><strong>Образы RVZ.</strong> Сжатые образы GameCube в контейнере RVZ из Dolphin
+        (Zstandard) монтируются только для чтения — так же, как ISO или GCM.</li>
+      <li><strong>Настройка контроллеров в SDL.</strong> У SDL-сборки появился собственный бэкенд
+        контроллеров и полное окно «Configure Controller N»: привязки клавиатуры и геймпада рядом,
+        аналоговые стики и триггеры, кнопки Clear / Default / OK / Cancel.</li>
+      <li><strong>Новая иконка.</strong> Иконка-куб перекрашена в синюю палитру логотипа и заново
+        сгенерирована как <code>pureikyubu.ico</code> (16–256 px, 32 bpp); SDL-сборки встраивают
+        те же пиксели и вызывают <code>SDL_SetWindowIcon</code>.</li>
+    </ul>
+
+    <h2 id="added">Добавлено</h2>
+
+    <h3>Gekko</h3>
+    <ul>
+      <li>Рекомпилятор базовых блоков Gekko в x86-64 (<code>src/gekkojit.h</code>,
+        <code>src/gekkojit.cpp</code>). Каждый блок запоминает состояние трансляции (счётчик
+        поколений), при котором он был скомпилирован, поэтому запись в BAT, <code>SDR1</code>,
+        <code>HID0</code>/<code>HID2</code> или <code>MSR</code>, а также <code>rfi</code>,
+        <code>tlbie</code>, <code>icbi</code>, <code>dcbst</code> или сброс кэша отбрасывают все
+        блоки за O(1). Нетранслированные инструкции идут через
+        <code>Interpreter::ExecuteDecoded</code> и общий с интерпретатором кэш декодирования, так
+        что оба движка декодируют одинаково по построению.</li>
+      <li>Кэш декодирования на 8192 записи с ключом из pc и выбранного слова инструкции и
+        прямоадресуемый TLB на 2048 трансляций страниц вместо <code>unordered_map</code>,
+        выделявшего по <code>TLBEntry</code> на каждую отображённую страницу.</li>
+      <li>Трансляция Paired-Single (<code>src/gekkojit_ps.cpp</code>, отключается через
+        <code>-DGEKKO_JIT_PS=0</code>): <code>add</code>, <code>sub</code>, <code>mul</code>,
+        <code>div</code>, <code>res</code>, <code>rsqrte</code>, <code>madd</code>,
+        <code>msub</code>, <code>nmadd</code>, <code>nmsub</code>, <code>muls0/1</code>,
+        <code>madds0/1</code>, <code>sum0/1</code>, <code>sel</code>, <code>mr</code>,
+        <code>neg</code>, <code>abs</code>, <code>nabs</code>, <code>merge00/01/10/11</code> и
+        формы с записью результата (<code>_d</code>). Кодер x86-64, роли регистров хоста и смещения
+        <code>GekkoRegs</code> переехали в <code>src/gekkojit_x64.h</code>.</li>
+      <li>Квантизованные парные загрузки и сохранения (<code>psq_l</code> / <code>psq_st</code>):
+        все восемь форм — индексные и неиндексные, с обновлением и без, W = 0 и W = 1; правила
+        <code>HID2[PSE]</code>, <code>HID2[LSQE]</code> и <code>RA != 0</code> для форм с
+        обновлением решаются на этапе компиляции. GQR читается во время выполнения в
+        <code>Jit::PsqLoad</code> / <code>Jit::PsqStore</code>, поэтому его запись ничего не
+        инвалидирует.</li>
+      <li>Команда отладчика <code>jit 0</code> / <code>jit 1</code>; 32-битные и не-x86 хосты, а
+        также сборки с <code>-DGEKKO_JIT_DISABLED</code> откатываются на интерпретатор.</li>
+    </ul>
+
+    <h3>Образы дисков</h3>
+    <ul>
+      <li>Поддержка только для чтения контейнера RVZ из Dolphin (<code>src/rvz.cpp</code>): заголовок
+        контейнера и его контрольные суммы SHA-1, таблицы записей данных и групп, методы сжатия
+        <code>None</code> и <code>Zstandard</code>, а также «упакованное» представление,
+        восстанавливающее участки псевдослучайного мусора диска из seed генератора LFG. Группы
+        bzip2/LZMA и образы Wii помечаются как неподдерживаемые. Zstandard добавлен в
+        <code>thirdparty/zstd</code>.</li>
+      <li><code>.rvz</code> принимается везде, где принимался образ диска: в командной строке,
+        в селекторе игр и в файловых диалогах.</li>
+    </ul>
+
+    <h3>Ввод и интерфейс</h3>
+    <ul>
+      <li>Бэкенд контроллеров SDL (<code>src/padsdl.cpp</code>): контроллером можно управлять
+        одновременно с клавиатуры (<code>SDL_GetKeyboardState</code>, скан-коды SDL в
+        <code>VKEY_FOR_*</code>) и с геймпада SDL (идентификаторы кнопок и осей
+        <code>GCKEY_FOR_*</code>); N-й подключённый геймпад управляет N-м портом. Левый стик
+        управляет основным стиком, правый — стиком C, триггеры — аналоговыми L/R (цифровые L/R
+        срабатывают на 50%); клавиши 50%/100% на клавиатуре продолжают работать, а значения обоих
+        источников складываются и ограничиваются, а не переполняют <code>int8_t</code>.</li>
+      <li>Окно настройки контроллеров в SDL-интерфейсе (<code>uisdl.cpp</code>, портировано из
+        Win32-процедуры <code>PADConfigDialogProc</code>): Options → Controllers → Port 1..4
+        открывает «Configure Controller N» с таблицей Buttons слева и таблицами Control Stick и
+        C Stick справа, у каждой свои столбцы Control | Keyboard | Gamepad. Щелчок по привязке
+        включает захват: следующая клавиша, кнопка геймпада или отклонение стика/триггера
+        становится новой привязкой, а событие проглатывается; Esc отменяет, модификаторы и F1–F12
+        для клавиатуры пропускаются.</li>
+      <li>Геймпады открываются и закрываются потоком, который прокачивает события SDL
+        (<code>PADUpdateControllers</code>), а поток эмуляции читает их через снимок со
+        спин-блокировкой; <code>PADLoadConfig</code> объявлена публично, чтобы диалог мог применить
+        привязки без перезапуска эмуляции.</li>
+      <li>Новая иконка приложения: рисунок куба перекрашен в палитру логотипа
+        (<code>src/res/pureikyubu_icon.svg</code>) и встроен в
+        <code>src/res/pureikyubu_icon.h</code> для <code>SDL_SetWindowIcon</code> (у SDL-порта нет
+        ресурсов <code>.rc</code>); <code>pureikyubu.ico</code> заново сгенерирован в размерах
+        16–256 px, 32 bpp.</li>
+    </ul>
+
+    <h3>Командная строка и инструменты</h3>
+    <ul>
+      <li><code>pureikyubu &lt;файл&gt;</code> (или <code>--image &lt;файл&gt;</code>) сразу
+        загружает и запускает образ вместо остановки в селекторе игр, а <code>--help</code>
+        печатает список ключей в консоль и в журнал отчёта, так что
+        <code>EMU_LOG=&lt;файл&gt; pureikyubu --help</code> тоже работает.</li>
+      <li><code>--bench &lt;файл&gt; [секунды]</code> прогоняет эмулятор без участия человека и
+        сообщает пропускную способность и <code>Gekko::CpuStats</code> (транслированные и
+        интерпретированные инструкции, длина базовых блоков, повторные трансляции и их причины,
+        заполнения строк кэша и каждое обращение, уходящее из кэша в PI/MEM);
+        <code>BENCH_PROFILE=1</code> добавляет разбивку по тактам хоста, а
+        <code>BENCH_STATS=1</code> — гистограмму гостевых инструкций.</li>
+      <li>В дифференциальном стенде Gekko появились режимы <code>BENCH_SPIN*</code>
+        (воспроизводящие и разбирающие взаимные помехи потоков на тайм-базе),
+        <code>BENCH_PS_TEST</code>, <code>BENCH_FUZZ_PS</code> и смесь нагрузки
+        <code>psq</code>; <code>build_win.bat</code> собирает стенд компилятором MSVC, чтобы оба
+        компилятора можно было сравнить на одной нагрузке.</li>
+    </ul>
+
+    <h3>Тесты</h3>
+    <ul>
+      <li>Тесты последовательного интерфейса по спецификации: 17 новых случаев — круговой прогон
+        SIPOLL и его независимые половины, выходные буферы каналов, входные буферы только для
+        чтения, позиции бит COMCSR и TSTART, интервал опроса, бюджет и привязка к вертикальному
+        гашению, включение отдельных каналов, а также прерывание статуса чтения и его маска.</li>
+      <li>Тесты Command Processor по спецификации (<code>testing/gfx_cp_spec_test.cpp</code>,
+        19 случаев), написанные по <code>specs/architecture/command-processor.md</code>: позиции
+        полей VCD/VAT, счётчики байт компонент и цвета в VAT, порядок вершинных атрибутов и
+        <code>gx_vtxsize</code>.</li>
+      <li>Пять тестов агрегации линии прерывания DSP (каждая причина поднимает линию только через
+        свою маску, реальное завершение ARAM DMA доходит до PI, замаскированная причина
+        защёлкивается без линии, подтверждение снимает её, а прерывание почтового ящика доходит до
+        PI), плюс исправленный тест векторов DSP и тест защёлкнутого запроса CPU→DSP. Всего в наборе
+        367 тестов.</li>
+    </ul>
+
+    <h2 id="changed">Изменено</h2>
+
+    <h3>Производительность и потоки</h3>
+    <ul>
+      <li>Развёртка VI и опрос последовательного порта выполняются потоком процессора на том же
+        тике, который он и так продвигает (<code>GekkoCore::Tick</code> / <code>TickN</code>
+        вызывают <code>Flipper::Update</code>), поэтому тайминг VI точный, а не сэмплируемый
+        потоком.</li>
+      <li>Поток Command Processor блокируется на новом переносимом <code>Event</code>
+        (<code>utils.h</code>), который поток процессора сигналит, когда подошла порция записей
+        FIFO (<code>CommandProcessor::TickSync</code>); слив по-прежнему идёт на эмулируемой
+        скорости <code>tickPerFifo</code>.</li>
+      <li>Поток AI DMA просыпается по <code>DSP::AITickSync</code> (примерно каждые 6750 тиков на
+        48 кГц) и паркуется через <code>Suspend()</code>, когда DMA не взведён. Поток DSP
+        просыпается по <code>DspCore::TickSync</code> раз в <code>DspWakeTicks</code> и сливает
+        порцию, поэтому эмулируемый DSP больше не тормозит сам себя, перезакрепляя дедлайн на каждом
+        опросе; удержание почтового ящика теперь измеряется в тиках
+        (<code>DspCore::MailboxHoldTicks</code>).</li>
+      <li><code>mtmsr</code> и <code>rfi</code> сбрасывают скомпилированные блоки, только когда
+        <code>MSR[IR]</code>/<code>[DR]</code> действительно меняются; ОС переключает
+        <code>MSR[EE]</code> вокруг каждой критической секции, и полный сброс кэша из-за этого
+        стоил около 85 000 лишних трансляций в секунду.</li>
+      <li>Трансляция адресов, тик и помощники условий переходов теперь действительно
+        инлайнятся (<code>GEKKO_INLINE</code>).</li>
+    </ul>
+
+    <h3>Поведение и конфигурация</h3>
+    <ul>
+      <li>Windows- и SDL-сборки хранят настройки раздельно: <code>DefaultSettingsWin.json</code> /
+        <code>SettingsWin.json</code> и <code>DefaultSettingsSdl.json</code> /
+        <code>SettingsSdl.json</code>. Оба порта запускаются из одного каталога и раньше
+        перезаписывали конфигурацию друг друга; теперь каждый исполняемый файл встраивает свои имена
+        файлов.</li>
+      <li>Последовательный интерфейс следует документированной раскладке регистров:
+        <code>SICnOUTBUF</code> — видимый процессору регистр, а теневой читает движок передачи;
+        <code>SICOMCSR</code> защёлкивает CHANNEL и INLNGTH при обычной записи, а
+        <code>TSTART</code> читается как бит ожидания; регистр опроса напрямую управляет
+        <code>SIPoll(line)</code>.</li>
+      <li>Потоки устройств Flipper и эмулятор используют одну и ту же абстракцию
+        <code>Event</code>, поэтому код таймингов переносим между Win32 и SDL.</li>
+    </ul>
+
+    <h2 id="fixed">Исправлено</h2>
+
+    <h3>Прерывания и таймеры</h3>
+    <ul>
+      <li><strong>Агрегатные линии прерываний DSP/DI.</strong> У каждой причины в CDCR и DI_SR есть
+        собственный бит маски, и пары расположены не рядом; оба помощника пересчёта объединяли
+        группу причин с группой масок по И, то есть всегда получали ноль, и линии вообще никогда не
+        поднимались. Animal Crossing зависала в ожидании ARQ, потому что завершение ARAM DMA не
+        доходило до процессора. Теперь обе линии следуют ИЛИ пар
+        <code>(причина &amp;&amp; её собственная маска)</code> и пересчитываются из
+        <code>DSPUpdateInt()</code> / <code>DIUpdateInt()</code> при любом изменении причины или
+        маски.</li>
+      <li><strong>Снятая причина может опустить линию.</strong> Линии сбрасывались только внутри
+        одной ветви <code>write_cdcr</code> / <code>write_sr</code>; снятие одной причины при
+        защёлкнутой другой оставляло линию поднятой, и снять её было уже нечем, поэтому процессор
+        заново входил во внешний обработчик на каждом <code>rfi</code>. Animal Crossing выполняла
+        около 11 500 исключений в секунду.</li>
+      <li><strong>Шторм опроса последовательного интерфейса.</strong> Эмулятор опрашивал порт по
+        фиксированному интервалу в 0x10000 тиков (примерно в десять раз чаще кадровой частоты
+        железа) вместо расписания видеолиний SIPOLL, поэтому <code>RDSTINT</code> поднимался
+        непрерывно. На Animal Crossing эмулируемое время за один и тот же интервал реального времени
+        выросло с 3.8 с до 74 с, число входов в исключения упало с 165 000 до 2 213, а прерывания VI
+        — с 0 до 2 178; у Zelda число исключений снизилось с 49 635 до 2 157.</li>
+      <li><strong>Векторы микрокода DSP.</strong> База векторов прерываний бралась из живого бита
+        use-rom регистра CDCR, а не из выполняющейся программы; микрокод Zelda ставит вектор CPU→DSP
+        по адресу 0x000E в IRAM, и векторы загрузчика заставляли его отбрасывать команду. Теперь
+        бит 1 CDCR защёлкивается как запрос и повторяется, пока ядро не примет его через вентиль
+        TE3/ET, поэтому запрос, пришедший при закрытом <code>te3</code>, больше не теряется.</li>
+      <li><strong>Потоки DSP/AI.</strong> <code>DspAIOpen</code> очищал состояние через
+        <code>memset</code>, затирая и <code>Event</code>, которого ждёт поток AI (ожидание на
+        обнулённом дескрипторе возвращается немедленно, поэтому поток незаметно возвращался к
+        вращению); теперь очистка выполняется явным <code>DspAIControl::Reset</code>.</li>
+    </ul>
+
+    <h3>Графика</h3>
+    <ul>
+      <li><strong>Вывод изображения (issue #361).</strong> <code>pe.cpp</code> выключал выход VI
+        после первого токена <code>GXDrawDone</code>/PE, из-за чего развёртка прекращалась до конца
+        запуска в играх, которые продолжают выдавать кадры; этот вентиль не имел смысла на железе и
+        удалён. В SDL-сборке картинка VI писалась в то же окно, что несёт контекст OpenGL, и два
+        презентера чередовались; пока работает GL-бэкенд, окно принадлежит ему, а VI по-прежнему
+        декодирует XFB и считает кадры.</li>
+      <li><strong>Command Processor.</strong> <code>CP_FIFO_COUNT</code> был устаревшим программным
+        регистром, а теперь это живая занятость FIFO («расстояние между указателем записи и
+        указателем чтения»). Бит статуса точки останова зависел от
+        <code>CP_ENABLE[FIFOBRKINT]</code> вместо <code>[FIFOBRK]</code>, поэтому игра, взводившая
+        точку останова без прерывания, никогда не видела флаг.
+        <code>CommandProcessor::ResetFifoProcessor()</code> сбрасывает командный буфер CP, чтобы
+        новый поток начинался с чистого состояния.</li>
+      <li><strong>VI.</strong> <code>VI_DTV_STATUS</code> (0xCC00206E) реализован вместо попадания в
+        ветвь по умолчанию, где он возвращал 0 и заставлял <code>VIGetTvFormat()</code> из SDK
+        всегда сообщать NTSC.</li>
+      <li><strong>Декодер текстур (issue #359).</strong> Формат IA4 обходил тайлы сначала по
+        столбцам, тогда как тайлы изображения хранятся построчно, поэтому карта шире одного тайла
+        выходила транспонированной (кодировщик отчёта повторял тот же обход — вот почему галерея
+        этого не показывала); отладочный дамп текстур <code>gxtexdump</code> читал поля цвета после
+        того, как декодер сериализовал тексели в порядок байт R,G,B,A, нужный GL, что проворачивало
+        каналы у всех не-серых форматов; C14X2 маскировал индекс палитры по 0x3ff вместо 0x3fff; а
+        прозрачный четвёртый цвет трёхцветного режима CMPR терял RGB среднего значения крайних
+        цветов.</li>
+      <li><strong>Загрузка текстур.</strong> <code>DecodeTexture</code> сравнивает описание и
+        хеш FNV-1a сырых байтов текстуры (плюс поколение TLUT для палитры) и сохраняет
+        GL-изображение, когда ничего не изменилось; загрузка переиспользует хранилище изображения
+        через <code>glTexSubImage2D</code>, параметры сэмплера и цепочка mip повторно применяются
+        только при реальном изменении <code>TX_SETMODE0/1</code>, а <code>TX_INVTAGS</code>
+        (<code>GXInvalidateTexAll</code>) помечает все карты на повторное декодирование.</li>
+    </ul>
+
+    <h3>Интерфейс и платформа</h3>
+    <ul>
+      <li>Пункт меню <code>File → Reopen</code>, до этого мёртвый, привязан к последнему
+        загруженному образу (настройка <code>LASTFILE</code>, которую и так ведёт селектор), а
+        ускорителем назначена F3.</li>
+      <li>Записи в регистры входного буфера SI больше не останавливают эмуляцию.</li>
+      <li>Исходники Gekko теперь корректный UTF-8 (два байта CP1252 в комментариях
+        <code>gekko.cpp</code> / <code>gekkoc.cpp</code> нормализованы).</li>
+      <li>Модульные тесты DSP линкуют заглушку счётчиков
+        (<code>testing/dsp_test_support.cpp</code>), раз исходники DSP собираются без
+        <code>gekko.cpp</code>, а удержание почтового ящика терпит нулевой <code>Core</code>,
+        который используют тесты.</li>
+    </ul>
+
+    <h2 id="known">Известные проблемы</h2>
+    <ul>
+      <li>Bump mapping, косвенное текстурирование, окружение Z-текстуры и Cpu2Efb пока не
+        эмулируются.</li>
+      <li>Дизеринг PE и несколько полей флагов <code>SU</code> намеренно не реализованы и описаны в
+        <code>wiki/gfx.md</code>.</li>
+      <li>Полная поддержка микрокода JAudio (issue #71) всё ещё в работе; оставшиеся расхождения DSP
+        с железом записаны в <code>testing/Readme.md</code>.</li>
+      <li>Поддержка RVZ только для чтения: группы bzip2/LZMA и образы Wii не реализованы.</li>
+      <li>Рекомпилятору нужен 64-битный хост x86; 32-битные и не-x86 сборки, а также
+        <code>GEKKO_JIT_DISABLED</code> откатываются на интерпретатор.</li>
+      <li>В Linux-сборке по-прежнему нет звука и ввода.</li>
+      <li>Часть игр всё ещё не рисует картинку или зависает; совместимость — работа в процессе.</li>
+    </ul>
+
+    <h2 id="build">Сборка</h2>
+    <p><strong>Windows.</strong> Откройте <code>scripts/VS2026/pureikyubu.sln</code> в Visual Studio
+      2026 и нажмите Build. Есть конфигурации Debug и Release как для Win32-, так и для
+      SDL-интерфейса.</p>
+    <p><strong>Linux.</strong></p>
+    <pre><code>sudo apt install libglew-dev
+git clone https://github.com/emu-russia/pureikyubu.git
+cd pureikyubu
+git submodule update --init
+cd build &amp;&amp; cmake .. &amp;&amp; make
+./pureikyubu pong.dol</code></pre>
+    <p><strong>Тесты.</strong></p>
+    <pre><code>MSBuild scripts/VS2026/pureikyubu_test.slnx -p:Configuration=Release -p:Platform=x64
+vstest.console.exe scripts/VS2026/x64/Release/pureikyubu_test.dll /Platform:x64</code></pre>
+
+    <p class="note">
+      Предыдущий релиз по-прежнему доступен:
+      <a href="release_notes_1.7.html">Release Notes 1.7</a> ·
+      <a href="release_notes_1.7_ru.html">Заметки о релизе 1.7</a>. Подробная история работы после
+      релиза 1.6 — в <a href="digest_ru.html">дайджесте</a>.
+    </p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© проект pureikyubu. Nintendo GameCube — торговая марка Nintendo; эмулятор не связан с Nintendo.</div>
+    <div><a href="index_ru.html">Главная</a> · <a href="release_notes_1.7_ru.html">Release Notes 1.7 (архив)</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

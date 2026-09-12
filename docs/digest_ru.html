@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Дайджест: что изменилось после релиза 1.6 — pureikyubu</title>
 <meta name="description" content="Дайджест всех изменений эмулятора GameCube pureikyubu после релиза 1.6: шейдеры графики, тесты DSP, загрузка GC-Linux, SDL-интерфейс и исправления в играх.">
-<link rel="icon" href="imgstore/pureikyubu.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/style.css">
 <script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head>
@@ -19,7 +21,7 @@
     <nav class="nav">
       <a href="index_ru.html">Главная</a>
       <a href="digest_ru.html" aria-current="page">Дайджест</a>
-      <a href="release_notes_1.7_ru.html">Release Notes 1.7</a>
+      <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Язык">
@@ -393,9 +395,9 @@
     <h2 id="tooling">Инструменты и система сборки</h2>
     <ul>
       <li><strong>Visual Studio 2026.</strong> Проекты мигрированы и собираются MSVC v145; решение —
-        <code>scripts/VS2022/pureikyubu.sln</code>, проект тестов —
-        <code>scripts/VS2026/pureikyubu_test.slnx</code> (устаревший проект VS2022 синхронизируется
-        вручную).</li>
+        <code>scripts/VS2026/pureikyubu.sln</code>, проект тестов —
+        <code>scripts/VS2026/pureikyubu_test.slnx</code> (устаревший проект VS2022 оставлен в дереве
+        для справки).</li>
       <li><strong>Модульные тесты.</strong> Проект тестов <em>ссылается</em> на исходники эмулятора,
         а не копирует их, поэтому тесты всегда проверяют именно тот код, из которого собран
         эмулятор. Наборы: ядро DSP, флаги, эталонное АЛУ, параллельные слова, почтовый ящик, IROM,
@@ -444,7 +446,7 @@
 <footer class="site-footer">
   <div class="wrap">
     <div>© проект pureikyubu. Nintendo GameCube — торговая марка Nintendo; эмулятор не связан с Nintendo.</div>
-    <div><a href="index_ru.html">Главная</a> · <a href="release_notes_1.7_ru.html">Release Notes 1.7</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+    <div><a href="index_ru.html">Главная</a> · <a href="release_notes_1.8_ru.html">Release Notes 1.8</a> · <a href="release_notes_1.7_ru.html">Release Notes 1.7 (архив)</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
   </div>
 </footer>
 

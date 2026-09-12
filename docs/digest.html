@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Digest: what changed after release 1.6 — pureikyubu</title>
 <meta name="description" content="A digest of everything the pureikyubu GameCube emulator project changed after release 1.6: graphics shaders, DSP tests, GC-Linux boot, the SDL user interface and game fixes.">
-<link rel="icon" href="imgstore/pureikyubu.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/style.css">
 <script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head>
@@ -19,7 +21,7 @@
     <nav class="nav">
       <a href="index.html">Home</a>
       <a href="digest.html" aria-current="page">Digest</a>
-      <a href="release_notes_1.7.html">Release Notes 1.7</a>
+      <a href="release_notes_1.8.html">Release Notes 1.8</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Language">
@@ -385,8 +387,9 @@
     <h2 id="tooling">Tooling and build system</h2>
     <ul>
       <li><strong>Visual Studio 2026.</strong> The project files were migrated and now build with MSVC
-        v145; the solution is <code>scripts/VS2022/pureikyubu.sln</code> and the test project is
-        <code>scripts/VS2026/pureikyubu_test.slnx</code> (a legacy VS2022 project is kept in sync).</li>
+        v145; the solution is <code>scripts/VS2026/pureikyubu.sln</code> and the test project is
+        <code>scripts/VS2026/pureikyubu_test.slnx</code> (a legacy VS2022 project is kept in the tree
+        for reference).</li>
       <li><strong>Unit tests.</strong> The test project <em>references</em> the emulator sources
         instead of copying them, so the tests always exercise exactly the code the emulator is built
         from. Suites: DSP core, flags, golden ALU, parallel words, mailbox, IROM, GQR, and the whole
@@ -436,7 +439,7 @@
 <footer class="site-footer">
   <div class="wrap">
     <div>© pureikyubu project. Nintendo GameCube is a trademark of Nintendo; this emulator is not affiliated with Nintendo.</div>
-    <div><a href="index.html">Home</a> · <a href="release_notes_1.7.html">Release Notes 1.7</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+    <div><a href="index.html">Home</a> · <a href="release_notes_1.8.html">Release Notes 1.8</a> · <a href="release_notes_1.7.html">Release Notes 1.7 (archive)</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
   </div>
 </footer>
 
