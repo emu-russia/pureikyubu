@@ -20,7 +20,8 @@ copy /y "%REPO%\src\gekkodec.cpp"     "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkodisasm.cpp"  "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkojit.cpp"     "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkojit_ps.cpp"  "%BLD%\src\" >nul
-copy /y "%REPO%\src\gekkojit_x64.h"   "%BLD%\src\" >nul
+copy /y "%REPO%\src\jit_x64.h"          "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_layout.h"  "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkojit_ps.h"    "%BLD%\src\" >nul
 copy /y "%REPO%\src\gqr.h"            "%BLD%\src\" >nul
 

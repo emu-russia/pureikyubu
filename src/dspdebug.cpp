@@ -593,6 +593,27 @@ namespace DSP
 		return output;
 	}
 
+	// Toggle the DSPcore recompiler at runtime: `dspjit 0` / `dspjit 1`, with no argument it
+	// reports the current state. The recompiler is correct by construction (it calls the very
+	// same instruction handlers as the interpreter) but it retires whole blocks, so this is
+	// the fastest way to tell whether a DSP problem comes from the recompiler or not.
+	static Json::Value* CmdDspJit(std::vector<std::string>& args)
+	{
+		DspCore* core = Flipper::DSP->core;
+
+		if (args.size() > 1)
+		{
+			core->JitEnabled = atoi(args[1].c_str()) != 0;
+			core->InvalidateJit();
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Bool;
+		output->value.AsBool = core->JitEnabled && core->GetJit() != nullptr && core->GetJit()->IsSupported();
+
+		return output;
+	}
+
 	static Json::Value* CmdDspTestBreakpoint(std::vector<std::string>& args)
 	{
 		DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
@@ -831,6 +852,7 @@ namespace DSP
 		JDI::Hub.AddCmd("DspTranslateIMem", CmdDspTranslateIMem);
 
 		JDI::Hub.AddCmd("DspTestBreakpoint", CmdDspTestBreakpoint);
+		JDI::Hub.AddCmd("dspjit", CmdDspJit);
 		JDI::Hub.AddCmd("DspToggleBreakpoint", CmdDspToggleBreakpoint);
 		JDI::Hub.AddCmd("DspAddOneShotBreakpoint", CmdDspAddOneShotBreakpoint);
 

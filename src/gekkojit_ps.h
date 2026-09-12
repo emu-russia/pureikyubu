@@ -81,15 +81,15 @@ the emulated machine anyway.
 #define GEKKO_JIT_PS 1
 #endif
 
+namespace X64
+{
+	class Emitter;
+}
+
 namespace Gekko
 {
 	class GekkoCore;
 	struct DecoderInfo;
-
-	namespace X64
-	{
-		class Emitter;
-	}
 
 	namespace JitPs
 	{

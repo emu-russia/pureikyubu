@@ -21,7 +21,7 @@ rm -rf $BLD/src
 mkdir -p $BLD/src
 cp $REPO/src/gekko.cpp $REPO/src/gekkoc.cpp $REPO/src/gekkodec.cpp \
    $REPO/src/gekkodisasm.cpp $REPO/src/gekkojit.cpp $REPO/src/gekkojit_ps.cpp \
-   $REPO/src/gekkojit_x64.h $REPO/src/gekkojit_ps.h $REPO/src/gqr.h $BLD/src/
+   $REPO/src/jit_x64.h $REPO/src/gekkojit_layout.h $REPO/src/gekkojit_ps.h $REPO/src/gqr.h $BLD/src/
 
 g++ -std=c++17 -D_LINUX -DBENCH_WITH_JIT $OPT -fno-strict-aliasing -w \
     -I$HERE -I$BLD/src -I$REPO/src \

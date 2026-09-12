@@ -103,6 +103,9 @@
     <ClInclude Include="..\..\src\dspcore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\dspjit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\dspdebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -139,7 +142,10 @@
     <ClInclude Include="..\..\src\gekkojit_ps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gekkojit_x64.h">
+    <ClInclude Include="..\..\src\jit_x64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gekkojit_layout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gekkodebug.h">
@@ -292,6 +298,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dspcore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspjit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdebug.cpp">

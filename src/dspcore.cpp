@@ -1,5 +1,6 @@
 // Low-level DSP core ("engine")
 #include "pch.h"
+#include "dspjit.h"
 
 using namespace Debug;
 
@@ -321,6 +322,7 @@ namespace DSP
 	{
 		dsp = parent;
 		interp = new DspInterpreter(this);
+		jit = new Jit(this);
 
 		// We will not emulate the Dsp feature - the combined stack pointer for eas and lcs.
 
@@ -335,6 +337,7 @@ namespace DSP
 	DspCore::~DspCore()
 	{
 		delete interp;
+		delete jit;
 
 		delete regs.pcs;
 		delete regs.pss;
@@ -535,6 +538,7 @@ namespace DSP
 		else
 		{
 			memcpy(irom, iromImage.data(), IROM_SIZE);
+			InvalidateJit();
 		}
 
 		return true;
@@ -549,6 +553,7 @@ namespace DSP
 		else
 		{
 			memcpy(drom, dromImage.data(), DROM_SIZE);
+			InvalidateJit();
 		}
 
 		return true;
@@ -649,6 +654,8 @@ namespace DSP
 
 		dsp->ResetIfx();
 
+		InvalidateJit();
+
 		dsp->Suspend();
 	}
 
@@ -699,7 +706,7 @@ namespace DSP
 		// backlog is dropped rather than accumulated.
 		uint32_t budget = (uint32_t)(DspWakeTicks / (int64_t)GekkoTicksPerDspInstruction);
 
-		while (budget-- > 0 && ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
+		while (budget > 0 && ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{
 			// Test breakpoints and canaries
 			if (dsp->IsRunning())
@@ -723,17 +730,66 @@ namespace DSP
 				}
 			}
 
-			// Check pending interrupts
-			CheckInterrupts();
+			// One compiled basic block, or one interpreted instruction when the pc cannot be
+			// compiled. A block retires several words at once, so it can overshoot the
+			// remaining budget; the emulated clock is advanced by what actually retired, and
+			// the batch simply ends earlier (the backlog is dropped either way).
+			uint32_t retired = RunJitBlock();
+			Gekko::stats.dspInstrs += retired;
+			dsp->savedGekkoTicks += (int64_t)retired * GekkoTicksPerDspInstruction;
 
-			interp->ExecuteInstr();
-			Gekko::stats.dspInstrs++;
-			dsp->savedGekkoTicks += GekkoTicksPerDspInstruction;
+			budget = (retired >= budget) ? 0 : (budget - retired);
 		}
 
 		if (dsp->savedGekkoTicks <= ticks)
 		{
 			dsp->savedGekkoTicks = ticks;
+		}
+	}
+
+	uint32_t DspCore::RunJitBlock()
+	{
+		// The interpreter calls CheckInterrupts before every instruction (DspCore::Step); this
+		// is the same entry point for one step of the recompiled path.
+		CheckInterrupts();
+
+		// Breakpoints, canaries and the one-shot breakpoint are tested per instruction by Update,
+		// so a block must not run over them: with any of them armed the core stays on the
+		// interpreter, exactly like GekkoCore does while its own breakpoints are enabled.
+		if (!(jit != nullptr && jit->IsSupported() && JitEnabled &&
+			breakpoints.empty() && canaries.empty() && watches.empty() && oneShotBreakpoint == 0xffff))
+		{
+			interp->ExecuteInstr();
+			return 1;
+		}
+
+		// While an interrupt is going through its pending-delay window (or the latched CPU->DSP
+		// request has not been taken yet) the core runs one word at a time. The delay is
+		// specified in instructions, and CheckInterrupts is called once per step here; letting a
+		// whole block run instead would stretch a two-instruction delay to two block lengths,
+		// which the CPU<->DSP mailbox handshake is sensitive to.
+		if (intr.pendingSomething || (dsp != nullptr && dsp->CpuIntRequested()))
+		{
+			interp->ExecuteInstr();
+			return 1;
+		}
+
+		return jit->Run();
+	}
+
+	void DspCore::InvalidateJit()
+	{
+		if (jit != nullptr)
+		{
+			jit->InvalidateAll();
+		}
+	}
+
+	void DspCore::SetJitMaxBlockInstrs(uint32_t count)
+	{
+		if (jit != nullptr)
+		{
+			jit->SetMaxBlockInstrs(count);
 		}
 	}
 
@@ -1429,11 +1485,11 @@ namespace DSP
 	{
 		// A non-flowControl instruction can change the interpreter's internal flag (for example, when trying to access the stack registers with overflow and generating an Error interrupt).
 
-		flowControl = info.flowControl;
+		flowControl = info->flowControl;
 
-		if (!info.parallel)
+		if (!info->parallel)
 		{
-			switch (info.instr)
+			switch (info->instr)
 			{
 				case DspRegularInstruction::jmp: jmp(); break;
 				case DspRegularInstruction::call: call(); break;
@@ -1490,7 +1546,7 @@ namespace DSP
 
 			LatchPackedMemoryOperand();
 
-			switch (info.parallelInstr)
+			switch (info->parallelInstr)
 			{
 				case DspParallelInstruction::add: p_add(); break;
 				case DspParallelInstruction::addl: p_addl(); break;
@@ -1526,7 +1582,7 @@ namespace DSP
 				case DspParallelInstruction::asf: p_asf(); break;
 			}
 
-			switch (info.parallelMemInstr)
+			switch (info->parallelMemInstr)
 			{
 				case DspParallelMemInstruction::ldd: p_ldd(); break;
 				case DspParallelMemInstruction::ls: p_ls(); break;
@@ -1541,62 +1597,86 @@ namespace DSP
 			core->instructionCounter += 2;
 		}
 
-		if (core->resetInstructionCounter)
-		{
-			core->resetInstructionCounter = false;
-			core->instructionCounter = 0;
-		}
+		CommitCounter();
 
 		// If there were no control transfers, increase pc by the instruction size
 
 		if (!flowControl)
 		{
-			// Checking the logic of the `rep` instruction.
-			// If the value of the repeat register is not equal to 0, then instead of the usual PC increment, it is not performed.
+			core->regs.pc = CommitNextPc(core->regs.pc);
+		}
+	}
 
-			if (core->repeatCount)
+	void DspInterpreter::CommitCounter()
+	{
+		if (core->resetInstructionCounter)
+		{
+			core->resetInstructionCounter = false;
+			core->instructionCounter = 0;
+		}
+	}
+
+	// The instruction-advance rules of Dispatch, applied to an explicit pc so that the recompiler
+	// (which keeps the pc in a host register for the length of a block) can share them. The loop
+	// bookkeeping is the fragile part of the core, so there is only one copy of it.
+	uint32_t DspInterpreter::CommitNextPc(uint32_t pc)
+	{
+		// Checking the logic of the `rep` instruction.
+		// If the value of the repeat register is not equal to 0, then instead of the usual PC increment, it is not performed.
+
+		if (core->repeatCount)
+		{
+			core->repeatCount--;
+		}
+
+		if (core->repeatCount == 0)
+		{
+			// Checking the current pc for loop is done only if the eas/lcs stack is not empty
+
+			if (pc == core->regs.eas->top() && !core->regs.lcs->empty())
 			{
-				core->repeatCount--;
-			}
+				// If pc is equal to eas then lcs = lcs - 1. 
 
-			if (core->repeatCount == 0)
-			{
-				// Checking the current pc for loop is done only if the eas/lcs stack is not empty
+				uint16_t lc;
+				core->regs.lcs->pop(lc);
+				core->regs.lcs->push(lc - 1);
 
-				if (core->regs.pc == core->regs.eas->top() && !core->regs.lcs->empty())
+				// If after that lcs is not equal to zero, then pc = pcs. Otherwise pop pcs/eas/lcs and pc = pc + 1 (exit the loop)
+
+				if (core->regs.lcs->top() != 0)
 				{
-					// If pc is equal to eas then lcs = lcs - 1. 
-
-					uint16_t lc;
-					core->regs.lcs->pop(lc);
-					core->regs.lcs->push(lc - 1);
-
-					// If after that lcs is not equal to zero, then pc = pcs. Otherwise pop pcs/eas/lcs and pc = pc + 1 (exit the loop)
-
-					if (core->regs.lcs->top() != 0)
-					{
-						core->regs.pc = core->regs.pcs->top();
-					}
-					else
-					{
-						uint16_t dummy;
-						core->regs.pcs->pop(dummy);
-						core->regs.eas->pop(dummy);
-						core->regs.lcs->pop(dummy);
-
-						// The DSP behaves strangely when the last loop instruction is a branch instruction. 
-						// The exact work of the DSP in this case is on the verge of unpredictable behavior, so we will not bother and complicate the code. 
-						// All the same, microcode developers are adequate people and will never deal with placing branch instructions at the end of a loop.
-
-						core->regs.pc += 1;
-					}
+					return core->regs.pcs->top();
 				}
 				else
 				{
-					core->regs.pc += (DspAddress)(info.sizeInBytes >> 1);
+					uint16_t dummy;
+					core->regs.pcs->pop(dummy);
+					core->regs.eas->pop(dummy);
+					core->regs.lcs->pop(dummy);
+
+					// The DSP behaves strangely when the last loop instruction is a branch instruction. 
+					// The exact work of the DSP in this case is on the verge of unpredictable behavior, so we will not bother and complicate the code. 
+					// All the same, microcode developers are adequate people and will never deal with placing branch instructions at the end of a loop.
+
+					return pc + 1;
 				}
 			}
+			else
+			{
+				return pc + (DspAddress)(info->sizeInBytes >> 1);
+			}
 		}
+
+		return pc;
+	}
+
+	// Every part of Dispatch except the opcode switch, for one recompiled word: the counter
+	// bookkeeping always runs, the pc advance only when the instruction did not transfer control.
+	uint32_t DspInterpreter::JitCommit(DspInterpreter* interp, uint32_t pc)
+	{
+		interp->CommitCounter();
+
+		return interp->flowControl ? pc : interp->CommitNextPc(pc);
 	}
 
 	void DspInterpreter::ExecuteInstr()
@@ -1613,7 +1693,7 @@ namespace DSP
 			return;
 		}
 
-		Decoder::Decode(imemPtr, DspCore::MaxInstructionSizeInBytes, info);
+		Decoder::Decode(imemPtr, DspCore::MaxInstructionSizeInBytes, *info);
 
 		Dispatch();
 	}
@@ -1633,7 +1713,7 @@ namespace DSP
 		int64_t s1 = 0;
 		int64_t s2 = 0;
 
-		FetchMpyParams(info.params[0], info.params[1], s1, s2, true);
+		FetchMpyParams(info->params[0], info->params[1], s1, s2, true);
 
 		core->regs.prod.bitsPacked = s1 * s2;
 		core->UnpackProd(core->regs.prod);
@@ -1644,7 +1724,7 @@ namespace DSP
 		int64_t s1 = 0;
 		int64_t s2 = 0;
 
-		FetchMpyParams(info.params[0], info.params[1], s1, s2, false);
+		FetchMpyParams(info->params[0], info->params[1], s1, s2, false);
 
 		core->PackProd(core->regs.prod);
 		core->regs.prod.bitsPacked = s1 * s2 + DspCore::SignExtend40(core->regs.prod.bitsPacked);
@@ -1656,7 +1736,7 @@ namespace DSP
 		int64_t s1 = 0;
 		int64_t s2 = 0;
 
-		FetchMpyParams(info.params[0], info.params[1], s1, s2, false);
+		FetchMpyParams(info->params[0], info->params[1], s1, s2, false);
 
 		core->PackProd(core->regs.prod);
 		core->regs.prod.bitsPacked = -s1 * s2 + DspCore::SignExtend40(core->regs.prod.bitsPacked);
@@ -1672,13 +1752,13 @@ namespace DSP
 		int64_t s1 = 0;
 		int64_t s2 = 0;
 
-		FetchMpyParams(info.params[1], info.params[2], s1, s2, true);
+		FetchMpyParams(info->params[1], info->params[2], s1, s2, true);
 
 		core->PackProd(core->regs.prod);
 		d = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 		case DspParameter::a:
 			core->regs.a.bits = r;
@@ -1703,7 +1783,7 @@ namespace DSP
 		int64_t s1 = 0;
 		int64_t s2 = 0;
 
-		FetchMpyParams(info.params[1], info.params[2], s1, s2, true);
+		FetchMpyParams(info->params[1], info->params[2], s1, s2, true);
 
 		core->PackProd(core->regs.prod);
 		d = DspCore::SignExtend40(core->regs.prod.bitsPacked);
@@ -1712,7 +1792,7 @@ namespace DSP
 		r = d + s;
 		r &= ~0xffff;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 		case DspParameter::a:
 			core->regs.a.bits = r;
@@ -1737,9 +1817,9 @@ namespace DSP
 		int64_t s1 = 0;
 		int64_t s2 = 0;
 
-		FetchMpyParams(info.params[1], info.params[2], s1, s2, true);
+		FetchMpyParams(info->params[1], info->params[2], s1, s2, true);
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				s = DspCore::SignExtend40(core->regs.a.bits);
@@ -1753,7 +1833,7 @@ namespace DSP
 		d = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -1780,54 +1860,54 @@ namespace DSP
 	// ldd d1,rn,mn d2,r3,m3
 	void DspInterpreter::p_ldd()
 	{
-		int r = (int)info.paramsEx[1];
-		core->MoveToReg((int)info.paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
-		AdvanceAddress(r, info.paramsEx[2]);
+		int r = (int)info->paramsEx[1];
+		core->MoveToReg((int)info->paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
+		AdvanceAddress(r, info->paramsEx[2]);
 
-		r = (int)info.paramsEx[4];
-		core->MoveToReg((int)info.paramsEx[3], core->dsp->ReadDMem(core->regs.r[r]));
-		AdvanceAddress(r, info.paramsEx[5]);
+		r = (int)info->paramsEx[4];
+		core->MoveToReg((int)info->paramsEx[3], core->dsp->ReadDMem(core->regs.r[r]));
+		AdvanceAddress(r, info->paramsEx[5]);
 	}
 
 	// ls d,r,m r,m,s
 	void DspInterpreter::p_ls()
 	{
-		int r = (int)info.paramsEx[1];
-		core->MoveToReg((int)info.paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
-		AdvanceAddress(r, info.paramsEx[2]);
+		int r = (int)info->paramsEx[1];
+		core->MoveToReg((int)info->paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
+		AdvanceAddress(r, info->paramsEx[2]);
 
-		r = (int)info.paramsEx[3];
-		core->dsp->WriteDMem(core->regs.r[r], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info.paramsEx[5]));
-		AdvanceAddress(r, info.paramsEx[4]);
+		r = (int)info->paramsEx[3];
+		core->dsp->WriteDMem(core->regs.r[r], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info->paramsEx[5]));
+		AdvanceAddress(r, info->paramsEx[4]);
 	}
 
 	// ld d,rn,mn
 	void DspInterpreter::p_ld()
 	{
-		int r = (int)info.paramsEx[1];
-		core->MoveToReg((int)info.paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
-		AdvanceAddress(r, info.paramsEx[2]);
+		int r = (int)info->paramsEx[1];
+		core->MoveToReg((int)info->paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
+		AdvanceAddress(r, info->paramsEx[2]);
 	}
 
 	// st rn,mn,s
 	void DspInterpreter::p_st()
 	{
-		int r = (int)info.paramsEx[0];
-		core->dsp->WriteDMem(core->regs.r[r], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info.paramsEx[2]));
-		AdvanceAddress(r, info.paramsEx[1]);
+		int r = (int)info->paramsEx[0];
+		core->dsp->WriteDMem(core->regs.r[r], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info->paramsEx[2]));
+		AdvanceAddress(r, info->paramsEx[1]);
 	}
 
 	// mv d,s
 	void DspInterpreter::p_mv()
 	{
-		core->MoveToReg((int)info.paramsEx[0], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info.paramsEx[1]));
+		core->MoveToReg((int)info->paramsEx[0], packedMemoryDataLatched ? packedMemoryData : core->MoveFromReg((int)info->paramsEx[1]));
 	}
 
 	// mr rn,mn
 	void DspInterpreter::p_mr()
 	{
-		int r = (int)info.paramsEx[0];
-		AdvanceAddress(r, info.paramsEx[1]);
+		int r = (int)info->paramsEx[0];
+		AdvanceAddress(r, info->paramsEx[1]);
 	}
 
 	// Latch the value the memory half of the current packed word reads from the register file.
@@ -1837,20 +1917,20 @@ namespace DSP
 	{
 		packedMemoryDataLatched = false;
 
-		switch (info.parallelMemInstr)
+		switch (info->parallelMemInstr)
 		{
 			case DspParallelMemInstruction::ls:
-				packedMemoryData = core->MoveFromReg((int)info.paramsEx[5]);
+				packedMemoryData = core->MoveFromReg((int)info->paramsEx[5]);
 				packedMemoryDataLatched = true;
 				break;
 
 			case DspParallelMemInstruction::st:
-				packedMemoryData = core->MoveFromReg((int)info.paramsEx[2]);
+				packedMemoryData = core->MoveFromReg((int)info->paramsEx[2]);
 				packedMemoryDataLatched = true;
 				break;
 
 			case DspParallelMemInstruction::mv:
-				packedMemoryData = core->MoveFromReg((int)info.paramsEx[1]);
+				packedMemoryData = core->MoveFromReg((int)info->paramsEx[1]);
 				packedMemoryDataLatched = true;
 				break;
 
@@ -1873,7 +1953,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -1883,7 +1963,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x0:
 				s = DspCore::SignExtend16(core->regs.x.l) << 16;
@@ -1917,7 +1997,7 @@ namespace DSP
 
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -1936,7 +2016,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -1946,7 +2026,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x0:
 				s = core->regs.x.l;
@@ -1958,7 +2038,7 @@ namespace DSP
 
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -1977,7 +2057,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -1987,7 +2067,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x0:
 				s = DspCore::SignExtend16(core->regs.x.l) << 16;
@@ -2021,7 +2101,7 @@ namespace DSP
 
 		r = d - s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2033,7 +2113,7 @@ namespace DSP
 
 		// The product source reports the borrow itself (C = 1 while D < P) instead of the
 		// complemented borrow that the C2 rule of the ordinary sources produces.
-		if (info.params[1] == DspParameter::prod)
+		if (info->params[1] == DspParameter::prod)
 		{
 			const uint64_t mask = 0x0000'00ff'ffff'ffffULL;
 			core->regs.psr.c = (((uint64_t)d & mask) < ((uint64_t)s & mask)) ? 1 : 0;
@@ -2048,7 +2128,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x0:
 				s = DspCore::SignExtend16(core->regs.x.l) << 16;
@@ -2084,7 +2164,7 @@ namespace DSP
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2103,7 +2183,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -2113,7 +2193,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x1:
 				s = DspCore::SignExtend16(core->regs.x.h) << 16;
@@ -2140,7 +2220,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 			case DspParameter::a1:
@@ -2152,7 +2232,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 			case DspParameter::b:
@@ -2166,7 +2246,7 @@ namespace DSP
 
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 			case DspParameter::a1:
@@ -2187,7 +2267,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 			case DspParameter::a1:
@@ -2199,7 +2279,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 			case DspParameter::b:
@@ -2213,7 +2293,7 @@ namespace DSP
 
 		r = d - s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 			case DspParameter::a1:
@@ -2238,7 +2318,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				s = DspCore::SignExtend40(core->regs.a.bits);
@@ -2257,7 +2337,7 @@ namespace DSP
 			r = d - s;
 		}
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2276,9 +2356,9 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		if (info.numParameters == 2)
+		if (info->numParameters == 2)
 		{
-			switch (info.params[1])
+			switch (info->params[1])
 			{
 				case DspParameter::prod:
 					core->PackProd(core->regs.prod);
@@ -2288,7 +2368,7 @@ namespace DSP
 		}
 		else
 		{
-			switch (info.params[0])
+			switch (info->params[0])
 			{
 				case DspParameter::a:
 					s = DspCore::SignExtend40(core->regs.a.bits);
@@ -2301,7 +2381,7 @@ namespace DSP
 
 		r = d - s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2317,7 +2397,7 @@ namespace DSP
 		// Negating the product registers reports the borrow of 0 - P itself rather than the
 		// C4 pattern: the carry is set while the product is not zero (checked against the
 		// hardware for the whole operand sweep).
-		if (info.numParameters == 2 && info.params[1] == DspParameter::prod)
+		if (info->numParameters == 2 && info->params[1] == DspParameter::prod)
 		{
 			core->regs.psr.c = (s != 0) ? 1 : 0;
 		}
@@ -2325,7 +2405,7 @@ namespace DSP
 
 	void DspInterpreter::p_clr()
 	{
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = 0;
@@ -2358,7 +2438,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -2373,7 +2453,7 @@ namespace DSP
 		r = d + s;
 		r &= ~0xffff;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2399,7 +2479,7 @@ namespace DSP
 		r = d + s;
 		r &= ~0xffff;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2418,7 +2498,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 		
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -2459,7 +2539,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
@@ -2473,7 +2553,7 @@ namespace DSP
 		// must be computed on the truncated result.
 		r = ((uint64_t)d << 16) & 0x0000'00ff'ffff'ffff;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2492,7 +2572,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
@@ -2506,7 +2586,7 @@ namespace DSP
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2525,7 +2605,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -2539,7 +2619,7 @@ namespace DSP
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2558,7 +2638,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x1:
 				d = DspCore::SignExtend16(core->regs.x.h) << 16;
@@ -2574,7 +2654,7 @@ namespace DSP
 
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2589,7 +2669,7 @@ namespace DSP
 
 	void DspInterpreter::p_set()
 	{
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::psr_im: core->regs.psr.im = 1; break;
 			case DspParameter::psr_dp: core->regs.psr.dp = 1; break;
@@ -2603,7 +2683,7 @@ namespace DSP
 		uint16_t s = 0;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -2623,7 +2703,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -2646,7 +2726,7 @@ namespace DSP
 		uint16_t s = 0;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -2656,7 +2736,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::a1:
 				s = core->regs.a.m;
@@ -2682,7 +2762,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -2705,7 +2785,7 @@ namespace DSP
 		uint16_t s = 0;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -2715,7 +2795,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::a1:
 				s = core->regs.a.m;
@@ -2741,7 +2821,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -2764,7 +2844,7 @@ namespace DSP
 		uint16_t s = 0;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -2774,7 +2854,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::a1:
 				s = core->regs.a.m;
@@ -2800,7 +2880,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -2863,7 +2943,7 @@ namespace DSP
 		int16_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
@@ -2873,7 +2953,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x1:
 				s = core->regs.x.h;
@@ -2889,11 +2969,11 @@ namespace DSP
 				break;
 		}
 
-		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), false);
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info->negatedSource), false);
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2912,7 +2992,7 @@ namespace DSP
 		int16_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -2922,7 +3002,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x1:
 				s = core->regs.x.h;
@@ -2938,11 +3018,11 @@ namespace DSP
 				break;
 		}
 
-		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), true);
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info->negatedSource), true);
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -2966,18 +3046,18 @@ namespace DSP
 	{
 		DspAddress address;
 
-		if (info.params[0] == DspParameter::Address)
+		if (info->params[0] == DspParameter::Address)
 		{
-			address = info.ImmOperand.Address;
+			address = info->ImmOperand.Address;
 		}
 		else
 		{
-			address = core->MoveFromReg((int)info.params[0]);
+			address = core->MoveFromReg((int)info->params[0]);
 		}
 
-		if (ConditionTrue(info.cc))
+		if (ConditionTrue(info->cc))
 		{
-			if (core->dsp->logNonconditionalCallJmp && info.cc == ConditionCode::always)
+			if (core->dsp->logNonconditionalCallJmp && info->cc == ConditionCode::always)
 			{
 				Report(Channel::DSP, "0x%04X: jmp 0x%04X\n", core->regs.pc, address);
 			}
@@ -2986,7 +3066,7 @@ namespace DSP
 		}
 		else
 		{
-			core->regs.pc += (DspAddress)(info.sizeInBytes >> 1);
+			core->regs.pc += (DspAddress)(info->sizeInBytes >> 1);
 		}
 	}
 
@@ -2994,23 +3074,23 @@ namespace DSP
 	{
 		DspAddress address;
 
-		if (info.params[0] == DspParameter::Address)
+		if (info->params[0] == DspParameter::Address)
 		{
-			address = info.ImmOperand.Address;
+			address = info->ImmOperand.Address;
 		}
 		else
 		{
-			address = core->MoveFromReg((int)info.params[0]);
+			address = core->MoveFromReg((int)info->params[0]);
 		}
 
-		if (ConditionTrue(info.cc))
+		if (ConditionTrue(info->cc))
 		{
-			if (core->dsp->logNonconditionalCallJmp && info.cc == ConditionCode::always)
+			if (core->dsp->logNonconditionalCallJmp && info->cc == ConditionCode::always)
 			{
 				Report(Channel::DSP, "0x%04X: call 0x%04X\n", core->regs.pc, address);
 			}
 
-			if (core->regs.pcs->push((uint16_t)(core->regs.pc + (info.sizeInBytes >> 1))))
+			if (core->regs.pcs->push((uint16_t)(core->regs.pc + (info->sizeInBytes >> 1))))
 			{
 				core->regs.pc = address;
 			}
@@ -3021,13 +3101,13 @@ namespace DSP
 		}
 		else
 		{
-			core->regs.pc += (DspAddress)(info.sizeInBytes >> 1);
+			core->regs.pc += (DspAddress)(info->sizeInBytes >> 1);
 		}
 	}
 
 	void DspInterpreter::rets()
 	{
-		if (ConditionTrue(info.cc))
+		if (ConditionTrue(info->cc))
 		{
 			uint16_t pc;
 
@@ -3048,7 +3128,7 @@ namespace DSP
 
 	void DspInterpreter::reti()
 	{
-		if (ConditionTrue(info.cc))
+		if (ConditionTrue(info->cc))
 		{
 			core->ReturnFromInterrupt();
 		}
@@ -3076,7 +3156,7 @@ namespace DSP
 
 	void DspInterpreter::exec()
 	{
-		if (ConditionTrue(info.cc))
+		if (ConditionTrue(info->cc))
 		{
 			core->regs.pc++;
 		}
@@ -3091,15 +3171,15 @@ namespace DSP
 		int lc;
 		DspAddress end_addr;
 
-		if (info.params[0] == DspParameter::Byte)
+		if (info->params[0] == DspParameter::Byte)
 		{
-			lc = info.ImmOperand.Byte;
-			end_addr = info.ImmOperand2.Address;
+			lc = info->ImmOperand.Byte;
+			end_addr = info->ImmOperand2.Address;
 		}
 		else
 		{
-			lc = core->MoveFromReg((int)info.params[0]);
-			end_addr = info.ImmOperand.Address;
+			lc = core->MoveFromReg((int)info->params[0]);
+			end_addr = info->ImmOperand.Address;
 		}
 
 		if (lc != 0)
@@ -3133,13 +3213,13 @@ namespace DSP
 	{
 		int rc;
 
-		if (info.params[0] == DspParameter::Byte)
+		if (info->params[0] == DspParameter::Byte)
 		{
-			rc = info.ImmOperand.Byte;
+			rc = info->ImmOperand.Byte;
 		}
 		else
 		{
-			rc = core->MoveFromReg((int)info.params[0]);
+			rc = core->MoveFromReg((int)info->params[0]);
 		}
 
 		if (rc != 0)
@@ -3155,15 +3235,15 @@ namespace DSP
 
 	void DspInterpreter::pld()
 	{
-		int r = (int)info.params[1];
-		core->MoveToReg((int)info.params[0], core->ReadIMem(core->regs.r[r]) );
-		AdvanceAddress(r, info.params[2]);
+		int r = (int)info->params[1];
+		core->MoveToReg((int)info->params[0], core->ReadIMem(core->regs.r[r]) );
+		AdvanceAddress(r, info->params[2]);
 	}
 
 	void DspInterpreter::mr()
 	{
-		int r = (int)info.params[0];
-		AdvanceAddress(r, info.params[1]);
+		int r = (int)info->params[0];
+		AdvanceAddress(r, info->params[1]);
 	}
 
 	void DspInterpreter::adsi()
@@ -3172,7 +3252,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3182,11 +3262,11 @@ namespace DSP
 				break;
 		}
 
-		s = DspCore::SignExtend16((int16_t)info.ImmOperand.SignedByte) << 16;
+		s = DspCore::SignExtend16((int16_t)info->ImmOperand.SignedByte) << 16;
 
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3205,7 +3285,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3215,11 +3295,11 @@ namespace DSP
 				break;
 		}
 
-		s = DspCore::SignExtend16(info.ImmOperand.UnsignedShort) << 16;
+		s = DspCore::SignExtend16(info->ImmOperand.UnsignedShort) << 16;
 
 		r = d + s;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3238,7 +3318,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3248,7 +3328,7 @@ namespace DSP
 				break;
 		}
 
-		s = DspCore::SignExtend16((int16_t)info.ImmOperand.SignedByte) << 16;
+		s = DspCore::SignExtend16((int16_t)info->ImmOperand.SignedByte) << 16;
 
 		r = d - s;
 
@@ -3261,7 +3341,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3271,7 +3351,7 @@ namespace DSP
 				break;
 		}
 
-		s = DspCore::SignExtend16(info.ImmOperand.UnsignedShort) << 16;
+		s = DspCore::SignExtend16(info->ImmOperand.UnsignedShort) << 16;
 
 		r = d - s;
 
@@ -3284,7 +3364,7 @@ namespace DSP
 		int16_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
@@ -3298,13 +3378,13 @@ namespace DSP
 		// shifts right by its magnitude, a positive one shifts left. The magnitude is formed
 		// explicitly - computing it as `~s + 1` on an unsigned operand yields a negative
 		// shift count, which is undefined behaviour.
-		s = (int16_t)info.ImmOperand.SignedByte;
+		s = (int16_t)info->ImmOperand.SignedByte;
 
-		r = DspShiftBy((uint64_t)d, (int8_t)info.ImmOperand.SignedByte, false);
+		r = DspShiftBy((uint64_t)d, (int8_t)info->ImmOperand.SignedByte, false);
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3323,7 +3403,7 @@ namespace DSP
 		int16_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3335,13 +3415,13 @@ namespace DSP
 
 		// See lsfi: the signed 7-bit immediate is the shift count, the magnitude is formed
 		// without relying on the shift of a negative count.
-		s = (int16_t)info.ImmOperand.SignedByte;
+		s = (int16_t)info->ImmOperand.SignedByte;
 
-		r = DspShiftBy((uint64_t)d, (int8_t)info.ImmOperand.SignedByte, true);
+		r = DspShiftBy((uint64_t)d, (int8_t)info->ImmOperand.SignedByte, true);
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3357,10 +3437,10 @@ namespace DSP
 	void DspInterpreter::xorli()
 	{
 		uint16_t d = 0;
-		uint16_t s = info.ImmOperand.UnsignedShort;
+		uint16_t s = info->ImmOperand.UnsignedShort;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -3380,7 +3460,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -3400,10 +3480,10 @@ namespace DSP
 	void DspInterpreter::anli()
 	{
 		uint16_t d = 0;
-		uint16_t s = info.ImmOperand.UnsignedShort;
+		uint16_t s = info->ImmOperand.UnsignedShort;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -3423,7 +3503,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -3443,10 +3523,10 @@ namespace DSP
 	void DspInterpreter::orli()
 	{
 		uint16_t d = 0;
-		uint16_t s = info.ImmOperand.UnsignedShort;
+		uint16_t s = info->ImmOperand.UnsignedShort;
 		uint16_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				d = core->regs.a.m;
@@ -3466,7 +3546,7 @@ namespace DSP
 		const uint16_t result16 = (uint16_t)r;
 		int64_t flagsResult = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				core->regs.a.m = result16;
@@ -3499,9 +3579,9 @@ namespace DSP
 	void DspInterpreter::norm()
 	{
 		int64_t d = 0;
-		int r = (int)info.params[1];
+		int r = (int)info->params[1];
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3525,7 +3605,7 @@ namespace DSP
 
 		if (shiftRight || shiftLeft)
 		{
-			switch (info.params[0])
+			switch (info->params[0])
 			{
 				case DspParameter::a:
 					core->regs.a.bits = (uint64_t)d & 0x0000'00ff'ffff'ffff;
@@ -3563,7 +3643,7 @@ namespace DSP
 		uint16_t divisor = 0;
 		const uint64_t MASK40 = 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3573,7 +3653,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x0:
 				divisor = core->regs.x.l;
@@ -3624,7 +3704,7 @@ namespace DSP
 
 		int64_t r = (int64_t)((sum & 0xFF'0000'0000ULL) | low);
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = (uint64_t)r & MASK40;
@@ -3647,7 +3727,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3657,7 +3737,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x:
 				s = DspCore::SignExtend32(core->regs.x.bits);
@@ -3669,7 +3749,7 @@ namespace DSP
 
 		r = d + s + core->regs.psr.c;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3688,7 +3768,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3698,7 +3778,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x:
 				s = DspCore::SignExtend32(core->regs.x.bits);
@@ -3710,7 +3790,7 @@ namespace DSP
 
 		r = d + (int64_t)(~s) + core->regs.psr.c;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3729,7 +3809,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				s = DspCore::SignExtend40(core->regs.a.bits);
@@ -3741,7 +3821,7 @@ namespace DSP
 
 		r = d + (int64_t)(~s) + core->regs.psr.c;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3761,7 +3841,7 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3771,7 +3851,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x0:
 				s = DspCore::SignExtend16(core->regs.x.l) << 16;
@@ -3816,7 +3896,7 @@ namespace DSP
 		int16_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
@@ -3826,7 +3906,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x1:
 				s = core->regs.x.h;
@@ -3842,11 +3922,11 @@ namespace DSP
 				break;
 		}
 
-		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), false);
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info->negatedSource), false);
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3865,7 +3945,7 @@ namespace DSP
 		int16_t s = 0;
 		int64_t r = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				d = DspCore::SignExtend40(core->regs.a.bits);
@@ -3875,7 +3955,7 @@ namespace DSP
 				break;
 		}
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::x1:
 				s = core->regs.x.h;
@@ -3891,11 +3971,11 @@ namespace DSP
 				break;
 		}
 
-		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info.negatedSource), true);
+		r = DspShiftBy((uint64_t)d, DspShiftCount(s, info->negatedSource), true);
 
 		r &= 0x0000'00ff'ffff'ffffULL;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a:
 				core->regs.a.bits = r;
@@ -3910,29 +3990,29 @@ namespace DSP
 
 	void DspInterpreter::ld()
 	{
-		int r = (int)info.params[1];
-		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(core->regs.r[r]) );
-		AdvanceAddress(r, info.params[2]);
+		int r = (int)info->params[1];
+		core->MoveToReg((int)info->params[0], core->dsp->ReadDMem(core->regs.r[r]) );
+		AdvanceAddress(r, info->params[2]);
 	}
 
 	void DspInterpreter::st()
 	{
-		int r = (int)info.params[0];
-		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info.params[2]) );
-		AdvanceAddress(r, info.params[1]);
+		int r = (int)info->params[0];
+		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info->params[2]) );
+		AdvanceAddress(r, info->params[1]);
 	}
 
 	void DspInterpreter::ldsa()
 	{
-		core->MoveToReg((int)info.params[0], 
-			core->dsp->ReadDMem( (DspAddress)((core->regs.dpp << 8) | (info.ImmOperand.Address))) );
+		core->MoveToReg((int)info->params[0], 
+			core->dsp->ReadDMem( (DspAddress)((core->regs.dpp << 8) | (info->ImmOperand.Address))) );
 	}
 
 	void DspInterpreter::stsa()
 	{
 		uint16_t s;
 
-		switch (info.params[1])
+		switch (info->params[1])
 		{
 			case DspParameter::a2:
 				s = core->regs.a.h & 0xff;
@@ -3943,46 +4023,46 @@ namespace DSP
 				if (s & 0x80) s |= 0xff00;
 				break;
 			default:
-				s = core->MoveFromReg((int)info.params[1]);
+				s = core->MoveFromReg((int)info->params[1]);
 				break;
 		}
 
-		core->dsp->WriteDMem((DspAddress)((core->regs.dpp << 8) | (info.ImmOperand.Address)), s);
+		core->dsp->WriteDMem((DspAddress)((core->regs.dpp << 8) | (info->ImmOperand.Address)), s);
 	}
 
 	void DspInterpreter::ldla()
 	{
-		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(info.ImmOperand.Address) );
+		core->MoveToReg((int)info->params[0], core->dsp->ReadDMem(info->ImmOperand.Address) );
 	}
 
 	void DspInterpreter::stla()
 	{
-		core->dsp->WriteDMem(info.ImmOperand.Address, core->MoveFromReg((int)info.params[1]) );
+		core->dsp->WriteDMem(info->ImmOperand.Address, core->MoveFromReg((int)info->params[1]) );
 	}
 
 	void DspInterpreter::mv()
 	{
-		core->MoveToReg((int)info.params[0], core->MoveFromReg((int)info.params[1]));
+		core->MoveToReg((int)info->params[0], core->MoveFromReg((int)info->params[1]));
 	}
 
 	void DspInterpreter::mvsi()
 	{
-		core->MoveToReg((int)info.params[0], (int16_t)info.ImmOperand.SignedByte);
+		core->MoveToReg((int)info->params[0], (int16_t)info->ImmOperand.SignedByte);
 	}
 
 	void DspInterpreter::mvli()
 	{
-		core->MoveToReg((int)info.params[0], info.ImmOperand.UnsignedShort);
+		core->MoveToReg((int)info->params[0], info->ImmOperand.UnsignedShort);
 	}
 
 	void DspInterpreter::stli()
 	{
-		core->dsp->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
+		core->dsp->WriteDMem(info->ImmOperand.Address, info->ImmOperand2.UnsignedShort);
 	}
 
 	void DspInterpreter::clr()
 	{
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::psr_tb: core->regs.psr.tb = 0; break;
 			case DspParameter::psr_sv: core->regs.psr.sv = 0; break;
@@ -3999,7 +4079,7 @@ namespace DSP
 
 	void DspInterpreter::set()
 	{
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::psr_tb: core->regs.psr.tb = 1; break;
 			case DspParameter::psr_sv: core->regs.psr.sv = 1; break;
@@ -4018,7 +4098,7 @@ namespace DSP
 	{
 		uint16_t val = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				val = core->regs.a.m;
@@ -4031,14 +4111,14 @@ namespace DSP
 				Halt("DspInterpreter::btstl: Invalid parameter\n");
 		}
 
-		core->regs.psr.tb = (val & info.ImmOperand.UnsignedShort) == 0;
+		core->regs.psr.tb = (val & info->ImmOperand.UnsignedShort) == 0;
 	}
 	
 	void DspInterpreter::btsth()
 	{
 		uint16_t val = 0;
 
-		switch (info.params[0])
+		switch (info->params[0])
 		{
 			case DspParameter::a1:
 				val = core->regs.a.m;
@@ -4051,7 +4131,7 @@ namespace DSP
 				Halt("DspInterpreter::btsth: Invalid parameter\n");
 		}
 
-		core->regs.psr.tb = (val & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
+		core->regs.psr.tb = (val & info->ImmOperand.UnsignedShort) == info->ImmOperand.UnsignedShort;
 	}
 
 }

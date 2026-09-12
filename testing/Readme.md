@@ -20,6 +20,7 @@ is built from.
 | `dsp_irom_test.cpp` | The `build/Data/dsp_irom.bin` boot ROM: disassembly, decode coverage and execution of its boot path |
 | `dsp_golden_alu_test.cpp` | Differential test of the data path against the golden vectors in `dsp_golden_alu_vectors.h` |
 | `dsp_golden_alu_vectors.h` | Generated: results and flags of ~180 instruction words from the hardware core (see below) |
+| `dsp_jit_test.cpp` | Differential tests of the DSP recompiler (`src/dspjit.cpp`) against the interpreter |
 | `DspIrom.md` | The IROM disassembly and analysis report |
 
 ## Building and running
@@ -143,6 +144,44 @@ its carry from a wrongly sized mask (so the low quotient bit was always zero), a
 handler whose 40-bit result was computed in a wider intermediate reported flags for the wide
 value — `ModifyFlags` now masks its inputs to 40 bits, which brought the `add`/`sub`/`admpy`
 product-source flag rows and the immediate shifts in line.
+
+## The DSPcore recompiler tests
+
+`src/dspjit.cpp` compiles straight-line runs of DSP instruction words into x86-64 machine
+code. It does not reimplement the instruction semantics: each decoded word becomes a
+direct call to the same handler the interpreter's `Dispatch` would call, and the
+non-opcode parts of `Dispatch` are shared through `DspInterpreter::JitCommit`. The tests
+are therefore differential against the interpreter:
+
+* `Jit_IsAvailable` - the core owns a recompiler and it is built for the host.
+* `Jit_CompilesWholeBlocks` - one `RunJitBlock` retires a whole block of nops, not one word.
+* `Jit_MatchesInterpreterOnGoldenVectors` - every word of the hardware golden table, run
+  once by each engine with a one-word block limit, must leave identical state. That covers
+  the whole data-path opcode space.
+* `Jit_MatchesInterpreterOnRandomProgram` - a 3000-word program assembled from golden words
+  must leave identical state after 2000 retired instructions.
+* `Jit_MatchesInterpreterOnEveryOpcode` - the whole 16-bit opcode space (all 65536 words,
+  twice: with a clean psr and with the flags set), each word run once by each engine with a
+  one-word block limit. This is the one that covers control transfers, the stacks, the
+  undefined words and the trap paths.
+* `Jit_MatchesInterpreterOnCpuInterrupt` - a real interrupt round trip (the request latches,
+  CheckInterrupts vectors to 0x000E, the handler `reti`s). Both engines must reach the same
+  state after the same number of instructions, which pins down the pending-delay cadence.
+* `Jit_StopsAtAPendingCpuInterrupt` - a block must leave as soon as an interrupt is pending.
+* `Jit_RecompilesWhenTheInstructionStreamChanges` - changing a word under a live block makes
+  the recompiler recompile it (the per-entry word verification).
+* `Jit_CanBeSwitchedOff` - `DspCore::JitEnabled = false` runs the interpreter.
+* `Jit_MatchesInterpreterOnIromBoot` - the real IROM boot path (mailbox handshake, command
+  dispatcher, wait loop) for 20000 instructions.
+
+The comparison covers the whole observable state: the accumulators and operands, the
+product, psr, pc, the address/modifier/length registers, dpp, the four stacks and the
+retired-instruction counter. The recompiler retires whole blocks, so the interpreter is
+run for exactly as many instructions as the recompiler actually retired.
+
+`testing/dsp_bench` is the standalone (non-CppUnitTest) counterpart: the same differential
+check without Visual Studio, plus a wall-clock benchmark of both engines. See its
+`Readme.md`.
 
 # GFX (Flipper graphics) tests
 

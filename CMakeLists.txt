@@ -39,6 +39,7 @@ add_executable (pureikyubu
 	src/di.cpp
 	src/dsp.cpp
 	src/dspcore.cpp
+	src/dspjit.cpp
 	src/dspdebug.cpp
 	src/dspdec.cpp
 	src/dspdisasm.cpp
