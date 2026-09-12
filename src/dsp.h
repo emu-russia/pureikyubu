@@ -198,6 +198,9 @@ namespace DSP
 		volatile uint16_t DspToCpuSnapshot = 0;		// DMBL latched with the last valid DMBH read
 		volatile bool DspToCpuSnapshotValid = false;
 
+		//! The CPU->DSP interrupt request (CDCR bit 1), latched until the core takes it.
+		bool intdspRequested = false;
+
 		volatile uint16_t CpuToDspMailbox[2]{};		// CMBH, CMBL
 		SpinLock CpuToDspLock;
 		volatile uint16_t CpuToDspSnapshot = 0;		// CMBL latched with the last valid CMBH read
@@ -258,6 +261,10 @@ namespace DSP
 		void CpuToDspWriteLo(uint16_t value);
 		uint16_t CpuToDspReadHi(bool ReadByDsp);
 		uint16_t CpuToDspReadLo(bool ReadByDsp);
+
+		//! The latched CPU->DSP interrupt request (see SetIntBit).
+		bool CpuIntRequested() const;
+		void ClearCpuIntRequest();
 
 		// DSP->CPU Mailbox
 		void DspToCpuWriteHi(uint16_t value);

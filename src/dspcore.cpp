@@ -344,6 +344,18 @@ namespace DSP
 
 	void DspCore::CheckInterrupts()
 	{
+		// The CPU->DSP interrupt request stays latched in CDCR until the core takes it, so a
+		// request that arrived while TE3/ET was clear is retried here and delivered as soon as
+		// the gate opens (see Dsp16::SetIntBit).
+		if (dsp != nullptr && dsp->CpuIntRequested())
+		{
+			AssertInterrupt(DspInterrupt::CpuInt);
+			if (intr.pending[(size_t)DspInterrupt::CpuInt])
+			{
+				dsp->ClearCpuIntRequest();
+			}
+		}
+
 		if (!intr.pendingSomething)
 		{
 			return;
@@ -367,11 +379,16 @@ namespace DSP
 					}
 					regs.psr.et = 0;
 
-					// All vectors are offsets relative to the active program base, which is
-					// selected by the CDCR reset-vector bit: 0x8000 (IROM) after a hardware
-					// reset, 0x0000 (IRAM) once the CPU has cleared the bit and downloaded the
-					// microcode (dsp.md section 2.7).
-					DspAddress programBase = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;
+					// All vectors are offsets relative to the base of the program that is
+					// running: the IROM loader has its vectors at 0x8000+, a downloaded
+					// microcode has its own at 0x0000+ (dsp.md section 2.7). The CDCR use-rom
+					// bit only selects where a *reset* starts - it must not pick the vector
+					// table, because the IROM loader hands control to the microcode by jumping
+					// into the IRAM window, and that microcode expects its own vectors there.
+					// Zelda's microcode installs a CPU->DSP interrupt vector at 0x000E that
+					// reads the mailbox and dispatches the command; with the loader's vectors
+					// the interrupt would bounce the command back as "unknown" instead.
+					DspAddress programBase = (regs.pc >= IROM_START_ADDRESS) ? IROM_START_ADDRESS : 0;
 
 					if (i == (size_t)DspInterrupt::Reset)
 					{
