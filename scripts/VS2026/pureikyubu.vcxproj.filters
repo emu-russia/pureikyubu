@@ -51,6 +51,9 @@
     <Image Include="..\..\src\res\pureikyubu.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\..\src\res\pureikyubu_icon.svg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\res\pureikyubu.rc">
@@ -59,6 +62,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\res\resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\res\pureikyubu_icon.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ai.h">
