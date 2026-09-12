@@ -74,7 +74,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,225,15
     CONTROL         "Embedded Link File, standard executable files",IDC_ELF_FILTER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,225,15
-    CONTROL         "GameCube DVD Images (GCM)",IDC_GCM_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,64,225,15
+    CONTROL         "GameCube DVD Images (GCM, RVZ)",IDC_GCM_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,64,225,15
     CONTROL         "GameCube DVD Images (ISO)",IDC_GMP_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,80,225,15
 END
 

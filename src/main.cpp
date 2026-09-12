@@ -258,8 +258,8 @@ void EMUPrintUsage()
 		"Usage: pureikyubu [options] [file]\n"
 		"\n"
 		"  <file>                Load and run a file right away, without the game selector. The\n"
-		"                        recognized formats are disk images (.iso, .gcm) and executables\n"
-		"                        (.dol, .elf). Quote the name when it contains spaces.\n"
+		"                        recognized formats are disk images (.iso, .gcm, .rvz) and\n"
+		"                        executables (.dol, .elf). Quote the name when it contains spaces.\n"
 		"  --image <file>        Same as the bare file argument.\n"
 		"  --ipl                 Start the Bootrom (IPL) instead of waiting for the selector.\n"
 		"  --no-disc             Start with the DVD lid open, so the IPL takes its \"no disk\" path.\n"
@@ -843,6 +843,8 @@ void EmuReflector()
 /*      .dol        - GAMECUBE custom executable                */
 /*      .elf        - standard executable                       */
 /*      .gcm        - game master data (GC DVD images)          */
+/*      .iso        - raw GC DVD image                          */
+/*      .rvz        - compressed GC DVD image (Dolphin RVZ)     */
 
 /* ---------------------------------------------------------------------------  */
 /* DOL loader                                                                   */
@@ -1273,6 +1275,12 @@ void LoadFile(const std::wstring& filename)
 			dvd = true;
 		}
 		else if (!_wcsicmp(extension, L".gcm"))
+		{
+			DVD::MountFile(filename);
+			GetDiskId(diskId);
+			dvd = true;
+		}
+		else if (!_wcsicmp(extension, L".rvz"))
 		{
 			DVD::MountFile(filename);
 			GetDiskId(diskId);

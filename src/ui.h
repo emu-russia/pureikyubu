@@ -2,7 +2,7 @@
 
 ## Technical features
 
-At the heart of the interface is the "Selector" - a custom ListView with a list of executable files (DOL/ELF) and disk images (GCM).
+At the heart of the interface is the "Selector" - a custom ListView with a list of executable files (DOL/ELF) and disk images (GCM/ISO/RVZ).
 
 The emulator settings dialog is used only for modifying the settings Json (SettingsWin.json).
 
@@ -138,7 +138,7 @@ namespace UI
 enum class SELECTOR_FILE
 {
 	Executable = 1,     /* any GC executable (*.dol, *.elf) */
-	Dvd                 /* any DVD image (*.gcm, *.iso)     */
+	Dvd                 /* any DVD image (*.gcm, *.iso, *.rvz) */
 };
 
 /* File info limits */

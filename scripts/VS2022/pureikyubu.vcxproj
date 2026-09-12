@@ -98,6 +98,7 @@
     <ClInclude Include="..\..\src\pi.h" />
     <ClInclude Include="..\..\src\ras.h" />
     <ClInclude Include="..\..\src\res\resource.h" />
+    <ClInclude Include="..\..\src\rvz.h" />
     <ClInclude Include="..\..\src\si.h" />
     <ClInclude Include="..\..\src\su.h" />
     <ClInclude Include="..\..\src\sym.h" />
@@ -177,6 +178,7 @@
     <ClCompile Include="..\..\src\dspdma.cpp" />
     <ClCompile Include="..\..\src\dvd.cpp" />
     <ClCompile Include="..\..\src\dvddebug.cpp" />
+    <ClCompile Include="..\..\src\rvz.cpp" />
     <ClCompile Include="..\..\src\exi.cpp" />
     <ClCompile Include="..\..\src\flipper.cpp" />
     <ClCompile Include="..\..\src\flipperdebug.cpp" />
@@ -372,6 +374,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\thirdparty\zstd\zstddeclib.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SDL|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug SDL|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="SDL.vcxproj">
@@ -477,7 +489,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -496,7 +508,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -517,7 +529,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -540,7 +552,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -561,7 +573,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -580,7 +592,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -601,7 +613,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>
@@ -624,7 +636,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../thirdparty/glew-2.2.0/include;$(ProjectDir)../../thirdparty/imgui;$(ProjectDir)../../thirdparty/SDL2/include;$(ProjectDir)../../thirdparty/zstd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4273</DisableSpecificWarnings>
     </ClCompile>

@@ -68,6 +68,7 @@ add_executable (pureikyubu
 	src/pe.cpp
 	src/pi.cpp
 	src/ras.cpp
+	src/rvz.cpp
 	src/si.cpp
 	src/su.cpp
 	src/sym.cpp
@@ -89,10 +90,12 @@ add_executable (pureikyubu
 	thirdparty/imgui/backends/imgui_impl_sdlrenderer2.cpp
 	thirdparty/imgui/imgui_tables.cpp
 	thirdparty/imgui/imgui_widgets.cpp
+
+	thirdparty/zstd/zstddeclib.c
 )
 
 target_compile_features(pureikyubu PRIVATE cxx_std_17)
 
-include_directories( thirdparty/imgui ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
+include_directories( thirdparty/imgui thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
 
 target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} SDL2 GLEW)
