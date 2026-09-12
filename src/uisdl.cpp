@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <memory>
+#include "res/pureikyubu_icon.h"
 
 static bool ui_active = false;
 static bool show_demo_window = false;
@@ -1087,11 +1088,30 @@ namespace UI
 }
 
 
+// The icon is embedded in the source code, so it is available in the SDL port on any platform
+static void SetWindowIcon(SDL_Window* wnd)
+{
+	if (!wnd)
+	{
+		return;
+	}
+
+	SDL_Surface* icon = SDL_CreateRGBSurfaceWithFormatFrom((void*)PureiIconPixels, PureiIconWidth, PureiIconHeight,
+		32, PureiIconWidth * sizeof(uint32_t), SDL_PIXELFORMAT_ARGB8888);
+
+	if (icon)
+	{
+		SDL_SetWindowIcon(wnd, icon);
+		SDL_FreeSurface(icon);
+	}
+}
+
 static void CreateRenderTarget()
 {
 	// Create RenderTarget (for xfb / gfx)
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
 	render_target = SDL_CreateWindow("Video Output", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);
+	SetWindowIcon(render_target);
 }
 
 static void DestroyRenderTarget()
@@ -1589,6 +1609,7 @@ static int ui_main()
 	// Create window with SDL_Renderer graphics context
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	window = SDL_CreateWindow(APPNAME_A, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, window_flags);
+	SetWindowIcon(window);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_SOFTWARE);
 	if (renderer == nullptr) {
 		SDL_Log("Error creating SDL_Renderer!");

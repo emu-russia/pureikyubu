@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 92" width="256" height="256" preserveAspectRatio="xMidYMid meet" role="img" aria-label="GameCube cube">
+  <defs>
+    <linearGradient id="gc-top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#63b0ff"/><stop offset="1" stop-color="#2e7fdd"/></linearGradient>
+    <linearGradient id="gc-left" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2168c8"/><stop offset="1" stop-color="#14428c"/></linearGradient>
+    <linearGradient id="gc-right" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14428c"/><stop offset="1" stop-color="#092050"/></linearGradient>
+  </defs>
+  <polygon points="50,2 97,26 50,50 3,26" fill="url(#gc-top)"/>
+  <polygon points="3,26 50,50 50,90 3,66" fill="url(#gc-left)"/>
+  <polygon points="50,50 97,26 97,66 50,90" fill="url(#gc-right)"/>
+  <polyline points="3,26 50,50 97,26" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.5"/>
+</svg>

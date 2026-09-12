@@ -45,6 +45,7 @@
     <Image Include="..\..\src\res\padTriggerL.bmp" />
     <Image Include="..\..\src\res\padTriggerR.bmp" />
     <Image Include="..\..\src\res\pureikyubu.ico" />
+    <Image Include="..\..\src\res\pureikyubu_icon.svg" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\res\pureikyubu.rc" />
@@ -95,6 +96,7 @@
     <ClInclude Include="..\..\src\pi.h" />
     <ClInclude Include="..\..\src\ras.h" />
     <ClInclude Include="..\..\src\res\resource.h" />
+    <ClInclude Include="..\..\src\res\pureikyubu_icon.h" />
     <ClInclude Include="..\..\src\si.h" />
     <ClInclude Include="..\..\src\su.h" />
     <ClInclude Include="..\..\src\sym.h" />
