@@ -23,12 +23,13 @@ namespace DVD
 		},
 
 		"MountIso": {
-			"help": "Mount GC DVD image (GCM)",
+			"help": "Mount GC DVD image (GCM/ISO/RVZ)",
 			"hints": "<file>",
 			"args": 1,
 			"usage": [
 				"Syntax: MountIso <file>\n",
-				"Examples of use: MountIso C:\\Isos\\mygame.iso\n"
+				"Examples of use: MountIso C:\\Isos\\mygame.iso\n",
+				"                 MountIso C:\\Isos\\mygame.rvz\n"
 			],
 			"output": "Bool Success/Fail"
 		},
@@ -162,7 +163,7 @@ namespace DVD
 			if (!silent)
 			{
 				Report(Channel::Norm, "Mounted as disk image: %s\n", Util::WstringToString(dvd.gcm_filename).c_str());
-				Report(Channel::Norm, "GCM Size: 0x%08X bytes\n", dvd.gcm_size);
+				Report(Channel::Norm, "%s Size: 0x%08X bytes\n", dvd.mountedRvz ? "RVZ (disc)" : "GCM", dvd.gcm_size);
 				Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 			}
 
@@ -203,7 +204,7 @@ namespace DVD
 		return output;
 	}
 
-	// Mount GC DVD image (GCM)
+	// Mount GC DVD image (GCM/ISO/RVZ)
 	static Json::Value* MountIso(std::vector<std::string>& args)
 	{
 		bool result = MountFile(args[1]);

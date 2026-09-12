@@ -1,5 +1,6 @@
 // DVD API for emulator
 #include "pch.h"
+#include "rvz.h"
 
 DVDControl dvd;
 
@@ -1340,22 +1341,47 @@ int dvd_open(const char *path)
 }
 
 
-// simple GCM image reading.
+// simple GCM image reading. Compressed RVZ containers are detected by their magic and read
+// through the RvzImage reader (see rvz.cpp).
+
+static DVD::RvzImage rvzImage;
 
 bool GCMMountFile(const wchar_t*file)
 {
-	FILE* gcm_file;
-
 	dvd.gcm_filename[0] = 0;
 	dvd.mountedImage = false;
+	dvd.mountedRvz = false;
+	dvd.gcm_size = 0;
+
+	rvzImage.Unmount();
 
 	if (file == nullptr)
 	{
 		return true;
 	}
 
+	// Is this a compressed RVZ image? The container is recognized by its magic, not by the
+	// extension, so that a renamed image still mounts.
+	if (DVD::RvzImage::IsRvzFile(file))
+	{
+		if (!rvzImage.Mount(file))
+		{
+			return false;
+		}
+
+		// For RVZ, gcm_size is the size of the uncompressed disc.
+		dvd.gcm_size = (int)rvzImage.GetDiscSize();
+		dvd.seekval = 0;
+
+		wcscpy(dvd.gcm_filename, file);
+		dvd.mountedImage = true;
+		dvd.mountedRvz = true;
+
+		return true;
+	}
+
 	// open GCM file
-	gcm_file = fopen(Util::WstringToString(file).c_str(), "rb");
+	FILE* gcm_file = fopen(Util::WstringToString(file).c_str(), "rb");
 	if(!gcm_file) return false;
 
 	// get file size
@@ -1387,64 +1413,69 @@ void GCMSeek(int position)
 
 bool GCMRead(uint8_t*buf, size_t length)
 {
-	FILE* gcm_file;
-
 	if (dvd.gcm_filename[0] == 0)
 	{
 		memset(buf, 0, length);        // fill by zeroes
 		return true;
 	}
 
-	gcm_file = fopen ( Util::WstringToString(dvd.gcm_filename).c_str(), "rb");
-
-	if(gcm_file)
+	// out of DVD
+	if(dvd.seekval >= DVD_SIZE)
 	{
-		// out of DVD
-		if(dvd.seekval >= DVD_SIZE)
-		{
-			memset(buf, 0, length);     // fill by zeroes
-			dvd.seekval += (int)length;
-			fclose(gcm_file);
-			return false;
-		}
+		memset(buf, 0, length);     // fill by zeroes
+		dvd.seekval += (int)length;
+		return false;
+	}
 
-		// GCM files can be less than 1.4 GB,
-		// so just return zeroes, when seek is out of file
-		if(dvd.seekval >= dvd.gcm_size)
+	// Images can be less than 1.4 GB,
+	// so just return zeroes, when seek is out of the image
+	if(dvd.seekval >= dvd.gcm_size)
+	{
+		memset(buf, 0, length);     // fill by zeroes
+		dvd.seekval += (int)length;
+		return true;
+	}
+
+	// wrap, if seek is near to out of DVD
+	if( (dvd.seekval + length) >= DVD_SIZE)
+	{
+		length = DVD_SIZE - dvd.seekval;
+	}
+
+	// wrap, if seek is near to out of the image
+	if( (dvd.seekval + length) >= dvd.gcm_size)
+	{
+		length = dvd.gcm_size - dvd.seekval;
+	}
+
+	// read data
+	if(length)
+	{
+		if (dvd.mountedRvz)
 		{
-			memset(buf, 0, length);     // fill by zeroes
+			if (!rvzImage.Read((uint64_t)dvd.seekval, length, buf))
+			{
+				return false;
+			}
+
 			dvd.seekval += (int)length;
-			fclose(gcm_file);
 			return true;
 		}
 
-		// wrap, if seek is near to out of DVD
-		if( (dvd.seekval + length) >= DVD_SIZE)
+		FILE* gcm_file = fopen ( Util::WstringToString(dvd.gcm_filename).c_str(), "rb");
+
+		if (!gcm_file)
 		{
-			length = DVD_SIZE - dvd.seekval;
+			memset(buf, 0, length);        // fill by zeroes
+			return false;
 		}
 
-		// wrap, if seek is near to out of file
-		if( (dvd.seekval + length) >= dvd.gcm_size)
-		{
-			length = dvd.gcm_size - dvd.seekval;
-		}
-
-		// read data
-		if(length)
-		{
-			fseek(gcm_file, dvd.seekval, SEEK_SET);
-			// https://stackoverflow.com/questions/295994/what-is-the-rationale-for-fread-fwrite-taking-size-and-count-as-arguments
-			size_t bytesRead = fread(buf, 1, length, gcm_file);
-			fclose(gcm_file);
-			dvd.seekval += (int)length;
-			return (bytesRead == length);
-		}
-	}
-	else
-	{
-		memset(buf, 0, length);        // fill by zeroes
-		return false;
+		fseek(gcm_file, dvd.seekval, SEEK_SET);
+		// https://stackoverflow.com/questions/295994/what-is-the-rationale-for-fread-fwrite-taking-size-and-count-as-arguments
+		size_t bytesRead = fread(buf, 1, length, gcm_file);
+		fclose(gcm_file);
+		dvd.seekval += (int)length;
+		return (bytesRead == length);
 	}
 
 	return true;

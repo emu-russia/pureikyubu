@@ -303,14 +303,14 @@ namespace UI
 			{
 				case FileType::All:
 					ofn.lpstrFilter =
-						L"All Supported Files (*.dol, *.elf, *.gcm, *.iso)\0*.dol;*.elf;*.gcm;*.iso\0"
+						L"All Supported Files (*.dol, *.elf, *.gcm, *.iso, *.rvz)\0*.dol;*.elf;*.gcm;*.iso;*.rvz\0"
 						L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-						L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+						L"GameCube DVD Images (*.gcm, *.iso, *.rvz)\0*.gcm;*.iso;*.rvz\0"
 						L"All Files (*.*)\0*.*\0";
 					break;
 				case FileType::Dvd:
 					ofn.lpstrFilter =
-						L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+						L"GameCube DVD Images (*.gcm, *.iso, *.rvz)\0*.gcm;*.iso;*.rvz\0"
 						L"All Files (*.*)\0*.*\0";
 					break;
 				case FileType::Map:
@@ -415,14 +415,14 @@ namespace UI
 			{
 				case FileType::All:
 					ofn.lpstrFilter =
-						L"All Supported Files (*.dol, *.elf, *.gcm, *.iso)\0*.dol;*.elf;*.gcm;*.iso\0"
+						L"All Supported Files (*.dol, *.elf, *.gcm, *.iso, *.rvz)\0*.dol;*.elf;*.gcm;*.iso;*.rvz\0"
 						L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-						L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+						L"GameCube DVD Images (*.gcm, *.iso, *.rvz)\0*.gcm;*.iso;*.rvz\0"
 						L"All Files (*.*)\0*.*\0";
 					break;
 				case FileType::Dvd:
 					ofn.lpstrFilter =
-						L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+						L"GameCube DVD Images (*.gcm, *.iso, *.rvz)\0*.gcm;*.iso;*.rvz\0"
 						L"All Files (*.*)\0*.*\0";
 					break;
 				case FileType::Map:
@@ -2057,7 +2057,7 @@ public:
 	std::vector<std::wstring> paths;
 
 	// file filter
-	uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
+	uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM/RVZ][ISO]
 
 	// list of found files
 	std::vector<std::unique_ptr<UserFile>> files;
@@ -2791,17 +2791,26 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-	static std::vector<std::pair<std::string, SELECTOR_FILE>> file_ext =
+	// The selector filter keeps one byte per extension group (see EditFileFilter below). The
+	// .rvz images share the GCM slot, because they are the same kind of DVD image.
+
+	struct SelectorMask
 	{
-		{ ".dol", SELECTOR_FILE::Executable },
-		{ ".elf", SELECTOR_FILE::Executable },
-		{ ".gcm", SELECTOR_FILE::Dvd        },
-		{ ".iso", SELECTOR_FILE::Dvd        }
+		const wchar_t* pattern;
+		SELECTOR_FILE  type;
+		uint32_t       filter;
+	};
+
+	static const SelectorMask masks[] =
+	{
+		{ L"*.dol", SELECTOR_FILE::Executable, 0xff000000 },
+		{ L"*.elf", SELECTOR_FILE::Executable, 0x00ff0000 },
+		{ L"*.gcm", SELECTOR_FILE::Dvd,        0x0000ff00 },
+		{ L"*.rvz", SELECTOR_FILE::Dvd,        0x0000ff00 },
+		{ L"*.iso", SELECTOR_FILE::Dvd,        0x000000ff },
 	};
 
 	wchar_t search[2 * MAX_PATH];
-	const wchar_t* mask[] = { L"*.dol", L"*.elf", L"*.gcm", L"*.iso", NULL };
-	SELECTOR_FILE type[] = { SELECTOR_FILE::Executable, SELECTOR_FILE::Executable, SELECTOR_FILE::Dvd, SELECTOR_FILE::Dvd };
 	WIN32_FIND_DATA fd = { 0 };
 	HANDLE hfff;
 	wchar_t found[2 * MAX_PATH];
@@ -2832,16 +2841,11 @@ void UpdateSelector()
 	size_t dir = 0;
 	while (dir < usel.paths.size())
 	{
-		int m = 0;
-		uint32_t filter = _byteswap_ulong(usel.filter);
-
-		while (mask[m])
+		for (const auto& m : masks)
 		{
-			uint8_t allow = (uint8_t)filter;
-			filter >>= 8;
-			if (!allow) { m++; continue; }
+			if (!(usel.filter & m.filter)) continue;
 
-			swprintf_s(search, _countof(search), L"%s%s", usel.paths[dir].c_str(), mask[m]);
+			swprintf_s(search, _countof(search), L"%s%s", usel.paths[dir].c_str(), m.pattern);
 
 			memset(&fd, 0, sizeof(fd));
 
@@ -2854,14 +2858,11 @@ void UpdateSelector()
 					{
 						swprintf_s(found, _countof(found), L"%s%s", usel.paths[dir].c_str(), fd.cFileName);
 						// Add file in list
-						add_file(found, fd.nFileSizeLow, type[m]);
+						add_file(found, fd.nFileSizeLow, m.type);
 					}
 				} while (FindNextFile(hfff, &fd));
 			}
 			FindClose(hfff);
-
-			// next mask
-			m++;
 		}
 
 		// next directory
@@ -3624,14 +3625,24 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 static void filter_string(HWND hDlg, uint32_t filter)
 {
 	wchar_t buf[64] = { 0 }, * ptr = buf;
-	const wchar_t* mask[] = { L"*.dol", L"*.elf", L"*.gcm", L"*.iso" };
 
-	filter = _byteswap_ulong(filter);
-
-	for (int i = 0; i < 4; i++)
+	// One filter byte can cover several extensions (GCM and RVZ share a byte).
+	static const struct
 	{
-		if (filter & 0xff) ptr += swprintf_s(ptr, _countof(buf) - (ptr - buf), L"%s;", mask[i]);
-		filter >>= 8;
+		const wchar_t* ext;
+		uint32_t       mask;
+	} masks[] =
+	{
+		{ L"*.dol", 0xff000000 },
+		{ L"*.elf", 0x00ff0000 },
+		{ L"*.gcm", 0x0000ff00 },
+		{ L"*.rvz", 0x0000ff00 },
+		{ L"*.iso", 0x000000ff },
+	};
+
+	for (const auto& mask : masks)
+	{
+		if (filter & mask.mask) ptr += swprintf_s(ptr, _countof(buf) - (ptr - buf), L"%s;", mask.ext);
 	}
 
 	SetDlgItemText(hDlg, IDC_FILE_FILTER, buf);
@@ -3645,7 +3656,7 @@ static void check_filter(HWND hDlg, uint32_t filter)
 	// ELF
 	if (filter & 0x00ff0000) CheckDlgButton(hDlg, IDC_ELF_FILTER, BST_CHECKED);
 	else CheckDlgButton(hDlg, IDC_ELF_FILTER, BST_UNCHECKED);
-	// GCM
+	// GCM / RVZ
 	if (filter & 0x0000ff00) CheckDlgButton(hDlg, IDC_GCM_FILTER, BST_CHECKED);
 	else CheckDlgButton(hDlg, IDC_GCM_FILTER, BST_UNCHECKED);
 	// ISO
@@ -4198,6 +4209,10 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		{
 			dvd = true;
 		}
+		else if (!_wcsicmp(extension, L".rvz"))
+		{
+			dvd = true;
+		}
 
 		_wsplitpath_s(currentFileName,
 			drive, _countof(drive) - 1,
@@ -4703,7 +4718,8 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			if(_wcsicmp(L".dol", wcsrchr(fileName, L'.')) &&
 			   _wcsicmp(L".elf", wcsrchr(fileName, L'.')) &&
 			   _wcsicmp(L".iso", wcsrchr(fileName, L'.')) &&
-			   _wcsicmp(L".gcm", wcsrchr(fileName, L'.')) ) break;
+			   _wcsicmp(L".gcm", wcsrchr(fileName, L'.')) &&
+			   _wcsicmp(L".rvz", wcsrchr(fileName, L'.')) ) break;
 
 			name = fileName;
 			goto loadFile;

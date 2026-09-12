@@ -4,8 +4,9 @@
 
 This component implements everything you need for a healthy emulation of the GameCube disk drive unit (DDU).
 
-There are currently two ways to read virtual DVDs:
-- Read sectors of a mounted GC DVD image (GCM)
+There are currently three ways to read virtual DVDs:
+- Read sectors of a mounted GC DVD image (GCM/ISO)
+- Read sectors of a compressed RVZ image (see `rvz.cpp`; read-only)
 - Reading sectors of a virtual disk mounted as a DolphinSDK folder. Required for comfortable launch of DolphinSDK demos
 
 ## DDU Core
@@ -307,8 +308,9 @@ namespace DVD
 struct DVDControl
 {
 	bool mountedImage;
+	bool mountedRvz;      // the mounted image is an RVZ container (otherwise a raw GCM/ISO)
 	wchar_t gcm_filename[0x1000];
-	int   gcm_size;       // size of mounted file
+	int   gcm_size;       // size of the virtual disc (for RVZ) or of the mounted file (for GCM/ISO)
 	int   seekval;        // current DVD position
 
 	DVD::MountDolphinSdk* mountedSdk;
@@ -523,7 +525,8 @@ namespace DVD
 }
 
 
-// very simple GCM reading (for .gcm files)
+// very simple GCM reading (for .gcm files). RVZ containers are handled by rvz.cpp, see
+// GCMMountFile below, which picks the right reader.
 
 // externals for DVD callbacks (see DVD.h)
 bool    GCMMountFile(const wchar_t* file);

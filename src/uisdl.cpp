@@ -250,7 +250,7 @@ void SetStatusText(STATUS_ENUM sbPart, const std::wstring& text, bool post)
 # Game selector
 
 The SDL port of the file selector (see ui.cpp): the list of executable files (DOL/ELF) and disk
-images (GCM/ISO) found in the configured paths, with the disk banners, titles, sizes and comments
+images (GCM/ISO/RVZ) found in the configured paths, with the disk banners, titles, sizes and comments
 taken from the DVD banner file. The list of paths is stored in the PATH user variable and is
 extended with the directory of every loaded file.
 
@@ -822,6 +822,7 @@ static void update_selector()
 		{ L".dol", SELECTOR_FILE::Executable, 0xff000000 },
 		{ L".elf", SELECTOR_FILE::Executable, 0x00ff0000 },
 		{ L".gcm", SELECTOR_FILE::Dvd,        0x0000ff00 },
+		{ L".rvz", SELECTOR_FILE::Dvd,        0x0000ff00 },
 		{ L".iso", SELECTOR_FILE::Dvd,        0x000000ff },
 	};
 
@@ -918,7 +919,7 @@ static void ui_selector_menu()
 
 		SELECTOR_FILTER_ITEM("*.dol", 0xff000000);
 		SELECTOR_FILTER_ITEM("*.elf", 0x00ff0000);
-		SELECTOR_FILTER_ITEM("*.gcm", 0x0000ff00);
+		SELECTOR_FILTER_ITEM("*.gcm, *.rvz", 0x0000ff00);
 		SELECTOR_FILTER_ITEM("*.iso", 0x000000ff);
 
 #undef SELECTOR_FILTER_ITEM
@@ -1635,6 +1636,10 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		{
 			dvd = true;
 		}
+		else if (!_wcsicmp(extension, L".rvz"))
+		{
+			dvd = true;
+		}
 	}
 
 	// set new title for main window
@@ -2317,10 +2322,10 @@ static int ui_main()
 	// Start the user interface
 
 	fileOpenDialog.SetTitle("Open File");
-	fileOpenDialog.SetTypeFilters({ ".dol", ".elf", ".gcm", ".iso", ".map", ".json", ".bin" });
+	fileOpenDialog.SetTypeFilters({ ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" });
 	
 	fileSaveDialog.SetTitle("Save File");
-	fileSaveDialog.SetTypeFilters({ ".dol", ".elf", ".gcm", ".iso", ".map", ".json", ".bin" });
+	fileSaveDialog.SetTypeFilters({ ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" });
 
 	chooseDirectoryDialog.SetTitle("Choose Directory");
 

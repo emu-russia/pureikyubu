@@ -21,6 +21,7 @@ Supported file formats:
 - DOL
 - ELF
 - GCM/ISO: unencrypted GameCube disk images
+- RVZ: compressed GameCube disk images (Dolphin's container; read-only, see `src/rvz.cpp`)
 - The special file name `Bootrom` is used to start the IPL from the beginning (reset vector, 0xfff00100); The Bootrom image must be set in the emulator settings.
 
 ## Threads
