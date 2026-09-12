@@ -294,17 +294,40 @@ namespace DSP
 
 	ARControl aram;
 
+// The three internal DSP causes (the DSP->CPU mailbox, the ARAM DMA completion and the AI DMA
+// completion) are latched in CDCR and reported to the CPU through ONE aggregate Processor
+// Interface line, PI_INTERRUPT_DSP. The line is therefore not "asserted by" any single cause:
+// it follows the OR of the ones that are currently latched *and* unmasked, and every place that
+// changes a cause has to re-evaluate it.
+//
+// Evaluating it only where a cause is raised left the line stuck: the guest acknowledges a cause
+// by writing the matching bit back to CDCR (write-1-to-clear), and while the line was computed
+// from "all three are clear" inside that one write path, clearing one cause while another was
+// still latched left the line high with nothing left to clear it. The CPU then re-entered the
+// external-interrupt handler on every rfi and never returned to the guest.
+void DSPUpdateInt()
+{
+	uint16_t pending = CDCR & (CDCR_DSPINT | CDCR_ARINT | CDCR_AIINT);
+	uint16_t unmasked = CDCR & (CDCR_DSPINTMSK | CDCR_ARINTMSK | CDCR_AIINTMSK);
+
+	if ((pending & unmasked) != 0)
+	{
+		Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
+	}
+	else
+	{
+		Flipper::HW->pi->PIClearInt(PI_INTERRUPT_DSP);
+	}
+}
 	static void ARINT()
 	{
 		CDCR |= CDCR_ARINT;
-		if (CDCR & CDCR_ARINTMSK)
+		if ((CDCR & CDCR_ARINTMSK) && aram.log)
 		{
-			if (aram.log)
-			{
-				Report(Channel::AR, "ARINT\n");
-			}
-			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
+			Report(Channel::AR, "ARINT\n");
 		}
+		// The ARAM completion is one of the three causes behind the aggregate PI line.
+		DSPUpdateInt();
 	}
 
 	// Perform the whole ARAM transfer. The hardware streams the block through the ARAM controller

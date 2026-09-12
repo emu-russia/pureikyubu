@@ -69,10 +69,11 @@ namespace DSP
 			CDCR &= ~CDCR_AIINT;
 		}
 
-		if ((CDCR & CDCR_DSPINT) == 0 && (CDCR & CDCR_ARINT) == 0 && (CDCR & CDCR_AIINT) == 0)
-		{
-			Flipper::HW->pi->PIClearInt(PI_INTERRUPT_DSP);
-		}
+		// The guest acknowledged some of the internal causes. The Processor Interface carries one
+		// aggregate line for all three of them, so it has to be re-evaluated here - otherwise a
+		// cause that the guest clears is still held high by whichever other cause is still latched,
+		// and the CPU re-enters the handler forever.
+		DSPUpdateInt();
 
 		// DSP DMA always ready
 		CDCR &= ~CDCR_DSPDMA;
@@ -124,14 +125,11 @@ namespace DSP
 	{
 		Gekko::stats.aiInts++;
 		CDCR |= CDCR_AIINT;
-		if (CDCR & CDCR_AIINTMSK)
+		if ((CDCR & CDCR_AIINTMSK) && dsp_ai.log)
 		{
-			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
-			if (dsp_ai.log)
-			{
-				Report(Channel::AI, "AIDINT\n");
-			}
+			Report(Channel::AI, "AIDINT\n");
 		}
+		DSPUpdateInt();
 	}
 
 	// how much time AI DMA need to playback "n" bytes in Gekko ticks
@@ -266,10 +264,7 @@ namespace DSP
 		}
 
 		CDCR |= CDCR_DSPINT;
-		if (CDCR & CDCR_DSPINTMSK)
-		{
-			Flipper::HW->pi->PIAssertInt(PI_INTERRUPT_DSP);
-		}
+		DSPUpdateInt();
 	}
 
 	bool DSPGetInterruptStatus()

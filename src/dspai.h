@@ -47,6 +47,13 @@ namespace DSP
 
 	// Used by DspCore
 
+	/// <summary>
+	/// Re-evaluate the aggregate Processor Interface line (PI_INTERRUPT_DSP) from the three internal
+	/// CDCR causes and their masks. Must be called whenever a cause or a mask changes - raising a
+	/// cause, or the guest acknowledging one by writing CDCR.
+	/// </summary>
+	void    DSPUpdateInt();
+
 	void    DSPAssertInt();
 	bool    DSPGetInterruptStatus();
 	bool    DSPGetResetModifier();
