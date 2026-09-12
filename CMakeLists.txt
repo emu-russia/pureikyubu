@@ -58,6 +58,7 @@ add_executable (pureikyubu
 	src/gfx.cpp
 	src/jdi.cpp
 	src/jdiserver.cpp
+	src/jdispecs.cpp
 	src/json.cpp
 	src/main.cpp
 	src/mem.cpp

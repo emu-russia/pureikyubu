@@ -59,6 +59,7 @@
 #include "json.h"
 #include "jdi.h"
 #include "jdiserver.h"
+#include "jdispecs.h"
 
 #include "gekkodec.h"
 #include "gekko.h"

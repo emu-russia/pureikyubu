@@ -4,45 +4,6 @@
 
 namespace UI
 {
-	const char* UiJdi = R"json(
-{
-  "info": {
-    "description": "UI Jey-Dai specs.",
-    "helpGroup": "UI Commands"
-  },
-
-  "can": {
-
-    "UIError": {
-      "help": "Display UI error message",
-      "args": 1,
-      "hints": "<text>",
-      "usage": [
-        "Syntax: UIError <text>\n",
-        "Example: UIError \"Error message!\"\n"
-      ]
-    },
-
-    "UIReport": {
-      "help": "Display UI message",
-      "args": 1,
-      "hints": "<text>",
-      "usage": [
-        "Syntax: UIReport <text>\n",
-        "Example: UIReport \"Hello, world!\"\n"
-      ]
-    },
-
-    "GetRenderTarget": {
-      "internal": true,
-      "help": "Return UI Render Target object (example: HWND). Flipper GFX will use to output graphics",
-      "output": "Int"
-    }
-
-  }
-
-}
-)json";
 
 	JdiClient* Jdi;
 

@@ -56,7 +56,7 @@ This happens due to the almost simultaneous writing to both Mailbox from two "en
 
 ## DSP JDI
 
-The debugging interface specification provided by this component can be found in Data/Json/DspJdi.json.
+The debugging interface specification provided by this component can be found in jdispecs.cpp (JdiSpecs::DspJdi).
 
 */
 

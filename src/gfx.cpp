@@ -29,105 +29,6 @@ namespace GFX
 	//   * EFB coordinates are in EFB pixels, the origin is the top left corner.
 	// -------------------------------------------------------------------------------------------
 
-	static const char* GfxJdi = R"json(
-{
-	"info":
-	{
-		"description": "Flipper GFX (GX) JDI",
-		"helpGroup": "GFX Debug Commands"
-	},
-
-	"can": {
-		"gx":
-		{
-			"help": "Show the state of the whole GFX pipeline",
-			"output": "Object with one member per pipeline block and the frame counters"
-		},
-
-		"gxframes":
-		{
-			"help": "Show the GFX frame statistics",
-			"output": "Object with the frame counters and the draw command counters of the CP"
-		},
-
-		"gxregs":
-		{
-			"help": "Dump the register state of one GFX block",
-			"args": 1,
-			"hints": "<block>",
-			"usage": [
-				"Syntax: gxregs <block>\n",
-				"Blocks: xf, su, ras, tx, tev, pe, bump, cp, all\n",
-				"Example of use: gxregs tev\n"
-			],
-			"output": "Object with the raw register fields of the block"
-		},
-
-		"gxshader":
-		{
-			"help": "Write the GLSL shaders the pipeline uses into files",
-			"args": 1,
-			"hints": "<basename>",
-			"usage": [
-				"Syntax: gxshader <basename>\n",
-				"Writes <basename>.vert.glsl and <basename>.frag.glsl\n",
-				"Example of use: gxshader gfx_shader\n"
-			],
-			"output": "Object with the file names and their sizes"
-		},
-
-		"gxtex":
-		{
-			"help": "Show the texture cache: what every one of the eight texture maps holds",
-			"output": "Array of 8 objects (one per texture map) with the decoded image and its registers"
-		},
-
-		"gxshot":
-		{
-			"help": "Save a screenshot of the emulated EFB as a PNG file",
-			"args": 1,
-			"hints": "<filename.png> [x y width height]",
-			"usage": [
-				"Syntax: gxshot <filename.png> [x y width height]\n",
-				"Without the optional rectangle the whole render target is saved.\n",
-				"Example of use: gxshot frame.png\n"
-			],
-			"output": "Object with the file name and the size of the saved image"
-		},
-
-		"gxpixel":
-		{
-			"help": "Read one EFB pixel",
-			"args": 2,
-			"hints": "<x> <y>",
-			"usage": [
-				"Syntax: gxpixel <x> <y>\n",
-				"Reads the colour and the depth of one EFB pixel (origin: top left).\n",
-				"Example of use: gxpixel 320 240\n"
-			],
-			"output": "Object with r, g, b, a and z"
-		},
-
-		"gxreset":
-		{
-			"help": "Reset the GFX pipeline register state (the software equivalent of a GX reset)"
-		},
-
-		"gxtexdump":
-		{
-			"help": "Save the image of one texture map as a PNG file",
-			"args": 2,
-			"hints": "<map 0-7> <filename.png>",
-			"usage": [
-				"Syntax: gxtexdump <map> <filename.png>\n",
-				"Example of use: gxtexdump 0 map0.png\n"
-			],
-			"output": "Object with the file name and the size of the saved image"
-		}
-	}
-}
-)json";
-
 	GFXCore* gfx_jdi_instance = nullptr;
 
 	static Json::Value* CmdGxState(std::vector<std::string>& args);
@@ -949,7 +850,7 @@ namespace GFX
 		// The GX debug commands (issue #87). The node is registered from here so that the commands
 		// exist exactly as long as the GFX subsystem does.
 		gfx_jdi_instance = this;
-		JDI::Hub.AddNode(L"GFX_JDI_JSON", GfxJdi, gfx_init_handlers);
+		JDI::Hub.AddNode(L"GFX_JDI_JSON", JdiSpecs::GfxJdi, gfx_init_handlers);
 	}
 
 	GFXCore::~GFXCore()

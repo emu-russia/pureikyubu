@@ -4,6 +4,5 @@
 
 namespace HLE
 {
-	extern const char* HleJdi;
 	void JdiReflector();
 }
