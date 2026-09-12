@@ -37,6 +37,7 @@
     <ClCompile Include="..\..\testing\gfx_cp_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_cp_array_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_cp_spec_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_si_spec_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_su_features_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_bump_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_texture_test.cpp" />
@@ -68,6 +69,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdma.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\si.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\dsparam.cpp">

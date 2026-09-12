@@ -19,6 +19,9 @@
 #include "pch.h"
 #include "gfx_test_common.h"
 
+static Flipper::SerialInterface* serialInterface = nullptr;
+
+
 namespace GfxUnitTest
 {
 	// -------------------------------------------------------------------------------------------
@@ -243,6 +246,8 @@ namespace GfxUnitTest
 		// The CP owns the CPU-visible graphics registers and the display-list FIFO; the tests drive
 		// it through the PI register window (PIRegWrite), exactly like the CPU does.
 		flipper->cp = new Flipper::CommandProcessor(flipper, &config);
+		serialInterface = new Flipper::SerialInterface(flipper, &config);
+		flipper->si = serialInterface;
 
 		started = true;
 		return true;
@@ -272,6 +277,11 @@ namespace GfxUnitTest
 		delete flipper->cp;
 		flipper->cp = nullptr;
 
+		delete serialInterface;
+		serialInterface = nullptr;
+		if (flipper != nullptr) flipper->si = nullptr;
+
+
 		Flipper::HW = nullptr;
 		Core = nullptr;
 
@@ -299,6 +309,13 @@ namespace GfxUnitTest
 		Assert::IsTrue(glOpen, Widen("the OpenGL backend could not be started: " + lastError).c_str());
 
 		gfx->ResetPipelineState();
+
+		// The serial interface is stateful (the poll schedule and the interrupt flags) and is not
+		// part of the pipeline state, so it is rebuilt. Its constructor also reinstalls the SI
+		// register traps, which then point at the new instance.
+		delete serialInterface;
+		serialInterface = new Flipper::SerialInterface(flipper, &config);
+		flipper->si = serialInterface;
 	}
 
 	void GfxTestMachine::BpLoad(unsigned index, uint32_t value)
@@ -758,4 +775,27 @@ namespace Flipper
 	{
 		// The unit tests render into an offscreen window; there is no XFB to disable.
 	}
+}
+
+// -------------------------------------------------------------------------------------------
+// Controller doubles. The SI reads the pad through the PAD plugin interface; the unit tests
+// answer with a neutral pad on every channel, so a test can tell "the channel was polled" from
+// "the channel was skipped" by looking at the read-status bits alone.
+// -------------------------------------------------------------------------------------------
+
+bool PADReadButtons(long padnum, PADState* state)
+{
+	if (padnum < 0 || padnum > 3 || state == nullptr)
+	{
+		return false;
+	}
+
+	// A neutral pad: no buttons, sticks centred and the triggers released.
+	*state = PADState{};
+	return true;
+}
+
+bool PADSetRumble(long padnum, long cmd)
+{
+	return true;
 }

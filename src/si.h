@@ -87,7 +87,10 @@ namespace Flipper
 	// SI state (registers and other data)
 	struct SIState
 	{
-		volatile uint32_t            out[4], shdw[4];// out + shadows
+		// SICnOUTBUF is double buffered (serial-interface.md 4.1): `out` is the CPU-visible
+		// register, `shdw` the hidden shadow the transfer engine shifts out. Setting SISR[WR]
+		// copies the visible register into the shadow one.
+		volatile uint32_t            out[4], shdw[4];// command latch + shadow buffers
 		volatile uint32_t            poll;           // poll control
 		volatile uint32_t            comcsr;         // CSR
 		volatile uint32_t            sr;             // status
@@ -108,7 +111,6 @@ namespace Flipper
 	class SerialInterface
 	{
 		SIState si{};		//!< SI state (registers and other data)
-		VideoInterface* vi = nullptr;	//!< the video interface, for the poll schedule
 
 		void SICommand(int chan, int outlen, int inlen, uint8_t* ptr);
 		void SIClearInterrupt();
@@ -177,9 +179,15 @@ namespace Flipper
 		static void read_exilk_lo(uint32_t addr, uint32_t* reg, void* ctx);
 
 	public:
-		SerialInterface(Flipper* flipper, HWConfig* config, VideoInterface* video);
+		SerialInterface(Flipper* flipper, HWConfig* config);
 		~SerialInterface();
 
-		void SIPoll();
+		/// <summary>
+		/// One step of the automatic poll schedule (serial-interface.md 5.1). `line` is the current
+		/// video line (VI_DISPLAY_POS.VCT), which is what the schedule is counted in: SIPOLL[X] is
+		/// the interval between two polls in lines, SIPOLL[Y] is how many polls a frame may issue,
+		/// and a wrap of the counter is a new frame.
+		/// </summary>
+		void SIPoll(uint32_t line);
 	};
 }
