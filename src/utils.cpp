@@ -577,6 +577,14 @@ namespace Util
 
 		DWORD attr = ::GetFileAttributesW(path.c_str());
 
+		// A path that is not there must not pass for a directory: GetFileAttributes answers
+		// INVALID_FILE_ATTRIBUTES, which has every bit set - the directory bit included.
+
+		if (attr == INVALID_FILE_ATTRIBUTES)
+		{
+			return false;
+		}
+
 		return (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
 
 #endif
@@ -587,7 +595,13 @@ namespace Util
 
 		struct stat attr;
 
-		stat(Util::WstringToString(path).c_str(), &attr);
+		// stat() leaves the structure alone when it fails, so the result has to be checked
+		// before the mode is looked at.
+
+		if (stat(Util::WstringToString(path).c_str(), &attr) != 0)
+		{
+			return false;
+		}
 
 		return (attr.st_mode & S_IFDIR) != 0;
 

@@ -119,6 +119,74 @@ namespace Flipper
 		return nullptr;
 	}
 
+	// Dump a range of physical memory as a Markdown hexdump. This is what the new debugger
+	// (debugui2) shows in its "Splash Memory" panel.
+	static Json::Value* cmd_memdump(std::vector<std::string>& args)
+	{
+		if (!JDI::Hub.ExecuteFastBool("IsLoaded") || HW == nullptr)
+		{
+			Report(Channel::Norm, "memdump: nothing is running\n");
+			return nullptr;
+		}
+
+		uint32_t address = (uint32_t)strtoul(args[1].c_str(), nullptr, 0) & 0x0FFFFFFF;
+
+		int lines = (int)strtoul(args[2].c_str(), nullptr, 0);
+		if (lines <= 0)
+			lines = 16;
+		if (lines > 256)
+			lines = 256;
+
+		std::string md;
+		char text[0x100];
+
+		sprintf(text, "# Physical Memory (Splash)\n\n`0x%08X` .. `0x%08X`\n\n```\n",
+			address, (address + lines * 16 - 1) & 0x0FFFFFFF);
+		md += text;
+
+		for (int row = 0; row < lines; row++)
+		{
+			if (HW->mem->MIGetMemoryPointerForDebug(address) == nullptr)
+			{
+				md += "          (end of memory)\n";
+				break;
+			}
+
+			sprintf(text, "%08X  ", address);
+			md += text;
+
+			std::string chars;
+
+			// The pointer is asked for every byte: the last row of the dump may well run past
+			// the end of Splash memory.
+			for (int b = 0; b < 16; b++)
+			{
+				uint8_t* byte = (uint8_t*)HW->mem->MIGetMemoryPointerForDebug(address + b);
+				if (byte == nullptr)
+				{
+					md += "   ";
+					chars += ' ';
+					continue;
+				}
+
+				sprintf(text, "%02X ", *byte);
+				md += text;
+				chars += (*byte >= 0x20 && *byte < 0x7F) ? (char)*byte : '.';
+			}
+
+			md += " |" + chars + "|\n";
+			address += 16;
+		}
+
+		md += "```\n";
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Object;
+		output->AddAnsiString("markdown", md.c_str());
+
+		return output;
+	}
+
 	void hw_init_handlers()
 	{
 		JDI::Hub.AddCmd("ramload", cmd_ramload);
@@ -127,5 +195,6 @@ namespace Flipper
 		JDI::Hub.AddCmd("aramsave", cmd_aramsave);
 		JDI::Hub.AddCmd("nvi", cmd_nextvi);
 		JDI::Hub.AddCmd("npe", cmd_nextpe);
+		JDI::Hub.AddCmd("memdump", cmd_memdump);
 	}
 };

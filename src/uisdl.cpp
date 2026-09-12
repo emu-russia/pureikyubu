@@ -1845,6 +1845,14 @@ static void ui_main_menu()
 					//SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
 				}
 			}
+			// The new debugger (debugui2, issue #371). It opens its own window; the legacy
+			// console above is kept around until the new one is complete.
+			if (ImGui::MenuItem("Test New Debugger", NULL, Debug2::IsDebuggerActive())) {
+				if (Debug2::IsDebuggerActive())
+					Debug2::StopDebugger();
+				else
+					Debug2::StartDebugger();
+			}
 			ImGui::MenuItem("Mount DolphinSDK as DVD...", NULL);
 			ImGui::EndMenu();
 		}
@@ -2318,6 +2326,7 @@ static int ui_main()
 	// Add UI methods
 	JdiAddNode("UI_JDI_JSON", JdiSpecs::UiJdi, UIReflector);
 	JdiAddNode("DEBUG_UI_JDI_JSON", JdiSpecs::DebugUiJdi, Debug::DebugUIReflector);
+	JdiAddNode("DEBUG_UI2_JDI_JSON", JdiSpecs::DebugUi2Jdi, Debug2::Reflector);
 
 	// Start the user interface
 
@@ -2414,6 +2423,13 @@ static int ui_main()
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
+
+			// The new debugger (debugui2) draws into a window of its own and takes the events
+			// that belong to it. Everything else goes on to ImGui as before.
+			if (Debug2::UiSdlEvent(event))
+			{
+				continue;
+			}
 
 			bool forMainWindow = true;
 
@@ -2634,6 +2650,14 @@ static int ui_main()
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer);
 
+		// The new debugger draws its own window on top of the same frame loop. If the user closed
+		// that window, the debugger is stopped here, outside of its own event callback.
+		Debug2::Frame();
+		if (Debug2::CloseRequested())
+		{
+			Debug2::StopDebugger();
+		}
+
 		SDL_Delay(10);
 	}
 
@@ -2641,6 +2665,10 @@ static int ui_main()
 
 	// Cleanup
 	usel.clear();       // the banner textures must be destroyed before the renderer
+
+	// The new debugger owns an SDL window and a GL context of its own, so it goes before the
+	// renderer and the video subsystem do.
+	Debug2::StopDebugger();
 
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
@@ -2653,6 +2681,7 @@ static int ui_main()
 
 	JdiRemoveNode("UI_JDI_JSON");
 	JdiRemoveNode("DEBUG_UI_JDI_JSON");
+	JdiRemoveNode("DEBUG_UI2_JDI_JSON");
 
 	if (Debug::debugger) {
 		delete Debug::debugger;

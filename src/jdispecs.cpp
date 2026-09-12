@@ -305,6 +305,53 @@ namespace JdiSpecs
 }
 )json";
 
+	const char* DebugUi2Jdi = R"json(
+{
+  "info": {
+    "description": "The session of the new debugger (debugui2). The debugger works within a session folder, and this is how the command handlers reach it: the artifacts a command creates (binaries, PNGs) belong next to the session.",
+    "helpGroup": "New Debugger (debugui2) Commands"
+  },
+
+  "can": {
+
+    "SessionPath": {
+      "internal": true,
+      "help": "Get the folder of the current debugger session",
+      "usage": [
+        "Syntax: SessionPath\n",
+        "The answer is empty when the new debugger is not running.\n"
+      ],
+      "output": "Array: [String]"
+    },
+
+    "SessionSave": {
+      "internal": true,
+      "help": "Store a text artifact in the current session folder",
+      "args": 2,
+      "hints": "<file> <text>",
+      "usage": [
+        "Syntax: SessionSave <file> <text>\n",
+        "Example: SessionSave dump.txt \"some text\"\n"
+      ],
+      "output": "Array: [String] - the full path of the artifact, or an empty string"
+    },
+
+    "testimage": {
+      "help": "Store a test picture in the session folder and answer with the Markdown that shows it",
+      "hints": "[width] [height]",
+      "usage": [
+        "Syntax: testimage [width] [height]\n",
+        "The picture goes next to the session and the answer refers to it relative to the session folder.\n",
+        "Example: testimage 320 200\n"
+      ],
+      "output": "{ markdown: String }"
+    }
+
+  }
+
+}
+)json";
+
 	const char* GekkoCoreJdi = R"json(
 {
   "info": {
@@ -605,6 +652,15 @@ namespace JdiSpecs
 
     "tlbinv": {
       "help": "Invalidate both DTLB/ITLB"
+    },
+
+    "regs": {
+      "help": "Dump all Gekko registers",
+      "usage": [
+        "Syntax: regs\n",
+        "The answer is Markdown (the new debugger, debugui2, shows it as a panel item).\n"
+      ],
+      "output": "{ markdown: String }"
     }
 
   }
@@ -940,6 +996,18 @@ namespace JdiSpecs
 
 	"npe": {
 	  "help": "Run emulation until the next PE interrupt (Done/Token). You can perform frame-by-frame emulation from the GFX Engine perspective"
+	},
+
+	"memdump": {
+	  "help": "Dump physical memory (Splash)",
+	  "args": 2,
+	  "hints": "<address> <lines>",
+	  "usage": [
+		"Syntax: memdump <address> <lines>\n",
+		"The answer is Markdown (the new debugger, debugui2, shows it as a panel item).\n",
+		"Example of use: memdump 0x00000000 16\n"
+	  ],
+	  "output": "{ markdown: String }"
 	}
 
   },

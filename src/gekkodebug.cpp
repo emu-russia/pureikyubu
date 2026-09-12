@@ -936,6 +936,153 @@ namespace Debug
 		return nullptr;
 	}
 
+	// Markdown helpers for the register dump below.
+
+	static void MdRow(std::string& md, const char* name, uint32_t value)
+	{
+		char line[0x100];
+		sprintf(line, "| %s | 0x%08X |\n", name, value);
+		md += line;
+	}
+
+	static void MdRow2(std::string& md, const char* name0, uint32_t value0, const char* name1, uint32_t value1)
+	{
+		char line[0x100];
+		sprintf(line, "| %s | 0x%08X | %s | 0x%08X |\n", name0, value0, name1, value1);
+		md += line;
+	}
+
+	static void MdRow4(std::string& md, const char* name0, uint32_t value0, const char* name1, uint32_t value1,
+		const char* name2, uint32_t value2, const char* name3, uint32_t value3)
+	{
+		char line[0x200];
+		sprintf(line, "| %s | 0x%08X | %s | 0x%08X | %s | 0x%08X | %s | 0x%08X |\n",
+			name0, value0, name1, value1, name2, value2, name3, value3);
+		md += line;
+	}
+
+	// Dump every Gekko register as Markdown. This is what the new debugger (debugui2) shows in
+	// its "Gekko Registers" panel.
+	static Json::Value* CmdGekkoRegsMarkdown(std::vector<std::string>& args)
+	{
+		if (!JDI::Hub.ExecuteFastBool("IsLoaded"))
+		{
+			Report(Channel::Norm, "regs: nothing is running\n");
+			return nullptr;
+		}
+
+		GekkoRegs& regs = Core->regs;
+
+		std::string md = "# Gekko Registers\n\n";
+		char line[0x400];
+
+		md += "## General Purpose\n\n";
+		md += "| Reg | Value | Reg | Value | Reg | Value | Reg | Value |\n";
+		md += "|---|---|---|---|---|---|---|---|\n";
+		for (int i = 0; i < 8; i++)
+		{
+			sprintf(line, "| r%i | 0x%08X | r%i | 0x%08X | r%i | 0x%08X | r%i | 0x%08X |\n",
+				i, regs.gpr[i], i + 8, regs.gpr[i + 8], i + 16, regs.gpr[i + 16], i + 24, regs.gpr[i + 24]);
+			md += line;
+		}
+
+		md += "\n## Floating Point (PS0)\n\n";
+		md += "| Reg | Value | Reg | Value | Reg | Value | Reg | Value |\n";
+		md += "|---|---|---|---|---|---|---|---|\n";
+		for (int i = 0; i < 8; i++)
+		{
+			sprintf(line, "| f%i | 0x%016llX | f%i | 0x%016llX | f%i | 0x%016llX | f%i | 0x%016llX |\n",
+				i, (unsigned long long)regs.fpr[i].uval,
+				i + 8, (unsigned long long)regs.fpr[i + 8].uval,
+				i + 16, (unsigned long long)regs.fpr[i + 16].uval,
+				i + 24, (unsigned long long)regs.fpr[i + 24].uval);
+			md += line;
+		}
+
+		md += "\n## Paired Single (PS1)\n\n";
+		md += "| Reg | Value | Reg | Value | Reg | Value | Reg | Value |\n";
+		md += "|---|---|---|---|---|---|---|---|\n";
+		for (int i = 0; i < 8; i++)
+		{
+			sprintf(line, "| ps1_%i | 0x%016llX | ps1_%i | 0x%016llX | ps1_%i | 0x%016llX | ps1_%i | 0x%016llX |\n",
+				i, (unsigned long long)regs.ps1[i].uval,
+				i + 8, (unsigned long long)regs.ps1[i + 8].uval,
+				i + 16, (unsigned long long)regs.ps1[i + 16].uval,
+				i + 24, (unsigned long long)regs.ps1[i + 24].uval);
+			md += line;
+		}
+
+		md += "\n## Machine State\n\n";
+		md += "| Register | Value | Register | Value |\n";
+		md += "|---|---|---|---|\n";
+		MdRow2(md, "pc", regs.pc, "msr", regs.msr);
+		MdRow2(md, "cr", regs.cr, "fpscr", regs.fpscr);
+		MdRow2(md, "lr", regs.spr[(int)Gekko::SPR::LR], "ctr", regs.spr[(int)Gekko::SPR::CTR]);
+		MdRow2(md, "xer", regs.spr[(int)Gekko::SPR::XER], "dec", regs.spr[(int)Gekko::SPR::DEC]);
+		MdRow2(md, "tbu", regs.tb.Part.u, "tbl", regs.tb.Part.l);
+		MdRow2(md, "srr0", regs.spr[(int)Gekko::SPR::SRR0], "srr1", regs.spr[(int)Gekko::SPR::SRR1]);
+		MdRow2(md, "dar", regs.spr[(int)Gekko::SPR::DAR], "dsisr", regs.spr[(int)Gekko::SPR::DSISR]);
+		MdRow2(md, "sdr1", regs.spr[(int)Gekko::SPR::SDR1], "ear", regs.spr[(int)Gekko::SPR::EAR]);
+		MdRow2(md, "sprg0", regs.spr[(int)Gekko::SPR::SPRG0], "sprg1", regs.spr[(int)Gekko::SPR::SPRG1]);
+		MdRow2(md, "sprg2", regs.spr[(int)Gekko::SPR::SPRG2], "sprg3", regs.spr[(int)Gekko::SPR::SPRG3]);
+		MdRow2(md, "pvr", regs.spr[(int)Gekko::SPR::PVR], "hid2", regs.spr[(int)Gekko::SPR::HID2]);
+
+		md += "\n## HID and Debug\n\n";
+		md += "| Register | Value | Register | Value |\n";
+		md += "|---|---|---|---|\n";
+		MdRow2(md, "hid0", regs.spr[(int)Gekko::SPR::HID0], "hid1", regs.spr[(int)Gekko::SPR::HID1]);
+		MdRow2(md, "iabr", regs.spr[(int)Gekko::SPR::IABR], "dabr", regs.spr[(int)Gekko::SPR::DABR]);
+		MdRow2(md, "l2cr", regs.spr[1017], "ictc", regs.spr[1019]);
+		MdRow2(md, "dmaU", regs.spr[(int)Gekko::SPR::DMAU], "dmaL", regs.spr[(int)Gekko::SPR::DMAL]);
+		MdRow2(md, "wpar", regs.spr[(int)Gekko::SPR::WPAR], "thrm1", regs.spr[1020]);
+		MdRow2(md, "thrm2", regs.spr[1021], "thrm3", regs.spr[1022]);
+
+		md += "\n## Performance Monitor\n\n";
+		md += "| Register | Value | Register | Value |\n";
+		md += "|---|---|---|---|\n";
+		MdRow2(md, "mmcr0", regs.spr[952], "mmcr1", regs.spr[956]);
+		MdRow2(md, "pmc1", regs.spr[953], "pmc2", regs.spr[954]);
+		MdRow2(md, "pmc3", regs.spr[957], "pmc4", regs.spr[958]);
+		MdRow2(md, "sia", regs.spr[955], "sda", regs.spr[959]);
+
+		md += "\n## Segment Registers\n\n";
+		md += "| Register | Value | Register | Value | Register | Value | Register | Value |\n";
+		md += "|---|---|---|---|---|---|---|---|\n";
+		for (int i = 0; i < 4; i++)
+		{
+			sprintf(line, "| sr%i | 0x%08X | sr%i | 0x%08X | sr%i | 0x%08X | sr%i | 0x%08X |\n",
+				i, regs.sr[i], i + 4, regs.sr[i + 4], i + 8, regs.sr[i + 8], i + 12, regs.sr[i + 12]);
+			md += line;
+		}
+
+		md += "\n## BAT Registers\n\n";
+		md += "| Register | Value | Register | Value |\n";
+		md += "|---|---|---|---|\n";
+		MdRow2(md, "ibat0u", regs.spr[(int)Gekko::SPR::IBAT0U], "ibat0l", regs.spr[(int)Gekko::SPR::IBAT0L]);
+		MdRow2(md, "ibat1u", regs.spr[(int)Gekko::SPR::IBAT1U], "ibat1l", regs.spr[(int)Gekko::SPR::IBAT1L]);
+		MdRow2(md, "ibat2u", regs.spr[(int)Gekko::SPR::IBAT2U], "ibat2l", regs.spr[(int)Gekko::SPR::IBAT2L]);
+		MdRow2(md, "ibat3u", regs.spr[(int)Gekko::SPR::IBAT3U], "ibat3l", regs.spr[(int)Gekko::SPR::IBAT3L]);
+		MdRow2(md, "dbat0u", regs.spr[(int)Gekko::SPR::DBAT0U], "dbat0l", regs.spr[(int)Gekko::SPR::DBAT0L]);
+		MdRow2(md, "dbat1u", regs.spr[(int)Gekko::SPR::DBAT1U], "dbat1l", regs.spr[(int)Gekko::SPR::DBAT1L]);
+		MdRow2(md, "dbat2u", regs.spr[(int)Gekko::SPR::DBAT2U], "dbat2l", regs.spr[(int)Gekko::SPR::DBAT2L]);
+		MdRow2(md, "dbat3u", regs.spr[(int)Gekko::SPR::DBAT3U], "dbat3l", regs.spr[(int)Gekko::SPR::DBAT3L]);
+
+		md += "\n## Quantization Registers\n\n";
+		md += "| Register | Value | Register | Value |\n";
+		md += "|---|---|---|---|\n";
+		MdRow2(md, "gqr0", regs.spr[(int)Gekko::SPR::GQR0], "gqr1", regs.spr[(int)Gekko::SPR::GQR1]);
+		MdRow2(md, "gqr2", regs.spr[(int)Gekko::SPR::GQR2], "gqr3", regs.spr[(int)Gekko::SPR::GQR3]);
+		MdRow2(md, "gqr4", regs.spr[(int)Gekko::SPR::GQR4], "gqr5", regs.spr[(int)Gekko::SPR::GQR5]);
+		MdRow2(md, "gqr6", regs.spr[(int)Gekko::SPR::GQR6], "gqr7", regs.spr[(int)Gekko::SPR::GQR7]);
+
+		// The answer of a JDI command is Markdown: the new debugger puts it into a panel as is.
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Object;
+		output->AddAnsiString("markdown", md.c_str());
+
+		return output;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", CmdRun);
@@ -994,5 +1141,7 @@ namespace Debug
 		JDI::Hub.AddCmd("dtlb", CmdDumpDTLB);
 		JDI::Hub.AddCmd("itlb", CmdDumpITLB);
 		JDI::Hub.AddCmd("tlbinv", CmdInvalidateTLB);
+
+		JDI::Hub.AddCmd("regs", CmdGekkoRegsMarkdown);
 	}
 }

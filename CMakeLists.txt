@@ -34,6 +34,8 @@ add_executable (pureikyubu
 	src/cuisdl.cpp
 	src/debug.cpp
 	src/debugui.cpp
+	src/debugui2.cpp
+	src/debugui2gl.cpp
 	src/di.cpp
 	src/dsp.cpp
 	src/dspcore.cpp
@@ -97,6 +99,6 @@ add_executable (pureikyubu
 
 target_compile_features(pureikyubu PRIVATE cxx_std_17)
 
-include_directories( thirdparty/imgui thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
+include_directories( thirdparty/imgui thirdparty/stb thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
 
 target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} SDL2 GLEW)
