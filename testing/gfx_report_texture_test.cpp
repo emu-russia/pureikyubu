@@ -331,9 +331,11 @@ namespace pureikyubutest
 					break;
 
 				case GFX::TF_IA4:
-					// The IA4 decoder walks the tiles column first (tx.cpp), so the encoder does too
-					for (int s = 0; s < w; s += 8)
-						for (int t = 0; t < h; t += 4)
+					// Tile rows first, like the decoder: the tiles of a texture are stored row by
+					// row, so the encoder must not mirror a column-first walk here (doing that hid
+					// the transposed decode the gallery was supposed to show).
+					for (int t = 0; t < h; t += 4)
+						for (int s = 0; s < w; s += 8)
 							for (int v = 0; v < 4; v++)
 								for (int u = 0; u < 8; u++)
 								{
