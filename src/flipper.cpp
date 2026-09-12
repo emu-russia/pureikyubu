@@ -141,8 +141,16 @@ namespace Flipper
 		vi->VIUpdate();
 		si->SIPoll();
 
-		// ... and let the CP thread know when it has a batch of FIFO entries to consume.
+		// ... and let the CP thread know when it has a batch of FIFO entries to consume, and the
+		// AI thread when the next audio DMA block is due.
 		cp->TickSync(ticks);
+		DSP::AITickSync(ticks);
+
+		// The DSP core has its own thread as well, woken in batches.
+		if (DSP != nullptr)
+		{
+			DSP->core->TickSync(ticks);
+		}
 	}
 
 	uint32_t Flipper::GetMemorySize()

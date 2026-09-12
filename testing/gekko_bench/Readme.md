@@ -128,6 +128,7 @@ The knobs below narrow down what part of it matters:
 | `BENCH_SPIN_PAUSE=1` | Execute the CPU's spin-wait hint (`pause`/`YieldProcessor`) in the loop |
 | `BENCH_SPIN_SLEEP=<ms>` | Sleep between polls instead of spinning (the fully blocked case) |
 | `BENCH_SPIN_DIV=<n>` | Touch the time base only every n-th iteration (`0` = never) |
+| `BENCH_SPIN_WORK=<n>` | Burn about n cycles per iteration, like a device thread that does real work per poll |
 
 Measured on the `workload_alu` mix at 30M instructions (~292 MIPS without
 pollers):
@@ -148,10 +149,43 @@ base at all costs 1.85x, so the damage is the spinning itself (the machine's SMT
 siblings and its power budget) and not only the cache-line transfers. And a
 blocked wait costs nothing: the remedy is to *not* busy-wait at all.
 
-The emulator was fixed accordingly: the VI/serial update is now executed by the
-CPU thread from the tick it already advances (`Flipper::Update`), and the CP
-thread blocks on an `Event` that the CPU thread signals when a batch of FIFO
-entries is due (`CommandProcessor::TickSync`).
+`BENCH_SPIN_WORK` separates the two effects. A device thread that does real work
+on every poll - the DSP executes one emulated instruction per iteration - spins
+orders of magnitude slower than a tight loop:
+
+| Configuration | Poll rate | MIPS |
+|---|---|---|
+| 2 pollers, no work | 80.1M/s | 130.3 |
+| 2 pollers, `BENCH_SPIN_WORK=40` | 48.8M/s | 146.2 |
+| 2 pollers, `BENCH_SPIN_WORK=400` | 16.6M/s | 188.0 |
+| 2 pollers, `BENCH_SPIN_WORK=4000` | 2.4M/s | 265.5 |
+| No pollers | - | 290.1 |
+
+So the cost tracks the poll rate, and a thread that only looks at the time base
+every few microseconds is nearly free. That is the test to apply before giving a
+device thread the same treatment: the AI DMA thread polled in a tight loop like
+the VI and CP ones and was worth 1.3-1.4x; the DSP thread, which was already
+15x slower, was worth another 1.2-1.3x - and it turned out to matter for
+correctness, not just speed (see below).
+
+The emulator was fixed accordingly. The VI/serial update is now executed by the
+CPU thread from the tick it already advances (`Flipper::Update`); the CP thread
+blocks on an `Event` that the CPU thread signals when a batch of FIFO entries is
+due (`CommandProcessor::TickSync`); the AI DMA thread is woken by
+`DSP::AITickSync` when the next 32-byte block is due; and the DSP thread is woken
+by `DspCore::TickSync` once per `DspWakeTicks` and then drains a batch of
+emulated DSP instructions.
+
+Two things to know about the DSP one. It batches, because one emulated DSP
+instruction per wakeup would mean five million wakeups per second. And batching
+made the DSP *execute more*: it used to re-anchor its deadline to the current
+tick on every poll, so a host that could not keep up with one instruction per
+five ticks simply dropped the rest - about 5.3M instructions/s here against the
+14-15M/s after. That is not only a speed question: on Luigi's Mansion the DSP
+falling behind stalls the game (it spins in its audio driver, the emulator drops
+to 0.6x real time and stops rendering altogether), and the batched version is
+stable at 4.3-4.6x. The per-event instructions still re-anchor after the batch,
+so the DSP stays host-limited rather than accumulating a backlog.
 
 Measured with two binaries built from the same tooling, one with the periodic
 work on its own polling thread and one without, on the same command line and the
@@ -165,6 +199,19 @@ whole story.
 | `pong.dol` (interpreted, no caches) | 22.0 MIPS, 1.47x | 55.0 MIPS, 3.66x | **2.50x** |
 | Ikaruga (disc, recompiler) | 40.3 MIPS, 2.16x | 49.6 MIPS, 2.66x | **1.23x** |
 | Luigi's Mansion (disc, recompiler) | 27.8 MIPS, 1.72x | 36.2 MIPS, 2.25x | **1.30x** |
+
+And the whole set, with the AI and DSP threads included, on a 20-second run of
+the same two images (the polling-thread figure is the build with the VI/CP only):
+
+| Workload | VI/CP only | all four | Speedup |
+|---|---|---|---|
+| Ikaruga | 48.7 MIPS, 2.61x | 80.4 MIPS, 4.58x | **1.65x** |
+| Luigi's Mansion | 10.7 MIPS, 0.62x (stalled) | 68.1 MIPS, 4.26x | **6.4x** |
+
+Attribution on Ikaruga (15 s, two runs each): the VI/CP work takes it from
+2.50-2.59x to 2.55x, the AI thread from there to 3.27-3.34x, and the DSP thread
+to 4.56-4.58x. `pong.dol`, which has neither an active DSP nor an active audio
+DMA, is unchanged by the last two steps (3.71x, 3.74x, 3.69x).
 
 The uncached case is the one the issue was written about - every Gekko memory
 access goes through the PI there - and it is also where the pollers hurt most,

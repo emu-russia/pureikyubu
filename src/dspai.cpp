@@ -104,12 +104,25 @@ namespace DSP
 		*reg = CDCR;
 	}
 
+	void DspAIControl::Reset()
+	{
+		cdcr = 0;
+		madr_hi = 0;
+		madr_lo = 0;
+		len = 0;
+		dcnt = 0;
+		currentDmaAddr = 0;
+		dmaTime = (uint64_t)-1;
+		memset(zeroes, 0, sizeof(zeroes));
+	}
+
 	// ---------------------------------------------------------------------------
 	// DMA
 
 	// dma transfer complete (when AIDCNT == 0)
 	void AIDINT()
 	{
+		Gekko::stats.aiInts++;
 		CDCR |= CDCR_AIINT;
 		if (CDCR & CDCR_AIINTMSK)
 		{
@@ -133,6 +146,9 @@ namespace DSP
 		dsp_ai.dcnt = dsp_ai.len & ~AID_EN;
 		dsp_ai.dmaTime = Core->GetTicks() + AIGetTime(32, dsp_ai.dmaRate);
 		dsp_ai.currentDmaAddr = (dsp_ai.madr_hi << 16) | dsp_ai.madr_lo;
+
+		// The thread may have parked itself while no DMA was armed; wake it for the first block.
+		dsp_ai.audioEvent.Signal();
 		if (dsp_ai.log)
 		{
 			Report(Channel::AI, "DMA started: %08X, %i bytes\n", dsp_ai.currentDmaAddr, dsp_ai.dcnt * 32);
@@ -143,6 +159,8 @@ namespace DSP
 	// Simulate AI FIFO
 	static void AIFeedMixer()
 	{
+		Gekko::stats.aiFeeds++;
+
 		int bytes = 32;
 
 		if (dsp_ai.dcnt == 0 || (dsp_ai.len & AID_EN) == 0)
@@ -265,8 +283,37 @@ namespace DSP
 	}
 
 	// Update audio DMA thread
+	// Called by the CPU thread every Flipper tick step. The DMA asks for a 32-byte block every
+	// `AIGetTime(32, rate)` ticks (about 6750 at 48 kHz), so the thread can block between the blocks.
+	void AITickSync(int64_t ticks)
+	{
+		if (dsp_ai.audioThread == nullptr)
+		{
+			return;
+		}
+
+		if (dsp_ai.dmaTime == (uint64_t)-1 || (uint64_t)ticks < dsp_ai.dmaTime)
+		{
+			return;
+		}
+
+		dsp_ai.audioEvent.Signal();
+	}
+
 	static void AIUpdate(void* Parameter)
 	{
+		// Block until the next DMA block is due (or the safety timeout expires, so that a missed
+		// wakeup cannot stall the audio). See AITickSync.
+		dsp_ai.audioEvent.Wait(2);
+
+		if (dsp_ai.dmaTime == (uint64_t)-1)
+		{
+			// No DMA is armed, so there is nothing to feed: park the thread until AIStartDMA
+			// resumes it instead of spinning on the time base.
+			dsp_ai.audioThread->Suspend();
+			return;
+		}
+
 		if ((uint64_t)Core->GetTicks() >= dsp_ai.dmaTime)
 		{
 			if (dsp_ai.dcnt == 0)
@@ -302,7 +349,7 @@ namespace DSP
 		Report(Channel::AI, "DSP AI DMA\n");
 
 		// clear regs
-		memset(&dsp_ai, 0, sizeof(DspAIControl));
+		dsp_ai.Reset();
 
 		dsp_ai.audioThread = EMUCreateThread(AIUpdate, true, nullptr, "AI");
 

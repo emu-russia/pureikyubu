@@ -681,6 +681,10 @@ namespace Gekko
 		uint64_t piWrites = 0;			// Single-beat CPU writes that reached the PI
 		uint64_t mmioReads = 0;			// ... of those, the ones that hit the register space
 		uint64_t mmioWrites = 0;
+		uint64_t dspInstrs = 0;			// DSP instructions executed
+		uint64_t dspWakes = 0;			// Times the DSP thread was woken
+		uint64_t aiFeeds = 0;			// AI DMA blocks pushed into the mixer
+		uint64_t aiInts = 0;			// AIDINT (DMA complete) interrupts
 
 		// Host cycles (only while `cycleProfile` is on).
 		uint64_t jitRunCycles = 0;		// Time inside Jit::Run, including the generated blocks

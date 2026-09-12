@@ -635,6 +635,35 @@ namespace DSP
 		dsp->Suspend();
 	}
 
+	// Called by the CPU thread every Flipper tick step. Waking up on every step would mean about a
+	// million scheduler wakeups per second, so the thread is woken once per `DspWakeTicks` and then
+	// drains a whole batch.
+	void DspCore::TickSync(int64_t ticks)
+	{
+		if (ticks < wakeTick)
+		{
+			return;
+		}
+
+		wakeTick = ticks + DspWakeTicks;
+		workEvent.Signal();
+	}
+
+	void DspCore::HoldMailbox()
+	{
+		if (Core != nullptr)
+		{
+			mailboxHoldTick = Core->GetTicks() + MailboxHoldTicks;
+		}
+	}
+
+	void DspCore::WaitForWork()
+	{
+		// The safety timeout keeps a missed wakeup from stalling the DSP forever.
+		workEvent.Wait(2);
+		Gekko::stats.dspWakes++;
+	}
+
 	void DspCore::Update()
 	{
 		uint64_t ticks = Core->GetTicks();
@@ -642,12 +671,18 @@ namespace DSP
 		// We need to suspend DspCore execution for a while until the CPU writes all data to Mailbox registers.
 		// In reality 2 writes from Gekko side fly quickly through Flipper's guts and DSPCore does not have time to wedge in the middle. In the emulator it is necessary to do more carefully.
 
-		if (delay_mailbox_reasons > 0) {
-			delay_mailbox_reasons--;
+		if (ticks < mailboxHoldTick)
+		{
 			return;
 		}
 
-		if (ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
+		// Execute everything the emulated DSP could have executed since it last ran, up to one
+		// wakeup's worth. The anchor is taken again at the end exactly as the one-instruction-at-a-
+		// time version did: the DSP is limited by the host, not by the emulated clock, and the
+		// backlog is dropped rather than accumulated.
+		uint32_t budget = (uint32_t)(DspWakeTicks / (int64_t)GekkoTicksPerDspInstruction);
+
+		while (budget-- > 0 && ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{
 			// Test breakpoints and canaries
 			if (dsp->IsRunning())
@@ -675,6 +710,12 @@ namespace DSP
 			CheckInterrupts();
 
 			interp->ExecuteInstr();
+			Gekko::stats.dspInstrs++;
+			dsp->savedGekkoTicks += GekkoTicksPerDspInstruction;
+		}
+
+		if (dsp->savedGekkoTicks <= ticks)
+		{
 			dsp->savedGekkoTicks = ticks;
 		}
 	}

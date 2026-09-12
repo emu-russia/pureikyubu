@@ -158,7 +158,12 @@ static void StartSpinners(int count)
         int div = getenv("BENCH_SPIN_DIV") ? atoi(getenv("BENCH_SPIN_DIV")) : 1;
         if (div < 1) div = 1;
 
-        g_spinThreads.emplace_back([pause, sleepMs, div]()
+        // A device thread that does real work on every iteration (the DSP executes one emulated
+        // instruction per poll) iterates orders of magnitude slower than a tight loop. WORK makes
+        // each iteration burn roughly that many cycles, to see whether a slow poller still hurts.
+        int work = getenv("BENCH_SPIN_WORK") ? atoi(getenv("BENCH_SPIN_WORK")) : 0;
+
+        g_spinThreads.emplace_back([pause, sleepMs, div, work]()
         {
             int64_t deadline = Core->GetTicks();
             unsigned skip = 0;
@@ -171,6 +176,8 @@ static void StartSpinners(int count)
                     continue;   // div == 0: a pure spin that never touches the time base
                 }
                 skip = 0;
+
+                for (volatile int w = 0; w < work; w++) { }
 
                 int64_t ticks = Core->GetTicks();
                 g_spinPolls.fetch_add(1, std::memory_order_relaxed);

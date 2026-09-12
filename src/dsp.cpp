@@ -307,6 +307,11 @@ namespace DSP
 	{
 		Dsp16* dsp = (Dsp16*)Parameter;
 
+		// Block until the CPU thread says that a batch of DSP time is due (see DspCore::TickSync).
+		// The thread used to poll the shared time base in a tight loop, which cost far more than the
+		// DSP work itself (see the benchmark notes in `testing/gekko_bench`).
+		dsp->core->WaitForWork();
+
 		// Do DSP actions
 		dsp->core->Update();
 	}
@@ -321,6 +326,8 @@ namespace DSP
 				Report(Channel::DSP, "Run\n");
 			}
 			savedGekkoTicks = Core->GetTicks();
+			core->wakeTick = savedGekkoTicks;
+			core->workEvent.Signal();
 		}
 	}
 
@@ -795,7 +802,7 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
 		}
 
-		core->delay_mailbox_reasons = 4;
+		core->HoldMailbox();
 
 		// Bit 15 carries the valid flag, so the sender's bit 15 is discarded here
 		// (writing the high word clears the flag).
@@ -812,7 +819,7 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
 		}
 
-		core->delay_mailbox_reasons = 4;
+		core->HoldMailbox();
 
 		CpuToDspMailbox[1] = value;
 		CpuToDspMailbox[0] |= 0x8000;
