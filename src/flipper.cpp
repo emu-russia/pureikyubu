@@ -139,7 +139,7 @@ namespace Flipper
 
 		// update joypads and video
 		vi->VIUpdate();
-		si->SIPoll();
+		si->SIPoll(vi->GetCurrentLine());
 
 		// ... and let the CP thread know when it has a batch of FIFO entries to consume, and the
 		// AI thread when the next audio DMA block is due.

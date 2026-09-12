@@ -419,7 +419,9 @@ namespace DSP
 
 	void DSPAssertInt()
 	{
+		// Mirrors dspai.cpp: latch the cause and re-evaluate the aggregate PI line.
 		dsp_ai.cdcr |= CDCR_DSPINT;
+		DSPUpdateInt();
 	}
 
 	bool DSPGetInterruptStatus()

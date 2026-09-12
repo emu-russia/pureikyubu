@@ -32,8 +32,14 @@ extern  Emulator emu;
 
 struct CmdLineOptions
 {
+	bool    help = false;       // `--help`: print the accepted options and exit
 	bool    ipl = false;        // `--ipl`: start the Bootrom (IPL) immediately, without going through the UI
 	bool    noDisc = false;     // `--no-disc`: start with the DVD lid open (no disk), so that the IPL takes its "no disk" path
+
+	// `--image <file>` (or a bare file name): load and run that file right away instead of waiting
+	// for the game selector. The file is a disk image (`.iso`, `.gcm`) or an executable (`.dol`,
+	// `.elf`).
+	std::wstring image;
 
 	// `--bench <file> [seconds]`: load the file, run it for the given number of seconds (30 by
 	// default) without a user interface and print the measured emulation throughput and the
@@ -45,6 +51,11 @@ struct CmdLineOptions
 };
 
 extern  CmdLineOptions cmdline;
+
+/// <summary>
+/// Print the accepted command line options (the `--help` text) to the console, if there is one.
+/// </summary>
+void EMUPrintUsage();
 
 /// <summary>
 /// Parse the raw command line of the application (`lpCmdLine` on Windows, `argv` joined by spaces elsewhere).

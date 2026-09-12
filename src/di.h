@@ -76,6 +76,12 @@ namespace Flipper
 		static uint8_t DIHostToDduCallbackCommand(void* ctx);
 		static uint8_t DIHostToDduCallbackData(void* ctx);
 		static void DIDduToHostCallback(uint8_t data, void* ctx);
+		/// <summary>
+		/// Re-evaluate the aggregate Processor Interface line (PI_INTERRUPT_DI) from the three
+		/// internal DISR causes and their masks. Called wherever a cause or a mask changes.
+		/// </summary>
+		void DIUpdateInt();
+
 		void write_sr(uint16_t data);
 		void write_cr(uint16_t data);
 		void write_cvr(uint16_t data);

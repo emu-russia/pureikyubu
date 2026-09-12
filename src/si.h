@@ -1,8 +1,6 @@
 
 #pragma once
 
-#define SI_POLLING_INTERVAL     0x10000      // In Gekko ticks
-
 // SI registers (all registers are 32-bit from the software side)
 
 #define SI_CHAN0_OUTBUF     0x00      // Channel 0 Output Buffer
@@ -89,7 +87,10 @@ namespace Flipper
 	// SI state (registers and other data)
 	struct SIState
 	{
-		volatile uint32_t            out[4], shdw[4];// out + shadows
+		// SICnOUTBUF is double buffered (serial-interface.md 4.1): `out` is the CPU-visible
+		// register, `shdw` the hidden shadow the transfer engine shifts out. Setting SISR[WR]
+		// copies the visible register into the shadow one.
+		volatile uint32_t            out[4], shdw[4];// command latch + shadow buffers
 		volatile uint32_t            poll;           // poll control
 		volatile uint32_t            comcsr;         // CSR
 		volatile uint32_t            sr;             // status
@@ -100,7 +101,11 @@ namespace Flipper
 		bool                rumble[4];      // rumble support flags for every controller
 		// filled when SI is inited, by checking PADSetRumble
 		bool                log;            // do debugger log output
-		int64_t             pollingTime;    // Saved Gekko TBR for polling
+		// The poll schedule (serial-interface.md 5.1) is counted in video lines, not CPU ticks.
+		uint32_t            lastPollLine;   // line counter value at the previous poll evaluation
+		uint32_t            pollLineBase;   // line at which the current interval started
+		uint32_t            pollsThisFrame; // polls issued since the last vertical blank
+		bool                pollLineDue;    // the first poll of the frame is still due
 	};
 
 	class SerialInterface
@@ -177,6 +182,12 @@ namespace Flipper
 		SerialInterface(Flipper* flipper, HWConfig* config);
 		~SerialInterface();
 
-		void SIPoll();
+		/// <summary>
+		/// One step of the automatic poll schedule (serial-interface.md 5.1). `line` is the current
+		/// video line (VI_DISPLAY_POS.VCT), which is what the schedule is counted in: SIPOLL[X] is
+		/// the interval between two polls in lines, SIPOLL[Y] is how many polls a frame may issue,
+		/// and a wrap of the counter is a new frame.
+		/// </summary>
+		void SIPoll(uint32_t line);
 	};
 }

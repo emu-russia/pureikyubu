@@ -98,20 +98,22 @@ namespace Flipper
 
 	void SerialInterface::si_wr_out_hi(int chan, uint32_t data)
 	{
-		si.shdw[chan] &= 0x0000ffff;
-		si.shdw[chan] |= data << 16;
+		si.out[chan] &= 0x0000ffff;
+		si.out[chan] |= data << 16;
 	}
 
 	void SerialInterface::si_wr_out_lo(int chan, uint32_t mask, uint32_t data)
 	{
-		si.shdw[chan] &= 0xffff0000;
-		si.shdw[chan] |= (uint16_t)data;
+		si.out[chan] &= 0xffff0000;
+		si.out[chan] |= (uint16_t)data;
+
+		// The visible register no longer matches the shadow one until SISR[WR] copies it.
 		SI_SR_REG |= mask;
 
 		// control motor
-		if (si.shdw[chan] == 0x00400000) PADSetRumble(chan, PAD_MOTOR_STOP);
-		else if (si.shdw[chan] == 0x00400001) PADSetRumble(chan, PAD_MOTOR_RUMBLE);
-		else if (si.shdw[chan] == 0x00400002) PADSetRumble(chan, PAD_MOTOR_STOP_HARD);
+		if (si.out[chan] == 0x00400000) PADSetRumble(chan, PAD_MOTOR_STOP);
+		else if (si.out[chan] == 0x00400001) PADSetRumble(chan, PAD_MOTOR_RUMBLE);
+		else if (si.out[chan] == 0x00400002) PADSetRumble(chan, PAD_MOTOR_STOP_HARD);
 	}
 
 	/* ******* CHAN 0 ******* */
@@ -281,6 +283,7 @@ namespace Flipper
 	{
 		SerialInterface* si = (SerialInterface*)ctx;
 		data <<= 16;
+		uint32_t outlen = SI_COMCSR_OUTLEN(data);
 
 		// clear incoming interrupt
 		if (data & SI_COMCSR_TCINT)
@@ -297,7 +300,8 @@ namespace Flipper
 		if (data & SI_COMCSR_TCINTMSK) si->SI_COMCSR_REG |= SI_COMCSR_TCINTMSK;
 		else si->SI_COMCSR_REG &= ~SI_COMCSR_TCINTMSK;
 
-		int outlen = SI_COMCSR_OUTLEN(data);
+		// OUTLNGTH is the only other writable field of the high halfword; COMERR and RDSTINT
+		// are read-only and the reserved bits read as 0 (11.5).
 		si->SI_COMCSR_REG &= ~SI_COMCSR_OUTLEN_MASK;
 		si->SI_COMCSR_REG |= (outlen << 16);
 	}
@@ -305,20 +309,24 @@ namespace Flipper
 	void SerialInterface::write_commcsr_lo(uint32_t addr, uint32_t data, void* ctx)
 	{
 		SerialInterface* si = (SerialInterface*)ctx;
+
+		// CHANNEL and INLNGTH are ordinary writable fields of the low halfword (11.5); TSTART is
+		// a pending bit, so it is never stored (it is set below for the duration of the transfer).
+		si->SI_COMCSR_REG &= ~(SI_COMCSR_CHAN_MASK | SI_COMCSR_INLEN_MASK | SI_COMCSR_TSTART);
+		si->SI_COMCSR_REG |= (data & (SI_COMCSR_CHAN_MASK | SI_COMCSR_INLEN_MASK));
+
 		// commands are executed immediately
 		if (data & SI_COMCSR_TSTART)
 		{
-			// select channel
-			int chan = SI_COMCSR_CHAN(data);
-			si->SI_COMCSR_REG &= ~SI_COMCSR_CHAN_MASK;
-			si->SI_COMCSR_REG |= (chan << 1);
+			// the transfer is pending while it runs, and reads back complete once it has finished
+			si->SI_COMCSR_REG |= SI_COMCSR_TSTART;
+
+			int chan = SI_COMCSR_CHAN(si->SI_COMCSR_REG);
 
 			// setup in/out length
-			int inlen = SI_COMCSR_INLEN(data);
-			si->SI_COMCSR_REG &= ~SI_COMCSR_INLEN_MASK;
-			si->SI_COMCSR_REG |= (inlen << 8);
+			int inlen = SI_COMCSR_INLEN(si->SI_COMCSR_REG);
 			if (inlen == 0) inlen = 128;
-			int outlen = SI_COMCSR_OUTLEN(data);
+			int outlen = SI_COMCSR_OUTLEN(si->SI_COMCSR_REG);
 			if (outlen == 0) outlen = 128;
 
 			// make actual transfer
@@ -358,16 +366,16 @@ namespace Flipper
 		SerialInterface* si = (SerialInterface*)ctx;
 		data <<= 16;
 
-		// copy shadow command registers
+		// copy the visible command registers into the shadow ones
 		if (data & SI_SR_WR)
 		{
-			si->si.out[0] = si->si.shdw[0];
+			si->si.shdw[0] = si->si.out[0];
 			si->SI_SR_REG &= ~SI_SR_WRST0;
-			si->si.out[1] = si->si.shdw[1];
+			si->si.shdw[1] = si->si.out[1];
 			si->SI_SR_REG &= ~SI_SR_WRST1;
-			si->si.out[2] = si->si.shdw[2];
+			si->si.shdw[2] = si->si.out[2];
 			si->SI_SR_REG &= ~SI_SR_WRST2;
-			si->si.out[3] = si->si.shdw[3];
+			si->si.shdw[3] = si->si.out[3];
 			si->SI_SR_REG &= ~SI_SR_WRST3;
 		}
 	}
@@ -406,14 +414,56 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// polling
 
-	void SerialInterface::SIPoll()
+	// The poll schedule (serial-interface.md 5.1):
+	//
+	//   SIPOLL[X] is the interval between two polls in horizontal video lines,
+	//   SIPOLL[Y] is how many polls a frame may issue,
+	//   polling is anchored to the vertical blank, and `Y == 0` disables it.
+	//
+	// The schedule is therefore counted in *video lines*, not in CPU ticks: the interval used to
+	// be a fixed `SI_POLLING_INTERVAL` of Gekko ticks, which at the derived timer clock is about
+	// 1.6 ms - a poll every ~100 us per channel, i.e. roughly ten times the frame rate the
+	// hardware runs at. On a channel whose enable bit is set and whose response the guest has not
+	// read yet, every one of those polls re-raises RDSTINT, so the guest is buried in serial
+	// interrupts: Animal Crossing (GAFE01) spends its whole run in the SI handler instead of
+	// booting, which is the black screen.
+	//
+	// The video line counter is the natural tick for this: it is driven by the VI and wraps once
+	// per frame, so a new frame is exactly "the line count went backwards".
+	void SerialInterface::SIPoll(uint32_t line)
 	{
-		int64_t ticks = Core->GetTicks();
-		if (ticks < si.pollingTime)
+		// A new frame: restart the poll budget and allow the first poll of the frame.
+		if (line < si.lastPollLine)
+		{
+			si.pollsThisFrame = 0;
+			si.pollLineDue = true;
+		}
+		si.lastPollLine = line;
+
+		uint32_t interval = SI_POLL_X(SI_POLL_REG);
+		uint32_t perFrame = SI_POLL_Y(SI_POLL_REG);
+
+		// `Y == 0` means the poller is off, and a zero interval would poll every line.
+		if (perFrame == 0 || interval == 0)
 		{
 			return;
 		}
-		si.pollingTime = ticks + SI_POLLING_INTERVAL;
+
+		if (si.pollsThisFrame >= perFrame)
+		{
+			return;
+		}
+
+		// The first poll of a frame happens at the blank; after that one poll every `interval`
+		// lines. A frame shorter than `interval` therefore still gets its first poll.
+		if (!si.pollLineDue && (line - si.pollLineBase) < interval)
+		{
+			return;
+		}
+
+		si.pollLineDue = false;
+		si.pollLineBase = line;
+		si.pollsThisFrame++;
 
 		if (SI_POLL_REG & SI_POLL_EN0)
 		{
@@ -498,7 +548,10 @@ namespace Flipper
 
 		si.log = config->si_log;
 
-		si.pollingTime = Core->GetTicks() + SI_POLLING_INTERVAL;
+		si.lastPollLine = 0;
+		si.pollLineBase = 0;
+		si.pollsThisFrame = 0;
+		si.pollLineDue = true;
 
 		// these values are actually written when IPL boots
 		// meaning is unknown (some pad command) and no need to be known
@@ -507,11 +560,18 @@ namespace Flipper
 		si.out[2] =
 		si.out[3] = 0x00400300; // continue polling ?
 
+		// The boot ROM immediately copies the visible buffers into the shadow ones, so the
+		// transfer engine starts from the same command bytes without a pending write status.
+		for (int i = 0; i < 4; i++)
+		{
+			si.shdw[i] = si.out[i];
+		}
+
 		// enable polling (for homebrewn), IPL enabling it
 		SI_POLL_REG |= (SI_POLL_EN0 | SI_POLL_EN1 | SI_POLL_EN2 | SI_POLL_EN3);
 
 		// update joypad data
-		SIPoll();
+		SIPoll(0);
 
 		// set rumble flags
 		for (int i = 0; i < 4; i++) {

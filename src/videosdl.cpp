@@ -48,6 +48,16 @@ void VideoOutRefresh()
 	if (!render_target)
 		return;
 
+	// The window also carries the OpenGL context the GFX backend draws the EFB into and presents
+	// with SDL_GL_SwapWindow. Pushing a software surface into the same window fights that swap -
+	// the two presenters alternate, which shows up as flicker between the VI picture and the GL one.
+	// While the GL backend owns the window, it is the presenter; the VI still decodes the XFB and
+	// counts frames, it just does not write the window.
+	if (Flipper::HW != nullptr && Flipper::HW->gfx != nullptr && Flipper::HW->gfx->BackendStarted())
+	{
+		return;
+	}
+
 	Uint32* const pixels = (Uint32*)surface->pixels;
 
 	for (int y = 0; y < xfb_height; y++)

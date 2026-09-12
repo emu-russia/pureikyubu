@@ -187,7 +187,22 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 	{
 		const std::string& arg = args[i];
 
-		if (arg == "--ipl")
+		if (arg == "--help" || arg == "-h" || arg == "-?" || arg == "/?")
+		{
+			cmdline.help = true;
+		}
+		else if (arg == "--image")
+		{
+			if (i + 1 < args.size())
+			{
+				cmdline.image = Util::StringToWstring(args[++i]);
+			}
+			else
+			{
+				Report(Channel::Norm, "--image needs a file name\n");
+			}
+		}
+		else if (arg == "--ipl")
 		{
 			cmdline.ipl = true;
 		}
@@ -220,11 +235,53 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 				Report(Channel::Norm, "--bench needs an image file (and an optional duration in seconds)\n");
 			}
 		}
+		else if (arg.size() > 1 && arg[0] != '-')
+		{
+			// A bare argument is the file to run, which is the way every command line tool takes
+			// it: `pureikyubu "D:\Isos\game.gcm"`.
+			cmdline.image = Util::StringToWstring(arg);
+		}
 		else
 		{
 			Report(Channel::Norm, "Unknown command line argument: %s\n", arg.c_str());
 		}
 	}
+}
+
+// The `--help` text. It is printed to the console (when the application has one) and to the report
+// log, so `EMU_LOG=<file> pureikyubu --help` also shows it.
+void EMUPrintUsage()
+{
+	static const char* usage =
+		"pureikyubu, Nintendo GameCube emulator\n"
+		"\n"
+		"Usage: pureikyubu [options] [file]\n"
+		"\n"
+		"  <file>                Load and run a file right away, without the game selector. The\n"
+		"                        recognized formats are disk images (.iso, .gcm) and executables\n"
+		"                        (.dol, .elf). Quote the name when it contains spaces.\n"
+		"  --image <file>        Same as the bare file argument.\n"
+		"  --ipl                 Start the Bootrom (IPL) instead of waiting for the selector.\n"
+		"  --no-disc             Start with the DVD lid open, so the IPL takes its \"no disk\" path.\n"
+		"  --bench <file> [sec]  Run the file unattended for the given number of seconds (30 by\n"
+		"                        default) and print the throughput and the performance counters.\n"
+		"  -h, --help            Print this text and exit.\n"
+		"\n"
+		"With no option the game selector is shown, and a file is started from there (Enter or a\n"
+		"double click). File -> Reopen (F3) runs the last file again.\n";
+
+#ifdef _WINDOWS
+	// A windowed application has no console of its own; borrow the one it was started from, so
+	// that the text is visible when it is run from a command prompt.
+	if (AttachConsole(ATTACH_PARENT_PROCESS))
+	{
+		freopen("CONOUT$", "w", stdout);
+	}
+#endif
+
+	printf("%s", usage);
+
+	Report(Channel::Norm, "%s", usage);
 }
 
 void EMUParseCmdLine(const char* commandLine)

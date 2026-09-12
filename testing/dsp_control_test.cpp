@@ -678,6 +678,105 @@ namespace DspUnitTest
 			}
 		}
 
+		// ---------------------------------------------------------------
+		// The aggregate DSP interrupt line into the Processor Interface
+		//
+		// The DSP, ARAM-DMA and AI-DMA completions are three causes with three separate mask bits,
+		// and they share ONE PI line (dsp.md section 7, processor-interface.md section 4.1). The
+		// cause and mask bits are not adjacent in CDCR, so the line is the OR of the three
+		// (cause && its own mask) pairs - it is not the AND of the group of cause bits with the
+		// group of mask bits, which is always zero and leaves the guest waiting forever for a
+		// completion interrupt that never arrives.
+		// ---------------------------------------------------------------
+
+		/// <summary>
+		/// Put the interface into a known state: no cause latched, no mask, no line. The DSP unit
+		/// tests do not open the AI/DSP register block, so CDCR is driven directly - it is the same
+		/// state the guest programs through write_cdcr.
+		/// </summary>
+		void ClearDspInterrupts()
+		{
+			DSP::dsp_ai.cdcr = 0;
+			Flipper::TestPIAssertedInts = 0;
+		}
+
+		/// <summary>True while the aggregate DSP line is asserted on the Processor Interface.</summary>
+		bool DspLine() { return (Flipper::TestPIAssertedInts & PI_INTERRUPT_DSP) != 0; }
+
+		TEST_METHOD(DspInt_EachCauseRaisesTheLineOnlyThroughItsOwnMask)
+		{
+			// A cause with no mask behind it holds no line, whatever the other masks say.
+			ClearDspInterrupts();
+			DSP::dsp_ai.cdcr = CDCR_DSPINTMSK | CDCR_ARINTMSK | CDCR_AIINTMSK;
+			DSP::DSPUpdateInt();
+			Assert::IsFalse(DspLine(), L"a masked interface with no pending cause holds no line");
+
+			// Every cause on its own, through its own mask, must raise the line. The three pairs are
+			// not adjacent in CDCR, so a grouped AND would find none of them.
+			for (uint16_t cause : { (uint16_t)CDCR_DSPINT, (uint16_t)CDCR_ARINT, (uint16_t)CDCR_AIINT })
+			{
+				uint16_t mask = (cause == CDCR_DSPINT) ? CDCR_DSPINTMSK
+					: (cause == CDCR_ARINT) ? CDCR_ARINTMSK : CDCR_AIINTMSK;
+
+				ClearDspInterrupts();
+				DSP::dsp_ai.cdcr = CDCR_DSPINTMSK | CDCR_ARINTMSK | CDCR_AIINTMSK | cause;
+				DSP::DSPUpdateInt();
+				Assert::IsTrue(DspLine(), L"an unmasked completion must reach the PI");
+
+				// ... and stay silent once that cause's own mask is clear.
+				DSP::dsp_ai.cdcr &= ~mask;
+				DSP::DSPUpdateInt();
+				Assert::IsFalse(DspLine(), L"clearing the cause's own mask must drop the line");
+			}
+		}
+
+		TEST_METHOD(DspInt_AramCompletionReachesTheProcessorInterface)
+		{
+			ClearDspInterrupts();
+			DSP::dsp_ai.cdcr = CDCR_ARINTMSK;
+
+			StartAramCopy(0x00001000, 0x00001000, 0x20, false);
+
+			Assert::IsTrue((DSP::dsp_ai.cdcr & CDCR_ARINT) != 0, L"the ARAM completion latches its cause");
+			Assert::IsTrue(DspLine(), L"the ARAM completion must reach the Processor Interface");
+		}
+
+		TEST_METHOD(DspInt_MaskedAramCompletionLatchesButHoldsNoLine)
+		{
+			ClearDspInterrupts();
+
+			StartAramCopy(0x00001000, 0x00001000, 0x20, false);
+
+			Assert::IsTrue((DSP::dsp_ai.cdcr & CDCR_ARINT) != 0, L"the completion is still latched in CDCR");
+			Assert::IsFalse(DspLine(), L"a masked completion must not assert the PI line");
+		}
+
+		TEST_METHOD(DspInt_AcknowledgingTheCauseDropsTheLine)
+		{
+			ClearDspInterrupts();
+			DSP::dsp_ai.cdcr = CDCR_ARINTMSK;
+
+			StartAramCopy(0x00001000, 0x00001000, 0x20, false);
+			Assert::IsTrue(DspLine(), L"the line is up");
+
+			// The handler acknowledges by clearing the cause (write-1-to-clear on CDCR).
+			DSP::dsp_ai.cdcr &= ~CDCR_ARINT;
+			DSP::DSPUpdateInt();
+
+			Assert::IsFalse(DspLine(), L"the line must drop once its cause is acknowledged");
+		}
+
+		TEST_METHOD(DspInt_MailboxInterruptReachesTheProcessorInterface)
+		{
+			ClearDspInterrupts();
+			DSP::dsp_ai.cdcr = CDCR_DSPINTMSK;
+
+			DSP::DSPAssertInt();
+
+			Assert::IsTrue((DSP::dsp_ai.cdcr & CDCR_DSPINT) != 0, L"the DSP interrupt latches its cause");
+			Assert::IsTrue(DspLine(), L"and reaches the PI");
+		}
+
 		TEST_METHOD(Mvsi_SignExtendsShortImmediate)
 		{
 			m.Run({ Enc::Mvsi(R8A_A0, (int8_t)0x80) }, 1);

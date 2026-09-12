@@ -7,6 +7,40 @@ namespace Flipper
 {
 
 	// ---------------------------------------------------------------------------
+	// The aggregate disk interrupt
+	//
+	// The disk interface reports several internal causes to the CPU through ONE Processor
+	// Interface line (PI_INTERRUPT_DI): the transfer-complete, the break and the device-error
+	// causes in DISR, plus the cover cause in DICVR. Each cause has its own mask, and the line
+	// follows the OR of the ones that are currently latched and unmasked.
+	//
+	// The line therefore cannot be "asserted by" a single cause: every place that changes a cause
+	// or a mask has to re-evaluate it. Dropping it only inside one status-register write, and only
+	// when that single write left every cause clear, leaves the line asserted forever as soon as
+	// two causes are latched and the guest acknowledges them in separate writes - the CPU then
+	// re-enters the external-interrupt handler on every rfi and the guest never returns to its
+	// disk driver.
+	void DiskInterface::DIUpdateInt()
+	{
+		// Each cause has its own mask bit (DI_SR_BRKINT/DI_SR_BRKINTMSK and so on), so the line is
+		// the OR of the four (cause && its own mask) pairs. The cause bits and their masks are not
+		// adjacent, so the two groups cannot be ANDed with each other.
+		bool brk = (di.sr & DI_SR_BRKINT) != 0 && (di.sr & DI_SR_BRKINTMSK) != 0;
+		bool tc = (di.sr & DI_SR_TCINT) != 0 && (di.sr & DI_SR_TCINTMSK) != 0;
+		bool de = (di.sr & DI_SR_DEINT) != 0 && (di.sr & DI_SR_DEINTMSK) != 0;
+		bool cvr = (di.cvr & DI_CVR_CVRINT) != 0 && (di.cvr & DI_CVR_CVRINTMSK) != 0;
+
+		if (brk || tc || de || cvr)
+		{
+			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
+		}
+		else
+		{
+			HW->pi->PIClearInt(PI_INTERRUPT_DI);
+		}
+	}
+
+	// ---------------------------------------------------------------------------
 	// cover control. Callbacks are issued from DDU 
 
 	void DiskInterface::DIOpenCover(void *ctx)
@@ -14,10 +48,7 @@ namespace Flipper
 		DiskInterface* di = (DiskInterface*)ctx;
 		// cover interrupt
 		di->DICVR |= DI_CVR_CVRINT;
-		if (di->DICVR & DI_CVR_CVRINTMSK)
-		{
-			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
-		}
+		di->DIUpdateInt();
 	}
 
 	void DiskInterface::DICloseCover(void* ctx)
@@ -25,10 +56,7 @@ namespace Flipper
 		DiskInterface* di = (DiskInterface*)ctx;
 		// cover interrupt
 		di->DICVR |= DI_CVR_CVRINT;
-		if (di->DICVR & DI_CVR_CVRINTMSK)
-		{
-			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
-		}
+		di->DIUpdateInt();
 	}
 
 	// ---------------------------------------------------------------------------
@@ -40,10 +68,7 @@ namespace Flipper
 		di->DICR &= ~DI_CR_TSTART;
 
 		di->DISR |= DI_SR_DEINT;
-		if (di->DISR & DI_SR_DEINTMSK)
-		{
-			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
-		}
+		di->DIUpdateInt();
 
 		DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback, di);
 	}
@@ -58,10 +83,7 @@ namespace Flipper
 		DISR &= ~DI_SR_BRK;
 
 		DISR |= DI_SR_BRKINT;
-		if (DISR & DI_SR_BRKINTMSK)
-		{
-			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
-		}
+		DIUpdateInt();
 
 		DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback, this);
 	}
@@ -72,10 +94,7 @@ namespace Flipper
 		DICR &= ~DI_CR_TSTART;
 
 		DISR |= DI_SR_TCINT;
-		if (DISR & DI_SR_TCINTMSK)
-		{
-			HW->pi->PIAssertInt(PI_INTERRUPT_DI);
-		}
+		DIUpdateInt();
 
 		if (di.log) {
 			Report(Channel::DI, "TransferComplete\n");
@@ -256,10 +275,9 @@ namespace Flipper
 		{
 			DISR &= ~DI_SR_DEINT;
 		}
-		if ((DISR & DI_SR_BRKINT) == 0 && (DISR & DI_SR_TCINT) == 0 && (DISR & DI_SR_DEINT) == 0)
-		{
-			HW->pi->PIClearInt(PI_INTERRUPT_DI);
-		}
+		// The guest acknowledged some of the internal causes; the aggregate line has to be
+		// re-evaluated, not cleared from this one write.
+		DIUpdateInt();
 
 		// Issue break
 		if (data & DI_SR_BRK)
@@ -303,12 +321,13 @@ namespace Flipper
 		if (data & DI_CVR_CVRINT)
 		{
 			DICVR &= ~DI_CVR_CVRINT;
-			HW->pi->PIClearInt(PI_INTERRUPT_DI);
 		}
 
 		// set mask
 		if (data & DI_CVR_CVRINTMSK) DICVR |= DI_CVR_CVRINTMSK;
 		else DICVR &= ~DI_CVR_CVRINTMSK;
+
+		DIUpdateInt();
 	}
 
 	void DiskInterface::read_cvr(uint32_t* reg)

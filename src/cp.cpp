@@ -104,11 +104,27 @@ namespace Flipper
 		cp->CpWriteReg(addr & 0xFF, data);
 	}
 
+	// The read pointer has reached the break point. The break point itself stops the reader; the
+	// status flag is raised whenever the break point is enabled (CP_ENABLE[FIFOBRK]) and cleared
+	// when it is disabled (command-processor.md 4.3: "the FIFO read pointer reached the break
+	// point (cleared by disabling the break point)"). CP_ENABLE[FIFOBRKINT] only decides whether
+	// the CP interrupt is raised on top of that.
 	void CommandProcessor::CP_BREAK()
 	{
-		if (cpregs.cr & CP_CR_BPINTEN && (cpregs.sr & CP_SR_BPINT) == 0)
+		if ((cpregs.cr & CP_CR_BPEN) == 0)
 		{
-			cpregs.sr |= CP_SR_BPINT;
+			return;
+		}
+
+		if ((cpregs.sr & CP_SR_BPINT) != 0)
+		{
+			return;
+		}
+
+		cpregs.sr |= CP_SR_BPINT;
+
+		if (cpregs.cr & CP_CR_BPINTEN)
+		{
 			HW->pi->PIAssertInt(PI_INTERRUPT_CP);
 			Report(Channel::CP, "BREAK\n");
 		}
@@ -263,6 +279,25 @@ namespace Flipper
 		}
 	}
 
+	// The distance between the write and the read pointer, over the ring. Both pointers live in
+	// 32-byte units, so the result is in the same units (command-processor.md 4.5).
+	void CommandProcessor::FifoCount(uint32_t* count) const
+	{
+		if (cpregs.wrptr >= cpregs.rdptr)
+		{
+			*count = cpregs.wrptr - cpregs.rdptr;
+		}
+		else
+		{
+			*count = (cpregs.top - cpregs.rdptr) + (cpregs.wrptr - cpregs.base);
+		}
+	}
+
+	void CommandProcessor::ResetFifoProcessor()
+	{
+		fifo->Reset();
+	}
+
 	void CommandProcessor::CPAbortFifo()
 	{
 		Report(Channel::GP, "CP Abort FIFO\n");
@@ -299,10 +334,22 @@ namespace Flipper
 				return cpregs.lomarkl & 0xffe0;
 			case CP_FIFO_LOCNTH:
 				return cpregs.lomarkh;
+			// The count is what the hardware reports, not a value the CPU wrote: it is the distance
+			// between the write and the read pointer, in the same 32-byte units and over the same
+			// ring (command-processor.md 4.5). The CP keeps it live so that a program which polls
+			// CP_FIFO_COUNT sees the FIFO drain as the CP walks it.
 			case CP_FIFO_COUNTL:
-				return cpregs.cntl & 0xffe0;
+			{
+				uint32_t count = 0;
+				FifoCount(&count);
+				return (uint16_t)(count & 0xffe0);
+			}
 			case CP_FIFO_COUNTH:
-				return cpregs.cnth;
+			{
+				uint32_t count = 0;
+				FifoCount(&count);
+				return (uint16_t)(count >> 16);
+			}
 			case CP_FIFO_WPTRL:
 				return cpregs.wrptrl & 0xffe0;
 			case CP_FIFO_WPTRH:

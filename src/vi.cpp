@@ -144,6 +144,11 @@ namespace Flipper
 			case VI_DISP_CR:
 				*reg = vi->vi.disp_cr;
 				break;
+			case VI_DTV:
+				// The encoder strap is not software programmable: the PAL/NTSC bit always
+				// reflects the console's video encoder fuse (video-interface.md 6.16).
+				*reg = vi->vi.videoEncoderFuse ? VI_DTV_PAL : 0;
+				break;
 			case VI_TFBL:
 				*reg = vi->vi.tfbl >> 16;
 				break;
