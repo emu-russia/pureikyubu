@@ -1741,6 +1741,9 @@ static void ui_load_bootrom()
 	}
 }
 
+/* Defined with the other file loaders, below; the menu needs it first. */
+static void reopen_last_file();
+
 static void ui_main_menu()
 {
 	// Menu Bar
@@ -1752,7 +1755,9 @@ static void ui_main_menu()
 				file_reaction = FileReaction::OpenFile_LoadFile;
 				fileOpenDialog.Open();
 			}
-			ImGui::MenuItem("Reopen", NULL);
+			if (ImGui::MenuItem("Reopen", "F3")) {
+				reopen_last_file();
+			}
 			if (ImGui::MenuItem("Close", NULL)) {		// Unload file (STOP)
 				UI::Jdi->Stop();
 				Thread::Sleep(100);
@@ -1887,6 +1892,21 @@ static void run_selected_file()
 	}
 
 	load_file(usel.files[usel.selected]->name);
+}
+
+/* Run the image that was loaded last (File -> Reopen, F3), without going through the selector.
+   This is the quick way back into the same game, and it is also what an unattended run uses to
+   start an image while the selector is still scanning its directories. */
+static void reopen_last_file()
+{
+	const std::string last = UI::Jdi->GetConfigString(USER_LASTFILE, USER_UI);
+
+	if (last.empty())
+	{
+		return;
+	}
+
+	load_file(Util::StringToWstring(last));
 }
 
 /*
@@ -2334,11 +2354,26 @@ static int ui_main()
 		ui_active = false;
 	}
 
-	// The command line may ask to start the IPL right away (as if File -> Run Bootrom was clicked).
+	// The command line may ask to start the IPL right away (as if File -> Run Bootrom was clicked),
+	// or to run one specific file instead of waiting for the selector.
 
 	if (cmdline.ipl)
 	{
 		ui_load_bootrom();
+	}
+	else if (!cmdline.image.empty())
+	{
+		CreateRenderTarget();
+		UI::Jdi->LoadFile(Util::WstringToString(cmdline.image));
+		if (Debug::debugger != nullptr)
+		{
+			Debug::debugger->InvalidateAll();
+		}
+		OnMainWindowOpened(cmdline.image.c_str());
+		if (Debug::debugger == nullptr)
+		{
+			UI::Jdi->Run();
+		}
 	}
   
 	// The emulator has more than one SDL window: the video output is a separate window, which can
@@ -2378,6 +2413,14 @@ static int ui_main()
 				case SDL_CONTROLLERDEVICEREMOVED:
 				case SDL_CONTROLLERDEVICEREMAPPED: forMainWindow = !emu_running; break;
 				default: break;
+			}
+
+			// File -> Reopen (F3): reload the image that was loaded last. The menu item is the
+			// primary way in, this is the shortcut for it.
+			if (forMainWindow && !emu_running && !pad_capture_active &&
+				event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_F3)
+			{
+				reopen_last_file();
 			}
 
 			// The controller settings dialog captures the next key press or gamepad event as the
@@ -2606,6 +2649,13 @@ int WINAPI WinMain(
 	_In_ int nShowCmd )
 {
 	EMUParseCmdLine(lpCmdLine);
+
+	if (cmdline.help)
+	{
+		EMUPrintUsage();
+		return 0;
+	}
+
 	return ui_main();
 }
 
@@ -2614,6 +2664,13 @@ int WINAPI WinMain(
 int main(int argc, char** argv)
 {
 	EMUParseCmdLine(argc, argv);
+
+	if (cmdline.help)
+	{
+		EMUPrintUsage();
+		return 0;
+	}
+
 	return ui_main();
 }
 
