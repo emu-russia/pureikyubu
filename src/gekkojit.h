@@ -179,6 +179,14 @@ namespace Gekko
 		Block* FindBlock(uint32_t pc, uint32_t pa);
 		Block* AllocBlock(uint32_t pc, uint32_t pa);
 
+		// Run one instruction through the interpreter: every path of Run() that cannot use a
+		// compiled block goes through here, so that the CPU statistics can tell translated code
+		// and interpreted code apart.
+		void RunOneInterpreted();
+
+		// The body of Run(), so that Run() can wrap it in a cycle counter.
+		void RunInner();
+
 		// Called from generated code. Static members so that they inherit Jit's
 		// friendship with GekkoCore / Interpreter.
 		static void Fallback(GekkoCore* core, uint32_t instr, uint32_t pc);

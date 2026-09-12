@@ -67,7 +67,7 @@ namespace Flipper
 		fifo->Reset();
 
 		tickPerFifo = 100;
-		updateTbrValue = Core->GetTicks() + tickPerFifo;
+		updateTbrValue = Core->GetTicks() + (int64_t)tickPerFifo * (int64_t)FifoBatch;
 
 		cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
@@ -144,18 +144,74 @@ namespace Flipper
 		}
 	}
 
+	bool CommandProcessor::HasFifoWork()
+	{
+		// Same count calculation as PumpFifo, but without any of its side effects.
+		uint32_t cnt;
+
+		if (cpregs.wrptr >= cpregs.rdptr)
+		{
+			cnt = cpregs.wrptr - cpregs.rdptr;
+		}
+		else
+		{
+			cnt = (cpregs.top - cpregs.rdptr) + (cpregs.wrptr - cpregs.base);
+		}
+
+		return cnt != 0 && (cpregs.cr & CP_CR_RDEN) != 0 &&
+			(cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0;
+	}
+
+	// Called every Flipper tick step by the CPU thread. The CP thread is woken once per `FifoBatch`
+	// FIFO entries of emulated CP time, so it can drain a batch and go back to sleep instead of
+	// polling the time base in a tight loop (see the notes at Gekko::CpuStats).
+	void CommandProcessor::TickSync(int64_t ticks)
+	{
+		if (cp_thread == nullptr)
+		{
+			return;
+		}
+
+		// See Flipper::Update: a backwards jump of the time base (a CPU reset) invalidates the
+		// anchor and has to be picked up, or the FIFO would stop draining.
+		if (ticks < updateTbrValue && (updateTbrValue - ticks) < (int64_t)tickPerFifo * (int64_t)FifoBatch)
+		{
+			return;
+		}
+
+		updateTbrValue = ticks + (int64_t)tickPerFifo * (int64_t)FifoBatch;
+		lastDrainTick = ticks;
+		fifoEvent.Signal();
+	}
+
 	void CommandProcessor::CPThread(void* Param)
 	{
 		CommandProcessor* cp = (CommandProcessor*)Param;
 
+		// Block until the CPU thread says that a batch of FIFO entries is due (or until the safety
+		// timeout expires, so that a missed wakeup cannot stall the graphics pipeline).
+		cp->fifoEvent.Wait(2);
+
 		int64_t ticks = Core->GetTicks();
-		if (ticks < cp->updateTbrValue)
+
+		// How many entries the emulated CP could have consumed since the last drain. The batch is
+		// bounded, so that a long gap does not turn into one huge burst.
+		int64_t budget = (ticks - cp->lastDrainTick) / (int64_t)cp->tickPerFifo;
+		if (budget <= 0)
 		{
 			return;
 		}
-		cp->updateTbrValue = ticks + cp->tickPerFifo;
+		cp->lastDrainTick = ticks;
 
-		cp->PumpFifo();
+		if (budget > (int64_t)CommandProcessor::FifoBatch * 4)
+		{
+			budget = (int64_t)CommandProcessor::FifoBatch * 4;
+		}
+
+		while (budget-- > 0 && cp->HasFifoWork())
+		{
+			cp->PumpFifo();
+		}
 	}
 
 	// One burst of the graphics FIFO: this is what the CP does on a tick, and what the unit tests

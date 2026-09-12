@@ -9,24 +9,6 @@ namespace Flipper
 	Flipper* HW;
 	DSP::Dsp16* DSP;      // Instance of dsp core
 
-	// This thread acts as the HWUpdate of Dolwin 0.10.
-	// Previously, an HWUpdate call occurred after each Gekko instruction (or so).
-	// This was tied only to update VI, SI and AI.
-	// After switching to multitasking, leave the old HWUpdate update mechanism, will be gradually replaced by other threads of different Flipper components.
-	void Flipper::HwUpdateThread(void* Parameter)
-	{
-		Flipper* flipper = (Flipper*)Parameter;
-
-		int64_t ticks = Core->GetTicks();
-		if (ticks < flipper->hwUpdateTbrValue)
-		{
-			return;
-		}
-		flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
-
-		flipper->Update();
-	}
-
 	Flipper::Flipper(HWConfig* config)
 	{
 		Report(Channel::Info,
@@ -87,14 +69,10 @@ namespace Flipper
 		MCOpen(config);
 
 		JDI::Hub.AddNode(L"HW_JDI_JSON", HwJdi, hw_init_handlers);
-
-		hwUpdateThread = EMUCreateThread(HwUpdateThread, false, this, "HW");
 	}
 
 	Flipper::~Flipper()
 	{
-		EMUJoinThread(hwUpdateThread);
-
 		JDI::Hub.RemoveNode(L"HW_JDI_JSON");
 
 		DSP->Suspend();
@@ -148,11 +126,23 @@ namespace Flipper
 		MCClose();
 	}
 
-	void Flipper::Update()
+	void Flipper::Update(int64_t ticks)
 	{
+		// A pending deadline that is still ahead of us means there is nothing to do yet. When the
+		// time base has jumped *backwards* (the CPU was reset) the anchor is stale and has to be
+		// taken again, otherwise the periodic work would stop until the time base caught up.
+		if (ticks < hwUpdateTbrValue && (hwUpdateTbrValue - ticks) < FlipperTickStep)
+		{
+			return;
+		}
+		hwUpdateTbrValue = ticks + FlipperTickStep;
+
 		// update joypads and video
 		vi->VIUpdate();
 		si->SIPoll();
+
+		// ... and let the CP thread know when it has a batch of FIFO entries to consume.
+		cp->TickSync(ticks);
 	}
 
 	uint32_t Flipper::GetMemorySize()

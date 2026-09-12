@@ -789,6 +789,13 @@ namespace Debug
 			case PerfCounter::PEs:
 				return Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::PE_FINISH);
 				break;
+
+			case PerfCounter::GekkoCompiledSegments:
+				return Gekko::stats.jitCompiles;
+				break;
+			case PerfCounter::GekkoExecutedSegments:
+				return Gekko::stats.jitBlocks;
+				break;
 		}
 
 		return value;
@@ -809,6 +816,13 @@ namespace Debug
 				break;
 			case PerfCounter::PEs:
 				Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::PE_FINISH);
+				break;
+
+			case PerfCounter::GekkoCompiledSegments:
+				Gekko::stats.jitCompiles = 0;
+				break;
+			case PerfCounter::GekkoExecutedSegments:
+				Gekko::stats.jitBlocks = 0;
 				break;
 		}
 	}

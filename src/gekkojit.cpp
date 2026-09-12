@@ -39,11 +39,36 @@ namespace Gekko
 
 namespace
 {
-	void JitReadByte(GekkoCore* core, uint32_t addr, uint32_t* reg) { core->ReadByte(addr, reg); }
-	void JitReadWord(GekkoCore* core, uint32_t addr, uint32_t* reg) { core->ReadWord(addr, reg); }
-	void JitWriteByte(GekkoCore* core, uint32_t addr, uint32_t data) { core->WriteByte(addr, data); }
-	void JitWriteHalf(GekkoCore* core, uint32_t addr, uint32_t data) { core->WriteHalf(addr, data); }
-	void JitWriteWord(GekkoCore* core, uint32_t addr, uint32_t data) { core->WriteWord(addr, data); }
+	void JitReadByte(GekkoCore* core, uint32_t addr, uint32_t* reg)
+	{
+		stats.memHelperCalls++;
+		CycleScope cycles(&stats.memHelperCycles);
+		core->ReadByte(addr, reg);
+	}
+	void JitReadWord(GekkoCore* core, uint32_t addr, uint32_t* reg)
+	{
+		stats.memHelperCalls++;
+		CycleScope cycles(&stats.memHelperCycles);
+		core->ReadWord(addr, reg);
+	}
+	void JitWriteByte(GekkoCore* core, uint32_t addr, uint32_t data)
+	{
+		stats.memHelperCalls++;
+		CycleScope cycles(&stats.memHelperCycles);
+		core->WriteByte(addr, data);
+	}
+	void JitWriteHalf(GekkoCore* core, uint32_t addr, uint32_t data)
+	{
+		stats.memHelperCalls++;
+		CycleScope cycles(&stats.memHelperCycles);
+		core->WriteHalf(addr, data);
+	}
+	void JitWriteWord(GekkoCore* core, uint32_t addr, uint32_t data)
+	{
+		stats.memHelperCalls++;
+		CycleScope cycles(&stats.memHelperCycles);
+		core->WriteWord(addr, data);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -56,6 +81,8 @@ namespace
 // instruction - only a slower one.
 void Jit::Fallback(GekkoCore* core, uint32_t instr, uint32_t pc)
 {
+	stats.jitFallbacks++;
+	CycleScope cycles(&stats.fallbackCycles);
 	core->interp->ExecuteDecoded(pc, instr);
 }
 
@@ -135,6 +162,7 @@ void Jit::InvalidateAll()
 {
 	// O(1): every entry with an older generation is simply ignored. The arena is
 	// reused from the beginning only when it is exhausted.
+	stats.jitInvalidations++;
 	generation++;
 	if (generation == 0)
 	{
@@ -225,6 +253,8 @@ static bool IsBranchInstr(Instruction instr)
 
 uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 {
+	uint64_t compileStart = cycleProfile ? ReadCycleCounter() : 0;
+
 	if (code == nullptr)
 	{
 		return BadAddress;
@@ -1111,14 +1141,32 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	block->instrCount = count;
 	block->codeOffset = offset;
 
+	stats.jitCompiles++;
+	stats.compileCycles += compileStart ? (ReadCycleCounter() - compileStart) : 0;
+
 	return offset;
+}
+
+// Every path of Run() that hands the instruction back to the interpreter goes through here, so
+// that the CPU statistics can tell translated code and interpreted code apart.
+void Jit::RunOneInterpreted()
+{
+	stats.interpInstrs++;
+	CycleScope cycles(&stats.interpCycles);
+	core->interp->ExecuteOpcode();
 }
 
 void Jit::Run()
 {
+	CycleScope cycles(&stats.jitRunCycles);
+	RunInner();
+}
+
+void Jit::RunInner()
+{
 	if (!supported)
 	{
-		core->interp->ExecuteOpcode();
+		RunOneInterpreted();
 		return;
 	}
 
@@ -1129,7 +1177,7 @@ void Jit::Run()
 	// cache for every instruction of it either.
 	if (pc >= PI_MEMSPACE_BOOTROM)
 	{
-		core->interp->ExecuteOpcode();
+		RunOneInterpreted();
 		return;
 	}
 
@@ -1142,7 +1190,7 @@ void Jit::Run()
 	// path, which a compiled block cannot model (see FetchInstr).
 	if (!core->icache->IsEnabled())
 	{
-		core->interp->ExecuteOpcode();
+		RunOneInterpreted();
 		return;
 	}
 
@@ -1151,7 +1199,7 @@ void Jit::Run()
 	if (pa == BadAddress || pa >= PI_MEMSPACE_BOOTROM || core->icache->GetCachePointer(pa) == nullptr ||
 		(WIMG & WIMG_I) != 0)
 	{
-		core->interp->ExecuteOpcode();
+		RunOneInterpreted();
 		return;
 	}
 
@@ -1162,13 +1210,13 @@ void Jit::Run()
 		uint32_t count = 0;
 		if (CompileBlock(pc, pa, count) == BadAddress)
 		{
-			core->interp->ExecuteOpcode();
+			RunOneInterpreted();
 			return;
 		}
 		block = FindBlock(pc, pa);
 		if (block == nullptr)
 		{
-			core->interp->ExecuteOpcode();
+			RunOneInterpreted();
 			return;
 		}
 	}
@@ -1177,9 +1225,15 @@ void Jit::Run()
 
 	JitExit exit{};
 	BlockFn fn = (BlockFn)(void*)(code + block->codeOffset);
-	fn(core, &core->regs, &exit);
+	{
+		CycleScope cycles(&stats.blockCallCycles);
+		fn(core, &core->regs, &exit);
+	}
 
 	uint32_t n = (uint32_t)exit.count;
+
+	stats.jitBlocks++;
+	stats.jitInstrs += n;
 
 	// Mirror Interpreter::ExecuteOpcode: an instruction that raises an exception
 	// does not advance the tick, and a taken branch is ticked once by BranchCheck

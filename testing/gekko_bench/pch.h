@@ -22,6 +22,12 @@
 
 extern bool g_verbose;
 
+#if defined(_MSC_VER)
+#define BENCH_ALWAYS_INLINE __forceinline
+#else
+#define BENCH_ALWAYS_INLINE inline __attribute__((always_inline))
+#endif
+
 #ifdef _LINUX
 #include <byteswap.h>
 #define _BYTESWAP_UINT16 __bswap_16
@@ -119,14 +125,14 @@ namespace Flipper
 		static uint64_t mmioReads;
 		static uint64_t mmioWrites;
 
-		__attribute__((always_inline)) static uint8_t* RamPtr(uint32_t pa)
+		BENCH_ALWAYS_INLINE static uint8_t* RamPtr(uint32_t pa)
 		{
 			return (pa < ramSize) ? &ram[pa] : nullptr;
 		}
 
 		// Returns a pointer into the boot ROM image, or nullptr when the address is
 		// outside it (or outside the requested access size).
-		__attribute__((always_inline)) static uint8_t* BootromPtr(uint32_t pa, uint32_t need)
+		BENCH_ALWAYS_INLINE static uint8_t* BootromPtr(uint32_t pa, uint32_t need)
 		{
 			if (bootrom == nullptr || pa < PI_MEMSPACE_BOOTROM) return nullptr;
 			uint32_t off = pa - PI_MEMSPACE_BOOTROM;
@@ -145,9 +151,15 @@ namespace Flipper
 		void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 	};
 
+	// The harness has no Flipper ASIC: the CPU drives the periodic VI/serial work through this
+	// hook (see GekkoCore::SyncFlipper), so the stub only has to provide the interface.
+	static const int64_t FlipperTickStep = 100;
+
 	struct FlipperStub
 	{
 		ProcessorInterface* pi;
+
+		void Update(int64_t ticks) { (void)ticks; }
 	};
 
 	extern FlipperStub* HW;

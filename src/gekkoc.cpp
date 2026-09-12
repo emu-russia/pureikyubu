@@ -3976,13 +3976,21 @@ namespace Gekko
 	// return from exception
 	void Interpreter::rfi()
 	{
-		// SRR1 can flip MSR[IR]/[DR], which changes what every effective address in
-		// the compiled blocks translates to.
-		if (core->jit != nullptr) core->jit->InvalidateAll();
+		uint32_t oldMsr = core->regs.msr;
 
 		core->regs.msr &= ~(0x87C0FF73 | 0x00040000);
 		core->regs.msr |= core->regs.spr[SPR::SRR1] & 0x87C0FF73;
 		core->regs.pc = core->regs.spr[SPR::SRR0] & ~3;
+
+		// Only SRR1's view of MSR[IR]/[DR] can change what a compiled block translates to; the
+		// rest of the restored bits are read at run time by the helper the block calls. Dropping
+		// the whole block cache for them is what made rfi (and mtmsr) free to interrupt the
+		// recompiler thousands of times a second - see the benchmark notes in `testing/gekko_bench`.
+		if (((oldMsr ^ core->regs.msr) & (MSR_IR | MSR_DR)) != 0)
+		{
+			Gekko::stats.invRfi++;
+			if (core->jit != nullptr) core->jit->InvalidateAll();
+		}
 	}
 
 	// syscall
@@ -4145,7 +4153,16 @@ namespace Gekko
 
 		uint32_t oldMsr = core->regs.msr;
 		core->regs.msr = core->regs.gpr[info.paramBits[0]];
-		if (core->jit != nullptr) core->jit->InvalidateAll();
+
+		// The OS toggles MSR[EE] around every critical section, and that cannot change what a
+		// compiled block translates to: only MSR[IR]/[DR] can, because they decide what the cached
+		// instruction fetch means. Dropping the whole block cache on every mtmsr cost more
+		// re-translations than the rest of the recompiler together (see `testing/gekko_bench`).
+		if (((oldMsr ^ core->regs.msr) & (MSR_IR | MSR_DR)) != 0)
+		{
+			Gekko::stats.invMtmsr++;
+			if (core->jit != nullptr) core->jit->InvalidateAll();
+		}
 
 		if ((oldMsr & MSR_IR) != (core->regs.msr & MSR_IR))
 		{
@@ -4170,6 +4187,7 @@ namespace Gekko
 		if (spr == SPR::SDR1 || spr == SPR::HID0 || spr == SPR::HID2 ||
 			(spr >= SPR::IBAT0U && spr <= SPR::DBAT3L))
 		{
+			Gekko::stats.invMtspr++;
 			if (core->jit != nullptr) core->jit->InvalidateAll();
 		}
 
@@ -4533,6 +4551,7 @@ namespace Gekko
 		if (pa != Gekko::BadAddress)
 		{
 			core->icache->Invalidate(pa);
+			Gekko::stats.invIcbi++;
 			if (core->jit != nullptr) core->jit->InvalidateAll();
 		}
 		else
@@ -4603,6 +4622,7 @@ namespace Gekko
 
 	void Interpreter::tlbie()
 	{
+		Gekko::stats.invTlb++;
 		if (core->jit != nullptr) core->jit->InvalidateAll();
 		core->dtlb.Invalidate(core->regs.gpr[info.paramBits[0]]);
 		core->itlb.Invalidate(core->regs.gpr[info.paramBits[0]]);

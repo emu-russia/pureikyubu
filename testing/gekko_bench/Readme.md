@@ -17,7 +17,9 @@ It is a development tool, not part of any build.
 | `gen_workload.py` | Generates synthetic Gekko workloads (instruction mix, code size, data window) |
 | `gen_selfmod.py` | Self-modifying-code probe (does the execution engine pick up rewritten instructions?) |
 | `gen_ipl.py` | Synthetic boot ROM + game + IPL2: BAT setup, cache enable, `mtmsr`, a per-cache-line `dcbst`/`icbi` flush, `bctr` into the game, a deliberate DSI whose handler returns with `rfi`, and an IPL2 stand-in that calls a `bclrl` thunk |
-| `build.sh` | Builds the harness from the current working tree |
+| `build.sh` | Builds the harness from the current working tree (GCC/Clang) |
+| `build_win.bat` | The same build with MSVC, so that the two compilers can be compared on one workload |
+| `bench_win_prof.cpp` | Empty `ProfStart`/`ProfStop` for the MSVC build (the sampler is POSIX) |
 | `build_base.sh` | Builds a reference harness from `git HEAD` (used as the differential oracle) |
 | `check.sh` | Compares the state fingerprint of the reference, the interpreter and the recompiler |
 | `compare.sh` | Throughput table for every workload |
@@ -94,6 +96,143 @@ whole suite must stay green with it; see "Host ABI" below.
   almost never produces a `bclrl` (about one word in 131072): a wrong `bclrl`
   translation made the recompiler derail on the real IPL2 entry and was invisible
   to every other test here.
+
+## The emulator's background threads
+
+The harness runs the CPU core alone: `main` calls `Core->Step()` or
+`Core->jit->Run()` in a tight loop. The emulator does not - it also runs the
+Flipper-side device threads, and until recently every one of them waited for its
+own deadline by reading `Core->GetTicks()` in a tight loop. The time base is the
+same location the CPU thread writes on every tick, so each write had to take the
+cache line back from every poller, and every poller then pulled it back again.
+That is not a micro-optimisation problem: the pollers cost more than the work
+they perform.
+
+`BENCH_SPIN=<n>` reproduces it faithfully - it starts n threads that poll
+`Core->GetTicks()` exactly like the device threads did - so the effect can be
+measured on a workload that does not change underneath the measurement:
+
+```
+$ BENCH_JIT=1 BENCH_RAW=workload_alu.bin ./bench dummy 30000000 1000000
+Executed 30000018 instructions in 0.103 s = 291.74 MIPS
+$ BENCH_SPIN=2 BENCH_JIT=1 BENCH_RAW=workload_alu.bin ./bench dummy 30000000 1000000
+Executed 30000025 instructions in 0.214 s = 140.34 MIPS
+spinner polls: 16117259 (75.4M/s)
+```
+
+Two pollers cost **2.1x** on the same instruction stream, one costs about 1.85x.
+The knobs below narrow down what part of it matters:
+
+| Variable | Effect on the poller |
+|---|---|
+| `BENCH_SPIN_PAUSE=1` | Execute the CPU's spin-wait hint (`pause`/`YieldProcessor`) in the loop |
+| `BENCH_SPIN_SLEEP=<ms>` | Sleep between polls instead of spinning (the fully blocked case) |
+| `BENCH_SPIN_DIV=<n>` | Touch the time base only every n-th iteration (`0` = never) |
+
+Measured on the `workload_alu` mix at 30M instructions (~292 MIPS without
+pollers):
+
+| Configuration | MIPS |
+|---|---|
+| No pollers | 291.7 |
+| 1 poller | 157.7 |
+| 2 pollers | 140.3 |
+| 2 pollers, `BENCH_SPIN_PAUSE=1` | 152.4 |
+| 2 pollers, `BENCH_SPIN_DIV=1024` | 240.4 |
+| 2 pollers, `BENCH_SPIN_SLEEP=1` | 288.5 |
+| 2 pollers, `BENCH_SPIN_DIV=0` (pure spin, no time base reads) | 130.2 |
+
+Two things follow. Reducing the polling rate helps but does not fix it -
+`BENCH_SPIN_DIV=1024` still costs 18%, and a spinner that never touches the time
+base at all costs 1.85x, so the damage is the spinning itself (the machine's SMT
+siblings and its power budget) and not only the cache-line transfers. And a
+blocked wait costs nothing: the remedy is to *not* busy-wait at all.
+
+The emulator was fixed accordingly: the VI/serial update is now executed by the
+CPU thread from the tick it already advances (`Flipper::Update`), and the CP
+thread blocks on an `Event` that the CPU thread signals when a batch of FIFO
+entries is due (`CommandProcessor::TickSync`).
+
+Measured with two binaries built from the same tooling, one with the periodic
+work on its own polling thread and one without, on the same command line and the
+same wall time. "Real time" is the emulated time the run covered (`tb` divided
+by `CPU_TIMER_CLOCK`), which is the number to compare: a faster build reaches a
+later point of the game in the same second, so its MIPS figure alone is not the
+whole story.
+
+| Workload | Polling threads | Fixed | Speedup |
+|---|---|---|---|
+| `pong.dol` (interpreted, no caches) | 22.0 MIPS, 1.47x | 55.0 MIPS, 3.66x | **2.50x** |
+| Ikaruga (disc, recompiler) | 40.3 MIPS, 2.16x | 49.6 MIPS, 2.66x | **1.23x** |
+| Luigi's Mansion (disc, recompiler) | 27.8 MIPS, 1.72x | 36.2 MIPS, 2.25x | **1.30x** |
+
+The uncached case is the one the issue was written about - every Gekko memory
+access goes through the PI there - and it is also where the pollers hurt most,
+because the interpreter writes the time base on every instruction. A real disc
+game gains less: its Gekko thread is only part of the emulator's total load, and
+the same pollers are also competing with the graphics work.
+
+## Measuring the emulator as a whole
+
+`--bench <file> [seconds]` runs the emulator without a user interface for the
+requested number of seconds and prints the throughput together with the CPU
+statistics (`Gekko::CpuStats`). `set BENCH_PROFILE=1` additionally turns on the
+host cycle counters, which cost about 20% of the throughput themselves, so the
+plain run is the one to quote:
+
+```
+> set EMU_LOG=bench.log
+> pureikyubu.exe --bench "C:\Isos\NGC\Ikaruga.iso" 15
+```
+
+The report answers the question this harness keeps raising - how much of the
+emulated work is the CPU, and how much is the rest of the console:
+
+```
+instructions       : 602482411
+throughput         : 43.08 MIPS
+basic blocks run   : 96642645 (6.96 instructions per block)
+blocks translated  : 2902777 (193428/s, 3.07% of the blocks run)
+block invalidations: 163889 (10921/s)
+  mtmsr            : 107959
+  rfi              : 26050
+  exception entry  : 16248
+jit fallbacks      : 22767860 (3.52% of the instructions)
+data cache fills   : 932071
+pi reads           : 78024 (mmio 77968)
+```
+
+The PI/MEM interface is not the bottleneck. On this run the CPU reached it 78
+thousand times against 602 million retired instructions (0.013%), and with
+`BENCH_PROFILE=1` the whole memory-helper path - every translated load and
+store, including the address translation and the cache probe - accounted for
+about a tenth of the host cycles, of which filling lines from the PI/MEM was
+0.1%. Everything else is the recompiler's own bookkeeping:
+
+```
+host cycles (TSC 3.00 GHz):
+  jit total        : 13.901 s (92.6% of the wall)
+    generated block:  7.319 s (52.7% of jit), 252 cycles/block
+    translating    :  2.056 s (14.8% of jit), 2263 cycles/block
+    dispatch       :  4.526 s (32.6% of jit)
+    interp fallback:  0.460 s ( 3.3% of jit)
+    cache fills    :  0.011 s ( 0.1% of jit)
+```
+
+(A caveat: `BENCH_PROFILE` costs about 20% of the throughput, because two
+`rdtsc` per basic block is not free, so read the *shares* above rather than the
+absolute seconds, and quote the plain run when comparing configurations.)
+
+Two thirds of the block-cache drops came from `mtmsr` - the register the OS
+toggles around every critical section to enable and disable interrupts, which
+cannot change what a compiled block translates to - and one sixth from `rfi`.
+Both now only drop the cache when MSR[IR]/[DR] actually change; that removes
+about 85,000 cache drops per second on this workload. It does *not* reduce the
+re-translation rate by the same factor, because the rate is set by how much of
+the guest code is live at once rather than by the drops (the compiles stay at
+about 200,000/s, and quadrupling the block cache changes them by a few percent).
+The average basic block is only seven instructions long, so the per-block
+dispatch and translation are where the remaining time goes.
 
 ## Host ABI
 

@@ -6,6 +6,8 @@
 
 #include "pch.h"
 #include <chrono>
+#include <thread>
+#include <atomic>
 #include <fstream>
 #include <algorithm>
 #include <set>
@@ -127,6 +129,80 @@ static bool JitRequested()
 {
     const char* v = getenv("BENCH_JIT");
     return v != nullptr && v[0] != '\0';
+}
+
+// BENCH_SPIN=<n> makes n background threads poll Core->GetTicks() in a tight loop,
+// exactly like the emulator's HW update and CP FIFO threads do. The emulator runs
+// those threads on the same time base that the CPU thread advances on every
+// instruction, so the harness can measure that interference on a fixed workload
+// instead of guessing at it from the outside. BENCH_SPIN_PAUSE=1 makes the
+// pollers execute the CPU's spin-wait hint, BENCH_SPIN_SLEEP=<ms> makes them
+// sleep between polls.
+static std::atomic<bool> g_spinStop{ false };
+static std::atomic<long long> g_spinPolls{ 0 };
+static std::vector<std::thread> g_spinThreads;
+
+static void StartSpinners(int count)
+{
+    if (count <= 0)
+    {
+        return;
+    }
+
+    const char* pauseVar = getenv("BENCH_SPIN_PAUSE");
+    bool pause = pauseVar != nullptr && pauseVar[0] != '\0';
+    int sleepMs = getenv("BENCH_SPIN_SLEEP") ? atoi(getenv("BENCH_SPIN_SLEEP")) : -1;
+
+    for (int i = 0; i < count; i++)
+    {
+        int div = getenv("BENCH_SPIN_DIV") ? atoi(getenv("BENCH_SPIN_DIV")) : 1;
+        if (div < 1) div = 1;
+
+        g_spinThreads.emplace_back([pause, sleepMs, div]()
+        {
+            int64_t deadline = Core->GetTicks();
+            unsigned skip = 0;
+            while (!g_spinStop.load(std::memory_order_relaxed))
+            {
+                // A real device thread only has to look at the time base often enough to catch its
+                // next deadline; the rest of the loop is private work. BENCH_SPIN_DIV models that.
+                if (div != 1 && (div == 0 || ++skip < (unsigned)div))
+                {
+                    continue;   // div == 0: a pure spin that never touches the time base
+                }
+                skip = 0;
+
+                int64_t ticks = Core->GetTicks();
+                g_spinPolls.fetch_add(1, std::memory_order_relaxed);
+                if (ticks >= deadline)
+                {
+                    deadline = ticks + 100;
+                }
+                if (sleepMs >= 0)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+                }
+                else if (pause)
+                {
+#if defined(_MSC_VER)
+                    _mm_pause();
+#else
+                    __builtin_ia32_pause();
+#endif
+                }
+            }
+        });
+    }
+}
+
+static void StopSpinners()
+{
+    g_spinStop.store(true);
+    for (auto& t : g_spinThreads)
+    {
+        t.join();
+    }
+    g_spinThreads.clear();
 }
 
 static bool FuzzUnsafe(Gekko::Instruction i)
@@ -1163,6 +1239,10 @@ int main(int argc, char** argv)
 	bool stateTrace = getenv("BENCH_STATE_TRACE") != nullptr;
 
 	uint64_t done = 0;
+
+	// Reproduce the emulator's background threads (see BENCH_SPIN).
+	StartSpinners(getenv("BENCH_SPIN") ? atoi(getenv("BENCH_SPIN")) : 0);
+
 	auto t0 = std::chrono::high_resolution_clock::now();
 
 	while (done < totalSteps)
@@ -1231,6 +1311,9 @@ int main(int argc, char** argv)
 	auto t1 = std::chrono::high_resolution_clock::now();
 	double sec = std::chrono::duration<double>(t1 - t0).count();
 
+	long long spins = g_spinPolls.load();
+	StopSpinners();
+
 	if (useJit)
 	{
 		done = (uint64_t)Core->GetInstructionCounter();
@@ -1244,6 +1327,10 @@ int main(int argc, char** argv)
 	printf("MMIO reads %llu, writes %llu\n",
 		(unsigned long long)Flipper::ProcessorInterface::mmioReads,
 		(unsigned long long)Flipper::ProcessorInterface::mmioWrites);
+	if (spins != 0)
+	{
+		printf("spinner polls: %lld (%.1fM/s)\n", spins, (double)spins / sec / 1e6);
+	}
 	if (stats)
 	{
 		g_verbose = true;

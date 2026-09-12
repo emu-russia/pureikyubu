@@ -189,6 +189,29 @@ namespace Debug
 		VIs,				// Number of VI VBlank interrupts (based on PI interrupt counters)
 		PEs,				// Number of PE DRAW_DONE operations (based on PI interrupt counters)
 
+		// CPU-side counters (see Gekko::CpuStats). 4 and 5 are also what the status bar shows as
+		// "jitc <compiled>/<executed>".
+		GekkoCompiledSegments,		// Basic blocks translated by the recompiler
+		GekkoExecutedSegments,		// Basic blocks run by the recompiler
+		GekkoJitInstrs,			// Instructions retired inside those blocks
+		GekkoFallbacks,			// Instructions handed back to the interpreter from a block
+		GekkoInterpInstrs,		// Instructions run by the interpreter proper
+		DcacheFills,			// Data cache line fills
+		IcacheFills,			// Instruction cache line fills
+		PiReads,			// Single-beat CPU reads that reached the PI
+		PiWrites,			// Single-beat CPU writes that reached the PI
+		MmioReads,			// ... of those, the ones that hit the register space
+		MmioWrites,
+
+		// Host cycle counters (see Gekko::CycleScope). Only meaningful while `--bench` is running,
+		// which is the only thing that turns Gekko::cycleProfile on.
+		JitInvalidations,		// Times the whole block cache was dropped
+		JitRunCycles,			// Host cycles inside Jit::Run (including the compiled blocks)
+		JitCompileCycles,		// ... of which spent translating a block
+		JitFallbackCycles,		// ... of which spent in the interpreter fallback
+		CastInCycles,			// Host cycles spent filling cache lines from the PI/MEM
+		InterpCycles,			// Host cycles inside one interpreted instruction
+
 		Max,
 	};
 
