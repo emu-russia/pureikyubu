@@ -1,6 +1,8 @@
 
 #pragma once
 
+// The index of a GameCube controller control. Every pad has two bindings per control: a keyboard
+// key (vkeys) and a game controller button or axis (gckeys, the SDL build only).
 enum
 {
 	VKEY_FOR_UP = 0,
@@ -34,8 +36,26 @@ enum
 struct PADCONF
 {
 	bool    plugged;
-	int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
+	int     vkeys[VKEY_FOR_MAX];    // keyboard binding (-1 or 0 - undefined)
+	int     gckeys[VKEY_FOR_MAX];   // game controller binding (SDL build only), see PAD_GCKEY_*
 };
+
+// The game controller binding of a control is stored as a single integer, so that it fits the
+// existing configuration variables (GCKEY_FOR_*_N in the "controllers" section). It is either an
+// SDL game controller button or an SDL game controller axis with the direction that drives
+// the control.
+#define PAD_GCKEY_BUTTON_BASE   0x00010000
+#define PAD_GCKEY_AXIS_BASE     0x00020000
+
+#define PAD_GCKEY_IS_BUTTON(v)  ((v) >= PAD_GCKEY_BUTTON_BASE && (v) < PAD_GCKEY_AXIS_BASE)
+#define PAD_GCKEY_IS_AXIS(v)    ((v) >= PAD_GCKEY_AXIS_BASE)
+
+#define PAD_GCKEY_BUTTON(v)     ((v) - PAD_GCKEY_BUTTON_BASE)
+#define PAD_GCKEY_AXIS(v)       (((v) - PAD_GCKEY_AXIS_BASE) >> 1)
+#define PAD_GCKEY_AXIS_POS(v)   (((v) & 1) != 0)        // 1: positive direction, 0: negative
+
+#define PAD_GCKEY_MAKE_BUTTON(b)     (PAD_GCKEY_BUTTON_BASE + (b))
+#define PAD_GCKEY_MAKE_AXIS(a, pos)  (PAD_GCKEY_AXIS_BASE + ((a) << 1) + ((pos) ? 1 : 0))
 
 // PAD (input) interface
 // (padnum = 0...3)
@@ -74,6 +94,14 @@ struct PADState
 // plugin. PADClose() is called, when emulation is stopped, to shutdown plugin.
 bool PADOpen();
 void PADClose();
+
+// (Re)read the bindings of the specified pad from the configuration. Called by PADOpen(), and by
+// the controller settings dialog, so that the new bindings are applied without restarting the emulation.
+void PADLoadConfig(int padToConfigure);
+
+// SDL build only. Keep the SDL game controllers of the ports open and refresh their cached state.
+// Must be called from the thread that pumps the SDL events (the UI thread), see padsdl.cpp.
+void PADUpdateControllers();
 
 // read controller buttons state. returns 1, if ok, and 0, if PAD not connected
 bool PADReadButtons(long padnum, PADState* state);

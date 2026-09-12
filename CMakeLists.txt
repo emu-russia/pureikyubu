@@ -64,7 +64,7 @@ add_executable (pureikyubu
 	src/memcard.cpp
 	src/os.cpp
 	src/osdebug.cpp
-	src/padnull.cpp
+	src/padsdl.cpp
 	src/pe.cpp
 	src/pi.cpp
 	src/ras.cpp
