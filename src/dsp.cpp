@@ -748,13 +748,30 @@ namespace DSP
 	{
 		if (val)
 		{
+			// CDCR bit 1 is a *request*, not a pulse: the hardware clears it when the core takes
+			// the interrupt through the TE3/ET gate (dsp.md section 4.2). Latch it so that a
+			// request which arrives while the core has the interrupt masked is delivered as soon
+			// as the gate opens - the loader hands control to a microcode that closes the window
+			// at its entry and opens it again a few instructions later, and both Zelda and the
+			// AX microcode rely on the request surviving that window.
+			intdspRequested = true;
 			core->AssertInterrupt(DspInterrupt::CpuInt);
 		}
 	}
 
 	bool Dsp16::GetIntBit()
 	{
-		return core->IsInterruptPending(DspInterrupt::CpuInt);
+		return intdspRequested || core->IsInterruptPending(DspInterrupt::CpuInt);
+	}
+
+	bool Dsp16::CpuIntRequested() const
+	{
+		return intdspRequested;
+	}
+
+	void Dsp16::ClearCpuIntRequest()
+	{
+		intdspRequested = false;
 	}
 
 	void Dsp16::SetHaltBit(bool val)

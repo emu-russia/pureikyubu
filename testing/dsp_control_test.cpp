@@ -206,26 +206,68 @@ namespace DspUnitTest
 			Assert::AreEqual(3u, m.core->regs.pc, L"reti must resume after the trap");
 		}
 
-		TEST_METHOD(InterruptVectorsAreRelativeToTheActiveProgramBase)
+		TEST_METHOD(InterruptVectorsFollowTheRunningProgramNotTheResetVectorBit)
 		{
-			// dsp.md section 2.7: the vector offsets are relative to the active program base -
-			// 0x0000 in IRAM, or 0x8000 in IROM while the reset-vector bit is set.
-			m.Run({ Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Trap(), Enc::Nop(),
-				Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Nop() }, 4);
-			// Taking the interrupt and executing the instruction it vectors to happen in the
-			// same step, so the pc lands on the word after the first instruction of the
-			// handler: 0x0004 + 1 in IRAM, 0x8004 + 1 in the IROM.
+			// dsp.md section 2.7: the vector offsets are relative to the *running* program's
+			// base. The CDCR use-rom bit selects where a reset starts; it does not move the
+			// vectors of a microcode that the IROM loader has already handed control to. Such
+			// a microcode installs its own vector table at 0x0000 and expects it to be used -
+			// Zelda's microcode puts a CPU->DSP interrupt vector at 0x000E that reads the
+			// mailbox, and with the loader's vectors its commands were bounced back instead.
+			const std::vector<uint16_t> program = {
+				Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Trap(), Enc::Nop(),
+				Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Nop() };
+
+			// IRAM, the reset-vector bit clear: the trap vector is 0x0004.
+			m.Run(program, 4);
 			m.Step();
 			Assert::AreEqual(5u, m.core->regs.pc, L"the trap vector is 0x0004 while running from IRAM");
 
+			// The same IRAM program with the reset-vector bit *set* keeps its own vectors.
 			m.Reset();
 			dsp_ai.cdcr |= CDCR_RESETMOD;
-			m.Run({ Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Trap(), Enc::Nop(),
-				Enc::Nop(), Enc::Nop(), Enc::Nop(), Enc::Nop() }, 4);
+			m.Run(program, 4);
 			m.Step();
-			Assert::AreEqual(0x8005u, m.core->regs.pc,
-				L"the same vector is 0x8004 while the program base is the IROM");
+			Assert::AreEqual(5u, m.core->regs.pc,
+				L"a program running from IRAM keeps the IRAM vectors, whatever the reset-vector bit says");
 			dsp_ai.cdcr &= ~CDCR_RESETMOD;
+
+			// A program executing in the IROM window vectors at 0x8000 + offset.
+			m.Reset();
+			Assemble(m.core, DspTestMachine::IROM_BASE, program);
+			m.core->regs.pc = DspTestMachine::IROM_BASE;
+			m.Steps(4);			// nop, nop, nop, trap
+			m.Step();			// takes the trap and runs the handler's first word
+			Assert::AreEqual(0x8005u, m.core->regs.pc,
+				L"the same vector is 0x8004 while the core runs from the IROM");
+		}
+
+		TEST_METHOD(CpuIntRequestIsLatchedUntilTheCoreTakesIt)
+		{
+			// CDCR bit 1 is a *request*: the hardware clears it when the core takes the interrupt
+			// through the TE3/ET gate (dsp.md section 4.2). A request that arrives while the core
+			// has the interrupt masked must survive - the IROM loader hands control to a
+			// microcode that closes te3 at its first instruction and opens it a few instructions
+			// later, and both Zelda's and the AX microcode send mailbox commands right after
+			// asking for the interrupt.
+			m.core->regs.psr.et = 1;
+			m.core->regs.psr.te3 = 0;
+
+			Flipper::DSP->SetIntBit(true);
+
+			Assert::IsTrue(Flipper::DSP->GetIntBit(), L"the request is latched while it cannot be taken");
+			Assert::IsFalse(m.core->IsInterruptPending(DspInterrupt::CpuInt),
+				L"a request behind a closed TE3/ET gate is not delivered yet");
+
+			// The microcode opens the gate; the pending request must be delivered, not lost. The
+			// core takes it after its own two-instruction pending delay (dsp.md section 2.7).
+			m.core->regs.psr.te3 = 1;
+			m.core->regs.pc = DspTestMachine::IRAM_BASE;
+			m.Steps(3);			// delivered, delayed twice, then taken: pc lands on the vector
+
+			Assert::AreEqual(0x000Fu, m.core->regs.pc,
+				L"the CPU->DSP vector is 0x000E while the core runs from IRAM");
+			Assert::IsFalse(Flipper::DSP->GetIntBit(), L"taking the interrupt clears the request");
 		}
 
 		TEST_METHOD(Wait_DoesNotAdvancePc)
