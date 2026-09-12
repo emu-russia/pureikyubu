@@ -57,7 +57,7 @@ The current implementation is limited by the MN102 instruction decoder and the d
 
 ## DDU JDI
 
-The debugging interface specification provided by this component can be found in Data\\Json\\DduJdi.json.
+The debugging interface specification provided by this component can be found in jdispecs.cpp (JdiSpecs::DduJdi).
 
 */
 

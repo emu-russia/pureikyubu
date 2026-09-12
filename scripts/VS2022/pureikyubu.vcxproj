@@ -87,6 +87,7 @@
     <ClInclude Include="..\..\src\gfx.h" />
     <ClInclude Include="..\..\src\jdi.h" />
     <ClInclude Include="..\..\src\jdiserver.h" />
+    <ClInclude Include="..\..\src\jdispecs.h" />
     <ClInclude Include="..\..\src\json.h" />
     <ClInclude Include="..\..\src\main.h" />
     <ClInclude Include="..\..\src\mem.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="..\..\src\gfx.cpp" />
     <ClCompile Include="..\..\src\jdi.cpp" />
     <ClCompile Include="..\..\src\jdiserver.cpp" />
+    <ClCompile Include="..\..\src\jdispecs.cpp" />
     <ClCompile Include="..\..\src\json.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\mem.cpp" />

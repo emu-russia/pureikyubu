@@ -68,7 +68,7 @@ namespace Flipper
 		// open memory cards
 		MCOpen(config);
 
-		JDI::Hub.AddNode(L"HW_JDI_JSON", HwJdi, hw_init_handlers);
+		JDI::Hub.AddNode(L"HW_JDI_JSON", JdiSpecs::HwJdi, hw_init_handlers);
 	}
 
 	Flipper::~Flipper()

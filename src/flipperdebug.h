@@ -4,7 +4,5 @@
 
 namespace Flipper
 {
-	extern const char* HwJdi;
-
 	void hw_init_handlers();
 };

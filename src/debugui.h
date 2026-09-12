@@ -36,7 +36,6 @@ Gekko and DSP disassemblers are in the emulator core, in the corresponding compo
 
 namespace Debug
 {
-	extern const char* DebugUiJdi;
 	void DebugUIReflector();
 }
 

@@ -185,7 +185,7 @@ namespace DVD
 
 	void InitSubsystem()
 	{
-		JDI::Hub.AddNode(L"DDU_JDI_JSON", DduJdi, DvdCommandsReflector);
+		JDI::Hub.AddNode(L"DDU_JDI_JSON", JdiSpecs::DduJdi, DvdCommandsReflector);
 
 		DDU = new DduCore;
 	}

@@ -4,6 +4,5 @@
 
 namespace Debug
 {
-	extern const char* GekkoCoreJdi;
 	void gekko_init_handlers();
 }

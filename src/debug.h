@@ -136,7 +136,6 @@ namespace Debug
 
 namespace Debug
 {
-	extern const char* DebuggerJdi;
 	void Reflector();
 }
 

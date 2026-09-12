@@ -4,6 +4,5 @@
 
 namespace DSP
 {
-	extern const char* DspJdi;
 	void dsp_init_handlers();
 }
