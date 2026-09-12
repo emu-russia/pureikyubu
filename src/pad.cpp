@@ -2,7 +2,7 @@
 
 GameCube controllers emulation backend. This is shitty code in every way, don't look.
 
-Will be gradually superseded by DirectInput/SDL implementation.
+The SDL port uses its own backend, padsdl.cpp.
 
 ## Technical features
 

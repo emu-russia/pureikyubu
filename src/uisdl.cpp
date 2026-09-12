@@ -941,6 +941,479 @@ static void ui_selector_menu()
 
 /*
 
+# Controller settings
+
+The SDL port of the Win32 controller settings dialog (see PADConfigDialogProc and PADConfigure
+in ui.cpp): plug the pad, assign a keyboard key and/or a gamepad button or axis to every GameCube
+controller control, or clear/restore the bindings. Every control has two bindings, so the keyboard
+and the gamepad can be used at the same time.
+
+Clicking a binding button arms the capture, and the next input becomes the new binding (Esc cancels
+it, like in the Win32 dialog): a key of the main window for the keyboard column (the modifier keys
+and the F1-F12 keys are skipped, because the debugger uses them, see GetVKey in ui.cpp), or an SDL
+game controller button or a stick/trigger deflection for the gamepad column. The captured events
+are not passed to ImGui, so they cannot also move the selector cursor or navigate the UI.
+
+The dialog edits a copy of the PADCONF of the selected pad. OK writes it to the configuration
+("controllers" section) and makes the backend reread it; Cancel drops the copy.
+
+*/
+
+/* The names of the VKEY_FOR_* (keyboard) and GCKEY_FOR_* (gamepad) configuration variables, in the enum order */
+static const char* pad_binding_suffix[VKEY_FOR_MAX] =
+{
+	"UP", "DOWN", "LEFT", "RIGHT",
+	"XUP50", "XUP100", "XDOWN50", "XDOWN100",
+	"XLEFT50", "XLEFT100", "XRIGHT50", "XRIGHT100",
+	"CXUP", "CXDOWN", "CXLEFT", "CXRIGHT",
+	"TRIGGERL", "TRIGGERR", "TRIGGERZ",
+	"A", "B", "X", "Y", "START",
+};
+
+/* The rows of the dialog, in the display order */
+static const char* pad_binding_label[VKEY_FOR_MAX] =
+{
+	"Up", "Down", "Left", "Right",
+	"Up 50%", "Up 100%", "Down 50%", "Down 100%",
+	"Left 50%", "Left 100%", "Right 50%", "Right 100%",
+	"C Up", "C Down", "C Left", "C Right",
+	"L", "R", "Z", "A", "B", "X", "Y", "Start",
+};
+
+static const int pad_digital_bindings[] =
+{
+	VKEY_FOR_UP, VKEY_FOR_DOWN, VKEY_FOR_LEFT, VKEY_FOR_RIGHT,
+	VKEY_FOR_A, VKEY_FOR_B, VKEY_FOR_X, VKEY_FOR_Y,
+	VKEY_FOR_START, VKEY_FOR_TRIGGERL, VKEY_FOR_TRIGGERR, VKEY_FOR_TRIGGERZ,
+};
+
+static const int pad_stick_bindings[] =
+{
+	VKEY_FOR_XUP50, VKEY_FOR_XUP100, VKEY_FOR_XDOWN50, VKEY_FOR_XDOWN100,
+	VKEY_FOR_XLEFT50, VKEY_FOR_XLEFT100, VKEY_FOR_XRIGHT50, VKEY_FOR_XRIGHT100,
+};
+
+static const int pad_substick_bindings[] =
+{
+	VKEY_FOR_CXUP, VKEY_FOR_CXDOWN, VKEY_FOR_CXLEFT, VKEY_FOR_CXRIGHT,
+};
+
+/* The default keyboard bindings of the first pad (see PADDefaultConfig in ui.cpp), as SDL scancodes */
+static const int pad_default_vkeys[VKEY_FOR_MAX] =
+{
+	SDL_SCANCODE_HOME,      // Up
+	SDL_SCANCODE_END,       // Down
+	SDL_SCANCODE_DELETE,    // Left
+	SDL_SCANCODE_PAGEDOWN,  // Right
+	0,                      // Up 50%
+	SDL_SCANCODE_UP,        // Up 100%
+	0,                      // Down 50%
+	SDL_SCANCODE_DOWN,      // Down 100%
+	0,                      // Left 50%
+	SDL_SCANCODE_LEFT,      // Left 100%
+	0,                      // Right 50%
+	SDL_SCANCODE_RIGHT,     // Right 100%
+	SDL_SCANCODE_KP_8,      // C Up
+	SDL_SCANCODE_KP_2,      // C Down
+	SDL_SCANCODE_KP_4,      // C Left
+	SDL_SCANCODE_KP_6,      // C Right
+	SDL_SCANCODE_Q,         // L
+	SDL_SCANCODE_W,         // R
+	SDL_SCANCODE_E,         // Z
+	SDL_SCANCODE_X,         // A
+	SDL_SCANCODE_Z,         // B
+	SDL_SCANCODE_S,         // X
+	SDL_SCANCODE_A,         // Y
+	SDL_SCANCODE_RETURN,    // Start
+};
+
+/* The default gamepad bindings (the usual Xbox-style layout): the main stick is mapped to the
+   left stick, the C stick to the right stick, and the L/R triggers to the analog triggers. */
+static const int pad_default_gckeys[VKEY_FOR_MAX] =
+{
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP),           // Up
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN),         // Down
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT),         // Left
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT),        // Right
+	0,                                                              // Up 50%
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, false),          // Up 100%
+	0,                                                              // Down 50%
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, true),           // Down 100%
+	0,                                                              // Left 50%
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, false),          // Left 100%
+	0,                                                              // Right 50%
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, true),           // Right 100%
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, false),         // C Up
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, true),          // C Down
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, false),         // C Left
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, true),          // C Right
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERLEFT, true),     // L
+	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, true),    // R
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER),     // Z
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A),                 // A
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B),                 // B
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_X),                 // X
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_Y),                 // Y
+	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START),             // Start
+};
+
+/* The gamepad bindings offered by the dialog, for the buttons without a friendly name */
+static const char* pad_gamepad_button_name[SDL_CONTROLLER_BUTTON_MAX] =
+{
+	"A", "B", "X", "Y", "Back", "Guide", "Start", "L Stick", "R Stick",
+	"L Shoulder", "R Shoulder", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
+	"Misc", "Paddle 1", "Paddle 2", "Paddle 3", "Paddle 4", "Touchpad",
+};
+
+static const char* pad_gamepad_axis_name[SDL_CONTROLLER_AXIS_MAX] =
+{
+	"L Stick X", "L Stick Y", "R Stick X", "R Stick Y", "L Trigger", "R Trigger",
+};
+
+/* The axis capture ignores the stick noise */
+#define PAD_CAPTURE_AXIS_THRESHOLD  16384
+
+/* Dialog state */
+
+static bool     pad_dialog_open = false;
+static int      pad_dialog_num = 0;                 // the pad being configured
+static PADCONF  pad_dialog_config;                  // the edited copy of the pad configuration
+
+/* Key/gamepad capture, armed by a binding button and fed by the SDL event loop (see ui_main) */
+
+static int      pad_capture_target = -1;            // the VKEY_FOR_* that waits for an input
+static bool     pad_capture_gamepad = false;        // true: wait for a gamepad event, false: for a key
+static bool     pad_capture_active = false;
+static bool     pad_capture_done = false;
+static int      pad_captured_binding = 0;
+
+/* The keys that the Win32 dialog skips, because they cannot be bound (or the debugger needs them) */
+static bool pad_capture_ignored(SDL_Scancode scancode)
+{
+	switch (scancode)
+	{
+		case SDL_SCANCODE_LSHIFT:
+		case SDL_SCANCODE_RSHIFT:
+		case SDL_SCANCODE_LCTRL:
+		case SDL_SCANCODE_RCTRL:
+		case SDL_SCANCODE_LALT:
+		case SDL_SCANCODE_RALT:
+		case SDL_SCANCODE_LGUI:
+		case SDL_SCANCODE_RGUI:
+		case SDL_SCANCODE_MODE:
+			return true;
+		default:
+			return scancode >= SDL_SCANCODE_F1 && scancode <= SDL_SCANCODE_F12;
+	}
+}
+
+/* Load the pad configuration into the dialog (see PADLoadConfig in padsdl.cpp) */
+static void pad_dialog_load(int padnum)
+{
+	char parm[256];
+
+	pad_dialog_num = padnum;
+
+	sprintf(parm, "PluggedIn_%i", padnum);
+	pad_dialog_config.plugged = UI::Jdi->GetConfigBool(parm, USER_PADS);
+
+	for (int i = 0; i < VKEY_FOR_MAX; i++)
+	{
+		sprintf(parm, "VKEY_FOR_%s_%i", pad_binding_suffix[i], padnum);
+		pad_dialog_config.vkeys[i] = UI::Jdi->GetConfigInt(parm, USER_PADS);
+
+		sprintf(parm, "GCKEY_FOR_%s_%i", pad_binding_suffix[i], padnum);
+		pad_dialog_config.gckeys[i] = UI::Jdi->GetConfigInt(parm, USER_PADS);
+	}
+}
+
+/* Write the dialog configuration back (see PADSaveConfig in ui.cpp) and make the backend reread it */
+static void pad_dialog_save()
+{
+	char parm[256];
+
+	sprintf(parm, "PluggedIn_%i", pad_dialog_num);
+	UI::Jdi->SetConfigBool(parm, pad_dialog_config.plugged, USER_PADS);
+
+	for (int i = 0; i < VKEY_FOR_MAX; i++)
+	{
+		sprintf(parm, "VKEY_FOR_%s_%i", pad_binding_suffix[i], pad_dialog_num);
+		UI::Jdi->SetConfigInt(parm, pad_dialog_config.vkeys[i], USER_PADS);
+
+		sprintf(parm, "GCKEY_FOR_%s_%i", pad_binding_suffix[i], pad_dialog_num);
+		UI::Jdi->SetConfigInt(parm, pad_dialog_config.gckeys[i], USER_PADS);
+	}
+
+	PADLoadConfig(pad_dialog_num);
+}
+
+static void pad_dialog_abort_capture()
+{
+	pad_capture_target = -1;
+	pad_capture_gamepad = false;
+	pad_capture_active = false;
+	pad_capture_done = false;
+}
+
+static void pad_dialog_open_for(int padnum)
+{
+	pad_dialog_abort_capture();
+	pad_dialog_load(padnum);
+	pad_dialog_open = true;
+}
+
+static void pad_dialog_close()
+{
+	pad_dialog_abort_capture();
+	pad_dialog_open = false;
+}
+
+/* Unplug the pad and drop all the bindings (see PADClearConfig in ui.cpp) */
+static void pad_dialog_clear()
+{
+	pad_dialog_config.plugged = false;
+
+	for (int i = 0; i < VKEY_FOR_MAX; i++)
+	{
+		pad_dialog_config.vkeys[i] = 0;
+		pad_dialog_config.gckeys[i] = 0;
+	}
+}
+
+/* Restore the default bindings (see PADDefaultConfig in ui.cpp). The gamepad is per port, so every
+   port gets the standard gamepad mapping. The keyboard defaults are the same for every port, so
+   they are only applied to the first pad (otherwise all the pads would react to the same keys). */
+static void pad_dialog_default()
+{
+	for (int i = 0; i < VKEY_FOR_MAX; i++)
+	{
+		pad_dialog_config.gckeys[i] = pad_default_gckeys[i];
+
+		if (pad_dialog_num == 0)
+		{
+			pad_dialog_config.vkeys[i] = pad_default_vkeys[i];
+		}
+	}
+}
+
+/* The name of the key bound to the control, or "..." when the binding is not assigned */
+static std::string pad_binding_name(int scancode)
+{
+	if (scancode <= 0 || scancode >= SDL_NUM_SCANCODES)
+	{
+		return "...";
+	}
+
+	const char* name = SDL_GetScancodeName((SDL_Scancode)scancode);
+
+	return (name && *name) ? name : "?";
+}
+
+/* The name of the game controller button or axis bound to the control */
+static std::string pad_gamepad_binding_name(int binding)
+{
+	if (PAD_GCKEY_IS_BUTTON(binding))
+	{
+		int button = PAD_GCKEY_BUTTON(binding);
+
+		if (button < 0 || button >= SDL_CONTROLLER_BUTTON_MAX)
+		{
+			return "?";
+		}
+
+		return pad_gamepad_button_name[button];
+	}
+
+	if (PAD_GCKEY_IS_AXIS(binding))
+	{
+		int axis = PAD_GCKEY_AXIS(binding);
+
+		if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
+		{
+			return "?";
+		}
+
+		return std::string(pad_gamepad_axis_name[axis]) + (PAD_GCKEY_AXIS_POS(binding) ? " +" : " -");
+	}
+
+	return "...";
+}
+
+/* A binding button: the keyboard one or the gamepad one of the control */
+static void pad_dialog_binding_button(int vkey, bool gamepad)
+{
+	// The button label (and with it the button id) changes, so push a stable id
+	ImGui::PushID(vkey * 2 + (gamepad ? 1 : 0));
+
+	std::string name;
+
+	if (pad_capture_active && pad_capture_target == vkey && pad_capture_gamepad == gamepad)
+	{
+		name = "?";
+	}
+	else
+	{
+		name = gamepad
+			? pad_gamepad_binding_name(pad_dialog_config.gckeys[vkey])
+			: pad_binding_name(pad_dialog_config.vkeys[vkey]);
+	}
+
+	ImGui::BeginDisabled(!pad_dialog_config.plugged);
+	if (ImGui::Button(name.c_str(), ImVec2(110, 0)))
+	{
+		pad_capture_target = vkey;
+		pad_capture_gamepad = gamepad;
+		pad_capture_active = true;
+		pad_capture_done = false;
+	}
+	ImGui::EndDisabled();
+
+	ImGui::PopID();
+}
+
+/* A group of binding rows (Control | Keyboard | Gamepad). The table auto-fits its content, so that
+   the groups can be placed side by side. */
+static void pad_dialog_bindings(const char* id, const int* bindings, int count)
+{
+	if (!ImGui::BeginTable(id, 3, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX))
+	{
+		return;
+	}
+
+	ImGui::TableSetupColumn("Control");
+	ImGui::TableSetupColumn("Keyboard");
+	ImGui::TableSetupColumn("Gamepad");
+	ImGui::TableHeadersRow();
+
+	for (int i = 0; i < count; i++)
+	{
+		int vkey = bindings[i];
+
+		ImGui::TableNextRow();
+
+		ImGui::TableSetColumnIndex(0);
+		ImGui::TextUnformatted(pad_binding_label[vkey]);
+
+		ImGui::TableSetColumnIndex(1);
+		pad_dialog_binding_button(vkey, false);
+
+		ImGui::TableSetColumnIndex(2);
+		pad_dialog_binding_button(vkey, true);
+	}
+
+	ImGui::EndTable();
+}
+
+static void ui_pad_settings()
+{
+	if (!pad_dialog_open)
+	{
+		return;
+	}
+
+	// Apply the binding captured by the SDL event loop
+
+	if (pad_capture_done)
+	{
+		if (pad_capture_target >= 0 && pad_capture_target < VKEY_FOR_MAX)
+		{
+			if (pad_capture_gamepad)
+			{
+				pad_dialog_config.gckeys[pad_capture_target] = pad_captured_binding;
+			}
+			else
+			{
+				pad_dialog_config.vkeys[pad_capture_target] = pad_captured_binding;
+			}
+		}
+
+		pad_capture_target = -1;
+		pad_capture_done = false;
+	}
+
+	char title[0x40];
+	sprintf(title, "Configure Controller %i", pad_dialog_num + 1);
+
+	// Buttons on the left, the Control Stick with the C Stick under it on the right. The window
+	// auto-fits its content, so there is no empty space around the controls.
+	bool open = true;
+
+	if (ImGui::Begin(title, &open, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Checkbox("Plugged in", &pad_dialog_config.plugged);
+
+		// The backend maps the connected game controllers to the ports in the order they are reported by SDL
+		ImGui::TextDisabled("Connected gamepads drive Port 1, Port 2, ... in order");
+
+		ImGui::Separator();
+
+		ImGui::BeginGroup();
+		ImGui::TextUnformatted("Buttons");
+		pad_dialog_bindings("pad_buttons", pad_digital_bindings, sizeof(pad_digital_bindings) / sizeof(pad_digital_bindings[0]));
+		ImGui::EndGroup();
+
+		ImGui::SameLine(0, 24);
+
+		ImGui::BeginGroup();
+		ImGui::TextUnformatted("Control Stick");
+		pad_dialog_bindings("pad_stick", pad_stick_bindings, sizeof(pad_stick_bindings) / sizeof(pad_stick_bindings[0]));
+		ImGui::Dummy(ImVec2(0, 6));
+		ImGui::TextUnformatted("C Stick");
+		pad_dialog_bindings("pad_substick", pad_substick_bindings, sizeof(pad_substick_bindings) / sizeof(pad_substick_bindings[0]));
+		ImGui::EndGroup();
+
+		ImGui::Separator();
+
+		if (pad_capture_active)
+		{
+			ImGui::TextUnformatted(pad_capture_gamepad
+				? "Press a gamepad button or move an axis (Esc to cancel)"
+				: "Press a key (Esc to cancel)");
+		}
+
+		if (ImGui::Button("Clear", ImVec2(65, 0)))
+		{
+			pad_dialog_clear();
+		}
+
+		ImGui::SameLine();
+
+		// Gamepads are per port, so every port can get the standard gamepad mapping. The keyboard
+		// part of the defaults is only applied to the first pad (see pad_dialog_default).
+		if (ImGui::Button("Default", ImVec2(65, 0)))
+		{
+			pad_dialog_default();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("OK", ImVec2(65, 0)))
+		{
+			pad_dialog_save();
+			pad_dialog_close();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(65, 0)))
+		{
+			pad_dialog_close();
+		}
+	}
+
+	ImGui::End();
+
+	if (!open)
+	{
+		pad_dialog_close();
+	}
+}
+
+
+
+
+/*
+
 # Performance Counters
 
 Interesting to track :
@@ -1338,10 +1811,16 @@ static void ui_main_menu()
 			ImGui::Separator();
 			if (ImGui::BeginMenu("Controllers"))
 			{
-				ImGui::MenuItem("Port 1", NULL);
-				ImGui::MenuItem("Port 2", NULL);
-				ImGui::MenuItem("Port 3", NULL);
-				ImGui::MenuItem("Port 4", NULL);
+				for (int i = 0; i < 4; i++)
+				{
+					char label[0x20];
+					sprintf(label, "Port %i", i + 1);
+
+					if (ImGui::MenuItem(label, NULL, pad_dialog_open && pad_dialog_num == i))
+					{
+						pad_dialog_open_for(i);
+					}
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Memcards"))
@@ -1650,7 +2129,70 @@ static int ui_main()
 				// down. If the release event (which may be delivered to another window) is skipped, the
 				// mouse stays captured by the main window and the other windows stop responding to it.
 				case SDL_MOUSEWHEEL:      forMainWindow = (event.wheel.windowID == mainWindowID); break;
+				// The game controllers are used by the pad backend (see padsdl.cpp). They are only
+				// passed to ImGui while the selector is shown, so that a gamepad can navigate the UI,
+				// but does not move the ImGui cursor while a game is running.
+				case SDL_CONTROLLERAXISMOTION:
+				case SDL_CONTROLLERBUTTONDOWN:
+				case SDL_CONTROLLERBUTTONUP:
+				case SDL_CONTROLLERDEVICEADDED:
+				case SDL_CONTROLLERDEVICEREMOVED:
+				case SDL_CONTROLLERDEVICEREMAPPED: forMainWindow = !emu_running; break;
 				default: break;
+			}
+
+			// The controller settings dialog captures the next key press or gamepad event as the
+			// new binding. The captured events must not reach ImGui, otherwise they would also
+			// move the selector cursor, trigger a menu item or navigate the UI.
+			if (pad_capture_active && !pad_capture_done)
+			{
+				if (event.type == SDL_KEYDOWN && event.key.windowID == mainWindowID)
+				{
+					SDL_Scancode scancode = event.key.keysym.scancode;
+
+					if (scancode == SDL_SCANCODE_ESCAPE)
+					{
+						pad_captured_binding = 0;       // Esc cancels the capture
+						pad_capture_done = true;
+						pad_capture_active = false;
+					}
+					else if (!pad_capture_gamepad && !pad_capture_ignored(scancode))
+					{
+						pad_captured_binding = (int)scancode;
+						pad_capture_done = true;
+						pad_capture_active = false;
+					}
+
+					forMainWindow = false;
+				}
+				else if (pad_capture_gamepad && event.type == SDL_CONTROLLERBUTTONDOWN)
+				{
+					if (event.cbutton.button >= 0 && event.cbutton.button < SDL_CONTROLLER_BUTTON_MAX)
+					{
+						pad_captured_binding = PAD_GCKEY_MAKE_BUTTON(event.cbutton.button);
+						pad_capture_done = true;
+						pad_capture_active = false;
+					}
+
+					forMainWindow = false;
+				}
+				else if (pad_capture_gamepad && event.type == SDL_CONTROLLERAXISMOTION)
+				{
+					if (event.caxis.axis >= 0 && event.caxis.axis < SDL_CONTROLLER_AXIS_MAX &&
+						(event.caxis.value >= PAD_CAPTURE_AXIS_THRESHOLD || event.caxis.value <= -PAD_CAPTURE_AXIS_THRESHOLD))
+					{
+						pad_captured_binding = PAD_GCKEY_MAKE_AXIS(event.caxis.axis, event.caxis.value > 0);
+						pad_capture_done = true;
+						pad_capture_active = false;
+					}
+
+					forMainWindow = false;
+				}
+				else if (event.type == SDL_CONTROLLERBUTTONDOWN || event.type == SDL_CONTROLLERAXISMOTION)
+				{
+					// No gamepad event may navigate the UI while a binding waits for a key
+					forMainWindow = false;
+				}
 			}
 
 			if (forMainWindow)
@@ -1663,6 +2205,10 @@ static int ui_main()
 			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == mainWindowID)
 				ui_active = false;
 		}
+
+		// Keep the SDL game controllers of the pads open, and their cached state fresh. The events
+		// pumped above have the device list up to date (see PADUpdateControllers in padsdl.cpp).
+		PADUpdateControllers();
 
 		// The release of a pressed button can be delivered to another window or to another
 		// application, so do not leave the mouse captured by the main window when it is not active.
@@ -1697,6 +2243,8 @@ static int ui_main()
 
 		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 		ui_main_window();
+
+		ui_pad_settings();
 
 		if (Debug::debugger != nullptr) {
 			Debug::debugger->DrawInternal();

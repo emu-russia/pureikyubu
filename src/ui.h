@@ -8,7 +8,8 @@ The emulator settings dialog is used only for modifying the settings Json (Setti
 
 ## Controller Settings Dialog (PAD)
 
-This dialog is used to configure the PadSimpleWin32 backend.
+This dialog is used to configure the PadSimpleWin32 backend (pad.cpp). The SDL port has its own
+version of the dialog in uisdl.cpp, which configures the SDL backend (padsdl.cpp).
 
 When there is actual support for USB controllers, it will probably be redesigned.
 

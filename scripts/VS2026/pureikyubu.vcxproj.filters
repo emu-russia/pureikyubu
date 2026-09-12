@@ -336,6 +336,9 @@
     <ClCompile Include="..\..\src\pad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\padsdl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
