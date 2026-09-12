@@ -4,8 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>pureikyubu — эмулятор Nintendo GameCube</title>
-<meta name="description" content="pureikyubu — разрабатываемый эмулятор Nintendo GameCube для исследований и реверс-инжиниринга. Лендинг, дайджест изменений после релиза 1.6 и заметки о релизе 1.7.">
-<link rel="icon" href="imgstore/pureikyubu.png">
+<meta name="description" content="pureikyubu — разрабатываемый эмулятор Nintendo GameCube для исследований и реверс-инжиниринга. Лендинг, заметки о релизе 1.8 и архив прошлых релизов.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/style.css">
 <script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 </head>
@@ -19,7 +21,7 @@
     <nav class="nav">
       <a href="index_ru.html" aria-current="page">Главная</a>
       <a href="digest_ru.html">Дайджест</a>
-      <a href="release_notes_1.7_ru.html">Release Notes 1.7</a>
+      <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Язык">
@@ -41,7 +43,7 @@
       большое удовольствие.
     </p>
     <div class="btn-row">
-      <a class="btn" href="release_notes_1.7_ru.html">Заметки о релизе 1.7</a>
+      <a class="btn" href="release_notes_1.8_ru.html">Заметки о релизе 1.8</a>
       <a class="btn secondary" href="digest_ru.html">Что изменилось после 1.6</a>
       <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu">Исходники на GitHub</a>
     </div>
@@ -54,75 +56,73 @@
     <section>
       <h2>Что нового</h2>
       <p class="sub">
-        Релиз 1.6 вышел 17 августа 2023 года. С тех пор у эмулятора появился второй интерфейс
-        пользователя, графический конвейер на шейдерах, модульные тесты для графики и ядра DSP,
-        загружающийся Linux с работающей сетью и длинный список исправлений в играх — включая
-        вступительный ролик <em>Metroid Prime</em>.
+        Релиз 1.8 — релиз производительности: рекомпилятор Gekko в x86-64, Paired-Single на SSE и
+        событийные потоки устройств, которые больше не крутятся на тайм-базе. Вместе с
+        исправлениями агрегатных линий прерываний именно это позволяет загрузиться
+        <em>Zelda: The Wind Waker</em> и выпускает <em>Animal Crossing</em> из обработчика
+        исключений.
       </p>
       <div class="grid">
         <div class="card">
-          <span class="badge">Графика</span>
-          <h3>Шейдеры XF/TEV</h3>
-          <p>Фиксированный конвейер OpenGL больше не используется. Transform Unit и Texture
-             Environment Unit эмулятора выполняются вершинным и фрагментным шейдерами GLSL 3.30,
-             которым передаётся всё содержимое регистров.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Тесты</span>
-          <h3>340 тестов графики</h3>
-          <p>Стенд прогоняет настоящий конвейер CP → XF → SU → RAS → TX → TEV → PE на реальном
-             контексте OpenGL и публикует HTML-отчёт с сотнями отрендеренных картинок.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Звук</span>
-          <h3>DSP против эталонных векторов</h3>
-          <p>Ядро DSP проверяется по 1822 векторам, снятым с настоящего железа, а поведение
-             ARAM/AI приведено в соответствие с документацией.</p>
+          <span class="badge">Процессор</span>
+          <h3>Рекомпилятор Gekko</h3>
+          <p>Компилятор базовых блоков в x86-64 держит гостевые регистры в регистрах хоста и поднимает
+             эмулируемый процессор с 39.7 до 155.9 MIPS; код, насыщенный АЛУ, ускоряется в 8.6 раза.
+             Команды <code>jit 0</code> и <code>jit 1</code> переключают движки на ходу.</p>
         </div>
         <div class="card">
           <span class="badge">Процессор</span>
-          <h3>GC-Linux загружается</h3>
-          <p>Исправлены декодирование GQR/paired-single, обход хеш-таблицы MMU, декрементер,
-             <code>mtcrf</code> и <code>lswi</code> — ядро GC-Linux 2004 года доходит до консоли.</p>
+          <h3>Paired-Single на SSE</h3>
+          <p>Все арифметические инструкции PS и обе квантизованные загрузки/сохранения
+             транслируются в SSE/SSE2; нагрузка с преобладанием PS растёт с 59 до 435 MIPS.</p>
         </div>
         <div class="card">
-          <span class="badge">Интерфейс</span>
-          <h3>Селектор игр везде</h3>
-          <p>Селектор игр из Win32-версии портирован в SDL-сборку: баннеры, Game ID, сортировка,
-             фильтры и переход к игре по первой букве.</p>
+          <span class="badge">Производительность</span>
+          <h3>Конец активного ожидания</h3>
+          <p>Развёртка VI и опрос последовательного порта переехали в поток процессора, а потоки CP,
+             AI DMA и DSP блокируются на событиях. Ikaruga вышла на 4.58x реального времени,
+             Luigi's Mansion — на 4.26x.</p>
         </div>
         <div class="card">
           <span class="badge">Совместимость</span>
-          <h3>Больше игр запускается</h3>
-          <p>Играет вступительный ролик Metroid Prime, Zelda: The Wind Waker проходит загрузку,
-             у ролика Ikaruga правильные цвета, а PONG снова запускается.</p>
+          <h3>Чёрные экраны исправлены</h3>
+          <p>Агрегатные линии прерываний DSP и дискового интерфейса заработали, а опрос
+             последовательного порта идёт по расписанию видеолиний: Zelda: The Wind Waker доходит до
+             титульного экрана, Animal Crossing показывает логотип Nintendo.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Образы дисков</span>
+          <h3>Поддержка RVZ</h3>
+          <p>Сжатые образы GameCube в контейнере RVZ из Dolphin (Zstandard) монтируются только для
+             чтения — рядом с ISO и GCM.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Интерфейс</span>
+          <h3>Настройка контроллеров в SDL</h3>
+          <p>У SDL-сборки появился собственный бэкенд контроллеров и полное окно
+             «Configure Controller N»: привязки клавиатуры и геймпада, аналоговые стики и триггеры.</p>
         </div>
       </div>
     </section>
 
     <section>
       <h2>Скриншоты</h2>
-      <p class="sub">Снято с текущей сборки (линейка релиза 1.7).</p>
+      <p class="sub">Снято с текущей сборки (линейка релиза 1.8).</p>
       <div class="shots">
         <figure>
-          <img src="imgstore/luigis_mansion.png" alt="Luigi's Mansion в pureikyubu">
-          <figcaption><strong>Luigi's Mansion</strong>Работает на шейдерном конвейере XF/TEV;
-            встроенная статистика показывает скорость Gekko и DSP.</figcaption>
+          <img src="imgstore/metroid_prime.png" alt="Титульный экран Metroid Prime в pureikyubu">
+          <figcaption><strong>Metroid Prime</strong>Титульный экран после исправлений декодера
+            текстур и вывода изображения.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/ipl_menu.png" alt="Меню IPL GameCube, отрисованное pureikyubu">
-          <figcaption><strong>Меню IPL GameCube</strong>Новый ключ <code>--ipl</code> запускает
-            меню консоли напрямую, без образа диска.</figcaption>
+          <img src="imgstore/zelda_wind_waker.png" alt="Титульный экран The Legend of Zelda: The Wind Waker">
+          <figcaption><strong>Zelda: The Wind Waker</strong>Доходит до титульного экрана, как только
+            векторы DSP и запрос через почтовый ящик обрабатываются так, как на железе.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/game_selector.png" alt="Селектор игр pureikyubu со списком игр GameCube">
-          <figcaption><strong>Селектор игр</strong>Баннеры, Game ID, размеры, комментарии и
-            сортировка с фильтрами в SDL-сборке.</figcaption>
-        </figure>
-        <figure>
-          <img src="imgstore/ikaruga_thp.png" alt="Ролик THP из Ikaruga">
-          <figcaption><strong>Ikaruga</strong>Ролик THP после исправлений GQR/TEV: цвета совпадают
-            с эталонным декодером.</figcaption>
+          <img src="imgstore/controller_settings.png" alt="Окно Configure Controller 1 в SDL-интерфейсе">
+          <figcaption><strong>Настройка контроллеров</strong>Портированное окно Win32 в SDL-сборке:
+            привязки клавиатуры и геймпада рядом.</figcaption>
         </figure>
         <figure>
           <img src="imgstore/gc_linux_console.png" alt="Ядро GC-Linux загружается до консоли gcnfb">
@@ -137,9 +137,8 @@
       <div class="grid">
         <div class="card">
           <h3>Windows</h3>
-          <p>Откройте <code>scripts/VS2022/pureikyubu.sln</code> в Visual Studio 2022 или 2026 и
-             нажмите Build. Есть конфигурации Debug и Release как для Win32-, так и для
-             SDL-интерфейса.</p>
+          <p>Откройте <code>scripts/VS2026/pureikyubu.sln</code> в Visual Studio 2026 и нажмите Build.
+             Есть конфигурации Debug и Release как для Win32-, так и для SDL-интерфейса.</p>
         </div>
         <div class="card">
           <h3>Linux</h3>
@@ -157,19 +156,32 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Документация</h2>
       <div class="grid">
         <div class="card">
-          <h3>Дайджест после 1.6</h3>
-          <p><a href="digest.html">English digest</a> · <a href="digest_ru.html">Дайджест на русском</a></p>
+          <h3>Release Notes 1.8</h3>
+          <p><a href="release_notes_1.8.html">English release notes</a> ·
+             <a href="release_notes_1.8_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.8.md">Markdown</a></p>
         </div>
         <div class="card">
-          <h3>Release Notes 1.7</h3>
-          <p><a href="release_notes_1.7.html">English release notes</a> ·
-             <a href="release_notes_1.7_ru.html">Заметки о релизе на русском</a> ·
-             <a href="RELEASE_NOTES_1.7.md">Markdown</a></p>
+          <h3>Дайджест после 1.6</h3>
+          <p><a href="digest.html">English digest</a> · <a href="digest_ru.html">Дайджест на русском</a></p>
         </div>
         <div class="card">
           <h3>Wiki</h3>
           <p><a href="https://github.com/emu-russia/pureikyubu/tree/master/wiki">Внутренности
              эмулятора</a>: Flipper, GFX, Gekko, Debug UI и разбор IROM процессора DSP.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="archive">
+      <h2>Архив</h2>
+      <p class="sub">Прошлые релизы, оставлены для справки.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Release Notes 1.7</h3>
+          <p><a href="release_notes_1.7.html">English release notes</a> ·
+             <a href="release_notes_1.7_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.7.md">Markdown</a></p>
         </div>
       </div>
     </section>

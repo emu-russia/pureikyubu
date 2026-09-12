@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Notes 1.8 — pureikyubu</title>
+<meta name="description" content="Release notes for pureikyubu 1.8: the Gekko x86-64 recompiler, Paired-Single in SSE, event-driven device threads, the interrupt-line fixes that boot Zelda: The Wind Waker and Animal Crossing, RVZ disc images and the SDL controller settings.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="release_notes_1.8.html" aria-current="page">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="release_notes_1.8.html" class="active" hreflang="en">EN</a>
+      <a href="release_notes_1.8_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<main class="article">
+  <div class="wrap">
+
+    <div class="article-header">
+      <h1>pureikyubu 1.8 — Release Notes</h1>
+      <div class="meta">
+        September 2026 · previous release 1.7 (September 2026) ·
+        <a href="RELEASE_NOTES_1.8.md">Markdown version</a>
+      </div>
+    </div>
+
+    <p>
+      Version 1.8 is the performance release, and most of the speed came from removing work rather
+      than adding it. Gekko gained an x86-64 recompiler that lifts the emulated CPU to over 150 MIPS,
+      the periodic device threads stopped polling the time base in tight loops, and the interrupt
+      lines of the DSP, the disk interface and the serial interface were re-derived from the hardware
+      documentation. The last part matters more than the numbers: with the interrupt storms gone,
+      Zelda: The Wind Waker boots to its title screen and Animal Crossing finally leaves its exception
+      handler. The release also adds compressed RVZ disc images, a full controller-settings dialog for
+      the SDL build, and a new application icon.
+    </p>
+
+    <figure>
+      <img src="imgstore/zelda_wind_waker.png" alt="The Legend of Zelda: The Wind Waker title screen rendered by pureikyubu">
+      <figcaption><strong>The Legend of Zelda: The Wind Waker</strong>Boots to its title screen after
+        the DSP interrupt-vector and mailbox-request fixes.</figcaption>
+    </figure>
+
+    <div class="toc">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#highlights">Highlights</a></li>
+        <li><a href="#added">Added</a></li>
+        <li><a href="#changed">Changed</a></li>
+        <li><a href="#fixed">Fixed</a></li>
+        <li><a href="#known">Known issues</a></li>
+        <li><a href="#build">Building</a></li>
+      </ol>
+    </div>
+
+    <h2 id="highlights">Highlights</h2>
+    <ul>
+      <li><strong>Gekko recompiler.</strong> A new x86-64 basic-block compiler
+        (<code>src/gekkojit.*</code>) keeps the guest GPRs in host registers and shares the
+        interpreter's decode cache for everything it does not translate. Measured on the differential
+        harness: 39.7 MIPS for the original interpreter, 58.6 for the inlined interpreter and 155.9
+        with the recompiler; ALU-heavy code gains 8.6x. <code>jit 0</code> / <code>jit 1</code> in the
+        debugger switches engines at run time.</li>
+      <li><strong>Paired-Single in SSE.</strong> Every arithmetic PS instruction and both quantised
+        loads and stores (<code>psq_l</code> / <code>psq_st</code>) are translated to SSE/SSE2. The
+        PS-heavy workload goes from 59 MIPS (interpreter) to 435 MIPS, the quantised-load workload
+        from 57 to 191.</li>
+      <li><strong>No more busy-waiting.</strong> The VI scan-out and the serial poll now run on the CPU
+        thread from the tick it already advances, and the CP, AI DMA and DSP threads block on events
+        instead of spinning on <code>Core-&gt;GetTicks()</code>. <code>pong.dol</code> went from 1.47x
+        to 3.66x real time, Ikaruga from 2.16x to 4.58x and Luigi's Mansion from 0.62x (stalled) to
+        4.26x.</li>
+      <li><strong>The aggregate interrupt lines now work.</strong> The DSP and disk-interface
+        Processor-Interface lines ANDed the cause bits with their own mask bits, which is always zero;
+        both now follow the OR of the latched, unmasked causes. The serial interface polls on the
+        video line schedule instead of a fixed tick, which removes an interrupt storm that pinned
+        titles inside their handlers.</li>
+      <li><strong>Games.</strong> Zelda: The Wind Waker boots to its title screen and Metroid Prime
+        presents its title screen; Animal Crossing gets past the audio ARQ handshake, reads its disc
+        and displays the Nintendo logo.</li>
+      <li><strong>RVZ disc images.</strong> Compressed GameCube images in Dolphin's RVZ container
+        (Zstandard) can be mounted read-only, the same way an ISO or GCM is.</li>
+      <li><strong>SDL controller settings.</strong> The SDL build has a pad backend of its own and the
+        full "Configure Controller N" dialog: keyboard and game controller bindings side by side,
+        analog sticks and triggers, Clear / Default / OK / Cancel.</li>
+      <li><strong>New icon.</strong> The cube icon was recoloured with the blue palette of the logo
+        and regenerated as <code>pureikyubu.ico</code> (16–256 px, 32 bpp); the SDL builds embed the
+        same pixels and call <code>SDL_SetWindowIcon</code>.</li>
+    </ul>
+
+    <h2 id="added">Added</h2>
+
+    <h3>Gekko</h3>
+    <ul>
+      <li>x86-64 recompiler for Gekko basic blocks (<code>src/gekkojit.h</code>,
+        <code>src/gekkojit.cpp</code>). Every block records the translation state (generation counter)
+        it was compiled under, so a write to a BAT, <code>SDR1</code>, <code>HID0</code>/<code>HID2</code>
+        or <code>MSR</code>, or an <code>rfi</code>, <code>tlbie</code>, <code>icbi</code>,
+        <code>dcbst</code> or cache flush, drops all blocks in O(1). Untranslated instructions run
+        through <code>Interpreter::ExecuteDecoded</code> and share the interpreter's decode cache, so
+        both engines decode identically.</li>
+      <li>8192-entry decode cache keyed on the pc and the fetched instruction word, and a
+        direct-mapped TLB of 2048 page translations instead of an <code>unordered_map</code> that
+        allocated a <code>TLBEntry</code> per page.</li>
+      <li>Paired-Single translation (<code>src/gekkojit_ps.cpp</code>,
+        <code>-DGEKKO_JIT_PS=0</code> builds it out): <code>add</code>, <code>sub</code>,
+        <code>mul</code>, <code>div</code>, <code>res</code>, <code>rsqrte</code>, <code>madd</code>,
+        <code>msub</code>, <code>nmadd</code>, <code>nmsub</code>, <code>muls0/1</code>,
+        <code>madds0/1</code>, <code>sum0/1</code>, <code>sel</code>, <code>mr</code>, <code>neg</code>,
+        <code>abs</code>, <code>nabs</code>, <code>merge00/01/10/11</code> and the <code>_d</code>
+        recording forms. The x86-64 encoder, host register roles and <code>GekkoRegs</code> offsets
+        moved to <code>src/gekkojit_x64.h</code>.</li>
+      <li>Quantised paired loads and stores (<code>psq_l</code> / <code>psq_st</code>): all eight
+        indexed/non-indexed, update/non-update and W = 0/1 forms, with <code>HID2[PSE]</code>,
+        <code>HID2[LSQE]</code> and the <code>RA != 0</code> update rule decided at compile time. The
+        GQR is read at run time by <code>Jit::PsqLoad</code> / <code>Jit::PsqStore</code>, so writing
+        one invalidates nothing.</li>
+      <li>Debugger command <code>jit 0</code> / <code>jit 1</code>; 32-bit and non-x86 hosts, and
+        <code>-DGEKKO_JIT_DISABLED</code> builds, fall back to the interpreter.</li>
+    </ul>
+
+    <h3>Disc images</h3>
+    <ul>
+      <li>Read-only support for Dolphin's RVZ container (<code>src/rvz.cpp</code>): the container
+        header and its SHA-1 checksums, the data-entry and group tables, the <code>None</code> and
+        <code>Zstandard</code> compression methods and the "packed" representation that regenerates
+        runs of pseudo-random disc junk from an LFG seed. bzip2/LZMA groups and Wii images are
+        reported as unsupported. Zstandard is bundled under <code>thirdparty/zstd</code>.</li>
+      <li><code>.rvz</code> is accepted everywhere a disc image was accepted: the command line, the
+        game selector and the file dialogs.</li>
+    </ul>
+
+    <h3>Input and user interface</h3>
+    <ul>
+      <li>SDL pad backend (<code>src/padsdl.cpp</code>): a pad can be driven by the keyboard
+        (<code>SDL_GetKeyboardState</code>, SDL scancodes in <code>VKEY_FOR_*</code>) and by an SDL
+        game controller (<code>GCKEY_FOR_*</code> button and axis identifiers) at the same time; the
+        Nth connected controller drives the Nth port. The left stick drives the main stick, the right
+        stick the C stick and the triggers the analog L/R (digital L/R fire at 50%); the keyboard
+        50%/100% keys still work, and both sources are summed and clamped instead of overflowing
+        <code>int8_t</code>.</li>
+      <li>The controller-settings dialog in the SDL UI (<code>uisdl.cpp</code>, ported from the Win32
+        <code>PADConfigDialogProc</code>): Options → Controllers → Port 1..4 opens "Configure
+        Controller N" with the Buttons table on the left and the Control Stick / C Stick tables on the
+        right, each with its own Control | Keyboard | Gamepad columns. Clicking a binding arms capture,
+        the next key, controller button or stick/trigger deflection becomes the binding and the event
+        is swallowed; Esc cancels and modifier keys and F1–F12 are skipped for the keyboard.</li>
+      <li>Game controllers are opened and closed by the thread that pumps SDL events
+        (<code>PADUpdateControllers</code>) and read by the emulation thread through a spin-locked
+        snapshot; <code>PADLoadConfig</code> is public so the dialog can apply the bindings without
+        restarting emulation.</li>
+      <li>New application icon: the cube artwork recoloured to the logo palette
+        (<code>src/res/pureikyubu_icon.svg</code>) and embedded in
+        <code>src/res/pureikyubu_icon.h</code> for <code>SDL_SetWindowIcon</code> (the SDL port has no
+        <code>.rc</code> resources); <code>pureikyubu.ico</code> regenerated at 16–256 px,
+        32 bpp.</li>
+    </ul>
+
+    <h3>Command line and tooling</h3>
+    <ul>
+      <li><code>pureikyubu &lt;file&gt;</code> (or <code>--image &lt;file&gt;</code>) loads and runs the
+        image immediately instead of stopping in the game selector, and <code>--help</code> prints the
+        accepted options to the console and to the report log, so
+        <code>EMU_LOG=&lt;file&gt; pureikyubu --help</code> works too.</li>
+      <li><code>--bench &lt;file&gt; [seconds]</code> runs the emulator unattended and reports
+        throughput plus <code>Gekko::CpuStats</code> (translated vs interpreted instructions,
+        basic-block length, re-translations and their causes, cache-line fills and every access that
+        leaves the cache for the PI/MEM); <code>BENCH_PROFILE=1</code> adds a host cycle breakdown and
+        <code>BENCH_STATS=1</code> a guest instruction histogram.</li>
+      <li>The Gekko differential harness gained <code>BENCH_SPIN*</code> modes (which reproduce and
+        dissect the thread interference on the time base), <code>BENCH_PS_TEST</code>,
+        <code>BENCH_FUZZ_PS</code> and the <code>psq</code> workload mix; <code>build_win.bat</code>
+        builds the harness with MSVC so the two compilers can be compared on one workload.</li>
+    </ul>
+
+    <h3>Testing</h3>
+    <ul>
+      <li>Serial-interface spec tests: 17 new cases covering the SIPOLL round trip and its independent
+        halves, per-channel output buffers, read-only input buffers, COMCSR bit positions and TSTART,
+        the poll interval / budget / vertical-blank anchor, per-channel enables and the read-status
+        interrupt with its mask.</li>
+      <li>Command Processor spec tests (<code>testing/gfx_cp_spec_test.cpp</code>, 19 cases) written
+        from <code>specs/architecture/command-processor.md</code>: the VCD/VAT field positions, the
+        VAT component and colour byte counts, the vertex attribute order and
+        <code>gx_vtxsize</code>.</li>
+      <li>Five aggregation tests for the DSP interrupt line (each cause raises the line only through
+        its own mask, a real ARAM DMA completion reaches the PI, a masked cause latches without a
+        line, an acknowledgement drops it, and the mailbox interrupt reaches the PI), plus the
+        corrected DSP vector test and the latched CPU→DSP request test. The suite is at 367 tests.</li>
+    </ul>
+
+    <h2 id="changed">Changed</h2>
+
+    <h3>Performance and threading</h3>
+    <ul>
+      <li>The VI scan-out and the serial poll are executed by the CPU thread from the tick it already
+        advances (<code>GekkoCore::Tick</code> / <code>TickN</code> call <code>Flipper::Update</code>),
+        so VI timing is exact instead of sampled by a thread.</li>
+      <li>The Command Processor thread blocks on a new portable <code>Event</code>
+        (<code>utils.h</code>) that the CPU thread signals when a batch of FIFO entries is due
+        (<code>CommandProcessor::TickSync</code>); the drain stays at the emulated
+        <code>tickPerFifo</code> rate.</li>
+      <li>The AI DMA thread is woken by <code>DSP::AITickSync</code> (about every 6750 ticks at
+        48 kHz) and parks itself with <code>Suspend()</code> when no DMA is armed. The DSP thread is
+        woken by <code>DspCore::TickSync</code> once per <code>DspWakeTicks</code> and drains a batch,
+        so the emulated DSP no longer self-throttles by re-anchoring its deadline on every poll; the
+        mailbox hold-off is now a tick deadline (<code>DspCore::MailboxHoldTicks</code>).</li>
+      <li><code>mtmsr</code> and <code>rfi</code> drop the compiled blocks only when
+        <code>MSR[IR]</code>/<code>[DR]</code> actually change; the OS toggles <code>MSR[EE]</code>
+        around every critical section and dropping the whole cache for it cost ~85,000 needless
+        re-translations per second.</li>
+      <li>Address translation, the tick and the branch-condition helpers are really inlined now
+        (<code>GEKKO_INLINE</code>).</li>
+    </ul>
+
+    <h3>Behaviour and configuration</h3>
+    <ul>
+      <li>The Windows and SDL builds keep separate settings:
+        <code>DefaultSettingsWin.json</code> / <code>SettingsWin.json</code> and
+        <code>DefaultSettingsSdl.json</code> / <code>SettingsSdl.json</code>. The two ports run from
+        the same directory and used to overwrite each other's configuration; each executable now
+        embeds its own file names.</li>
+      <li>The serial interface follows the documented register layout: <code>SICnOUTBUF</code> is the
+        CPU-visible register with the shadow read by the transfer engine, <code>SICOMCSR</code>
+        latches CHANNEL and INLNGTH on an ordinary write and <code>TSTART</code> reads back as a
+        pending bit, and the poll register drives <code>SIPoll(line)</code> directly.</li>
+      <li>The Flipper device threads and the emulator use the same <code>Event</code> abstraction, so
+        the timing code is portable between Win32 and SDL.</li>
+    </ul>
+
+    <h2 id="fixed">Fixed</h2>
+
+    <h3>Interrupts and timers</h3>
+    <ul>
+      <li><strong>DSP/DI aggregate interrupt lines.</strong> Every cause in CDCR and DI_SR has its own
+        mask bit, and the pairs are not adjacent; both re-evaluation helpers ANDed the group of causes
+        with the group of masks, so the lines were never asserted at all. Animal Crossing hung in its
+        ARQ wait because the ARAM DMA completion never reached the CPU. Both lines now follow the OR of
+        <code>(cause &amp;&amp; its own mask)</code> and are re-evaluated from <code>DSPUpdateInt()</code>
+        / <code>DIUpdateInt()</code> whenever a cause or a mask changes.</li>
+      <li><strong>A cleared cause can drop the line.</strong> The lines were only ever dropped inside
+        one <code>write_cdcr</code> / <code>write_sr</code> branch; clearing one cause while another
+        was still latched left the line high with nothing left to clear it, so the CPU re-entered the
+        external-interrupt handler on every <code>rfi</code>. Animal Crossing was executing ~11,500
+        exceptions a second.</li>
+      <li><strong>Serial-interface poll storm.</strong> The emulator polled on a fixed 0x10000-tick
+        interval (about ten times the hardware frame rate) instead of the SIPOLL video-line schedule,
+        so <code>RDSTINT</code> was re-raised continuously. On Animal Crossing the emulated time for a
+        fixed wall clock went from 3.8 s to 74 s, exception entries from 165,000 to 2,213 and VI
+        interrupts from 0 to 2,178; Zelda's exception count dropped from 49,635 to 2,157.</li>
+      <li><strong>DSP microcode vectors.</strong> The interrupt vector base was taken from the live
+        CDCR use-rom bit instead of the program that is running; Zelda's microcode installs a CPU→DSP
+        vector at 0x000E in IRAM and the loader's vectors made it bounce the command. CDCR bit 1 is now
+        latched as a request and re-tried until the core accepts it through the TE3/ET gate, so a
+        request that arrives while <code>te3</code> is closed is no longer lost.</li>
+      <li><strong>DSP/AI threads.</strong> <code>DspAIOpen</code> cleared its state with
+        <code>memset</code>, which also wiped the <code>Event</code> the AI thread waits on (a wait on
+        a zeroed handle returns immediately, so the thread silently went back to spinning); the clear
+        is now an explicit <code>DspAIControl::Reset</code>.</li>
+    </ul>
+
+    <h3>Graphics</h3>
+    <ul>
+      <li><strong>Presentation (issue #361).</strong> <code>pe.cpp</code> switched the VI output off
+        after the first <code>GXDrawDone</code>/PE token, which stopped scan-out for the rest of the
+        run in titles that keep presenting; the gate had no hardware meaning and is gone. In the SDL
+        build the VI picture was written into the same window that carries the OpenGL context, so the
+        two presenters alternated; the GL backend owns the window while it runs and the VI still
+        decodes the XFB and counts frames.</li>
+      <li><strong>Command Processor.</strong> <code>CP_FIFO_COUNT</code> was a stale software register
+        and is now the live FIFO occupancy ("the distance between the write and the read pointer").
+        The break-point status bit was gated on <code>CP_ENABLE[FIFOBRKINT]</code> instead of
+        <code>[FIFOBRK]</code>, so a title that armed the break point without the interrupt never saw
+        the flag. <code>CommandProcessor::ResetFifoProcessor()</code> drops the CP-side command buffer
+        so a new stream starts clean.</li>
+      <li><strong>VI.</strong> <code>VI_DTV_STATUS</code> (0xCC00206E) is implemented instead of
+        falling through to the default case, where it returned 0 and made the SDK's
+        <code>VIGetTvFormat()</code> always report NTSC.</li>
+      <li><strong>Texture decoder (issue #359).</strong> IA4 walked the tiles column first while the
+        tiles of an image are stored row by row, so a map wider than one tile came out transposed (and
+        the report encoder mirrored the same walk, which is why the gallery never showed it); the
+        debugger's <code>gxtexdump</code> read the colour fields after the decoder had serialised the
+        texels into the R,G,B,A byte order GL wants, which rotated the channels of every non-grey
+        format; C14X2 masked its palette index with 0x3ff instead of 0x3fff; and the transparent
+        fourth colour of the CMPR three-colour mode lost the RGB of the endpoint average.</li>
+      <li><strong>Texture uploads.</strong> <code>DecodeTexture</code> compares the description and an
+        FNV-1a hash of the raw texture bytes (plus a TLUT generation for the palette) and keeps the GL
+        image when nothing changed; the upload reuses the image storage with
+        <code>glTexSubImage2D</code>, the sampler parameters and the mip chain are only re-applied
+        when <code>TX_SETMODE0/1</code> really change, and <code>TX_INVTAGS</code>
+        (<code>GXInvalidateTexAll</code>) marks every map for a decode again.</li>
+    </ul>
+
+    <h3>Interface and platform</h3>
+    <ul>
+      <li><code>File → Reopen</code>, a dead menu entry, is wired to the last loaded image (the
+        <code>LASTFILE</code> setting the selector already maintains) with F3 as its accelerator.</li>
+      <li>Writes to the SI input buffer registers no longer halt the emulation.</li>
+      <li>The Gekko sources are valid UTF-8 (two CP1252 comment bytes in <code>gekko.cpp</code> /
+        <code>gekkoc.cpp</code> were normalised).</li>
+      <li>The DSP unit tests link a counter double (<code>testing/dsp_test_support.cpp</code>) now
+        that the DSP sources are built without <code>gekko.cpp</code>, and the mailbox hold-off
+        tolerates the null <code>Core</code> the tests use.</li>
+    </ul>
+
+    <h2 id="known">Known issues</h2>
+    <ul>
+      <li>Bump mapping, indirect texturing, the Z-texture environment and Cpu2Efb are not emulated
+        yet.</li>
+      <li>PE dither and a few <code>SU</code> flag fields are deliberately unimplemented and documented
+        in <code>wiki/gfx.md</code>.</li>
+      <li>Full JAudio microcode support (issue #71) is still in progress; the remaining DSP
+        divergences from the hardware are recorded in <code>testing/Readme.md</code>.</li>
+      <li>RVZ support is read-only: bzip2/LZMA groups and Wii images are not implemented.</li>
+      <li>The recompiler needs a 64-bit x86 host; 32-bit and non-x86 builds, and
+        <code>GEKKO_JIT_DISABLED</code>, fall back to the interpreter.</li>
+      <li>The Linux build still has no sound and no input.</li>
+      <li>Some titles still fail to render or hang; compatibility is a work in progress.</li>
+    </ul>
+
+    <h2 id="build">Building</h2>
+    <p><strong>Windows.</strong> Open <code>scripts/VS2026/pureikyubu.sln</code> in Visual Studio 2026
+      and build. SDL and Win32 front ends both have Debug and Release configurations.</p>
+    <p><strong>Linux.</strong></p>
+    <pre><code>sudo apt install libglew-dev
+git clone https://github.com/emu-russia/pureikyubu.git
+cd pureikyubu
+git submodule update --init
+cd build &amp;&amp; cmake .. &amp;&amp; make
+./pureikyubu pong.dol</code></pre>
+    <p><strong>Tests.</strong></p>
+    <pre><code>MSBuild scripts/VS2026/pureikyubu_test.slnx -p:Configuration=Release -p:Platform=x64
+vstest.console.exe scripts/VS2026/x64/Release/pureikyubu_test.dll /Platform:x64</code></pre>
+
+    <p class="note">
+      The previous release is still available:
+      <a href="release_notes_1.7.html">Release Notes 1.7</a> ·
+      <a href="release_notes_1.7_ru.html">Заметки о релизе 1.7</a>. The long story of the work after
+      release 1.6 is in the <a href="digest.html">digest</a>.
+    </p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Nintendo GameCube is a trademark of Nintendo; this emulator is not affiliated with Nintendo.</div>
+    <div><a href="index.html">Home</a> · <a href="release_notes_1.7.html">Release Notes 1.7 (archive)</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>
