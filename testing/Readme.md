@@ -171,8 +171,12 @@ are therefore differential against the interpreter:
 * `Jit_RecompilesWhenTheInstructionStreamChanges` - changing a word under a live block makes
   the recompiler recompile it (the per-entry word verification).
 * `Jit_CanBeSwitchedOff` - `DspCore::JitEnabled = false` runs the interpreter.
+* `Jit_SeesTheCodeADspDmaWrites` - a running block triggers a mem->IMEM DSP-DMA that rewrites
+  words ahead of its pc; the block must leave and recompile (this is the microcode upload).
 * `Jit_MatchesInterpreterOnIromBoot` - the real IROM boot path (mailbox handshake, command
   dispatcher, wait loop) for 20000 instructions.
+* `Jit_MatchesInterpreterOnEveryIromEntry` - every entry point of the real IROM (the DMA
+  blocks and the whole DSP self-test included) for 64 instructions each.
 
 The comparison covers the whole observable state: the accumulators and operands, the
 product, psr, pc, the address/modifier/length registers, dpp, the four stacks and the

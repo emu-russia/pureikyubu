@@ -81,12 +81,15 @@ each (`interp` = `DspCore::Step`, `jit` = `DspCore::RunJitBlock`):
 
 | Workload | Interpreter | Recompiler | Speedup |
 |---|---|---|---|
-| `irom` - real boot microcode | 97.2 MIPS | 150.7 MIPS | 1.55x |
-| `nop` - pure block dispatch | 138.7 MIPS | 234.8 MIPS | 1.69x |
-| `golden` - synthetic data path | 35.8 MIPS | 61.3 MIPS | 1.71x |
-| `raw` - generated workload | 34.9 MIPS | 63.3 MIPS | 1.81x |
+| `irom` - real boot microcode | 97.1 MIPS | 146.1 MIPS | 1.50x |
+| `nop` - pure block dispatch | 136.5 MIPS | 211.0 MIPS | 1.55x |
+| `golden` - synthetic data path | 35.0 MIPS | 61.6 MIPS | 1.76x |
+| `raw` - generated workload | 34.8 MIPS | 62.5 MIPS | 1.80x |
 
 The speedup is bounded by how much of the interpreter's time is fetch/decode/dispatch -
 the part the recompiler removes by baking the decoded instruction into the generated call.
+The generated code also tests the code generation and the pending-interrupt flags after
+every word, so a DSP-DMA that rewrites the microcode, or an interrupt, is seen at the next
+instruction rather than at the end of the block.
 The handlers themselves are shared, so the two engines can never disagree about what an
 instruction *means*; `check.sh` and `testing/dsp_jit_test.cpp` pin that down.

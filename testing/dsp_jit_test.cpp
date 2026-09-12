@@ -605,6 +605,86 @@ namespace DspUnitTest
 		}
 
 		/// <summary>
+		/// Every entry point of the real IROM (the reset code, the mailbox handshakes, the four
+		/// DSP-DMA blocks, the command dispatcher and the whole DSP self-test), each run for a
+		/// fixed number of instructions from the same plausible state and compared. The reset
+		/// path alone does not reach the self-test or the DMA blocks, so this is what covers the
+		/// code the boot ROM actually spends its time in.
+		/// </summary>
+		TEST_METHOD(Jit_MatchesInterpreterOnEveryIromEntry)
+		{
+			std::string path;
+			if (!FindRepoFile("build/Data/dsp_irom.bin", path))
+			{
+				Assert::Fail(L"build/Data/dsp_irom.bin was not found");
+			}
+
+			m.core->SetJitMaxBlockInstrs(32);
+
+			const DspAddress first = 0x8000;
+			const DspAddress last = 0x88EB;
+			const uint32_t wanted = 64;
+
+			size_t mismatches = 0;
+			std::wstring firstMismatch;
+
+			auto setup = [&](DspAddress entry)
+			{
+				m.Reset();
+				m.LoadIROM(Util::StringToWstring(path));
+
+				m.core->regs.dpp = 0x00FF;
+				for (int i = 0; i < 4; i++)
+				{
+					m.core->regs.l[i] = 0xFFFF;
+				}
+
+				// A return address, so that a `rets` at the end of a routine returns instead of
+				// raising the stack-underflow Error.
+				m.core->regs.pcs->push(0x800E);
+				m.core->regs.pc = entry;
+				m.core->ResetInstructionCounter();
+			};
+
+			for (DspAddress pc = first; pc < last; pc++)
+			{
+				if ((pc & 0xFF) == 0)
+				{
+					DspTestLogClear();
+				}
+
+				uint32_t retired = 0;
+				setup(pc);
+				while (retired < wanted)
+				{
+					retired += m.core->RunJitBlock();
+				}
+				CoreState recompiled = Capture();
+
+				setup(pc);
+				for (uint32_t i = 0; i < retired; i++)
+				{
+					m.core->Step();
+				}
+				CoreState interp = Capture();
+
+				std::wstring diff = Diff(interp, recompiled);
+				if (!diff.empty())
+				{
+					mismatches++;
+					if (firstMismatch.empty())
+					{
+						wchar_t buf[512];
+						swprintf_s(buf, L"entry %04X: ", pc);
+						firstMismatch = buf + diff;
+					}
+				}
+			}
+
+			Assert::IsTrue(mismatches == 0, firstMismatch.c_str());
+		}
+
+		/// <summary>
 		/// The real IROM boot path (mailbox handshake, the command dispatcher and the wait loop)
 		/// on the recompiler must match the interpreter instruction for instruction.
 		/// </summary>
