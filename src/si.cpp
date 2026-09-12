@@ -406,14 +406,58 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// polling
 
+	// The poll schedule (serial-interface.md 5.1):
+	//
+	//   SIPOLL[X] is the interval between two polls in horizontal video lines,
+	//   SIPOLL[Y] is how many polls a frame may issue,
+	//   polling is anchored to the vertical blank, and `Y == 0` disables it.
+	//
+	// The schedule is therefore counted in *video lines*, not in CPU ticks: the interval used to
+	// be a fixed `SI_POLLING_INTERVAL` of Gekko ticks, which at the derived timer clock is about
+	// 1.6 ms - a poll every ~100 us per channel, i.e. roughly ten times the frame rate the
+	// hardware runs at. On a channel whose enable bit is set and whose response the guest has not
+	// read yet, every one of those polls re-raises RDSTINT, so the guest is buried in serial
+	// interrupts: Animal Crossing (GAFE01) spends its whole run in the SI handler instead of
+	// booting, which is the black screen.
+	//
+	// The video line counter is the natural tick for this: it is driven by the VI and wraps once
+	// per frame, so a new frame is exactly "the line count went backwards".
 	void SerialInterface::SIPoll()
 	{
-		int64_t ticks = Core->GetTicks();
-		if (ticks < si.pollingTime)
+		uint32_t line = vi->GetCurrentLine();
+
+		// A new frame: restart the poll budget and allow the first poll of the frame.
+		if (line < si.lastPollLine)
+		{
+			si.pollsThisFrame = 0;
+			si.pollLineDue = true;
+		}
+		si.lastPollLine = line;
+
+		uint32_t interval = SI_POLL_X(SI_POLL_REG);
+		uint32_t perFrame = SI_POLL_Y(SI_POLL_REG);
+
+		// `Y == 0` means the poller is off, and a zero interval would poll every line.
+		if (perFrame == 0 || interval == 0)
 		{
 			return;
 		}
-		si.pollingTime = ticks + SI_POLLING_INTERVAL;
+
+		if (si.pollsThisFrame >= perFrame)
+		{
+			return;
+		}
+
+		// The first poll of a frame happens at the blank; after that one poll every `interval`
+		// lines. A frame shorter than `interval` therefore still gets its first poll.
+		if (!si.pollLineDue && (line - si.pollLineBase) < interval)
+		{
+			return;
+		}
+
+		si.pollLineDue = false;
+		si.pollLineBase = line;
+		si.pollsThisFrame++;
 
 		if (SI_POLL_REG & SI_POLL_EN0)
 		{
@@ -489,8 +533,9 @@ namespace Flipper
 	{
 	}
 
-	SerialInterface::SerialInterface(Flipper* flipper, HWConfig* config)
+	SerialInterface::SerialInterface(Flipper* flipper, HWConfig* config, VideoInterface* video)
 	{
+		vi = video;
 		Debug::Report(Debug::Channel::SI, "Serial interface driver\n");
 
 		// clear all registers
@@ -498,7 +543,10 @@ namespace Flipper
 
 		si.log = config->si_log;
 
-		si.pollingTime = Core->GetTicks() + SI_POLLING_INTERVAL;
+		si.lastPollLine = 0;
+		si.pollLineBase = 0;
+		si.pollsThisFrame = 0;
+		si.pollLineDue = true;
 
 		// these values are actually written when IPL boots
 		// meaning is unknown (some pad command) and no need to be known

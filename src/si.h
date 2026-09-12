@@ -1,8 +1,6 @@
 
 #pragma once
 
-#define SI_POLLING_INTERVAL     0x10000      // In Gekko ticks
-
 // SI registers (all registers are 32-bit from the software side)
 
 #define SI_CHAN0_OUTBUF     0x00      // Channel 0 Output Buffer
@@ -100,12 +98,17 @@ namespace Flipper
 		bool                rumble[4];      // rumble support flags for every controller
 		// filled when SI is inited, by checking PADSetRumble
 		bool                log;            // do debugger log output
-		int64_t             pollingTime;    // Saved Gekko TBR for polling
+		// The poll schedule (serial-interface.md 5.1) is counted in video lines, not CPU ticks.
+		uint32_t            lastPollLine;   // line counter value at the previous poll evaluation
+		uint32_t            pollLineBase;   // line at which the current interval started
+		uint32_t            pollsThisFrame; // polls issued since the last vertical blank
+		bool                pollLineDue;    // the first poll of the frame is still due
 	};
 
 	class SerialInterface
 	{
 		SIState si{};		//!< SI state (registers and other data)
+		VideoInterface* vi = nullptr;	//!< the video interface, for the poll schedule
 
 		void SICommand(int chan, int outlen, int inlen, uint8_t* ptr);
 		void SIClearInterrupt();
@@ -174,7 +177,7 @@ namespace Flipper
 		static void read_exilk_lo(uint32_t addr, uint32_t* reg, void* ctx);
 
 	public:
-		SerialInterface(Flipper* flipper, HWConfig* config);
+		SerialInterface(Flipper* flipper, HWConfig* config, VideoInterface* video);
 		~SerialInterface();
 
 		void SIPoll();

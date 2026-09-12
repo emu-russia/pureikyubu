@@ -135,6 +135,13 @@ namespace Flipper
 		~VideoInterface();
 
 		void VIUpdate();
+
+		/// <summary>
+		/// The current video line number of the raster (VI_DISPLAY_POS.VCT). The serial interface
+		/// derives its poll schedule from it: SIPOLL[X] is an interval in video lines and a new
+		/// frame is a wrap of the counter (serial-interface.md 5.1).
+		/// </summary>
+		uint32_t GetCurrentLine() const { return vi.pos.vcount; }
 		void VIStats();
 
 		void VISetEncoderFuse(int value);

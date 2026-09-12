@@ -30,7 +30,7 @@ namespace Flipper
 		DSP::AROpen(this);       // aux. memory (ARAM)  TODO: find better place
 		exi = new ExternalInterface(this, config);
 		di = new DiskInterface(this, config);
-		si = new SerialInterface(this, config);
+		si = new SerialInterface(this, config, vi);
 
 		DSP->core->HardReset();
 
