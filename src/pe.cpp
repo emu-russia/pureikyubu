@@ -244,15 +244,10 @@ namespace GFX
 			// draw done
 			case PE_FINISH_ID:
 			{
-				// GXDrawDone marks the end of the frame and is how most titles present: the copied
-				// picture is complete by now.
+				// GXDrawDone marks the end of the frame: the copied picture is complete.
 				gfx->GPFrameDone();
 
 				pe_done_num++;
-				if (pe_done_num == 1)
-				{
-					Flipper::HW->vi->VIDisableXfb();	// disable VI output
-				}
 				PE_DONE_INT();
 			}
 			break;
@@ -269,7 +264,6 @@ namespace GFX
 				{
 					gfx->GPFrameDone();
 
-					Flipper::HW->vi->VIDisableXfb();	// disable VI output
 					PE_TOKEN_INT();
 				}
 			}

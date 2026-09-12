@@ -62,6 +62,11 @@
 #define VI_NTSC_LIKE        0
 #define VI_PAL_LIKE         1
 
+// VI_DTV_REG (VI_DTV_STATUS) pins. The register reports the state of the hardware
+// pins that strap the video encoder; software (the SDK's VIGetTvFormat) reads the
+// PAL/NTSC bit to decide which of its render modes it is allowed to configure.
+#define VI_DTV_PAL          0x0002      // 1: PAL encoder, 0: NTSC encoder
+
 // max vertical line count
 #define VI_NTSC_INTER       525         // 60 Hz
 #define VI_NTSC_NON_INTER   263         // 30 Hz

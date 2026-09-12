@@ -591,6 +591,10 @@ namespace Flipper
 		uint16_t CpReadReg(uint32_t addr);
 		void CpWriteReg(uint32_t addr, uint16_t value);
 
+		//! The live FIFO occupancy (write pointer minus read pointer, over the ring), in 32-byte
+		//! units. This is what CP_FIFO_COUNT reports and what the water marks are compared against.
+		void FifoCount(uint32_t* count) const;
+
 	public:
 		CommandProcessor(Flipper* flipper, HWConfig* config);
 		~CommandProcessor();
@@ -610,6 +614,11 @@ namespace Flipper
 
 		//! The frame counters, for the debug interface (`gxframes`, `gxregs cp`).
 		void GetStats(CommandProcessorStats* stats) const;
+
+		//! Drop the decoded command stream the CP has buffered (the CP-side FIFO), so that a new
+		//! command stream starts from an empty buffer. The unit tests use it to isolate one test
+		//! stream from the next; CPAbortFifo (CP_ABORT) is the guest-visible equivalent.
+		void ResetFifoProcessor();
 
 		//! Drain the graphics FIFO once: exactly the work the CP thread does on one tick. The unit
 		//! tests use it to run the command stream deterministically, without the emulator threads.
