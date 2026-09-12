@@ -65,6 +65,9 @@
     <ClCompile Include="..\..\src\jdi.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\jdispecs.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\json.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>

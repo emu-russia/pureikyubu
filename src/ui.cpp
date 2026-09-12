@@ -725,7 +725,18 @@ int WINAPI WinMain(
 	{
 		while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
 		{
-			Sleep(1);
+			// The new debugger (debugui2) draws into an SDL window of its own. While the Win32
+			// side has nothing to do, its events are pumped and a frame is drawn.
+			Debug2::UiPumpSdlEvents();
+			Debug2::Frame();
+
+			if (Debug2::CloseRequested())
+			{
+				Debug2::StopDebugger();
+				CheckMenuItem(wnd.hMainMenu, ID_DEBUG_TESTNEWDEBUGGER, MF_BYCOMMAND | MF_UNCHECKED);
+			}
+
+			Sleep(Debug2::IsDebuggerActive() ? 10 : 1);
 		}
 
 		/* Idle loop */
@@ -4151,6 +4162,7 @@ static void OnMainWindowCreate(HWND hwnd)
 	// Add UI methods
 	JdiAddNode("UI_JDI_JSON", JdiSpecs::UiJdi, UIReflector);
 	JdiAddNode("DEBUG_UI_JDI_JSON", JdiSpecs::DebugUiJdi, Debug::DebugUIReflector);
+	JdiAddNode("DEBUG_UI2_JDI_JSON", JdiSpecs::DebugUi2Jdi, Debug2::Reflector);
 
 	// simulate close operation, like we just stopped emu
 	OnMainWindowClosed();
@@ -4159,10 +4171,14 @@ static void OnMainWindowCreate(HWND hwnd)
 // called once, when emu exits to OS
 static void OnMainWindowDestroy()
 {
+	// The new debugger owns an SDL window and a GL context of its own, so it goes first.
+	Debug2::StopDebugger();
+
 	UI::Jdi->Unload();
 
 	JdiRemoveNode("UI_JDI_JSON");
 	JdiRemoveNode("DEBUG_UI_JDI_JSON");
+	JdiRemoveNode("DEBUG_UI2_JDI_JSON");
 
 	// disable drop operation
 	DragAcceptFiles(wnd.hMainWindow, FALSE);
@@ -4657,6 +4673,23 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 						Debug::debugger = nullptr;
 						UI::Jdi->SetConfigBool(USER_DOLDEBUG, false, USER_UI);
 						SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
+					}
+					return 0;
+				}
+				// Open/close the new debugger (debugui2, issue #371). The window it opens
+				// belongs to the debugger itself, the Win32 front end only pumps its events.
+				case ID_DEBUG_TESTNEWDEBUGGER:
+				{
+					if (Debug2::IsDebuggerActive())
+					{   // close
+						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_TESTNEWDEBUGGER, MF_BYCOMMAND | MF_UNCHECKED);
+						Debug2::StopDebugger();
+					}
+					else
+					{   // open
+						Debug2::StartDebugger();
+						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_TESTNEWDEBUGGER, MF_BYCOMMAND |
+							(Debug2::IsDebuggerActive() ? MF_CHECKED : MF_UNCHECKED));
 					}
 					return 0;
 				}

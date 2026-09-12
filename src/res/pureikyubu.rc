@@ -358,6 +358,7 @@ BEGIN
         MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
         MENUITEM "&Find Symbols",               ID_CREATE_MAP, CHECKED, GRAYED
         MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
+        MENUITEM "&Test New Debugger",          ID_DEBUG_TESTNEWDEBUGGER
         MENUITEM "Mount DolphinSDK as DVD...",  ID_DEVELOPMENT_MOUNTSDK
     END
     POPUP "&Options"

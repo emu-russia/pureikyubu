@@ -83,6 +83,11 @@
     <ClCompile Include="..\..\src\jdi.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <!-- The JDI node descriptions: dsp.cpp and gfx.cpp register their nodes with the texts from
+         JdiSpecs, so the module has to be linked in as well. -->
+    <ClCompile Include="..\..\src\jdispecs.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\src\json.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>

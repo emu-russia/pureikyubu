@@ -198,6 +198,7 @@
 #define ID_ALLOW_PATCHES                40066
 #define ID_LOAD_PATCH                   40067
 #define ID_ADD_PATCH                    40068
+#define ID_DEBUG_TESTNEWDEBUGGER        40069
 #define ID_ABOUT_GFX                    40071
 #define ID_ABOUT_AUD                    40072
 #define ID_ABOUT_PAD                    40073

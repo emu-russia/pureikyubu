@@ -11,6 +11,7 @@ namespace JdiSpecs
 	extern const char* EmuJdi;			// Emulator control commands (main.cpp)
 	extern const char* DebuggerJdi;		// Debugger commands (debug.cpp)
 	extern const char* DebugUiJdi;		// Debug UI commands (debugui.cpp)
+	extern const char* DebugUi2Jdi;		// The new debugger session commands (debugui2.cpp)
 	extern const char* GekkoCoreJdi;	// Gekko (CPU) debug commands (gekkodebug.cpp)
 	extern const char* DspJdi;			// DSP debug commands (dsp.cpp)
 	extern const char* HwJdi;			// Flipper HW debug commands (flipperdebug.cpp)
