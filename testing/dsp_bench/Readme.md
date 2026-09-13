@@ -58,7 +58,7 @@ instructions, so the two fingerprints have to match.
 
 | Variable | Effect |
 |---|---|
-| `DSP_JIT=1` | Run the recompiler instead of the interpreter |
+| `DSP_JIT=1` | Run the recompiler instead of the interpreter. It is off by default (in the emulator too: `--dspjit` is the same opt-in), so the benchmark's interpreter half is what a plain run does |
 | `DSP_VERBOSE=1` | Print the core's `Debug::Report` output |
 | `DSP_IROM=<path>` | The IROM image to load (default `build/Data/dsp_irom.bin`) |
 | `DSP_JIT_BLOCK=<n>` | Limit a compiled block to `n` words (bisecting a codegen problem) |

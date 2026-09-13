@@ -50,10 +50,19 @@ its exact semantics (including the `Halt` the core raises for it).
 * The debug paths stay on the interpreter: `DspCore::Step`, breakpoints, canaries and the
   one-shot breakpoint all fall back (see `DspCore::RunJitBlock`).
 
-## Switching it off
+## Switching it on
 
-`DspCore::JitEnabled` (public, on by default) selects the engine; setting it to false
-runs the plain interpreter. `-DDSP_JIT_DISABLED` removes the recompiler from the build.
+The recompiler is experimental and **off by default**: the emulator runs the interpreter
+unless it is asked not to, so a plain run is never affected by this module. There are
+three ways to turn it on:
+
+* `--dspjit` on the command line,
+* `dspjit 1` in the debugger (and `dspjit 0` back off, at runtime),
+* `DspCore::JitEnabled = true` from code (this is what the tests and `dsp_bench` do).
+
+`DspCore::JitEnabled` is the single switch; with it false `RunJitBlock` retires exactly one
+instruction through the interpreter, so the two engines can be compared in one binary.
+`-DDSP_JIT_DISABLED` removes the recompiler from the build entirely.
 
 ## x86-64 only
 

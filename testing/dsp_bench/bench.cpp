@@ -143,6 +143,10 @@ int main(int argc, char** argv)
 	// Pin the tick source to a non-null stub so that nothing dereferences a null Core.
 	Core = &tickSource;
 
+	// The recompiler is off by default; this benchmark is the tool that measures it, so ask for
+	// it explicitly (`DSP_JIT=1`), exactly as `--dspjit` does in the emulator.
+	core->JitEnabled = useJit;
+
 	// The ARAM accelerator is part of the DSP device and the sweep reaches its data port
 	// through `ldsa`; without the ARAM image those reads dereference a null buffer.
 	DSP::AROpen(Flipper::HW);

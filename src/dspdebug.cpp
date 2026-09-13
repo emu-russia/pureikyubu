@@ -594,9 +594,9 @@ namespace DSP
 	}
 
 	// Toggle the DSPcore recompiler at runtime: `dspjit 0` / `dspjit 1`, with no argument it
-	// reports the current state. The recompiler is correct by construction (it calls the very
-	// same instruction handlers as the interpreter) but it retires whole blocks, so this is
-	// the fastest way to tell whether a DSP problem comes from the recompiler or not.
+	// reports the current state. The recompiler is experimental and off by default; while it is
+	// on it retires whole blocks, so this is also the fastest way to tell whether a DSP problem
+	// comes from the recompiler or not.
 	static Json::Value* CmdDspJit(std::vector<std::string>& args)
 	{
 		DspCore* core = Flipper::DSP->core;

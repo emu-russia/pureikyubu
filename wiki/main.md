@@ -52,6 +52,7 @@ measurements in `testing/gekko_bench/Readme.md`).
 |---|---|
 | `--ipl` | Start the Bootrom (IPL) right away, without going through the UI |
 | `--no-disc` | Start with the DVD lid open, so that the IPL takes its "no disc" path |
+| `--dspjit` | Run the DSPcore on the experimental basic block recompiler. The default is the interpreter, and the same switch is available at runtime as `dspjit 0` / `dspjit 1` in the debugger (see `src/dspjit.h`) |
 | `--bench <file> [seconds]` | Run the file unattended for the given number of seconds (30 by default) and print the measured throughput and the CPU statistics to the debug log (`EMU_LOG=<file>`). `BENCH_PROFILE=1` adds the host cycle breakdown, `BENCH_STATS=1` the guest instruction histogram |
 
 ## HWConfig

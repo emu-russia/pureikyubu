@@ -153,6 +153,10 @@ direct call to the same handler the interpreter's `Dispatch` would call, and the
 non-opcode parts of `Dispatch` are shared through `DspInterpreter::JitCommit`. The tests
 are therefore differential against the interpreter:
 
+The recompiler is experimental and off by default (`--dspjit`, or `dspjit 1` in the
+debugger, turns it on), so the fixture enables it before every test;
+`DspJitDefaultTest.RecompilerIsOffByDefault` pins the default down.
+
 * `Jit_IsAvailable` - the core owns a recompiler and it is built for the host.
 * `Jit_CompilesWholeBlocks` - one `RunJitBlock` retires a whole block of nops, not one word.
 * `Jit_MatchesInterpreterOnGoldenVectors` - every word of the hardware golden table, run

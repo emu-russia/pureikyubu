@@ -520,10 +520,12 @@ namespace DSP
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
 
 		/// <summary>
-		/// Enable the basic block recompiler. The generated code retires whole blocks, so the
-		/// debug paths (single stepping, breakpoints, canaries) keep using the interpreter.
+		/// Enable the basic block recompiler. It is an experimental feature and off by default:
+		/// turning it on is a deliberate act (`--dspjit`, the debugger's `dspjit 1`, or a test).
+		/// The generated code retires whole blocks, so the debug paths (single stepping,
+		/// breakpoints, canaries) keep using the interpreter.
 		/// </summary>
-		bool JitEnabled = true;
+		bool JitEnabled = false;
 
 		/// <summary>
 		/// Bumped every time the compiled code is invalidated (DspCore::InvalidateJit, and the

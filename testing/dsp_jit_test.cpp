@@ -214,6 +214,16 @@ namespace DspUnitTest
 		// Tests
 		// ------------------------------------------------------------------
 
+		/// <summary>
+		/// The recompiler is off by default (it is an experimental feature), so every test that
+		/// means to exercise it has to ask for it. `Jit_CanBeSwitchedOff` is the exception that
+		/// proves the switch itself.
+		/// </summary>
+		TEST_METHOD_INITIALIZE(EnableTheRecompiler)
+		{
+			m.core->JitEnabled = true;
+		}
+
 		TEST_METHOD(Jit_IsAvailable)
 		{
 			Assert::IsTrue(m.core->GetJit() != nullptr, L"the DSP core must own a recompiler");
@@ -364,7 +374,8 @@ namespace DspUnitTest
 		}
 
 		/// <summary>
-		/// Turning the recompiler off must fall back to the interpreter (one word per call).
+		/// Turning the recompiler off must fall back to the interpreter (one word per call). This
+		/// is also the state a plain emulator run starts in.
 		/// </summary>
 		TEST_METHOD(Jit_CanBeSwitchedOff)
 		{
@@ -377,8 +388,6 @@ namespace DspUnitTest
 
 			Assert::AreEqual((uint32_t)1, m.core->RunJitBlock(), L"with the recompiler off, one word is retired");
 			Assert::AreEqual((uint32_t)1, m.core->regs.pc, L"the interpreter advanced the pc by one word");
-
-			m.core->JitEnabled = true;
 		}
 
 		/// <summary>
@@ -914,6 +923,32 @@ namespace DspUnitTest
 
 			std::wstring diff = Diff(interp, recompiled);
 			Assert::IsTrue(diff.empty(), diff.c_str());
+		}
+	};
+
+	/// <summary>
+	/// The recompiler is an experimental feature, so it must stay off unless something asks for
+	/// it. This class deliberately has no initializer: it checks the state a plain `DspCore` -
+	/// what an emulator run creates - starts in.
+	/// </summary>
+	TEST_CLASS(DspJitDefaultTest)
+	{
+		DspTestMachine m;
+
+		TEST_METHOD(RecompilerIsOffByDefault)
+		{
+			Assert::IsFalse(m.core->JitEnabled, L"the recompiler must be off by default");
+
+			// With it off, RunJitBlock is the interpreter: one word per call, never a block.
+			m.core->SetJitMaxBlockInstrs(32);
+			std::vector<uint16_t> nops(8, 0x0000);
+			Assemble(m.core, 0, nops);
+			m.core->regs.pc = 0;
+
+			Assert::AreEqual((uint32_t)1, m.core->RunJitBlock(),
+				L"a default core must retire one word at a time");
+			Assert::AreEqual((uint32_t)1, m.core->regs.pc,
+				L"a default core must advance the pc by one word");
 		}
 	};
 }
