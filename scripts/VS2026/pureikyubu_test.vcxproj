@@ -52,6 +52,7 @@
     <ClCompile Include="..\..\testing\dsp_mailbox_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_irom_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_golden_alu_test.cpp" />
+    <ClCompile Include="..\..\testing\dsp_jit_test.cpp" />
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
@@ -63,6 +64,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\dspcore.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspjit.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdec.cpp">
@@ -141,6 +145,7 @@
     <ClInclude Include="..\..\src\dspai.h" />
     <ClInclude Include="..\..\src\dsparam.h" />
     <ClInclude Include="..\..\src\dspcore.h" />
+    <ClInclude Include="..\..\src\dspjit.h" />
     <ClInclude Include="..\..\src\dspdec.h" />
     <ClInclude Include="..\..\src\dspdisasm.h" />
     <ClInclude Include="..\..\src\dspdma.h" />

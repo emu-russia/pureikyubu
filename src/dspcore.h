@@ -209,10 +209,36 @@ namespace DSP
 
 		/// <summary>
 		/// Current decoded instruction.
+		///
+		/// The interpreter owns one decoded instruction (`infoStorage`); `info` points at it. The
+		/// recompiler decodes a whole basic block once at compile time and hands each word's
+		/// DecoderInfo back through `info`, so the handlers below never have to care which engine
+		/// is running them (see dspjit.h).
 		/// </summary>
-		DecoderInfo info = { 0 };
+		DecoderInfo infoStorage = { 0 };
+		DecoderInfo* info = &infoStorage;
+
+		/// <summary>
+		/// The instruction-advance rules of `Dispatch`, split out so that the recompiler can run
+		/// them for a word whose handler it called directly. `CommitCounter` retires the
+		/// instruction counter; `CommitNextPc` applies the repeat/loop rules to a pc.
+		/// </summary>
+		void CommitCounter();
+		uint32_t CommitNextPc(uint32_t pc);
+
+		/// <summary>
+		/// Everything Dispatch() does after the opcode handlers for one recompiled word, with the
+		/// pc passed in and returned (the recompiler keeps it in a host register). Static so that
+		/// the recompiler can take its address and call it directly from generated code.
+		/// </summary>
+		static uint32_t JitCommit(DspInterpreter* interp, uint32_t pc);
 
 		bool flowControl = false;
+
+		// The recompiler calls the instruction handlers directly (through the trampolines in
+		// dspjit.cpp) and reads the state above, so it needs access to the private members. It
+		// never changes their meaning - it only calls the same code the interpreter calls.
+		friend class Jit;
 
 	public:
 		DspInterpreter(DspCore* parent);
@@ -386,6 +412,17 @@ namespace DSP
 	};
 
 	class Dsp16;
+	class Jit;
+
+	// Development trace (DSP_TRACE_RING=1): a lock-free ring of the last execution steps and the
+	// IRAM writes, dumped when the core stops on a pc it cannot fetch. Writing a log line per
+	// step perturbs the timing enough to hide some bugs, which is why the ring keeps everything
+	// in memory and only the dump does I/O. See DspCore::RunJitBlock and
+	// DspInterpreter::ExecuteInstr.
+	void TraceStep(uint32_t pc, uint32_t retired);
+	void TraceMark(uint32_t marker);
+	void TraceDump();
+	uint32_t TraceLastPc();
 
 	/// <summary>
 	/// Macronix DSP core.
@@ -424,6 +461,7 @@ namespace DSP
 		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		DspInterpreter* interp = nullptr;
+		Jit* jit = nullptr;
 
 		Dsp16* dsp = nullptr;
 
@@ -472,9 +510,32 @@ namespace DSP
 		/// </summary>
 		static const int64_t DspWakeTicks = 1000;
 
+		// The recompiler translates whole basic blocks and calls back into the interpreter for
+		// the parts it does not reimplement, so it needs the interpreter's private entry points
+		// and the addresses of the decoded-instruction handlers (see dspjit.cpp).
+		friend class Jit;
+
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
+
+		/// <summary>
+		/// Enable the basic block recompiler. It is an experimental feature and off by default:
+		/// turning it on is a deliberate act (`--dspjit`, the debugger's `dspjit 1`, or a test).
+		/// The generated code retires whole blocks, so the debug paths (single stepping,
+		/// breakpoints, canaries) keep using the interpreter.
+		/// </summary>
+		bool JitEnabled = false;
+
+		/// <summary>
+		/// Bumped every time the compiled code is invalidated (DspCore::InvalidateJit, and the
+		/// recompiler's own invalidation when its arena is reset). The generated block carries
+		/// the value it was compiled under and tests it after every word, so a block that is
+		/// running when the instruction stream changes - a DSP-DMA that writes the microcode
+		/// into IRAM, which the boot loader does while a block is live - leaves immediately
+		/// instead of running the words it was built from.
+		/// </summary>
+		uint32_t jitGeneration = 1;
 
 		DspRegs regs;
 
@@ -494,6 +555,32 @@ namespace DSP
 		void HardReset();
 
 		void Update();
+
+		/// <summary>
+		/// Run one compiled basic block (or one interpreted instruction when the pc cannot be
+		/// compiled). Returns the number of DSP instruction words retired. Used by Update() and
+		/// by the differential tests, which compare a run of blocks against the interpreter.
+		/// </summary>
+		uint32_t RunJitBlock();
+
+		/// <summary>
+		/// The recompiler, for the differential tests (the emulator itself only goes through
+		/// Update / RunJitBlock).
+		/// </summary>
+		Jit* GetJit() { return jit; }
+
+		/// <summary>
+		/// Limit how many words one compiled block may hold (the tests set it to 1 so that a
+		/// block retires exactly one instruction and can be compared word for word).
+		/// </summary>
+		void SetJitMaxBlockInstrs(uint32_t count);
+
+		/// <summary>
+		/// Drop every compiled block. Called when the instruction memory (or the meaning of an
+		/// address in it) can have changed: a hard reset, an IROM/DROM load and any DSP-DMA that
+		/// wrote instruction memory.
+		/// </summary>
+		void InvalidateJit();
 
 		/// <summary>
 		/// Called by the CPU thread (through Flipper::Update) every Flipper tick step, so that the

@@ -31,26 +31,74 @@ namespace DSP
 			return;
 		}
 
+		// The block size is a 16-bit register value, so it can exceed the memory it is aimed
+		// at; copying it blindly overruns the DSP memory arrays (and, through them, the
+		// DspCore object). Clip the transfer to what is left of the region it starts in.
+		size_t available = 0;
+		if (DmaRegs.control.Imem)
+		{
+			if (DmaRegs.dspAddr < (DspCore::IRAM_SIZE / 2))
+			{
+				available = DspCore::IRAM_SIZE - (size_t)DmaRegs.dspAddr * 2;
+			}
+			else if (DmaRegs.dspAddr >= DspCore::IROM_START_ADDRESS &&
+				DmaRegs.dspAddr < DspCore::IROM_START_ADDRESS + (DspCore::IROM_SIZE / 2))
+			{
+				available = DspCore::IROM_SIZE - (size_t)(DmaRegs.dspAddr - DspCore::IROM_START_ADDRESS) * 2;
+			}
+		}
+		else
+		{
+			if (DmaRegs.dspAddr < (DspCore::DRAM_SIZE / 2))
+			{
+				available = DspCore::DRAM_SIZE - (size_t)DmaRegs.dspAddr * 2;
+			}
+			else if (DmaRegs.dspAddr >= DspCore::DROM_START_ADDRESS &&
+				DmaRegs.dspAddr < DspCore::DROM_START_ADDRESS + (DspCore::DROM_SIZE / 2))
+			{
+				available = DspCore::DROM_SIZE - (size_t)(DmaRegs.dspAddr - DspCore::DROM_START_ADDRESS) * 2;
+			}
+		}
+
+		size_t count = DmaRegs.blockSize;
+		if (count > available)
+		{
+			Report(Channel::DSP, "Dsp16::DoDma: block size 0x%04X exceeds the 0x%zX bytes at 0x%04X, clipped\n",
+				DmaRegs.blockSize, DmaRegs.dspAddr, available);
+			count = available;
+		}
+
+		TraceMark(0xD000'0000u | ((DmaRegs.control.Imem ? 0x1u : 0u) << 20) |
+			((DmaRegs.control.Dsp2Mmem ? 0x1u : 0u) << 21) | DmaRegs.dspAddr);
+
 		uint8_t* mem_ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(DmaRegs.mmemAddr.bits);
-		if (mem_ptr)
+		if (mem_ptr && count > 0)
 		{
 			if (DmaRegs.control.Dsp2Mmem)
 			{
-				memcpy(mem_ptr, ptr, DmaRegs.blockSize);
+				memcpy(mem_ptr, ptr, count);
 			}
 			else
 			{
-				memcpy(ptr, mem_ptr, DmaRegs.blockSize);
+				memcpy(ptr, mem_ptr, count);
 			}
+		}
+
+		// The DSP just rewrote instruction memory: every block compiled from it is stale. (The
+		// recompiler also verifies the words of a block before it runs it, so this is only the
+		// cheap path - a forgotten invalidation would be a recompile, not a wrong instruction.)
+		if (DmaRegs.control.Imem)
+		{
+			core->InvalidateJit();
 		}
 
 		// Dump ucode.
 		if (dumpUcode)
 		{
-			if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
+			if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem && count > 0)
 			{
-				std::string filename = "Data/DspUcode_" + std::to_string(DmaRegs.blockSize) + ".bin";
-				auto buffer = std::vector<uint8_t>(ptr, ptr + DmaRegs.blockSize);
+				std::string filename = "Data/DspUcode_" + std::to_string(count) + ".bin";
+				auto buffer = std::vector<uint8_t>(ptr, ptr + count);
 
 				Util::FileSave(filename, buffer);
 				Report(Channel::DSP, "Ucode dumped to %s\n", filename.c_str());
@@ -72,7 +120,20 @@ namespace DSP
 
 	void Dsp16::SpecialAramImemDma(uint8_t* ptr, size_t byteCount)
 	{
+		TraceMark(0xE000'0000u | (uint32_t)byteCount);
+
+		if (byteCount > DspCore::IRAM_SIZE)
+		{
+			Report(Channel::DSP, "Dsp16::SpecialAramImemDma: %zu bytes into an 0x%zX byte IRAM, clipped\n",
+				byteCount, DspCore::IRAM_SIZE);
+			byteCount = DspCore::IRAM_SIZE;
+		}
+
 		memcpy(core->iram, ptr, byteCount);
+
+		// The instruction memory changed behind the core's back, so any block compiled from it
+		// is stale. (The recompiler also verifies a block's words before running it.)
+		core->InvalidateJit();
 
 		if (logDspDma)
 		{

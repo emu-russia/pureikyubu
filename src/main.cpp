@@ -41,6 +41,10 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 		{
 			cmdline.noDisc = true;
 		}
+		else if (arg == "--dspjit")
+		{
+			cmdline.dspJit = true;
+		}
 		else if (arg == "--bench")
 		{
 			if (i + 1 < args.size())
@@ -94,6 +98,8 @@ void EMUPrintUsage()
 		"  --image <file>        Same as the bare file argument.\n"
 		"  --ipl                 Start the Bootrom (IPL) instead of waiting for the selector.\n"
 		"  --no-disc             Start with the DVD lid open, so the IPL takes its \"no disk\" path.\n"
+		"  --dspjit              Run the DSPcore on the experimental basic block recompiler.\n"
+		"                        The default is the interpreter; see src/dspjit.h.\n"
 		"  --bench <file> [sec]  Run the file unattended for the given number of seconds (30 by\n"
 		"                        default) and print the throughput and the performance counters.\n"
 		"  -h, --help            Print this text and exit.\n"
@@ -332,6 +338,16 @@ void EMUCtor()
 	JDI::Hub.AddNode(L"GEKKO_CORE_JDI_JSON", JdiSpecs::GekkoCoreJdi, Debug::gekko_init_handlers);
 	Core = new Gekko::GekkoCore();
 	Flipper::DSP = new DSP::Dsp16();
+
+	// The DSPcore recompiler is an experimental feature and off by default; `--dspjit` swaps the
+	// interpreter for it, so two runs of the same binary differ only in the execution engine.
+	Flipper::DSP->core->JitEnabled = cmdline.dspJit;
+	if (cmdline.dspJit)
+	{
+		DSP::Jit* dspJit = Flipper::DSP->core->GetJit();
+		Report(Channel::DSP, "DSPcore: experimental recompiler requested (%s)\n",
+			(dspJit != nullptr && dspJit->IsSupported()) ? "on" : "not available on this host, staying on the interpreter");
+	}
 	JDI::Hub.AddNode(L"EMU_JDI_JSON", JdiSpecs::EmuJdi, EmuReflector);
 	DVD::InitSubsystem();
 	HLEInit();

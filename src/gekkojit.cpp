@@ -19,7 +19,8 @@ readable place.
 
 #if GEKKO_JIT_SUPPORTED
 
-#include "gekkojit_x64.h"
+#include "jit_x64.h"
+#include "gekkojit_layout.h"
 #include "gekkojit_ps.h"
 
 #if defined(_WINDOWS)

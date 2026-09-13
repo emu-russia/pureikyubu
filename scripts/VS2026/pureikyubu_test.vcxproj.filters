@@ -44,10 +44,16 @@
     <ClCompile Include="..\..\testing\dsp_golden_alu_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\testing\dsp_jit_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\dsp.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dspcore.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspjit.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdec.cpp">
@@ -95,6 +101,9 @@
       <Filter>Emulator Sources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dspcore.h">
+      <Filter>Emulator Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dspjit.h">
       <Filter>Emulator Sources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dspdec.h">

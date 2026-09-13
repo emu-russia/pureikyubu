@@ -881,6 +881,11 @@ namespace JdiSpecs
 			"output": "Bool"
 		},
 
+		"dspjit": {
+			"args": 0,
+			"output": "Bool - the DSPcore recompiler is on and supported (dspjit 0 / 1 switches it)"
+		},
+
 		"DspToggleBreakpoint": {
 			"internal": true,
 			"args": 1

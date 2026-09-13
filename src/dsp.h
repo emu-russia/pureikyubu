@@ -266,6 +266,13 @@ namespace DSP
 		bool CpuIntRequested() const;
 		void ClearCpuIntRequest();
 
+		/// <summary>
+		/// Address of the latched CPU->DSP interrupt request. The DSPcore recompiler bakes the
+		/// offset of this flag into the generated per-word interrupt check, so it needs the
+		/// address rather than the value (see dspjit.h).
+		/// </summary>
+		bool* JitCpuIntRequestFlag() { return &intdspRequested; }
+
 		// DSP->CPU Mailbox
 		void DspToCpuWriteHi(uint16_t value);
 		void DspToCpuWriteLo(uint16_t value);

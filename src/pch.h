@@ -83,6 +83,7 @@
 #include "dsparam.h"
 #include "dspdma.h"
 #include "dsp.h"
+#include "dspjit.h"
 #include "dspdisasm.h"
 #include "dspdebug.h"
 

@@ -68,6 +68,7 @@
     <ClInclude Include="..\..\src\dspai.h" />
     <ClInclude Include="..\..\src\dsparam.h" />
     <ClInclude Include="..\..\src\dspcore.h" />
+    <ClInclude Include="..\..\src\dspjit.h" />
     <ClInclude Include="..\..\src\dspdebug.h" />
     <ClInclude Include="..\..\src\dspdec.h" />
     <ClInclude Include="..\..\src\dspdisasm.h" />
@@ -81,7 +82,8 @@
     <ClInclude Include="..\..\src\gekkoc.h" />
     <ClInclude Include="..\..\src\gekkojit.h" />
     <ClInclude Include="..\..\src\gekkojit_ps.h" />
-    <ClInclude Include="..\..\src\gekkojit_x64.h" />
+    <ClInclude Include="..\..\src\jit_x64.h" />
+    <ClInclude Include="..\..\src\gekkojit_layout.h" />
     <ClInclude Include="..\..\src\gekkodebug.h" />
     <ClInclude Include="..\..\src\gekkodec.h" />
     <ClInclude Include="..\..\src\gekkodisasm.h" />
@@ -178,6 +180,7 @@
     <ClCompile Include="..\..\src\dspai.cpp" />
     <ClCompile Include="..\..\src\dsparam.cpp" />
     <ClCompile Include="..\..\src\dspcore.cpp" />
+    <ClCompile Include="..\..\src\dspjit.cpp" />
     <ClCompile Include="..\..\src\dspdebug.cpp" />
     <ClCompile Include="..\..\src\dspdec.cpp" />
     <ClCompile Include="..\..\src\dspdisasm.cpp" />

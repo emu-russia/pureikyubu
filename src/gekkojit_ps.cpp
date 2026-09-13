@@ -17,7 +17,8 @@ with p1/p2/p3 named after the paramBits index rather than after a role.
 #if GEKKO_JIT_SUPPORTED && GEKKO_JIT_PS
 
 #include "gqr.h"
-#include "gekkojit_x64.h"
+#include "jit_x64.h"
+#include "gekkojit_layout.h"
 
 namespace Gekko
 {
