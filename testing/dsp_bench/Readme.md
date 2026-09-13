@@ -66,6 +66,7 @@ instructions, so the two fingerprints have to match.
 | `DSP_TRACE=1` | Print every basic block the recompiler runs (start pc and retired count) |
 | `DSP_DETAIL=1` | Print the extended register/stack/memory state after the run |
 | `DSP_TRACE_RING=1` | Keep the DSP trace ring (the last 16K execution steps and DMA writes, in memory) and dump it when the core stops on a pc it cannot fetch |
+| `DSP_TRACE_AT_PC=<pc>` | With the ring on, dump the last 48 steps the first time the core reaches `pc` (finding what led into a bad address) |
 | `DSP_TRACE_WORDS=1` | Also trace every individual instruction inside a block (emits a call per word; use it on a small run) |
 
 ## ABI regression build

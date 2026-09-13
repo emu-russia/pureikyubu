@@ -24,6 +24,9 @@ namespace DSP
 		bool traceRingEnabled = false;
 		bool traceRingInit = false;
 		uint32_t traceLastPc = 0;
+		uint32_t traceAtPc = 0xFFFFFFFF;
+		bool traceAtInit = false;
+		bool traceAtDone = false;
 
 		inline bool TraceOn()
 		{
@@ -47,6 +50,25 @@ namespace DSP
 		e.marker = 0;
 		traceLastPc = pc;
 		traceSeq++;
+
+		if (!traceAtInit)
+		{
+			traceAtInit = true;
+			const char* s = getenv("DSP_TRACE_AT_PC");
+			if (s != nullptr) traceAtPc = (uint32_t)strtoul(s, nullptr, 0);
+		}
+
+		if (!traceAtDone && pc == traceAtPc)
+		{
+			traceAtDone = true;
+			Report(Channel::DSP, "DSPTRACEAT %04X\n", pc);
+			uint32_t first = (traceSeq > 48) ? (traceSeq - 48) : 0;
+			for (uint32_t t = first; t < traceSeq; t++)
+			{
+				const TraceEntry& e = traceRing[t % TraceRingSize];
+				Report(Channel::DSP, "DSPT %u %04X +%u\n", e.seq, e.pc, e.retired);
+			}
+		}
 	}
 
 	void TraceMark(uint32_t marker)
@@ -458,10 +480,14 @@ namespace DSP
 				{
 					if (!regs.pcs->push(regs.pc))
 					{
+						TraceDump();
+						Report(Channel::DSP, "DSPSTACK pcs=%d pss=%d eas=%d lcs=%d top=%04X\n",
+							regs.pcs->size(), regs.pss->size(), regs.eas->size(), regs.lcs->size(), regs.pcs->top());
 						Halt("CheckInterrupts: pcs overflow\n");
 					}
 					if (!regs.pss->push(regs.psr.bits))
 					{
+						TraceDump();
 						Halt("CheckInterrupts: pss overflow\n");
 					}
 					regs.psr.et = 0;
@@ -526,6 +552,21 @@ namespace DSP
 			case DspInterrupt::Reset:
 				break;
 			case DspInterrupt::Error:
+				TraceDump();
+				Report(Channel::DSP, "DSPSTACK pcs=%d pss=%d eas=%d lcs=%d top=%04X pc=%04X\n",
+					regs.pcs->size(), regs.pss->size(), regs.eas->size(), regs.lcs->size(), regs.pcs->top(), regs.pc);
+				{
+					// The loop machinery state: which loops are on the stacks and where they end.
+					std::string line = "DSPPCS ";
+					for (int i = 0; i < regs.pcs->size(); i++) { char b[8]; sprintf(b, "%04X ", regs.pcs->at(i)); line += b; }
+					Report(Channel::DSP, "%s\n", line.c_str());
+					line = "DSPEAS ";
+					for (int i = 0; i < regs.eas->size(); i++) { char b[8]; sprintf(b, "%04X ", regs.eas->at(i)); line += b; }
+					Report(Channel::DSP, "%s\n", line.c_str());
+					line = "DSPLCS ";
+					for (int i = 0; i < regs.lcs->size(); i++) { char b[8]; sprintf(b, "%04X ", regs.lcs->at(i)); line += b; }
+					Report(Channel::DSP, "%s\n", line.c_str());
+				}
 				Halt("DspCore::AssertInterrupt - `Error` counted as non-recoverable\n");
 				break;
 			case DspInterrupt::Trap:

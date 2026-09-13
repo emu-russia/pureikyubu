@@ -181,6 +181,14 @@ are therefore differential against the interpreter:
   boot shape: it checks the cached block's dump before and after an interpreted step.
 * `Jit_SeesTheCodeADspDmaWrites` - a running block triggers a mem->IMEM DSP-DMA that rewrites
   words ahead of its pc; the block must leave and recompile (this is the microcode upload).
+* `Jit_KeepsTheRepeatInsideABlock`, `Jit_EndsALoopInsideABlock` - a block may not fall through
+  to its next compiled word unconditionally. `rep` keeps the pc on the same instruction until
+  its count drains, and the end address of a `loop` sends the pc back to the loop start; both
+  land on a word that is not the next one in the block. A block that falls through anyway runs
+  the repeated instruction once and then repeats the *following* words, which is what the boot
+  ROM's `rep` + `st` table fills hit (a `loop` stack grew past its depth and the DSP halted on
+  `pcs overflow`). The block now compares the pc `JitCommit` produced against the next word's
+  address and leaves when they differ.
 * `Jit_MatchesInterpreterOnIromBoot` - the real IROM boot path (mailbox handshake, command
   dispatcher, wait loop) for 20000 instructions.
 * `Jit_MatchesInterpreterOnEveryIromEntry` - every entry point of the real IROM (the DMA

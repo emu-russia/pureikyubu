@@ -721,6 +721,88 @@ namespace DspUnitTest
 		}
 
 		/// <summary>
+		/// `rep` keeps the pc on the same instruction until its count is drained, so a block may
+		/// not simply fall through to its next compiled word. Without the check the block
+		/// executed the repeated instruction once and ran on, which is what the boot ROM's
+		/// table-fill loops (rep + st) hit.
+		/// </summary>
+		TEST_METHOD(Jit_KeepsTheRepeatInsideABlock)
+		{
+			m.core->SetJitMaxBlockInstrs(8);
+
+			auto setup = [&]()
+			{
+				m.Reset();
+				m.core->regs.psr.bits = 0;
+				m.core->regs.pc = 0;
+				// mvli a1,#3 ; rep a1 ; adsi a,1 ; set im ; nop
+				Assemble(m.core, 0, { 0x009E, 0x0003, 0x005E, 0x0401, 0x8B00, 0x0000 });
+				m.core->ResetInstructionCounter();
+			};
+
+			setup();
+			uint32_t retired = 0;
+			for (int i = 0; i < 8 && retired < 5; i++)
+			{
+				retired += m.core->RunJitBlock();
+			}
+			CoreState recompiled = Capture();
+
+			setup();
+			for (uint32_t i = 0; i < retired; i++)
+			{
+				m.core->Step();
+			}
+			CoreState interp = Capture();
+
+			std::wstring diff = Diff(interp, recompiled);
+			Assert::IsTrue(diff.empty(), diff.c_str());
+			// The repeated instruction must have run more than once, which is what a block that
+			// simply falls through would get wrong.
+			Assert::IsTrue((interp.a & 0xFFFFFFFFFFULL) >= 0x20000ULL,
+				L"the repeated instruction must run more than once");
+		}
+
+		/// <summary>
+		/// The same for a `loop` whose end address is inside the block: reaching it sends the pc
+		/// back to the loop start, not to the next compiled word.
+		/// </summary>
+		TEST_METHOD(Jit_EndsALoopInsideABlock)
+		{
+			m.core->SetJitMaxBlockInstrs(8);
+
+			auto setup = [&]()
+			{
+				m.Reset();
+				m.core->regs.psr.bits = 0;
+				m.core->regs.pc = 0;
+				// loop #2, 0x0004 ; adsi a,1 ; adsi a,1 ; adsi a,1 ; set im
+				Assemble(m.core, 0, { 0x1102, 0x0004, 0x0401, 0x0401, 0x0401, 0x8B00 });
+				m.core->ResetInstructionCounter();
+			};
+
+			setup();
+			uint32_t retired = 0;
+			for (int i = 0; i < 8 && retired < 6; i++)
+			{
+				retired += m.core->RunJitBlock();
+			}
+			CoreState recompiled = Capture();
+
+			setup();
+			for (uint32_t i = 0; i < retired; i++)
+			{
+				m.core->Step();
+			}
+			CoreState interp = Capture();
+
+			std::wstring diff = Diff(interp, recompiled);
+			Assert::IsTrue(diff.empty(), diff.c_str());
+			Assert::AreEqual((unsigned long long)0x60000ULL, (unsigned long long)(interp.a & 0xFFFFFFFFFFULL),
+				L"the loop body must run twice (6 increments of 1<<16)");
+		}
+
+		/// <summary>
 		/// The boot-ROM shape of the same bug: the wait routine's block is compiled and then the
 		/// core interprets a single instruction (the CPU->DSP request forces the fallback). With
 		/// the fix the cached block stays a wait routine and keeps spinning at 0x8078.

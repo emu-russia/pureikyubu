@@ -446,6 +446,7 @@ void* Jit::CompileBlock(uint32_t pc)
 
 	DecoderInfo infos[Jit::MaxBlockInstrs];
 	uint16_t words[Jit::MaxBlockWords];
+	uint32_t instrPc[Jit::MaxBlockInstrs];
 	uint32_t count = 0;
 	uint32_t wordCount = 0;
 	uint32_t curPc = pc;
@@ -476,6 +477,7 @@ void* Jit::CompileBlock(uint32_t pc)
 		}
 
 		infos[count] = di;
+		instrPc[count] = curPc;
 		for (uint32_t k = 0; k < sizeWords; k++)
 		{
 			words[wordCount + k] = core->ReadIMem(curPc + k);
@@ -591,6 +593,17 @@ void* Jit::CompileBlock(uint32_t pc)
 		if (!di.flowControl)
 		{
 			e.mov_r32_r32(RegPc, X64::RAX);
+
+			// A block is a straight-line run, but the instruction advance is not always to the
+			// next word: `rep` keeps the pc on the same instruction until its count is drained,
+			// and the end address of a `loop` sends it back to the loop start. When the pc that
+			// DspInterpreter::JitCommit produced is not the next instruction of this block,
+			// leave - the next RunJitBlock dispatches at whatever the pc really is.
+			if (i + 1 < count)
+			{
+				e.alu_r32_imm(X64::AluCmp, RegPc, instrPc[i + 1]);
+				bailJumps.push_back(e.jcc_rel32(X64::CcNE));
+			}
 
 			// The instruction stream can change under a running block: the DSP-DMA that uploads
 			// the microcode into IRAM is triggered by an instruction *inside* the block, and the
