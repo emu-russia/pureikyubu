@@ -35,6 +35,7 @@ struct CmdLineOptions
 	bool    help = false;       // `--help`: print the accepted options and exit
 	bool    ipl = false;        // `--ipl`: start the Bootrom (IPL) immediately, without going through the UI
 	bool    noDisc = false;     // `--no-disc`: start with the DVD lid open (no disk), so that the IPL takes its "no disk" path
+	bool    noDspJit = false;   // `--nodspjit`: run the DSP on the interpreter (an A/B switch for DSP JIT problems)
 
 	// `--image <file>` (or a bare file name): load and run that file right away instead of waiting
 	// for the game selector. The file is a disk image (`.iso`, `.gcm`, `.rvz`) or an executable

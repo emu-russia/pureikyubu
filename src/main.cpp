@@ -41,6 +41,10 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 		{
 			cmdline.noDisc = true;
 		}
+		else if (arg == "--nodspjit")
+		{
+			cmdline.noDspJit = true;
+		}
 		else if (arg == "--bench")
 		{
 			if (i + 1 < args.size())
@@ -94,6 +98,7 @@ void EMUPrintUsage()
 		"  --image <file>        Same as the bare file argument.\n"
 		"  --ipl                 Start the Bootrom (IPL) instead of waiting for the selector.\n"
 		"  --no-disc             Start with the DVD lid open, so the IPL takes its \"no disk\" path.\n"
+		"  --nodspjit            Run the DSPcore on the interpreter instead of the recompiler (A/B switch).\n"
 		"  --bench <file> [sec]  Run the file unattended for the given number of seconds (30 by\n"
 		"                        default) and print the throughput and the performance counters.\n"
 		"  -h, --help            Print this text and exit.\n"
@@ -332,6 +337,13 @@ void EMUCtor()
 	JDI::Hub.AddNode(L"GEKKO_CORE_JDI_JSON", JdiSpecs::GekkoCoreJdi, Debug::gekko_init_handlers);
 	Core = new Gekko::GekkoCore();
 	Flipper::DSP = new DSP::Dsp16();
+
+	// `--nodspjit` is the A/B switch for a DSP recompiler problem: the same binary then runs the
+	// DSP on the interpreter, so the two runs differ only in the execution engine.
+	if (cmdline.noDspJit)
+	{
+		Flipper::DSP->core->JitEnabled = false;
+	}
 	JDI::Hub.AddNode(L"EMU_JDI_JSON", JdiSpecs::EmuJdi, EmuReflector);
 	DVD::InitSubsystem();
 	HLEInit();

@@ -137,6 +137,11 @@ namespace DSP
 		// differential tests set it to 1 to compare one instruction at a time.
 		uint32_t maxBlockInstrs = MaxBlockInstrs;
 
+		// Development aid (DSP_TRACE_WORDS=1): emit a TraceWord call in front of every word, so
+		// that the trace ring holds the pc of each individual instruction inside a block. It is
+		// only compiled into the block when the environment asks for it.
+		bool traceWords = false;
+
 		// Byte offsets inside DspCore / Dsp16 that the generated code addresses. They are
 		// computed from a live instance, so the class layouts can change without breaking the
 		// recompiler silently.
@@ -183,6 +188,9 @@ namespace DSP
 		// the interpreter (which also owns the Halt on an undefined opcode).
 		static bool ThunkAvailable(const DecoderInfo& info);
 
+		// Emitted in front of every word when traceWords is set (see CompileBlock).
+		static void TraceWord(DspInterpreter* interp, uint32_t pc);
+
 	public:
 		Jit(DspCore* core);
 		~Jit();
@@ -194,6 +202,13 @@ namespace DSP
 		/// (the differential tests use a limit of 1); changing it drops the cache.
 		/// </summary>
 		void SetMaxBlockInstrs(uint32_t count);
+
+		/// <summary>
+		/// Development aid: report the compiled block that covers `pc` (its words, its decoded
+		/// instructions and the first bytes of its code). Used by the trace dump when the core
+		/// stops on a pc it cannot fetch.
+		/// </summary>
+		void DumpBlock(uint32_t pc);
 
 		/// <summary>
 		/// Drop every compiled block. Must be called whenever instruction memory can have

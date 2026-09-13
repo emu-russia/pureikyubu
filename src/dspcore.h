@@ -414,6 +414,16 @@ namespace DSP
 	class Dsp16;
 	class Jit;
 
+	// Development trace (DSP_TRACE_RING=1): a lock-free ring of the last execution steps and the
+	// IRAM writes, dumped when the core stops on a pc it cannot fetch. Writing a log line per
+	// step perturbs the timing enough to hide some bugs, which is why the ring keeps everything
+	// in memory and only the dump does I/O. See DspCore::RunJitBlock and
+	// DspInterpreter::ExecuteInstr.
+	void TraceStep(uint32_t pc, uint32_t retired);
+	void TraceMark(uint32_t marker);
+	void TraceDump();
+	uint32_t TraceLastPc();
+
 	/// <summary>
 	/// Macronix DSP core.
 	/// </summary>

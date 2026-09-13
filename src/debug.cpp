@@ -14,6 +14,10 @@ namespace Debug
 		vsprintf(buf, text, arg);
 		va_end(arg);
 
+		// The reason has to reach the report log (`EMU_LOG=<file>`) as well as the debugger's
+		// message queue: a headless run has no debugger window open, and the log is the only
+		// place the crash reason can be read from.
+		Report(Channel::Error, "%s", buf);
 		Msgs.AddReport(Channel::Error, true, buf);
 
 		bool any_debugger_present = false;

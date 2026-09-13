@@ -102,6 +102,11 @@ uint32_t Jit::NopTrampoline(DspInterpreter* interp, DecoderInfo* info, uint32_t 
 	return DspInterpreter::JitCommit(interp, pc);
 }
 
+void Jit::TraceWord(DspInterpreter* interp, uint32_t pc)
+{
+	TraceStep(pc, 1);
+}
+
 void Jit::ParallelNopUpperTrampoline(DspInterpreter* interp, DecoderInfo* info)
 {
 	interp->info = info;
@@ -292,6 +297,7 @@ Jit::Jit(DspCore* parent)
 	corePcOffset = (int32_t)((uint8_t*)&core->regs.pc - (uint8_t*)core);
 	pendingOffset = (int32_t)((uint8_t*)&core->intr.pendingSomething - (uint8_t*)core);
 	dspOffset = (int32_t)((uint8_t*)&core->dsp - (uint8_t*)core);
+	traceWords = getenv("DSP_TRACE_WORDS") != nullptr;
 	cpuIntOffset = (core->dsp != nullptr)
 		? (int32_t)((uint8_t*)core->dsp->JitCpuIntRequestFlag() - (uint8_t*)core->dsp)
 		: -1;
@@ -550,6 +556,13 @@ void* Jit::CompileBlock(uint32_t pc)
 			e.mov_m32_r(RegCore, corePcOffset, RegPc);
 		}
 
+		if (traceWords)
+		{
+			e.mov_r64_r64(Arg0, RegInterp);
+			e.mov_r64_r64(Arg1, RegPc);
+			e.call_abs((uint64_t)(void*)&Jit::TraceWord);
+		}
+
 		if (!di.parallel)
 		{
 			// regular trampoline(interp, info, pc) -> new pc (also retires the counter and
@@ -670,6 +683,58 @@ void* Jit::CompileBlock(uint32_t pc)
 	}
 
 	return code + codeStart;
+}
+
+void Jit::DumpBlock(uint32_t pc)
+{
+	for (size_t s = 0; s < BlockCacheSets; s++)
+	{
+		for (size_t w = 0; w < BlockCacheWays; w++)
+		{
+			Block* b = &blocks[s][w];
+			if (b->pc != pc || b->instrCount == 0)
+			{
+				continue;
+			}
+
+			Debug::Report(Debug::Channel::DSP, "DSPBLOCK pc=%04X gen=%u words=%u instrs=%u codeOff=%u infosOff=%u\n",
+				b->pc, b->gen, b->wordCount, b->instrCount, b->codeOffset, b->infosOffset);
+
+			std::string line = "DSPWORDS ";
+			for (uint32_t i = 0; i < b->wordCount; i++)
+			{
+				char buf[8];
+				sprintf(buf, "%04X ", b->words[i]);
+				line += buf;
+			}
+			Debug::Report(Debug::Channel::DSP, "%s\n", line.c_str());
+
+			const DecoderInfo* infos = (const DecoderInfo*)(code + b->infosOffset);
+			for (uint32_t i = 0; i < b->instrCount; i++)
+			{
+				const DecoderInfo& d = infos[i];
+				Debug::Report(Debug::Channel::DSP, "DSPINFO %u par=%d instr=%d pInstr=%d pMem=%d flow=%d size=%zu cc=%d npar=%zu imm=%04X\n",
+					i, (int)d.parallel, d.parallel ? -1 : (int)d.instr,
+					d.parallel ? (int)d.parallelInstr : -1, d.parallel ? (int)d.parallelMemInstr : -1,
+					(int)d.flowControl, d.sizeInBytes, (int)d.cc, d.numParameters, d.ImmOperand.Address);
+			}
+
+			if (b->codeOffset + 64 <= CodeArenaSize)
+			{
+				std::string bytes = "DSPCODE ";
+				for (uint32_t i = 0; i < 64; i++)
+				{
+					char buf[4];
+					sprintf(buf, "%02X", code[b->codeOffset + i]);
+					bytes += buf;
+				}
+				Debug::Report(Debug::Channel::DSP, "%s\n", bytes.c_str());
+			}
+			return;
+		}
+	}
+
+	Debug::Report(Debug::Channel::DSP, "DSPBLOCK pc=%04X not found\n", pc);
 }
 
 uint32_t Jit::Run()

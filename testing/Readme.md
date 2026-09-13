@@ -171,6 +171,14 @@ are therefore differential against the interpreter:
 * `Jit_RecompilesWhenTheInstructionStreamChanges` - changing a word under a live block makes
   the recompiler recompile it (the per-entry word verification).
 * `Jit_CanBeSwitchedOff` - `DspCore::JitEnabled = false` runs the interpreter.
+* `Jit_KeepsItsCachedInstructionsWhenTheInterpreterRuns`,
+  `Jit_KeepsTheWaitBlockIntactAfterAnInterpretedStep` - the interpreter and the recompiler
+  share the DecoderInfo the handlers read. After a block runs, `DspInterpreter::info` points
+  at that block's cached DecoderInfo; an interpreted instruction (the fallback the core takes
+  while an interrupt is pending, or a debugger step) must decode into the interpreter's own
+  storage. When it did not, the boot ROM's wait routine had its `jmpnt` replaced by the reset
+  vector's `mvli` and the DSP left the mailbox loop for a wild address. The second test is the
+  boot shape: it checks the cached block's dump before and after an interpreted step.
 * `Jit_SeesTheCodeADspDmaWrites` - a running block triggers a mem->IMEM DSP-DMA that rewrites
   words ahead of its pc; the block must leave and recompile (this is the microcode upload).
 * `Jit_MatchesInterpreterOnIromBoot` - the real IROM boot path (mailbox handshake, command

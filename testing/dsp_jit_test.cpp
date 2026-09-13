@@ -685,6 +685,111 @@ namespace DspUnitTest
 		}
 
 		/// <summary>
+		/// The interpreter and the recompiler share the DecoderInfo the handlers read. After a
+		/// block runs, `DspInterpreter::info` points at that block's *cached* DecoderInfo - so an
+		/// interpreted instruction (the fallback the core takes while an interrupt is pending, or
+		/// a debugger step) must not decode through it, or it overwrites the block's instructions.
+		///
+		/// With the boot ROM this corrupted the wait routine's `jmpnt` with the reset vector's
+		/// `mvli`, and the DSP left the mailbox loop for an address it had just decoded.
+		/// </summary>
+		TEST_METHOD(Jit_KeepsItsCachedInstructionsWhenTheInterpreterRuns)
+		{
+			m.core->SetJitMaxBlockInstrs(2);
+
+			m.Reset();
+			m.core->regs.psr.bits = 0;
+			m.core->regs.pc = 0;
+			Assemble(m.core, 0, { 0x0000, 0x8B00, 0x0000 });	// nop, `set im`, nop
+
+			Assert::AreEqual((uint32_t)2, m.core->RunJitBlock(), L"the block must hold the two words");
+			Assert::AreEqual((int)1, (int)m.core->regs.psr.im, L"the block must have executed `set im`");
+
+			// One interpreted instruction decodes into whatever DecoderInfo the interpreter points
+			// at; before the fix that was the block's entry for its second word (`set im`).
+			m.core->Step();
+
+			m.core->regs.psr.im = 0;
+			m.core->regs.pc = 0;
+			DspTestLogClear();
+			m.core->RunJitBlock();
+
+			Assert::AreEqual(0, DspTestHaltCount(),
+				L"the block's handlers must still see their own operands");
+			Assert::AreEqual((int)1, (int)m.core->regs.psr.im,
+				L"the cached block must still execute its own instructions");
+		}
+
+		/// <summary>
+		/// The boot-ROM shape of the same bug: the wait routine's block is compiled and then the
+		/// core interprets a single instruction (the CPU->DSP request forces the fallback). With
+		/// the fix the cached block stays a wait routine and keeps spinning at 0x8078.
+		/// </summary>
+		TEST_METHOD(Jit_KeepsTheWaitBlockIntactAfterAnInterpretedStep)
+		{
+			std::string path;
+			if (!FindRepoFile("build/Data/dsp_irom.bin", path))
+			{
+				Assert::Fail(L"build/Data/dsp_irom.bin was not found");
+			}
+
+			m.Reset();
+			m.LoadIROM(Util::StringToWstring(path));
+			m.core->regs.pc = 0x8000;
+
+			// Run into the mailbox wait routine...
+			for (int i = 0; i < 200 && m.core->regs.pc != 0x8078; i++)
+			{
+				m.core->RunJitBlock();
+			}
+			Assert::AreEqual((uint32_t)0x8078, m.core->regs.pc, L"the boot path must reach the wait routine");
+
+			// ... and run it once, so that its block exists and the interpreter's DecoderInfo
+			// points at that block's cache afterwards.
+			m.core->RunJitBlock();
+			Assert::AreEqual((uint32_t)0x8078, m.core->regs.pc, L"the wait routine must spin here");
+
+			DspTestLogEnable(true);
+			DspTestLogClear();
+			m.core->GetJit()->DumpBlock(0x8078);
+			std::string dumpBefore = DspTestLogText();
+			Assert::IsTrue(dumpBefore.find("DSPBLOCK pc=8078") != std::string::npos,
+				L"the wait routine's block must be cached");
+
+			// Make the next step take the interpreter path (a latched CPU->DSP request does
+			// that), so it decodes into whatever DecoderInfo the recompiler left behind.
+			m.dsp.SetIntBit(true);
+			m.core->RunJitBlock();
+			m.dsp.SetIntBit(false);
+			m.dsp.ClearCpuIntRequest();
+			m.core->ReturnFromInterrupt();
+
+			DspTestLogClear();
+			m.core->GetJit()->DumpBlock(0x8078);
+			std::string dumpAfter = DspTestLogText();
+
+			Assert::AreEqual(Util::StringToWstring(dumpBefore), Util::StringToWstring(dumpAfter),
+				L"an interpreted instruction must not rewrite the block's decoded instructions");
+
+			// Re-enter from the reset vector, like the Reset interrupt of the real boot does.
+			m.core->regs.pcs->clear();
+			m.core->regs.psr.bits = 0;
+			m.core->regs.pc = 0x8000;
+
+			for (int i = 0; i < 60 && m.core->regs.pc != 0x8078; i++)
+			{
+				m.core->RunJitBlock();
+			}
+			for (int i = 0; i < 5; i++)
+			{
+				m.core->RunJitBlock();
+			}
+
+			Assert::AreEqual((uint32_t)0x8078, m.core->regs.pc,
+				L"the wait routine must still spin at 0x8078");
+		}
+
+		/// <summary>
 		/// The real IROM boot path (mailbox handshake, the command dispatcher and the wait loop)
 		/// on the recompiler must match the interpreter instruction for instruction.
 		/// </summary>

@@ -4,6 +4,90 @@
 
 using namespace Debug;
 
+// Development trace. The ring is written without I/O so that it does not perturb the DSP/CPU
+// timing; the dump happens only when the core stops on a pc it cannot fetch (see ExecuteInstr).
+namespace DSP
+{
+	namespace
+	{
+		struct TraceEntry
+		{
+			uint32_t seq;
+			uint32_t pc;
+			uint32_t retired;
+			uint32_t marker;
+		};
+
+		const size_t TraceRingSize = 16384;
+		TraceEntry traceRing[TraceRingSize];
+		uint32_t traceSeq = 0;
+		bool traceRingEnabled = false;
+		bool traceRingInit = false;
+		uint32_t traceLastPc = 0;
+
+		inline bool TraceOn()
+		{
+			if (!traceRingInit)
+			{
+				traceRingInit = true;
+				traceRingEnabled = getenv("DSP_TRACE_RING") != nullptr;
+			}
+			return traceRingEnabled;
+		}
+	}
+
+	void TraceStep(uint32_t pc, uint32_t retired)
+	{
+		if (!TraceOn()) return;
+
+		TraceEntry& e = traceRing[traceSeq % TraceRingSize];
+		e.seq = traceSeq;
+		e.pc = pc;
+		e.retired = retired;
+		e.marker = 0;
+		traceLastPc = pc;
+		traceSeq++;
+	}
+
+	void TraceMark(uint32_t marker)
+	{
+		if (!TraceOn()) return;
+
+		TraceEntry& e = traceRing[traceSeq % TraceRingSize];
+		e.seq = traceSeq;
+		e.pc = 0;
+		e.retired = 0;
+		e.marker = marker;
+		traceSeq++;
+	}
+
+	uint32_t TraceLastPc()
+	{
+		return traceLastPc;
+	}
+
+	void TraceDump()
+	{
+		if (!traceRingEnabled || traceSeq == 0) return;
+
+		uint32_t first = (traceSeq > TraceRingSize) ? (traceSeq - TraceRingSize) : 0;
+		Report(Channel::DSP, "DSPTRACE %u..%u\n", first, traceSeq - 1);
+
+		for (uint32_t s = first; s < traceSeq; s++)
+		{
+			const TraceEntry& e = traceRing[s % TraceRingSize];
+			if (e.marker != 0)
+			{
+				Report(Channel::DSP, "DSPT %u MARK %08X\n", e.seq, e.marker);
+			}
+			else
+			{
+				Report(Channel::DSP, "DSPT %u %04X +%u\n", e.seq, e.pc, e.retired);
+			}
+		}
+	}
+}
+
 namespace DSP
 {
 	// The part handles ALU / multiplier operations and flag setting, as well as other auxiliary operations.
@@ -393,6 +477,8 @@ namespace DSP
 					// the interrupt would bounce the command back as "unknown" instead.
 					DspAddress programBase = (regs.pc >= IROM_START_ADDRESS) ? IROM_START_ADDRESS : 0;
 
+					TraceMark(0xF000'0000u | ((uint32_t)i << 16) | (regs.pc & 0xFFFF));
+
 					if (i == (size_t)DspInterrupt::Reset)
 					{
 						regs.pcs->clear();
@@ -431,6 +517,8 @@ namespace DSP
 
 	void DspCore::AssertInterrupt(DspInterrupt id)
 	{
+		TraceMark(0xA000'0000u | (uint32_t)id);
+
 		// Source disabled ?
 
 		switch (id)
@@ -749,32 +837,36 @@ namespace DSP
 
 	uint32_t DspCore::RunJitBlock()
 	{
+		uint32_t retired = 1;
+
 		// The interpreter calls CheckInterrupts before every instruction (DspCore::Step); this
 		// is the same entry point for one step of the recompiled path.
 		CheckInterrupts();
 
+		const uint32_t entryPc = regs.pc;
+
 		// Breakpoints, canaries and the one-shot breakpoint are tested per instruction by Update,
 		// so a block must not run over them: with any of them armed the core stays on the
 		// interpreter, exactly like GekkoCore does while its own breakpoints are enabled.
-		if (!(jit != nullptr && jit->IsSupported() && JitEnabled &&
-			breakpoints.empty() && canaries.empty() && watches.empty() && oneShotBreakpoint == 0xffff))
+		if (jit != nullptr && jit->IsSupported() && JitEnabled &&
+			breakpoints.empty() && canaries.empty() && watches.empty() && oneShotBreakpoint == 0xffff &&
+			!intr.pendingSomething && !(dsp != nullptr && dsp->CpuIntRequested()))
 		{
+			retired = jit->Run();
+		}
+		else
+		{
+			// While an interrupt is going through its pending-delay window (or the latched CPU->DSP
+			// request has not been taken yet) the core runs one word at a time. The delay is
+			// specified in instructions, and CheckInterrupts is called once per step here; letting a
+			// whole block run instead would stretch a two-instruction delay to two block lengths,
+			// which the CPU<->DSP mailbox handshake is sensitive to.
 			interp->ExecuteInstr();
-			return 1;
 		}
 
-		// While an interrupt is going through its pending-delay window (or the latched CPU->DSP
-		// request has not been taken yet) the core runs one word at a time. The delay is
-		// specified in instructions, and CheckInterrupts is called once per step here; letting a
-		// whole block run instead would stretch a two-instruction delay to two block lengths,
-		// which the CPU<->DSP mailbox handshake is sensitive to.
-		if (intr.pendingSomething || (dsp != nullptr && dsp->CpuIntRequested()))
-		{
-			interp->ExecuteInstr();
-			return 1;
-		}
+		TraceStep(entryPc, retired);
 
-		return jit->Run();
+		return retired;
 	}
 
 	void DspCore::InvalidateJit()
@@ -1688,11 +1780,27 @@ namespace DSP
 		uint8_t* imemPtr = core->TranslateIMem(imemAddr);
 		if (imemPtr == nullptr)
 		{
+			TraceDump();
+			Report(Channel::DSP, "DSPLASTPC %04X\n", TraceLastPc());
+			if (core->jit != nullptr)
+			{
+				core->jit->DumpBlock(TraceLastPc());
+			}
+			Report(Channel::DSP, "DSPSTACK pcs=%d pss=%d eas=%d lcs=%d pcsTop=%04X\n",
+				core->regs.pcs->size(), core->regs.pss->size(), core->regs.eas->size(), core->regs.lcs->size(),
+				core->regs.pcs->top());
 			Halt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
 			core->dsp->Suspend();
 			return;
 		}
 
+		// The recompiler hands `info` around pointing at a block's *cached* DecoderInfo array
+		// (dspjit.cpp trampolines), and the compiled code calls the handlers through it. The
+		// interpreter therefore has to decode into its own storage every time: decoding through
+		// whatever `info` currently points at would overwrite that block's cached instructions,
+		// and the next run of the block would call the wrong handlers (the reset vector's `mvli`
+		// landing on the wait routine's `jmpnt` was the boot failure this caused).
+		info = &infoStorage;
 		Decoder::Decode(imemPtr, DspCore::MaxInstructionSizeInBytes, *info);
 
 		Dispatch();

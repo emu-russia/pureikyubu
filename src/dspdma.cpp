@@ -68,6 +68,9 @@ namespace DSP
 			count = available;
 		}
 
+		TraceMark(0xD000'0000u | ((DmaRegs.control.Imem ? 0x1u : 0u) << 20) |
+			((DmaRegs.control.Dsp2Mmem ? 0x1u : 0u) << 21) | DmaRegs.dspAddr);
+
 		uint8_t* mem_ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(DmaRegs.mmemAddr.bits);
 		if (mem_ptr && count > 0)
 		{
@@ -117,6 +120,8 @@ namespace DSP
 
 	void Dsp16::SpecialAramImemDma(uint8_t* ptr, size_t byteCount)
 	{
+		TraceMark(0xE000'0000u | (uint32_t)byteCount);
+
 		if (byteCount > DspCore::IRAM_SIZE)
 		{
 			Report(Channel::DSP, "Dsp16::SpecialAramImemDma: %zu bytes into an 0x%zX byte IRAM, clipped\n",
