@@ -49,7 +49,7 @@ instructions, so the two fingerprints have to match.
 | Mode | Contents |
 |---|---|
 | `irom [N]` | The real 8 KB IROM (`build/Data/dsp_irom.bin`, override with `DSP_IROM`): the mailbox handshake, the command dispatcher and its wait loop. Loops forever, so `N` can be large. |
-| `golden <seed> [N]` | A deterministic stream of words sampled from the hardware golden vector table, ending in a `jmp 0` self-loop. Every word is one the real core executes. |
+| `golden <seed> [N]` | A deterministic stream of words sampled from the hardware golden vector table, ending in a `jmp 0` self-loop. Every word is one the real core executes; the flow-control rows are skipped and a trailing two-word form is dropped, so the stream is a straight line that always stays inside IRAM. |
 | `raw <file> [N]` | A raw big-endian 16-bit IRAM image (what `gen_workload.py` writes). |
 | `nop [N]` | IRAM full of `nop`s (with a `jmp 0` loop at the end) - the pure block-dispatch throughput. |
 | `sweep [from] [to]` | Every instruction word in the range, from a fixed state, through the interpreter and (with `DSP_JIT=1`) the recompiler. `Debug::Halt` returns instead of stopping, so undefined words are covered. Built with `-fsanitize=address` it is how a memory error is traced to the exact word. |
@@ -84,15 +84,18 @@ each (`interp` = `DspCore::Step`, `jit` = `DspCore::RunJitBlock`):
 
 | Workload | Interpreter | Recompiler | Speedup |
 |---|---|---|---|
-| `irom` - real boot microcode | 97.1 MIPS | 146.1 MIPS | 1.50x |
-| `nop` - pure block dispatch | 136.5 MIPS | 211.0 MIPS | 1.55x |
-| `golden` - synthetic data path | 35.0 MIPS | 61.6 MIPS | 1.76x |
-| `raw` - generated workload | 34.8 MIPS | 62.5 MIPS | 1.80x |
+| `irom` - real boot microcode | 96.7 MIPS | 143.7 MIPS | 1.49x |
+| `nop` - pure block dispatch | 142.9 MIPS | 212.3 MIPS | 1.49x |
+| `golden` - synthetic data path | 35.9 MIPS | 61.7 MIPS | 1.72x |
+| `raw` - generated workload | 35.8 MIPS | 62.9 MIPS | 1.76x |
 
 The speedup is bounded by how much of the interpreter's time is fetch/decode/dispatch -
 the part the recompiler removes by baking the decoded instruction into the generated call.
+The handlers stay the dominant cost, so the data-path workloads (where a handler does real
+arithmetic) gain more than the `nop` loop (where dispatch is all there is).
 The generated code also tests the code generation and the pending-interrupt flags after
-every word, so a DSP-DMA that rewrites the microcode, or an interrupt, is seen at the next
-instruction rather than at the end of the block.
+every word, and compares the pc against the next word's address, so a DSP-DMA that rewrites
+the microcode, an interrupt, a `rep` that did not advance the pc or a `loop` that jumped
+back is seen at the next instruction rather than at the end of the block.
 The handlers themselves are shared, so the two engines can never disagree about what an
 instruction *means*; `check.sh` and `testing/dsp_jit_test.cpp` pin that down.

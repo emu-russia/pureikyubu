@@ -208,18 +208,35 @@ int main(int argc, char** argv)
 		uint32_t seed = (argc > 2) ? (uint32_t)strtoul(argv[2], nullptr, 0) : 0x12345678;
 		if (argc > 3) wanted = strtoull(argv[3], nullptr, 0);
 
-		// The program ends with `jmp 0` (0x029F/0x0000 - the encoding the IROM uses in its own
-		// main loop), so a synthetic run of any length stays inside IRAM.
+		// The table is the data-path corpus, but a few entries are flow control; a stream that
+		// contains one leaves IRAM at some pc the jump picked (the core halts on the fetch and
+		// the run is silently cut short). Decode every candidate and keep only the words that
+		// advance the pc by their own size, so the program is a straight line into the `jmp 0`
+		// (0x029F/0x0000 - the encoding the IROM uses in its own main loop) that closes it.
 		size_t limit = IRAM_BYTES / 2 - 2;
 		std::vector<uint16_t> words;
+		size_t lastStart = 0;
+		bool lastTwo = false;
 		while (words.size() < limit)
 		{
 			seed = seed * 1103515245u + 12345u;
 			const DspGolden::Vector& v = DspGolden::kAluVectors[(seed >> 8) % DspGolden::kAluVectorCount];
+
+			uint8_t encoded[4] = { (uint8_t)(v.word >> 8), (uint8_t)v.word, 0, 0 };
+			DSP::DecoderInfo info;
+			DSP::Decoder::Decode(encoded, 2, info);
+			if (info.flowControl) continue;
+
+			lastStart = words.size();
+			lastTwo = v.twoWord != 0;
 			words.push_back(v.word);
 			if (v.twoWord) words.push_back(v.word2);
 		}
-		words.resize(limit);
+		// A two-word form must not be cut in half by the limit: the `jmp 0` that closes the
+		// program has to start on an instruction boundary, otherwise its operand is executed as
+		// an instruction and the pc walks off the end of IRAM.
+		if (lastTwo) words.resize(lastStart);
+		if (words.size() > limit) words.resize(limit);
 		words.push_back(0x029F);
 		words.push_back(0x0000);
 
