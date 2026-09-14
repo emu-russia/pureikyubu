@@ -450,17 +450,10 @@ void main()
         bool odd = (stage & 1) != 0;
 
         uint treg = tevTref[pair].x;
-        // A TREF word binds a *pair* of stages, and its two halves are consumed by the texture
-        // passes in the order (upper half, lower half): the first stage of the pair whose texture is
-        // enabled takes the upper half's binding, the second one the lower half. A pair with a
-        // single texture - one texture object per draw, as Luigi's Mansion programs it - therefore
-        // keeps that texture on the lower half.
-        int teUpper = int(Bits(treg, 18, 1));
-        bool upper = odd ? (teUpper == 0) : (teUpper != 0);
-        int ti = upper ? int(Bits(treg, 12, 3)) : int(Bits(treg, 0, 3));
-        int tcindex = upper ? int(Bits(treg, 15, 3)) : int(Bits(treg, 3, 3));
-        int te = upper ? int(Bits(treg, 18, 1)) : int(Bits(treg, 6, 1));
-        int cc = upper ? int(Bits(treg, 19, 3)) : int(Bits(treg, 7, 3));
+        int ti = odd ? int(Bits(treg, 12, 3)) : int(Bits(treg, 0, 3));
+        int tcindex = odd ? int(Bits(treg, 15, 3)) : int(Bits(treg, 3, 3));
+        int te = odd ? int(Bits(treg, 18, 1)) : int(Bits(treg, 6, 1));
+        int cc = odd ? int(Bits(treg, 19, 3)) : int(Bits(treg, 7, 3));
 
         // ---- indirect texture stage (gfx-bump.md 3.3) ----
         //
