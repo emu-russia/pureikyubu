@@ -1,13 +1,18 @@
 # testing/gba_bench - the GBA core harness
 
-`gba_test` is two tools in one binary:
+`gba_test` is three tools in one binary:
 
 * the **unit tests** of the integrated GBA emulator (`GBA_TEST` registration, see `gba_test.h`), run
   with no arguments (or with a substring filter: `gba_test Ppu`);
 * the **ROM harness** that made the core debuggable while it was written: it boots a cartridge (or
   the emulator's own boot ROM, or a demo cartridge it assembles itself) headlessly, prints a hash of
   every frame, dumps frames as PNG, measures the emulation speed and can plug two instances into
-  each other through the emulated link cable.
+  each other through the emulated link cable;
+* the module's **debugging tools**: the ARM/Thumb and SM83 disassemblers of `src/gba/gba_disasm.cpp`
+  and `src/gba/gb_disasm.cpp`. `--disasm-*` lists an instruction stream (a BIOS, a cartridge, any
+  file), and `--trace N` runs the last frame instruction by instruction and prints the last N
+  instructions with the register file, which is what answers "what is this program doing now" for a
+  machine that seems stuck.
 
 ```
 check.sh                          # build and run every test
@@ -19,6 +24,10 @@ check.sh --dump-bootrom /tmp/gba_bootrom.bin
 check.sh --link-test
 check.sh --bootrom --frames 300 --wav /tmp/boot.wav          # listen to the boot animation
 check.sh --bootrom --bios bios/gba_bios.bin --frames 900 --wav /tmp/bios.wav
+check.sh --disasm-arm bios/gba_bios.bin 0x340 10             # read the BIOS's Halt loop
+check.sh --disasm-thumb roms/metroid_fusion.gba 0xA00 20     # a cartridge's own code
+check.sh --disasm-gb roms/zelda_ladx.gbc 0x150 20            # the Game Boy's code
+check.sh --run game.gba --frames 200 --trace 60              # what the last frame executed
 ```
 
 The core is compiled straight from `src/gba` (the SDL frontend `gba_sdl.cpp` is the only file left
@@ -32,6 +41,7 @@ official IPL.
 
 | Suite | What it drives |
 |---|---|
+| `Disasm` | The two disassemblers: the ARM data processing, transfer, block transfer, branch and miscellaneous encodings, the Thumb formats (including the two halfword long branch) and the SM83 opcode and CB maps, each checked against the encoding table it was written from and, for ARM, against the bytes of the real BIOS it is used on |
 | `Cpu` | The ARM7TDMI: the data processing family with the flags and the barrel shifter, multiplies, the load/store family, the block transfers, the branch family, all the Thumb formats, the mode banking, the exceptions, HALT |
 | `Ppu` | The LCD: text/affine/bitmap backgrounds, sprites, windows, blending, forced blank, the scanline timing and the HBlank/VBlank/VCount interrupts |
 | `Apu` | The four legacy channels, the wave RAM, the noise LFSR, the two FIFOs with their DMA requests, the mixer and the sample rate |

@@ -17,7 +17,10 @@
 
 #include "gba.h"
 #include "gba_bootrom.h"
+#include "gba_disasm.h"
 #include "gb.h"
+#include "gb_bus.h"
+#include "gb_disasm.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -230,6 +233,11 @@ namespace
 		std::string pngDir;
 		std::string dumpBootRom;
 		std::string wavPath;
+		std::string disasmFile;		// --disasm-arm/--disasm-thumb/--disasm-gb
+		std::string disasmKind;		// "arm", "thumb" or "gb"
+		u32 disasmOffset = 0;
+		int disasmCount = 0;
+		int trace = 0;				// --trace: how many instructions of the last frame to keep
 		int frames = 60;
 		int pngEvery = 0;
 		bool bootRomOnly = false;
@@ -242,6 +250,165 @@ namespace
 		bool gbDmg = false;			// force the monochrome console
 		u16 keys = 0;
 	};
+
+	/// <summary>A disassembly memory that reads through a live machine's bus, so the listing shows
+	/// what the CPU would fetch rather than what a file holds.</summary>
+	class BusDisasmMemory : public DisasmMemory
+	{
+	public:
+		explicit BusDisasmMemory(GbaBus& bus) : bus(bus) {}
+
+		u16 Read16(u32 address) const override
+		{
+			return (u16)(bus.Read16(address) & 0xFFFF);
+		}
+
+	private:
+		GbaBus& bus;
+	};
+
+	/// <summary>The Game Boy's bus as a byte stream for its disassembler.</summary>
+	class GbBusDisasmMemory : public DisasmMemory
+	{
+	public:
+		explicit GbBusDisasmMemory(GbBus& bus) : bus(bus) {}
+
+		u16 Read16(u32 address) const override
+		{
+			u8 low = bus.ReadByte((u16)address);
+			u8 high = bus.ReadByte((u16)(address + 1));
+			return (u16)(low | (high << 8));
+		}
+
+	private:
+		GbBus& bus;
+	};
+
+	/// <summary>List an image (a BIOS or a cartridge file) or a live machine's memory, one
+	/// instruction per line, with the address and the raw bytes in front of the mnemonic.</summary>
+	int RunDisassembly(const HarnessOptions& options)
+	{
+		// The file is read into a flat image; the offsets are given relative to its base, which is
+		// where the machine maps it (a BIOS at 0, a cartridge at 0x08000000).
+		std::vector<u8> image;
+		u32 base = 0;
+
+		FILE* file = fopen(options.disasmFile.c_str(), "rb");
+		if (file == nullptr)
+		{
+			printf("harness: cannot open %s\n", options.disasmFile.c_str());
+			return 2;
+		}
+
+		u8 buffer[65536];
+		size_t got;
+		while ((got = fread(buffer, 1, sizeof buffer, file)) > 0)
+			image.insert(image.end(), buffer, buffer + got);
+		fclose(file);
+
+		ImageMemory memory(image.data(), image.size(), base);
+		bool thumb = options.disasmKind == "thumb";
+		bool gb = options.disasmKind == "gb";
+
+		printf("harness: %s, %zu bytes, listing %i instruction(s) from 0x%X as %s\n",
+			options.disasmFile.c_str(), image.size(), options.disasmCount, options.disasmOffset,
+			gb ? "SM83" : (thumb ? "Thumb" : "ARM"));
+
+		u32 address = base + options.disasmOffset;
+
+		for (int i = 0; i < options.disasmCount; i++)
+		{
+			int size = 0;
+			std::string text;
+			std::string bytes;
+
+			if (gb)
+			{
+				text = GbDisassemble(memory, (u16)address, &size);
+				bytes = GbInstructionBytes(memory, (u16)address, size);
+				printf("  %04X: %-8s %s\n", (unsigned)address, bytes.c_str(), text.c_str());
+			}
+			else
+			{
+				text = Disassemble(memory, address, thumb, &size);
+				bytes = InstructionBytes(memory, address, size);
+				printf("  %08X: %-10s %s\n", (unsigned)address, bytes.c_str(), text.c_str());
+			}
+
+			address += (u32)size;
+		}
+
+		return 0;
+	}
+
+	/// <summary>One traced instruction: where it was, what it was and - for the last few - what the
+	/// registers held.</summary>
+	struct TraceEntry
+	{
+		u32 pc = 0;
+		bool thumb = false;
+		int size = 2;
+		std::string text;
+	};
+
+	/// <summary>Run the last frame of the machine one instruction at a time, keeping the last
+	/// `count` instructions, and print them. This is the tool that answers "what is it doing now"
+	/// for a program that seems to be stuck.</summary>
+	void TraceLastFrame(GbaSystem& system, int count)
+	{
+		BusDisasmMemory memory(system.Bus());
+		std::vector<TraceEntry> trace;
+		trace.reserve((size_t)count);
+
+		int frame = system.Bus().ppu.FrameCounter();
+		u64 guard = 0;
+		const u64 maxCycles = (u64)CyclesPerFrame * 4;
+
+		while (system.Bus().ppu.FrameCounter() == frame && guard < maxCycles)
+		{
+			TraceEntry entry;
+			entry.pc = system.Cpu().CurrentPC();
+			entry.thumb = system.Cpu().ThumbState();
+			entry.text = Disassemble(memory, entry.pc, entry.thumb, &entry.size);
+
+			trace.push_back(entry);
+			if ((int)trace.size() > count)
+				trace.erase(trace.begin());
+
+			int taken = system.Cpu().Step();
+			if (taken < 1)
+				taken = 1;
+			system.Bus().Tick(taken);
+			guard += (u64)taken;
+		}
+
+		printf("harness: the last frame ran %zu traced instructions (showing the last %zu)\n",
+			trace.size(), trace.size());
+
+		// The last few entries carry the register file as well: a trace that says "it halts here"
+		// is much more useful with the arguments the program passed in.
+		const size_t withRegisters = 12;
+		size_t index = 0;
+
+		for (const TraceEntry& entry : trace)
+		{
+			bool showRegisters = index + withRegisters >= trace.size();
+			index++;
+
+			if (!showRegisters)
+			{
+				printf("  %08X: %s\n", (unsigned)entry.pc, entry.text.c_str());
+				continue;
+			}
+
+			printf("  %08X: %-28s r0=%08X r1=%08X r2=%08X r3=%08X\n", (unsigned)entry.pc,
+				entry.text.c_str(), (unsigned)system.Cpu().Reg(0), (unsigned)system.Cpu().Reg(1),
+				(unsigned)system.Cpu().Reg(2), (unsigned)system.Cpu().Reg(3));
+		}
+
+		printf("harness: cpu at %08X, cpsr %08X (%s)\n", (unsigned)system.Cpu().CurrentPC(),
+			(unsigned)system.Cpu().ReadCPSR(), ConditionFlags(system.Cpu().ReadCPSR()).c_str());
+	}
 
 	int RunHarness(const HarnessOptions& options)
 	{
@@ -319,7 +486,13 @@ namespace
 
 		for (int frame = 0; frame < options.frames; frame++)
 		{
-			system.RunFrame();
+			// --trace steps the *last* frame one instruction at a time (and prints it afterwards),
+			// which is what answers "what is this program doing right now"; the frames before it
+			// run at full speed.
+			if (options.trace > 0 && frame == options.frames - 1)
+				TraceLastFrame(system, options.trace);
+			else
+				system.RunFrame();
 
 			if (!options.wavPath.empty())
 			{
@@ -518,6 +691,9 @@ namespace
 			"  gba_test --demo [options]          run the demo cartridge the harness assembles\n"
 			"  gba_test --dump-bootrom <file>     write the generated boot ROM and its listing\n"
 			"  gba_test --link-test               plug two instances into each other\n"
+			"  gba_test --disasm-arm <file> <offset> <count>     list ARM instructions\n"
+			"  gba_test --disasm-thumb <file> <offset> <count>   list Thumb instructions\n"
+			"  gba_test --disasm-gb <file> <offset> <count>      list SM83 instructions\n"
 			"\n"
 			"options for --run/--bootrom/--demo:\n"
 			"  --frames N        how many frames to run (default 60)\n"
@@ -526,6 +702,8 @@ namespace
 			"  --keys <mask>     hold the keys named by the bits (see gba_keypad.h)\n"
 			"  --bios <file>     use a real BIOS image instead of the built-in one\n"
 			"  --wav <file>      record what the sound hardware produces into a WAV file\n"
+			"  --trace N         step the last frame instruction by instruction and print the last N\n"
+			"                    of them (with the disassembly), for a program that seems stuck\n"
 			"  --no-custom-boot  do not run the custom boot ROM\n"
 			"  --gb              run the Game Boy machine instead of the GBA (with --gb-dmg for the\n"
 			"                    monochrome console)\n"
@@ -569,6 +747,26 @@ int main(int argc, char** argv)
 	if (args[0] == "--link-test")
 		return RunLinkTest();
 
+	if (args[0] == "--disasm-arm" || args[0] == "--disasm-thumb" || args[0] == "--disasm-gb")
+	{
+		// --disasm-arm <file> <offset> <count>: list an instruction stream. The offsets are given
+		// in the file's own numbering (a BIOS starts at 0, a cartridge at 0x08000000 is listed by
+		// its file offset).
+		if (args.size() < 4)
+		{
+			printf("%s needs a file, an offset and an instruction count\n", args[0].c_str());
+			return 2;
+		}
+
+		HarnessOptions options;
+		options.disasmFile = args[1];
+		options.disasmOffset = (u32)strtoul(args[2].c_str(), nullptr, 0);
+		options.disasmCount = atoi(args[3].c_str());
+		options.disasmKind = (args[0] == "--disasm-arm") ? "arm" :
+			((args[0] == "--disasm-thumb") ? "thumb" : "gb");
+		return RunDisassembly(options);
+	}
+
 	if (args[0] == "--run" || args[0] == "--bootrom" || args[0] == "--demo")
 	{
 		HarnessOptions options;
@@ -600,6 +798,7 @@ int main(int argc, char** argv)
 			else if (arg == "--gb-dmg") { options.gb = true; options.gbDmg = true; }
 			else if (arg == "--no-custom-boot") options.noCustomBoot = true;
 			else if (arg == "--bench") options.bench = true;
+			else if (arg == "--trace") options.trace = atoi(next("--trace").c_str());
 			else if (arg == "--quiet") options.quiet = true;
 			else if (arg[0] != '-') options.rom = arg;
 			else

@@ -39,6 +39,9 @@
       <Filter>Game Boy Advance</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gba\gba_dma.cpp">
+    <ClCompile Include="..\..\src\gba\gba_disasm.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
       <Filter>Game Boy Advance</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gba\gba_hlebios.cpp">
@@ -87,6 +90,9 @@
       <Filter>Game Boy</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gba\gb_cpu.cpp">
+    <ClCompile Include="..\..\src\gba\gb_disasm.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
       <Filter>Game Boy</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gba\gb_ppu.cpp">
@@ -116,6 +122,9 @@
       <Filter>Game Boy Advance</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gba\gba_dma.h">
+    <ClInclude Include="..\..\src\gba\gba_disasm.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
       <Filter>Game Boy Advance</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gba\gba_hlebios.h">
@@ -164,6 +173,9 @@
       <Filter>Game Boy</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gba\gb_cpu.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_disasm.h">
       <Filter>Game Boy</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gba\gb_ppu.h">

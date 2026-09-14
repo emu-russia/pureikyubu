@@ -85,6 +85,19 @@ namespace GbaTest
 		} \
 	} while (0)
 
+/// <summary>Compare two strings and print both of them when they differ (a disassembly, a path, a
+/// name - anything GBA_CHECK_EQ cannot show as a number).</summary>
+#define GBA_CHECK_STR(actual, expected) \
+	do { \
+		std::string gba_actual = (actual); \
+		std::string gba_expected = (expected); \
+		if (gba_actual != gba_expected) \
+		{ \
+			GbaTest::Fail(__FILE__, __LINE__, std::string("expected \"") + gba_expected + "\", got \"" + \
+				gba_actual + "\""); \
+		} \
+	} while (0)
+
 /// <summary>Compare two 16-bit words and print both in hexadecimal.</summary>
 #define GBA_CHECK_HEX16(actual, expected) \
 	do { \

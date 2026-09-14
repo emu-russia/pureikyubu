@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   gba_bench: the standalone harness of the integrated GBA emulator (issue #388).
 
@@ -108,6 +108,7 @@
     <ClCompile Include="..\..\src\gba\gba_bus.cpp" />
     <ClCompile Include="..\..\src\gba\gba_cart.cpp" />
     <ClCompile Include="..\..\src\gba\gba_dma.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_disasm.cpp" />
     <ClCompile Include="..\..\src\gba\gba_hlebios.cpp" />
     <ClCompile Include="..\..\src\gba\gba_irq.cpp" />
     <ClCompile Include="..\..\src\gba\gba_keypad.cpp" />
@@ -123,6 +124,7 @@
     <ClCompile Include="..\..\src\gba\gb_bus.cpp" />
     <ClCompile Include="..\..\src\gba\gb_cart.cpp" />
     <ClCompile Include="..\..\src\gba\gb_cpu.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_disasm.cpp" />
     <ClCompile Include="..\..\src\gba\gb_ppu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +134,7 @@
     <ClCompile Include="..\..\testing\gba_bench\test_cart.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_cpu.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_demo.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_disasm.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_bootrom.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_cart.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_cpu.cpp" />
@@ -165,6 +168,7 @@
     <ClInclude Include="..\..\src\gba\gb_bus.h" />
     <ClInclude Include="..\..\src\gba\gb_cart.h" />
     <ClInclude Include="..\..\src\gba\gb_cpu.h" />
+    <ClInclude Include="..\..\src\gba\gb_disasm.h" />
     <ClInclude Include="..\..\src\gba\gb_ppu.h" />
     <ClInclude Include="..\..\testing\gba_bench\demo_rom.h" />
     <ClInclude Include="..\..\testing\gba_bench\gba_test.h" />
