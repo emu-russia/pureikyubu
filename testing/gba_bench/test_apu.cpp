@@ -84,7 +84,10 @@ namespace
 		std::vector<s16> Drain()
 		{
 			std::vector<s16> out;
-			s16 buffer[128];
+
+			// ReadSamples hands over `maxFrames` *stereo* frames, i.e. two s16 per frame: the
+			// buffer has to hold twice as many samples as the frame count it is asked for.
+			s16 buffer[128 * 2];
 
 			for (;;)
 			{
@@ -382,7 +385,7 @@ GBA_TEST(Apu, BusRegisterAccess)
 		bus.Tick(SampleCycles);
 
 	std::vector<s16> mono;
-	s16 buffer[128];
+	s16 buffer[128 * 2];		// stereo frames: two s16 each (see Drain)
 	for (;;)
 	{
 		int frames = bus.apu.ReadSamples(buffer, 128);
@@ -1233,6 +1236,6 @@ GBA_TEST(Apu, ReadSamplesPartial)
 	EnablePsg(exact);
 	PlayChannel1(exact, 1792, 2, 15);
 	exact.TickSliced(SampleCycles * 8);
-	s16 big[100];
+	s16 big[100 * 2];		// room for 100 stereo frames
 	GBA_CHECK_EQ(exact.apu().ReadSamples(big, 100), 8);
 }

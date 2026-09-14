@@ -6,3 +6,6 @@ roms/
 # own copy here to run the tests that compare the emulator against the real BIOS, or point the
 # emulator at it with `pureikyubu --gba --gba-bios <file>` / `gba_bench --run <rom> --bios <file>`.
 bios/
+
+# Recordings made by `--wav` (they are output, not source).
+recordings/

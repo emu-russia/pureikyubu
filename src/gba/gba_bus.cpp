@@ -477,8 +477,7 @@ namespace GBA
 				break;
 
 			case 0x07:
-				ppu.WriteOam(address & (OamSize - 1), (u8)value);
-				ppu.WriteOam((address + 1) & (OamSize - 1), (u8)(value >> 8));
+				ppu.WriteOam16(address, value);
 				break;
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:

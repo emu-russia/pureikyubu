@@ -96,8 +96,12 @@ namespace GBA
 				bus->SetCustomBios(false);
 
 				// A real BIOS is *executed*: the CPU starts at address 0 and lets it boot the
-				// cartridge (or decide what to do with no cartridge).
+				// cartridge (or decide what to do with no cartridge). Its own SWI handler must run
+				// as well, so the host-side BIOS calls are switched off with it - a real BIOS that
+				// has its service functions intercepted is not a real BIOS.
 				realBios = true;
+				settings.hleBios = false;
+				bus->HleBiosEnabled = false;
 				return;
 			}
 
@@ -155,10 +159,12 @@ namespace GBA
 
 		biosImage = image;
 		settings.biosPath = path;
+		settings.hleBios = false;
 		realBios = true;
 
 		bus->SetBios(biosImage.data(), biosImage.size());
 		bus->SetCustomBios(false);
+		bus->HleBiosEnabled = false;
 
 		return true;
 	}

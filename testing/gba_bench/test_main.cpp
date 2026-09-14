@@ -21,8 +21,8 @@
 
 #include <chrono>
 #include <cstdlib>
-#include <dirent.h>
-#include <sys/stat.h>
+#include <filesystem>
+#include <system_error>
 
 using namespace GBA;
 
@@ -83,7 +83,12 @@ namespace
 
 	bool MakeDirectory(const std::string& path)
 	{
-		return mkdir(path.c_str(), 0755) == 0;
+		// The harness runs on Linux (build.sh) and on Windows (the gba_bench project of the VS
+		// solution), so the directory is created through the standard library instead of mkdir():
+		// create_directories also reports success for a directory that is already there.
+		std::error_code error;
+		std::filesystem::create_directories(path, error);
+		return !error;
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -151,6 +156,70 @@ namespace
 	}
 
 	// ---------------------------------------------------------------------------------------
+	// A minimal WAV writer, so a run can be listened to afterwards (`--wav <file>`). The audio the
+	// emulator mixes is 16-bit stereo at the system's sample rate; the header is written first
+	// with placeholder sizes and patched when the file is closed.
+	// ---------------------------------------------------------------------------------------
+
+	class WavWriter
+	{
+		FILE* file = nullptr;
+		uint32_t dataBytes = 0;
+
+	public:
+		bool Open(const std::string& path, int sampleRate)
+		{
+			file = fopen(path.c_str(), "wb");
+			if (file == nullptr)
+				return false;
+
+			uint8_t header[44] = { 0 };
+			memcpy(header + 0, "RIFF", 4);
+			memcpy(header + 8, "WAVEfmt ", 8);
+			uint32_t chunkSize = 16;
+			uint16_t format = 1, channels = 2, bits = 16;
+			uint32_t byteRate = (uint32_t)sampleRate * 2 * 2;
+			uint16_t blockAlign = 4;
+			memcpy(header + 16, &chunkSize, 4);
+			memcpy(header + 20, &format, 2);
+			memcpy(header + 22, &channels, 2);
+			memcpy(header + 24, &sampleRate, 4);
+			memcpy(header + 28, &byteRate, 4);
+			memcpy(header + 32, &blockAlign, 2);
+			memcpy(header + 34, &bits, 2);
+			memcpy(header + 36, "data", 4);
+			fwrite(header, 1, sizeof(header), file);
+			return true;
+		}
+
+		void Write(const s16* samples, int frames)
+		{
+			if (file == nullptr || frames <= 0)
+				return;
+
+			size_t bytes = (size_t)frames * 2 * sizeof(s16);
+			fwrite(samples, 1, bytes, file);
+			dataBytes += (uint32_t)bytes;
+		}
+
+		void Close()
+		{
+			if (file == nullptr)
+				return;
+
+			uint32_t riffSize = 36 + dataBytes;
+			fseek(file, 4, SEEK_SET);
+			fwrite(&riffSize, 1, 4, file);
+			fseek(file, 40, SEEK_SET);
+			fwrite(&dataBytes, 1, 4, file);
+			fclose(file);
+			file = nullptr;
+		}
+
+		~WavWriter() { Close(); }
+	};
+
+	// ---------------------------------------------------------------------------------------
 	// The ROM harness
 	// ---------------------------------------------------------------------------------------
 
@@ -160,6 +229,7 @@ namespace
 		std::string bios;
 		std::string pngDir;
 		std::string dumpBootRom;
+		std::string wavPath;
 		int frames = 60;
 		int pngEvery = 0;
 		bool bootRomOnly = false;
@@ -227,12 +297,36 @@ namespace
 		if (!options.pngDir.empty())
 			MakeDirectory(options.pngDir);
 
+		// `--wav <file>`: record what the sound hardware produces while the frames run, so a boot
+		// animation or a game's music can be listened to afterwards.
+		WavWriter wav;
+		std::vector<s16> audio;
+
+		if (!options.wavPath.empty())
+		{
+			if (!wav.Open(options.wavPath, system.SampleRate()))
+			{
+				printf("harness: cannot write %s\n", options.wavPath.c_str());
+				return 2;
+			}
+
+			printf("harness: recording the audio to %s at %i Hz\n",
+				options.wavPath.c_str(), system.SampleRate());
+		}
+
 		auto start = std::chrono::steady_clock::now();
 		u64 startCycles = system.Cycles();
 
 		for (int frame = 0; frame < options.frames; frame++)
 		{
 			system.RunFrame();
+
+			if (!options.wavPath.empty())
+			{
+				audio.resize(4096 * 2);
+				int got = system.ReadAudio(audio.data(), 4096);
+				wav.Write(audio.data(), got);
+			}
 
 			uint32_t hash = FrameHash(system.FrameBuffer(), ScreenWidth * ScreenHeight);
 
@@ -255,6 +349,13 @@ namespace
 		auto end = std::chrono::steady_clock::now();
 		double seconds = std::chrono::duration<double>(end - start).count();
 		u64 cycles = system.Cycles() - startCycles;
+
+		wav.Close();
+
+		if (!options.wavPath.empty())
+		{
+			printf("harness: wrote %s\n", options.wavPath.c_str());
+		}
 
 		if (options.bench && seconds > 0)
 		{
@@ -424,6 +525,7 @@ namespace
 			"  --png-every N     dump every N-th frame (default: only with --png, every 10th)\n"
 			"  --keys <mask>     hold the keys named by the bits (see gba_keypad.h)\n"
 			"  --bios <file>     use a real BIOS image instead of the built-in one\n"
+			"  --wav <file>      record what the sound hardware produces into a WAV file\n"
 			"  --no-custom-boot  do not run the custom boot ROM\n"
 			"  --gb              run the Game Boy machine instead of the GBA (with --gb-dmg for the\n"
 			"                    monochrome console)\n"
@@ -492,6 +594,7 @@ int main(int argc, char** argv)
 			else if (arg == "--png-every") options.pngEvery = atoi(next("--png-every").c_str());
 			else if (arg == "--keys") options.keys = (u16)strtoul(next("--keys").c_str(), nullptr, 0);
 			else if (arg == "--bios") options.bios = next("--bios");
+			else if (arg == "--wav") options.wavPath = next("--wav");
 			else if (arg == "--demo") options.demo = true;
 			else if (arg == "--gb") options.gb = true;
 			else if (arg == "--gb-dmg") { options.gb = true; options.gbDmg = true; }

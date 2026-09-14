@@ -74,6 +74,16 @@ namespace GBA
 			const u32 RegSioMulti1 = 0x04000122;		// SIOMULTI1, the first child's slot
 			const u32 RegSioMltSend = 0x0400012A;		// SIOMLT_SEND, the local outgoing word
 
+			// GBATEK "GBA Sound Control Registers" and "GBA Sound Channel 1": the boot animation
+			// greets the player with a short tone, the way a handheld's logo does.
+			const u32 RegSound1CntL = 0x04000060;		// NR10: the sweep
+			const u32 RegSound1CntH = 0x04000062;		// NR11/NR12: duty, length, envelope
+			const u32 RegSound1CntX = 0x04000064;		// NR13/NR14: frequency and the trigger
+			const u32 RegSoundCntL = 0x04000080;		// the PSG volumes and the panning
+			const u32 RegSoundCntH = 0x04000082;		// the PSG/DMA mix
+			const u32 RegSoundCntX = 0x04000084;		// the master enable
+			const u32 RegSoundBias = 0x04000088;
+
 			const u32 VramBase = 0x06000000;
 
 			// The IWRAM the ROM uses. 0x03007C00-0x03007EFF is free: GBATEK "Default WRAM Usage"
@@ -576,6 +586,40 @@ namespace GBA
 				// The static part of the background (the vertical gradient). The stars are drawn
 				// every frame, and every frame's pixels are undone by the next one.
 				emitter.Bl("DrawBackground");
+
+				// ---------------------------------------------------------------------------------
+				// The greeting: the sound hardware on, both PSG sides at full volume, and channel 1
+				// triggered on a short, decaying tone. A boot animation that makes no sound is not
+				// what a player expects from the logo of a handheld, and the tone is also the
+				// emulator's own check that the mixer works (see testing/gba_bench).
+				// ---------------------------------------------------------------------------------
+				LoadConst(1, RegSoundCntX);
+				LoadConst(0, 0x0080);						// SOUNDCNT_X: master enable
+				emitter.Str(0, 1, 0, Cond::AL, true);
+
+				LoadConst(1, RegSoundCntL);
+				LoadConst(0, 0x1177);						// SOUNDCNT_L: 100% volume, all to both sides
+				emitter.Strh(0, 1, 0);
+
+				LoadConst(1, RegSoundCntH);
+				LoadConst(0, 0x0002);						// SOUNDCNT_H: the PSG at 100%
+				emitter.Strh(0, 1, 0);
+
+				LoadConst(1, RegSoundBias);
+				LoadConst(0, 0x0200);						// SOUNDBIAS: the documented default
+				emitter.Strh(0, 1, 0);
+
+				LoadConst(1, RegSound1CntL);
+				emitter.Mov(0, 0);
+				emitter.Str(0, 1, 0, Cond::AL, true);		// NR10: no sweep
+
+				LoadConst(1, RegSound1CntH);
+				LoadConst(0, 0xF180);						// NR11/NR12: 50% duty, volume 15,
+				emitter.Strh(0, 1, 0);						// decreasing, envelope period 1
+
+				LoadConst(1, RegSound1CntX);
+				LoadConst(0, 0x8300);						// NR13/NR14: frequency 0x300, triggered
+				emitter.Strh(0, 1, 0);
 
 				// -- the animation frame loop ---------------------------------------------------
 				emitter.Label("AnimationLoop");

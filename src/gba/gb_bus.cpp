@@ -210,6 +210,13 @@ namespace GBA
 		if (address >= 0xFF40 && address <= 0xFF4B)
 			return ppu.ReadRegister(address);
 
+		// The CGB colour palette registers: BCPS/BCPD at 0xFF68/0xFF69 and OCPS/OCPD at
+		// 0xFF6A/0xFF6B (Pan Docs "CGB Registers"). They are the only way a CGB game can define
+		// its colours, so the bus has to pass them through to the PPU - which ignores them on a
+		// monochrome console, where the addresses read back as 0xFF anyway.
+		if (address >= 0xFF68 && address <= 0xFF6B)
+			return ppu.ReadRegister(address);
+
 		switch (address)
 		{
 		case 0xFF00: return JoypadValue();
@@ -376,6 +383,15 @@ namespace GBA
 		}
 
 		if (address >= 0xFF40 && address <= 0xFF4B)
+		{
+			ppu.WriteRegister(address, value);
+			return;
+		}
+
+		// The CGB colour palette registers (see ReadIo): without them a CGB game cannot define a
+		// single colour, so the whole picture - sprites included - stays on the palette the
+		// machine installed at reset.
+		if (address >= 0xFF68 && address <= 0xFF6B)
 		{
 			ppu.WriteRegister(address, value);
 			return;

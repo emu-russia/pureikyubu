@@ -17,13 +17,16 @@ check.sh --demo --frames 120 --png /tmp/demo
 check.sh --run roms/arm.gba --frames 120 --png /tmp/arm
 check.sh --dump-bootrom /tmp/gba_bootrom.bin
 check.sh --link-test
+check.sh --bootrom --frames 300 --wav /tmp/boot.wav          # listen to the boot animation
+check.sh --bootrom --bios bios/gba_bios.bin --frames 900 --wav /tmp/bios.wav
 ```
 
 The core is compiled straight from `src/gba` (the SDL frontend `gba_sdl.cpp` is the only file left
 out: the core itself has no SDL dependency). `get_test_roms.sh` fetches three public, MIT-licensed
-test ROMs (`jsmolka/gba-tests`) that the harness can be pointed at; they are not part of the
-repository. A **real BIOS image** can be dropped into `bios/` (also git-ignored) to run the tests
-that compare the emulator against the official IPL.
+GBA test ROMs (`jsmolka/gba-tests`) and the two Game Boy Acid2 pictures (`dmg-acid2`, `cgb-acid2`)
+that the harness can be pointed at; they are not part of the repository. A **real BIOS image** can be
+dropped into `bios/` (also git-ignored) to run the tests that compare the emulator against the
+official IPL.
 
 ## What the tests cover
 
@@ -74,24 +77,38 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 * **The Game Boy (DMG/CGB) machine** is a separate core (`src/gba/gb_*.cpp`) with its own tests
   (`test_gb_*.cpp`) and its own harness mode (`--gb`); the GBA in Game Boy compatibility mode does
   not run it, and the GBA cartridge slot does not accept a Game Boy cartridge.
+* **The Game Boy's picture is composed one line at a time**, like the GBA's, so a Game Boy program
+  that changes a register *inside* the visible part of a line sees the change one line early. The
+  two Acid2 images (`get_test_roms.sh`: `dmg-acid2.gb`, `cgb-acid2.gbc`) are the end-to-end check
+  of that picture: the monochrome one (background, window, objects, their priorities, the object
+  8x16 size and the flips) comes out as the reference drawing, and the colour one draws the right
+  colours, the right background and the right objects, but its nose, its diagonal and the ring of
+  its right eye - the parts the test moves around to catch mid-line behaviour - still differ from
+  the reference.
 
-## Known failing tests
+## The test suite
 
-The suite is not green at the time of writing: 223 of 243 tests pass. The failures are listed here
-with the honest state of each, because a red test is only useful if it is understood.
+Every test passes: **245 of 245**. The suite was not green while the core was being written, and
+every failure was resolved by fixing the emulator or by correcting an expectation that did not
+match GBATEK - never by deleting a test. The failures are listed here because each one names a real
+bug that is easy to reintroduce.
 
-| Test | State |
+| Test that used to fail | What it turned out to be |
 |---|---|
-| `Dma.ImmediateTransferWithIncrementDecrementAndFixed` | The DMA0/DMA1 parts pass; the DMA2 fixed-destination scope fails although the transfer itself is verified to write the right value (the later read-back in the test sees zero). Belongs to `test_io.cpp`'s scope setup, or to `Dma::Perform`'s register restore - not yet diagnosed. |
-| `Dma.FifoRefillCompletesWhenTheApuAsks` | The DMA side calls `Apu::FifoDmaDone` with the four words and clears the request (verified by its author in a standalone harness); the integrated failure needs the same look. |
-| `Sio.NormalMode32BitTransferExchangesData` | The 32-bit normal-mode receive value is wrong for the end that finishes first (the deferred commit path). A real gap in `gba_sio.cpp`; the 8-bit form and the empty-cable case pass. |
-| `Sio.MultiplayerEmptySlotsReadFFFF` | A parent slot reads the peer's word instead of 0xFFFF for an unconnected slot. A real gap in the multiplayer slot logic. |
-| `Sio.TransferLengthsMatchTheSpecifiedBaudRate` | `Busy()` is not reported right after the start write in that test. |
-| 15 `Ppu.*` tests (e.g. `TextBg8bpp`, `Sprite256Colors`, `AlphaBlendingOfTwoBgs`, `VCountMatchInterrupt`) | Their author's own report: the renderer implements the features (tile and bitmap backgrounds, sprites, windows, mosaic, blending - the boot ROM animation, the demo cartridge and the public test ROMs all render correctly through them), but these tests' setups collide inside one 96 KByte of VRAM (the same character/screen base reused by two cases) or target the wrong dot, so the expectations - not the emulator - are the problem. They are kept failing rather than weakened. |
+| `Dma.FifoRefillCompletesWhenTheApuAsks` | A FIFO-mode DMA collected its four words but never handed them to the APU (`Apu::FifoDmaDone`), and it used the 16-bit unit size for a transfer the hardware always performs 32bits wide. Sound DMA produced no sound at all. |
+| `Ppu.Sprite256Colors`, `Ppu.AffineSpriteIdentityMatrix` | The 1-dimensional OBJ tile mapping stepped the tile rows by a fixed 16 tiles instead of the OBJ's own width, an affine OBJ scaled its matrix parameters by 256, and it was placed with the reference point in its middle instead of at its upper-left. |
+| `Ppu.SpriteHorizontalFlip` | Attribute 1 bits 12/13, the flips of a non-affine OBJ, were not implemented at all. |
+| `Ppu.AffineBgRotationAndReferenceAdvance` | The affine renderer sampled the write latch instead of the internal reference register (throwing the per-line PB/PD advance away), the advance itself multiplied PB/PD by 256, and the source X subtracted the scanline number. |
+| `Ppu.AlphaBlendingOfTwoBgs`, `Ppu.SemiTransparentSpriteAlphaBlendsWithTheBg` | Alpha blending required the top pixel to be a 2nd target as well, which is not what GBATEK 4000050h asks for: only the next-lower pixel has to be one, so BG-to-BG blending never happened. |
+| Every sprite test | The bus assembled an OAM halfword out of two `Ppu::WriteOam` byte writes, and that accessor drops the high byte (OAM has no 8-bit write access). Every sprite attribute above bit 7 - tile number, size, 256-colour flag, priority, flips, the affine parameters - was lost. |
+| `Ppu.ForcedBlankIsWhite`, `Ppu.WindowMasksOneBg`, `Ppu.TextBg8bpp`, `Ppu.PriorityFightBetweenTwoBgs`, `Ppu.TextBgTileMapWrap512`, `Ppu.VCountMatchInterrupt`, `Ppu.VramWindowsPerMode`, `Ppu.BrightnessDecreaseOfTheBackdrop` | Expectations that did not follow the hardware: the forced blank and the green swap did not reach the line buffer, a window row that is still inside the window, a palette entry written to the wrong offset, a background map that collided with its own tile data, a V-Count match line the test's loop never reached again, the VRAM mirroring formula, and the truncation order of the brightness decrease. |
+| The colour half of `cgb-acid2` (found by running the ROM, not by a unit test) | `GbBus::WriteIo`/`ReadIo` passed the PPU registers `0xFF40-0xFF4B` through but not the CGB palette registers `0xFF68-0xFF6B`, so a colour game could not define a single colour: the whole picture - sprites included, which is why they seemed to be missing - stayed on the grey ramp the machine installs at reset. `GbBus, cgb_palette_registers_are_reachable_through_the_bus` and `GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank` now cover the path. |
+| `Apu.DutyWaveform` and every later test (a crash, not a failure) | The tests drained `Apu::ReadSamples` into an `s16 buffer[128]`, but the call hands over `maxFrames` *stereo* frames and writes two samples per frame: the 256 byte stack buffer was overflowed and the run died later, in the middle of another suite. Found with AddressSanitizer; the buffers are sized for stereo frames now. |
 
-Everything else passes: the ARM7TDMI (60 tests), the sound (23), the cartridge (14), the boot ROM
-and the emitter (12), the timers/keypad/interrupts (12), the demo machine (5), the settings (19),
-the Game Boy machine (61) and the memory-suite-driven bus rules.
+Everything else passes: the ARM7TDMI (60 tests), the Game Boy machine (63 with its boot ROM and its
+colour palette path), the LCD controller (25), the sound (22), the settings (19), the cartridge (14),
+the boot ROM and the emitter (12), the DMA (7), the SIO (7), the timers/keypad/interrupts (9), the
+demo machine (5) and the BIOS harness (2).
 
 ## Open findings
 
@@ -100,11 +117,22 @@ They are recorded so that they are not mistaken for verified behaviour, and so t
 knows where to look.
 
 * **The real BIOS executes but does not finish its boot.** With an official `gba_bios.bin` in
-  `bios/`, the CPU starts in the BIOS, the BIOS sets `POSTFLG` and programs `DISPCNT`, and then it
-  settles into a loop at `PC = 0x348` (with `DISPCNT` alternating between 0x1002 and 0x9802) and
-  never reaches the health screen or the cartridge. The emulator's own boot ROM (and the HLE boot,
-  `--no-gba-bootrom`) is what boots cartridges today. `test_bios.cpp` asserts what is certainly
-  true and reports the rest.
+  `bios/`, the CPU starts in the BIOS (and the host-side BIOS calls are switched off automatically,
+  as they must be: a real BIOS with intercepted service functions is not a real BIOS), it runs its
+  initialization, sets `POSTFLG`, programs `DISPCNT`, fills the sound registers
+  (`SOUNDCNT_X = 0x80`, `SOUNDCNT_H = 0x210E`, `SOUNDBIAS = 0x4200`, `IE = 0x0081`), arms DMA1/DMA2
+  for the sound FIFOs (`CNT_H = 0xB600`) and then spends its time between its `Halt` loop (the
+  `SWI 02h` implementation at `PC = 0x348`: a store to `HALTCNT`, a call to its own interrupt
+  acknowledge helper, `BEQ` back) and the BIOS region at `0x2000-0x2100`. It never reaches the
+  health screen, the logo animation or its jingle: a 15-second recording of the boot is silence
+  (`recordings/gba_bios_boot.wav`, made with the harness's `--wav`). The VBlank interrupt does
+  reach the CPU (the PPU raises it once per frame, and the pending bit stays set while the BIOS
+  waits with `IME = 0`, which is the documented HALT pattern), and the serial port takes part in
+  the probe (`RCNT = 0x4000`, the JOY bus, with 8/32-bit normal-mode transfers around it - a JOY
+  transfer now completes instead of leaving the port busy for ever). What is left is the BIOS's
+  own port/multiboot detection and its sound-driver handshake; the emulator's boot ROM (and the
+  HLE boot, `--no-gba-bootrom`) is what boots cartridges today. `test_bios.cpp` asserts what is
+  certainly true and reports the rest.
 * **Real Game Boy Color cartridge pictures are not trustworthy yet.** The DMG/CGB machine boots,
   runs the emulator's own boot ROM (whose "pureikyubu" wordmark slides in and settles - the
   documentation image), passes all 61 of its tests, and runs Link's Awakening DX with the right

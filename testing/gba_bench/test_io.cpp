@@ -278,8 +278,8 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 		f.Write(0x0CC, 0x0100);			// DMA2DAD = 0x02000100
 		f.Write(0x0CE, 0x0200);
 		f.Write(0x0D0, 2);
+		f.WriteMem16(0x02000100, 0x0000);	// the destination starts clear
 		f.Write(0x0D2, 0x8040);			// dest fixed (bits 5-6 = 2), immediate, enable
-		f.WriteMem16(0x02000100, 0x0000);
 
 		GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000100), 0x5678);	// the second unit wins
 	}
@@ -391,35 +391,74 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 	for (int i = 0; i < 8; i++)
 		f.WriteMem16(0x02000000 + i * 2, payload[i]);
 
-	// DMA1, special timing (bits 12-13 = 3) with the FIFO A destination (0x040000A0).
+	// DMA1, special timing (bits 12-13 = 3), incrementing source, fixed destination, repeat, with
+	// the FIFO A destination (0x040000A0).
 	f.Write(0x0BC, 0x0000);
 	f.Write(0x0BE, 0x0200);
 	f.Write(0x0C0, 0x00A0);
 	f.Write(0x0C2, 0x0400);
 	f.Write(0x0C4, 4);
-	f.Write(0x0C6, (u16)(0x0300 | 0x8000));		// special timing, repeat, enable
+	f.Write(0x0C6, (u16)(0x3000 | 0x0200 | 0x8000));
 
 	// The APU asks for a refill...
 	f.bus.dma.OnFifoRequest(f.bus, 0);
 
-	// ... and the four words are in FIFO A, in transfer order, through the documented APU
-	// interface (Apu::Read8 pops one byte of the FIFO).
+	// ... and the four words are in FIFO A, in transfer order. The FIFO is write-only on the
+	// hardware (a read returns the open bus), so the emulator's `Apu::Read8` - which is const -
+	// peeks at the byte that will be played next instead of popping it, and the FIFO is drained
+	// the way the hardware does it: one byte per overflow of timer 0/1 (GBATEK "Sound Channel
+	// A/B": "Move 8bit data from FIFO to sound circuit").
 	const u8 expected[16] = {
 		0x11, 0x11, 0x22, 0x22, 0x33, 0x33, 0x44, 0x44,
 		0x55, 0x55, 0x66, 0x66, 0x77, 0x77, 0x88, 0x88,
 	};
-	for (int i = 0; i < 16; i++)
-		GBA_CHECK_HEX16(f.bus.apu.Read8(0x0A0, 0x00), expected[i]);
 
-	// The request flag is cleared again so the APU can ask once more.
-	GBA_CHECK(!f.bus.apu.FifoRequest(0));
+	GBA_CHECK_HEX16(f.bus.apu.Read8(0x0A0, 0x00), expected[0]);
 
-	// The channel stays armed for the next refill (the repeat bit is set).
+	// Disarm the channel for the drain: the FIFO is a level-sensitive requester, so a repeating
+	// DMA would refill it the moment it drops below 16 bytes and the FIFO would never run dry.
+	f.Write(0x0C6, 0x0000);
+
+	// Timer 0 reloads from 0xFC00 with the prescaler at 1, so it overflows every 1024 cycles -
+	// two APU samples at 32768 Hz, which is two FIFO bytes per overflow-free sample and makes the
+	// wrap visible to the APU (which detects an overflow by the counter going backwards).
+	f.bus.apu.SetSampleRate(32768);
+	f.Write(0x100, 0xFC00);				// TM0CNT_L
+	f.Write(0x102, 0x0080);				// TM0CNT_H: enable, prescaler 1
+
+	// SOUNDCNT_H: FIFO A on both outputs (bits 8-9), 100% volume (bits 2-3 = 1), timer 0;
+	// SOUNDCNT_X: master enable.
+	f.Write(0x082, 0x0304);
+	f.Write(0x084, 0x0080);
+
+	// The APU samples the timer once per host sample, so a wrap that lands outside a sample
+	// boundary is missed (a documented approximation of the sound path); 120 samples is several
+	// times the 16 bytes the payload holds, so the FIFO is certainly empty by then.
+	for (int i = 0; i < 120; i++)
+	{
+		f.bus.timers.Tick(f.bus, 512);
+		f.bus.apu.Tick(f.bus, 512);
+	}
+
+	// The FIFO has run dry, and the byte it stopped on is the last one of the payload: the DMA
+	// queued all four words in order and the drain moved exactly those 16 bytes. The peek then
+	// returns that latched sample (hardware keeps the last sample it played rather than going
+	// silent).
+	GBA_CHECK_HEX16(f.bus.apu.Read8(0x0A0, 0x00), expected[15]);
+
+	// An enabled but empty FIFO asks for more data, which is the level the sound DMA watches.
+	GBA_CHECK(f.bus.apu.FifoRequest(0));
+
+	// Re-arming the repeating channel lets the pending request fill the FIFO again; the repeat bit
+	// keeps the channel armed after the transfer.
+	f.Write(0x0C6, (u16)(0x3000 | 0x0200 | 0x8000));
 	GBA_CHECK(f.bus.dma.Active(1));
 
-	// A second request moves the next 16 bytes.
-	f.bus.dma.OnFifoRequest(f.bus, 0);
-	GBA_CHECK(!f.bus.apu.FifoRequest(0));
+	// A peek that no longer returns the latched 0x88 is the proof: the FIFO holds data once more,
+	// and it was filled from the same source address, so it starts at the first byte of the
+	// payload.
+	f.bus.apu.Tick(f.bus, 512);
+	GBA_CHECK_HEX16(f.bus.apu.Read8(0x0A0, 0x00), expected[0]);
 
 	// A request for the other FIFO finds no channel and changes nothing.
 	f.bus.dma.OnFifoRequest(f.bus, 1);
@@ -686,7 +725,7 @@ GBA_TEST(Sio, TransferLengthsMatchTheSpecifiedBaudRate)
 	// countdown is checked through the end of the transfer rather than directly.
 	f.Write(0x120, 0x1234);
 	f.Write(0x122, 0x5678);
-	f.Write(0x128, 0x5001);			// 32bit, IRQ, 256KHz, start
+	f.Write(0x128, 0x5081);			// 32bit, IRQ, 256KHz, internal clock, start (bit 7)
 
 	for (int elapsed = 0; elapsed < 4096 - 64; elapsed += 64)
 	{

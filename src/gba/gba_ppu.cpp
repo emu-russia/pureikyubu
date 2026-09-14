@@ -110,10 +110,6 @@ namespace GBA
 		const u32 BITMAP_OBJ_TILES = 0x14000;	// the same area in the bitmap modes
 		const u32 BITMAP_FRAME1 = 0x0A000;
 
-		// The VRAM region mirrors every 128 KByte (GBATEK "GBA Memory Map"), so the address
-		// decoder wraps inside that window first and inside the 96 KByte of real memory second.
-		const u32 VramMirror = 0x20000;
-
 		const int BITMAP_STRIDE_16 = 480;		// modes 3/5: two bytes per dot
 		const int BITMAP_STRIDE_8 = 240;		// mode 4: one byte per dot
 		const int MODE3_HEIGHT = 160;
@@ -169,6 +165,8 @@ namespace GBA
 			int tileNumber = 0;
 			int paletteIndex = 0;
 			int objPriority = 0;	// the OBJ/BG priority, 0 = highest
+			bool hFlip = false;		// attribute 1 bit 12 (only without rotation/scaling)
+			bool vFlip = false;		// attribute 1 bit 13 (only without rotation/scaling)
 			int pa = 0, pb = 0, pc = 0, pd = 0;		// the affine matrix in 8.8 fixed point
 		};
 
@@ -301,24 +299,32 @@ namespace GBA
 			const int px = sx - sprite.left;	// 0..width-1
 			const int py = sy - sprite.top;		// 0..height-1
 
-			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the
-			// upper-left of the OBJ, so a dot of the (double-sized) display area is
-			// (px - baseWidth/2, py - baseHeight/2) away from the rotation center, which sits in
-			// the middle of the base OBJ. The matrix is 8.8 fixed point.
-			const s32 offsetX = px - sprite.baseWidth / 2;
-			const s32 offsetY = py - sprite.baseHeight / 2;
+			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the upper-left
+			// of the OBJ, so a dot of the display area is measured from its middle, which is where
+			// the rotation center sits. The matrix is 8.8 fixed point.
+			const s32 offsetX = px - sprite.width / 2;
+			const s32 offsetY = py - sprite.height / 2;
 			const s32 srcX = sprite.pa * offsetX + sprite.pb * offsetY;
 			const s32 srcY = sprite.pc * offsetX + sprite.pd * offsetY;
 
 			// The source coordinate comes out relative to the rotation center, so half the base
 			// size (in 8.8 fixed point) puts it back into the base OBJ.
-			const s32 texelX = ReferenceRounded(srcX + sprite.baseWidth * 128);
-			const s32 texelY = ReferenceRounded(srcY + sprite.baseHeight * 128);
+			s32 texelX = ReferenceRounded(srcX + sprite.baseWidth * 128);
+			s32 texelY = ReferenceRounded(srcY + sprite.baseHeight * 128);
 
 			// A dot that falls outside of the base OBJ is not displayed: that is what clips a
 			// rotated OBJ to its non double-sized rectangle.
 			if (texelX < 0 || texelX >= sprite.baseWidth || texelY < 0 || texelY >= sprite.baseHeight)
 				return NO_PIXEL;
+
+			if (!sprite.affine)
+			{
+				// Without rotation/scaling, attribute 1 bits 12/13 mirror the OBJ (GBATEK "OBJ
+				// Attribute 1"). An affine OBJ has the parameter-selection field there instead,
+				// so the bits mean nothing for it.
+				if (sprite.hFlip) texelX = sprite.baseWidth - 1 - texelX;
+				if (sprite.vFlip) texelY = sprite.baseHeight - 1 - texelY;
+			}
 
 			// GBATEK "OBJ Tile Number": in the bitmap modes only tile numbers 512-1023 may be
 			// used, because the lower 16 KByte of the OBJ area holds the frame buffer.
@@ -328,7 +334,10 @@ namespace GBA
 			const int tileX = (int)(texelX / 8);
 			const int tileY = (int)(texelY / 8);
 			const bool oneDimensional = (ppu.DispCnt() & (1 << DC_OBJ_1D)) != 0;
-			const int rowTiles = sprite.colors256 ? 16 : 32;	// one matrix row covers 128 dots
+			// The tile matrix of an OBJ is as wide as the OBJ itself: the next 8x8 row of the OBJ
+			// starts that many tiles on (GBATEK "OBJ - VRAM Character (Tile) Mapping"). Only the
+			// 2-dimensional matrix uses the fixed 32-tile stride of the VRAM layout.
+			const int rowTiles = sprite.baseWidth / 8;
 			int tileNumber = sprite.tileNumber;
 
 			if (sprite.colors256)
@@ -883,11 +892,13 @@ namespace GBA
 		else
 		{
 			// The internal registers are then incremented by dmx (PB) and dmy (PD) after each
-			// scanline, in 8.8 fixed point (GBATEK "Internal Reference Point Registers").
+			// scanline, in 8.8 fixed point (GBATEK "Internal Reference Point Registers"). The
+			// parameters carry the same eight fractional bits as the reference point, so one dot
+			// of PB is 0x0100 and the increment is the raw register value.
 			for (int i = 0; i < 2; i++)
 			{
-				bgx[i] = (s32)((u32)(bgx[i] + (s32)bgpb[i] * 256) & REFERENCE_MASK);
-				bgy[i] = (s32)((u32)(bgy[i] + (s32)bgpd[i] * 256) & REFERENCE_MASK);
+				bgx[i] = (s32)((u32)(bgx[i] + (s32)bgpb[i]) & REFERENCE_MASK);
+				bgy[i] = (s32)((u32)(bgy[i] + (s32)bgpd[i]) & REFERENCE_MASK);
 			}
 		}
 
@@ -976,16 +987,20 @@ namespace GBA
 			if (state.forcedBlank)
 			{
 				// Forced blank (DISPCNT bit 7) makes the LCD display white lines (GBATEK
-				// "Blanking Bits").
+				// "Blanking Bits"). It is the last stage of the pipeline, so the line buffer -
+				// what the rest of the emulator and the debugger see - holds the white dot too.
 				color = 0x7FFF;
 			}
-			else if ((greenswap & 1) != 0)
+
+			if ((greenswap & 1) != 0)
 			{
 				// Undocumented Green Swap (4000002h): the green intensities of each group of two
-				// dots are exchanged.
+				// dots are exchanged. It is a final-stage effect, so it applies to the white lines
+				// of a forced blank as well.
 				color = Swap16(color);
 			}
 
+			line[x] = color;
 			target[x] = Color15ToXrgb(color);
 		}
 	}
@@ -1051,12 +1066,14 @@ namespace GBA
 			sprite.width = sprite.doubleSize ? dim.width * 2 : dim.width;
 			sprite.height = sprite.doubleSize ? dim.height * 2 : dim.height;
 
-			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the upper-left
-			// of the OBJ, i.e. its X/Y attributes. Only an affine OBJ is rotated around the middle
-			// of its base size, so only that case starts half the base size before the reference
-			// point; a normal OBJ has its upper-left dot exactly at (X, Y).
-			sprite.left = sprite.affine ? ((attr1 & 0x1FF) - sprite.baseWidth / 2) : (attr1 & 0x1FF);
-			sprite.top = sprite.affine ? ((attr0 & 0xFF) - sprite.baseHeight / 2) : (attr0 & 0xFF);
+			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the OBJ's X/Y
+			// attributes and the rotation center sits in the middle of the base OBJ, i.e. half the
+			// base size right and below the reference point. That center is also the middle of the
+			// display area (twice the base size when the double-size flag is set), so the display
+			// area starts half of itself before the center: with the identity matrix the OBJ lands
+			// exactly on (X, Y)-(X + width, Y + height).
+			sprite.left = (attr1 & 0x1FF) + sprite.baseWidth / 2 - sprite.width / 2;
+			sprite.top = (attr0 & 0xFF) + sprite.baseHeight / 2 - sprite.height / 2;
 
 			// A sprite off the top or bottom of this scanline is not sampled at all. (It still
 			// consumes its OBJ slot, as GBATEK "Maximum Number of Sprites per Line" warns.)
@@ -1067,16 +1084,21 @@ namespace GBA
 			if (sprite.affine)
 			{
 				// The rotation/scaling group is selected by bits 9-13 of attribute 1 and its four
-				// parameters are 8.8 fixed point (GBATEK "OBJ Rotation/Scaling PA,PB,PC,PD").
+				// parameters are 8.8 fixed point (GBATEK "OBJ Rotation/Scaling PA,PB,PC,PD"), the
+				// same units the source coordinate is computed in - a 1.0 scale is 0x0100.
 				const int group = (attr1 >> 9) & 0x1F;
-				sprite.pa = (s32)AffineParam(*this, group, 0) * 256;
-				sprite.pb = (s32)AffineParam(*this, group, 1) * 256;
-				sprite.pc = (s32)AffineParam(*this, group, 2) * 256;
-				sprite.pd = (s32)AffineParam(*this, group, 3) * 256;
+				sprite.pa = (s32)AffineParam(*this, group, 0);
+				sprite.pb = (s32)AffineParam(*this, group, 1);
+				sprite.pc = (s32)AffineParam(*this, group, 2);
+				sprite.pd = (s32)AffineParam(*this, group, 3);
 			}
 			else
 			{
-				// A normal OBJ uses the identity matrix.
+				// A normal OBJ uses the identity matrix, and attribute 1 bits 12/13 mirror it
+				// (GBATEK "OBJ Attribute 1"; the bits are the affine group number for an OBJ that
+				// rotates, so they only mean a flip here).
+				sprite.hFlip = (attr1 & 0x1000) != 0;
+				sprite.vFlip = (attr1 & 0x2000) != 0;
 				sprite.pa = 256;
 				sprite.pb = 0;
 				sprite.pc = 0;
@@ -1392,18 +1414,23 @@ namespace GBA
 		const bool wrap = (control & (1 << BGCNT_AREA_OVERFLOW)) != 0;
 
 		// BG2 uses the first set of affine registers (0x020..0x02F) and BG3 the second
-		// (0x030..0x03F). The reference point is the internal value, which Read16 returns through
-		// its write latch.
+		// (0x030..0x03F). The reference point to sample from is the *internal* register: it is
+		// copied from the write latch during VBlank and then advanced by PB/PD after every
+		// scanline (GBATEK "Internal Reference Point Registers"). Reading the latch here would
+		// throw the per-line advance away and paint every line from the same origin.
 		const int slot = index - 2;
 		const u32 base = 0x020 + (u32)slot * 0x10;
 		const s32 pa = (s16)Read16(base + 0, 0);
 		const s32 pb = (s16)Read16(base + 2, 0);
 		const s32 pc = (s16)Read16(base + 4, 0);
 		const s32 pd = (s16)Read16(base + 6, 0);
-		const s32 referenceX = (s32)((u32)Read16(base + 8, 0) | ((u32)Read16(base + 0x0A, 0) << 16));
-		const s32 referenceY = (s32)((u32)Read16(base + 0x0C, 0) | ((u32)Read16(base + 0x0E, 0) << 16));
+		const s32 referenceX = bgx[slot];
+		const s32 referenceY = bgy[slot];
 
-		const int offsetX = sourceX - state.line;
+		// The reference point is the origin of the *current* scanline, so the dot is offset from
+		// it by the dot's position within the line. A mosaic block that starts above this line
+		// moves the sample up by the lines it spans, which is what the negative offsetY does.
+		const int offsetX = sourceX;
 		const int offsetY = sourceY - state.line;
 
 		// (srcX, srcY) = reference + M * (screen - mosaic origin). Both the reference point and
@@ -1500,12 +1527,13 @@ namespace GBA
 			hasSecond = true;
 			second = secondColor;
 		}
-		else if (effect == 1 && firstTarget && (state.bldcnt & (1 << (BLD_2ND + top.layer))) != 0 &&
+		else if (effect == 1 && firstTarget &&
 			(state.bldcnt & (1 << (BLD_2ND + secondLayer))) != 0)
 		{
-			// Alpha blending needs the top-most dot to be a 1st target and the next lower
-			// non-transparent dot to be a 2nd target; otherwise only the top-most dot is
-			// displayed, at normal intensity (GBATEK 4000052h).
+			// "For this effect, the top-most non-transparent pixel must be selected as 1st
+			// Target, and the next-lower non-transparent pixel must be selected as 2nd Target,
+			// if so - and only if so, then color intensities of 1st and 2nd Target are mixed"
+			// (GBATEK 4000050h). The 1st target does not have to be a 2nd target as well.
 			hasSecond = true;
 			second = secondColor;
 		}

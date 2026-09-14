@@ -146,13 +146,14 @@ namespace GBA
 
 		/// <summary>
 		/// The full 32bit value a normal-mode transfer received. lastReceived is only 16 bits, and
-		/// the peer may overwrite its own SIODATA32_H before the other end commits, so the value
-		/// is stashed here (keyed by the object, like MultiSlot3) when the transfer completes and
-		/// read back by whichever commit path runs last.
+		/// the peer may overwrite its own SIODATA32_H before the other end commits, so the value is
+		/// stashed here (keyed by the object, like MultiSlot3) when the transfer completes and read
+		/// back by whichever commit path runs last. It has to be 32 bits wide: a 16-bit stash loses
+		/// the high half of a 32bit transfer, which is exactly what `master.Read(0x122)` sees.
 		/// </summary>
-		u16& StashReceive(const Sio* unit)
+		u32& StashReceive(const Sio* unit)
 		{
-			static std::map<const Sio*, u16> stash;
+			static std::map<const Sio*, u32> stash;
 			return stash[unit];
 		}
 
@@ -261,10 +262,13 @@ namespace GBA
 			return siodata32H;
 
 		case 0x124:
-			// SIODATA8 in normal mode, SIOMULTI2 in multiplayer mode.
+			// SIODATA8 in normal mode, SIOMULTI2 in multiplayer mode - the same storage, and in
+			// multiplayer mode it really is the *second child's* slot: reading it back as
+			// siodata32H (the first child's slot) made SIOMULTI2 report the wrong unit's data,
+			// which is what the `MultiplayerEmptySlotsReadFFFF` test caught.
 			if (mode == ModeNormal)
 				return siodata8;
-			return siodata32H;
+			return siodata8;
 
 		case 0x126:
 			// SIOMULTI3, see MultiSlot3.
@@ -300,9 +304,12 @@ namespace GBA
 
 		case 0x124:
 			// SIODATA8 in normal mode ("only lower 8bit are used", GBATEK "SIODATA8");
-			// SIOMULTI2 belongs to the hardware in multiplayer mode.
+			// SIOMULTI2 in multiplayer mode, where the whole 16bit slot belongs to the second
+			// child and the game may preload it.
 			if (mode == ModeNormal)
 				siodata8 = (u16)(value & 0x00FF);
+			else
+				siodata8 = value;
 			return;
 
 		case 0x126:
@@ -443,7 +450,21 @@ namespace GBA
 			joyTrans = value;
 			// "Bit 3 is automatically set when writing to local JOY_TRANS" (GBATEK "JOYSTAT").
 			joystat |= JoyStatSend;
-			joycnt |= JoyCntSend;
+
+			// Nothing is plugged into the link port here, but the transfer still has to *finish*:
+			// the bus drives the line, no device answers, and both completion flags are set with
+			// the receive data left at zero - that is how a game (and the BIOS's own port probe at
+			// boot) learns that there is no device on the port. A JOY transfer that never completes
+			// leaves the BIOS waiting for the SIO interrupt for ever, which is what stopped the
+			// real BIOS from reaching its logo animation.
+			joycnt |= (u16)(JoyCntSend | JoyCntRecv);
+			joyRecv = 0;
+			joystat &= (u16)~JoyStatSend;
+			joystat |= JoyStatReceive;
+
+			// JOYCNT bit 6 enables the interrupt of the port (GBATEK "4000140h - JOYCNT").
+			if (joycnt & 0x0040)
+				bus.irq.Raise(INT_SIO);
 			return;
 
 		case 0x158:
@@ -606,10 +627,15 @@ namespace GBA
 				{
 					if (siocnt & SioLength32)
 					{
+						// The full 32bit value comes from the stash, not from lastReceived: the
+						// high half has no place in a 16-bit lastReceived, and the peer may have
+						// overwritten its own SIODATA32_H by now.
+						const u32 full = StashReceive(this);
+
 						// SIODATA32_H first, then the low half: siomltSend is also the register
 						// the peer reads as its outgoing value while it is still shifting.
-						siodata32H = (u16)(lastReceived >> 16);
-						siomltSend = (u16)(lastReceived & 0xFFFF);
+						siodata32H = (u16)(full >> 16);
+						siomltSend = (u16)(full & 0xFFFF);
 					}
 					else
 					{
@@ -786,6 +812,14 @@ namespace GBA
 			// chain the child must not hand the parent's own slot back to it (the parent works its
 			// own slot out when its own transfer completes). A downstream unit also has to be a
 			// child, which is what makes the parent stop before it reaches itself.
+			//
+			// The same walk hands every unit of the cable the four slot values: a child that
+			// finished first cannot fill them in itself (its SIOMLT_SEND is still the value the
+			// parent has to read), so it waits in completionPending, and the head of the cable -
+			// the unit that sees the whole chain - is the one that knows them all. This is what
+			// "after the transfer, all connected GBAs will contain the same values in their
+			// SIOMULTI0-3 registers" means (GBATEK "SIOMULTI0-3"), including the FFFFh of a slot
+			// that has no unit behind it.
 			if (!(siocnt & SioMultiSlave))
 			{
 				int nextId = id + 1;
@@ -798,6 +832,13 @@ namespace GBA
 					Sio* writable = const_cast<Sio*>(downstream);
 					writable->siocnt = (u16)((writable->siocnt & ~SioMultiIdMask) |
 						((u16)nextId << 4));
+
+					writable->siomltSend = slot[0];
+					writable->siodata32H = slot[1];
+					writable->siodata8 = slot[2];
+					MultiSlot3(writable) = slot[3];
+					writable->completionPending = false;
+
 					nextId++;
 				}
 			}
@@ -828,7 +869,7 @@ namespace GBA
 		{
 			// A 32bit transfer whose peer is still shifting: the full value has to survive until
 			// this unit commits, because the peer overwrites its own SIODATA32_H meanwhile.
-			StashReceive(this) = received;
+			StashReceive(this) = (u32)received | ((u32)peer->siodata32H << 16);
 		}
 
 		siocnt &= (u16)~SioStart;
@@ -844,8 +885,16 @@ namespace GBA
 			// the received value" means for a 32bit transfer (GBATEK "SIODATA32").
 			if (siocnt & SioLength32)
 			{
-				siodata32H = (u16)(received >> 16);
-				siomltSend = (u16)(received & 0xFFFF);
+				// The full 32bit value: `received` only carries the low half, so the peer's
+				// outgoing high half is taken directly from its SIODATA32_H while it is still
+				// there (the peer has not committed yet in this path).
+				const u32 full = (peer != nullptr)
+					? ((u32)received | ((u32)peer->siodata32H << 16))
+					: (u32)0xFFFFFFFF;
+
+				StashReceive(this) = full;
+				siodata32H = (u16)(full >> 16);
+				siomltSend = (u16)(full & 0xFFFF);
 			}
 			else
 			{
@@ -860,7 +909,7 @@ namespace GBA
 			// SIODATA32_H by now.
 			completionPending = false;
 
-			u16 full = StashReceive(this);
+			const u32 full = StashReceive(this);
 
 			if (siocnt & SioLength32)
 			{

@@ -9,6 +9,7 @@
 
 #include "gba_test.h"
 #include "gb_ppu.h"
+#include "gb_bus.h"
 
 #include <string>
 
@@ -536,6 +537,117 @@ GBA_TEST(GbPpu, obj_behind_bg_and_colour_zero_transparency)
 // ---------------------------------------------------------------------------------------
 // The CGB
 // ---------------------------------------------------------------------------------------
+
+GBA_TEST(GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank)
+{
+	GbPpu ppu;
+	ppu.Reset();
+	ppu.SetCgb(true);
+	ppu.WriteRegister(0xFF40, 0x93);		// LCD on, BG on, OBJ on
+	ppu.WriteRegister(0xFF42, 0x00);		// SCY
+	ppu.WriteRegister(0xFF43, 0x00);		// SCX
+
+	// The two object palettes the test uses. A colour is two bytes (Pan Docs "Palettes"), and
+	// OCPS's bit 7 makes the address advance by itself: palette 0 = black/red/green/blue and
+	// palette 1 = black/yellow/cyan/magenta.
+	const u8 palette0[8] = { 0x00, 0x00, 0x1F, 0x00, 0xE0, 0x03, 0x00, 0x7C };
+	const u8 palette1[8] = { 0x00, 0x00, 0xFF, 0x03, 0xE0, 0x7F, 0x1F, 0x7C };
+	ppu.WriteRegister(0xFF6A, 0x80);		// OCPS: palette 0, colour 0, auto-increment
+	for (int i = 0; i < 8; i++)
+		ppu.WriteRegister(0xFF6B, palette0[i]);
+	ppu.WriteRegister(0xFF6A, 0x88);		// OCPS: palette 1, colour 0
+	for (int i = 0; i < 8; i++)
+		ppu.WriteRegister(0xFF6B, palette1[i]);
+	GBA_CHECK_EQ(ppu.ReadRegister(0xFF6A), 0x90);	// the address advanced to byte 16
+
+	// The background palette 0, so that the dots the object does not cover are a known white
+	// instead of whatever the reset left in the palette memory.
+	ppu.WriteRegister(0xFF68, 0x80);		// BCPS: palette 0, colour 0, auto-increment
+	ppu.WriteRegister(0xFF69, 0xFF);		// 0: white (0x7FFF)
+	ppu.WriteRegister(0xFF69, 0x7F);
+	for (int i = 0; i < 6; i++)
+		ppu.WriteRegister(0xFF69, 0x00);	// 1..3: black
+
+	// The object's tile lives in VRAM bank 1 (OAM attribute bit 3) and is solid colour index 2.
+	const char* const solid2[8] =
+	{
+		"22222222", "22222222", "22222222", "22222222",
+		"22222222", "22222222", "22222222", "22222222",
+	};
+	WriteTile(ppu.VramBank(1), 4, solid2);
+
+	// OAM entry 0: at screen (10, 8) (the coordinate bias is 16/8), tile 4, bank 1, palette 0.
+	u8* oam = ppu.Oam();
+	oam[0] = 24;
+	oam[1] = 18;
+	oam[2] = 4;
+	oam[3] = 0x08;
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 10, 8), 0xFF00FF00);		// palette 0, index 2: green
+	GBA_CHECK_HEX32(Pixel(ppu, 9, 8), 0xFFFFFFFF);		// the white background
+
+	// The palette field of the attribute (bits 0-2) picks the other object palette: the same
+	// index 2 is now cyan.
+	oam[3] = (u8)(0x08 | 0x01);
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 10, 8), 0xFF00FFFF);
+
+	// Clearing the OAM attribute's bank bit makes the PPU fetch from bank 0, where tile 4 is
+	// blank: the object disappears.
+	oam[3] = 0x01;
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 10, 8), 0xFFFFFFFF);
+}
+
+GBA_TEST(GbBus, cgb_palette_registers_are_reachable_through_the_bus)
+{
+	// A CGB game defines every colour it draws through BCPS/BCPD (0xFF68/0xFF69) and OCPS/OCPD
+	// (0xFF6A/0xFF6B), so the bus has to pass those four registers to the PPU. This drives the
+	// whole register path rather than the PPU's own WriteRegister.
+	GbBus bus;
+	bus.cpu.bus = &bus;
+	bus.Reset();
+	// A bare GbBus does not reset its devices (the machine does that, see GbSystem::Reset): the PPU
+	// has to be reset before it can draw, because that is what sizes its frame buffer.
+	bus.ppu.Reset();
+	bus.ppu.SetCgb(true);
+	bus.SetCgb(true);
+
+	bus.WriteByte(0xFF40, 0x93);			// LCD on, BG on, OBJ on
+	bus.WriteByte(0xFF42, 0x00);
+	bus.WriteByte(0xFF43, 0x00);
+
+	// BG palette 0: black/red/green/blue (the boot state is a grey ramp).
+	const u8 colors[8] = { 0x00, 0x00, 0x1F, 0x00, 0xE0, 0x03, 0x00, 0x7C };
+	bus.WriteByte(0xFF68, 0x80);			// BGPI: palette 0, colour 0, auto-increment
+	for (int i = 0; i < 8; i++)
+		bus.WriteByte(0xFF69, colors[i]);
+
+	// Tile 1 is colour index 1 (red) everywhere, and the map's entry 0 selects it.
+	char tile[8][9];
+	for (int row = 0; row < 8; row++)
+	{
+		for (int column = 0; column < 8; column++)
+			tile[row][column] = '1';
+		tile[row][8] = '\0';
+	}
+	const char* rows[8];
+	for (int row = 0; row < 8; row++)
+		rows[row] = tile[row];
+	WriteTile(bus.ppu.VramBank(0), 1, rows);
+	bus.WriteByte(0x9800, 1);				// the map entry of the top-left tile
+
+	// The attribute map (VRAM bank 1) says "palette 0" for that entry, which is the reset value.
+	bus.ppu.VramBank(1)[0x1800] = 0x00;
+
+	for (int frame = 0; frame < 2; frame++)
+		for (int i = 0; i < 20000; i++)
+			bus.ppu.Tick(4, false);
+
+	// The picture is red - which it cannot be if the bus drops the palette writes (the grey ramp
+	// the machine installs at reset is what the screen would keep showing).
+	GBA_CHECK_HEX32(bus.ppu.Frame()[0], 0xFFFF0000);
+}
 
 GBA_TEST(GbPpu, cgb_palettes_and_the_attribute_map)
 {

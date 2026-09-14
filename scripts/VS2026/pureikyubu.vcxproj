@@ -401,6 +401,10 @@
     <ProjectReference Include="SDL.vcxproj">
       <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
     </ProjectReference>
+    <!-- The integrated GBA/Game Boy emulator (issue #388); see src/gba/Readme.md. -->
+    <ProjectReference Include="GBA.vcxproj">
+      <Project>{2f7c4a61-8d3b-4e52-9c74-6a5e1b0d93c8}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -662,59 +666,4 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
-  <!-- The integrated GBA emulator (issue #388); see src/gba/Readme.md. -->
-  <ItemGroup>
-    <ClInclude Include="..\..\src\gba\arm7tdmi.h" />
-    <ClInclude Include="..\..\src\gba\gba.h" />
-    <ClInclude Include="..\..\src\gba\gba_apu.h" />
-    <ClInclude Include="..\..\src\gba\gba_armasm.h" />
-    <ClInclude Include="..\..\src\gba\gba_bootrom.h" />
-    <ClInclude Include="..\..\src\gba\gba_bus.h" />
-    <ClInclude Include="..\..\src\gba\gba_cart.h" />
-    <ClInclude Include="..\..\src\gba\gba_dma.h" />
-    <ClInclude Include="..\..\src\gba\gba_hlebios.h" />
-    <ClInclude Include="..\..\src\gba\gba_irq.h" />
-    <ClInclude Include="..\..\src\gba\gba_keypad.h" />
-    <ClInclude Include="..\..\src\gba\gba_ppu.h" />
-    <ClInclude Include="..\..\src\gba\gba_sdl.h" />
-    <ClInclude Include="..\..\src\gba\gba_settings.h" />
-    <ClInclude Include="..\..\src\gba\gba_sio.h" />
-    <ClInclude Include="..\..\src\gba\gba_timers.h" />
-    <ClInclude Include="..\..\src\gba\gba_types.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\gba\gba.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_bus.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_dma.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_hlebios.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_irq.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_keypad.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_ppu.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_sdl.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_settings.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_sio.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_timers.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_types.cpp" />
-  </ItemGroup>
-    <ClInclude Include="..\..\src\gba\gb.h" />
-    <ClInclude Include="..\..\src\gba\gb_apu.h" />
-    <ClInclude Include="..\..\src\gba\gb_asm.h" />
-    <ClInclude Include="..\..\src\gba\gb_bootrom.h" />
-    <ClInclude Include="..\..\src\gba\gb_bus.h" />
-    <ClInclude Include="..\..\src\gba\gb_cart.h" />
-    <ClInclude Include="..\..\src\gba\gb_cpu.h" />
-    <ClInclude Include="..\..\src\gba\gb_ppu.h" />
-    <ClCompile Include="..\..\src\gba\arm7tdmi.cpp" />
-    <ClCompile Include="..\..\src\gba\gb.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_apu.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_asm.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_bootrom.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_bus.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_cart.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_cpu.cpp" />
-    <ClCompile Include="..\..\src\gba\gb_ppu.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_apu.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_armasm.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_bootrom.cpp" />
-    <ClCompile Include="..\..\src\gba\gba_cart.cpp" />
 </Project>

@@ -59,7 +59,20 @@ namespace GBA
 
 		/// <summary>Object attribute memory (0x07000000, 1 KByte).</summary>
 		u8 ReadOam(u32 offset) const;
+
+		/// <summary>An 8-bit store of OAM. The hardware only has 16-bit and 32-bit write access
+		/// to OAM (GBATEK "GBA Memory Map"), so this only drives the low byte of the halfword the
+		/// address names and leaves the high byte alone.</summary>
 		void WriteOam(u32 offset, u8 value);
+
+		/// <summary>A whole halfword of OAM, i.e. what a 16-bit store drives. The bus uses this:
+		/// assembling the halfword out of two WriteOam calls would drop its high byte.</summary>
+		void WriteOam16(u32 offset, u16 value)
+		{
+			const u32 index = offset & (OamSize - 1);
+			oam.Write8(index, (u8)value);
+			oam.Write8((index + 1) & (OamSize - 1), (u8)(value >> 8));
+		}
 
 		// -- timing ------------------------------------------------------------------------
 
@@ -86,7 +99,9 @@ namespace GBA
 		int FrameCounter() const { return frameCounter; }
 
 		u16 VCount() const { return vcount; }
-		u16 DispStat() const { return dispstat; }
+		/// <summary>The DISPSTAT value the CPU would read right now, i.e. the stored IRQ
+		/// enables and V-Count setting plus the flags of the current line position.</summary>
+		u16 DispStat() const { return ComputeDispStat(); }
 		u16 DispCnt() const { return dispcnt; }
 
 		/// <summary>True while the LCD is inside the forced-blank window (DISPCNT bit 7).</summary>

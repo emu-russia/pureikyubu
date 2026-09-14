@@ -110,6 +110,11 @@ namespace GBA
 	const u32 IoSize = 0x400;
 	const u32 PaletteSize = 0x400;
 	const u32 VramSize = 0x18000;
+
+	/// <summary>VRAM is mirrored every 128 KByte (GBATEK "GBA Memory Map"), so the address
+	/// decoder wraps through this window before it wraps through the 96 KByte bank itself.</summary>
+	const u32 VramMirror = 0x20000;
+
 	const u32 OamSize = 0x400;
 	const u32 BiosSize = 0x4000;
 

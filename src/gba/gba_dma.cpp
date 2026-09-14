@@ -531,6 +531,16 @@ namespace GBA
 
 		bool word = UsesWords(channel, index);
 		bool fifoMode = IsFifoMode(channel, index);
+
+		if (fifoMode)
+		{
+			// "4 units of 32bits (16 bytes) are transferred, both Word Count register and DMA
+			// Transfer Type bit are ignored" (GBATEK "Sound DMA (FIFO Timing Mode)"): a FIFO
+			// refill is always a 32bit transfer, whatever CNT_H bit 10 says, so the source steps
+			// by four bytes per unit even when the register asks for 16bit units.
+			word = true;
+		}
+
 		int units = UnitCount(channel, index);
 
 		if (units <= 0)
@@ -626,6 +636,12 @@ namespace GBA
 		if (fifoMode && fifoCount > 0)
 		{
 			int which = (channel.destLatch == FifoB) ? 1 : 0;
+
+			// The collected words are the FIFO's new contents. Handing them over here (rather than
+			// writing them through the bus) keeps the DMA from re-reading the FIFO register it is
+			// writing: the refill is one 16 byte block, in transfer order.
+			bus.apu.FifoDmaDone(which, fifoWords, fifoCount);
+
 			bus.apu.ClearFifoRequest(which);
 			fifoRequest[which] = false;
 		}

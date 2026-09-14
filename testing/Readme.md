@@ -319,7 +319,9 @@ testing/gba_bench/check.sh --dump-bootrom /tmp/gba_bootrom.bin
 ```
 
 On Windows the same sources build as the `gba_bench` project of `scripts/VS2026/pureikyubu.sln`
-(a console application; it has no dependency besides the C++ runtime):
+(a console application; it has no dependency besides the C++ runtime). The core itself is also a
+project of that solution in its own right: the `GBA` library, which the emulator application links
+the way it links SDL2 (see `src/gba/Readme.md`).
 
 ```
 cd scripts/VS2026

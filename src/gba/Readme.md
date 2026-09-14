@@ -105,5 +105,6 @@ wsl -e bash -lc "/tmp/gbabench/gba_test --bootrom --frames 240 --png /tmp/shots"
 wsl -e bash -lc "/tmp/gbabench/gba_test --run game.gba --frames 600 --bench"
 ```
 
-On Windows the same sources are part of `scripts/VS2026/pureikyubu.vcxproj` and of the test
-project; see the "GBA emulator" section of `testing/Readme.md`.
+On Windows the same sources build as the `GBA` project of `scripts/VS2026/pureikyubu.sln` (a
+library the emulator links, exactly like SDL2) and as the `gba_bench` project of the same solution;
+see the "GBA emulator" section of `testing/Readme.md`.

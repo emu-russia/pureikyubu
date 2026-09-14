@@ -69,6 +69,9 @@ namespace
 	const u32 OBJ_TILES = 0x10000;			// the OBJ tile area of the tile modes
 	const u32 OBJ_TILES_BITMAP = 0x14000;	// the OBJ tile area of the bitmap modes
 
+	// OAM (0x07000000, 1 KByte), reached through the bus because it has no 8-bit write access.
+	const u32 OamBase = 0x07000000;
+
 	// ---------------------------------------------------------------------------------------
 	// The tests drive the PPU directly (Tick is exercised by the timing tests only). In the
 	// assembled emulator GbaBus::Tick advances the PPU; calling Ppu::Tick on a freshly reset bus
@@ -117,11 +120,12 @@ namespace
 		bus.ppu.WriteVram(offset + 1, (u8)(value >> 8));
 	}
 
-	/// <summary>Write a 16-bit halfword of OAM.</summary>
+	/// <summary>Write a 16-bit halfword of OAM. OAM has no 8-bit write access (GBATEK "GBA Memory
+	/// Map"), so this goes through the bus's halfword path: assembling the value from two
+	/// Ppu::WriteOam calls would drive only the low byte and drop the high one.</summary>
 	void WriteOam16(GbaBus& bus, u32 offset, u16 value)
 	{
-		bus.ppu.WriteOam(offset, (u8)(value & 0xFF));
-		bus.ppu.WriteOam(offset + 1, (u8)(value >> 8));
+		bus.Write16(OamBase + offset, value);
 	}
 
 	/// <summary>Fill `count` bytes of VRAM starting at `offset`.</summary>
@@ -271,11 +275,19 @@ GBA_TEST(Ppu, VramWindowsPerMode)
 	GbaBus bus;
 	SetupDisplay(bus);
 
-	// BG modes 0-2: the whole 96 KByte is one window. (96 KByte is not a power of two, so the
-	// byte bank wraps an address one past the end with a modulo instead of a mask.)
+	// BG modes 0-2: the whole 96 KByte is real, linearly addressed memory. The region mirrors
+	// every 128 KByte (GBATEK "GBA Memory Map": 0x06018000-0x0601FFFF is outside VRAM, and the
+	// next 96 KByte repeat at 0x06020000), so a byte written at the base reads back there too.
 	bus.ppu.WriteVram(0x0000, 0x5A);
 	GBA_CHECK_HEX16(bus.ppu.ReadVram(0x0000), 0x5A);
-	GBA_CHECK_HEX16(bus.ppu.ReadVram(VramSize * 2), 0x5A);	// 0x30000 % 0x18000 == 0
+	GBA_CHECK_HEX16(bus.ppu.ReadVram(VramMirror), 0x5A);		// 0x20000 % 0x20000 == 0
+
+	// 96 KByte is not a power of two, so the wrap through the bank itself is a modulo and not a
+	// bit mask: the last 32 KByte do not alias onto the first ones. Their mirror image inside the
+	// 128 KByte window (0x06018000 and up) is not VRAM at all and reads as zero.
+	bus.ppu.WriteVram(VramSize - 1, 0x3C);
+	GBA_CHECK_HEX16(bus.ppu.ReadVram(VramSize - 1), 0x3C);
+	GBA_CHECK_HEX16(bus.ppu.ReadVram(VramMirror - 1), 0x00);
 
 	// BG modes 3-5: the OBJ tiles live at 0x06014000 (GBATEK "LCD VRAM Overview"), and the
 	// 0x10000..0x13FFF hole is not real memory.
@@ -291,7 +303,7 @@ GBA_TEST(Ppu, VramWindowsPerMode)
 	WriteOam16(bus, 0x0000, 0xABCD);
 	bus.ppu.WriteOam(0x0001, 0x99);
 	GBA_CHECK_HEX16(bus.ppu.ReadOam(0x0000), 0xCD);
-	GBA_CHECK_HEX16(bus.ppu.ReadOam(0x0001), 0x00);
+	GBA_CHECK_HEX16(bus.ppu.ReadOam(0x0001), 0xAB);		// the ignored 0x99 never got there
 	GBA_CHECK_HEX16(bus.ppu.ReadOam(OamSize), 0xCD);
 }
 
@@ -432,7 +444,18 @@ GBA_TEST(Ppu, TextBg8bpp)
 	WritePal16(bus, 0x0002, 0x1234);
 	bus.ppu.RenderLine(bus, 0);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x1234);		// tile dot, palette entry 1
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x7C00);		// the backdrop: an unwritten map entry
+
+	// Transparency is decided by the *index* of the dot, not by the colour it selects: dot 9 of
+	// the tile is palette entry 2, which is a non-zero index and therefore opaque even though
+	// nothing was written to that palette entry (it is black, so the backdrop does not show).
+	GBA_CHECK_HEX16(RefBgColor(bus.ppu, 2), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x0000);
+
+	// Clear the tile dot that screen x = 9 samples to index 0 - the one transparent index of the
+	// palette - and the backdrop appears there.
+	bus.ppu.WriteVram(charBase + 1, 0x00);			// dot (1, 0) of tile 0
+	bus.ppu.RenderLine(bus, 0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x7C00);
 }
 
 GBA_TEST(Ppu, TextBgTileMapWrap512)
@@ -444,8 +467,8 @@ GBA_TEST(Ppu, TextBgTileMapWrap512)
 	// (GBATEK 4000008h). Character base block 1 (0x06004000), screen base block 0.
 	const u32 charBase = 0x4000;
 	WriteReg(bus, BG0CNT, BG_CNT(0, 0x4000, 0) | (1 << 14));
-	WritePal16(bus, 0x0002, 0x001F);
-	WritePal16(bus, 0x0004, 0x03E0);
+	WritePal16(bus, 0x0002, 0x001F);					// palette 0 index 1 = red
+	WritePal16(bus, 0x0022, 0x03E0);					// palette 1 index 1 = green (16 * 2 + 2)
 
 	// A solid tile 0 and a solid tile 1, both filled with 0x11 (pixel index 1 in both nibbles).
 	// The two layers are told apart by the palette field of the map entry: SC0 uses palette 0 and
@@ -503,10 +526,15 @@ GBA_TEST(Ppu, PriorityFightBetweenTwoBgs)
 	WritePal16(bus, 0x0002, 0x001F);					// palette 0 index 1 = red
 	WritePal16(bus, 0x0022, 0x7C00);					// palette 1 index 1 = blue
 
-	// BG0 uses tile 0 with palette 0, BG1 uses tile 0 with palette 1.
+	// Both layers use tile 0 with palette 0 for BG0 and palette 1 for BG1, and both maps are
+	// filled completely so that the two layers cover the whole line and the priority order -
+	// not the map contents - decides every dot.
 	FillVram(bus, charBase + 0 * 32, 32, 0x11);
-	WriteVram16(bus, 0x0000, 0x0000);					// BG0 map entry: tile 0, palette 0
-	WriteVram16(bus, 0x0000 + 0x800, 0x1000);			// BG1 map entry: tile 0, palette 1
+	for (u32 i = 0; i < 0x800; i += 2)
+	{
+		WriteVram16(bus, 0x0000 + i, 0x0000);			// BG0 map: tile 0, palette 0
+		WriteVram16(bus, 0x0800 + i, 0x1000);			// BG1 map: tile 0, palette 1
+	}
 
 	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_BG1);
 	bus.ppu.RenderLine(bus, 0);
@@ -540,51 +568,52 @@ GBA_TEST(Ppu, AffineBgRotationAndReferenceAdvance)
 	WriteReg(bus, BG2CNT, 0x0000);
 
 	// The rotation/scaling map is one byte per entry and always 256 colours (GBATEK
-	// "Rotation/Scaling BG Screen"): tile 5.
-	bus.ppu.WriteVram(0x0000, 5);
+	// "Rotation/Scaling BG Screen"): the entry of the tile row 8 / tile column 5 is tile 5.
+	bus.ppu.WriteVram(8 * 16 + 5, 5);
 
 	// Tile 5 (at character base 0x0000, 64 bytes per 8bpp tile) is solid palette index 6.
 	FillVram(bus, 5 * 64, 64, 6);
 	WritePal16(bus, 6 * 2, 0x1234);
 
 	// A = 0x0100 (1.0), B = 0x0010 (0.0625), C = 0x0000, D = 0x0100.
-	// (srcX, srcY) = reference + M * (x, y), so the rotation moves the sampled column to the
-	// right as the line grows, and PB advances the reference between scanlines.
+	// (srcX, srcY) = reference + M * (x, y), so PA is the per-dot step along the line and PB
+	// advances the reference between scanlines (GBATEK "LCD I/O BG Rotation/Scaling").
 	WriteReg(bus, BG2PA, 0x0100);
 	WriteReg(bus, 0x022, 0x0010);
 	WriteReg(bus, 0x024, 0x0000);
 	WriteReg(bus, 0x026, 0x0100);
 
-	// Reference point (44, 66) in 8.8 fixed point: X_L then X_H, Y_L then Y_H (GBATEK 4000028h).
-	WriteReg(bus, BG2X_L, 44);
+	// Reference point (44, 66) dots. The registers hold 8.8 fixed point values - "values are
+	// shifted left by eight" (GBATEK 4000028h) - so 44 dots is 44 * 256.
+	WriteReg(bus, BG2X_L, 44 * 256);
 	WriteReg(bus, 0x02A, 0);
-	WriteReg(bus, 0x02C, 66);
+	WriteReg(bus, 0x02C, 66 * 256);
 	WriteReg(bus, 0x02E, 0);
 
-	WriteReg(bus, DISPCNT, DC_MODE1 | DC_BG2);		// mode 2 == the affine layers, use mode 2
-	WriteReg(bus, DISPCNT, 0x0002 | DC_BG2);
+	WriteReg(bus, DISPCNT, 0x0002 | DC_BG2);		// mode 2 == the affine layers
 
-	// Line 0: dot 0 samples src (44, 66) = tile (5, 8) -> tile map entry 0 (tile 5), dot (4, 2)
-	// of tile 5, which is solid index 6.
+	// Line 0: dot 0 samples src (44, 66) = tile (5, 8) -> the map entry above, dot (4, 2) of
+	// tile 5, which is solid index 6.
 	bus.ppu.RenderLine(bus, 0);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x1234);
 
 	// Dot 1 samples srcX = 44 + 1 = 45, which is still tile column 5.
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(1), 0x1234);
 
-	// The reference point is advanced by PB (0.0625) per scanline: line 1 samples
-	// 44 + 0.0625 + 1 = 45.0625 for dot 0, i.e. the same tile dot, so the colour is unchanged.
+	// The internal reference point is advanced by PB (0.0625 dots) and PD (1 dot) after every
+	// scanline (GBATEK "Internal Reference Point Registers"), so line 1 samples (44.0625, 67) -
+	// the same tile dot, which is what makes the colour unchanged.
 	bus.ppu.RenderLine(bus, 1);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x1234);
 
-	// With a reference point that lands on the transparent part of the map - an empty tile map
-	// entry - the layer is transparent and the backdrop shows. Scroll the map column to 16 (the
-	// entry at 16 is unwritten) and use a pure X reference of 128.
+	// With a reference point that lands on an empty tile map entry the layer is transparent and
+	// the backdrop shows. A pure X reference of 128 dots is tile column 16 of the first map row,
+	// which nothing was written to.
 	WriteReg(bus, BG2PA, 0x0100);
 	WriteReg(bus, 0x022, 0x0000);
 	WriteReg(bus, 0x024, 0x0000);
 	WriteReg(bus, 0x026, 0x0100);
-	WriteReg(bus, BG2X_L, 128);
+	WriteReg(bus, BG2X_L, 128 * 256);
 	WriteReg(bus, 0x02A, 0);
 	WriteReg(bus, 0x02C, 0);
 	WriteReg(bus, 0x02E, 0);
@@ -687,17 +716,23 @@ GBA_TEST(Ppu, Sprite256Colors)
 	GbaBus bus;
 	SetupDisplay(bus);
 
-	// A 16x16 square (shape 0, size 1) of 256-colour tiles at (100, 20). The tile data is written
-	// for the whole 16x16 dot area so that the assertion does not depend on which 8x8 tile of the
-	// matrix a dot lands in: the left half is colour index 7 and the right half index 9.
-	// GBATEK "OBJ Tile Number": each tile number is even in 256-colour mode, so the second tile of
-	// the row is number 2 (a 16x16 OBJ has no tile to its right within tile 0).
-	for (int y = 0; y < 16; y++)
+	// A 16x16 square (shape 0, size 1) of 256-colour tiles at (100, 20). The whole 16x16 dot area
+	// is written so that the assertion does not depend on which 8x8 tile of the matrix a dot lands
+	// in: the left half is colour index 7 and the right half index 9.
+	//
+	// The OBJ is set up in 1-dimensional mapping (DISPCNT bit 6), where "the upper row of the OBJ
+	// will consist of tile 04h and 06h, the next row of 08h and 0Ah" (GBATEK "OBJ - VRAM Character
+	// (Tile) Mapping"): in 256 colour mode only every second tile number may be used, so a row of
+	// this two-tile-wide OBJ covers 128 dots worth of tile numbers - twice the 64 bytes a tile
+	// occupies - and the second row of the OBJ starts 256 bytes on. Inside a tile one dot row is
+	// eight bytes.
+	for (int row = 0; row < 16; row++)
 	{
-		for (int x = 0; x < 8; x++)
+		for (int x = 0; x < 16; x++)
 		{
-			bus.ppu.WriteVram(OBJ_TILES + (u32)y * 64 + (u32)x, 7);
-			bus.ppu.WriteVram(OBJ_TILES + (u32)y * 64 + 8 + (u32)x, 9);
+			const u32 address = OBJ_TILES + (u32)(row / 8) * 256 + (u32)(row & 7) * 8 +
+				(u32)(x / 8) * 128 + (u32)(x & 7);
+			bus.ppu.WriteVram(address, (u8)(x < 8 ? 7 : 9));
 		}
 	}
 
@@ -709,7 +744,7 @@ GBA_TEST(Ppu, Sprite256Colors)
 	WriteOam16(bus, 0x02, 100 | (1 << 14));
 	WriteOam16(bus, 0x04, 0);
 
-	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ);
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ | DC_OBJ_1D);
 	bus.ppu.RenderLine(bus, 25);
 
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x001F);	// tile 0
@@ -777,18 +812,23 @@ GBA_TEST(Ppu, AffineSpriteIdentityMatrix)
 	GbaBus bus;
 	SetupDisplay(bus);
 
-	// A 16x16 affine sprite at (50, 30) with the identity matrix. The 256-colour tile data is
-	// written for the whole 16x16 dot area (each tile is 64 bytes, one byte per dot; the second
-	// tile of a matrix row is number 2 in 256-colour mode).
-	for (int y = 0; y < 16; y++)
+	// A 16x16 affine sprite at (50, 30) with the identity matrix, in 1-dimensional 256-colour
+	// mapping: as in Sprite256Colors, a row of the two-tile-wide OBJ covers 128 dots worth of
+	// tile numbers, so the second row of the OBJ starts 256 bytes on.
+	for (int row = 0; row < 16; row++)
 	{
 		for (int x = 0; x < 16; x++)
-			bus.ppu.WriteVram(OBJ_TILES + (u32)y * 64 + (u32)x, 5);
+		{
+			const u32 address = OBJ_TILES + (u32)(row / 8) * 256 + (u32)(row & 7) * 8 +
+				(u32)(x / 8) * 128 + (u32)(x & 7);
+			bus.ppu.WriteVram(address, 5);
+		}
 	}
 	WritePal16(bus, 0x200 + 5 * 2, 0x001F);
 
-	// attr0: Y | rotation/scaling flag (bit 8); attr1: X | size 1 | matrix group 0 (bits 9-13 = 0).
-	WriteOam16(bus, 0x00, 30 | 0x0100);
+	// attr0: Y | rotation/scaling flag (bit 8) | colours 256 (bit 13); attr1: X | size 1 |
+	// matrix group 0 (bits 9-13 = 0).
+	WriteOam16(bus, 0x00, 30 | 0x0100 | 0x2000);
 	WriteOam16(bus, 0x02, 50 | (1 << 14));
 	WriteOam16(bus, 0x04, 0);
 
@@ -799,7 +839,7 @@ GBA_TEST(Ppu, AffineSpriteIdentityMatrix)
 	WriteOam16(bus, 0x016, 0x0000);
 	WriteOam16(bus, 0x01E, 0x0100);
 
-	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ);
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ | DC_OBJ_1D);
 	bus.ppu.RenderLine(bus, 30);
 
 	// The reference point is the OBJ's own X/Y, and the rotation center is the middle of the base
@@ -894,8 +934,17 @@ GBA_TEST(Ppu, SemiTransparentSpriteAlphaBlendsWithTheBg)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), expected);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(17), expected);
 
-	// Outside of the sprite the background is unchanged (the backdrop is the 2nd target but the
-	// background is opaque, so the 1st/2nd pair is BG0 with the backdrop behind it).
+	// Where no sprite covers the background, the 1st target is BG0 and the next lower
+	// non-transparent pixel is the backdrop, which BLDCNT selects as a 2nd target: BG0 is mixed
+	// with the black backdrop, so only its red survives at half intensity.
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), Blend15(0x001F, 0x0000, 8, 8));
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x000F);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(18), 0x000F);
+
+	// Without the backdrop as a 2nd target there is nothing to mix with, so the background is
+	// displayed at its normal intensity (GBATEK 4000050h).
+	WriteReg(bus, BLDCNT, 0x0001 | (1 << 8) | (1 << 6));
+	bus.ppu.RenderLine(bus, 20);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x001F);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(18), 0x001F);
 }
@@ -954,10 +1003,12 @@ GBA_TEST(Ppu, BrightnessDecreaseOfTheBackdrop)
 
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x0000);
 
-	// Half: (31 - 31*8/16) = 15 for every component, i.e. 0x3DEF.
+	// Half: the hardware works in integers and truncates the product before subtracting it,
+	// I = I1st - (I1st * EVY >> 4): 31 - (31 * 8 >> 4) = 31 - 15 = 16 for every component, i.e.
+	// 0x4210. (Rounding the 15.5 up to 16 first would give 0x3DEF.)
 	WriteReg(bus, 0x054, 8);
 	bus.ppu.RenderLine(bus, 0);
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x3DEF);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x4210);
 
 	// Brightness increase of the backdrop with EVY = 16 saturates to white.
 	WritePal16(bus, 0x0000, 0x0000);
@@ -973,8 +1024,11 @@ GBA_TEST(Ppu, WindowMasksOneBg)
 	SetupDisplay(bus);
 
 	// A solid BG0 covers the whole screen, but window 0 only enables it in the columns 10..49 and
-	// the lines 5..24 (GBATEK 4000040h: X1 inclusive, X2 exclusive).
-	WriteReg(bus, BG0CNT, 0x0000);
+	// the lines 5..24 (GBATEK 4000040h: X1 inclusive, X2 exclusive). The tile data sits at
+	// character base block 0 and the map in screen base block 8 (0x06004000), so the two do not
+	// overlap; the map entry written there is tile 0 of palette 0, which every map entry already
+	// holds.
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
 	WritePal16(bus, 0x0002, 0x03E0);
 	FillVram(bus, 0x0000, 32, 0x11);
 	WriteVram16(bus, 0x4000 + 0, 0x0000);
@@ -996,10 +1050,13 @@ GBA_TEST(Ppu, WindowMasksOneBg)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(49), 0x03E0);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(50), 0x0000);
 
-	// The window is also limited vertically.
+	// The window is also limited vertically: WIN0V = 5..24 means the lines 5..24 inclusive
+	// (Y1 inclusive, Y2 exclusive), so line 24 is still inside and line 25 is the first outside.
 	bus.ppu.RenderLine(bus, 4);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x0000);
 	bus.ppu.RenderLine(bus, 24);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	bus.ppu.RenderLine(bus, 25);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x0000);
 
 	// Window 0 wins over window 1 in an overlap (GBATEK "Window Priority"). Window 1 shows BG0 in
@@ -1008,6 +1065,7 @@ GBA_TEST(Ppu, WindowMasksOneBg)
 	WriteReg(bus, 0x042, (0 << 8) | 100);		// WIN1H: 0..99
 	WriteReg(bus, 0x046, (0 << 8) | 160);		// WIN1V: 0..159
 	WriteReg(bus, WININ, 0x0021 | (0x21 << 8));
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_WIN0 | DC_WIN1);
 
 	bus.ppu.RenderLine(bus, 10);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(5), 0x03E0);		// inside window 1 only
@@ -1015,10 +1073,11 @@ GBA_TEST(Ppu, WindowMasksOneBg)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(99), 0x03E0);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x0000);	// outside both windows
 
-	// Disabling window 0 (DISPCNT bit 13) makes the outside region cover everything.
+	// Disabling all three window bits turns the window feature off entirely: WININ/WINOUT are
+	// ignored and every layer is displayed everywhere (GBATEK 4000000h).
 	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0);
 	bus.ppu.RenderLine(bus, 10);
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
 }
 
 GBA_TEST(Ppu, ForcedBlankIsWhite)
@@ -1027,8 +1086,9 @@ GBA_TEST(Ppu, ForcedBlankIsWhite)
 	SetupDisplay(bus);
 
 	// Draw a red background first, then force the blank (GBATEK "Blanking Bits": "Setting Forced
-	// Blank causes the video controller to display white lines").
-	WriteReg(bus, BG0CNT, 0x0000);
+	// Blank causes the video controller to display white lines"). The map is put in screen base
+	// block 8 (0x06004000) so that it does not overlap the tile data of character base block 0.
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
 	WritePal16(bus, 0x0002, 0x001F);
 	FillVram(bus, 0x0000, 32, 0x11);
 	WriteVram16(bus, 0x4000 + 0, 0x0000);
@@ -1183,19 +1243,23 @@ GBA_TEST(Ppu, VCountMatchInterrupt)
 	GBA_CHECK_EQ(matches, 1);				// only when the counter passed line 42
 
 	// The flag is set exactly while VCOUNT equals the setting: step through the match line and
-	// record the stored flag on it and on the line after it (GBATEK 4000004h).
+	// record the stored flag on it and on the line after it (GBATEK 4000004h). The counter is at
+	// line 50 now, so first run out the rest of the 228-line frame and into the next one, where
+	// the match line lies again.
 	int flagSetAtMatch = 0;
 	int flagSetAfterMatch = 0;
 
-	for (int line = 0; line < matchLine + 3; line++)
+	while (bus.ppu.VCount() != (u16)matchLine)
 	{
 		bus.Tick(CyclesPerScanline);
 
 		if (bus.ppu.VCount() == (u16)matchLine)
 			flagSetAtMatch = (bus.ppu.DispStat() & STAT_VCOUNT) != 0 ? 1 : 0;
-		else if (bus.ppu.VCount() == (u16)(matchLine + 1))
-			flagSetAfterMatch = (bus.ppu.DispStat() & STAT_VCOUNT) != 0 ? 1 : 0;
 	}
+
+	bus.Tick(CyclesPerScanline);
+	if (bus.ppu.VCount() == (u16)(matchLine + 1))
+		flagSetAfterMatch = (bus.ppu.DispStat() & STAT_VCOUNT) != 0 ? 1 : 0;
 
 	GBA_CHECK_EQ(flagSetAfterMatch, 0);
 	GBA_CHECK_EQ(flagSetAtMatch, 1);
