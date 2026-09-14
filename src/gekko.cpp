@@ -1509,7 +1509,6 @@ namespace Gekko
 		memset(fifo, 0, sizeof(fifo));
 		readPtr = 0;
 		writePtr = 0;
-		retireTimeout = 0;
 
 		if (log)
 		{
@@ -1622,16 +1621,18 @@ namespace Gekko
 		WriteBytes(data, 8);
 	}
 
+	// WPAR[BNE]: "buffer not empty". This is a plain status bit - reading it must not disturb the
+	// pipe. A partial 32-byte block really does wait: the hardware has no timeout, and the only
+	// ways to get the bytes out are to accumulate a whole block, to fill the block with dummy
+	// data, or to reprogram WPAR (which invalidates whatever is still buffered). Games that poll
+	// this bit while data is pending are waiting for an already-requested burst to finish on the
+	// bus, so clearing the buffer here would silently drop command bytes.
+	// WPAR[BNE]: "buffer not empty" (manual 9.4.1). It is a plain status bit - reading it must not
+	// disturb the pipe. A block that is not full yet really does wait in the buffer: the pipe has
+	// no timeout, and nothing is transferred before a whole block is gathered or WPAR is
+	// re-programmed (which discards it). Software that must deliver a partial block has to pad it.
 	bool GatherBuffer::NotEmpty()
 	{
-		// The GatherBuffer has an undocumented feature - after a certain number of cycles the data in it is destroyed and it becomes free
-
-		retireTimeout++;
-		if (retireTimeout >= GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS)
-		{
-			Reset();
-		}
-
 		return readPtr != writePtr;
 	}
 }

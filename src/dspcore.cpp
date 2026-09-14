@@ -788,9 +788,9 @@ namespace DSP
 		dsp->Suspend();
 	}
 
-	// Called by the CPU thread every Flipper tick step. Waking up on every step would mean about a
-	// million scheduler wakeups per second, so the thread is woken once per `DspWakeTicks` and then
-	// drains a whole batch.
+	// Called by the CPU thread every Flipper tick step. Waking up on every step would mean about
+	// half a million scheduler wakeups per second, so the thread is woken once per `DspWakeTicks`
+	// and then drains a whole batch.
 	void DspCore::TickSync(int64_t ticks)
 	{
 		if (ticks < wakeTick)
@@ -833,9 +833,9 @@ namespace DSP
 		// wakeup's worth. The anchor is taken again at the end exactly as the one-instruction-at-a-
 		// time version did: the DSP is limited by the host, not by the emulated clock, and the
 		// backlog is dropped rather than accumulated.
-		uint32_t budget = (uint32_t)(DspWakeTicks / (int64_t)GekkoTicksPerDspInstruction);
+		int64_t budget = DspWakeTicks / GekkoTicksPerDspInstruction;
 
-		while (budget > 0 && ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
+		while (budget > 0 && (int64_t)ticks >= dsp->savedGekkoTicks + GekkoTicksPerDspInstruction)
 		{
 			// Test breakpoints and canaries
 			if (dsp->IsRunning())
@@ -867,12 +867,12 @@ namespace DSP
 			Gekko::stats.dspInstrs += retired;
 			dsp->savedGekkoTicks += (int64_t)retired * GekkoTicksPerDspInstruction;
 
-			budget = (retired >= budget) ? 0 : (budget - retired);
+			budget = ((int64_t)retired >= budget) ? 0 : (budget - (int64_t)retired);
 		}
 
-		if (dsp->savedGekkoTicks <= ticks)
+		if (dsp->savedGekkoTicks <= (int64_t)ticks)
 		{
-			dsp->savedGekkoTicks = ticks;
+			dsp->savedGekkoTicks = (int64_t)ticks;
 		}
 	}
 

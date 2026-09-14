@@ -309,26 +309,37 @@ namespace GFX
 				pe.copy_clear_z.bits = value;
 				break;
 
-			// The copy command is the trigger of the whole copy engine. Of its operations only the
-			// clear and the hand-over to the display are something the OpenGL backend can honour:
-			// the copy to main memory (display copy and texture copy) needs the EFB to be readable
-			// as a texture, which the emulator does not emulate.
+			// The copy command is the trigger of the whole copy engine.
 			//
-			// The clear is only *recorded* here, it is performed by the frame begin: it belongs to
-			// the end of the frame (the finished EFB is handed over and prepared for the next one),
-			// so clearing right away would erase the frame that is still to be displayed. The swap
-			// itself happens right here, on the display copy - that is where the XFB the video
-			// interface shows is written (see GFXCore::GPDisplayCopy).
+			// A copy and its clear belong together, in the order the stream asks for them: the copy
+			// reads the rectangle as it is, and a copy that asked for a clear turns the quads it
+			// read into the clear colour (gfx-pe.md 5.1, the RMW of the colour unit), so whatever
+			// follows sees the cleared EFB. See below for when the clear of each kind runs.
+			//
+			// The values are captured when the command arrives, because the game may reprogram the
+			// registers for its next copy before the clear runs.
 			case PE_COPY_CMD_ID:
+			{
 				pe.copy_cmd.bits = value;
+
+				CopyClearState clear{};
+
 				if (pe.copy_cmd.clear)
 				{
-					// Capture the clear values now: the clear runs at the next frame begin, and the
-					// game may have programmed the registers for its next copy by then.
-					copy_clear.ar = pe.copy_clear_ar;
-					copy_clear.gb = pe.copy_clear_gb;
-					copy_clear.z = pe.copy_clear_z;
-					copy_clear.pending = true;
+					clear.ar = pe.copy_clear_ar;
+					clear.gb = pe.copy_clear_gb;
+					clear.z = pe.copy_clear_z;
+					clear.x = (int)pe.copy_src_addr.x;
+					clear.y = (int)pe.copy_src_addr.y;
+					clear.w = (int)pe.copy_src_size.x + 1;
+					clear.h = (int)pe.copy_src_size.y + 1;
+
+					// A display copy's clear waits for the frame begin; a texture copy's runs below.
+					if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY &&
+						pending_clear_count < MaxPendingCopyClears)
+					{
+						pending_clears[pending_clear_count++] = clear;
+					}
 				}
 
 				// A display copy hands the finished EFB over to the video interface as the XFB
@@ -342,13 +353,31 @@ namespace GFX
 				// write the picture in several passes (one copy per display-list buffer) and call
 				// PE_FINISH when the frame is complete. Presenting those would flicker the picture.
 				//
-				// A texture copy is an intermediate render target and never presents.
+				// A texture copy is an intermediate render target and never presents: it turns the
+				// rectangle into a tiled texture in main memory (gfx-pe.md 5.7).
+				if (pe.copy_cmd.opcode == PE_COPY_CMD_TEXTURE)
+				{
+					TextureCopy();
+				}
+
 				if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY &&
 					pe.copy_src_addr.x == 0 && pe.copy_src_size.x + 1 >= gfx->RenderWidth())
 				{
 					gfx->GPDisplayCopy();
 				}
+
+				// A texture copy's clear belongs to the copy itself and runs right here: it only
+				// prepares the EFB for the copies that follow, and it cannot disturb the frame a
+				// display copy presents. The clear of a *display* copy stays deferred to the frame
+				// begin: the backend shows the EFB in place of the XFB the hardware would have
+				// written first, so clearing it here would wipe the picture that is about to be
+				// shown (the bootrom screen went black that way).
+				if (pe.copy_cmd.clear && pe.copy_cmd.opcode == PE_COPY_CMD_TEXTURE)
+				{
+					ApplyCopyClear(clear);
+				}
 				break;
+			}
 
 			case PE_COPY_VFILTER0_ID:
 				pe.vfilter_0.bits = value;
@@ -491,15 +520,254 @@ namespace GFX
 			glDisable(GL_DITHER);
 	}
 
+	//! Read a rectangle of the EFB into an RGB buffer, top row first. This is the only way back from
+	//! the copy engine's round trip through the colour buffer, which is what makes it a pixel engine
+	//! operation (gfx-pe.md 5).
+	bool PixelEngine::ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgb)
+	{
+		if (width <= 0 || height <= 0 || gfx == nullptr || !gfx->HasGLContext())
+		{
+			return false;
+		}
+
+		rgb.resize((size_t)width * height * 3);
+
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
+
+		// glReadPixels returns the bottom row first
+		std::vector<uint8_t> flipped(rgb.size());
+		for (int row = 0; row < height; row++)
+		{
+			memcpy(&flipped[(size_t)row * width * 3],
+				&rgb[(size_t)(height - 1 - row) * width * 3], (size_t)width * 3);
+		}
+		rgb.swap(flipped);
+
+		return true;
+	}
+
 	// The copy engine's clear fills the EFB with the PE clear colour and the clear Z, without depth
 	// testing or blending, using the values the copy that asked for it was programmed with (see
 	// CopyClearState). The hardware clears only the rectangle the copy read, but the backend displays
 	// the whole EFB (a real console shows the scaled XFB instead), so the whole render target is
 	// cleared here: leaving the rest of it alone smeared the previous frame into the part of the
 	// picture the copy does not cover.
+	// The copy engine turns a rectangle of the EFB into a tiled texture in main memory. The tiling
+	// is the one the texture unit reads back (see tx.cpp) applied in reverse: the tiles of a
+	// texture are stored row by row, and the shape of a tile follows the texel size of the
+	// destination format. The tile rows are `PE_COPY_DST_STRIDE` cache lines apart, so they are
+	// not necessarily contiguous (gfx-pe.md 5.7).
+	void PixelEngine::TextureCopy()
+	{
+		int w = (int)pe.copy_src_size.x + 1;
+		int h = (int)pe.copy_src_size.y + 1;
+		int srcX = (int)pe.copy_src_addr.x;
+		int srcY = (int)pe.copy_src_addr.y;
+		int fmt = (int)pe.copy_cmd.tex_format | ((int)pe.copy_cmd.tex_format_h << 3);
+		uint32_t dst = (uint32_t)pe.copy_dst_base[0].base << 5;
+
+		if (w <= 0 || h <= 0)
+			return;
+
+		// A rectangle that runs off the EFB is clamped: the tiles it covers are written anyway.
+		if (srcX < 0) { w += srcX; srcX = 0; }
+		if (srcY < 0) { h += srcY; srcY = 0; }
+		if (srcX + w > (int)gfx->RenderWidth()) w = (int)gfx->RenderWidth() - srcX;
+		if (srcY + h > (int)gfx->RenderHeight()) h = (int)gfx->RenderHeight() - srcY;
+
+		if (w <= 0 || h <= 0)
+			return;
+
+		// The shape of a tile follows the texel size of the format (gfx-pe.md 5.7).
+		int tileW = 4, tileH = 4;
+
+		switch (fmt)
+		{
+			case TF_I4:
+			case TF_C4:
+				tileW = 8; tileH = 8;
+				break;
+
+			case TF_I8:
+			case TF_IA4:
+			case TF_C8:
+				tileW = 8; tileH = 4;
+				break;
+
+			case TF_IA8:
+			case TF_RGB565:
+			case TF_RGB5A3:
+			case TF_C14:
+			case TF_RGBA8:
+				tileW = 4; tileH = 4;
+				break;
+
+			default:
+				return;
+		}
+
+		// The copy engine reads whole tiles: the destination holds the tiles the rectangle covers,
+		// so a rectangle that is not a multiple of the tile size is padded with the edge texels.
+		int tilesX = (w + tileW - 1) / tileW;
+		int tilesY = (h + tileH - 1) / tileH;
+
+		// The copy engine reads its source out of the EFB, which is this unit's own colour buffer:
+		// the rectangle is given in screen coordinates and glReadPixels counts from the bottom.
+		std::vector<uint8_t> rgb;
+		if (!ReadEfb(srcX, (int)gfx->RenderHeight() - srcY - h, w, h, rgb))
+			return;
+
+		auto texel = [&](int x, int y, int c) -> uint8_t
+		{
+			if (x >= w) x = w - 1;
+			if (y >= h) y = h - 1;
+			if (x < 0) x = 0;
+			if (y < 0) y = 0;
+			return rgb[((size_t)y * w + x) * 3 + c];
+		};
+
+		// The intensity formats take the luma of the EFB colour: the RGB to Y conversion of the
+		// copy path is applied automatically for a copy into an intensity format (gfx-pe.md 5.4).
+		auto luma = [&](int x, int y) -> uint8_t
+		{
+			int r = texel(x, y, 0), g = texel(x, y, 1), b = texel(x, y, 2);
+			int y_ = (66 * r + 129 * g + 25 * b + 128) >> 8;
+			return (uint8_t)(y_ < 0 ? 0 : (y_ > 255 ? 255 : y_));
+		};
+
+		uint8_t* dstPtr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(dst);
+		if (dstPtr == nullptr)
+			return;
+
+		// The stride is the distance between the first texel of a tile and the first texel of the
+		// tile below it, in cache lines.
+		size_t stride = (size_t)pe.copy_dst_stride.stride * 32;
+
+		for (int ty = 0; ty < tilesY; ty++)
+		{
+			// A tile of a 32-bit format spans two cache lines, every other one is a single line.
+			uint8_t* p = dstPtr + (size_t)ty * stride;
+
+			for (int tx = 0; tx < tilesX; tx++)
+			{
+				int bx = tx * tileW;
+				int by = ty * tileH;
+
+				switch (fmt)
+				{
+					case TF_I4:
+					{
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u += 2)
+							{
+								uint8_t hi = luma(bx + u, by + v) >> 4;
+								uint8_t lo = luma(bx + u + 1, by + v) >> 4;
+								*p++ = (uint8_t)((hi << 4) | lo);
+							}
+						break;
+					}
+
+					case TF_I8:
+					{
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u++)
+								*p++ = luma(bx + u, by + v);
+						break;
+					}
+
+					case TF_IA4:
+					{
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u++)
+								*p++ = (uint8_t)((texel(bx + u, by + v, 3) & 0xf0) | (luma(bx + u, by + v) >> 4));
+						break;
+					}
+
+					case TF_IA8:
+					{
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u++)
+							{
+								*p++ = texel(bx + u, by + v, 3);
+								*p++ = luma(bx + u, by + v);
+							}
+						break;
+					}
+
+					case TF_RGB565:
+					{
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u++)
+							{
+								uint16_t c = (uint16_t)(((texel(bx + u, by + v, 0) >> 3) << 11) |
+									((texel(bx + u, by + v, 1) >> 2) << 5) |
+									(texel(bx + u, by + v, 2) >> 3));
+								*p++ = (uint8_t)(c >> 8);
+								*p++ = (uint8_t)c;
+							}
+						break;
+					}
+
+					case TF_RGB5A3:
+					{
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u++)
+							{
+								int r = texel(bx + u, by + v, 0), g = texel(bx + u, by + v, 1), b = texel(bx + u, by + v, 2);
+								int a = texel(bx + u, by + v, 3);
+								uint16_t c;
+								if (a > 0xe0)
+								{
+									c = (uint16_t)(0x8000 | ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3));
+								}
+								else
+								{
+									c = (uint16_t)(((a >> 5) << 12) | ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4));
+								}
+								*p++ = (uint8_t)(c >> 8);
+								*p++ = (uint8_t)c;
+							}
+						break;
+					}
+
+					case TF_RGBA8:
+					{
+						// A 4x4 block of this format spans two cache lines: alpha/red pairs first,
+						// then the green/blue ones.
+						for (int v = 0; v < 4; v++)
+							for (int u = 0; u < 4; u++)
+							{
+								*p++ = texel(bx + u, by + v, 3);
+								*p++ = texel(bx + u, by + v, 0);
+							}
+						for (int v = 0; v < 4; v++)
+							for (int u = 0; u < 4; u++)
+							{
+								*p++ = texel(bx + u, by + v, 1);
+								*p++ = texel(bx + u, by + v, 2);
+							}
+						break;
+					}
+
+					default:
+						return;
+				}
+			}
+		}
+	}
+
 	void PixelEngine::ApplyCopyClear(const CopyClearState& clear)
 	{
-		int x = 0, y = 0, w = (int)gfx->scr_w, h = (int)gfx->scr_h;
+		// A texture copy's clear covers the rectangle the copy reads (gfx-pe.md 5.1): the copy engine
+		// turns every quad it reads into the clear colour and leaves the rest of the EFB as it was.
+		// The rectangle comes from the copy registers, so it is in screen coordinates.
+		int x = clear.x, y = clear.y, w = clear.w, h = clear.h;
+
+		if (w <= 0 || h <= 0)
+		{
+			x = 0; y = 0; w = (int)gfx->scr_w; h = (int)gfx->scr_h;
+		}
 
 		glScissor(x, (int)gfx->scr_h - (y + h), w, h);
 		glDisable(GL_BLEND);
@@ -527,15 +795,19 @@ namespace GFX
 		glScissor(0, 0, (GLsizei)gfx->scr_w, (GLsizei)gfx->scr_h);
 	}
 
-	bool PixelEngine::TakePendingCopyClear(CopyClearState* state)
+	bool PixelEngine::ApplyPendingCopyClears()
 	{
-		if (!copy_clear.pending)
+		if (pending_clear_count == 0)
 		{
 			return false;
 		}
 
-		*state = copy_clear;
-		copy_clear.pending = false;
+		for (size_t i = 0; i < pending_clear_count; i++)
+		{
+			ApplyCopyClear(pending_clears[i]);
+		}
+
+		pending_clear_count = 0;
 		return true;
 	}
 
@@ -543,7 +815,7 @@ namespace GFX
 	{
 		pe = PEState{};
 		peregs = PERegs{};
-		copy_clear = CopyClearState{};
+		pending_clear_count = 0;
 
 		// The hardware reset values that the specification states (gfx-pe.md 6.5, 6.8, 6.20)
 		pe.field_mask.bits = 0x3;

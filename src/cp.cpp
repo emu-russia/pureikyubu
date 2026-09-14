@@ -63,7 +63,7 @@ namespace Flipper
 		flipper->pi->PISetTrap(PI_REGSPACE_CP | CP_XF_DATAL, CPRegRead, CPRegWrite, this);
 		flipper->pi->PISetTrap(PI_REGSPACE_CP | CP_XF_DATAH, CPRegRead, CPRegWrite, this);
 
-		fifo = new FifoProcessor();
+		fifo = new FifoProcessor(this);
 		fifo->Reset();
 
 		tickPerFifo = 100;
@@ -102,6 +102,14 @@ namespace Flipper
 	{
 		CommandProcessor* cp = (CommandProcessor*)context;
 		cp->CpWriteReg(addr & 0xFF, data);
+	}
+
+	//! The reader is held while the break point is enabled (CP_ENABLE[FIFOBRK]) and its read
+	//! pointer sits on it. This is the condition that gates the fetch; CP_SR_BPINT only reports it.
+	bool CommandProcessor::AtBreakPoint() const
+	{
+		return (cpregs.cr & CP_CR_BPEN) != 0 &&
+			((cpregs.rdptr & ~0x1f) == (cpregs.bpptr & ~0x1f));
 	}
 
 	// The read pointer has reached the break point. The break point itself stops the reader; the
@@ -174,8 +182,13 @@ namespace Flipper
 			cnt = (cpregs.top - cpregs.rdptr) + (cpregs.wrptr - cpregs.base);
 		}
 
+		// Only the break point stops the reader: the overflow and underflow bits are status
+		// (and interrupt) flags, not gates on the fetch. The break itself is reported from
+		// PumpFifo, so the FIFO must still look busy while the reader sits on it - otherwise the
+		// status bit and the CP interrupt would never be raised and a host waiting for them would
+		// wait forever. Once the flag is up there is nothing left to do.
 		return cnt != 0 && (cpregs.cr & CP_CR_RDEN) != 0 &&
-			(cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0;
+			(!AtBreakPoint() || (cpregs.sr & CP_SR_BPINT) == 0);
 	}
 
 	// Called every Flipper tick step by the CPU thread. The CP thread is woken once per `FifoBatch`
@@ -195,8 +208,18 @@ namespace Flipper
 			return;
 		}
 
+		// A backwards jump of the time base (a CPU reset) has to be picked up as well, or the
+		// reader would stay parked in the future for as long as the reset set it back.
+		if (ticks < lastDrainTick)
+		{
+			lastDrainTick = ticks;
+		}
+
+		// Waking the thread must not move the drain anchor: the CP thread works out how many
+		// entries it owes from the time that passed since it last drained, and a wake-up that
+		// also reset the anchor would make that budget zero whenever the thread happens to be
+		// scheduled promptly - the reader then only ran as fast as the host scheduled it.
 		updateTbrValue = ticks + (int64_t)tickPerFifo * (int64_t)FifoBatch;
-		lastDrainTick = ticks;
 		fifoEvent.Signal();
 	}
 
@@ -208,26 +231,33 @@ namespace Flipper
 		// timeout expires, so that a missed wakeup cannot stall the graphics pipeline).
 		cp->fifoEvent.Wait(2);
 
-		int64_t ticks = Core->GetTicks();
+		// The thread only has to hand over the entries the emulated CP owes by now; DrainFifo
+		// works that out from the time base and returns straight away when nothing is due.
+		cp->DrainFifo();
+	}
 
-		// How many entries the emulated CP could have consumed since the last drain. The batch is
-		// bounded, so that a long gap does not turn into one huge burst.
-		int64_t budget = (ticks - cp->lastDrainTick) / (int64_t)cp->tickPerFifo;
-		if (budget <= 0)
-		{
-			return;
-		}
-		cp->lastDrainTick = ticks;
+	// The emulated CP consumes one FIFO entry every `tickPerFifo` ticks, so the entries it owes
+	// follow from the time that passed since the last drain. The anchor only moves by the entries
+	// actually drained: nothing owed is ever dropped, and no extra batch limit is applied, because
+	// a limit would tie the reader's emulated throughput to how often the host happens to schedule
+	// the CP thread - the FIFO would then fill up on a busy host and the guest would stall on
+	// registers that should have moved on. The drain stops by itself when the FIFO runs dry.
+	void CommandProcessor::DrainFifo()
+	{
+		fifoLock.Lock();
 
-		if (budget > (int64_t)CommandProcessor::FifoBatch * 4)
+		int64_t budget = (Core->GetTicks() - lastDrainTick) / (int64_t)tickPerFifo;
+		if (budget > 0)
 		{
-			budget = (int64_t)CommandProcessor::FifoBatch * 4;
+			lastDrainTick += budget * (int64_t)tickPerFifo;
+
+			while (budget-- > 0 && HasFifoWork())
+			{
+				PumpFifo();
+			}
 		}
 
-		while (budget-- > 0 && cp->HasFifoWork())
-		{
-			cp->PumpFifo();
-		}
+		fifoLock.Unlock();
 	}
 
 	// One burst of the graphics FIFO: this is what the CP does on a tick, and what the unit tests
@@ -255,18 +285,17 @@ namespace Flipper
 		}
 
 		// Breakpoint
-		if ((cpregs.rdptr & ~0x1f) == (cpregs.bpptr & ~0x1f))
+		if (AtBreakPoint())
 		{
 			CP_BREAK();
 		}
 
 		// Advance read pointer.
-		if (cpregs.cnt != 0 && cpregs.cr & CP_CR_RDEN && (cpregs.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+		if (cpregs.cnt != 0 && cpregs.cr & CP_CR_RDEN && !AtBreakPoint())
 		{
 			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
 			GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr) );
-
 			cpregs.rdptr += 32;
 			if (cpregs.rdptr == cpregs.top)
 			{
@@ -414,8 +443,10 @@ namespace Flipper
 			case CP_ENABLE:
 				cpregs.cr = (uint16_t)value;
 
-				// clear breakpoint
-				if ((value & CP_CR_BPINTEN) == 0)
+				// The break-point status flag is cleared by disabling the break point itself
+				// (CP_ENABLE[FIFOBRK]); clearing only its interrupt enable does not release the
+				// reader.
+				if ((value & CP_CR_BPEN) == 0)
 				{
 					cpregs.sr &= ~CP_SR_BPINT;
 				}
@@ -541,6 +572,12 @@ namespace Flipper
 	void CommandProcessor::FifoWriteBurst()
 	{
 		// CP FIFO
+		//
+		// The write side of the ring belongs to the PI (CPBAS / CPTOP / CPWRT); the CP keeps its
+		// own copy of the write pointer (CP_FIFO_WPTRH/L) and steps it on every FIFO write burst,
+		// but only while CP_ENABLE[WRPTRINC] is set. That gate is what lets the CPU use the write
+		// path as a plain DMA into a scratch buffer - it repoints the PI's base / top / write
+		// pointer at the scratch area and back without the CP taking the data for commands.
 
 		if (cpregs.cr & CP_CR_WPINC)
 		{
@@ -579,7 +616,7 @@ namespace Flipper
 
 	// index range = 00..FF
 	// reg size = 32 bit
-	void CommandProcessor::loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo)
+	void CommandProcessor::loadCPReg(size_t index, uint32_t value)
 	{
 		cpLoads++;
 
@@ -605,14 +642,12 @@ namespace Flipper
 			case CP_VCD_LO_ID:
 			{
 				cp.vcdLo.bits = value;
-				FifoReconfigure(gxfifo);
 			}
 			return;
 
 			case CP_VCD_HI_ID:
 			{
 				cp.vcdHi.bits = value;
-				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -626,7 +661,6 @@ namespace Flipper
 			case CP_VAT_A_ID | 7:
 			{
 				cp.vatA[index & 7].bits = value;
-				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -640,7 +674,6 @@ namespace Flipper
 			case CP_VAT_B_ID | 7:
 			{
 				cp.vatB[index & 7].bits = value;
-				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -654,7 +687,6 @@ namespace Flipper
 			case CP_VAT_C_ID | 7:
 			{
 				cp.vatC[index & 7].bits = value;
-				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -744,19 +776,21 @@ namespace Flipper
 
 	#pragma region "FIFO Processing"
 
-	FifoProcessor::FifoProcessor()
+	FifoProcessor::FifoProcessor(CommandProcessor* owner)
 	{
 		fifo = new uint8_t[fifoSize];
 		memset(fifo, 0, fifoSize);
 		allocated = true;
+		this->owner = owner;
 	}
 
-	FifoProcessor::FifoProcessor(uint8_t* fifoPtr, size_t size)
+	FifoProcessor::FifoProcessor(uint8_t* fifoPtr, size_t size, CommandProcessor* owner)
 	{
 		fifo = fifoPtr;
 		fifoSize = size + 1;
 		writePtr = fifoSize - 1;
 		allocated = false;
+		this->owner = owner;
 	}
 
 	FifoProcessor::~FifoProcessor()
@@ -1002,12 +1036,14 @@ namespace Flipper
 					return false;
 
 				int vtxnum = Peek16(1);
-				return GetSize() >= (vtxnum * vertexSize[cmd & 7] + 3);
+				return GetSize() >= (vtxnum * VertexSize(cmd & 7) + 3);
 			}
 
 			default:
 			{
-				Halt("GFX: Unsupported opcode: 0x%02X (%s, readPtr: 0x%x)\n", cmd, allocated ? "Call DL" : "Stream", readPtr);
+				// `allocated` is true for the processor that owns its own buffer, which is the main
+				// command stream; the other one is a display list being walked at this moment.
+				Halt("GFX: Unsupported opcode: 0x%02X (%s, readPtr: 0x%x)\n", cmd, allocated ? "Stream" : "Call DL", readPtr);
 				break;
 			}
 		}
@@ -1065,9 +1101,15 @@ namespace Flipper
 		return ((uint16_t)Peek8(offset) << 8) | Peek8(offset + 1);
 	}
 
-	void FifoProcessor::RecalcVertexSize()
+	//! The CP owns the vertex format state (VCD / VAT); the stream only asks it for the sizes.
+	size_t FifoProcessor::VertexSize(unsigned vat)
 	{
+		return owner != nullptr ? owner->VertexSize(vat) : 0;
+	}
 
+	size_t CommandProcessor::VertexSize(unsigned vat)
+	{
+		return (size_t)gx_vtxsize(vat);
 	}
 
 	void FifoProcessor::ExecuteCommand()
@@ -1112,7 +1154,7 @@ namespace Flipper
 		static int cntn[] = { 3, 9 };
 		static int cntt[] = { 1, 2 };
 		static int fmtsz[] = { 1, 1, 2, 2, 4 };
-		static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
+		static int cfmtsz[] = { 2, 3, 4, 2, 3, 4 };
 
 		if (cp.vcdLo.PosNrmMatIdx) vtxsize++;
 		if (cp.vcdLo.Tex0MatIdx) vtxsize++;
@@ -1291,14 +1333,6 @@ namespace Flipper
 		}
 
 		return vtxsize;
-	}
-
-	void CommandProcessor::FifoReconfigure(FifoProcessor *gxfifo)
-	{
-		for (unsigned v = 0; v < 8; v++)
-		{
-			gxfifo->vertexSize[v] = gx_vtxsize(v);
-		}
 	}
 
 	void * CommandProcessor::GetArrayPtr(ArrayId arrayId, int idx, int compSize)
@@ -1600,7 +1634,7 @@ namespace Flipper
 	{
 		void* ptr;
 		GFX::Color col{};
-		static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
+		static int cfmtsz[] = { 2, 3, 4, 2, 3, 4 };
 
 		col.R = 0;
 		col.G = 0;
@@ -2075,14 +2109,18 @@ namespace Flipper
 			{
 				uint32_t physAddress = gxfifo->Read32() & 0x03ffffe0;
 				uint8_t* fifoPtr = (uint8_t *)HW->mem->MIGetMemoryPointerForCP(physAddress);
-				size_t size = gxfifo->Read32() & ~0x1f;
+
+				// The object's size field is the byte count of the list, encoded like the address
+				// above: only bits [25:5] are meaningful, which is the number of 32-byte blocks
+				// (the CP walks the object a block at a time).
+				size_t size = gxfifo->Read32() & 0x03ffffe0;
 
 				if (logDrawCommands)
 				{
 					Report(Channel::GP, "CP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
 				}
 
-				FifoProcessor* callDlFifo = new FifoProcessor(fifoPtr, size);
+				FifoProcessor* callDlFifo = new FifoProcessor(fifoPtr, size, this);
 
 				while (callDlFifo->EnoughToExecute())
 				{
@@ -2141,7 +2179,7 @@ namespace Flipper
 			{
 				uint8_t index = gxfifo->Read8();
 				uint32_t word = gxfifo->Read32();
-				loadCPReg(index, word, gxfifo);
+				loadCPReg(index, word);
 				break;
 			}
 

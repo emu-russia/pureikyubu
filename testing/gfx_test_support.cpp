@@ -771,6 +771,11 @@ namespace Flipper
 		return GfxUnitTest::TestMainMemory(phys_addr, 0);
 	}
 
+	void* MemoryInterface::MIGetMemoryPointerForPI(uint32_t phys_addr)
+	{
+		return GfxUnitTest::TestMainMemory(phys_addr, 0);
+	}
+
 	void VideoInterface::VIDisableXfb()
 	{
 		// The unit tests render into an offscreen window; there is no XFB to disable.
