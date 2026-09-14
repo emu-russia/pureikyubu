@@ -711,6 +711,13 @@ int WINAPI WinMain(
 		return EMUSelfTest();
 	}
 
+	// The integrated GBA emulator has its own machine and its own SDL2 frontend (issue #388); it
+	// does not go through the GameCube UI at all.
+	if (cmdline.gba)
+	{
+		return EMURunGba();
+	}
+
 	DWORD attribs = GetFileAttributes(L"Data");
 	if (attribs == INVALID_FILE_ATTRIBUTES || (attribs & FILE_ATTRIBUTE_DIRECTORY) == 0) {
 		UI::Error(L"Application data not found", L"The emulator stores all important data in the Data folder, which is not found. Verify that the executable file is in the correct location. If you are running the emulator from Visual Studio, ensure that Debugging->Working Directory is set to $(ProjectDir)../../build");

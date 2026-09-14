@@ -1,0 +1,106 @@
+
+	void Sio::FinishTransfer(GbaBus& bus)
+	{
+		(void)bus;
+
+		// Commit the received value of a normal-mode transfer. This runs when the last unit of
+		// the cable has finished, so every send register is final: this unit may read its peer's
+		// data and put the value it latched into its own data registers (GBATEK "SIODATA8" /
+		// "SIODATA32_L/H": "Upon transfer completion, the register contains the received value").
+		if (!completionPending)
+			return;
+
+		completionPending = false;
+
+		if (mode == ModeNormal)
+		{
+			if (siocnt & SioLength32)
+			{
+				siomltSend = (u16)(lastReceived & 0xFFFF);	// SIODATA32_L: the received low half
+				siodata32H = (u16)(lastReceived >> 16);		// SIODATA32_H: the received high half
+			}
+			else
+			{
+				siodata8 = (u16)(lastReceived & 0x00FF);
+			}
+		}
+		else
+		{
+			// A multiplayer unit that is told the parent has finished fills its slots in again.
+			FillMultiplayerSlots();
+		}
+	}
+
+
+	u16 Sio::OutgoingData() const
+	{
+		switch (mode)
+		{
+		case ModeNormal:
+			// GBATEK "SIODATA8" / "SIODATA32_L/H": the outgoing value was written to the data
+			// register before the transfer (MSB first on the wire, which does not matter for the
+			// whole-register exchange the emulated cable carries).
+			if (siocnt & SioLength32)
+				return siomltSend;
+
+			return (u16)(siodata8 & 0x00FF);
+
+		case ModeMulti:
+			// The multiplayer transfer sends SIOMLT_SEND (GBATEK "400012Ah - SIOMLT_SEND").
+			return siomltSend;
+
+		case ModeUart:
+			return (u16)(siodata8 & 0x00FF);
+
+		default:
+			// General purpose: SI and SO are the two low data bits of SIOCNT.
+			return (u16)(siocnt & 0x0003);
+		}
+	}
+
+	u16 Sio::IncomingData() const
+	{
+		switch (mode)
+		{
+		case ModeNormal:
+		{
+			// Two units, each one's SO wired to the other's SI: what this unit receives is what
+			// the peer drives. "With no peer attached the port behaves like an empty cable (the
+			// received data is 0xFFFF)".
+			u16 value = SioEmptyCable;
+			if (peer != nullptr && (siocnt & SioLength32))
+			{
+				// The peer's 32bit data spans two halfwords: the low one is its outgoing value
+				// (SIODATA32_L) and the high one its SIODATA32_H.
+				fprintf(stderr, "DBGSIO peer out=%04X peerH=%04X peerMode=%d myMode=%d\n",
+					(unsigned)peer->OutgoingData(), (unsigned)peer->siodata32H, peer->mode, mode);
+				return (u16)((u32)peer->OutgoingData() | ((u32)peer->siodata32H << 16));
+			}
+
+			if (peer != nullptr)
+				value = peer->OutgoingData();
+
+			if (siocnt & SioLength32)
+				return value;
+
+			// The 8bit transfer only carries the low byte; the upper half of the register keeps
+			// its open-bus value ("only lower 8bit are used", GBATEK "SIODATA8").
+			return (u16)(value & 0x00FF);
+		}
+
+		case ModeMulti:
+		{
+			// The multiplayer registers hold the data of every unit, so the value that "came
+			// back" over the cable is this unit's own slot; CompleteTransfer stores all four
+			// slots, since it can see the whole chain.
+			return siomltSend;
+		}
+
+		case ModeUart:
+			return SioEmptyCable;
+
+		default:
+			return (u16)(SioEmptyCable & 0x0003);
+		}
+	}
+}

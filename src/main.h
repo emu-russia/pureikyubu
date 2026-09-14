@@ -55,6 +55,25 @@ struct CmdLineOptions
 	bool    bench = false;
 	std::wstring benchFile;
 	uint32_t    benchSeconds = 30;
+
+	// The integrated GBA emulator (issue #388). `--gba [file]` runs the GBA machine with the SDL2
+	// backend instead of the GameCube one; a file whose extension is a Game Boy one (.gba, .agb,
+	// .gb, .gbc) selects the same mode by itself. With no file at all the GBA boots its own boot
+	// ROM and its link driver takes over, which is the GBA Link mode.
+	bool    gba = false;
+	bool    gbaLink = false;        // `--gba-link`: initialize the link port even with a cartridge
+
+	// `--gba-bios <file>`: a real 16 KByte GBA BIOS image. Without it the emulator runs its own
+	// boot ROM (and, with `--no-gba-bootrom`, the cartridge is started directly).
+	std::wstring gbaBios;
+	bool    gbaNoBootrom = false;
+
+	// The Game Boy (DMG/CGB) is the other machine of the same module and runs in the same
+	// frontend: a `.gb`/`.gbc`/`.sgb` cartridge selects it by itself, `--gb` forces it for a file
+	// whose extension is ambiguous, and `--gb-dmg` asks for the monochrome console instead of a
+	// CGB.
+	bool    gb = false;
+	bool    gbDmg = false;
 };
 
 extern  CmdLineOptions cmdline;
@@ -63,6 +82,12 @@ extern  CmdLineOptions cmdline;
 /// Print the accepted command line options (the `--help` text) to the console, if there is one.
 /// </summary>
 void EMUPrintUsage();
+
+/// <summary>
+/// Run the integrated GBA emulator (the SDL2 frontend) with the settings from
+/// build/Data/GBASettings.json merged with the command line. Returns the process exit code.
+/// </summary>
+int EMURunGba();
 
 /// <summary>
 /// Run the emulator's startup sequence headlessly and report what failed. Returns 0 when the

@@ -1,6 +1,9 @@
 // Emulator controls
 #include "pch.h"
 
+// The GBA mode of the application (issue #388): its own machine and its own SDL2 frontend.
+#include "gba/gba_sdl.h"
+
 using namespace Debug;
 
 // Emulator state
@@ -49,6 +52,57 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 		{
 			cmdline.selftest = true;
 		}
+		else if (arg == "--gba")
+		{
+			// `--gba [file]`: the GBA emulator takes over. The file may follow as the next
+			// argument or be given later as the bare file argument.
+			cmdline.gba = true;
+
+			if (i + 1 < args.size() && args[i + 1].size() > 1 && args[i + 1][0] != '-')
+			{
+				cmdline.image = Util::StringToWstring(args[++i]);
+			}
+		}
+		else if (arg == "--gba-link")
+		{
+			cmdline.gba = true;
+			cmdline.gbaLink = true;
+		}
+		else if (arg == "--gba-bios")
+		{
+			if (i + 1 < args.size())
+			{
+				cmdline.gba = true;
+				cmdline.gbaBios = Util::StringToWstring(args[++i]);
+			}
+			else
+			{
+				Report(Channel::Norm, "--gba-bios needs a file name\n");
+			}
+		}
+		else if (arg == "--no-gba-bootrom")
+		{
+			cmdline.gba = true;
+			cmdline.gbaNoBootrom = true;
+		}
+		else if (arg == "--gb")
+		{
+			// `--gb [file]`: the Game Boy (DMG/CGB) machine, for a file whose extension does not
+			// say so.
+			cmdline.gba = true;
+			cmdline.gb = true;
+
+			if (i + 1 < args.size() && args[i + 1].size() > 1 && args[i + 1][0] != '-')
+			{
+				cmdline.image = Util::StringToWstring(args[++i]);
+			}
+		}
+		else if (arg == "--gb-dmg")
+		{
+			cmdline.gba = true;
+			cmdline.gb = true;
+			cmdline.gbDmg = true;
+		}
 		else if (arg == "--bench")
 		{
 			if (i + 1 < args.size())
@@ -85,6 +139,64 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 			Report(Channel::Norm, "Unknown command line argument: %s\n", arg.c_str());
 		}
 	}
+
+	// A Game Boy cartridge on the command line selects the portable emulator by itself, exactly
+	// like a disk image selects the GameCube one. The Game Boy Advance and the Game Boy are two
+	// machines of the same module, and the extension says which one runs the file.
+	if (!cmdline.image.empty() && GBA::IsGameBoyImage(Util::WstringToString(cmdline.image)))
+	{
+		cmdline.gba = true;
+
+		if (GBA::IsDmgImage(Util::WstringToString(cmdline.image)))
+		{
+			cmdline.gb = true;
+		}
+	}
+}
+
+/// <summary>
+/// Run the integrated GBA emulator (issue #388) with the SDL2 frontend. The settings come from
+/// build/Data/GBASettings.json, overridden by the command line.
+/// </summary>
+int EMURunGba()
+{
+	GBA::GbaSettings settings;
+	std::string usedPath;
+	std::string error;
+
+	if (!GBA::LoadSettings("", settings, usedPath, &error))
+	{
+		Report(Channel::Norm, "GBA: %s: %s (using the defaults)\n", usedPath.c_str(), error.c_str());
+	}
+
+	if (!cmdline.gbaBios.empty())
+	{
+		settings.biosPath = Util::WstringToString(cmdline.gbaBios);
+		settings.useCustomBootRom = false;
+	}
+
+	if (cmdline.gbaNoBootrom)
+	{
+		settings.useCustomBootRom = false;
+	}
+
+	if (cmdline.gbaLink)
+	{
+		settings.linkEnabled = true;
+	}
+
+	Report(Channel::Norm, "GBA: settings from %s\n", usedPath.c_str());
+
+	std::string rom = Util::WstringToString(cmdline.image);
+
+	// The Game Boy (DMG/CGB) is the other machine of the module and has its own core; a
+	// `.gb`/`.gbc`/`.sgb` cartridge (or `--gb`) selects it.
+	if (cmdline.gb || (!rom.empty() && GBA::IsDmgImage(rom)))
+	{
+		return GBA::RunSdlFrontendGb(rom, settings, cmdline.gbDmg);
+	}
+
+	return GBA::RunSdlFrontend(rom, cmdline.gbaLink, settings);
 }
 
 // The `--help` text. It is printed to the console (when the application has one) and to the report
@@ -110,6 +222,21 @@ void EMUPrintUsage()
 		"                        emulated hardware, ROM and memory card files) without a window and\n"
 		"                        exit with the number of failed steps as the status code.\n"
 		"  -h, --help            Print this text and exit.\n"
+		"\n"
+		"GBA emulator (issue #388):\n"
+		"\n"
+		"  --gba [file]          Run the integrated GBA emulator instead of the GameCube one. With a\n"
+		"                        cartridge the boot ROM animation runs and the cartridge is started;\n"
+		"                        with no file the link driver is started (GBA Link mode). A file\n"
+		"                        whose name ends in .gba/.agb/.gb/.gbc selects this mode by itself.\n"
+		"  --gba-link            Initialize the link port even when a cartridge is loaded.\n"
+		"  --gba-bios <file>     Use a real 16 KByte GBA BIOS image instead of the built-in boot ROM.\n"
+		"  --no-gba-bootrom      Skip the boot ROM and the BIOS: start the cartridge directly.\n"
+		"\n"
+		"Game Boy (DMG/CGB) emulator (the same module and frontend):\n"
+		"\n"
+		"  --gb [file]           Run the Game Boy machine; a .gb/.gbc/.sgb file selects it too.\n"
+		"  --gb-dmg              Emulate the monochrome console instead of a CGB.\n"
 		"\n"
 		"With no option the game selector is shown, and a file is started from there (Enter or a\n"
 		"double click). File -> Reopen (F3) runs the last file again.\n";

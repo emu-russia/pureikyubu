@@ -87,6 +87,38 @@ add_executable (pureikyubu
 	src/xf.cpp
 	src/videosdl.cpp
 
+	# The integrated GBA emulator (issue #388). The core is self contained (see src/gba/Readme.md);
+	# gba_sdl.cpp is the SDL2 frontend the `--gba` mode uses.
+	src/gba/arm7tdmi.cpp
+	src/gba/gba.cpp
+	src/gba/gba_apu.cpp
+	src/gba/gba_armasm.cpp
+	src/gba/gba_bootrom.cpp
+	src/gba/gba_bus.cpp
+	src/gba/gba_cart.cpp
+	src/gba/gba_dma.cpp
+	src/gba/gba_hlebios.cpp
+	src/gba/gba_irq.cpp
+	src/gba/gba_keypad.cpp
+	src/gba/gba_ppu.cpp
+	src/gba/gba_sdl.cpp
+	src/gba/gba_settings.cpp
+	src/gba/gba_sio.cpp
+	src/gba/gba_timers.cpp
+	src/gba/gba_types.cpp
+
+	# The Game Boy (DMG/CGB) machine, the second half of the same module: the GBA can run Game Boy
+	# cartridges only through its compatibility hardware, which this emulator implements as its own
+	# machine (see wiki/gba.md).
+	src/gba/gb.cpp
+	src/gba/gb_asm.cpp
+	src/gba/gb_apu.cpp
+	src/gba/gb_bootrom.cpp
+	src/gba/gb_bus.cpp
+	src/gba/gb_cart.cpp
+	src/gba/gb_cpu.cpp
+	src/gba/gb_ppu.cpp
+
 	thirdparty/imgui/imgui.cpp
 	thirdparty/imgui/imgui_demo.cpp
 	thirdparty/imgui/imgui_draw.cpp

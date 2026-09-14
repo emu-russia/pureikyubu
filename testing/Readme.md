@@ -275,3 +275,68 @@ readable message instead of crashing.
 * **Bump mapping and indirect texturing.** The register file is emulated and dumped, but the
   indirect coordinate arithmetic is not: see `wiki/gfx.md`.
 
+# The GBA emulator tests (issue #388)
+
+The integrated GBA emulator (`src/gba`) is deliberately self contained: it includes nothing from
+the GameCube side of the emulator and no third party library, so its tests do **not** use
+CppUnitTest and do not need a window, OpenGL or ImGui. They are a plain console harness,
+`testing/gba_bench`, that builds the whole core plus the tests into one executable.
+
+The tests are in `testing/gba_bench/test_*.cpp` and follow the same rules as the rest of the
+suite: they drive the real modules through their public API, and the expected values come from the
+hardware specifications written out independently in the test (see `testing/gba_bench/Readme.md`
+for the deviations that are pinned down instead of fixed).
+
+| File | Contents |
+|---|---|
+| `test_cpu.cpp` | The ARM7TDMI: every data processing opcode with the condition and flag rules, the barrel shifter, multiplies, the load/store family, LDM/STM, the branch family and interworking, all 19 Thumb formats, the mode banking, an IRQ round trip and the HALT wake-up |
+| `test_ppu.cpp` | The LCD: text/affine/bitmap backgrounds, sprites, windows, blending, forced blank and the scanline timing with the HBlank/VBlank/VCount interrupts |
+| `test_apu.cpp` | The four legacy channels, the wave RAM, the noise LFSR, the two FIFOs with their DMA requests, the mixer and the sample rate conversion |
+| `test_io.cpp` | The timers (prescaler, cascade, the reload formula), the four DMA channels and their start timings, the serial port in normal/multiplayer mode between two attached machines, the keypad conditions and the interrupt controller |
+| `test_cart.cpp` | The ROM header, the save-type detection, SRAM, the Flash command set, the EEPROM bit protocol, the GPIO/RTC port and the `.sav` round trip |
+| `test_bootrom.cpp` | The ARM emitter's encodings against the ARM Architecture Reference Manual, and the boot ROM: the vector table, the logo animation actually drawing frames, the cartridge handover and the link driver |
+| `test_settings.cpp` | `build/Data/GBASettings.json`: the defaults, the round trip, the shipped file matching the code, the key bindings, and the malformed documents a hostile file may contain |
+| `test_demo.cpp` | A whole cartridge assembled at run time and run on the whole machine (the program's markers, its paint, the mode-3 display and the animation) |
+| `test_bios.cpp` | The official IPL, when the user has one (skipped otherwise); it also proves that a real BIOS boots the cartridge |
+| `test_gb_cpu.cpp`, `test_gb_ppu.cpp`, `test_gb_cart.cpp`, `test_gb_bootrom.cpp` | The Game Boy (DMG/CGB) machine: the LR35902 and its flags, the LCD with the CGB palettes and banks, the MBC1/2/3/5 mappers and the `.sav` round trip, and the free 256-byte boot ROM with its sliding wordmark |
+
+The Game Boy is a separate machine in the same module (see `wiki/gba.md`), so it has its own test
+files and its own harness mode: `gba_test --run <rom.gbc> --gb` runs a Game Boy cartridge, and
+`--gb-dmg` forces the monochrome console. Both machines are built by the same `build.sh` and by the
+same `gba_bench.vcxproj`.
+
+## Building and running
+
+On Linux (or WSL; the harness is what the GBA core was developed against):
+
+```
+testing/gba_bench/check.sh                    # build and run every test
+testing/gba_bench/check.sh Ppu                # only the tests whose name contains "Ppu"
+testing/gba_bench/check.sh --bootrom --frames 300 --png /tmp/gba_shots
+testing/gba_bench/check.sh --run game.gba --frames 600 --bench
+testing/gba_bench/check.sh --run game.gbc --gb --frames 240
+testing/gba_bench/check.sh --dump-bootrom /tmp/gba_bootrom.bin
+```
+
+On Windows the same sources build as the `gba_bench` project of `scripts/VS2026/pureikyubu.sln`
+(a console application; it has no dependency besides the C++ runtime):
+
+```
+cd scripts/VS2026
+MSBuild gba_bench.vcxproj -p:Configuration=Debug -p:Platform=x64
+x64\Debug\gba_bench.exe
+```
+
+## The ROM harness
+
+`gba_bench --run <rom>` boots a cartridge headlessly, prints a hash of every frame (so a rendering
+change is visible without a window), can dump frames as PNG and, with `--bench`, reports how many
+times faster than the console the emulator runs. `--bootrom` runs the emulator's own boot ROM
+alone, `--link-test` plugs two instances into each other through the emulated link cable, and
+`--dump-bootrom` writes the generated boot ROM and its assembly listing out for review.
+
+`gba_sdl.cpp` (the SDL2 frontend of the emulator) is **not** part of the harness: it is the only
+file of the module that needs SDL, and the frontend is exercised by running the emulator itself
+(`pureikyubu --gba`).
+
+

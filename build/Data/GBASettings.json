@@ -1,0 +1,62 @@
+{
+	"info":
+	{
+		"description": "The GBA emulator's configuration. These are the shipped defaults; a user's file is merged over them, so a member that is missing keeps its default."
+	},
+
+	"boot":
+	{
+		"biosPath": "",
+		"useCustomBootRom": true,
+		"skipBootAnimation": false,
+		"hleBios": true
+	},
+
+	"video":
+	{
+		"videoScale": 3,
+		"fullscreen": false,
+		"vsync": true,
+		"integerScale": true,
+		"showFps": true,
+		"frameSkip": false
+	},
+
+	"audio":
+	{
+		"audioEnabled": true,
+		"sampleRate": 32768,
+		"volume": 100
+	},
+
+	"input":
+	{
+		"A": "X",
+		"B": "Z",
+		"SELECT": "Backspace",
+		"START": "Return",
+		"RIGHT": "Right",
+		"LEFT": "Left",
+		"UP": "Up",
+		"DOWN": "Down",
+		"R": "S",
+		"L": "A",
+		"SPEED": "Space"
+	},
+
+	"link":
+	{
+		"linkEnabled": false,
+		"linkServer": false,
+		"linkAddress": "127.0.0.1:33333",
+		"linkPlayers": 2
+	},
+
+	"emulation":
+	{
+		"rtcEnabled": true,
+		"bootWithNoCartridge": false,
+		"saveDirectory": "",
+		"logLevel": 1
+	}
+}

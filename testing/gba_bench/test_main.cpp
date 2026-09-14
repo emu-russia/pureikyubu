@@ -1,0 +1,529 @@
+// The GBA core test runner and the ROM harness.
+//
+// Two jobs in one binary:
+//
+//   * `gba_test [suite[.name]]` runs the registered unit tests (the same sources the emulator is
+//     built from, see testing/Readme.md);
+//   * `gba_test --run <rom> [--frames N] [--png <dir>] [--bench] ...` is the harness that made
+//     the emulator debuggable while it was written: it boots a ROM headlessly, can dump frames as
+//     PNG, prints a hash of every frame so a rendering change is visible without a window, and
+//     measures the emulation speed. `--bootrom` runs the custom boot ROM alone, `--link-test`
+//     plugs two instances into each other, and `--dump-bootrom` writes the generated boot ROM and
+//     its listing out for review.
+
+#include "gba_test.h"
+#include "png.h"
+#include "demo_rom.h"
+
+#include "gba.h"
+#include "gba_bootrom.h"
+#include "gb.h"
+
+#include <chrono>
+#include <cstdlib>
+#include <dirent.h>
+#include <sys/stat.h>
+
+using namespace GBA;
+
+namespace GbaTest
+{
+	std::vector<TestCase>& Registry()
+	{
+		static std::vector<TestCase> registry;
+		return registry;
+	}
+
+	int& FailureCount()
+	{
+		static int failures = 0;
+		return failures;
+	}
+
+	static int notes = 0;
+
+	void Note(const std::string& message)
+	{
+		printf("      %s\n", message.c_str());
+		notes++;
+	}
+
+	void Fail(const char* file, int line, const std::string& message)
+	{
+		throw Failure{ std::string(file) + ":" + std::to_string(line) + ": " + message };
+	}
+}
+
+namespace
+{
+	// ---------------------------------------------------------------------------------------
+	// Small helpers
+	// ---------------------------------------------------------------------------------------
+
+	std::string BaseName(const std::string& path)
+	{
+		size_t slash = path.find_last_of("/\\");
+		return (slash == std::string::npos) ? path : path.substr(slash + 1);
+	}
+
+	uint32_t FrameHash(const uint32_t* pixels, int count)
+	{
+		uint32_t hash = 2166136261u;
+		for (int i = 0; i < count; i++)
+		{
+			uint32_t p = pixels[i];
+			for (int b = 0; b < 4; b++)
+			{
+				hash ^= (p >> (b * 8)) & 0xFF;
+				hash *= 16777619u;
+			}
+		}
+		return hash;
+	}
+
+	bool MakeDirectory(const std::string& path)
+	{
+		return mkdir(path.c_str(), 0755) == 0;
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// The unit test runner
+	// ---------------------------------------------------------------------------------------
+
+	int RunTests(const std::string& filter)
+	{
+		auto& registry = GbaTest::Registry();
+		int passed = 0;
+		int failed = 0;
+		int skipped = 0;
+
+		std::string currentSuite;
+
+		for (const auto& test : registry)
+		{
+			std::string full = std::string(test.suite) + "." + test.name;
+
+			if (!filter.empty() && full.find(filter) == std::string::npos)
+			{
+				skipped++;
+				continue;
+			}
+
+			if (currentSuite != test.suite)
+			{
+				currentSuite = test.suite;
+				printf("\n[%s]\n", currentSuite.c_str());
+			}
+
+			GbaTest::FailureCount() = 0;
+			int before = GbaTest::FailureCount();
+
+			try
+			{
+				test.fn();
+				(void)before;
+				printf("  ok   %s\n", test.name);
+				passed++;
+			}
+			catch (const GbaTest::Failure& failure)
+			{
+				printf("  FAIL %s\n       %s\n", test.name, failure.message.c_str());
+				failed++;
+			}
+			catch (const std::exception& e)
+			{
+				printf("  FAIL %s\n       unexpected exception: %s\n", test.name, e.what());
+				failed++;
+			}
+			catch (...)
+			{
+				printf("  FAIL %s\n       unexpected exception\n", test.name);
+				failed++;
+			}
+		}
+
+		printf("\n%i passed, %i failed", passed, failed);
+		if (skipped != 0)
+			printf(", %i filtered out", skipped);
+		printf("\n");
+
+		return failed;
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// The ROM harness
+	// ---------------------------------------------------------------------------------------
+
+	struct HarnessOptions
+	{
+		std::string rom;
+		std::string bios;
+		std::string pngDir;
+		std::string dumpBootRom;
+		int frames = 60;
+		int pngEvery = 0;
+		bool bootRomOnly = false;
+		bool demo = false;
+		bool noCustomBoot = false;
+		bool bench = false;
+		bool linkTest = false;
+		bool quiet = false;
+		bool gb = false;			// run the Game Boy machine instead of the GBA
+		bool gbDmg = false;			// force the monochrome console
+		u16 keys = 0;
+	};
+
+	int RunHarness(const HarnessOptions& options)
+	{
+		GbaSystem system;
+		GbaSettings settings = GbaSettings::Defaults();
+		settings.logLevel = options.quiet ? 0 : 3;
+		if (options.noCustomBoot)
+			settings.useCustomBootRom = false;
+		system.ApplySettings(settings);
+
+		if (!options.bios.empty())
+		{
+			std::string error;
+			if (!system.LoadBiosFile(options.bios, error))
+			{
+				printf("harness: cannot load the BIOS: %s\n", error.c_str());
+				return 2;
+			}
+		}
+
+		if (!options.rom.empty())
+		{
+			std::string error;
+			if (!system.LoadRomFile(options.rom, error))
+			{
+				printf("harness: cannot load the ROM: %s\n", error.c_str());
+				return 2;
+			}
+		}
+		else if (options.demo)
+		{
+			// The demo cartridge is assembled here, in memory, by the same emitter the boot ROM
+			// uses: nothing has to be shipped with the repository for the harness to have
+			// something to run. The demo synchronizes to the display itself, so the boot
+			// animation is skipped.
+			GbaSettings adjusted = system.Settings();
+			adjusted.useCustomBootRom = false;
+			system.ApplySettings(adjusted);
+
+			std::string error;
+			if (!system.LoadRomImage(GbaTest::BuildDemoRom(), error))
+			{
+				printf("harness: cannot load the demo cartridge: %s\n", error.c_str());
+				return 2;
+			}
+		}
+
+		system.Reset();
+		system.SetPressedKeys(options.keys);
+
+		printf("harness: %s\n", system.Describe().c_str());
+
+		if (!options.pngDir.empty())
+			MakeDirectory(options.pngDir);
+
+		auto start = std::chrono::steady_clock::now();
+		u64 startCycles = system.Cycles();
+
+		for (int frame = 0; frame < options.frames; frame++)
+		{
+			system.RunFrame();
+
+			uint32_t hash = FrameHash(system.FrameBuffer(), ScreenWidth * ScreenHeight);
+
+			if (!options.quiet && (options.pngEvery == 0 || (frame % options.pngEvery) == 0))
+			{
+				printf("  frame %5i  hash %08X%s\n", frame, hash,
+					system.LinkMode() ? "  (link mode)" : "");
+			}
+
+			if (!options.pngDir.empty() && options.pngEvery > 0 && (frame % options.pngEvery) == 0)
+			{
+				char name[256];
+				snprintf(name, sizeof(name), "%s/%s_frame%04i.png", options.pngDir.c_str(),
+					BaseName(options.rom.empty() ? (options.demo ? "demo.gba" : "bootrom") : options.rom).c_str(), frame);
+				if (!GbaTest::WritePng(name, system.FrameBuffer(), ScreenWidth, ScreenHeight, 2))
+					printf("  (cannot write %s)\n", name);
+			}
+		}
+
+		auto end = std::chrono::steady_clock::now();
+		double seconds = std::chrono::duration<double>(end - start).count();
+		u64 cycles = system.Cycles() - startCycles;
+
+		if (options.bench && seconds > 0)
+		{
+			printf("harness: %i frames in %.2f s = %.1f fps, %.1f MHz emulated (%.2fx real time)\n",
+				options.frames, seconds, options.frames / seconds,
+				(cycles / seconds) / 1e6, (cycles / seconds) / (double)CyclesPerSecond);
+		}
+
+		std::string error;
+		system.SaveBattery(&error);
+
+		return 0;
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// The Game Boy harness (the same shape as the GBA one, for the other machine)
+	// ---------------------------------------------------------------------------------------
+
+	int RunGbHarness(const HarnessOptions& options)
+	{
+		GbSystem system;
+
+		GbSettings settings = GbSettings::Defaults();
+		settings.cgb = !options.gbDmg;
+		settings.useBootRom = !options.noCustomBoot;
+		settings.logLevel = options.quiet ? 0 : 4;
+		system.ApplySettings(settings);
+
+		std::string error;
+
+		if (!options.rom.empty() && !system.LoadRomFile(options.rom, error))
+		{
+			printf("gb harness: cannot load the ROM: %s\n", error.c_str());
+			return 2;
+		}
+
+		system.Reset();
+
+		printf("gb harness: %s\n", system.Describe().c_str());
+
+		if (!options.pngDir.empty())
+			MakeDirectory(options.pngDir);
+
+		auto start = std::chrono::steady_clock::now();
+		u64 startCycles = system.Cycles();
+
+		for (int frame = 0; frame < options.frames; frame++)
+		{
+			system.RunFrame();
+
+			uint32_t hash = FrameHash(system.FrameBuffer(), GbScreenWidth * GbScreenHeight);
+
+			if (!options.quiet && (options.pngEvery == 0 || (frame % options.pngEvery) == 0))
+			{
+				printf("  frame %5i  hash %08X\n", frame, hash);
+			}
+
+			if (!options.pngDir.empty() && options.pngEvery > 0 && (frame % options.pngEvery) == 0)
+			{
+				char name[256];
+				snprintf(name, sizeof(name), "%s/%s_frame%04i.png", options.pngDir.c_str(),
+					BaseName(options.rom.empty() ? "gb-bootrom" : options.rom).c_str(), frame);
+
+				if (!GbaTest::WritePng(name, system.FrameBuffer(), GbScreenWidth, GbScreenHeight, 3))
+					printf("  (cannot write %s)\n", name);
+			}
+		}
+
+		auto end = std::chrono::steady_clock::now();
+		double seconds = std::chrono::duration<double>(end - start).count();
+		u64 cycles = system.Cycles() - startCycles;
+
+		if (options.bench && seconds > 0)
+		{
+			printf("gb harness: %i frames in %.2f s = %.1f fps, %.2f MHz emulated (%.2fx real time)\n",
+				options.frames, seconds, options.frames / seconds,
+				(cycles / seconds) / 1e6, (cycles / seconds) / 4194304.0);
+		}
+
+		std::string saveError;
+		system.SaveBattery(&saveError);
+
+		return 0;
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// The link harness: two machines, one cable.
+	// ---------------------------------------------------------------------------------------
+
+	int RunLinkTest()
+	{
+		GbaSystem master, slave;
+
+		GbaSettings settings = GbaSettings::Defaults();
+		settings.logLevel = 3;
+
+		master.ApplySettings(settings);
+		slave.ApplySettings(settings);
+
+		master.AttachLink(&slave);
+		master.Reset();
+		slave.Reset();
+
+		printf("link: %s\n", master.Describe().c_str());
+		printf("link: %s\n", slave.Describe().c_str());
+
+		for (int frame = 0; frame < 10; frame++)
+		{
+			master.RunFrame();
+			slave.RunFrame();
+		}
+
+		printf("link: master sent %04X, received %04X\n",
+			master.Link().LastSent(), master.Link().LastReceived());
+		printf("link: slave  sent %04X, received %04X\n",
+			slave.Link().LastSent(), slave.Link().LastReceived());
+
+		return 0;
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// The boot ROM dump
+	// ---------------------------------------------------------------------------------------
+
+	int DumpBootRom(const std::string& path)
+	{
+		const std::vector<u8>& image = BootRom::GbaImage();
+
+		FILE* f = fopen(path.c_str(), "wb");
+		if (f == nullptr)
+		{
+			printf("cannot write %s\n", path.c_str());
+			return 2;
+		}
+		fwrite(image.data(), 1, image.size(), f);
+		fclose(f);
+
+		std::string listingPath = path + ".txt";
+		FILE* l = fopen(listingPath.c_str(), "w");
+		if (l != nullptr)
+		{
+			std::string listing = BootRom::GbaListing();
+			fwrite(listing.data(), 1, listing.size(), l);
+			fclose(l);
+		}
+
+		printf("boot rom: %zu bytes -> %s (%s)\n", image.size(), path.c_str(), listingPath.c_str());
+		return 0;
+	}
+
+	void PrintUsage()
+	{
+		printf(
+			"gba_test - the GBA core test runner and ROM harness\n"
+			"\n"
+			"  gba_test [suite[.name]]            run the unit tests (a substring filter)\n"
+			"  gba_test --list                    list the registered tests\n"
+			"  gba_test --run <rom> [options]     run a ROM headlessly\n"
+			"  gba_test --bootrom [options]       run the custom boot ROM alone\n"
+			"  gba_test --demo [options]          run the demo cartridge the harness assembles\n"
+			"  gba_test --dump-bootrom <file>     write the generated boot ROM and its listing\n"
+			"  gba_test --link-test               plug two instances into each other\n"
+			"\n"
+			"options for --run/--bootrom/--demo:\n"
+			"  --frames N        how many frames to run (default 60)\n"
+			"  --png <dir>       dump frames as PNG into <dir>\n"
+			"  --png-every N     dump every N-th frame (default: only with --png, every 10th)\n"
+			"  --keys <mask>     hold the keys named by the bits (see gba_keypad.h)\n"
+			"  --bios <file>     use a real BIOS image instead of the built-in one\n"
+			"  --no-custom-boot  do not run the custom boot ROM\n"
+			"  --gb              run the Game Boy machine instead of the GBA (with --gb-dmg for the\n"
+			"                    monochrome console)\n"
+			"  --bench           print the emulation speed\n"
+			"  --quiet           only print the final summary\n");
+	}
+}
+
+int main(int argc, char** argv)
+{
+	std::vector<std::string> args;
+	for (int i = 1; i < argc; i++)
+		args.push_back(argv[i]);
+
+	if (args.empty())
+		return RunTests("");
+
+	if (args[0] == "--help" || args[0] == "-h")
+	{
+		PrintUsage();
+		return 0;
+	}
+
+	if (args[0] == "--list")
+	{
+		for (const auto& test : GbaTest::Registry())
+			printf("%s.%s\n", test.suite, test.name);
+		return 0;
+	}
+
+	if (args[0] == "--dump-bootrom")
+	{
+		if (args.size() < 2)
+		{
+			printf("--dump-bootrom needs a file name\n");
+			return 2;
+		}
+		return DumpBootRom(args[1]);
+	}
+
+	if (args[0] == "--link-test")
+		return RunLinkTest();
+
+	if (args[0] == "--run" || args[0] == "--bootrom" || args[0] == "--demo")
+	{
+		HarnessOptions options;
+		options.bootRomOnly = (args[0] == "--bootrom");
+		options.demo = (args[0] == "--demo");
+
+		for (size_t i = 1; i < args.size(); i++)
+		{
+			const std::string& arg = args[i];
+
+			auto next = [&](const char* what) -> std::string
+			{
+				if (i + 1 >= args.size())
+				{
+					printf("%s needs a value\n", what);
+					exit(2);
+				}
+				return args[++i];
+			};
+
+			if (arg == "--frames") options.frames = atoi(next("--frames").c_str());
+			else if (arg == "--png") options.pngDir = next("--png");
+			else if (arg == "--png-every") options.pngEvery = atoi(next("--png-every").c_str());
+			else if (arg == "--keys") options.keys = (u16)strtoul(next("--keys").c_str(), nullptr, 0);
+			else if (arg == "--bios") options.bios = next("--bios");
+			else if (arg == "--demo") options.demo = true;
+			else if (arg == "--gb") options.gb = true;
+			else if (arg == "--gb-dmg") { options.gb = true; options.gbDmg = true; }
+			else if (arg == "--no-custom-boot") options.noCustomBoot = true;
+			else if (arg == "--bench") options.bench = true;
+			else if (arg == "--quiet") options.quiet = true;
+			else if (arg[0] != '-') options.rom = arg;
+			else
+			{
+				printf("unknown option %s\n", arg.c_str());
+				return 2;
+			}
+		}
+
+		if (options.pngDir.empty())
+			options.pngEvery = 0;
+		else if (options.pngEvery == 0)
+			options.pngEvery = 10;
+
+		if (options.gb)
+		{
+			return RunGbHarness(options);
+		}
+
+		return RunHarness(options);
+	}
+
+	if (args[0][0] == '-')
+	{
+		PrintUsage();
+		return 2;
+	}
+
+	return RunTests(args[0]);
+}

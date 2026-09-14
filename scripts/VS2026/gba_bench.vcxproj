@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  gba_bench: the standalone harness of the integrated GBA emulator (issue #388).
+
+  It builds the GBA core (src/gba, without the SDL frontend) together with the test runner and the
+  ROM harness in testing/gba_bench, exactly like testing/gba_bench/build.sh does on Linux. The
+  core has no dependency on SDL, OpenGL, ImGui or the GameCube side of the emulator, so this
+  project is a plain console application and needs no third party libraries at all.
+
+  Run it from the scripts/VS2026 directory (or from Visual Studio's Test/Debug):
+
+    x64\Debug\gba_bench.exe                      the unit tests
+    x64\Debug\gba_bench.exe --bootrom --frames 300 --png shots
+    x64\Debug\gba_bench.exe --run game.gba --frames 600 --bench
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{6C4A2F80-9C8E-4B3F-9E7A-2C51F0B41D02}</ProjectGuid>
+    <RootNamespace>gba_bench</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\gba_bench\</IntDir>
+    <TargetName>gba_bench</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>..\..\src\gba;..\..\testing\gba_bench;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\gba\arm7tdmi.cpp" />
+    <ClCompile Include="..\..\src\gba\gba.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_apu.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_armasm.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_bootrom.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_bus.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_cart.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_dma.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_hlebios.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_irq.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_keypad.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_ppu.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_settings.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_sio.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_timers.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_types.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_apu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_bootrom.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_cart.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_cpu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_demo.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_io.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_main.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_ppu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_settings.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\gba\arm7tdmi.h" />
+    <ClInclude Include="..\..\src\gba\gba.h" />
+    <ClInclude Include="..\..\src\gba\gba_apu.h" />
+    <ClInclude Include="..\..\src\gba\gba_armasm.h" />
+    <ClInclude Include="..\..\src\gba\gba_bootrom.h" />
+    <ClInclude Include="..\..\src\gba\gba_bus.h" />
+    <ClInclude Include="..\..\src\gba\gba_cart.h" />
+    <ClInclude Include="..\..\src\gba\gba_dma.h" />
+    <ClInclude Include="..\..\src\gba\gba_hlebios.h" />
+    <ClInclude Include="..\..\src\gba\gba_irq.h" />
+    <ClInclude Include="..\..\src\gba\gba_keypad.h" />
+    <ClInclude Include="..\..\src\gba\gba_ppu.h" />
+    <ClInclude Include="..\..\src\gba\gba_settings.h" />
+    <ClInclude Include="..\..\src\gba\gba_sio.h" />
+    <ClInclude Include="..\..\src\gba\gba_timers.h" />
+    <ClInclude Include="..\..\src\gba\gba_types.h" />
+    <ClInclude Include="..\..\testing\gba_bench\demo_rom.h" />
+    <ClInclude Include="..\..\testing\gba_bench\gba_test.h" />
+    <ClInclude Include="..\..\testing\gba_bench\png.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+    <ClCompile Include="..\..\src\gba\gb.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_apu.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_asm.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_bootrom.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_bus.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_cart.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_cpu.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_ppu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_bios.cpp" />
+    <ClInclude Include="..\..\src\gba\gb.h" />
+    <ClInclude Include="..\..\src\gba\gb_apu.h" />
+    <ClInclude Include="..\..\src\gba\gb_asm.h" />
+    <ClInclude Include="..\..\src\gba\gb_bootrom.h" />
+    <ClInclude Include="..\..\src\gba\gb_bus.h" />
+    <ClInclude Include="..\..\src\gba\gb_cart.h" />
+    <ClInclude Include="..\..\src\gba\gb_cpu.h" />
+    <ClInclude Include="..\..\src\gba\gb_ppu.h" />
+    <ClInclude Include="..\..\src\gba\gba_sdl.h" />
+    <ClCompile Include="..\..\testing\gba_bench\test_gb_bootrom.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_gb_cart.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_gb_cpu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_gb_ppu.cpp" />
+</Project>
