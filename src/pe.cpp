@@ -334,11 +334,23 @@ namespace GFX
 					clear.w = (int)pe.copy_src_size.x + 1;
 					clear.h = (int)pe.copy_src_size.y + 1;
 
-					// A display copy's clear waits for the frame begin; a texture copy's runs below.
-					if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY &&
-						pending_clear_count < MaxPendingCopyClears)
+					// The two kinds of copy clear differently. A texture copy prepares a render
+					// target the title is about to draw into: its clear runs below, over the
+					// rectangle it read, before those draws - a title that renders its frame in
+					// several passes through the copy engine loses the passes drawn before it if
+					// that clear wipes the whole buffer. A display copy presents the frame, and this
+					// backend shows the EFB where a console shows the XFB, so its clear covers the
+					// whole colour buffer and waits for the frame begin: running it here would wipe
+					// the picture that is about to be shown, and leaving any part of the buffer
+					// alone kept the previous frame in the lower half of the bootrom's splash.
+					if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY)
 					{
-						pending_clears[pending_clear_count++] = clear;
+						clear.full = true;
+
+						if (pending_clear_count < MaxPendingCopyClears)
+						{
+							pending_clears[pending_clear_count++] = clear;
+						}
 					}
 				}
 
@@ -761,10 +773,11 @@ namespace GFX
 	{
 		// A texture copy's clear covers the rectangle the copy reads (gfx-pe.md 5.1): the copy engine
 		// turns every quad it reads into the clear colour and leaves the rest of the EFB as it was.
-		// The rectangle comes from the copy registers, so it is in screen coordinates.
+		// A display copy's clear covers the whole buffer instead, because this backend shows the EFB
+		// where a console scans out the XFB the copy wrote (see CopyClearState::full).
 		int x = clear.x, y = clear.y, w = clear.w, h = clear.h;
 
-		if (w <= 0 || h <= 0)
+		if (clear.full || w <= 0 || h <= 0)
 		{
 			x = 0; y = 0; w = (int)gfx->scr_w; h = (int)gfx->scr_h;
 		}

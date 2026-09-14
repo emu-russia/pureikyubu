@@ -484,6 +484,12 @@ namespace GFX
 			//! The rectangle the copy reads. The clear engine turns the quads it reads into the
 			//! clear colour and leaves the rest of the EFB alone (gfx-pe.md 5.1).
 			int x = 0, y = 0, w = 0, h = 0;
+
+			//! A display copy hands the frame over to the video interface, and this backend shows the
+			//! EFB where a console shows the XFB, so its clear has to cover the whole colour buffer:
+			//! whatever the copy does not read is still on screen, and leaving it there kept the
+			//! previous frame in the lower half of the bootrom's splash.
+			bool full = false;
 		};
 
 		//! The display copies of the frame that is being drawn each clear their own rectangle, and a
