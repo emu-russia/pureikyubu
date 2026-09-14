@@ -414,6 +414,10 @@
     <ProjectReference Include="SDL.vcxproj">
       <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
     </ProjectReference>
+    <!-- The integrated GBA/Game Boy emulator (issue #388); see src/gba/Readme.md. -->
+    <ProjectReference Include="GBA.vcxproj">
+      <Project>{2f7c4a61-8d3b-4e52-9c74-6a5e1b0d93c8}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — the integrated GBA emulator</title>
+<meta name="description" content="The Game Boy Advance emulator built into pureikyubu: its own boot ROM with the pureikyubu logo animation, the link port, and the SDL2 frontend. Issue #388.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="gba.html" aria-current="page">GBA</a>
+      <a href="release_notes_1.8.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="gba.html" class="active" hreflang="en">EN</a>
+      <a href="gba_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap">
+      <img src="imgstore/gba_icon.png" alt="Game Boy Advance" style="width:76px;height:76px;flex:0 0 auto">
+      <h1 style="margin:0">The integrated Game Boy Advance emulator</h1>
+    </div>
+    <p class="lead">
+      pureikyubu now contains a second machine: a Game Boy Advance written from the public hardware
+      specifications (the ARM Architecture Reference Manual for the ARM7TDMI, GBATEK for the GBA peripherals, the Pan Docs
+      for the Game Boy). It is not a port of anything — it is a separate core in
+      <code>src/gba</code> with its own boot ROM, its own test harness and its own SDL2 frontend,
+      built for the two jobs the issue asked for: a <strong>GBA Link</strong> peer and a
+      <strong>Game Boy Player</strong> stand-in.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/emu-russia/pureikyubu/issues/388">Issue #388</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gba.md">Wiki: GBA</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/src/gba/Readme.md">Core notes</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>The boot ROM draws the pureikyubu logo</h2>
+      <p class="sub" style="max-width:none">
+        The official IPL is copyrighted and is not shipped. The emulator builds a free replacement
+        from source instead — the boot animation is emulated ARM code, assembled at run time by the
+        small emitter in <code>src/gba/gba_armasm.cpp</code>. A rotating wireframe hypercube
+        collapses into the flat pureikyubu cube mark while the wordmark scrolls in underneath, and
+        the boot ROM then hands the machine over to the cartridge exactly the way the real BIOS
+        does.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <img src="imgstore/gba_bootrom_hypercube.png" alt="The rotating hypercube of the boot animation" style="width:100%;image-rendering:pixelated">
+          <p>1. The hypercube turns. Every frame is painted by the boot ROM's own rasterizer.</p>
+        </div>
+        <div class="card">
+          <img src="imgstore/gba_bootrom_morph.png" alt="The hypercube collapsing into the cube mark" style="width:100%;image-rendering:pixelated">
+          <p>2. The projection collapses and the wireframe settles into the cube mark.</p>
+        </div>
+        <div class="card">
+          <img src="imgstore/gba_bootrom_logo.png" alt="The final boot screen: the cube mark and the pureikyubu wordmark" style="width:100%;image-rendering:pixelated">
+          <p>3. The final frame: the cube mark with the wordmark, then the cartridge starts.</p>
+        </div>
+      </div>
+
+      <p class="sub" style="max-width:none">
+        The image can be dumped for review, together with its assembly listing:
+        <code>gba_bench --dump-bootrom bootrom.bin</code>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Running it</h2>
+      <p class="sub" style="max-width:none">
+        The GBA is a mode of the same executable. A cartridge selects it by its extension, and with
+        no cartridge at all the boot ROM starts its link driver — which is the state the "GBA Link"
+        mode needs.
+      </p>
+      <table>
+        <tr><th>Command</th><th>What it does</th></tr>
+        <tr><td><code>pureikyubu --gba game.gba</code></td><td>Run a cartridge: boot animation first, then the game.</td></tr>
+        <tr><td><code>pureikyubu --gba</code></td><td>No cartridge: the boot ROM's SIO link driver takes over.</td></tr>
+        <tr><td><code>pureikyubu game.gba</code></td><td>The same as <code>--gba</code>; the extension decides.</td></tr>
+        <tr><td><code>pureikyubu --gba --gba-bios bios.bin</code></td><td>Use a real 16 KByte BIOS image instead of the boot ROM.</td></tr>
+        <tr><td><code>pureikyubu --gba --no-gba-bootrom</code></td><td>Skip the BIOS entirely and start the cartridge directly.</td></tr>
+        <tr><td><code>pureikyubu --gba-link</code></td><td>Initialize the link port even with a cartridge loaded.</td></tr>
+      </table>
+
+      <p class="sub" style="max-width:none">
+        The window, the sound and the input come from SDL2. The keyboard and game controller
+        bindings, the scale, the sample rate and the link options live in
+        <code>build/Data/GBASettings.json</code>; a malformed file is rejected with a message and
+        the built-in defaults are used.
+      </p>
+    </section>
+
+    <section>
+      <h2>The harness runs a cartridge it assembles itself</h2>
+      <p class="sub" style="max-width:none">
+        The GBA core has no dependency on SDL, OpenGL or ImGui, so it has its own harness
+        (<code>testing/gba_bench</code>): unit tests, a headless ROM runner, a frame-hash log, PNG
+        dumps, a speed measurement and a link test that plugs two instances into each other. The
+        demo cartridge above is assembled at run time by the same emitter the boot ROM uses — a
+        real ARM program, in a real cartridge image with a real header — so the whole machine (CPU,
+        cartridge, LCD, timers, VCOUNT synchronisation) is exercised by a single command.
+      </p>
+      <p><img src="imgstore/gba_demo.png" alt="The demo cartridge rendering its animation" style="width:100%;max-width:480px;image-rendering:pixelated"></p>
+      <pre><code>testing/gba_bench/check.sh --demo --frames 120 --png /tmp/demo
+testing/gba_bench/check.sh --bootrom --frames 300 --png /tmp/shots
+testing/gba_bench/check.sh --run game.gba --frames 600 --bench</code></pre>
+    </section>
+
+    <section>
+      <h2>The public test ROMs</h2>
+      <p class="sub" style="max-width:none">
+        <code>jsmolka/gba-tests</code> is a suite of MIT-licensed GBA test ROMs. They are not part
+        of the repository (they are somebody else's build output); a small script fetches them and
+        the harness runs them like any other cartridge. They are a real end-to-end check, because
+        they report their results on screen: <strong>the memory, ARM and Thumb suites all report
+        "All tests passed"</strong>, and they are what found the VRAM mirroring, the byte-store
+        rules of the video memory and the register-shift-by-zero carry rule.
+      </p>
+      <p><img src="imgstore/gba_memory_tests.png" alt="The memory test ROM reporting that all its tests passed" style="width:100%;max-width:480px;image-rendering:pixelated"></p>
+      <pre><code>testing/gba_bench/get_test_roms.sh
+testing/gba_bench/check.sh --run testing/gba_bench/roms/memory.gba --frames 200
+testing/gba_bench/check.sh --run testing/gba_bench/roms/arm.gba --frames 200</code></pre>
+    </section>
+
+    <section>
+      <h2>The Game Boy mode</h2>
+      <p class="sub" style="max-width:none">
+        The GBA can run Game Boy cartridges only because the console carries a second, older
+        machine inside it. That machine is implemented as its own core as well
+        (<code>src/gba/gb_*.cpp</code>): the LR35902 CPU, the DMG/CGB LCD with the CGB palettes and
+        VRAM banks, the four sound channels, and the MBC1/2/3/5 mappers with battery saves. It has
+        its own free 256-byte boot ROM, whose boot animation is the "pureikyubu" wordmark sliding
+        into the middle of the screen.
+      </p>
+      <p><img src="imgstore/gba_gb_bootrom.png" alt="The Game Boy boot ROM's sliding wordmark" style="width:100%;max-width:320px;image-rendering:pixelated"></p>
+    </section>
+
+    <section>
+      <h2>What is implemented, and what is not</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Implemented</h3>
+          <p>
+            The ARM7TDMI (ARM and Thumb, all seven modes, the exceptions, HALT), the memory map with
+            the open bus and the WAITCNT waitstates, the LCD (tile modes 0-2, bitmap modes 3-5,
+            sprites, windows, mosaic, blending, forced blank), the four timers, the four DMA
+            channels including the sound-FIFO and video-capture timings, the keypad, the interrupt
+            controller, the sound (the four legacy channels and the two direct-sound FIFOs), the
+            serial port in normal/multiplayer/UART mode with an emulated link cable, the cartridge
+            (ROM-only plus SRAM, Flash and EEPROM saves, the GPIO/RTC port), the BIOS calls in the
+            host, and the emulator's own boot ROM with its SIO link driver.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Not implemented (yet)</h3>
+          <p>
+            The JOY bus (a GameCube controller on the link port) and the Game Boy Player's own boot
+            protocol; the BIOS sound driver and the Huffman decompressor; save states and rewind;
+            the EEPROM's "last byte is the AND of the old and the new value" quirk. The LCD composes
+            a scanline when its HBlank starts rather than dot by dot, and the internal RAM's own
+            access times are not modelled. The full list, including every deliberate deviation the
+            tests pin down, is in
+            <a href="https://github.com/emu-russia/pureikyubu/blob/master/testing/gba_bench/Readme.md">testing/gba_bench/Readme.md</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Documentation</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Wiki: GBA</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gba.md">How the machine is put together</a>:
+             the boot ROM, the link port, the settings, the tests and the deviations.</p>
+        </div>
+        <div class="card">
+          <h3>The core's own notes</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/src/gba/Readme.md">src/gba/Readme.md</a>:
+             the file layout, the specifications each file is written from, and how a frame runs.</p>
+        </div>
+        <div class="card">
+          <h3>The test harness</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/testing/gba_bench/Readme.md">testing/gba_bench</a>:
+             what the tests cover and which hardware behaviours are deliberately simplified.</p>
+        </div>
+        <div class="card">
+          <h3>Credits</h3>
+          <p>The purple Game Boy Advance in the page icon is
+             <a href="https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Advance-Purple-FL.png">Evan-Amos'
+             photograph</a> (public domain, via Wikimedia Commons), cropped and keyed by
+             <code>src/res/make_gba_icon.py</code>; the icon itself is <code>src/res/gba_icon.png</code>.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Game Boy, Game Boy Color and Game Boy Advance are trademarks of Nintendo; this emulator is not affiliated with Nintendo. No BIOS image and no game is distributed with it.</div>
+    <div><a href="security.html">Security</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

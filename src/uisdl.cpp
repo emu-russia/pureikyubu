@@ -2577,6 +2577,14 @@ int WINAPI WinMain(
 		return EMUSelfTest();
 	}
 
+	// The GBA emulator is a separate machine inside the same executable (issue #388): when the
+	// command line asks for it - `--gba`, or a file with a Game Boy extension - the GBA frontend
+	// takes over instead of the GameCube UI.
+	if (cmdline.gba)
+	{
+		return EMURunGba();
+	}
+
 	return ui_main();
 }
 
@@ -2595,6 +2603,11 @@ int main(int argc, char** argv)
 	if (cmdline.selftest)
 	{
 		return EMUSelfTest();
+	}
+
+	if (cmdline.gba)
+	{
+		return EMURunGba();
 	}
 
 	return ui_main();

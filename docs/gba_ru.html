@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — встроенный эмулятор GBA</title>
+<meta name="description" content="Встроенный в pureikyubu эмулятор Game Boy Advance: собственный бутром с анимацией логотипа pureikyubu, линк-порт и фронтенд на SDL2. Задача #388.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index_ru.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index_ru.html">Главная</a>
+      <a href="digest_ru.html">Дайджест</a>
+      <a href="gba_ru.html" aria-current="page">GBA</a>
+      <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Язык">
+      <a href="gba.html" hreflang="en">EN</a>
+      <a href="gba_ru.html" class="active" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Светлая</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap">
+      <img src="imgstore/gba_icon.png" alt="Game Boy Advance" style="width:76px;height:76px;flex:0 0 auto">
+      <h1 style="margin:0">Встроенный эмулятор Game Boy Advance</h1>
+    </div>
+    <p class="lead">
+      В pureikyubu появилась вторая машина: Game Boy Advance, написанный по публичным
+      спецификациям на железо (ARM Architecture Reference Manual для ARM7TDMI, GBATEK для периферии GBA, Pan Docs для Game
+      Boy). Это не порт чужого кода: отдельное ядро в <code>src/gba</code> со своим бутромом,
+      своим тестовым харнессом и своим фронтендом на SDL2 — под те две задачи, о которых говорит
+      задача: быть <strong>GBA Link</strong>-партнёром и заменой <strong>Game Boy Player</strong>.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/emu-russia/pureikyubu/issues/388">Задача #388</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gba.md">Wiki: GBA</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/src/gba/Readme.md">Заметки по ядру</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>Бутром рисует логотип pureikyubu</h2>
+      <p class="sub" style="max-width:none">
+        Официальный IPL защищён авторским правом и в репозитории не распространяется. Вместо него
+        эмулятор собирает свободную замену прямо из исходников: анимация бутрома — это
+        эмулируемый ARM-код, который ассемблируется во время работы маленьким эмиттером из
+        <code>src/gba/gba_armasm.cpp</code>. Вращающийся каркасный гиперкуб складывается в плоский
+        куб-логотип pureikyubu, снизу выезжает надпись, после чего бутром передаёт управление
+        картриджу так же, как это делает настоящий BIOS.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <img src="imgstore/gba_bootrom_hypercube.png" alt="Вращающийся гиперкуб в анимации бутрома" style="width:100%;image-rendering:pixelated">
+          <p>1. Гиперкуб вращается. Каждый кадр рисует собственный растеризатор бутрома.</p>
+        </div>
+        <div class="card">
+          <img src="imgstore/gba_bootrom_morph.png" alt="Гиперкуб складывается в куб-логотип" style="width:100%;image-rendering:pixelated">
+          <p>2. Проекция «схлопывается», каркас превращается в куб-логотип.</p>
+        </div>
+        <div class="card">
+          <img src="imgstore/gba_bootrom_logo.png" alt="Финальный кадр бутрома: куб-логотип и надпись pureikyubu" style="width:100%;image-rendering:pixelated">
+          <p>3. Финальный кадр: куб-логотип и надпись, затем запускается картридж.</p>
+        </div>
+      </div>
+
+      <p class="sub" style="max-width:none">
+        Образ бутрома можно выгрузить для проверки вместе с листингом ассемблера:
+        <code>gba_bench --dump-bootrom bootrom.bin</code>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Как запускать</h2>
+      <p class="sub" style="max-width:none">
+        GBA — это режим того же самого исполняемого файла. Картридж выбирает режим по расширению, а
+        без картриджа бутром запускает свой SIO-драйвер — именно это и нужно режиму «GBA Link».
+      </p>
+      <table>
+        <tr><th>Команда</th><th>Что делает</th></tr>
+        <tr><td><code>pureikyubu --gba game.gba</code></td><td>Запустить картридж: сначала анимация бутрома, затем игра.</td></tr>
+        <tr><td><code>pureikyubu --gba</code></td><td>Без картриджа: работает SIO-драйвер бутрома.</td></tr>
+        <tr><td><code>pureikyubu game.gba</code></td><td>То же, что <code>--gba</code>: режим определяется расширением.</td></tr>
+        <tr><td><code>pureikyubu --gba --gba-bios bios.bin</code></td><td>Использовать настоящий BIOS (16 КБайт) вместо бутрома.</td></tr>
+        <tr><td><code>pureikyubu --gba --no-gba-bootrom</code></td><td>Пропустить BIOS и запустить картридж напрямую.</td></tr>
+        <tr><td><code>pureikyubu --gba-link</code></td><td>Инициализировать линк-порт даже при загруженном картридже.</td></tr>
+      </table>
+
+      <p class="sub" style="max-width:none">
+        Окно, звук и ввод — на SDL2. Раскладка клавиатуры и геймпада, масштаб, частота
+        дискретизации и параметры линка хранятся в <code>build/Data/GBASettings.json</code>;
+        повреждённый файл отвергается с сообщением, и берутся встроенные значения по умолчанию.
+      </p>
+    </section>
+
+    <section>
+      <h2>Харнесс запускает картридж, который собирает сам</h2>
+      <p class="sub" style="max-width:none">
+        У ядра GBA нет зависимостей от SDL, OpenGL и ImGui, поэтому у него свой харнесс
+        (<code>testing/gba_bench</code>): юнит-тесты, безоконный запуск ROM, хеши кадров, выгрузка
+        кадров в PNG, замер скорости и проверка линка, в которой два экземпляра соединяются друг с
+        другом. Демо-картридж на картинке выше собирается во время работы тем же эмиттером, что и
+        бутром, — это настоящая ARM-программа в настоящем образе картриджа с настоящим заголовком,
+        поэтому одна команда проверяет всю машину (процессор, картридж, экран, таймеры, синхронизацию
+        по VCOUNT).
+      </p>
+      <p><img src="imgstore/gba_demo.png" alt="Демо-картридж рисует свою анимацию" style="width:100%;max-width:480px;image-rendering:pixelated"></p>
+      <pre><code>testing/gba_bench/check.sh --demo --frames 120 --png /tmp/demo
+testing/gba_bench/check.sh --bootrom --frames 300 --png /tmp/shots
+testing/gba_bench/check.sh --run game.gba --frames 600 --bench</code></pre>
+    </section>
+
+    <section>
+      <h2>Публичные тестовые ROM</h2>
+      <p class="sub" style="max-width:none">
+        <code>jsmolka/gba-tests</code> — набор тестовых ROM для GBA под лицензией MIT. В
+        репозиторий они не входят (это чужие сборки); небольшой скрипт их скачивает, после чего
+        харнесс запускает их как обычный картридж. Это настоящая сквозная проверка, потому что
+        результаты тесты показывают прямо на экране: <strong>наборы для памяти, ARM и Thumb
+        сообщают «All tests passed»</strong>, и именно они нашли ошибку зеркалирования VRAM,
+        правила байтовых операций с видеопамятью и правило флага переноса при сдвиге на 0,
+        заданном регистром.
+      </p>
+      <p><img src="imgstore/gba_memory_tests.png" alt="Тестовый ROM для памяти сообщает, что все тесты пройдены" style="width:100%;max-width:480px;image-rendering:pixelated"></p>
+      <pre><code>testing/gba_bench/get_test_roms.sh
+testing/gba_bench/check.sh --run testing/gba_bench/roms/memory.gba --frames 200
+testing/gba_bench/check.sh --run testing/gba_bench/roms/arm.gba --frames 200</code></pre>
+    </section>
+
+    <section>
+      <h2>Режим Game Boy</h2>
+      <p class="sub" style="max-width:none">
+        GBA умеет запускать картриджи Game Boy только потому, что внутри консоли живёт вторая,
+        более старая машина. Она тоже реализована отдельным ядром (<code>src/gba/gb_*.cpp</code>):
+        процессор LR35902, экран DMG/CGB с палитрами и банками VRAM, четыре звуковых канала и
+        мапперы MBC1/2/3/5 с батарейным сохранением. У неё свой свободный бутром на 256 байт, в
+        котором надпись «pureikyubu» выезжает в центр экрана.
+      </p>
+      <p><img src="imgstore/gba_gb_bootrom.png" alt="Надпись бутрома Game Boy выезжает на экран" style="width:100%;max-width:320px;image-rendering:pixelated"></p>
+    </section>
+
+    <section>
+      <h2>Что реализовано, а что нет</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Реализовано</h3>
+          <p>
+            ARM7TDMI (ARM и Thumb, все семь режимов, исключения, HALT), карта памяти с open bus и
+            задержками WAITCNT, экран (текстовые режимы 0-2, битмап-режимы 3-5, спрайты, окна,
+            мозаика, смешивание, принудительный бланк), четыре таймера, четыре канала DMA включая
+            тайминги для звуковых FIFO и захвата видео, клавиатура, контроллер прерываний, звук
+            (четыре унаследованных канала и два канала прямого звука), последовательный порт в
+            режимах normal/multiplayer/UART с эмулируемым линк-кабелем, картридж (ROM-only плюс
+            SRAM, Flash и EEPROM, порт GPIO/RTC), вызовы BIOS в хосте и собственный бутром с
+            SIO-драйвером.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Не реализовано (пока)</h3>
+          <p>
+            Шина JOY (геймпад GameCube на линк-порте) и собственный протокол загрузки Game Boy
+            Player; звуковой драйвер BIOS и декомпрессор Хаффмана; сохранения состояния и
+            перемотка; особенность EEPROM «последний байт — это AND старого и нового значения».
+            Экран собирает строку целиком к началу HBlank, а не по точкам, и собственные задержки
+            внутренней памяти не моделируются. Полный список отличий, включая все deliberate
+            упрощения, зафиксированные тестами, — в
+            <a href="https://github.com/emu-russia/pureikyubu/blob/master/testing/gba_bench/Readme.md">testing/gba_bench/Readme.md</a>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Документация</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Wiki: GBA</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gba.md">Как устроена машина</a>:
+             бутром, линк-порт, настройки, тесты и отличия.</p>
+        </div>
+        <div class="card">
+          <h3>Заметки по ядру</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/src/gba/Readme.md">src/gba/Readme.md</a>:
+             состав файлов, спецификации, по которым они написаны, и как проходит кадр.</p>
+        </div>
+        <div class="card">
+          <h3>Тестовый харнесс</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/testing/gba_bench/Readme.md">testing/gba_bench</a>:
+             что покрывают тесты и какие поведения железа сознательно упрощены.</p>
+        </div>
+        <div class="card">
+          <h3>Благодарности</h3>
+          <p>Фиолетовая Game Boy Advance в иконке страницы — это
+             <a href="https://commons.wikimedia.org/wiki/File:Nintendo-Game-Boy-Advance-Purple-FL.png">фотография
+             Evan-Amos</a> (общественное достояние, через Wikimedia Commons); её обрезает и удаляет фон
+             <code>src/res/make_gba_icon.py</code>, а сама иконка — <code>src/res/gba_icon.png</code>.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© проект pureikyubu. Game Boy, Game Boy Color и Game Boy Advance — торговые марки Nintendo; эмулятор не связан с Nintendo. Ни BIOS, ни игры в комплект не входят.</div>
+    <div><a href="security_ru.html">Безопасность</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GBA: the integrated Game Boy Advance and Game Boy emulator (issue #388).
+
+  The module is self contained. src/gba talks to the rest of the emulator through its own headers
+  only - no pch.h, no OpenGL, no ImGui - so it builds as a library of its own and the emulator
+  application links it exactly like it links SDL2. Keeping it separate also keeps the module's
+  precompiled-header-free compiler settings from leaking into the application: everything here is
+  compiled with PrecompiledHeader=NotUsing.
+
+  gba_sdl.cpp is the SDL2 front end of the module, so this project includes the SDL2 headers; those
+  sources stay in the library because the app links SDL2 anyway.
+
+  The standalone test harness is the gba_bench project. It compiles the same core sources itself
+  instead of linking this library, which is what keeps it free of the SDL dependency (see
+  testing/gba_bench/Readme.md).
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{2F7C4A61-8D3B-4E52-9C74-6A5E1B0D93C8}</ProjectGuid>
+    <ProjectName>GBA</ProjectName>
+    <RootNamespace>GBA</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\GBA\</IntDir>
+    <TargetName>GBA</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>..\..\src\gba;..\..\thirdparty\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <!-- The application links the static CRT (/MTd), so the library has to use it too: a library
+           built against the DLL CRT leaves the application with unresolved __imp_ symbols. -->
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="..\..\src\gba\Readme.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\gba\arm7tdmi.cpp" />
+    <ClCompile Include="..\..\src\gba\gba.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_apu.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_armasm.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_bootrom.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_bus.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_cart.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_dma.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_disasm.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_hlebios.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_irq.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_keypad.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_ppu.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_sdl.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_settings.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_sio.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_timers.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_types.cpp" />
+    <ClCompile Include="..\..\src\gba\gb.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_apu.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_asm.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_bootrom.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_bus.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_cart.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_cpu.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_disasm.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_ppu.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\gba\arm7tdmi.h" />
+    <ClInclude Include="..\..\src\gba\gba.h" />
+    <ClInclude Include="..\..\src\gba\gba_apu.h" />
+    <ClInclude Include="..\..\src\gba\gba_armasm.h" />
+    <ClInclude Include="..\..\src\gba\gba_bootrom.h" />
+    <ClInclude Include="..\..\src\gba\gba_bus.h" />
+    <ClInclude Include="..\..\src\gba\gba_cart.h" />
+    <ClInclude Include="..\..\src\gba\gba_dma.h" />
+    <ClInclude Include="..\..\src\gba\gba_disasm.h" />
+    <ClInclude Include="..\..\src\gba\gba_hlebios.h" />
+    <ClInclude Include="..\..\src\gba\gba_irq.h" />
+    <ClInclude Include="..\..\src\gba\gba_keypad.h" />
+    <ClInclude Include="..\..\src\gba\gba_ppu.h" />
+    <ClInclude Include="..\..\src\gba\gba_sdl.h" />
+    <ClInclude Include="..\..\src\gba\gba_settings.h" />
+    <ClInclude Include="..\..\src\gba\gba_sio.h" />
+    <ClInclude Include="..\..\src\gba\gba_timers.h" />
+    <ClInclude Include="..\..\src\gba\gba_types.h" />
+    <ClInclude Include="..\..\src\gba\gb.h" />
+    <ClInclude Include="..\..\src\gba\gb_apu.h" />
+    <ClInclude Include="..\..\src\gba\gb_asm.h" />
+    <ClInclude Include="..\..\src\gba\gb_bootrom.h" />
+    <ClInclude Include="..\..\src\gba\gb_bus.h" />
+    <ClInclude Include="..\..\src\gba\gb_cart.h" />
+    <ClInclude Include="..\..\src\gba\gb_cpu.h" />
+    <ClInclude Include="..\..\src\gba\gb_disasm.h" />
+    <ClInclude Include="..\..\src\gba\gb_ppu.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

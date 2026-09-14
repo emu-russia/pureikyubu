@@ -23,9 +23,10 @@ still fail to render or hang — compatibility is a work in progress.
 
 ### Windows
 
-Build using Visual Studio 2026. Open `scripts/VS2026/pureikyubu.sln` and click Build. Both the SDL
-and the Win32 front ends have Debug and Release configurations. A legacy Visual Studio 2022 project
-is kept in `scripts/VS2022` for reference.
+Build using Visual Studio 2026. Open `scripts/VS2026/pureikyubu.sln` and click Build. The solution
+holds four projects: `pureikyubu` (the emulator), `SDL2`, `GBA` (the integrated Game Boy Advance and
+Game Boy emulator, built as a library the emulator links) and `gba_bench` (the standalone harness of
+the GBA core). Both the SDL and the Win32 front ends have Debug and Release configurations.
 
 ### Headless
 

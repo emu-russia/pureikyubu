@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Game Boy Advance">
+      <UniqueIdentifier>{41c2b6d8-1f5e-4a70-9b3d-6e12c8a4f501}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Boy">
+      <UniqueIdentifier>{7d9e2a35-4c68-4f1b-8e50-3a97b1c6d402}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documents">
+      <UniqueIdentifier>{b5a3f720-9e14-4d8c-b6a1-2f83e0c7d503}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\gba\Readme.md">
+      <Filter>Documents</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\gba\arm7tdmi.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_apu.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_armasm.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_bootrom.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_bus.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_cart.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_dma.cpp">
+    <ClCompile Include="..\..\src\gba\gba_disasm.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_hlebios.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_irq.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_keypad.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_ppu.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_sdl.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_settings.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_sio.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_timers.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_types.cpp">
+      <Filter>Game Boy Advance</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_apu.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_asm.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_bootrom.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_bus.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_cart.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_cpu.cpp">
+    <ClCompile Include="..\..\src\gba\gb_disasm.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gb_ppu.cpp">
+      <Filter>Game Boy</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\gba\arm7tdmi.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_apu.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_armasm.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_bootrom.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_bus.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_cart.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_dma.h">
+    <ClInclude Include="..\..\src\gba\gba_disasm.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_hlebios.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_irq.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_keypad.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_ppu.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_sdl.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_settings.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_sio.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_timers.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_types.h">
+      <Filter>Game Boy Advance</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_apu.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_asm.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_bootrom.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_bus.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_cart.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_cpu.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_disasm.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gba\gb_ppu.h">
+      <Filter>Game Boy</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
