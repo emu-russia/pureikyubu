@@ -1300,17 +1300,19 @@ namespace GBA
 		u32 comment = (opcode >> 16) & 0xFF;
 		u32 returnAddress = address + 4;
 
-		// The HLE contract, which is unusual and deliberate: r14 of the *current* mode takes
-		// the return address *before* the host hook runs. The GBA's BIOS service functions are
-		// ordinary functions called from the caller's mode, not exceptions, so the host handler
-		// finishes the call itself - it writes the result registers and moves the PC (it calls
-		// BranchTo(Reg(14))), or leaves the CPU halted for Halt/IntrWait. The CPU must therefore
-		// not bank the mode, not touch the CPSR or the SPSR and not double-return to the caller.
-		// Leaving currentPC on the return address makes the instruction complete normally if a
-		// handler chooses not to move the PC at all.
 		bool wasThumb = ThumbState();
-		SetReg(14, returnAddress);
-		currentPC = returnAddress;
+
+		if (bus->HleBiosEnabled)
+		{
+			// The HLE contract: the host handler is called from the caller's mode and finishes the
+			// call itself (it returns through the PC, which this leaves on the return address, or
+			// leaves the CPU halted for Halt/IntrWait). r14 of the caller's mode is *not* touched:
+			// a real BIOS preserves it across the SWI, and a leaf thunk ("swi N; bx lr") depends on
+			// it. The CPU must not bank the mode, not touch the CPSR or the SPSR and not
+			// double-return to the caller. Leaving currentPC on the return address makes the
+			// instruction complete normally if a handler chooses not to move the PC at all.
+			currentPC = returnAddress;
+		}
 
 		if (bus->Swi(comment))
 		{
@@ -1324,7 +1326,8 @@ namespace GBA
 		{
 			// No host handler (a real BIOS image is installed, or the call is not implemented):
 			// this is the real exception, with LR_svc just past the SWI and SPSR_svc holding the
-			// caller's CPSR. Exception() derives LR from the instruction address, so put it back.
+			// caller's CPSR - the caller's own r14 is left untouched. Exception() derives LR from
+			// the instruction address, so put the PC back first.
 			currentPC = address;
 			Exception(VectorSwi, ModeSupervisor, FlagI);
 		}
@@ -1911,14 +1914,16 @@ namespace GBA
 	{
 		// GBATEK "SWI": a Thumb SWI's comment is its own 8-bit immediate (the ARM form puts the
 		// same number in bits 16-23, which is why Thumb assemblers accept "swi n<<16"). The HLE
-		// contract is the one ArmSwi documents: LR of the current mode takes the return address
-		// - here the next halfword - and the host returns through it.
+		// contract is the one ArmSwi documents: the host returns through the PC (left on the next
+		// halfword), and the caller's LR is left untouched.
 		u32 address = currentPC;
 		u32 comment = opcode & 0xFF;
 		u32 returnAddress = address + 2;
 
-		SetReg(14, returnAddress);
-		currentPC = returnAddress;
+		if (bus->HleBiosEnabled)
+		{
+			currentPC = returnAddress;
+		}
 
 		if (bus->Swi(comment))
 		{
@@ -1928,6 +1933,7 @@ namespace GBA
 		}
 		else
 		{
+			// A real BIOS image: the SWI is a real exception and the caller's r14 stays put.
 			currentPC = address;
 			Exception(VectorSwi, ModeSupervisor, FlagI);
 		}

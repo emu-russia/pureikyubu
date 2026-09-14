@@ -73,11 +73,15 @@ namespace GBA
 
 	void GbSystem::InstallBootRom()
 	{
-		// The built-in ROM (or the file the settings name). The image is always 256 bytes: the
-		// real CGB boot ROM is 2304 bytes in two halves with the cartridge header readable at
-		// 0x0100 in between, but this emulator's ROM is a single page (it reads the header through
-		// the bus, which maps the cartridge there anyway).
+		// The machine's own boot ROM first (the built-in one, or the emulator's own animation),
+		// and then the file the settings name, if any. The two sizes the hardware has are 256
+		// bytes (DMG) and 2304 bytes (CGB): the image is kept *whole*, because the size decides
+		// how much of the address space the boot overlay covers. Truncating a CGB image to its
+		// first 256 bytes - which is what this used to do - leaves a boot ROM that never reaches
+		// its second half (the code and data past the cartridge header), so a colour game cannot
+		// boot from it.
 		bootImage = settings.cgb ? GbBootRom::CgbImage() : GbBootRom::DmgImage();
+		bootImageFromFile = false;
 
 		if (settings.bootRomPath.empty())
 			return;
@@ -101,16 +105,26 @@ namespace GBA
 		}
 		fclose(file);
 
-		if (image.size() >= 0x100)
+		// The DMG's boot ROM and the CGB's are the two documented sizes; anything else is either
+		// a wrong file or a dump with padding, and either way it is a guess this emulator does not
+		// make silently.
+		if (image.size() == 0x100 || image.size() == 0x900)
 		{
-			bootImage.assign(image.begin(), image.begin() + 0x100);
-			GBA::Log(LogLevel::Info, "gb: boot ROM %s (%u bytes, the first 256 used)",
-				settings.bootRomPath.c_str(), (unsigned)image.size());
+			bootImage = image;
+			bootImageFromFile = true;
+
+			const bool matches = (image.size() == 0x100) == !settings.cgb;
+			GBA::Log(matches ? LogLevel::Info : LogLevel::Warn,
+				"gb: boot ROM %s (%u bytes) %s", settings.bootRomPath.c_str(), (unsigned)image.size(),
+				matches ? (settings.cgb ? "for the CGB" : "for the DMG")
+					: (settings.cgb ? "is a DMG image, but the machine is a CGB"
+						: "is a CGB image, but the machine is a DMG"));
 		}
 		else
 		{
-			GBA::Log(LogLevel::Warn, "gb: the boot ROM %s is too short, using the built-in one",
-				settings.bootRomPath.c_str());
+			GBA::Log(LogLevel::Warn, "gb: the boot ROM %s is %u bytes; the DMG's is 256 and the "
+				"CGB's is 2304, so the built-in one is used instead",
+				settings.bootRomPath.c_str(), (unsigned)image.size());
 		}
 	}
 
@@ -445,9 +459,20 @@ namespace GBA
 
 		if (settings.useBootRom && !settings.skipBootRom)
 		{
-			snprintf(buffer, sizeof(buffer), ", boot ROM %s (%u bytes, %d frames of animation)",
-				settings.bootRomPath.empty() ? "built in" : settings.bootRomPath.c_str(),
-				(unsigned)bootImage.size(), GbBootRom::AnimationFrames());
+			// The size says which of the two boot ROMs is in use (256 bytes is the DMG's, 2304
+			// the CGB's, split around the cartridge header), so it is worth printing.
+			if (bootImageFromFile)
+			{
+				snprintf(buffer, sizeof(buffer), ", boot ROM %s (%u bytes%s)",
+					settings.bootRomPath.c_str(), (unsigned)bootImage.size(),
+					bootImage.size() == 0x900 ? ", split around the header" : "");
+			}
+			else
+			{
+				snprintf(buffer, sizeof(buffer), ", boot ROM built in (%u bytes, %d frames of animation)",
+					(unsigned)bootImage.size(), GbBootRom::AnimationFrames());
+			}
+
 			text += buffer;
 		}
 		else

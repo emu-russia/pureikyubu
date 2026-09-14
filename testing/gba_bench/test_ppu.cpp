@@ -763,15 +763,15 @@ GBA_TEST(Ppu, Sprite256Colors)
 	// The OBJ is set up in 1-dimensional mapping (DISPCNT bit 6), where "the upper row of the OBJ
 	// will consist of tile 04h and 06h, the next row of 08h and 0Ah" (GBATEK "OBJ - VRAM Character
 	// (Tile) Mapping"): in 256 colour mode only every second tile number may be used, so a row of
-	// this two-tile-wide OBJ covers 128 dots worth of tile numbers - twice the 64 bytes a tile
-	// occupies - and the second row of the OBJ starts 256 bytes on. Inside a tile one dot row is
-	// eight bytes.
+	// this two-tile-wide OBJ covers tile numbers 0 and 2 - two 64 byte tiles, 128 bytes in all -
+	// and the second row of the OBJ starts at tile number 4, 128 bytes on. Inside a tile one dot
+	// row is eight bytes.
 	for (int row = 0; row < 16; row++)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			const u32 address = OBJ_TILES + (u32)(row / 8) * 256 + (u32)(row & 7) * 8 +
-				(u32)(x / 8) * 128 + (u32)(x & 7);
+			const u32 address = OBJ_TILES + (u32)(row / 8) * 128 + (u32)(row & 7) * 8 +
+				(u32)(x / 8) * 64 + (u32)(x & 7);
 			bus.ppu.WriteVram(address, (u8)(x < 8 ? 7 : 9));
 		}
 	}
@@ -853,14 +853,14 @@ GBA_TEST(Ppu, AffineSpriteIdentityMatrix)
 	SetupDisplay(bus);
 
 	// A 16x16 affine sprite at (50, 30) with the identity matrix, in 1-dimensional 256-colour
-	// mapping: as in Sprite256Colors, a row of the two-tile-wide OBJ covers 128 dots worth of
-	// tile numbers, so the second row of the OBJ starts 256 bytes on.
+	// mapping: as in Sprite256Colors, a row of the two-tile-wide OBJ covers tile numbers 0 and 2
+	// (two 64 byte tiles, 128 bytes), so the second row of the OBJ starts 128 bytes on.
 	for (int row = 0; row < 16; row++)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			const u32 address = OBJ_TILES + (u32)(row / 8) * 256 + (u32)(row & 7) * 8 +
-				(u32)(x / 8) * 128 + (u32)(x & 7);
+			const u32 address = OBJ_TILES + (u32)(row / 8) * 128 + (u32)(row & 7) * 8 +
+				(u32)(x / 8) * 64 + (u32)(x & 7);
 			bus.ppu.WriteVram(address, 5);
 		}
 	}

@@ -147,9 +147,13 @@ namespace GBA
 		GbApu& Sound() { return bus->apu; }
 		GbCart& Cartridge() { return bus->cart; }
 
-		/// <summary>The boot ROM image the machine runs (the built-in one, or a loaded file),
-		/// 256 bytes.</summary>
+		/// <summary>The boot ROM image the machine runs, whole: the built-in one (256 bytes for
+		/// both machines' own animation) or the file `bootRomPath` named, which is the DMG's 256
+		/// bytes or the CGB's 2304.</summary>
 		const std::vector<u8>& BootRomImage() const { return bootImage; }
+
+		/// <summary>True when the boot ROM in use came from a file rather than being built in.</summary>
+		bool BootRomFromFile() const { return bootImageFromFile; }
 
 		/// <summary>The cartridge's title, for the window title and the harness report.</summary>
 		std::string RomTitle() const { return bus->cart.Header().title; }
@@ -171,6 +175,7 @@ namespace GBA
 		std::unique_ptr<GbBus> bus;
 		GbSettings settings;
 		std::vector<u8> bootImage;
+		bool bootImageFromFile = false;
 		u8 headerChecksum = 0x00;
 		u8 bootRegisterA = 0x01;
 		bool linkAttached = false;

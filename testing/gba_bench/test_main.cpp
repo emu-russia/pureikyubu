@@ -235,6 +235,7 @@ namespace
 		std::string wavPath;
 		std::string disasmFile;		// --disasm-arm/--disasm-thumb/--disasm-gb
 		std::string disasmKind;		// "arm", "thumb" or "gb"
+		std::string gbBios;			// --gb-bios: the Game Boy's own boot ROM
 		u32 disasmOffset = 0;
 		int disasmCount = 0;
 		int trace = 0;				// --trace: how many instructions of the last frame to keep
@@ -565,6 +566,7 @@ namespace
 		GbSettings settings = GbSettings::Defaults();
 		settings.cgb = !options.gbDmg;
 		settings.useBootRom = !options.noCustomBoot;
+		settings.bootRomPath = options.gbBios;
 		settings.logLevel = options.quiet ? 0 : 4;
 		system.ApplySettings(settings);
 
@@ -718,6 +720,8 @@ namespace
 			"  --no-custom-boot  do not run the custom boot ROM\n"
 			"  --gb              run the Game Boy machine instead of the GBA (with --gb-dmg for the\n"
 			"                    monochrome console)\n"
+			"  --gb-bios <file>  run a real Game Boy boot ROM: the DMG's 256 bytes or the CGB's 2304\n"
+			"                    (--bios is the *GBA*'s BIOS, this is the Game Boy's)\n"
 			"  --bench           print the emulation speed\n"
 			"  --quiet           only print the final summary\n");
 	}
@@ -807,6 +811,7 @@ int main(int argc, char** argv)
 			else if (arg == "--demo") options.demo = true;
 			else if (arg == "--gb") options.gb = true;
 			else if (arg == "--gb-dmg") { options.gb = true; options.gbDmg = true; }
+			else if (arg == "--gb-bios") { options.gb = true; options.gbBios = next("--gb-bios"); }
 			else if (arg == "--no-custom-boot") options.noCustomBoot = true;
 			else if (arg == "--bench") options.bench = true;
 			else if (arg == "--trace") options.trace = atoi(next("--trace").c_str());

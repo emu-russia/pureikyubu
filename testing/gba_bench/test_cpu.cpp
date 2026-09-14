@@ -2056,11 +2056,12 @@ namespace
 
 	GBA_TEST(Cpu, SwiHleContract)
 	{
-		// With HLE on the host handles the call. The contract: the CPU puts the return address
-		// in r14 of the *caller's* mode before calling the hook, does not bank the mode and does
-		// not touch the CPSR, and the handler finishes the call itself (here: Div, r0/r1 in,
-		// r0/r1 out, then BranchTo(r14)). This exercises gba_hlebios.cpp through the real bus,
-		// because GbaBus::Swi is not virtual.
+		// With HLE on the host handles the call. The contract: the CPU leaves the PC on the
+		// return address and leaves the caller's r14 alone (a real BIOS preserves it across the
+		// SWI, and a leaf "swi N; bx lr" thunk depends on it), does not bank the mode and does
+		// not touch the CPSR; the handler finishes the call itself (here: Div, r0/r1 in, r0/r1
+		// out, then BranchTo(PC)). This exercises gba_hlebios.cpp through the real bus, because
+		// GbaBus::Swi is not virtual.
 		Bench b;
 		b.Arm(CodeBase, { Enc::Swi(Enc::AL, 0x06) });		// SWI 0x060000: the BIOS Div call
 		b.EnterArm(CodeBase);
@@ -2068,11 +2069,12 @@ namespace
 		b.SetR(1, 7);
 
 		u32 before = b.Cpu().ReadCPSR();
+		u32 lrBefore = b.R(14);
 		b.Step();
 
 		GBA_CHECK_EQ(b.R(0), 14u);					// 100 / 7
 		GBA_CHECK_EQ(b.R(1), 2u);					// 100 % 7
-		GBA_CHECK_EQ(b.R(14), CodeBase + 4);		// the CPU set LR to the return address
+		GBA_CHECK_EQ(b.R(14), lrBefore);			// the caller's LR is preserved
 		GBA_CHECK_EQ(b.Cpu().CurrentPC(), CodeBase + 4);
 		GBA_CHECK_EQ(b.Cpu().ReadCPSR(), before);	// no mode change, no CPSR change
 		GBA_CHECK(b.Cpu().Mode() == ModeSupervisor);
@@ -2613,7 +2615,8 @@ namespace
 	GBA_TEST(Cpu, ThumbSwiHle)
 	{
 		// A Thumb BIOS call handled in the host: the comment is the SWI's own byte, the call
-		// finishes in the caller's mode and the CPU stays in Thumb state.
+		// finishes in the caller's mode, the CPU stays in Thumb state and the caller's LR is
+		// preserved (a real BIOS leaves it alone).
 		Bench b;
 		b.Thumb(CodeBase, { Enc::ThumbSwiCall(0x06) });		// swi 6: the same BIOS Div call
 		b.EnterThumb(CodeBase);
@@ -2621,11 +2624,12 @@ namespace
 		b.SetR(1, 7);
 
 		u32 before = b.Cpu().ReadCPSR();
+		u32 lrBefore = b.R(14);
 		b.Step();
 
 		GBA_CHECK_EQ(b.R(0), 14u);
 		GBA_CHECK_EQ(b.R(1), 2u);
-		GBA_CHECK_EQ(b.R(14), CodeBase + 2);
+		GBA_CHECK_EQ(b.R(14), lrBefore);
 		GBA_CHECK_EQ(b.Cpu().CurrentPC(), CodeBase + 2);
 		GBA_CHECK(b.Cpu().ThumbState());
 		GBA_CHECK_EQ(b.Cpu().ReadCPSR(), before);

@@ -27,10 +27,12 @@ namespace GBA
 		static u32 Reg(GbaBus& bus, int index) { return bus.cpu.Reg(index); }
 		static void SetReg(GbaBus& bus, int index, u32 value) { bus.cpu.SetReg(index, value); }
 
-		/// <summary>Return from the service call: the caller's LR is the return address.</summary>
+		/// <summary>Return from the service call. The CPU's PC already holds the return address
+		/// (the SWI decoder left it there), and the caller's LR must be left alone, so the branch
+		/// reads the PC rather than r14.</summary>
 		static void Return(GbaBus& bus)
 		{
-			bus.cpu.BranchTo(bus.cpu.Reg(14));
+			bus.cpu.BranchTo(bus.cpu.CurrentPC());
 		}
 
 		void Reset()

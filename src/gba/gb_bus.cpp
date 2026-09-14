@@ -92,24 +92,29 @@ namespace GBA
 
 	void GbBus::SetBootRom(const u8* image, u32 size)
 	{
-		u32 count = size < sizeof(bootRom) ? size : (u32)sizeof(bootRom);
+		// The two sizes the hardware has: the DMG's 256 byte boot ROM and the CGB's 2304 byte one
+		// (Pan Docs "Power Up Sequence": the CGB's is split in two with the cartridge header in
+		// the middle, which is why the image is kept whole rather than truncated).
+		u32 count = (size < sizeof(bootRom)) ? size : (u32)sizeof(bootRom);
 		if (image != nullptr && count != 0)
 		{
 			memcpy(bootRom, image, count);
+			bootRomSize = count;
 			bootRomLoaded = true;
 		}
 		else
 		{
 			memset(bootRom, 0x00, sizeof(bootRom));
+			bootRomSize = 0;
 			bootRomLoaded = false;
 		}
 	}
 
 	void GbBus::MapBootRom(bool mapped)
 	{
-		// The boot ROM is 256 bytes at 0x0000..0x00FF; the cartridge header stays visible at
-		// 0x0100 even while the boot ROM is mapped. The program unmaps it by writing anything to
-		// 0xFF50 (Pan Docs "Memory Map").
+		// The boot ROM is mapped at 0x0000: 0x100 bytes on a DMG and, on a CGB, the two halves
+		// 0x0000-0x00FF and 0x0200-0x08FF with the cartridge header in the middle (Pan Docs
+		// "Power Up Sequence"). The program unmaps it by writing anything to 0xFF50.
 		bootRomMapped = mapped && bootRomLoaded;
 	}
 
@@ -147,7 +152,9 @@ namespace GBA
 		// file for the emulator's own report and for the tests.
 		if (address >= 0xFF10 && address <= 0xFF3F)
 			return apu.ReadRegister(address);
-		if (address >= 0xFF40 && address <= 0xFF4B)
+		// 0xFF46 (DMA) sits between LYC (0xFF45) and BGP (0xFF47) and belongs to the bus, not
+		// to the PPU, so it is excluded from the PPU's register range.
+		if (address >= 0xFF40 && address <= 0xFF4B && address != 0xFF46)
 			return ppu.ReadRegister(address);
 
 		switch (address)
@@ -207,7 +214,8 @@ namespace GBA
 		if (address >= 0xFF10 && address <= 0xFF3F)
 			return apu.ReadRegister(address);
 
-		if (address >= 0xFF40 && address <= 0xFF4B)
+		// 0xFF46 (DMA) is the bus's register between the PPU's LYC and BGP.
+		if (address >= 0xFF40 && address <= 0xFF4B && address != 0xFF46)
 			return ppu.ReadRegister(address);
 
 		// The CGB colour palette registers: BCPS/BCPD at 0xFF68/0xFF69 and OCPS/OCPD at
@@ -253,14 +261,13 @@ namespace GBA
 
 	u8 GbBus::ReadByte(u16 address)
 	{
-		if (address < 0x0100)
-		{
-			// The boot ROM overlay (Pan Docs "Memory Map": the boot ROM is mapped at power-up
-			// and unmapped by a write to 0xFF50).
-			if (bootRomMapped)
-				return bootRom[address];
-			return cart.ReadRom(address);
-		}
+		// The boot ROM overlay (Pan Docs "Power Up Sequence": the boot ROM is mapped at power-up
+		// and unmapped by a write to 0xFF50). The DMG's ROM is one 256 byte page at 0x0000; the
+		// CGB's is split in two with the cartridge header in the middle - 0x0000-0x00FF and
+		// 0x0200-0x08FF - so the header at 0x0100-0x01FF stays readable the whole time.
+		if (bootRomMapped && address < bootRomSize
+			&& (address < 0x100 || address >= 0x200))
+			return bootRom[address];
 
 		if (address < 0x8000)
 			return cart.ReadRom(address);
@@ -382,7 +389,8 @@ namespace GBA
 			return;
 		}
 
-		if (address >= 0xFF40 && address <= 0xFF4B)
+		// 0xFF46 (DMA) is the bus's register between the PPU's LYC and BGP.
+		if (address >= 0xFF40 && address <= 0xFF4B && address != 0xFF46)
 		{
 			ppu.WriteRegister(address, value);
 			return;

@@ -482,3 +482,46 @@ GBA_TEST(GbBootRom, direct_start_skips_the_animation)
 	GBA_CHECK_EQ(machine.Bus().Peek(0xFF24), 0x77);			// NR50
 	GBA_CHECK_EQ(machine.Bus().Peek(0xFF25), 0xF3);			// NR51
 }
+
+GBA_TEST(GbBootRom, cgb_boot_rom_is_split_around_the_cartridge_header)
+{
+	// The CGB's boot ROM is split in two parts with the cartridge header in the middle (Pan Docs
+	// "Power Up Sequence" "Size"): 0x0000-0x00FF and 0x0200-0x08FF are the ROM, while
+	// 0x0100-0x01FF keeps reading the cartridge the whole time the ROM is mapped. A colour boot
+	// ROM therefore sees the real header, not the unused middle of its own image.
+
+	// A cartridge with markers inside the header region.
+	std::vector<u8> cartridge = BuildTestCartridge();
+	cartridge[0x0140] = 0xAB;			// a marker in the middle of the header region
+	cartridge[0x01FF] = 0xCD;			// the last byte of the region
+
+	// A fake 2304 byte CGB boot ROM: one value in the first half, another in the second, and a
+	// third in the file's own middle - the "hole" - that must never be read.
+	std::vector<u8> rom(0x900, 0x00);
+	for (int i = 0x000; i < 0x100; i++) rom[i] = 0x11;
+	for (int i = 0x100; i < 0x200; i++) rom[i] = 0x22;
+	for (int i = 0x200; i < 0x900; i++) rom[i] = 0x33;
+
+	GbSystem machine;
+	GbSettings settings = GbSettings::Defaults();
+	settings.cgb = true;
+	machine.ApplySettings(settings);
+
+	std::string error;
+	GBA_CHECK_MSG(machine.LoadRomImage(cartridge, error), "the test cartridge must load: " + error);
+	machine.Reset();
+
+	machine.Bus().SetBootRom(rom.data(), (u32)rom.size());
+	machine.Bus().MapBootRom(true);
+
+	// The two halves are the ROM's own bytes...
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x0000), 0x11);
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x00FF), 0x11);
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x0200), 0x33);
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x08FF), 0x33);
+
+	// ...and the header in the middle reads the cartridge, not the ROM's hole.
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x0100), cartridge[0x0100]);
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x0140), 0xAB);
+	GBA_CHECK_EQ(machine.Bus().ReadByte(0x01FF), 0xCD);
+}

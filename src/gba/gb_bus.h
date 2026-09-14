@@ -203,7 +203,12 @@ namespace GBA
 
 		u8 wram[8][0x1000]{};			// the CGB's eight 4 KByte banks (a DMG uses the first two)
 		u8 hram[0x7F]{};
-		u8 bootRom[0x100]{};
+		/// <summary>The boot ROM image, at most 0x900 bytes: the DMG's is 256 bytes (mapped at
+		/// 0x0000-0x00FF) and the CGB's is 2304 bytes (mapped at 0x0000-0x00FF and 0x0200-0x08FF,
+		/// with the cartridge header at 0x0100-0x01FF readable in between - the ROM is split in
+		/// two parts, Pan Docs "Power Up Sequence").</summary>
+		u8 bootRom[0x900]{};
+		u32 bootRomSize = 0;
 		bool bootRomLoaded = false;
 		bool bootRomMapped = true;
 

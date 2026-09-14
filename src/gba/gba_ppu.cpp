@@ -357,11 +357,16 @@ namespace GBA
 			// GBATEK "LCD OBJ - Overview": the object tiles are at 06010000-06017FFF in the BG
 			// modes 0-2 and at 06014000-06017FFF in the bitmap modes 3-5, where the frame buffer
 			// takes 0x00000-0x13FFF. The in-tile offset is one byte per two dots in 16 colour mode.
+			//
+			// The tile number is a 32-byte slot index in *both* colour depths (GBATEK "OBJ Tile
+			// Number": in 256 colour mode "only each second tile may be used", so the number above
+			// already steps by two and a 256-colour tile is the two slots tileNumber and
+			// tileNumber+1). The byte address is therefore always tileNumber * 32 - multiplying by
+			// 64 here would skip the second slot every 256-colour tile occupies.
 			const u32 objTileBase = IsBitmapMode(ppu.DispCnt() & 7) ? BITMAP_OBJ_TILES : OBJ_TILE_BASE;
 			const u32 inTile = (u32)(texelY & 7) * (sprite.colors256 ? 8 : 4) +
 				(u32)((texelX & 7) / (sprite.colors256 ? 1 : 2));
-			const u32 address = objTileBase +
-				(u32)tileNumber * (sprite.colors256 ? TILE_SIZE_8BPP : TILE_SIZE_4BPP) + inTile;
+			const u32 address = objTileBase + (u32)tileNumber * TILE_SIZE_4BPP + inTile;
 			const u8 packed = ppu.ReadVram(address);
 
 			if (sprite.colors256)
