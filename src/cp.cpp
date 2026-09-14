@@ -274,7 +274,9 @@ namespace Flipper
 			cpregs.cnt = (cpregs.top - cpregs.rdptr) + (cpregs.wrptr - cpregs.base);
 		}
 
-		// Watermarks logic. Active only in linked-mode (?).
+		// Watermarks. The hardware compares the count against the high/low water marks in both
+		// modes; the flags are status (and, with their enables, CP interrupts) and never gate the
+		// fetch - only the break point, the read enable and a full streaming buffer do.
 		if (cpregs.cnt > cpregs.himark)
 		{
 			CP_OVF();
@@ -447,6 +449,13 @@ namespace Flipper
 
 	void CommandProcessor::CpWriteReg(uint32_t addr, uint16_t value)
 	{
+		// The reader walks these registers under `fifoLock` (DrainFifo). A CPU-side write has to
+		// respect the same lock: the reader reads the pointer, fetches the burst and only then
+		// advances it (`rdptr += 32`), so a write that lands in between - GXSetGPFifo repointing
+		// the FIFO is exactly that - is overwritten by the stale advance and the CP skips the
+		// first 32-byte entry of the new FIFO. mgt-fifo-brkpt depends on the switch being atomic.
+		fifoLock.Lock();
+
 		switch (addr)
 		{
 			case CP_STATUS:
@@ -578,6 +587,8 @@ namespace Flipper
 				// Read-back data, read-only.
 				break;
 		}
+
+		fifoLock.Unlock();
 	}
 
 	void CommandProcessor::FifoWriteBurst()
@@ -745,7 +756,9 @@ namespace Flipper
 
 			default:
 			{
-				Report(Channel::GP, "Unknown CP load, index: 0x%02X\n", index);
+				// The value is part of the report: an unhandled CP register is only meaningful
+				// together with what the guest tried to write into it.
+				Report(Channel::GP, "Unknown CP load, index: 0x%02X, data: 0x%08X\n", index, value);
 			}
 		}
 	}
@@ -1361,6 +1374,44 @@ namespace Flipper
 		}
 
 		return HW->mem->MIGetMemoryPointerForCP(address);
+	}
+
+	// XF_IndexLoadRegA..D (00100xxx .. 00111xxx). A block load of the XF matrix/light area whose
+	// source address is not in the command: the command carries an index into one of the four index
+	// arrays (A..D are the CP arrays 0xC..0xF), and the CP reads that array entry as the source
+	// address and streams `count` words of it into the XF, starting at the XF address that rides in
+	// the command. It is how the GX SDK's GXLoadPosMtxIndx / GXLoadNrmMtxIndx3x3 / GXLoadTexMtxIndx /
+	// GXLoadLightObjIndx take a matrix or a light record out of an array of them, and it is what the
+	// demos that walk a model one matrix slot at a time use (tf-reflect, DL-tf-mtx, tev-outline).
+	void CommandProcessor::LoadIndexedXF(ArrayId arrayId, FifoProcessor* gxfifo)
+	{
+		uint32_t word = gxfifo->Read32();
+
+		size_t index = word >> 16;					// which entry of the index array
+		size_t count = ((word >> 12) & 0xF) + 1;	// how many words to load
+		size_t xfAddr = word & 0xFFF;				// the XF address, in words
+
+		// The array entry is a main memory address, so the array window and the block it points at
+		// are both guest data and are validated before anything is read.
+		uint32_t address = cp.arrayBase[(size_t)arrayId].Base +
+			(uint32_t)index * cp.arrayStride[(size_t)arrayId].Stride;
+
+		if (!Verify::MainMemory(address, count * sizeof(uint32_t), HW->mem->MIGetMemorySize()))
+		{
+			Report(Channel::CP, "XF index array load is out of memory (array %i, index %zi, address 0x%08X, %zi words)\n",
+				(int)arrayId, index, address, count);
+			return;
+		}
+
+		uint32_t* src = (uint32_t*)HW->mem->MIGetMemoryPointerForCP(address);
+
+		XFSync();
+		HW->gfx->xf->CPRegLoadBegin(xfAddr, count);
+
+		for (size_t i = 0; i < count; i++)
+		{
+			HW->gfx->xf->CPRegLoadData(src[i]);
+		}
 	}
 
 	void CommandProcessor::FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId)
@@ -2272,15 +2323,8 @@ namespace Flipper
 			case CP_CMD_LOAD_INDXA | 5:
 			case CP_CMD_LOAD_INDXA | 6:
 			case CP_CMD_LOAD_INDXA | 7:
-			{
-				uint16_t idx, start, len;
-				idx = gxfifo->Read16();
-				start = gxfifo->Read16();
-				len = (start >> 12) + 1;
-				start &= 0xfff;
-				Report(Channel::GP, "CP_CMD_LOAD_INDXA: idx: %i, start: %i, len: %i\n", idx, start, len);
+				LoadIndexedXF(ArrayId::IndexRegA, gxfifo);
 				break;
-			}
 
 			case CP_CMD_LOAD_INDXB | 0:
 			case CP_CMD_LOAD_INDXB | 1:
@@ -2290,15 +2334,8 @@ namespace Flipper
 			case CP_CMD_LOAD_INDXB | 5:
 			case CP_CMD_LOAD_INDXB | 6:
 			case CP_CMD_LOAD_INDXB | 7:
-			{
-				uint16_t idx, start, len;
-				idx = gxfifo->Read16();
-				start = gxfifo->Read16();
-				len = (start >> 12) + 1;
-				start &= 0xfff;
-				Report(Channel::GP, "CP_CMD_LOAD_INDXB: idx: %i, start: %i, len: %i\n", idx, start, len);
+				LoadIndexedXF(ArrayId::IndexRegB, gxfifo);
 				break;
-			}
 
 			case CP_CMD_LOAD_INDXC | 0:
 			case CP_CMD_LOAD_INDXC | 1:
@@ -2308,15 +2345,8 @@ namespace Flipper
 			case CP_CMD_LOAD_INDXC | 5:
 			case CP_CMD_LOAD_INDXC | 6:
 			case CP_CMD_LOAD_INDXC | 7:
-			{
-				uint16_t idx, start, len;
-				idx = gxfifo->Read16();
-				start = gxfifo->Read16();
-				len = (start >> 12) + 1;
-				start &= 0xfff;
-				Report(Channel::GP, "CP_CMD_LOAD_INDXC: idx: %i, start: %i, len: %i\n", idx, start, len);
+				LoadIndexedXF(ArrayId::IndexRegC, gxfifo);
 				break;
-			}
 
 			case CP_CMD_LOAD_INDXD | 0:
 			case CP_CMD_LOAD_INDXD | 1:
@@ -2326,15 +2356,8 @@ namespace Flipper
 			case CP_CMD_LOAD_INDXD | 5:
 			case CP_CMD_LOAD_INDXD | 6:
 			case CP_CMD_LOAD_INDXD | 7:
-			{
-				uint16_t idx, start, len;
-				idx = gxfifo->Read16();
-				start = gxfifo->Read16();
-				len = (start >> 12) + 1;
-				start &= 0xfff;
-				Report(Channel::GP, "CP_CMD_LOAD_INDXD: idx: %i, start: %i, len: %i\n", idx, start, len);
+				LoadIndexedXF(ArrayId::IndexRegD, gxfifo);
 				break;
-			}
 
 			// ---------------------------------------------------------------
 			// draw commands

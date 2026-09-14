@@ -93,7 +93,11 @@ namespace GFX
 	// thread).
 	static bool GLContextCurrent()
 	{
-#ifdef _WINDOWS
+#ifdef GFX_NULL
+		// Headless: there is no context, and every GL call is a no-op (see gfxnull.h), so the
+		// read-back commands are always allowed.
+		return true;
+#elif defined(_WINDOWS)
 		return wglGetCurrentContext() != 0;
 #else
 		return true;
@@ -917,6 +921,16 @@ namespace GFX
 		if (backend_started)
 			return true;
 
+#ifdef GFX_NULL
+		// Headless: there is no window to draw into and no driver to ask for a context. The null
+		// backend (gfxnull.h) accepts every GL call, so the pipeline is simply marked as running;
+		// the shaders, the geometry buffers and the textures are "created" as no-op handles, and
+		// the drawing goes nowhere.
+		Report(Channel::GP, "GFX: the null (headless) backend is running, nothing is presented\n");
+		backend_started = true;
+		return true;
+#else
+
 #if GFX_USE_SDL_WINDOW
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -985,6 +999,7 @@ namespace GFX
 
 		backend_started = true;
 		return true;
+#endif // GFX_NULL
 	}
 
 	// The GL state that the GFX register loads are applied on top of. It is also what
@@ -1055,7 +1070,9 @@ namespace GFX
 
 		//if(frameReady) GL_EndFrame();
 
-#if GFX_USE_SDL_WINDOW
+#ifdef GFX_NULL
+		// Headless: nothing was created, so there is no context to destroy.
+#elif GFX_USE_SDL_WINDOW
 		SDL_GL_DeleteContext(context);
 		context = nullptr;
 #else
@@ -1194,7 +1211,9 @@ namespace GFX
 
 		glFinish();
 
-#if GFX_USE_SDL_WINDOW
+#ifdef GFX_NULL
+		// Headless: the frame was "drawn" into nowhere, so there is nothing to present.
+#elif GFX_USE_SDL_WINDOW
 		SDL_GL_SwapWindow(render_window);
 #else
 		SwapBuffers(hdcgl);

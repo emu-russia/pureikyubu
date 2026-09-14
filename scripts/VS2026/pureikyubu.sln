@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GBA", "GBA.vcxproj", "{2F7C
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gba_bench", "gba_bench.vcxproj", "{6C4A2F80-9C8E-4B3F-9E7A-2C51F0B41D02}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pureikyubu_headless", "pureikyubu_headless.vcxproj", "{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug SDL|x64 = Debug SDL|x64
@@ -87,6 +89,14 @@ Global
 		{6C4A2F80-9C8E-4B3F-9E7A-2C51F0B41D02}.Release|x64.Build.0 = Release|x64
 		{6C4A2F80-9C8E-4B3F-9E7A-2C51F0B41D02}.Release|x86.ActiveCfg = Release|Win32
 		{6C4A2F80-9C8E-4B3F-9E7A-2C51F0B41D02}.Release|x86.Build.0 = Release|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug SDL|x64.ActiveCfg = Debug|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug SDL|x86.ActiveCfg = Debug|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug|x64.ActiveCfg = Debug|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug|x86.ActiveCfg = Debug|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release SDL|x64.ActiveCfg = Release|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release SDL|x86.ActiveCfg = Release|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release|x64.ActiveCfg = Release|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release|x86.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,12 +9,22 @@ There is no UI toolkit behind this. The window is an SDL window, the text comes 
 atlas built at start-up from `Data/DebugUiMono.ttf` with `stb_truetype`, and the panels, the
 scrolling and the command line are laid out by this module.
 
+The layout is a tree of panels. A panel is a frame with a header (the title, and to the right of
+it the info line the debugger put there) and a body that holds either the queued items, a split,
+or a tab strip. The panel under the pointer is the one with the focus: it is drawn with a thicker
+border and, when its content does not fit, with a vertical scrollbar (the other panels keep their
+full width). The scroll position of a panel and the selected tab are kept here, per panel, rather
+than in the debugger, which only publishes what is to be drawn.
+
 ## Text on GL
 
 The atlas is one 8-bit texture: `stb_truetype` rasterizes the codepoints of the ranges listed in
 `AtlasRanges` into it, and the text is drawn as a batch of textured quads. Everything else - the
 panel frames, the caret, the rules - is the same batch with the "solid" mode, so a frame is a
 handful of draw calls at most.
+
+The `y` a line of text is drawn at is the top of the line; a glyph quad is placed against the
+baseline, which is what `stbtt_GetPackedQuad` expects, so `DrawText` adds the ascent itself.
 
 The atlas carries more than ASCII on purpose. The JDI interface is ASCII for now (UTF-8 is a
 separate task), but the renderer should not have to be rewritten when that changes: the ranges
@@ -53,8 +63,12 @@ namespace Debug2
 	static const uint32_t ColWindowBg = 0xFF1E1E1E;
 	static const uint32_t ColPanelBg = 0xFF252526;
 	static const uint32_t ColPanelBorder = 0xFF3C3C3C;
+	static const uint32_t ColPanelFocus = 0xFF007ACC;	// the border of the panel under the pointer
 	static const uint32_t ColPanelTitleBg = 0xFF2D2D30;
 	static const uint32_t ColPanelTitle = 0xFFB0B0B0;
+	static const uint32_t ColTabHover = 0xFF3F3F46;
+	static const uint32_t ColScrollTrack = 0xFF1B1B1B;
+	static const uint32_t ColScrollThumb = 0xFF4E4E4E;
 	static const uint32_t ColText = 0xFFD4D4D4;
 	static const uint32_t ColCode = 0xFFCE9178;
 	static const uint32_t ColHeading = 0xFF4EC9B0;
@@ -211,6 +225,24 @@ namespace Debug2
 		float scroll = 0;
 		bool stickToEnd = false;
 		size_t lastItemCount = 0;
+		size_t activeTab = 0;
+	};
+
+	// The geometry of a scrollbar, kept from the layout so that a mouse event can hit it.
+	struct ScrollGeom
+	{
+		Rect track;
+		Rect thumb;
+		float maxScroll = 0;
+		std::string key;
+	};
+
+	// The rectangle of one tab, kept from the layout so that a click can be routed to it.
+	struct TabHit
+	{
+		Rect rect;
+		std::string key;
+		size_t index = 0;
 	};
 
 	struct ImageTexture
@@ -220,6 +252,12 @@ namespace Debug2
 		int height = 0;
 		bool loaded = false;
 	};
+
+	// The scrollbar lives in the right edge of a leaf panel; the text is wrapped that much
+	// narrower, whether the bar is shown or not, so that gaining the focus does not reflow it.
+	static const float ScrollbarWidth = 6.0f;
+	static const float ScrollbarGap = 3.0f;
+	static const float TabPadding = 7.0f;
 
 
 	// ----------------------------------------------------------------------------------------
@@ -252,8 +290,9 @@ namespace Debug2
 		std::vector<GlyphRange> ranges;
 		int atlasWidth = 0;
 		int atlasHeight = 0;
-		float fontSize = 16.0f;
+		float fontSize = 13.0f;
 		float lineHeight = 0;
+		float ascent = 0;				// the baseline of a line, from the top of the line
 		float advance[128] = { 0 };
 		float defaultAdvance = 8;
 
@@ -269,9 +308,21 @@ namespace Debug2
 		int historyPos = -1;
 		std::vector<std::string> cmdHistory;
 
-		std::map<const Panel*, PanelState> panelStates;
-		std::map<const Panel*, Rect> panelRects;
+		std::map<std::string, PanelState> panelStates;	// per panel, keyed by its path in the tree
+		std::map<const Panel*, Rect> panelRects;		// of the frame being drawn, for the hit tests
+		std::map<const Panel*, std::string> panelKeys;
+		std::map<const Panel*, ScrollGeom> scrollGeoms;
+		std::vector<TabHit> tabHits;
 		std::map<std::string, ImageTexture> images;
+
+		// The view of the last frame. It is kept alive so that a mouse event can walk the tree
+		// that was drawn: the debugger thread replaces the snapshot whenever it likes.
+		std::shared_ptr<const View> renderedView;
+		const Panel* hoveredPanel = nullptr;
+
+		// A scrollbar drag in progress.
+		const Panel* dragPanel = nullptr;
+		float dragOffset = 0;
 
 		float mouseX = 0, mouseY = 0;
 
@@ -303,13 +354,19 @@ namespace Debug2
 		void DrawLines(const std::vector<VisualLine>& lines, const Rect& content, float y, ItemAlign align);
 		void DrawImageBlock(const VisualLine& line, const Rect& content, float y);
 		ImageTexture& GetImage(const std::string& ref);
-		void LayoutPanel(const Panel& panel, const Rect& rect);
-		const Panel* PanelAt(float x, float y) const;
+		void LayoutPanel(const Panel& panel, const Rect& rect, const std::string& key, bool showTitle = true);
+		void LayoutTabs(const Panel& panel, const Rect& content, const std::string& key);
+		const Panel* HitTest(const Panel& panel, float x, float y) const;
+		void UpdateHover();
+		void DrawScrollbar(const ScrollGeom& geom);
 
 		// ---- the input ----
 
 		void InsertText(const char* utf8);
 		void HandleSdlKey(const SDL_KeyboardEvent& key);
+		void MouseDown(float x, float y);
+		void MouseUp();
+		void DragScrollbar(float y);
 		void HandleSdlEvent(const SDL_Event& event);
 
 	public:
@@ -319,7 +376,7 @@ namespace Debug2
 		virtual bool Open(const std::string& title, Sink* sink);
 		virtual void Close();
 		virtual bool IsOpen() const { return open; }
-		virtual void Render(const View& view);
+		virtual void Render(const std::shared_ptr<const View>& view);
 
 		bool HandleEvent(const SDL_Event& event);
 	};
@@ -345,7 +402,8 @@ namespace Debug2
 		if (!stbtt_PackBegin(&pc, bitmap, width, height, 0, 1, nullptr))
 			return false;
 
-		stbtt_PackSetOversampling(&pc, 1, 1);
+		// The text is small, and this is what keeps it readable.
+		stbtt_PackSetOversampling(&pc, 2, 2);
 
 		int offset = 0;
 
@@ -397,6 +455,7 @@ namespace Debug2
 
 		float scale = stbtt_ScaleForPixelHeight(&font, fontSize);
 		lineHeight = ceilf((ascentRaw - descentRaw + lineGapRaw) * scale) + 1.0f;
+		ascent = ascentRaw * scale;
 
 		// The advances are cached. The font is monospaced, but the wrapping does not assume it.
 		defaultAdvance = CharAdvance('?');
@@ -540,6 +599,9 @@ namespace Debug2
 
 	void GlUi::DrawText(float x, float y, const std::string& text, uint32_t color)
 	{
+		// `y` is the top of the line; stbtt_GetPackedQuad() places a glyph against the baseline.
+		float baseline = y + ascent;
+
 		for (size_t i = 0; i < text.size(); i++)
 		{
 			unsigned char c = (unsigned char)text[i];
@@ -549,7 +611,7 @@ namespace Debug2
 			if (glyph != nullptr)
 			{
 				stbtt_aligned_quad q;
-				float px = x, py = y;
+				float px = x, py = baseline;
 				// `glyph` is already the entry of this codepoint: stbtt_GetPackedQuad() indexes the
 				// array it is given by the character index, so the index here is 0.
 				stbtt_GetPackedQuad(glyph, atlasWidth, atlasHeight, 0, &px, &py, &q, 0);
@@ -863,18 +925,47 @@ namespace Debug2
 		}
 	}
 
-	const Panel* GlUi::PanelAt(float x, float y) const
+	// The deepest panel that contains the point, or nullptr. The walk goes over the snapshot the
+	// last frame was drawn from, and the deepest hit is the panel with the focus.
+	const Panel* GlUi::HitTest(const Panel& panel, float x, float y) const
 	{
-		for (auto it = panelRects.begin(); it != panelRects.end(); ++it)
+		auto it = panelRects.find(&panel);
+
+		if (it == panelRects.end() || !it->second.Contains(x, y))
+			return nullptr;
+
+		for (size_t i = 0; i < panel.SubCount(); i++)
 		{
-			if (it->second.Contains(x, y))
-				return it->first;
+			const Panel* hit = HitTest(panel.Sub(i), x, y);
+			if (hit != nullptr)
+				return hit;
 		}
 
-		return nullptr;
+		return &panel;
 	}
 
-	void GlUi::LayoutPanel(const Panel& panel, const Rect& rect)
+	void GlUi::UpdateHover()
+	{
+		// While a scrollbar is dragged the focus stays on its panel, even if the pointer wanders
+		// off it (the thumb is following the pointer).
+		if (dragPanel != nullptr)
+		{
+			hoveredPanel = dragPanel;
+			return;
+		}
+
+		hoveredPanel = (renderedView != nullptr) ? HitTest(renderedView->root, mouseX, mouseY) : nullptr;
+	}
+
+	void GlUi::DrawScrollbar(const ScrollGeom& geom)
+	{
+		FillRect(geom.track, ColScrollTrack);
+
+		if (geom.thumb.h > 0)
+			FillRect(geom.thumb, ColScrollThumb);
+	}
+
+	void GlUi::LayoutPanel(const Panel& panel, const Rect& rect, const std::string& key, bool showTitle)
 	{
 		if (rect.w < 6 || rect.h < 6)
 			return;
@@ -882,17 +973,47 @@ namespace Debug2
 		FillRect(rect, ColPanelBg);
 		FrameRect(rect, ColPanelBorder, 1.0f);
 
-		Rect title = { rect.x + 1, rect.y + 1, rect.w - 2, lineHeight + 2 };
-		if (!panel.Title().empty())
+		// The body starts under the header. A panel that is drawn as the active tab of another
+		// one has no header of its own: the tab strip already carries the title.
+		float top = rect.y;
+
+		if (showTitle)
 		{
-			FillRect(title, ColPanelTitleBg);
-			DrawText(title.x + 4, title.y + 1, panel.Title(), ColPanelTitle);
+			Rect title = { rect.x + 1, rect.y + 1, rect.w - 2, lineHeight + 2 };
+
+			if (!panel.Title().empty() || !panel.Info().empty())
+			{
+				FillRect(title, ColPanelTitleBg);
+
+				float titleWidth = MeasureText(panel.Title());
+				if (!panel.Title().empty())
+					DrawText(title.x + 4, title.y + 1, panel.Title(), ColPanelTitle);
+
+				// The info goes to the right edge, as long as it does not run into the title.
+				if (!panel.Info().empty())
+				{
+					float infoX = title.Right() - 4 - MeasureText(panel.Info());
+					if (infoX > title.x + 8 + titleWidth)
+						DrawText(infoX, title.y + 1, panel.Info(), ColPanelTitle);
+				}
+			}
+
+			top = title.Bottom();
 		}
 
-		Rect content = { rect.x + 3, title.Bottom() + 1, rect.w - 6, rect.Bottom() - title.Bottom() - 4 };
+		Rect content = { rect.x + 3, top + 1, rect.w - 6, rect.Bottom() - top - 4 };
 
 		if (content.w < 4 || content.h < 4)
 			return;
+
+		panelRects[&panel] = rect;
+		panelKeys[&panel] = key;
+
+		if (panel.GetSplit() == Split::Tabs)
+		{
+			LayoutTabs(panel, content, key);
+			return;
+		}
 
 		if (panel.GetSplit() != Split::None)
 		{
@@ -907,22 +1028,22 @@ namespace Debug2
 				float each = (content.w - gap * (count - 1)) / (float)count;
 
 				for (size_t i = 0; i < count; i++)
-					LayoutPanel(panel.Sub(i), { content.x + i * (each + gap), content.y, each, content.h });
+					LayoutPanel(panel.Sub(i), { content.x + i * (each + gap), content.y, each, content.h },
+						key + "/" + std::to_string(i));
 			}
 			else
 			{
 				float each = (content.h - gap * (count - 1)) / (float)count;
 
 				for (size_t i = 0; i < count; i++)
-					LayoutPanel(panel.Sub(i), { content.x, content.y + i * (each + gap), content.w, each });
+					LayoutPanel(panel.Sub(i), { content.x, content.y + i * (each + gap), content.w, each },
+						key + "/" + std::to_string(i));
 			}
 
 			return;
 		}
 
 		// A leaf panel. The command line, if the panel has one, lives at the bottom.
-		panelRects[&panel] = rect;
-
 		Rect itemArea = content;
 		Rect cmdArea = { 0, 0, 0, 0 };
 		bool hasCmdline = panel.HasCmdline() && sink != nullptr;
@@ -934,6 +1055,11 @@ namespace Debug2
 			itemArea.h -= (cmdHeight + 2);
 		}
 
+		// The scrollbar column is kept free whether the bar is drawn or not, so that gaining
+		// the focus does not reflow the text.
+		Rect textArea = itemArea;
+		textArea.w = my_max(8.0f, textArea.w - (ScrollbarWidth + ScrollbarGap));
+
 		// Lay the items out once: the same lines are measured for the scroll and then drawn.
 		std::vector<std::vector<VisualLine>> itemLines(panel.ItemCount());
 		std::vector<float> itemHeights(panel.ItemCount(), 0);
@@ -941,12 +1067,12 @@ namespace Debug2
 		float total = 0;
 		for (size_t i = 0; i < panel.ItemCount(); i++)
 		{
-			itemLines[i] = BuildItemLines(panel.GetItem(i), itemArea.w);
+			itemLines[i] = BuildItemLines(panel.GetItem(i), textArea.w);
 			itemHeights[i] = LinesHeight(itemLines[i]);
 			total += itemHeights[i];
 		}
 
-		PanelState& state = panelStates[&panel];
+		PanelState& state = panelStates[key];
 
 		// A panel whose queue grows is a log: it follows the newest item. A panel whose content
 		// is replaced wholesale (the live panels) keeps showing the beginning of what it has.
@@ -959,6 +1085,25 @@ namespace Debug2
 
 		float maxScroll = my_max(0.0f, total - itemArea.h);
 		state.scroll = my_max(0.0f, my_min(state.scroll, maxScroll));
+
+		// A panel whose content does not fit gets a scrollbar. It is drawn for the panel with the
+		// focus only (see Render), but the geometry is remembered for every panel that has one,
+		// so that a mouse event can find the thumb.
+		if (total > itemArea.h && itemArea.h > 20.0f)
+		{
+			ScrollGeom geom;
+			geom.track = { itemArea.Right() - ScrollbarWidth, itemArea.y, ScrollbarWidth, itemArea.h };
+			geom.maxScroll = maxScroll;
+			geom.key = key;
+
+			float thumbHeight = my_max(20.0f, itemArea.h * itemArea.h / total);
+			float travel = itemArea.h - thumbHeight;
+			float thumbY = itemArea.y + ((maxScroll > 0) ? (state.scroll / maxScroll) * travel : 0);
+
+			geom.thumb = { geom.track.x, thumbY, geom.track.w, thumbHeight };
+
+			scrollGeoms[&panel] = geom;
+		}
 
 		std::vector<float> positions(panel.ItemCount(), itemArea.y);
 
@@ -1038,12 +1183,12 @@ namespace Debug2
 		{
 			if (panel.GetOrder() == ItemOrder::LeftRight || panel.GetOrder() == ItemOrder::RightLeft)
 			{
-				Rect itemRect = { positions[i], itemArea.y, itemArea.w, itemArea.h };
+				Rect itemRect = { positions[i], itemArea.y, textArea.w, itemArea.h };
 				DrawLines(itemLines[i], itemRect, itemArea.y, panel.GetItem(i).align);
 			}
 			else
 			{
-				DrawLines(itemLines[i], itemArea, positions[i], panel.GetItem(i).align);
+				DrawLines(itemLines[i], textArea, positions[i], panel.GetItem(i).align);
 			}
 		}
 
@@ -1077,6 +1222,73 @@ namespace Debug2
 				FillRect({ caretX, textY, 1.0f, lineHeight }, ColCmdText);
 			}
 		}
+	}
+
+	// The body of a panel that holds tabs: a strip of the sub-panel titles on top, and the
+	// content of the active sub-panel underneath. The sub-panels are ordinary panels, they just
+	// do not draw a header of their own - their title is the tab.
+	void GlUi::LayoutTabs(const Panel& panel, const Rect& content, const std::string& key)
+	{
+		size_t count = panel.SubCount();
+		if (count == 0)
+			return;
+
+		PanelState& state = panelStates[key];
+		if (state.activeTab >= count)
+			state.activeTab = 0;
+
+		Rect strip = { content.x, content.y, content.w, lineHeight + 6 };
+		FillRect(strip, ColPanelTitleBg);
+
+		float x = strip.x;
+
+		for (size_t i = 0; i < count; i++)
+		{
+			const Panel& sub = panel.Sub(i);
+
+			float width = MeasureText(sub.Title()) + TabPadding * 2;
+			if ((x + width) > strip.Right())
+				break;
+
+			Rect tab = { x, strip.y, width, strip.h };
+			bool active = (i == state.activeTab);
+
+			if (active)
+			{
+				FillRect(tab, ColPanelBg);
+				FillRect({ tab.x, tab.y, tab.w, 2.0f }, ColPanelFocus);
+			}
+			else if (tab.Contains(mouseX, mouseY))
+			{
+				FillRect(tab, ColTabHover);
+			}
+
+			DrawText(tab.x + TabPadding, tab.y + 3, sub.Title(), active ? ColStrong : ColPanelTitle);
+
+			TabHit hit;
+			hit.rect = tab;
+			hit.key = key;
+			hit.index = i;
+			tabHits.push_back(hit);
+
+			x += width;
+		}
+
+		// The info of the active tab goes to the right end of the strip: the sub-panel has no
+		// header of its own to put it in.
+		const Panel& active = panel.Sub(state.activeTab);
+		if (!active.Info().empty())
+		{
+			float infoX = strip.Right() - 4 - MeasureText(active.Info());
+			if (infoX > x)
+				DrawText(infoX, strip.y + 3, active.Info(), ColPanelTitle);
+		}
+
+		Rect body = { content.x, strip.Bottom() + 1, content.w, content.Bottom() - strip.Bottom() - 1 };
+		if (body.w < 6 || body.h < 6)
+			return;
+
+		LayoutPanel(active, body, key + "/" + std::to_string(state.activeTab), false);
 	}
 
 
@@ -1191,6 +1403,60 @@ namespace Debug2
 		}
 	}
 
+	void GlUi::MouseDown(float x, float y)
+	{
+		// A tab takes the click first: it is the only thing in a header that reacts to one.
+		for (size_t i = 0; i < tabHits.size(); i++)
+		{
+			if (!tabHits[i].rect.Contains(x, y))
+				continue;
+
+			PanelState& state = panelStates[tabHits[i].key];
+			state.activeTab = tabHits[i].index;
+			return;
+		}
+
+		// Grab the thumb of the scrollbar of the panel with the focus.
+		if (hoveredPanel == nullptr)
+			return;
+
+		auto it = scrollGeoms.find(hoveredPanel);
+		if (it == scrollGeoms.end() || !it->second.thumb.Contains(x, y))
+			return;
+
+		dragPanel = hoveredPanel;
+		dragOffset = y - it->second.thumb.y;
+	}
+
+	void GlUi::MouseUp()
+	{
+		dragPanel = nullptr;
+	}
+
+	void GlUi::DragScrollbar(float y)
+	{
+		auto it = scrollGeoms.find(dragPanel);
+		if (it == scrollGeoms.end())
+		{
+			// The panel is gone (the debugger published another snapshot): drop the drag.
+			dragPanel = nullptr;
+			return;
+		}
+
+		const ScrollGeom& geom = it->second;
+		float travel = geom.track.h - geom.thumb.h;
+
+		if (travel <= 0 || geom.maxScroll <= 0)
+			return;
+
+		float thumbY = my_min(my_max(y - dragOffset, geom.track.y), geom.track.y + travel);
+		float fraction = (thumbY - geom.track.y) / travel;
+
+		PanelState& state = panelStates[geom.key];
+		state.scroll = fraction * geom.maxScroll;
+		state.stickToEnd = false;
+	}
+
 	void GlUi::HandleSdlEvent(const SDL_Event& event)
 	{
 		switch (event.type)
@@ -1211,23 +1477,41 @@ namespace Debug2
 			case SDL_MOUSEMOTION:
 				mouseX = (float)event.motion.x;
 				mouseY = (float)event.motion.y;
+				if (dragPanel != nullptr)
+					DragScrollbar(mouseY);
+				else
+					UpdateHover();
+				break;
+
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button != SDL_BUTTON_LEFT)
+					break;
+				mouseX = (float)event.button.x;
+				mouseY = (float)event.button.y;
+				UpdateHover();
+				MouseDown(mouseX, mouseY);
+				break;
+
+			case SDL_MOUSEBUTTONUP:
+				if (event.button.button == SDL_BUTTON_LEFT)
+					MouseUp();
 				break;
 
 			case SDL_MOUSEWHEEL:
 			{
-				// Scroll the panel under the pointer. The rectangles are the ones of the frame
-				// that has just been drawn, which is close enough for a wheel notch.
-				int x = 0, y = 0;
-				SDL_GetMouseState(&x, &y);
-
-				const Panel* panel = PanelAt((float)x, (float)y);
-				if (panel != nullptr)
+				// Scroll the panel with the focus. The rectangles are the ones of the frame that
+				// has just been drawn, which is close enough for a wheel notch.
+				if (hoveredPanel != nullptr)
 				{
-					PanelState& state = panelStates[panel];
-					state.scroll -= event.wheel.y * lineHeight * 3;
-					state.stickToEnd = false;
-					if (state.scroll < 0)
-						state.scroll = 0;
+					auto key = panelKeys.find(hoveredPanel);
+					if (key != panelKeys.end())
+					{
+						PanelState& state = panelStates[key->second];
+						state.scroll -= event.wheel.y * lineHeight * 3;
+						state.stickToEnd = false;
+						if (state.scroll < 0)
+							state.scroll = 0;
+					}
 				}
 				break;
 			}
@@ -1434,9 +1718,9 @@ namespace Debug2
 		sink = nullptr;
 	}
 
-	void GlUi::Render(const View& view)
+	void GlUi::Render(const std::shared_ptr<const View>& view)
 	{
-		if (!open || window == nullptr)
+		if (!open || window == nullptr || view == nullptr)
 			return;
 
 		// The emulator draws through its own context on its own thread; this one is made current
@@ -1446,7 +1730,11 @@ namespace Debug2
 
 		SDL_GL_MakeCurrent(window, context);
 
-		cmdHistory = view.cmdHistory;
+		cmdHistory = view->cmdHistory;
+
+		// The snapshot is kept until the next frame, so that the mouse events in between can walk
+		// the tree that is on the screen.
+		renderedView = view;
 
 		int width = 0, height = 0;
 		SDL_GetWindowSize(window, &width, &height);
@@ -1466,12 +1754,31 @@ namespace Debug2
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			panelRects.clear();
+			panelKeys.clear();
+			scrollGeoms.clear();
+			tabHits.clear();
 
 			BeginBatch(width, height);
 			FillRect({ 0, 0, (float)width, (float)height }, ColWindowBg);
 			FlushBatch();
 
-			LayoutPanel(view.root, { 4, 4, (float)width - 8, (float)height - 8 });
+			LayoutPanel(view->root, { 4, 4, (float)width - 8, (float)height - 8 }, "");
+
+			UpdateHover();
+
+			// The panel with the focus is marked and, when its content does not fit, gets the
+			// scrollbar. Both are drawn after the rest, so that they go over the frames of the
+			// panels around it.
+			if (hoveredPanel != nullptr)
+			{
+				auto rect = panelRects.find(hoveredPanel);
+				if (rect != panelRects.end())
+					FrameRect(rect->second, ColPanelFocus, 2.0f);
+
+				auto bar = scrollGeoms.find(hoveredPanel);
+				if (bar != scrollGeoms.end())
+					DrawScrollbar(bar->second);
+			}
 
 			FlushBatch();
 			SDL_GL_SwapWindow(window);

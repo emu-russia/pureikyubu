@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>DolphinSDK GX demo sweep (issue #385)</title>
+<style>
+ body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 1180px; padding: 24px; background:#15171c; color:#dfe3ea; }
+ h1,h2 { color:#fff; } a { color:#7fb2ff; }
+ table { border-collapse: collapse; width: 100%; }
+ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2b2f38; vertical-align: top; font-size: 14px; }
+ th { background:#1d2129; position: sticky; top: 0; }
+ .ok { color:#6ee787; } .flat { color:#ffd166; } .no-frame { color:#ff7b72; }
+ .shot { width: 320px; height: 240px; object-fit: contain; background:#000; border:1px solid #2b2f38; }
+ .kv { display:inline-block; min-width: 74px; color:#9aa4b2; }
+ pre { background:#0f1115; padding:10px; overflow:auto; font-size:12px; border-radius:6px; }
+ .card { background:#1a1d24; border:1px solid #2b2f38; border-radius:8px; padding:16px; margin:14px 0; }
+ .summary span { display:inline-block; margin-right:18px; }
+</style></head><body>
+<h1>DolphinSDK GX demo sweep</h1>
+<p>Every demo in <code>DolphinSDK\HW2\bin\demos\gxdemo</code> (87 ELF binaries) run through the
+emulator's SDL2 port with the DolphinSDK folder mounted as a virtual DVD, for 7 seconds each.
+The method is described in <code>testing/dolphinsdk/Readme.md</code>.</p>
+<p><b>How to read the verdicts.</b> <i>frames</i> counts the <code>GXDrawDone</code>/PE-finish
+interrupts, so a demo that never calls <code>GXDrawDone</code> (the FIFO break-point and
+triple-buffer management demos, for instance) shows 0 even while it renders &mdash; the picture,
+not the counter, decides. <i>flat</i> means the captured picture is a single colour. The notes give
+what the demo's source says it should do, so a flat or missing picture can be judged against it.
+Runs are made without controller input, so demos that only change state on a button show their
+first case.</p>
+<p class="summary"><span><b>87</b> demos</span>
+<span class="ok"><b>72</b> clean</span>
+<span class="flat"><b>3</b> drawn nothing (flat picture)</span>
+<span class="no-frame"><b>6</b> never finished a frame</span></p>
+<p>Three emulator bugs found this way are fixed: the PE draw-sync token was treated as a frame boundary, which swapped the frame half-way through and lost the picture of every demo that puts <code>GXSetDrawSync</code> in the middle of a frame (<code>frb-bound-box</code> came out black); and the <code>XF_IndexLoadRegA..D</code> commands (the indexed matrix/light block loads behind <code>GXLoadPosMtxIndx</code> / <code>GXLoadTexMtxIndx</code>) were logged and thrown away, which left <code>DL-tf-mtx</code> and <code>tf-reflect</code> with no matrices at all. The report below is from the build with both fixes.</p>
+<h2>What is still open</h2>
+<ul>
+<li><code>ind-bump-st</code>, <code>ind-bump-xyz</code> - the generated light map (TEXMAP1, an IA8
+    texture the demo renders into the EFB and copies out with <code>GXCopyTex</code>) is empty. The
+    geometry, the lighting arithmetic, the copy destination against the texture address, the viewport,
+    the scissor and the GL draw order have all been checked and ruled out; what is left is the frame
+    bookkeeping (<code>GPFrameBegin</code>/<code>GL_BeginFrame</code> and the pending copy clears)
+    around a <code>PE_COPY_CMD</code> that arrives before the main loop's first frame.</li>
+<li><code>tev-outline</code> - 3402 primitives and 378 display-list calls reach the command processor
+    and no pixel appears; the per-vertex matrix index is the next thing to check.</li>
+<li><code>G2D-test</code> - one 472-vertex quad batch per frame is drawn as a large dark shape; the 2D
+    layer's scale/projection is the next thing to check.</li>
+<li>The PE bounding box is not emulated: <code>PE_XBOUND</code>/<code>PE_YBOUND</code> latch the BP
+    write but are never updated from the drawn geometry, and the CPU-visible
+    <code>PE_PI_XBOUND0/1</code>, <code>YBOUND0/1</code> pair reads back as 0, so
+    <code>GXReadBoundingBox</code> always answers <code>(0,0,0,0)</code> (gfx-pe 6.17, gfx-pe 8).</li>
+</ul>
+<h2>Per-demo result</h2>
+<table><tr><th>demo</th><th>shot</th><th>frames</th><th>verdict</th><th>what the log and the source say</th></tr>
+<tr><td><b>G2D-test</b><br><span style='color:#9aa4b2'>G2D-test: test game that uses 2D library</span></td><td><img class="shot" src="shots/gxdemo__G2D-test.png"></td><td><span class='kv'>pe</span>0<br><span class='kv'>vi</span>1247<br><span class='kv'>CP 0x20</span>371</td><td class='no-frame'>no-frame</td><td>Runs (the OSReport intro is printed and the TPL is read from the disc), but the picture is a flat dark shape: the G2D scene (tiles, ship sprite, shadow) is missing. The demo is the only one in the set that writes the CP statistics register CP_STAT_SEL (0x20) once per frame (196 times in 7 s), which suggests the frame loop is running but the G2D layer drawing is not producing output.<pre>pe finishes: 0 - the frame counter does not apply here. vi: 742. CP 0x20: 196.
+Source: G2D/G2D-test.c loads gxTests/G2D-00.tpl from the disc (1 441 952 bytes, the log shows exactly three disc reads of that size), then G2DDrawLayer/G2DDrawSprite per frame.
+The emulator log shows the TPL being read, the XF and TEV shaders compiling and a "Unknown CP load, index: 0x20, data: 0x00000000" every frame (CP_STAT_SEL, the GX performance-counter select - 0x20 is (0x2 &lt;&lt; 4) | 0 in the CP command-stream address encoding, see command-processor specs 5.1).
+Open: why the layer draw produces no visible geometry.
+
+Evidence from the draw-command log (one run per demo):
+  - tev-outline submits 3402 primitives and 378 display-list calls in 3 s, so the model and the
+    display list do reach the command processor - the picture (one colour, the demo's own
+    clear colour 160,160,160) is not a missing draw, it is state: the model colour comes from
+    the per-vertex colour (GX_SRC_VTX) and the per-vertex position-matrix index, and the
+    enlarged black cartoon outline is missing too.
+  - ind-bump-xyz / ind-bump-st submit their donut (1900 GX_QUADS of 4 vertices plus strips) and
+    still come out pure black. Their textures come from gxTests/dnt-03.tpl and dnt-02.tpl, both
+    of which exist on the virtual disc, and the same TPL loading path works in tex-fmt-tpl.
+  - G2D-test submits a single draw per frame (GX_QUADS, 472 vertices = 118 quads, about 32/s),
+    which is the 2D layer batch; the captured picture is that layer drawn huge and dark
+    rather than the expected game scene.
+These three are the next cases to work: they all have geometry, so the fault is in the state
+that turns it into pixels (the per-vertex matrix index and the indirect/bump stage).</pre></td></tr>
+<tr><td><b>ind-bump-st</b><br><span style='color:#9aa4b2'>ind-bump-st: show indirect texture bump mapping</span></td><td><img class="shot" src="shots/gxdemo__ind-bump-st.png"></td><td><span class='kv'>pe</span>713<br><span class='kv'>vi</span>1402<br><span class='kv'>CP 0x20</span>195</td><td class='flat'>flat</td><td>Flat black: the indirect bump-mapping demo draws nothing. It uses GXSetTevIndBumpST with the indirect matrix GX_ITM_0 plus a normal-perturbation texture in TEXMAP2.<pre>pe: 872, vi: 881, shot: one colour (0,0,0).
+Source: Indirect/ind-bump-st.c - renderSetup2() calls GXSetTevIndBumpST(GX_TEVSTAGE1, GX_INDTEXSTAGE0, GX_ITM_0); the map file confirms GXSetTevIndBumpST is linked in, so the #ifndef EMU blocks in the demo are not the cause. The demo also calls GXSetIndTexMtx.
+The plain indirect demos (ind-pseudo-3d, ind-tile-test, ind-warp) do render, so the difference is the bump matrix mode (GX_ITM_0/1/2) rather than indirect texturing as such.
+
+Evidence from the draw-command log (one run per demo):
+  - tev-outline submits 3402 primitives and 378 display-list calls in 3 s, so the model and the
+    display list do reach the command processor - the picture (one colour, the demo's own
+    clear colour 160,160,160) is not a missing draw, it is state: the model colour comes from
+    the per-vertex colour (GX_SRC_VTX) and the per-vertex position-matrix index, and the
+    enlarged black cartoon outline is missing too.
+  - ind-bump-xyz / ind-bump-st submit their donut (1900 GX_QUADS of 4 vertices plus strips) and
+    still come out pure black. Their textures come from gxTests/dnt-03.tpl and dnt-02.tpl, both
+    of which exist on the virtual disc, and the same TPL loading path works in tex-fmt-tpl.
+  - G2D-test submits a single draw per frame (GX_QUADS, 472 vertices = 118 quads, about 32/s),
+    which is the 2D layer batch; the captured picture is that layer drawn huge and dark
+    rather than the expected game scene.
+These three are the next cases to work: they all have geometry, so the fault is in the state
+that turns it into pixels (the per-vertex matrix index and the indirect/bump stage).
+
+Narrowed down by experiment: forcing the texture sampler to return white for every map makes the donut appear (2 colours, 16% of the screen), so the geometry, the projection, the TEV structure and the indirect stage all work - it is the texture *values* that are black. Forcing white for map 1 only (TEXMAP1, the light map) reproduces it exactly, while forcing map 0 or 2 changes nothing, so the light map is the black one.
+The light map is generated once before the frame loop: lightMapSetup() renders a hemisphere into the EFB with lighting on (diffuse in COLOR0, specular in ALPHA0) and GXCopyTex(lightMap, FALSE) copies it into an IA8 texture in main memory. The demo also calls showMaps() every frame to display that light map, and nothing of it is visible either, so the texture really is empty.
+Next: instrument which side is empty - the hemisphere render (the light and the two channel controls) or the IA8 texture copy (the emulator does implement TF_IA8 in TextureCopy, and its byte order matches the texture decoder in tx.cpp, so the copy path itself looks consistent).
+
+More evidence (all of it from temporary logs and shader experiments, reverted afterwards):
+  - The copy does run: a TEXCOPY log in PixelEngine::TextureCopy reports exactly one copy for this demo,
+    64x64, fmt=3 (IA8), source (0,0), destination 0x00239F40, a valid main-memory pointer, stride 16.
+    The working frb-copy demo copies 32x32 fmt=4 (RGB565) 354 times through the same code, so the copy
+    engine itself is fine.
+  - The light is a standard specular setup: GXInitSpecularDir + GXInitLightColor(0x88) +
+    GXInitLightAttn(-3, 0, 4, ...) with the comment "Light equation 4x^2 - 3, x = N.H". The emulator's
+    CosineAttenuation computes exactly clamp(a0 + a1*cos + a2*cos^2) = clamp(-3 + 4*cos^2), and the
+    diffuse material is white, so with the illumination term forced to 1.0 the hemisphere must render
+    white.
+  - Forcing the illumination term to 1.0 does NOT make the donut appear, so the lighting of the
+    hemisphere is not the fault: the hemisphere render, the copy and the texture the TEV samples do not
+    meet. The next thing to check is that the address the copy writes (PE_COPY_DST_BASE &lt;&lt; 5, a physical
+    address) and the data pointer of the texture object the TEV samples (a pointer the emulator masks
+    itself) really are the same memory.
+
+Decisive check of the addressing: a temporary log of the texture engine's image address shows the
+light map is programmed at addr=0x00239F40, fmt=3 (IA8), 64x64, 8192 bytes - exactly the destination
+the copy wrote (0x00239F40, fmt=3, 64x64, stride 16). So the copy writes precisely where the sampler
+reads, and the light map is empty only because the EFB the copy read back held nothing.
+The render that should fill it is drawHemisphere() (triangle strips over the whole screen with an
+orthographic projection, white diffuse material, the specular light above), and forcing the
+illumination term to 1.0 still left the picture black - which points at the ordering rather than at
+the values: the GXCopyTex reads the EFB back, and the geometry the demo drew just before it has to be
+in the GL framebuffer by then. Next: check the emulator's GL draw batching/flush order around
+PE_COPY_CMD, i.e. whether ReadEfb sees the draws that the CP issued earlier in the same frame.
+
+Final narrowing of this pass: the copy's readback *succeeds* - the TEXCOPY log line sits after the
+ReadEfb() call and TextureCopy returns early when the readback fails - so the GL context is current,
+glReadPixels runs, and it returns black. The hemisphere the demo drew immediately before the copy is
+therefore not in the framebuffer yet: the emulator clears/starts the GL frame on the draw path
+(GPFrameBegin -&gt; GL_BeginFrame) while PE_COPY_CMD reads the EFB back, so the order of start-frame and
+readback around the first frame is what to look at next (the demo does its one and only light map
+render plus GXCopyTex *before* the main loop, i.e. before the first DEMOBeforeRender).
+
+Also ruled out: the light map render targets the top-left 64x64 of the EFB
+(setupSize -&gt; GXSetViewport(0,0,64,64) + GXSetScissor(0,0,64,64)), and TextureCopy converts that
+rectangle correctly for the GL readback (ReadEfb(srcX, RenderHeight - srcY - h, ...)), so the
+viewport placement is not the reason the copied rectangle is empty. That leaves the frame order:
+GPFrameBegin()/GL_BeginFrame() (which clears) runs from the draw path in cp.cpp, while PE_COPY_CMD
+reads the EFB back - for a copy made before the main loop's first frame the two have to be checked
+against each other.
+
+And the viewport mapping itself is right: GL_SetViewport does glViewport(x, scr_h - (h + y), w, h), i.e.
+it flips GX's top-left origin for GL, and RAS_End() issues glDrawArrays synchronously at GXEnd, so the
+hemisphere really is drawn into the GL buffer before the copy command is walked. What is left for this
+demo is the frame bookkeeping (GPFrameBegin/GL_BeginFrame and the pending copy clears) around a
+PE_COPY_CMD that arrives before the main loop's first frame.
+
+One more hypothesis ruled out: GL_SetScissor documents and implements the Y flip for the scissor
+rectangle ("the programmed scissor rectangle is in screen coordinates, the origin is the top left
+corner of the EFB ... GL measures its scissor box from the bottom left corner, so the Y axis is
+flipped here"), so the 64x64 scissor and the 64x64 viewport agree with the rectangle the copy reads.
+With the geometry, the lighting, the addressing, the viewport, the scissor and the GL draw order all
+checked, what is left is the frame bookkeeping (GPFrameBegin/GL_BeginFrame plus the pending copy
+clears) around a PE_COPY_CMD that arrives before the main loop's first frame.</pre></td></tr>
+<tr><td><b>ind-bump-xyz</b><br><span style='color:#9aa4b2'>ind-bump-xyz: demonstrate bumpXYZ method</span></td><td><img class="shot" src="shots/gxdemo__ind-bump-xyz.png"></td><td><span class='kv'>pe</span>760<br><span class='kv'>vi</span>1438<br><span class='kv'>CP 0x20</span>204</td><td class='flat'>flat</td><td>Same failure as ind-bump-st: flat black. This one uses GXSetTevIndBumpXYZ.<pre>pe: 859, vi: 867, shot: one colour (0,0,0).
+Source: Indirect/ind-bump-xyz.c - renderSetup2() calls GXSetTevIndBumpXYZ(GX_TEVSTAGE1, GX_INDTEXSTAGE0, GX_ITM_0) and GXSetIndTexMtx; GXSetTevIndBumpXYZ is linked in (map file).
+
+Evidence from the draw-command log (one run per demo):
+  - tev-outline submits 3402 primitives and 378 display-list calls in 3 s, so the model and the
+    display list do reach the command processor - the picture (one colour, the demo's own
+    clear colour 160,160,160) is not a missing draw, it is state: the model colour comes from
+    the per-vertex colour (GX_SRC_VTX) and the per-vertex position-matrix index, and the
+    enlarged black cartoon outline is missing too.
+  - ind-bump-xyz / ind-bump-st submit their donut (1900 GX_QUADS of 4 vertices plus strips) and
+    still come out pure black. Their textures come from gxTests/dnt-03.tpl and dnt-02.tpl, both
+    of which exist on the virtual disc, and the same TPL loading path works in tex-fmt-tpl.
+  - G2D-test submits a single draw per frame (GX_QUADS, 472 vertices = 118 quads, about 32/s),
+    which is the 2D layer batch; the captured picture is that layer drawn huge and dark
+    rather than the expected game scene.
+These three are the next cases to work: they all have geometry, so the fault is in the state
+that turns it into pixels (the per-vertex matrix index and the indirect/bump stage).
+
+Narrowed down by experiment: forcing the texture sampler to return white for every map makes the donut appear (2 colours, 16% of the screen), so the geometry, the projection, the TEV structure and the indirect stage all work - it is the texture *values* that are black. Forcing white for map 1 only (TEXMAP1, the light map) reproduces it exactly, while forcing map 0 or 2 changes nothing, so the light map is the black one.
+The light map is generated once before the frame loop: lightMapSetup() renders a hemisphere into the EFB with lighting on (diffuse in COLOR0, specular in ALPHA0) and GXCopyTex(lightMap, FALSE) copies it into an IA8 texture in main memory. The demo also calls showMaps() every frame to display that light map, and nothing of it is visible either, so the texture really is empty.
+Next: instrument which side is empty - the hemisphere render (the light and the two channel controls) or the IA8 texture copy (the emulator does implement TF_IA8 in TextureCopy, and its byte order matches the texture decoder in tx.cpp, so the copy path itself looks consistent).
+
+More evidence (all of it from temporary logs and shader experiments, reverted afterwards):
+  - The copy does run: a TEXCOPY log in PixelEngine::TextureCopy reports exactly one copy for this demo,
+    64x64, fmt=3 (IA8), source (0,0), destination 0x00239F40, a valid main-memory pointer, stride 16.
+    The working frb-copy demo copies 32x32 fmt=4 (RGB565) 354 times through the same code, so the copy
+    engine itself is fine.
+  - The light is a standard specular setup: GXInitSpecularDir + GXInitLightColor(0x88) +
+    GXInitLightAttn(-3, 0, 4, ...) with the comment "Light equation 4x^2 - 3, x = N.H". The emulator's
+    CosineAttenuation computes exactly clamp(a0 + a1*cos + a2*cos^2) = clamp(-3 + 4*cos^2), and the
+    diffuse material is white, so with the illumination term forced to 1.0 the hemisphere must render
+    white.
+  - Forcing the illumination term to 1.0 does NOT make the donut appear, so the lighting of the
+    hemisphere is not the fault: the hemisphere render, the copy and the texture the TEV samples do not
+    meet. The next thing to check is that the address the copy writes (PE_COPY_DST_BASE &lt;&lt; 5, a physical
+    address) and the data pointer of the texture object the TEV samples (a pointer the emulator masks
+    itself) really are the same memory.
+
+Decisive check of the addressing: a temporary log of the texture engine's image address shows the
+light map is programmed at addr=0x00239F40, fmt=3 (IA8), 64x64, 8192 bytes - exactly the destination
+the copy wrote (0x00239F40, fmt=3, 64x64, stride 16). So the copy writes precisely where the sampler
+reads, and the light map is empty only because the EFB the copy read back held nothing.
+The render that should fill it is drawHemisphere() (triangle strips over the whole screen with an
+orthographic projection, white diffuse material, the specular light above), and forcing the
+illumination term to 1.0 still left the picture black - which points at the ordering rather than at
+the values: the GXCopyTex reads the EFB back, and the geometry the demo drew just before it has to be
+in the GL framebuffer by then. Next: check the emulator's GL draw batching/flush order around
+PE_COPY_CMD, i.e. whether ReadEfb sees the draws that the CP issued earlier in the same frame.
+
+Final narrowing of this pass: the copy's readback *succeeds* - the TEXCOPY log line sits after the
+ReadEfb() call and TextureCopy returns early when the readback fails - so the GL context is current,
+glReadPixels runs, and it returns black. The hemisphere the demo drew immediately before the copy is
+therefore not in the framebuffer yet: the emulator clears/starts the GL frame on the draw path
+(GPFrameBegin -&gt; GL_BeginFrame) while PE_COPY_CMD reads the EFB back, so the order of start-frame and
+readback around the first frame is what to look at next (the demo does its one and only light map
+render plus GXCopyTex *before* the main loop, i.e. before the first DEMOBeforeRender).
+
+Also ruled out: the light map render targets the top-left 64x64 of the EFB
+(setupSize -&gt; GXSetViewport(0,0,64,64) + GXSetScissor(0,0,64,64)), and TextureCopy converts that
+rectangle correctly for the GL readback (ReadEfb(srcX, RenderHeight - srcY - h, ...)), so the
+viewport placement is not the reason the copied rectangle is empty. That leaves the frame order:
+GPFrameBegin()/GL_BeginFrame() (which clears) runs from the draw path in cp.cpp, while PE_COPY_CMD
+reads the EFB back - for a copy made before the main loop's first frame the two have to be checked
+against each other.
+
+And the viewport mapping itself is right: GL_SetViewport does glViewport(x, scr_h - (h + y), w, h), i.e.
+it flips GX's top-left origin for GL, and RAS_End() issues glDrawArrays synchronously at GXEnd, so the
+hemisphere really is drawn into the GL buffer before the copy command is walked. What is left for this
+demo is the frame bookkeeping (GPFrameBegin/GL_BeginFrame and the pending copy clears) around a
+PE_COPY_CMD that arrives before the main loop's first frame.
+
+One more hypothesis ruled out: GL_SetScissor documents and implements the Y flip for the scissor
+rectangle ("the programmed scissor rectangle is in screen coordinates, the origin is the top left
+corner of the EFB ... GL measures its scissor box from the bottom left corner, so the Y axis is
+flipped here"), so the 64x64 scissor and the 64x64 viewport agree with the rectangle the copy reads.
+With the geometry, the lighting, the addressing, the viewport, the scissor and the GL draw order all
+checked, what is left is the frame bookkeeping (GPFrameBegin/GL_BeginFrame plus the pending copy
+clears) around a PE_COPY_CMD that arrives before the main loop's first frame.</pre></td></tr>
+<tr><td><b>lit-atn-func</b><br><span style='color:#9aa4b2'>lit-atn-func: convienance light attn. function test</span></td><td><img class="shot" src="shots/gxdemo__lit-atn-func.png"></td><td><span class='kv'>pe</span>0<br><span class='kv'>vi</span>1284<br><span class='kv'>CP 0x20</span>369</td><td class='no-frame'>no-frame</td><td>Two colours only: a black shape on the grey background. The demo walks through 11 light-attenuation functions and should show a shaded surface, so the black object suggests the attenuation lookup is not applied. CP 0x20: 197 (once per frame).<pre>pe finishes: 0 (the GXDrawDone counter does not apply to this run). vi: 728.
+Source: Lighting/lit-atn-func.c - one object, the attenuation function is stepped with the A button, the intro says "to quit hit the start button".
+The shape is drawn (the silhouette is correct) but it is unlit black on the grey clear colour.</pre></td></tr>
+<tr><td><b>mgt-fifo-brkpt</b><br><span style='color:#9aa4b2'>to quit:</span></td><td><img class="shot" src="shots/gxdemo__mgt-fifo-brkpt.png"></td><td><span class='kv'>pe</span>0<br><span class='kv'>vi</span>744<br><span class='kv'>CP 0x20</span>203</td><td class='no-frame'>no-frame</td><td>FIFO break-point demo: it arms the CP break point and stops the FIFO on purpose, so the flat green screen and the missing frame counter are expected behaviour, not a failure.<pre>pe finishes: 0, vi: 64 (the shortest run in the set).
+Source: Management/mgt-fifo-brkpt.c - the demo is about CP_FIFO_BRKL/BRKH and the CP status BRK bit (command-processor specs 4.2).</pre></td></tr>
+<tr><td><b>mgt-triple-buf</b><br><span style='color:#9aa4b2'>Press the X button to pause the animation</span></td><td><img class="shot" src="shots/gxdemo__mgt-triple-buf.png"></td><td><span class='kv'>pe</span>0<br><span class='kv'>vi</span>733<br><span class='kv'>CP 0x20</span>195</td><td class='no-frame'>no-frame</td><td>Triple-buffer management demo; the picture has two colours and no frame was counted, which fits a demo that deliberately switches between three XFBs and waits on draw sync.<pre>pe finishes: 0, vi: 78.
+Source: Management/mgt-triple-buf.c - drives three frame buffers through VI and uses the draw-sync token to know when a buffer is free.</pre></td></tr>
+<tr><td><b>perf-geo</b><br><span style='color:#9aa4b2'>Check immediate mode performance</span></td><td><img class="shot" src="shots/gxdemo__perf-geo.png"></td><td><span class='kv'>pe</span>0<br><span class='kv'>vi</span>743<br><span class='kv'>CP 0x20</span>37</td><td class='no-frame'>no-frame</td><td>A performance measurement demo (green screen). It is meant to be timed, not looked at, so the flat picture is not a rendering failure.<pre>pe finishes: 0, vi: 775. CP 0x20: 0.
+Source: Performance/perf-geo.c - geometry throughput measurement.</pre></td></tr>
+<tr><td><b>tev-outline</b><br><span style='color:#9aa4b2'>tev-outline: cartoon-outline demo</span></td><td><img class="shot" src="shots/gxdemo__tev-outline.png"></td><td><span class='kv'>pe</span>748<br><span class='kv'>vi</span>1423<br><span class='kv'>CP 0x20</span>203</td><td class='flat'>flat</td><td>Flat grey: the outline demo draws nothing. It is one of the two demos in the set that build a display list (GXCallDisplayList) and it also uses an indirect stage.<pre>pe: 898, vi: 906, shot: one colour (160,160,160).
+Source: Tev/tev-outline.c.
+
+Evidence from the draw-command log (one run per demo):
+  - tev-outline submits 3402 primitives and 378 display-list calls in 3 s, so the model and the
+    display list do reach the command processor - the picture (one colour, the demo's own
+    clear colour 160,160,160) is not a missing draw, it is state: the model colour comes from
+    the per-vertex colour (GX_SRC_VTX) and the per-vertex position-matrix index, and the
+    enlarged black cartoon outline is missing too.
+  - ind-bump-xyz / ind-bump-st submit their donut (1900 GX_QUADS of 4 vertices plus strips) and
+    still come out pure black. Their textures come from gxTests/dnt-03.tpl and dnt-02.tpl, both
+    of which exist on the virtual disc, and the same TPL loading path works in tex-fmt-tpl.
+  - G2D-test submits a single draw per frame (GX_QUADS, 472 vertices = 118 quads, about 32/s),
+    which is the 2D layer batch; the captured picture is that layer drawn huge and dark
+    rather than the expected game scene.
+These three are the next cases to work: they all have geometry, so the fault is in the state
+that turns it into pixels (the per-vertex matrix index and the indirect/bump stage).</pre></td></tr>
+<tr><td><b>tex-invalid</b><br><span style='color:#9aa4b2'>tex-invalid: tex cache region allocator test</span></td><td><img class="shot" src="shots/gxdemo__tex-invalid.png"></td><td><span class='kv'>pe</span>0<br><span class='kv'>vi</span>1314<br><span class='kv'>CP 0x20</span>366</td><td class='no-frame'>no-frame</td><td>CP 0x20 is written 175 times (once per row of texture updates per frame); the picture has some content but the demo is the invalid-texture stress test, so a per-case comparison against the source is needed.<pre>pe finishes: 0. vi: 777.
+Source: Texture/tex-invalid.c - after each row of quads it calls GXSetDrawSync(++token) and spins on GXReadDrawSync(); it also uses GXInvalidateTexRegion/GXInvalidateTexAll between rows. The GXReadDrawSync/GXSetDrawSync path is exercised here more than anywhere else in the set.</pre></td></tr>
+<tr><td><b>DL-tf-mtx</b><br><span style='color:#9aa4b2'>Size = 12384</span></td><td><img class="shot" src="shots/gxdemo__DL-tf-mtx.png"></td><td><span class='kv'>pe</span>1430<br><span class='kv'>vi</span>1338<br><span class='kv'>CP 0x20</span>191</td><td class='ok'>ok</td><td>FIXED by this sweep: the display-list model renders now (179 colours; before it was a flat grey screen). The demo loads one matrix per contour with GXLoadPosMtxIndx/GXLoadTexMtxIndx, which the emulator ignored.<pre>Before: one colour (64,64,64). After: 179 colours, 71% background.
+The model itself is still not fully right - the remaining picture is dominated by large flat areas - so the demo is a useful follow-up case for the texture-matrix side of the same path.
+Root cause (fixed in src/cp.cpp): the 0x20..0x3F commands are XF_IndexLoadRegA..D, block loads of the XF matrix/light area whose source address comes from one of the four index arrays (A..D = CP arrays 0xC..0xF). The emulator only logged them, so the matrices never reached the XF.</pre></td></tr>
+<tr><td><b>frb-bound-box</b><br><span style='color:#9aa4b2'>frb-bound-box: bounding box feature demo</span></td><td><img class="shot" src="shots/gxdemo__frb-bound-box.png"></td><td><span class='kv'>pe</span>747<br><span class='kv'>vi</span>1432<br><span class='kv'>CP 0x20</span>200</td><td class='ok'>ok</td><td>FIXED by this sweep: the demo shows its eight coloured cubes now. The cubes and the bounding-box outline were reaching the command processor all along; the picture was lost because the PE draw-sync token was treated as a frame boundary, so the frame was swapped half-way through and the buffer the display copy presented held only the (degenerate) outline. The white outline is still missing: the emulator does not track the bounding box yet.<pre>Before the fix: pure black (one colour). After: 46 colours, 82% background, the eight GXDrawCube
+cubes visible in their material colours.
+
+Root cause (fixed in src/pe.cpp): the PE token path called GPFrameDone(), which presents the frame.
+frb-bound-box puts GXSetDrawSync in the middle of the frame - draw the cubes, sync, wait, read the
+bounding box back, draw the outline - so the swap happened with only the cubes drawn, and the
+display copy at the end of the frame then presented the other back buffer, which held just the
+outline over nothing. A draw-sync token is a synchronisation marker, not the end of a frame; the
+frame is presented at GXDrawDone (PE_FINISH) and at a full-frame display copy (GPDisplayCopy),
+which are the points where the picture is complete.
+
+Evidence gathered before the fix:
+  - CP draw log: 2728 x "Draw: cmd 0x83, vtxnum 24, vat 3" (the cubes) and 341 x "Draw: cmd 0xB0,
+    vtxnum 5, vat 0" (the outline) - the geometry did reach the command processor.
+  - XF lighting log: ambient 0x404040FF, the eight cube materials and channel control 0x00000506
+    (lighting on, light 0, N.L clamped, attenuation off), exactly what the demo asks for.
+  - Forcing the illumination term to 1.0 in the vertex shader still gave black, which ruled the
+    lighting arithmetic out and pointed at the presentation path.
+
+Still open: the bounding box itself. PE_XBOUND/YBOUND (0x55/0x56) latch the BP write but are never
+updated from the drawn geometry, and the CPU-visible PE_PI_XBOUND0/1 and YBOUND0/1 pair
+(0x10/0x12/0x14/0x16) reads back as 0, so GXReadBoundingBox always answers (0,0,0,0) and the white
+outline collapses to a point (gfx-pe 6.17 and gfx-pe 8).</pre></td></tr>
+<tr><td><b>frb-zcopy</b><br><span style='color:#9aa4b2'>frb-zcopy: Z texture copy from EFB</span></td><td><img class="shot" src="shots/gxdemo__frb-zcopy.png"></td><td><span class='kv'>pe</span>253<br><span class='kv'>vi</span>1447<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td>Sparse content: black background with a few short white/yellow segments. The demo copies the EFB Z buffer into a texture and displays it, so the segments may be all that the Z-copy produced.<pre>pe: 295 (well below vi: 956 - the frame counter only counts the GXDrawDone-based frames).
+Source: Framebuffer/frb-zcopy.c.</pre></td></tr>
+<tr><td><b>lit-basic</b><br><span style='color:#9aa4b2'>lit-basic - demonstrate basic lighting controls</span></td><td><img class="shot" src="shots/gxdemo__lit-basic.png"></td><td><span class='kv'>pe</span>723<br><span class='kv'>vi</span>1390<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td>Three flat-shaded red shapes on grey. Correct: the demo is basic lighting control, and the shapes are lit with one light.<pre>pe: 869. Two colours (grey background + red), which is what a flat-shaded lit object looks like.</pre></td></tr>
+<tr><td><b>smp-octa</b><br><span style='color:#9aa4b2'>to quit:</span></td><td><img class="shot" src="shots/gxdemo__smp-octa.png"></td><td><span class='kv'>pe</span>756<br><span class='kv'>vi</span>1425<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td>Reference run: the rotating red/green octahedron from smp-octa.c, 932 frames in 7 s.<pre>pe: 932, vi: 942.</pre></td></tr>
+<tr><td><b>tf-reflect</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tf-reflect.png"></td><td><span class='kv'>pe</span>728<br><span class='kv'>vi</span>1417<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td>FIXED by this sweep: the reflection demo renders its model now (170 colours; before it was a flat grey screen). It loads the position and texture matrices by index (GXLoadPosMtxIndx/GXLoadTexMtxIndx), which the emulator ignored.<pre>Before: one colour (128,128,128). After: 170 colours, 46% dominant.
+Same root cause and fix as DL-tf-mtx (see that entry): the XF index-array block loads were not implemented.</pre></td></tr>
+<tr><td><b>DL-geom</b><br><span style='color:#9aa4b2'>DL-geom: display list test with geometry</span></td><td><img class="shot" src="shots/gxdemo__DL-geom.png"></td><td><span class='kv'>pe</span>769<br><span class='kv'>vi</span>1407<br><span class='kv'>CP 0x20</span>194</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>DL-tex</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__DL-tex.png"></td><td><span class='kv'>pe</span>782<br><span class='kv'>vi</span>1454<br><span class='kv'>CP 0x20</span>202</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>cul-faces</b><br><span style='color:#9aa4b2'>cul-faces: show different culling modes</span></td><td><img class="shot" src="shots/gxdemo__cul-faces.png"></td><td><span class='kv'>pe</span>723<br><span class='kv'>vi</span>1415<br><span class='kv'>CP 0x20</span>199</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>cul-viewport</b><br><span style='color:#9aa4b2'>cul-viewport: demonstrate viewport/scissor controls</span></td><td><img class="shot" src="shots/gxdemo__cul-viewport.png"></td><td><span class='kv'>pe</span>399<br><span class='kv'>vi</span>1482<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-aa-full</b><br><span style='color:#9aa4b2'>frb-aa-full: demonstrate full-frame antialiasing</span></td><td><img class="shot" src="shots/gxdemo__frb-aa-full.png"></td><td><span class='kv'>pe</span>623<br><span class='kv'>vi</span>1421<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-copy</b><br><span style='color:#9aa4b2'>frb-copy: texture copy from EFB test</span></td><td><img class="shot" src="shots/gxdemo__frb-copy.png"></td><td><span class='kv'>pe</span>737<br><span class='kv'>vi</span>1422<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-fld-dbs-aa</b><br><span style='color:#9aa4b2'>frb-fld-dbs-aa: demonstrate double-strike field antialiasing</span></td><td><img class="shot" src="shots/gxdemo__frb-fld-dbs-aa.png"></td><td><span class='kv'>pe</span>837<br><span class='kv'>vi</span>1496<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-fld-dbs</b><br><span style='color:#9aa4b2'>frb-fld-dbs : field rendering, double-strike mode</span></td><td><img class="shot" src="shots/gxdemo__frb-fld-dbs.png"></td><td><span class='kv'>pe</span>839<br><span class='kv'>vi</span>1512<br><span class='kv'>CP 0x20</span>202</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-fld-int-aa</b><br><span style='color:#9aa4b2'>frb-fld-int-aa: demonstrate interlaced field antialiasing</span></td><td><img class="shot" src="shots/gxdemo__frb-fld-int-aa.png"></td><td><span class='kv'>pe</span>793<br><span class='kv'>vi</span>1464<br><span class='kv'>CP 0x20</span>197</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-fld-int</b><br><span style='color:#9aa4b2'>A Button : pause animation while pressed down</span></td><td><img class="shot" src="shots/gxdemo__frb-fld-int.png"></td><td><span class='kv'>pe</span>767<br><span class='kv'>vi</span>1450<br><span class='kv'>CP 0x20</span>199</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>frb-gamma</b><br><span style='color:#9aa4b2'>frb-gamma: gamma correction mode demo</span></td><td><img class="shot" src="shots/gxdemo__frb-gamma.png"></td><td><span class='kv'>pe</span>720<br><span class='kv'>vi</span>1397<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>geo-particle</b><br><span style='color:#9aa4b2'>geo-particle - demonstrate paritcle effects</span></td><td><img class="shot" src="shots/gxdemo__geo-particle.png"></td><td><span class='kv'>pe</span>779<br><span class='kv'>vi</span>1450<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>geo-vtx-fmt</b><br><span style='color:#9aa4b2'>geo-vtx-fmt: test combinations of vertex formats</span></td><td><img class="shot" src="shots/gxdemo__geo-vtx-fmt.png"></td><td><span class='kv'>pe</span>727<br><span class='kv'>vi</span>1416<br><span class='kv'>CP 0x20</span>197</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>ind-pseudo-3d</b><br><span style='color:#9aa4b2'>ind-pseudo-3D: demonstrate pseudo-3D texturing</span></td><td><img class="shot" src="shots/gxdemo__ind-pseudo-3d.png"></td><td><span class='kv'>pe</span>727<br><span class='kv'>vi</span>1347<br><span class='kv'>CP 0x20</span>189</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>ind-tile-test</b><br><span style='color:#9aa4b2'>ind-tile-test: tiled texture map using indirect textures</span></td><td><img class="shot" src="shots/gxdemo__ind-tile-test.png"></td><td><span class='kv'>pe</span>780<br><span class='kv'>vi</span>1454<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>ind-warp</b><br><span style='color:#9aa4b2'>ind-tile-test: tiled texture map using indirect textures</span></td><td><img class="shot" src="shots/gxdemo__ind-warp.png"></td><td><span class='kv'>pe</span>629<br><span class='kv'>vi</span>1313<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-alpha</b><br><span style='color:#9aa4b2'>lit-alpha: one RGB light and one Alpha light</span></td><td><img class="shot" src="shots/gxdemo__lit-alpha.png"></td><td><span class='kv'>pe</span>716<br><span class='kv'>vi</span>1395<br><span class='kv'>CP 0x20</span>203</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-cartoon</b><br><span style='color:#9aa4b2'>lit-cartoon: unclamped diffuse function with</span></td><td><img class="shot" src="shots/gxdemo__lit-cartoon.png"></td><td><span class='kv'>pe</span>619<br><span class='kv'>vi</span>1296<br><span class='kv'>CP 0x20</span>200</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-dist-atn</b><br><span style='color:#9aa4b2'>lit-dist-atn: distance attenuation test</span></td><td><img class="shot" src="shots/gxdemo__lit-dist-atn.png"></td><td><span class='kv'>pe</span>741<br><span class='kv'>vi</span>1423<br><span class='kv'>CP 0x20</span>197</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-multi</b><br><span style='color:#9aa4b2'>lit-multi: multiple lights in one RGB channel</span></td><td><img class="shot" src="shots/gxdemo__lit-multi.png"></td><td><span class='kv'>pe</span>728<br><span class='kv'>vi</span>1412<br><span class='kv'>CP 0x20</span>202</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-prelit</b><br><span style='color:#9aa4b2'>lit-prelit: prelit vertex lighting test</span></td><td><img class="shot" src="shots/gxdemo__lit-prelit.png"></td><td><span class='kv'>pe</span>316<br><span class='kv'>vi</span>1262<br><span class='kv'>CP 0x20</span>189</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-specular</b><br><span style='color:#9aa4b2'>lit-specular: specular lighting test</span></td><td><img class="shot" src="shots/gxdemo__lit-specular.png"></td><td><span class='kv'>pe</span>396<br><span class='kv'>vi</span>1466<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-spot</b><br><span style='color:#9aa4b2'>lit-spot: spot light angle attenuation test</span></td><td><img class="shot" src="shots/gxdemo__lit-spot.png"></td><td><span class='kv'>pe</span>733<br><span class='kv'>vi</span>1412<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-texture</b><br><span style='color:#9aa4b2'>lit-texture: texture with lighting test</span></td><td><img class="shot" src="shots/gxdemo__lit-texture.png"></td><td><span class='kv'>pe</span>723<br><span class='kv'>vi</span>1408<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-tx-alpha</b><br><span style='color:#9aa4b2'>lit-tx-alpha: one RGB and one Alpha light with texture</span></td><td><img class="shot" src="shots/gxdemo__lit-tx-alpha.png"></td><td><span class='kv'>pe</span>748<br><span class='kv'>vi</span>1440<br><span class='kv'>CP 0x20</span>200</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>lit-unclamp</b><br><span style='color:#9aa4b2'>lit-unclamp: clamped/unclamped diffuse func.test</span></td><td><img class="shot" src="shots/gxdemo__lit-unclamp.png"></td><td><span class='kv'>pe</span>716<br><span class='kv'>vi</span>1356<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>mgt-fifo-dual</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__mgt-fifo-dual.png"></td><td><span class='kv'>pe</span>349<br><span class='kv'>vi</span>1213<br><span class='kv'>CP 0x20</span>198</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>mgt-single-buf</b><br><span style='color:#9aa4b2'>frb-single - double-buffer with only 1 XFB</span></td><td><img class="shot" src="shots/gxdemo__mgt-single-buf.png"></td><td><span class='kv'>pe</span>759<br><span class='kv'>vi</span>1449<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>perf-fill</b><br><span style='color:#9aa4b2'>Reading tex obj 0</span></td><td><img class="shot" src="shots/gxdemo__perf-fill.png"></td><td><span class='kv'>pe</span>2809<br><span class='kv'>vi</span>1381<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>perf-sync</b><br><span style='color:#9aa4b2'>perf-sync - demonstrates sampling perf counters</span></td><td><img class="shot" src="shots/gxdemo__perf-sync.png"></td><td><span class='kv'>pe</span>418<br><span class='kv'>vi</span>1099<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>pix-a-comp</b><br><span style='color:#9aa4b2'>pix-a-comp: alpha compare test</span></td><td><img class="shot" src="shots/gxdemo__pix-a-comp.png"></td><td><span class='kv'>pe</span>745<br><span class='kv'>vi</span>1421<br><span class='kv'>CP 0x20</span>202</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>pix-blend</b><br><span style='color:#9aa4b2'>pix-blend: blend mode test</span></td><td><img class="shot" src="shots/gxdemo__pix-blend.png"></td><td><span class='kv'>pe</span>722<br><span class='kv'>vi</span>1385<br><span class='kv'>CP 0x20</span>194</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>pix-fog</b><br><span style='color:#9aa4b2'>pix-fog: fog test</span></td><td><img class="shot" src="shots/gxdemo__pix-fog.png"></td><td><span class='kv'>pe</span>693<br><span class='kv'>vi</span>1369<br><span class='kv'>CP 0x20</span>198</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>pix-logic</b><br><span style='color:#9aa4b2'>pix-logic: logic-ops test</span></td><td><img class="shot" src="shots/gxdemo__pix-logic.png"></td><td><span class='kv'>pe</span>737<br><span class='kv'>vi</span>1422<br><span class='kv'>CP 0x20</span>198</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>pix-z-comp</b><br><span style='color:#9aa4b2'>pix-z-comp: test z compare modes</span></td><td><img class="shot" src="shots/gxdemo__pix-z-comp.png"></td><td><span class='kv'>pe</span>748<br><span class='kv'>vi</span>1426<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>smp-light</b><br><span style='color:#9aa4b2'>to quit:</span></td><td><img class="shot" src="shots/gxdemo__smp-light.png"></td><td><span class='kv'>pe</span>764<br><span class='kv'>vi</span>1455<br><span class='kv'>CP 0x20</span>200</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>smp-onetri</b><br><span style='color:#9aa4b2'>to quit:</span></td><td><img class="shot" src="shots/gxdemo__smp-onetri.png"></td><td><span class='kv'>pe</span>371<br><span class='kv'>vi</span>1408<br><span class='kv'>CP 0x20</span>200</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>smp-onetri_dl</b><br><span style='color:#9aa4b2'>to quit:</span></td><td><img class="shot" src="shots/gxdemo__smp-onetri_dl.png"></td><td><span class='kv'>pe</span>362<br><span class='kv'>vi</span>1405<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>smp-texexample</b><br><span style='color:#9aa4b2'>to quit:</span></td><td><img class="shot" src="shots/gxdemo__smp-texexample.png"></td><td><span class='kv'>pe</span>775<br><span class='kv'>vi</span>1459<br><span class='kv'>CP 0x20</span>199</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>smp-toy</b><br><span style='color:#9aa4b2'>to play:</span></td><td><img class="shot" src="shots/gxdemo__smp-toy.png"></td><td><span class='kv'>pe</span>734<br><span class='kv'>vi</span>1413<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tev-complex</b><br><span style='color:#9aa4b2'>tev-complex: complex multitexture</span></td><td><img class="shot" src="shots/gxdemo__tev-complex.png"></td><td><span class='kv'>pe</span>754<br><span class='kv'>vi</span>1432<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tev-multi</b><br><span style='color:#9aa4b2'>tev-multi: multiple TEV stages test</span></td><td><img class="shot" src="shots/gxdemo__tev-multi.png"></td><td><span class='kv'>pe</span>715<br><span class='kv'>vi</span>1401<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tev-one-op</b><br><span style='color:#9aa4b2'>tev-one-op: one stage test with various inputs</span></td><td><img class="shot" src="shots/gxdemo__tev-one-op.png"></td><td><span class='kv'>pe</span>724<br><span class='kv'>vi</span>1396<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tev-swap</b><br><span style='color:#9aa4b2'>tev-swap: TEV swap mode table demo</span></td><td><img class="shot" src="shots/gxdemo__tev-swap.png"></td><td><span class='kv'>pe</span>788<br><span class='kv'>vi</span>1435<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tev-ztex</b><br><span style='color:#9aa4b2'>tex-ztex: Z texture demo</span></td><td><img class="shot" src="shots/gxdemo__tev-ztex.png"></td><td><span class='kv'>pe</span>770<br><span class='kv'>vi</span>1441<br><span class='kv'>CP 0x20</span>194</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-2-tex</b><br><span style='color:#9aa4b2'>Don't invlidate texture cache</span></td><td><img class="shot" src="shots/gxdemo__tex-2-tex.png"></td><td><span class='kv'>pe</span>394<br><span class='kv'>vi</span>1456<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-filter</b><br><span style='color:#9aa4b2'>tex-filter: texture filter mode test</span></td><td><img class="shot" src="shots/gxdemo__tex-filter.png"></td><td><span class='kv'>pe</span>765<br><span class='kv'>vi</span>1444<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-fmt-cube</b><br><span style='color:#9aa4b2'>tex-fmt-cube: various format test (non-tpl version)</span></td><td><img class="shot" src="shots/gxdemo__tex-fmt-cube.png"></td><td><span class='kv'>pe</span>734<br><span class='kv'>vi</span>1409<br><span class='kv'>CP 0x20</span>193</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-fmt-tpl</b><br><span style='color:#9aa4b2'>Instructions:</span></td><td><img class="shot" src="shots/gxdemo__tex-fmt-tpl.png"></td><td><span class='kv'>pe</span>747<br><span class='kv'>vi</span>1425<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-layer</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tex-layer.png"></td><td><span class='kv'>pe</span>763<br><span class='kv'>vi</span>1447<br><span class='kv'>CP 0x20</span>198</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-lod</b><br><span style='color:#9aa4b2'>tex-lod: advanced LOD filter test</span></td><td><img class="shot" src="shots/gxdemo__tex-lod.png"></td><td><span class='kv'>pe</span>731<br><span class='kv'>vi</span>1416<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-mix-mode</b><br><span style='color:#9aa4b2'>tex-mix-mode: mixture of preloaded/cached tex test</span></td><td><img class="shot" src="shots/gxdemo__tex-mix-mode.png"></td><td><span class='kv'>pe</span>417<br><span class='kv'>vi</span>1518<br><span class='kv'>CP 0x20</span>193</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-preload</b><br><span style='color:#9aa4b2'>tex-preload: texture preloading test</span></td><td><img class="shot" src="shots/gxdemo__tex-preload.png"></td><td><span class='kv'>pe</span>763<br><span class='kv'>vi</span>1439<br><span class='kv'>CP 0x20</span>194</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-tc-alloc</b><br><span style='color:#9aa4b2'>tex-tc-alloc: tex cache region allocator test</span></td><td><img class="shot" src="shots/gxdemo__tex-tc-alloc.png"></td><td><span class='kv'>pe</span>267<br><span class='kv'>vi</span>1474<br><span class='kv'>CP 0x20</span>192</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-tlut</b><br><span style='color:#9aa4b2'>tex-tlut: CI texture with arbitrary TLUT size test</span></td><td><img class="shot" src="shots/gxdemo__tex-tlut.png"></td><td><span class='kv'>pe</span>769<br><span class='kv'>vi</span>1458<br><span class='kv'>CP 0x20</span>199</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tex-wrap</b><br><span style='color:#9aa4b2'>tex-wrap: texture wrap mode test</span></td><td><img class="shot" src="shots/gxdemo__tex-wrap.png"></td><td><span class='kv'>pe</span>765<br><span class='kv'>vi</span>1448<br><span class='kv'>CP 0x20</span>202</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tf-clip-bug</b><br><span style='color:#9aa4b2'>Running...</span></td><td><img class="shot" src="shots/gxdemo__tf-clip-bug.png"></td><td><span class='kv'>pe</span>734<br><span class='kv'>vi</span>1412<br><span class='kv'>CP 0x20</span>197</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tf-mirror</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tf-mirror.png"></td><td><span class='kv'>pe</span>702<br><span class='kv'>vi</span>1372<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tf-pn-mtx</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tf-pn-mtx.png"></td><td><span class='kv'>pe</span>736<br><span class='kv'>vi</span>1419<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tf-stitch</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tf-stitch.png"></td><td><span class='kv'>pe</span>660<br><span class='kv'>vi</span>1343<br><span class='kv'>CP 0x20</span>195</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tf-tg-mtx</b><br><span style='color:#9aa4b2'>No TexGen</span></td><td><img class="shot" src="shots/gxdemo__tf-tg-mtx.png"></td><td><span class='kv'>pe</span>751<br><span class='kv'>vi</span>1428<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-basic</b><br><span style='color:#9aa4b2'>TexGen - Texture coord translate in T</span></td><td><img class="shot" src="shots/gxdemo__tg-basic.png"></td><td><span class='kv'>pe</span>780<br><span class='kv'>vi</span>1458<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-clr-persp</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tg-clr-persp.png"></td><td><span class='kv'>pe</span>750<br><span class='kv'>vi</span>1436<br><span class='kv'>CP 0x20</span>199</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-dual</b><br><span style='color:#9aa4b2'>tg-dual : HW2 dual transform texgen demo</span></td><td><img class="shot" src="shots/gxdemo__tg-dual.png"></td><td><span class='kv'>pe</span>296<br><span class='kv'>vi</span>1270<br><span class='kv'>CP 0x20</span>194</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-emboss</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tg-emboss.png"></td><td><span class='kv'>pe</span>698<br><span class='kv'>vi</span>1365<br><span class='kv'>CP 0x20</span>194</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-light-fx</b><br><span style='color:#9aa4b2'>tg-light-fx: some applications using texgen</span></td><td><img class="shot" src="shots/gxdemo__tg-light-fx.png"></td><td><span class='kv'>pe</span>301<br><span class='kv'>vi</span>1344<br><span class='kv'>CP 0x20</span>193</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-parabolicmap</b><br><span style='color:#9aa4b2'>Opening gxTests/tg-cube.tpl</span></td><td><img class="shot" src="shots/gxdemo__tg-parabolicmap.png"></td><td><span class='kv'>pe</span>407<br><span class='kv'>vi</span>1474<br><span class='kv'>CP 0x20</span>198</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-project</b><br><span style='color:#9aa4b2'></span></td><td><img class="shot" src="shots/gxdemo__tg-project.png"></td><td><span class='kv'>pe</span>732<br><span class='kv'>vi</span>1416<br><span class='kv'>CP 0x20</span>196</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-shadow</b><br><span style='color:#9aa4b2'>tg-shadow: generating shadow by texture projection</span></td><td><img class="shot" src="shots/gxdemo__tg-shadow.png"></td><td><span class='kv'>pe</span>598<br><span class='kv'>vi</span>1281<br><span class='kv'>CP 0x20</span>197</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-shadow2</b><br><span style='color:#9aa4b2'>tg-shadow2: full-scene shadow by object ID map</span></td><td><img class="shot" src="shots/gxdemo__tg-shadow2.png"></td><td><span class='kv'>pe</span>682<br><span class='kv'>vi</span>1324<br><span class='kv'>CP 0x20</span>191</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-shadow3</b><br><span style='color:#9aa4b2'>tg-shadow3: full-scene shadow by Z buffer copy</span></td><td><img class="shot" src="shots/gxdemo__tg-shadow3.png"></td><td><span class='kv'>pe</span>693<br><span class='kv'>vi</span>1368<br><span class='kv'>CP 0x20</span>201</td><td class='ok'>ok</td><td></td></tr>
+<tr><td><b>tg-spheremap</b><br><span style='color:#9aa4b2'>tex 8019a700</span></td><td><img class="shot" src="shots/gxdemo__tg-spheremap.png"></td><td><span class='kv'>pe</span>321<br><span class='kv'>vi</span>1323<br><span class='kv'>CP 0x20</span>200</td><td class='ok'>ok</td><td></td></tr>
+</table></body></html>

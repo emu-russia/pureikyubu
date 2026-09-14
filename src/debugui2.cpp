@@ -42,6 +42,7 @@ namespace Debug2
 		subs.clear();
 
 		title = other.title;
+		info = other.info;
 		split = other.split;
 		items = other.items;
 		cmdline = other.cmdline;
@@ -609,7 +610,8 @@ namespace Debug2
 
 
 		// The mockup layout: the main panel is split vertically into the message history on the
-		// left and the three live panels on the right, which are stacked horizontally.
+		// left and the live panels on the right. The live panels share one space as tabs, which
+		// is what the tabs are for: only one of them needs to be on the screen at a time.
 		root.SetTitle(sessionPath);
 		root.SplitInto(Split::Vertical, 2);
 
@@ -618,16 +620,17 @@ namespace Debug2
 		log->SetCmdline(true);
 
 		Panel& right = root.Sub(1);
-		right.SplitInto(Split::Horizontal, 3);
+		right.SetTitle("Gekko");
+		right.SplitInto(Split::Tabs, 3);
 
 		regs = &right.Sub(0);
-		regs->SetTitle("Gekko Registers");
+		regs->SetTitle("Registers");
 
 		disasm = &right.Sub(1);
-		disasm->SetTitle("Gekko Disassembly");
+		disasm->SetTitle("Disassembly");
 
 		memdump = &right.Sub(2);
-		memdump->SetTitle("Splash Memory");
+		memdump->SetTitle("Memory");
 
 		// Whatever the panels will show, they are never empty: this is also the hint about why
 		// the live panels stay blank until something is running.
@@ -907,8 +910,70 @@ namespace Debug2
 		}
 	}
 
+	void Debugger::SetPanelInfo(Panel* panel, const std::string& value)
+	{
+		if (panel == nullptr || panel->Info() == value)
+			return;
+
+		panel->SetInfo(value);
+		dirty = true;
+	}
+
+	void Debugger::UpdatePanelInfo()
+	{
+		// The performance counters live in the emulated machine, which is not built until an
+		// image is loaded (EMUOpen): asking for them before that walks a null Flipper and takes
+		// the emulator down with it. There is nothing to report before that either.
+		bool loaded = JDI::Hub.ExecuteFastBool("IsLoaded");
+
+		if (loaded)
+		{
+			// The main panel reports the frame rate. The counter is the number of vertical blank
+			// interrupts since the host front end last reset it (the status bar resets it once a
+			// second), so a sample only counts when the counter did not go backwards in between;
+			// the last good estimate then holds until a clean pair of samples comes along.
+			int vis = 0;
+
+			char cmd[0x40];
+			sprintf(cmd, "GetPerformanceCounter %i", (int)Debug::PerfCounter::VIs);
+
+			if (CallJdiReturnInt(cmd, &vis))
+			{
+				uint64_t now = NowMs();
+
+				if (fpsSampled && vis >= (int)fpsCounter && now > fpsTime)
+				{
+					double seconds = (now - fpsTime) / 1000.0;
+					if (seconds >= 0.2)
+						fps = (float)((vis - (int)fpsCounter) / seconds);
+				}
+
+				fpsCounter = (uint64_t)vis;
+				fpsTime = now;
+				fpsSampled = true;
+			}
+		}
+		else
+		{
+			fps = 0;
+			fpsSampled = false;
+		}
+
+		char text[0x40];
+		sprintf(text, "%.01f fps", fps);
+		SetPanelInfo(&root, text);
+
+		// The disassembler panel reports what the processor is doing.
+		bool running = false;
+		if (loaded)
+			CallJdiReturnBool("IsRunning", &running);
+		SetPanelInfo(disasm, running ? "Gekko running" : "Gekko stopped");
+	}
+
 	void Debugger::RefreshLivePanels()
 	{
+		UpdatePanelInfo();
+
 		// The live panels read the emulated machine, so there is nothing to show until it runs.
 		if (!JDI::Hub.ExecuteFastBool("IsLoaded"))
 			return;
@@ -983,7 +1048,7 @@ namespace Debug2
 		lock.Unlock();
 
 		if (view)
-			ui->Render(*view);
+			ui->Render(view);
 	}
 
 	void Debugger::OnUiCommand(const std::string& cmdline)
