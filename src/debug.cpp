@@ -5,6 +5,8 @@ namespace Debug
 
 	ReportHub Msgs;			// Singletone
 
+	bool ConsoleEcho = false;
+
 	void Halt(const char* text, ...)
 	{
 		va_list arg;
@@ -65,6 +67,13 @@ namespace Debug
 		{
 			fprintf(logFile, "[%s] %s", Msgs.DebugChannelToString(chan).c_str(), buf);
 			fflush(logFile);
+		}
+
+		// A headless run has no debugger window to read the message queue from.
+		if (ConsoleEcho)
+		{
+			fputs(buf, stdout);
+			fflush(stdout);
 		}
 
 		Msgs.AddReport(chan, false, buf);

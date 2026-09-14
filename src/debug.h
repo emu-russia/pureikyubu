@@ -68,6 +68,10 @@ namespace Debug
 	// do debugger output
 	void Report(Channel chan, const char* text, ...);
 
+	//! When set, every report is also written to stdout. The headless UI turns it on: an unattended
+	//! run has no debugger window to read the message queue from, so the console is the log.
+	extern bool ConsoleEcho;
+
 	class ReportEntry
 	{
 	public:

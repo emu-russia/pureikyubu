@@ -27,6 +27,32 @@ Build using Visual Studio 2026. Open `scripts/VS2026/pureikyubu.sln` and click B
 and the Win32 front ends have Debug and Release configurations. A legacy Visual Studio 2022 project
 is kept in `scripts/VS2022` for reference.
 
+### Headless
+
+`scripts/VS2026/pureikyubu_headless.vcxproj` is the emulator without a window: no SDL/ImGui front
+end, no OpenGL context, no controller, audio or video output. It is a console application meant for
+unattended runs — a build server, a scripted test, a DolphinSDK demo sweep, a benchmark. It is part
+of the solution (so it is easy to find in the IDE) but is not built by "Build Solution"; build it
+directly:
+
+```
+MSBuild scripts/VS2026/pureikyubu_headless.vcxproj -p:Configuration=Release -p:Platform=x64
+```
+
+On Linux the same target is built with `cmake -DHEADLESS=ON ..`.
+
+The command line options are the usual ones; the difference is that this build has no game
+selector, so an image, the Bootrom or a benchmark has to be requested:
+
+```
+pureikyubu_headless "D:\Isos\game.gcm"      # run it until Ctrl+C
+pureikyubu_headless --ipl                   # run the Bootrom
+pureikyubu_headless --bench game.gcm 30     # measure it and print the report
+```
+
+The reports are also written to the console and to the `EMU_LOG` file, and `--help` lists the
+accepted options.
+
 ### Generic Linux (Ubuntu)
 
 The Linux build does not yet have support for sound and input.

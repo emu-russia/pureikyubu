@@ -32,4 +32,8 @@ namespace Debug
 	void Cui::SetCursor(int x, int y) {}
 
 	void Cui::InvalidateAll() {}
+
+	// The legacy debugger draws its windows through this entry point. There is no console to draw
+	// into in a headless build, so it does nothing (the debugger itself is never opened).
+	void Cui::DrawInternal() {}
 }

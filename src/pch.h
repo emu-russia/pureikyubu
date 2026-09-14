@@ -44,6 +44,12 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+// The headless build redirects the OpenGL entry points to the null backend. It has to happen after
+// the GL headers, because it redefines the GLEW macros (see gfxnull.h).
+#ifdef GFX_NULL
+#include "gfxnull.h"
+#endif
+
 #define SDL_MAIN_HANDLED
 #ifdef _WIN32
 #include "SDL.h"
