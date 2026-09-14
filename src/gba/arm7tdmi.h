@@ -67,6 +67,10 @@ namespace GBA
 		/// <summary>Leave HALT (an interrupt request or a reset wakes the CPU up).</summary>
 		void Wake() { halted = false; }
 
+		/// <summary>True while the core is suspended by HALTCNT (the BIOS's Halt and IntrWait): it
+		/// resumes when an enabled interrupt is requested (GBATEK "HALT/STOP"). A trace uses this to
+		/// show a halted stretch as one line instead of repeating the same address thousands of
+		/// times, which is what makes the trace readable for a program that waits.</summary>
 		bool Halted() const { return halted; }
 
 		// -- registers ---------------------------------------------------------------------
@@ -90,6 +94,7 @@ namespace GBA
 		u32 ReadSPSR() const;
 
 		bool ThumbState() const { return (cpsr & FlagT) != 0; }
+
 		CpuMode Mode() const { return (CpuMode)(cpsr & ModeMask); }
 
 		/// <summary>Switch the mode, banking r13/r14/r8-r12 as the hardware does.</summary>

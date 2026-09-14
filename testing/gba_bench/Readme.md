@@ -126,23 +126,27 @@ These are things the tests look at and report, but do not (yet) pin down as corr
 They are recorded so that they are not mistaken for verified behaviour, and so that the next person
 knows where to look.
 
-* **The real BIOS executes but does not finish its boot.** With an official `gba_bios.bin` in
-  `bios/`, the CPU starts in the BIOS (and the host-side BIOS calls are switched off automatically,
-  as they must be: a real BIOS with intercepted service functions is not a real BIOS), it runs its
-  initialization, sets `POSTFLG`, programs `DISPCNT`, fills the sound registers
+* **The real BIOS runs its boot but its picture does not appear yet.** With an official
+  `gba_bios.bin` in `bios/`, the CPU starts in the BIOS (and the host-side BIOS calls are switched
+  off automatically, as they must be: a real BIOS with intercepted service functions is not a real
+  BIOS), it runs its initialization, sets `POSTFLG`, programs `DISPCNT`, fills the sound registers
   (`SOUNDCNT_X = 0x80`, `SOUNDCNT_H = 0x210E`, `SOUNDBIAS = 0x4200`, `IE = 0x0081`), arms DMA1/DMA2
-  for the sound FIFOs (`CNT_H = 0xB600`) and then spends its time between its `Halt` loop (the
-  `SWI 02h` implementation at `PC = 0x348`: a store to `HALTCNT`, a call to its own interrupt
-  acknowledge helper, `BEQ` back) and the BIOS region at `0x2000-0x2100`. It never reaches the
-  health screen, the logo animation or its jingle: a 15-second recording of the boot is silence
-  (`recordings/gba_bios_boot.wav`, made with the harness's `--wav`). The VBlank interrupt does
-  reach the CPU (the PPU raises it once per frame, and the pending bit stays set while the BIOS
-  waits with `IME = 0`, which is the documented HALT pattern), and the serial port takes part in
-  the probe (`RCNT = 0x4000`, the JOY bus, with 8/32-bit normal-mode transfers around it - a JOY
-  transfer now completes instead of leaving the port busy for ever). What is left is the BIOS's
-  own port/multiboot detection and its sound-driver handshake; the emulator's boot ROM (and the
-  HLE boot, `--no-gba-bootrom`) is what boots cartridges today. `test_bios.cpp` asserts what is
-  certainly true and reports the rest.
+  for the sound FIFOs (`CNT_H = 0xB600`), and then drives the boot animation from its own Thumb code
+  (the routine around `PC = 0x2B48`, which manipulates `DISPCNT` and the animation counter, and the
+  helper at `0x2D5C` it calls). With a **valid** cartridge the animation's data really is
+  decompressed into VRAM (682 bytes of OBJ tiles and 698 of BG data with Metroid Fusion, where the
+  harness's own marker ROM - an invalid header - leaves them empty, which is why the BIOS used to
+  look like it never got there at all) and the animation's palettes and sprites are programmed.
+
+  What is still missing is the picture itself: the animation is drawn as a mode 2 background on
+  **BG3** (256 colours, screen base 23, size 1, area overflow) that is only visible **inside the OBJ
+  window**, which nine mode 2 sprites of 32x64/64x64 dots form, with the sprite palette, `WINOUT =
+  0x3F27` and alpha blending around it - and the frame stays the backdrop colour. The `Disasm`
+  suite and `--trace` (see above) are what made this readable, and the OBJ window had no test until
+  now: `Ppu.ObjWindowMasksTheLayers` covers it and found that the window stamp of one scanline
+  survived into the next. The real BIOS's boot therefore still waits for the picture path to be
+  right, and the emulator's own boot ROM (and the HLE boot, `--no-gba-bootrom`) is what boots
+  cartridges today. `test_bios.cpp` asserts what is certainly true and reports the rest.
 * **Real Game Boy Color cartridge pictures are not trustworthy yet.** The DMG/CGB machine boots,
   runs the emulator's own boot ROM (whose "pureikyubu" wordmark slides in and settles - the
   documentation image), passes all 61 of its tests, and runs Link's Awakening DX with the right

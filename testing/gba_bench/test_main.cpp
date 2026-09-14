@@ -347,6 +347,7 @@ namespace
 	{
 		u32 pc = 0;
 		bool thumb = false;
+		bool halted = false;
 		int size = 2;
 		std::string text;
 	};
@@ -369,9 +370,16 @@ namespace
 			TraceEntry entry;
 			entry.pc = system.Cpu().CurrentPC();
 			entry.thumb = system.Cpu().ThumbState();
-			entry.text = Disassemble(memory, entry.pc, entry.thumb, &entry.size);
+			entry.halted = system.Cpu().Halted();
+			entry.text = entry.halted ? std::string("halted (waiting for IE & IF)") :
+				Disassemble(memory, entry.pc, entry.thumb, &entry.size);
 
-			trace.push_back(entry);
+			// A halted core is stepped (the bus still advances) but recorded once: otherwise a
+			// program that waits out a whole frame fills the trace with one address.
+			if (!entry.halted || trace.empty() || !trace.back().halted ||
+				trace.back().pc != entry.pc)
+				trace.push_back(entry);
+
 			if ((int)trace.size() > count)
 				trace.erase(trace.begin());
 
@@ -406,8 +414,11 @@ namespace
 				(unsigned)system.Cpu().Reg(2), (unsigned)system.Cpu().Reg(3));
 		}
 
-		printf("harness: cpu at %08X, cpsr %08X (%s)\n", (unsigned)system.Cpu().CurrentPC(),
-			(unsigned)system.Cpu().ReadCPSR(), ConditionFlags(system.Cpu().ReadCPSR()).c_str());
+		printf("harness: cpu at %08X, cpsr %08X (%s), IE %04X IF %04X IME %i, DISPSTAT %04X\n",
+			(unsigned)system.Cpu().CurrentPC(), (unsigned)system.Cpu().ReadCPSR(),
+			ConditionFlags(system.Cpu().ReadCPSR()).c_str(),
+			(unsigned)system.Bus().irq.ReadIE(), (unsigned)system.Bus().irq.ReadIF(),
+			(int)system.Bus().irq.ReadIME(), (unsigned)system.Bus().ppu.DispStat());
 	}
 
 	int RunHarness(const HarnessOptions& options)

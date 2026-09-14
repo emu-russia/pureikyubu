@@ -1118,6 +1118,11 @@ namespace GBA
 			pixels[x].priority = 0xFF;
 			pixels[x].semiTransparent = false;
 
+			// The OBJ window region belongs to this line alone: the stamp ApplyWindows reads is
+			// written per line here, so a dot that an OBJ covered on the previous line is not
+			// still part of the window.
+			windowMask[x] = MASK_OUTSIDE;
+
 			bool inObjWindow = false;
 
 			for (int i = 0; i < spriteCount; i++)

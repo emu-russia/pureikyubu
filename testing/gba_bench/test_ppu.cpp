@@ -1080,6 +1080,69 @@ GBA_TEST(Ppu, WindowMasksOneBg)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
 }
 
+// ===========================================================================================
+// The OBJ window
+// ===========================================================================================
+
+GBA_TEST(Ppu, ObjWindowMasksTheLayers)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// A solid BG0 over the whole screen: the tile data at character base block 0, the map in
+	// screen base block 8 (every entry of an untouched map is tile 0 of palette 0).
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
+	WritePal16(bus, 0x0002, 0x03E0);		// BG palette 0 entry 1 = green
+	FillVram(bus, 0x0000, 32, 0x11);
+
+	// An OBJ in "OBJ window" mode (attribute 0 bits 10-11 = 10) whose non-transparent dots mark the
+	// window region; in window mode the OBJ itself is not drawn (GBATEK "OBJ Mode" / "The OBJ
+	// Window"). Its tile is solid colour index 1 in the OBJ tile area.
+	FillVram(bus, OBJ_TILES, 32, 0x11);
+	WriteOam16(bus, 0x00, 20 | (2 << 10));		// Y = 20, OBJ mode 2
+	WriteOam16(bus, 0x02, 10);					// X = 10
+	WriteOam16(bus, 0x04, 0);					// tile 0, priority 0
+
+	// WINOUT bits 0-5 say what is displayed *outside* of every window and bits 8-13 what is
+	// displayed inside the OBJ window (GBATEK 400004Ah): here the background and the colour effect
+	// are shown inside the OBJ window (0x21 in the high half) and nothing at all outside it (0x00
+	// in the low half). WININ is unused because no window 0 or 1 is enabled.
+	WriteReg(bus, WINOUT, 0x2100);
+
+	// DISPCNT: mode 0, BG0 and the OBJ layer (the OBJ window is a function of the OBJ layer), with
+	// the OBJ window enabled by bit 15.
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ | DC_OBJ_WIN);
+
+	bus.ppu.RenderLine(bus, 20);
+
+	// Only the dots the OBJ window covers show the background, and the OBJ itself is not visible
+	// there (mode 2 OBJs are a mask, not a picture).
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x0000);		// outside the window: the backdrop
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);		// inside: BG0
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(17), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(18), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x0000);
+
+	// The window is bounded vertically by the OBJ, so line 19 (above it) shows nothing.
+	bus.ppu.RenderLine(bus, 19);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x0000);
+
+	// Disabling the OBJ window (DISPCNT bit 15) turns the window feature off entirely - with none
+	// of DISPCNT bits 13-15 set, WININ and WINOUT are ignored and every layer is displayed
+	// everywhere (GBATEK 4000000h), so the background comes back over the whole line.
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ);
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+
+	// With the outside region enabling BG0 as well, the window has no visible effect at all.
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ | DC_OBJ_WIN);
+	WriteReg(bus, WINOUT, 0x2121);
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+}
+
 GBA_TEST(Ppu, ForcedBlankIsWhite)
 {
 	GbaBus bus;
