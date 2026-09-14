@@ -111,8 +111,14 @@ void EMUPrintUsage()
 		"                        exit with the number of failed steps as the status code.\n"
 		"  -h, --help            Print this text and exit.\n"
 		"\n"
+#ifdef GFX_NULL
+		"This is the headless build: there is no window and no game selector, so an image (or\n"
+		"--ipl) has to be passed on the command line. Ctrl+C stops an unattended run; the reports\n"
+		"go to the console and to the `EMU_LOG` file.\n";
+#else
 		"With no option the game selector is shown, and a file is started from there (Enter or a\n"
 		"double click). File -> Reopen (F3) runs the last file again.\n";
+#endif
 
 #ifdef _WINDOWS
 	// A windowed application has no console of its own; borrow the one it was started from, so

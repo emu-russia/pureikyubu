@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pureikyubu", "pureikyubu.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDL2", "SDL.vcxproj", "{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pureikyubu_headless", "pureikyubu_headless.vcxproj", "{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug SDL|x64 = Debug SDL|x64
@@ -51,6 +53,14 @@ Global
 		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Release|x64.Build.0 = Release|x64
 		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Release|x86.ActiveCfg = Release|Win32
 		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Release|x86.Build.0 = Release|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug SDL|x64.ActiveCfg = Debug|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug SDL|x86.ActiveCfg = Debug|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug|x64.ActiveCfg = Debug|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Debug|x86.ActiveCfg = Debug|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release SDL|x64.ActiveCfg = Release|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release SDL|x86.ActiveCfg = Release|Win32
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release|x64.ActiveCfg = Release|x64
+		{7C3F9B1E-2A54-4E2F-9C18-6A0D5F4B8E21}.Release|x86.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
