@@ -37,6 +37,12 @@ struct CmdLineOptions
 	bool    noDisc = false;     // `--no-disc`: start with the DVD lid open (no disk), so that the IPL takes its "no disk" path
 	bool    dspJit = false;     // `--dspjit`: run the DSP on the experimental recompiler instead of the interpreter
 
+	// `--selftest`: run the whole startup sequence (the settings, the debug interface
+	// specifications, the emulated hardware and the ROM/memory card files) without creating a
+	// window, print a report and exit with the number of failed steps as the status code. This is
+	// how a startup crash is turned into a readable failure instead of a silent abort.
+	bool    selftest = false;
+
 	// `--image <file>` (or a bare file name): load and run that file right away instead of waiting
 	// for the game selector. The file is a disk image (`.iso`, `.gcm`, `.rvz`) or an executable
 	// (`.dol`, `.elf`).
@@ -57,6 +63,14 @@ extern  CmdLineOptions cmdline;
 /// Print the accepted command line options (the `--help` text) to the console, if there is one.
 /// </summary>
 void EMUPrintUsage();
+
+/// <summary>
+/// Run the emulator's startup sequence headlessly and report what failed. Returns 0 when the
+/// emulator can start, or the number of steps that failed. Every step is wrapped in a catch-all,
+/// so a broken settings file, a bad ROM image or a missing data file is reported instead of
+/// taking the process down with no explanation.
+/// </summary>
+int EMUSelfTest();
 
 /// <summary>
 /// Parse the raw command line of the application (`lpCmdLine` on Windows, `argv` joined by spaces elsewhere).

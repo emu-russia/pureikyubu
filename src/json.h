@@ -10,7 +10,7 @@ class Json
 	// Foolproof
 	static const int MaxDepth = 255;
 	static const int MaxStringSize = 0x1000;
-	static const int MaxElements = 255;				// Deserialize only
+	static const int MaxElements = 0x10000;			// Deserialize only. A runaway-memory guard for one container, not the format's limit
 
 public:
 	class Value;
@@ -58,6 +58,7 @@ private:
 		uint8_t* ptr;
 		size_t offset;
 		size_t maxSize;
+		int depth = 0;					// Nesting depth of the value currently being deserialized
 	};
 
 	static bool IsWhiteSpace(uint8_t value);

@@ -114,6 +114,7 @@
     <ClInclude Include="..\..\src\ui.h" />
     <ClInclude Include="..\..\src\uijdi.h" />
     <ClInclude Include="..\..\src\utils.h" />
+    <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\vi.h" />
     <ClInclude Include="..\..\src\xf.h" />
     <ClInclude Include="..\..\src\video.h" />

@@ -291,13 +291,20 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 	{
-		uint8_t* ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(phys_addr);
-		if (!ptr) {
-			Halt("PI: Unmapped read burst 0x%08X\n", phys_addr);
+		// A burst is a whole 32-byte cache line and the address comes from guest registers (a
+		// locked-cache DMA address or a cache line), so the *whole* window has to be inside main
+		// memory: the old test only asked whether the first byte was mapped, and a burst in the
+		// last 31 bytes of RAM read past the end of the allocation. MIReadBurst indexes the RAM
+		// array with the address it is given, so it gets the decoded (masked) one.
+		uint32_t mem_addr = phys_addr & Verify::MainMemoryMask;
+
+		if (HW->mem->MIGetMemoryPointerForPI(phys_addr, 32) == nullptr)
+		{
+			Report(Channel::PI, "PI: Read burst outside main memory: 0x%08X\n", phys_addr);
 			return;
 		}
 
-		HW->mem->MIReadBurst(phys_addr, burstData);
+		HW->mem->MIReadBurst(mem_addr, burstData);
 	}
 
 	void ProcessorInterface::PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
@@ -307,7 +314,18 @@ namespace Flipper
 		{
 			// PI FIFO
 
-			HW->mem->MIWriteBurst(pi.cp_wrptr, burstData);
+			// The CP FIFO is a window into main memory, and cp_wrptr is assembled from guest
+			// register halves (up to 0x03FFFFE0 = 64 MB - 32, while only 24 or 48 MB are
+			// allocated) with no bound of its own, so the 32 bytes have to be checked against
+			// the allocation before they are written. The pointer is left untouched when the
+			// window does not fit: the burst is simply dropped.
+			if (HW->mem->MIGetMemoryPointerForPI(pi.cp_wrptr, 32) == nullptr)
+			{
+				Report(Channel::PI, "PI: CP FIFO write burst outside main memory: wrptr:0x%08X\n", (uint32_t)pi.cp_wrptr);
+				return;
+			}
+
+			HW->mem->MIWriteBurst(pi.cp_wrptr & Verify::MainMemoryMask, burstData);
 			pi.cp_wrptr += 32;
 
 			if (pi.cp_wrptr == pi.cp_top)
@@ -321,13 +339,15 @@ namespace Flipper
 			return;
 		}
 
-		uint8_t* ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(phys_addr);
-		if (!ptr) {
-			Halt("PI: Unmapped write burst\n");
+		uint32_t mem_addr = phys_addr & Verify::MainMemoryMask;
+
+		if (HW->mem->MIGetMemoryPointerForPI(phys_addr, 32) == nullptr)
+		{
+			Report(Channel::PI, "PI: Write burst outside main memory: 0x%08X\n", phys_addr);
 			return;
 		}
 
-		HW->mem->MIWriteBurst(phys_addr, burstData);
+		HW->mem->MIWriteBurst(mem_addr, burstData);
 	}
 
 	// ---------------------------------------------------------------------------

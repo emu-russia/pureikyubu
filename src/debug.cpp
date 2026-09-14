@@ -11,7 +11,7 @@ namespace Debug
 		char buf[0x1000] = { 0, };
 
 		va_start(arg, text);
-		vsprintf(buf, text, arg);
+		vsnprintf(buf, sizeof(buf), text, arg);
 		va_end(arg);
 
 		// The reason has to reach the report log (`EMU_LOG=<file>`) as well as the debugger's
@@ -47,7 +47,7 @@ namespace Debug
 		static bool logChecked = false;
 
 		va_start(arg, text);
-		vsprintf(buf, text, arg);
+		vsnprintf(buf, sizeof(buf), text, arg);
 		va_end(arg);
 
 		// Optional debug log (useful when no debugger window is open)
@@ -278,7 +278,10 @@ namespace Debug
 		return true;
 	}
 
-	static void Tokenize(char* line, std::vector<std::string>& args)
+	// Splits one command line into arguments. Returns false (instead of throwing) when a
+	// quotation is not closed: an exception here would leave cmd_script, the JDI hub and the
+	// loader with no handler at all and terminate the process.
+	static bool Tokenize(char* line, std::vector<std::string>& args)
 	{
 #define endl    ( line[p] == 0 )
 #define space   ( line[p] == 0x20 )
@@ -303,8 +306,8 @@ namespace Debug
 				{
 					if (endl)
 					{
-						throw "Open quotation";
-						return;
+						args.clear();
+						return false;
 					}
 
 					if (quot || dquot)
@@ -339,11 +342,39 @@ namespace Debug
 #undef quot
 #undef dquot
 #undef endl
+
+		return true;
 	}
 
 	static Json::Value* cmd_script(std::vector<std::string>& args)
 	{
 		size_t i;
+
+		// The JDI parameter check only enforces the minimum declared by the command spec, so a
+		// direct call can still arrive without the file name.
+		if (args.size() < 2)
+		{
+			Report(Channel::Error, "Script: file not specified.\n");
+			return nullptr;
+		}
+
+		// A script that runs itself (directly, or through `load`, which re-runs autoexec.cmd)
+		// would recurse once per line; every level also holds its own copy of the file.
+		static int scriptDepth = 0;
+
+		if (scriptDepth >= 8)
+		{
+			Report(Channel::Error, "Script '%s': too many nested scripts.\n", args[1].c_str());
+			return nullptr;
+		}
+
+		// RAII, so the counter is restored on every early return below as well.
+		struct DepthGuard
+		{
+			DepthGuard() { scriptDepth++; }
+			~DepthGuard() { scriptDepth--; }
+		} depthGuard;
+
 		const char* file;
 		std::vector<std::string> commandArgs;
 
@@ -359,31 +390,38 @@ namespace Debug
 		}
 		sbuf.push_back(0);
 
-		/* Remove all garbage, like tabs. */
+		/* Remove all garbage, like tabs. CR-only files are split as well. */
 		for (i = 0; i < sbuf.size(); i++)
 		{
-			char c = sbuf[i];
-
-			if (c < ' ')
+			if (sbuf[i] < ' ')
 			{
-				c = '\n';
+				sbuf[i] = '\n';
 			}
 		}
 
 		Report(Channel::Norm, "Executing script...\n");
 
 		int cnt = 1;
-		char* ptr = (char*)sbuf.data();
-		while (*ptr)
+		size_t position = 0;
+
+		while (position < sbuf.size())
 		{
 			char line[1000];
-			line[i = 0] = 0;
+			bool truncated = false;
 
-			// Cut string
-			while (*ptr == '\n') ptr++;
-			if (!*ptr) break;
-			while (*ptr != '\n') line[i++] = *ptr++;
-			line[i++] = 0;
+			// The line is always bounded and NUL-terminated; at the end of the script the
+			// loop ends instead of walking past the buffer looking for a '\n'.
+			if (!Verify::ScriptLine(sbuf.data(), sbuf.size(), position, line, sizeof(line), truncated))
+			{
+				break;
+			}
+
+			if (truncated)
+			{
+				// The tail was dropped, so the fragment is not the command that was written.
+				Report(Channel::Error, "%i: line is too long, skipped\n", cnt++);
+				continue;
+			}
 
 			// remove comments
 			char* p = line;
@@ -397,27 +435,22 @@ namespace Debug
 				p++;
 			}
 
-			// empty string ?
-			if (strlen(line) == 0) continue;
-
-			// remove spaces at the end
-			p = &line[strlen(line) - 1];
-			while (*p <= ' ') p--;
-			if (*p) p[1] = 0;
-
-			// remove spaces at the beginning
-			p = line;
-			while (*p <= ' ' && *p) p++;
-
-			// empty string ?
-			if (!*p) continue;
+			// Remove the spaces at the end and find the first non-blank character. A line that
+			// is empty, blank or nothing but a comment comes back as nullptr and is skipped.
+			p = Verify::ScriptTrim(line);
+			if (p == nullptr) continue;
 
 			// execute line
 			if (testempty(line)) continue;
-			Report(Channel::Norm, "%i: %s", cnt++, line);
+			Report(Channel::Norm, "%i: %s", cnt, line);
+			int lineNumber = cnt++;
 
 			commandArgs.clear();
-			Tokenize(line, commandArgs);
+			if (!Tokenize(line, commandArgs))
+			{
+				Report(Channel::Error, "Line %i has an open quotation, skipped\n", lineNumber);
+				continue;
+			}
 			line[0] = 0;
 
 			JDI::Hub.Execute(commandArgs);
@@ -445,6 +478,12 @@ namespace Debug
 
 	static Json::Value* StartProfiler(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Error, "StartProfiler: file not specified.\n");
+			return nullptr;
+		}
+
 		if (profiler)
 		{
 			Report(Channel::Norm, "Already started.\n");
@@ -455,7 +494,7 @@ namespace Debug
 		if (args.size() > 2)
 		{
 			period = atoi(args[2].c_str());
-			period = my_min(2, my_max(period, 50));
+			period = my_max(2, my_min(period, 50));
 		}
 
 		profiler = new SamplingProfiler(args[1].c_str(), period);
@@ -483,6 +522,16 @@ namespace Debug
 
 	static Json::Value* GetChannelName(std::vector<std::string>& args)
 	{
+		// Keep the declared output type even when the argument is missing, so a caller that
+		// dereferences the reply does not crash.
+		if (args.size() < 2)
+		{
+			Report(Channel::Error, "GetChannelName: channel not specified.\n");
+			Json::Value* empty = new Json::Value();
+			empty->type = Json::ValueType::Array;
+			return empty;
+		}
+
 		Channel chan = (Channel)atoi(args[1].c_str());
 
 		Json::Value* output = new Json::Value();
@@ -527,6 +576,15 @@ namespace Debug
 
 	static Json::Value* IsCommandExists(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Error, "IsCommandExists: command name not specified.\n");
+			Json::Value* output = new Json::Value();
+			output->type = Json::ValueType::Bool;
+			output->value.AsBool = false;
+			return output;
+		}
+
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Bool;
 		output->value.AsBool = JDI::Hub.CommandExists(args[1]);
@@ -536,6 +594,15 @@ namespace Debug
 	// Get the value of the debug counter
 	static Json::Value* CmdGetPerformanceCounter(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Error, "GetPerformanceCounter: counter not specified.\n");
+			Json::Value* output = new Json::Value();
+			output->type = Json::ValueType::Int;
+			output->value.AsInt = 0;
+			return output;
+		}
+
 		PerfCounter counter = (PerfCounter)strtoul(args[1].c_str(), nullptr, 0);
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -546,6 +613,12 @@ namespace Debug
 	// Reset the value of the debug counter
 	static Json::Value* CmdResetPerformanceCounter(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Error, "ResetPerformanceCounter: counter not specified.\n");
+			return nullptr;
+		}
+
 		PerfCounter counter = (PerfCounter)strtoul(args[1].c_str(), nullptr, 0);
 		g_PerfCounters->ResetCounter(counter);
 		return nullptr;

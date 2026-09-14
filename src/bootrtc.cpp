@@ -107,6 +107,22 @@ static char* uartf(char* buf)
 	return str;
 }
 
+// The length of an MX chip DMA comes from the guest (EXI_LEN is written without a mask), so the
+// whole destination window is validated here, once, instead of trusting the start address.
+// Returns nullptr (and reports) when the transfer would leave main memory.
+static uint8_t* MXGetDmaDestination(Flipper::ExternalInterface* exi, uint32_t len)
+{
+	uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK, len);
+
+	if (ptr == nullptr)
+	{
+		Report(Channel::EXI, "MX chip dma destination outside of memory (madr:%08X, len:%u)\n",
+			exi->exi.regs[0].madr, len);
+	}
+
+	return ptr;
+}
+
 // MX chip transfers (EXI device 0:1)
 void MXTransfer(void *ctx)
 {
@@ -122,37 +138,64 @@ void MXTransfer(void *ctx)
 		{
 			if (dma)             // dma
 			{
+				// Both windows of the copy are guest-controlled: the length may be up to
+				// 0xFFFFFFFF and the windows above only pin down the first byte of the source.
+				uint32_t len = exi->exi.regs[0].len;
+
 				ofs = exi->exi.mxaddr & 0x7fffffff;
 				if (ofs == 0x20000100)
 				{
-					if (exi->exi.regs[0].len > sizeof(SRAM))
+					if (len > sizeof(SRAM))
 					{
 						Report(Channel::EXI, "wrong input buffer size for SRAM read dma\n");
 						return;
 					}
-					ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
-					memcpy(ptr, &exi->exi.sram, sizeof(SRAM));
+					ptr = MXGetDmaDestination(exi, len);
+					if (ptr == nullptr)
+					{
+						return;
+					}
+					memcpy(ptr, &exi->exi.sram, len);
 					return;
 				}
 				if ((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
 				{
 					if (exi->exi.BootromPresent)
 					{
-						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
+						if (!Verify::Range(ofs, len, exi->exi.bootromSize))
+						{
+							Report(Channel::EXI, "ansi font copy outside of bootrom (ofs:%08X, len:%u)\n", ofs, len);
+							return;
+						}
+						ptr = MXGetDmaDestination(exi, len);
+						if (ptr == nullptr)
+						{
+							return;
+						}
 						memcpy(
 							ptr,
 							&exi->exi.bootrom[ofs],
-							exi->exi.regs[0].len
+							len
 						);
 					}
 					else
 					{
-						assert(exi->exi.ansiFont);
-						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
+						// The window test only bounds the first byte; the font buffer itself is
+						// ANSI_SIZE bytes long.
+						if (exi->exi.ansiFont == nullptr || !Verify::Range(ofs - 0x001fcf00, len, ANSI_SIZE))
+						{
+							Report(Channel::EXI, "ansi font copy outside of font (ofs:%08X, len:%u)\n", ofs, len);
+							return;
+						}
+						ptr = MXGetDmaDestination(exi, len);
+						if (ptr == nullptr)
+						{
+							return;
+						}
 						memcpy(
 							ptr,
 							&exi->exi.ansiFont[ofs - 0x001fcf00],
-							exi->exi.regs[0].len
+							len
 						);
 					}
 					if (exi->exi.log) Report(Channel::EXI, "ansi font copy %08X->%08X (%i)\n",
@@ -163,21 +206,40 @@ void MXTransfer(void *ctx)
 				{
 					if (exi->exi.BootromPresent)
 					{
-						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
+						if (!Verify::Range(ofs, len, exi->exi.bootromSize))
+						{
+							Report(Channel::EXI, "sjis font copy outside of bootrom (ofs:%08X, len:%u)\n", ofs, len);
+							return;
+						}
+						ptr = MXGetDmaDestination(exi, len);
+						if (ptr == nullptr)
+						{
+							return;
+						}
 						memcpy(
 							ptr,
 							&exi->exi.bootrom[ofs],
-							exi->exi.regs[0].len
+							len
 						);
 					}
 					else
 					{
-						assert(exi->exi.sjisFont);
-						ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
+						// The window test only bounds the first byte; the font buffer itself is
+						// SJIS_SIZE bytes long.
+						if (exi->exi.sjisFont == nullptr || !Verify::Range(ofs - 0x001aff00, len, SJIS_SIZE))
+						{
+							Report(Channel::EXI, "sjis font copy outside of font (ofs:%08X, len:%u)\n", ofs, len);
+							return;
+						}
+						ptr = MXGetDmaDestination(exi, len);
+						if (ptr == nullptr)
+						{
+							return;
+						}
 						memcpy(
 							ptr,
 							&exi->exi.sjisFont[ofs - 0x001aff00],
-							exi->exi.regs[0].len
+							len
 						);
 					}
 					if (exi->exi.log) Report(Channel::EXI, "sjis font copy %08X->%08X (%i)\n",
@@ -189,11 +251,20 @@ void MXTransfer(void *ctx)
 
 				if (ofs < exi->exi.bootromSize && exi->exi.BootromPresent)
 				{
-					ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->exi.regs[0].madr & EXI_MADR_MASK);
+					if (!Verify::Range(ofs, len, exi->exi.bootromSize))
+					{
+						Report(Channel::EXI, "bootrom copy outside of bootrom (ofs:%08X, len:%u)\n", ofs, len);
+						return;
+					}
+					ptr = MXGetDmaDestination(exi, len);
+					if (ptr == nullptr)
+					{
+						return;
+					}
 					memcpy(
 						ptr,
 						&exi->exi.bootrom[ofs],
-						exi->exi.regs[0].len
+						len
 					);
 					if (exi->exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
 						exi->exi.regs[0].madr, exi->exi.regs[0].len);
@@ -217,7 +288,15 @@ void MXTransfer(void *ctx)
 				else if ((ofs >= 0x20000100) && (ofs < (0x20000100 + (sizeof(SRAM) << 6))))
 				{
 					int len = EXI_CR_TLEN(exi->exi.regs[0].cr);
-					uint8_t* sofs = (uint8_t*)&exi->exi.sram + ((ofs >> 6) & 0xff) - 4;
+					// The index is masked exactly like the write path, but the multi-byte forms
+					// read on from the index, so the whole access has to be inside the SRAM.
+					uint32_t index = ((ofs - 0x20000100) >> 6) & 0x3F;
+					if (index + (uint32_t)(len + 1) > sizeof(SRAM))
+					{
+						Report(Channel::EXI, "SRAM immediate read outside of SRAM (ofs:%08X, len:%i)\n", ofs, len + 1);
+						return;
+					}
+					uint8_t* sofs = (uint8_t*)&exi->exi.sram + index;
 					uint8_t* rofs = (uint8_t*)&exi->exi.regs[0].data;
 					switch (len)
 					{
@@ -250,7 +329,7 @@ void MXTransfer(void *ctx)
 							exi->exi.mxaddr += 4 << 6;
 							break;
 					}
-					if (exi->exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len + 1);
+					if (exi->exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", index, len + 1);
 					return;
 				}
 				else if (ofs == 0x20010000)
@@ -304,6 +383,16 @@ void MXTransfer(void *ctx)
 						uint8_t* buf = (uint8_t*)&data;
 						for (uint32_t n = 0; n < bytes; n++)
 						{
+							// Keep one byte for the terminator written below: a guest that never
+							// sends CR must not walk out of the buffer (upos is only reset by CR).
+							if (exi->exi.upos >= sizeof(exi->exi.uart) - 1)
+							{
+								exi->exi.uart[exi->exi.upos] = 0;
+								exi->exi.upos = 0;
+								Report(Channel::EXI, "UART buffer overflow, line flushed\n");
+								if (exi->exi.osReport) Report(Channel::Info, "%s", uartf(exi->exi.uart));
+							}
+
 							exi->exi.uart[exi->exi.upos++] = buf[n];
 
 							// output UART buffer after de-select
@@ -431,12 +520,28 @@ static void ReadFST()
 
 	uint32_t ArenaHi = 0;
 	Core->ReadWord(0x80000034, &ArenaHi);
+
+	// The whole FST description comes from the image, so it is bounded before it is used as a
+	// length: a real table stays far below the limit, and the window has to fit in main memory.
+	if (fstSize > DVD_FST_MAX_SIZE)
+	{
+		Report(Channel::HLE, "FST size is too large (%u bytes), skipped\n", fstSize);
+		return;
+	}
+
 	ArenaHi -= fstSize;
-	Core->WriteWord(0x80000034, ArenaHi);
 
 	// load FST into memory
 	DVD::Seek(fstOffs);
-	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(ArenaHi & 0x0fffffff);
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(ArenaHi & 0x0fffffff, fstSize);
+	if (ptr == nullptr)
+	{
+		Report(Channel::HLE, "FST does not fit in main memory (%08X:%u), skipped\n", ArenaHi, fstSize);
+		return;
+	}
+
+	Core->WriteWord(0x80000034, ArenaHi);
+
 	DVD::Read(ptr, fstSize);
 
 	// save fst configuration in lomem
@@ -477,9 +582,23 @@ static void BootApploader()
 	appEntryPoint = appHeader[4];
 	appSize = appHeader[5];
 
+	// The size comes from the image: a real apploader is a few hundred kilobytes, so bound it
+	// with the same 4 MB limit the loader uses elsewhere, and require the whole image to fit in
+	// main memory above 0x81200000.
+	if (appSize > DOL_LIMIT)
+	{
+		Report(Channel::HLE, "apploader size is too large (%u bytes), skipped\n", appSize);
+		return;
+	}
+
 	// load apploader image
 	DVD::Seek(0x2460);
-	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(0x81200000 & 0x0fffffff);
+	ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(0x81200000 & 0x0fffffff, appSize);
+	if (ptr == nullptr)
+	{
+		Report(Channel::HLE, "apploader does not fit in main memory (%u bytes), skipped\n", appSize);
+		return;
+	}
 	DVD::Read(ptr, appSize);
 
 	// set parameters for apploader entrypoint
@@ -533,8 +652,17 @@ static void BootApploader()
 
 		if (size)
 		{
+			// addr and size come back from the apploader (i.e. from the image), so the whole
+			// destination window is validated before DVD::Read copies the section there.
+			ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(addr & 0x0fffffff, size);
+			if (ptr == nullptr)
+			{
+				Report(Channel::HLE, "apploader read does not fit in main memory (offs:%08X size:%08X addr:%08X), stopped\n",
+					offs, size, addr);
+				break;
+			}
+
 			DVD::Seek(offs);
-			ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(addr & 0x0fffffff);
 			DVD::Read(ptr, size);
 
 			Report(Channel::HLE, "apploader read : offs : %08X size : %08X addr : %08X\n",
@@ -641,7 +769,12 @@ void BootROM(HWConfig* config, bool dvd, bool rtc)
 	{
 		// read disk ID information to 0x80000000
 		DVD::Seek(0);
-		ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(0);
+		ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(0, 32);
+		if (ptr == nullptr)
+		{
+			Report(Channel::HLE, "cannot read the disk id, not enough main memory\n");
+			return;
+		}
 		DVD::Read(ptr, 32);
 
 		// additional PAL/NTSC selection hack for old VIConfigure()
@@ -663,8 +796,18 @@ bool IsBootromPALRevision()
 {
 	if (Flipper::HW->exi->exi.BootromPresent) {
 
-		if (strstr((char*)Flipper::HW->exi->exi.bootrom, "PAL")) {
-			return true;
+		// The image is not NUL-terminated, so the search stays inside the loaded size (strstr
+		// would keep reading past the end of the buffer when the image has no zero byte).
+		const char* bootrom = (const char*)Flipper::HW->exi->exi.bootrom;
+		const char* end = bootrom + Flipper::HW->exi->exi.bootromSize;
+
+		while (bootrom < end && *bootrom != 0)
+		{
+			if (bootrom[0] == 'P' && (bootrom + 2) < end && bootrom[1] == 'A' && bootrom[2] == 'L')
+			{
+				return true;
+			}
+			bootrom++;
 		}
 	}
 	return false;
@@ -740,5 +883,12 @@ void LoadBootrom(HWConfig* config, bool& BootromPresent, size_t& bootromSize, ui
 	// Show version
 
 	Report(Channel::MI, "Loaded and descrambled valid Bootrom\n");
-	Report(Channel::Norm, "%s\n", (char*)bootrom_data);
+
+	// The image is not NUL-terminated either: print only the string it really contains.
+	size_t versionLength = 0;
+	while (versionLength < bootromSize && bootrom_data[versionLength] != 0)
+	{
+		versionLength++;
+	}
+	Report(Channel::Norm, "%.*s\n", (int)versionLength, (char*)bootrom_data);
 }

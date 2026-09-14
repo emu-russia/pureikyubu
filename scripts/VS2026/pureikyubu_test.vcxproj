@@ -54,6 +54,7 @@
     <ClCompile Include="..\..\testing\dsp_golden_alu_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_jit_test.cpp" />
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
+    <ClCompile Include="..\..\testing\security_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
       The DSP core, its decoder, its disassembler and the DSP device (memory engine + mailboxes)
@@ -151,6 +152,7 @@
     <ClInclude Include="..\..\src\dspdma.h" />
     <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\utils.h" />
+    <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\gfx.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\xf.h" />

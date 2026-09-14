@@ -311,10 +311,16 @@ namespace Util
 			return 0;
 
 		fseek(f, 0, SEEK_END);
-		size_t size = ftell(f);
+
+		// ftell returns -1 when the position cannot be reported (a pipe, or an error); a caller that
+		// sizes a buffer from it would ask for SIZE_MAX bytes.
+		long end = ftell(f);
 		fclose(f);
 
-		return size;
+		if (end < 0)
+			return 0;
+
+		return (size_t)end;
 	}
 
 	size_t FileSize(const std::string& filename)
@@ -357,26 +363,35 @@ namespace Util
 
 	std::vector<uint8_t> FileLoad(const std::wstring& filename)
 	{
-		if (!FileExists(filename))
-		{
-			return std::vector<uint8_t>();
-		}
-
-		size_t size = FileSize(filename);
-
-		uint8_t* data = new uint8_t[size];
-
 		FILE* f;
 #ifdef _LINUX
 		f = fopen(Util::WstringToString(filename).c_str(), "rb");
 #else
 		_wfopen_s(&f, filename.c_str(), L"rb");
 #endif
+		if (!f)
+		{
+			return std::vector<uint8_t>();
+		}
 
-		fread(data, 1, size, f);
+		// A size of 0 means either an empty file or a stream whose length cannot be measured
+		// (FileSize returns 0 for a failed ftell); neither can be loaded, and a bogus size would
+		// size both the allocation and the read.
+		size_t size = FileSize(filename);
+		if (size == 0)
+		{
+			fclose(f);
+			return std::vector<uint8_t>();
+		}
+
+		uint8_t* data = new uint8_t[size];
+
+		// A short read means the file changed under us; the tail of the buffer would be
+		// uninitialized, so hand back only what was really read.
+		size_t bytesRead = fread(data, 1, size, f);
 		fclose(f);
 
-		std::vector<uint8_t> output(data, data + size);
+		std::vector<uint8_t> output(data, data + bytesRead);
 
 		delete[] data;
 
@@ -399,7 +414,8 @@ namespace Util
 	{
 		FILE* f;
 #ifdef _LINUX
-		f = fopen(Util::WstringToString(filename).c_str(), "rb");
+		// "rb" would make every save fail on the first write; the file has to be opened for writing.
+		f = fopen(Util::WstringToString(filename).c_str(), "wb");
 #else
 		_wfopen_s(&f, filename.c_str(), L"wb");
 #endif
@@ -424,30 +440,73 @@ namespace Util
 		return FileSave(wstr, data);
 	}
 
-	void SplitPath(const char* _Path,
-		char* _Drive,
-		char* _Dir,
-		char* _Filename,
-		char* _Ext)
+#if defined (_LINUX)
+	// A bounded copy that always terminates and reports a component which does not fit, so an
+	// over-long path component fails the split instead of overflowing the caller's buffer.
+	static bool SplitPathCopy(char* dst, size_t dstSize, const char* src)
 	{
+		if (dst == nullptr || dstSize == 0)
+			return false;
+
+		if (src == nullptr)
+		{
+			dst[0] = 0;
+			return true;
+		}
+
+		size_t len = strlen(src);
+		if (len >= dstSize)
+		{
+			dst[0] = 0;
+			return false;
+		}
+
+		memcpy(dst, src, len + 1);
+		return true;
+	}
+#endif
+
+	bool SplitPath(const char* _Path,
+		char* _Drive, size_t _DriveSize,
+		char* _Dir, size_t _DirSize,
+		char* _Filename, size_t _FilenameSize,
+		char* _Ext, size_t _ExtSize)
+	{
+		// On failure every component is empty, so a caller that ignores the result cannot build a
+		// path out of a half-filled buffer.
+		if (_Drive) _Drive[0] = 0;
+		if (_Dir) _Dir[0] = 0;
+		if (_Filename) _Filename[0] = 0;
+		if (_Ext) _Ext[0] = 0;
+
+		if (_Path == nullptr)
+			return false;
 
 #if defined(_WINDOWS)
-		_splitpath(_Path, _Drive, _Dir, _Filename, _Ext);
+		// _splitpath_s reports a too-long component (ERANGE) instead of copying past the given
+		// capacities, which is what the unsized _splitpath did. A UNC prefix is a directory
+		// component like any other and has to fit in _DirSize.
+		return _splitpath_s(_Path,
+			_Drive, _DriveSize,
+			_Dir, _DirSize,
+			_Filename, _FilenameSize,
+			_Ext, _ExtSize) == 0;
 #endif
 
 #if defined (_LINUX)
 
-		_Drive[0] = 0;
-
-		char filename[0x1000] = { 0, };
-
+		// The order matters: basename() and dirname() may modify _Path in place, so base has to be
+		// copied out before dirname() is called on it.
 		char* base = basename((char*)_Path);
+
+		if (!SplitPathCopy(_Filename, _FilenameSize, base) ||
+			!SplitPathCopy(_Ext, _ExtSize, base))
+		{
+			return false;
+		}
 
 		if (base)
 		{
-			strcpy(_Filename, base);
-			strcpy(_Ext, base);
-
 			char* fnamePtr = strchr(_Filename, '.');
 			if (fnamePtr)
 			{
@@ -468,26 +527,20 @@ namespace Util
 				_Ext[0] = 0;
 			}
 		}
-		else
-		{
-			_Filename[0] = 0;
-			_Ext[0] = 0;
-		}
 
 		char* dir = dirname((char*)_Path);
 
-		if (dir)
+		if (!SplitPathCopy(_Dir, _DirSize, dir))
 		{
-			strcpy(_Dir, dir);
-		}
-		else
-		{
-			_Dir[0] = 0;
+			return false;
 		}
 
-
+		return true;
 #endif
 
+#if !defined(_WINDOWS) && !defined(_LINUX)
+		return false;
+#endif
 	}
 
 	/// <summary>

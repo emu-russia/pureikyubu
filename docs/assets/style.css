@@ -354,6 +354,7 @@ figcaption strong { color: var(--text); display: block; font-size: 15px; margin-
 .site-footer a { color: var(--muted); }
 .site-footer a:hover { color: var(--accent); }
 
+
 @media (max-width: 640px) {
   .site-header .wrap { min-height: 58px; gap: 10px; }
   .hero { padding: 40px 0 30px; }

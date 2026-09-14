@@ -295,7 +295,18 @@ namespace Flipper
 		{
 			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
-			GXWriteFifo( (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr) );
+			// The read pointer comes from the FIFO base/top registers the guest writes, so the
+			// whole 32-byte burst has to be inside main memory before it is handed to the GX.
+			uint8_t* fifoBurst = (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr);
+
+			if (fifoBurst == nullptr || !Verify::MainMemory(cpregs.rdptr, 32, HW->mem->MIGetMemorySize()))
+			{
+				Report(Channel::CP, "CP FIFO read pointer is out of main memory: %08X\n", cpregs.rdptr);
+				cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+				return;
+			}
+
+			GXWriteFifo(fifoBurst);
 			cpregs.rdptr += 32;
 			if (cpregs.rdptr == cpregs.top)
 			{
@@ -1339,6 +1350,16 @@ namespace Flipper
 	{
 		uint32_t address = cp.arrayBase[(size_t)arrayId].Base + 
 			(uint32_t)idx * cp.arrayStride[(size_t)arrayId].Stride;
+
+		// The array base, the stride and the index all come from guest state, and the caller
+		// reads up to four 32-bit components from the result, so the whole window has to be
+		// inside main memory: the old code validated the start address only and then walked off
+		// the end of the RAM allocation.
+		if (!Verify::MainMemory(address, 16, HW->mem->MIGetMemorySize()))
+		{
+			return nullptr;
+		}
+
 		return HW->mem->MIGetMemoryPointerForCP(address);
 	}
 
@@ -1369,6 +1390,14 @@ namespace Flipper
 			default:
 				ptr = nullptr;
 				break;
+		}
+
+		// An indirect attribute whose address does not resolve to main memory cannot be read;
+		// the direct form reads from the FIFO itself and does not use the pointer.
+		if (type != VCD_DIRECT && ptr == nullptr)
+		{
+			Report(Channel::CP, "CP: vertex array address is out of main memory\n");
+			return;
 		}
 
 		switch (fmt)
@@ -2114,6 +2143,26 @@ namespace Flipper
 				// above: only bits [25:5] are meaningful, which is the number of 32-byte blocks
 				// (the CP walks the object a block at a time).
 				size_t size = gxfifo->Read32() & 0x03ffffe0;
+
+				// Both the address and the size are guest data, and the list is read through a
+				// raw pointer: a display list that does not fit in main memory would read past
+				// the end of the RAM allocation. An in-range list is still executed, clamped to
+				// what the memory actually holds.
+				if (fifoPtr == nullptr || !Verify::MainMemory(physAddress, size, HW->mem->MIGetMemorySize()))
+				{
+					uint32_t ramSize = (uint32_t)HW->mem->MIGetMemorySize();
+					uint32_t offset = physAddress & Verify::MainMemoryMask;
+
+					Report(Channel::CP, "CP_CMD_CALL_DL: display list out of memory (addr 0x%08X, size %zi)\n",
+						physAddress, size);
+
+					if (fifoPtr == nullptr || offset >= ramSize)
+					{
+						break;
+					}
+
+					size = ramSize - offset;
+				}
 
 				if (logDrawCommands)
 				{

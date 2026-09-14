@@ -5,6 +5,21 @@
 the sources are never copied, so the tests always exercise exactly the code that the emulator
 is built from.
 
+## Input verifiers (issue #381)
+
+A second suite covers the data the emulator loads from the outside world, which is the subject of
+the security review in `wiki/security.md`:
+
+| File | Contents |
+|---|---|
+| `security_test.cpp` | The rules of `src/verify.h` (main-memory windows, image sections, disc reads, FST entries, memory card transfers, the console script reader) and the hardening of `Json::Deserialize`: the malformed settings documents that used to overflow, spin or exhaust the stack must be rejected, the well-formed ones must still parse, and the shipped JDI specification texts must all be accepted. Two of the cases are property tests (200 000 random ranges checked against carry-based arithmetic, and 3000 random binary scripts read with canaries around the line buffer). |
+| `startup_cases.sh` | The startup-crash checks: `pureikyubu --selftest` run against a settings file truncated after `{`, a settings file with a missing colon, an over-long string, a corrupt default settings file, and random files renamed to `.dol` and `.rvz`. Each case must be reported by the self test (non-zero status) and must not crash or hang the process. It needs a built emulator in `build/`. |
+
+`--selftest` runs the emulator's whole startup sequence without a window - the debug interface
+specifications, the settings, the emulated hardware and the ROM/memory card files - and exits with
+the number of failed steps, so a startup failure is a readable status code instead of a disappearing
+process.
+
 ## Layout
 
 | File | Contents |

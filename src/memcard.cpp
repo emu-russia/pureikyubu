@@ -154,8 +154,12 @@ bool MCOpened = false;
 Memcard memcard[2];
 
 static uint32_t MCCalculateOffset(uint32_t mc_address) {
-	if (mc_address & MEMCARD_BA_EXTRABYTES)
-		Halt("MC :: Extra bytes are not supported\n");
+	// Fail closed: Halt() only logs, so returning an offset with the extra-bytes bit
+	// silently masked off would let the malformed request reach the copy below.
+	if (mc_address & MEMCARD_BA_EXTRABYTES) {
+		Report(Channel::MC, "MC :: Extra bytes are not supported\n");
+		return UINT32_MAX;		// no caller's range check accepts this
+	}
 	return        (mc_address & 0x0000007F) |
 		((mc_address & 0x00000300) >> 1) |
 		((mc_address & 0x7FFF0000) >> 7);
@@ -164,6 +168,13 @@ static uint32_t MCCalculateOffset(uint32_t mc_address) {
 static void MCSyncSave(Memcard* memcard, uint32_t offset, uint32_t size) {
 	if (SyncSave == true) // Bad idea!!
 	{
+		// The callers validate their window too, but a save must never fwrite outside
+		// the card image even if one of them forgets.
+		if (memcard->file == nullptr || memcard->data == nullptr ||
+			!Verify::MemcardWindow(memcard->size, offset, size)) {
+			Report(Channel::MC, "MC :: SyncSave offset is out of range\n");
+			return;
+		}
 		if (fseek(memcard->file, offset, SEEK_SET) != 0) {
 			Halt("MC :: Error at seeking the memcard file.\n");
 			return;
@@ -200,8 +211,14 @@ static void MCPageProgramProc(Memcard* memcard, EXIRegs* exi) {
 	uint8_t* abuf;
 	uint32_t size;
 	if (exi->cr & EXI_CR_DMA) {
-		abuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->madr & EXI_MADR_MASK);
 		size = exi->len;
+		// exi->len is a raw guest register: the length-aware accessor rejects both a
+		// MADR outside main memory and a transfer that runs past the end of it.
+		abuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->madr & EXI_MADR_MASK, size);
+		if (abuf == nullptr) {
+			Report(Channel::MC, "PageProgram DMA source is out of main memory\n");
+			return;
+		}
 	}
 	else {
 		Halt("MC : Unhandled Imm Page Program.\n");
@@ -211,8 +228,8 @@ static void MCPageProgramProc(Memcard* memcard, EXIRegs* exi) {
 
 	offset = MCCalculateOffset(auxdata);
 
-	if (offset >= memcard->size + size) {
-		Halt("MC :: PageProgram offset is out of range\n");
+	if (!Verify::MemcardWindow(memcard->size, offset, size)) {
+		Report(Channel::MC, "PageProgram offset is out of range\n");
 		return;
 	}
 
@@ -237,17 +254,28 @@ static void MCReadArrayProc(Memcard* memcard, EXIRegs* exi) {
 	uint32_t size;
 
 	if (exi->cr & EXI_CR_DMA) {
-		abuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->madr & EXI_MADR_MASK);
 		size = exi->len;
+		// Length-aware: the destination has to hold the whole transfer, not just its start.
+		abuf = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForIO(exi->madr & EXI_MADR_MASK, size);
+		if (abuf == nullptr) {
+			Report(Channel::MC, "ReadArray DMA destination is out of main memory\n");
+			return;
+		}
 	}
 	else {
+		// The immediate branch copies into the 4-byte data register, so the length
+		// (the TLEN field, 1..4) can never exceed it.
+		if (auxbytes < 1 || auxbytes > (int)sizeof(exi->data)) {
+			Report(Channel::MC, "ReadArray immediate length is out of range\n");
+			return;
+		}
 		abuf = (uint8_t*)&exi->data;
 		size = auxbytes;
 	}
 
 	offset = MCCalculateOffset(auxdata);
 
-	if (offset >= memcard->size + size) {
+	if (!Verify::MemcardWindow(memcard->size, offset, size)) {
 		Report(Channel::MC, "ReadArray offset is out of range\n");
 		return;
 	}
@@ -264,7 +292,9 @@ static void MCReadArrayProc(Memcard* memcard, EXIRegs* exi) {
 	if (exi->cr & EXI_CR_DMA) {
 	}
 	else {
-		exi->data = _BYTESWAP_UINT32(exi->data) << (auxbytes - 4);
+		// auxbytes is 1..4: shift the byte the guest receives down without the
+		// negative shift count the old `<< (auxbytes - 4)` produced.
+		exi->data = _BYTESWAP_UINT32(exi->data) >> (8 * (4 - auxbytes));
 	}
 }
 /**********************************MCSectorEraseProc*********************************************/
@@ -273,8 +303,9 @@ static void MCSectorEraseProc(Memcard* memcard, EXIRegs* exi) {
 
 	offset = MCCalculateOffset(memcard->commandData);
 
-	if (offset >= memcard->size) {
-		Halt("MC :: Erase sector is out of range\n");
+	// The whole erased sector has to fit, not just its first byte.
+	if (!Verify::MemcardWindow(memcard->size, offset, Memcard_BlockSize)) {
+		Report(Channel::MC, "MC :: Erase sector is out of range\n");
 		return;
 	}
 
@@ -292,8 +323,10 @@ static void MCSectorEraseProc(Memcard* memcard, EXIRegs* exi) {
 static void MCGetEXIDeviceIdProc(Memcard* memcard, EXIRegs* exi) {
 
 	int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
+	// The mask keeps the most significant byte, so the capacity has to be shifted
+	// there the way MCGetStatusProc/MCReadIdProc do it (was always zero).
 	exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
-		((uint32_t)(memcard->size >> 17) & Memcard_BytesMask[auxbytes]);
+		((((uint32_t)(memcard->size >> 17)) << 24) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCCardEraseProc*********************************************/
 static void MCCardEraseProc(Memcard* memcard, EXIRegs* exi) {
@@ -427,8 +460,13 @@ void MCTransfer(void* ctx) {
  * Checks if the memcard is connected.
  */
 bool    MCIsConnected(int cardnum) {
-	// Invalid memcard number
+	// Invalid memcard number. assert() is gone in Release, so this has to be a real
+	// check: a bad slot number would index the memcard[] array out of bounds.
 	assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
+	if (cardnum != MEMCARD_SLOTA && cardnum != MEMCARD_SLOTB) {
+		Report(Channel::MC, "MC :: Invalid memcard slot %d\n", cardnum);
+		return false;
+	}
 	return memcard[cardnum].connected;
 }
 
@@ -493,10 +531,15 @@ void    MCUseFile(int cardnum, const wchar_t* path, bool connect) {
 
 	// Invalid memcard number
 	assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
+	if (cardnum != MEMCARD_SLOTA && cardnum != MEMCARD_SLOTB) {
+		Report(Channel::MC, "MC :: Invalid memcard slot %d\n", cardnum);
+		return;
+	}
 	if (memcard[cardnum].connected == true) MCDisconnect(cardnum);
 
+	// Bounded copy: the path comes from the caller and the buffer is fixed size.
 	memset(memcard[cardnum].filename, 0, sizeof(memcard[cardnum].filename));
-	wcscpy(memcard[cardnum].filename, path);
+	wcsncpy(memcard[cardnum].filename, path, _countof(memcard[cardnum].filename) - 1);
 
 	if (connect == true) MCConnect(cardnum);
 }
@@ -556,7 +599,9 @@ bool MCConnect(int cardnum) {
 	switch (cardnum) {
 		case -1:
 			if (Memcard_Connected[MEMCARD_SLOTA] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTA);
-			if (Memcard_Connected[MEMCARD_SLOTB] /*== TRUE*/)   ret = ret && MCConnect(MEMCARD_SLOTB);
+			// Slot B is attempted even when slot A failed: `ret && MCConnect(...)`
+			// short-circuited and left a working slot B disconnected.
+			if (Memcard_Connected[MEMCARD_SLOTB] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTB) && ret;
 			return ret;
 			break;
 		case MEMCARD_SLOTA:
@@ -581,7 +626,9 @@ bool MCConnect(int cardnum) {
 				return false;
 			}
 
-			for (i = 0; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)memcardSize; i++);
+			// The file size is 64-bit: comparing it after a cast to uint32_t accepted a
+			// 4 GiB + 512 KiB file as a 512 KiB card.
+			for (i = 0; i < Num_Memcard_ValidSizes && (uint64_t)Memcard_ValidSizes[i] != (uint64_t)memcardSize; i++);
 
 			if (i >= Num_Memcard_ValidSizes) {
 				//          DBReport(YEL "memcard file doesnt have a valid size\n");
@@ -591,7 +638,8 @@ bool MCConnect(int cardnum) {
 				return false;
 			}
 
-			memcard[cardnum].size = (uint32_t)memcardSize;
+			// Store the validated entry, never the raw (possibly truncated) file size.
+			memcard[cardnum].size = Memcard_ValidSizes[i];
 			memcard[cardnum].data = (uint8_t*)malloc(memcard[cardnum].size);
 
 			if (memcard[cardnum].data == nullptr) {
@@ -642,11 +690,30 @@ bool MCDisconnect(int cardnum) {
 	bool ret = true;
 	switch (cardnum) {
 		case -1:
-			ret = MCDisconnect(MEMCARD_SLOTA) && MCDisconnect(MEMCARD_SLOTB);
+			// Both slots must be flushed: `a && b` short-circuits and would leave a
+			// slot B whose data was never written to disk.
+			ret = MCDisconnect(MEMCARD_SLOTA);
+			ret = MCDisconnect(MEMCARD_SLOTB) && ret;
 			break;
 		case MEMCARD_SLOTA:
 		case MEMCARD_SLOTB:
 			if (!memcard[cardnum].connected) break;
+
+			// A connected card always has both, but never fseek/fwrite a null FILE*
+			// or touch a null buffer: drop the state instead.
+			if (memcard[cardnum].file == nullptr || memcard[cardnum].data == nullptr) {
+				Report(Channel::MC, "MC :: Slot %d has no file or buffer, disconnecting\n", cardnum);
+				free(memcard[cardnum].data);
+				memcard[cardnum].data = nullptr;
+				memcard[cardnum].ID = 0;
+				memcard[cardnum].size = 0;
+				memcard[cardnum].file = nullptr;
+				memcard[cardnum].status = 0;
+				memcard[cardnum].connected = false;
+				Flipper::HW->exi->EXIDetach(cardnum);
+				ret = false;
+				break;
+			}
 
 			if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0)
 			{

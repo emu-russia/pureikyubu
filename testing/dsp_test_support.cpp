@@ -405,6 +405,18 @@ namespace Flipper
 		}
 		return DspTestMainMemoryBase() + phys_addr;
 	}
+
+	// The length-aware form the DMA engines use in the emulator: the whole window has to fit, not
+	// just its first byte, so the test double has to answer the same question the real MI does.
+	void* MemoryInterface::MIGetMemoryPointerForDSP(uint32_t phys_addr, size_t size)
+	{
+		return DspTestMainMemory(phys_addr & Verify::MainMemoryMask, size);
+	}
+
+	size_t MemoryInterface::MIGetMemorySize()
+	{
+		return TestMainMemorySize;
+	}
 }
 
 // ----------------------------------------------------------------------

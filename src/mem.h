@@ -193,6 +193,24 @@ namespace Flipper
 		void* MIGetMemoryPointerForDebug(uint32_t phys_addr);
 
 		/// <summary>
+		/// The size of the allocated main memory, so that a caller which has to validate a
+		/// transfer window of its own (EXI, AI, DSP, the executable loaders) can ask for it
+		/// instead of assuming the 24 MB of the standard configuration.
+		/// </summary>
+		size_t MIGetMemorySize();
+
+		/// <summary>
+		/// A whole DMA window inside main memory: the accessors above validate the start address
+		/// only, which is not enough for a transfer of an attacker-chosen length, so every block
+		/// that copies into (or out of) main memory uses this one instead. Returns nullptr when
+		/// any byte of [phys_addr, phys_addr + size) is outside the RAM that was allocated.
+		/// </summary>
+		void* MIGetMemoryPointerForIO(uint32_t phys_addr, size_t size);
+		void* MIGetMemoryPointerForDSP(uint32_t phys_addr, size_t size);
+		void* MIGetMemoryPointerForPI(uint32_t phys_addr, size_t size);
+		void* MIGetMemoryPointerForDebug(uint32_t phys_addr, size_t size);
+
+		/// <summary>
 		/// The PI requested a MEM subsystem reset by clearing the PI_CONFIG_MEMRSTB bit (active low). Do something similar to a MEM reset.
 		/// It's not yet clear exactly what happens when the MEM is reset, but it's clear that various FIFOs and the state machines in the MEM itself are cleared,
 		/// and RST is also forwarded to the 1T-SRAM chips to reset the rich internal world of Splash.

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security review — pureikyubu</title>
+<meta name="description" content="Security review of pureikyubu (issue #381): the untrusted input artifacts, the verifiers that check them, and the vulnerabilities that were found and fixed in the loaders, parsers and DMA engines.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="release_notes_1.8.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="security.html" class="active" hreflang="en">EN</a>
+      <a href="security_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<main class="article">
+  <div class="wrap">
+
+    <div class="article-header">
+      <h1>Security review</h1>
+      <div class="meta">
+        Issue #381 · the untrusted inputs, the verifiers, and every vulnerability that was found and fixed
+      </div>
+    </div>
+
+    <p>This page is the report for <a href="https://github.com/emu-russia/pureikyubu/issues/381">issue #381</a>: the emulator's sources were audited for vulnerabilities reachable from the data it loads, every confirmed defect was fixed, and the checks that were missing are now a small, tested layer (<code>src/verify.h</code>).</p>
+    <p>The audit and the fixes were done with this source tree alone (no other emulator was consulted for either the findings or the repairs).</p>
+    <h2>Threat model</h2>
+    <p>An emulator is a program that parses files. A GameCube emulator parses files that come from third parties (game images, homebrew, save files), runs code written by those third parties, and is normally run with the rights of the user. The realistic attacker is therefore:</p>
+    <ul>
+      <li>a <strong>malformed file</strong> the user is asked to open - a "demo" <code>.dol</code>, a patched <code>.gcm</code>/<code>.rvz</code>, a <code>.map</code> file shipped next to it, a <code>.cmd</code> script, a memory card save, a ROM dump - and</li>
+      <li><strong>guest code</strong> running inside the emulator, which drives every DMA engine in the machine (EXI, DSP, DI, AI, PI/CP) with values the emulator must not trust.</li>
+    </ul>
+    <p>A crash is the common outcome of the defects below; several of them were heap or stack buffer overflows with attacker-chosen content, which is worse than a crash.</p>
+    <h2>What the emulator takes from the outside</h2>
+    <table>
+      <thead>
+        <tr><th>Artifact</th><th>Read by</th><th>Entry point</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Settings JSON (<code>Data/DefaultSettings*.json</code>, <code>Data/Settings*.json</code>)</td><td><code>src/config.cpp</code> -&gt; <code>src/json.cpp</code></td><td><code>GetConfig*</code> (first use, i.e. startup)</td></tr>
+        <tr><td>Bootrom image (<code>Data/bootrom.bin</code>)</td><td><code>src/bootrtc.cpp</code></td><td><code>BootROM()</code> on every load</td></tr>
+        <tr><td>DSP IROM/DROM (<code>Data/dsp_irom.bin</code>, <code>Data/dsp_drom.bin</code>)</td><td><code>src/flipper.cpp</code> -&gt; <code>src/dspcore.cpp</code></td><td><code>Flipper::Flipper()</code></td></tr>
+        <tr><td>Executables (<code>.dol</code>, <code>.elf</code>)</td><td><code>src/main.cpp</code></td><td><code>LoadFile()</code> (command line, selector, <code>load</code>)</td></tr>
+        <tr><td>Disc images (<code>.iso</code>, <code>.gcm</code>, <code>.rvz</code>)</td><td><code>src/dvd.cpp</code>, <code>src/rvz.cpp</code>, <code>src/dvddebug.cpp</code></td><td><code>DVD::MountFile()</code>, <code>dvd_fs_init()</code></td></tr>
+        <tr><td>Memory card saves</td><td><code>src/memcard.cpp</code></td><td><code>MCConnect()</code> at startup, guest EXI transfers</td></tr>
+        <tr><td>Command line</td><td><code>src/main.cpp</code></td><td><code>EMUParseCmdLine()</code></td></tr>
+        <tr><td>Emulated IPL ROM and the guest's device registers</td><td><code>src/pi.cpp</code>, <code>src/mem.cpp</code>, <code>src/exi.cpp</code>, <code>src/bootrtc.cpp</code>, <code>src/dsparam.cpp</code>, <code>src/dspdma.cpp</code>, <code>src/cp.cpp</code></td><td>memory traps, the CP FIFO and every DMA engine</td></tr>
+        <tr><td>Console scripts (<code>autoexec.cmd</code>, any <code>script &lt;file&gt;.cmd</code>)</td><td><code>src/debug.cpp</code></td><td><code>CallJdi("script autoexec.cmd")</code> on every load</td></tr>
+        <tr><td>Symbol maps (<code>*.map</code>, <code>Data/makemap.dat</code>)</td><td><code>src/sym.cpp</code></td><td><code>AutoloadMap()</code> on every load</td></tr>
+      </tbody>
+    </table>
+    <h2>Method</h2>
+    <ul>
+      <li>The input surfaces were audited one by one, and every reported defect was re-checked by a second pass that tried to refute it (line numbers, reachability and severity were all verified against the actual source).</li>
+      <li>Findings that exist only because a bound was written as <code>assert()</code> are real defects here: the Release configurations define <code>NDEBUG</code>, so the check is not compiled in, and in a Debug build the assert pops a blocking dialog. Most of what was found was exactly that.</li>
+      <li>Every fix is a check where the untrusted value is used, and the checks that repeat (windows in main memory, image sections, FST entries, card transfers, script lines) were moved into <code>src/verify.h</code>, so the valid range of each field is written down once.</li>
+      <li><code>testing/security_test.cpp</code> turns each of those rules into a unit test, including the malformed artifacts that used to overflow, spin or exhaust the stack.</li>
+    </ul>
+    <h2>The verifiers</h2>
+    <p><code>src/verify.h</code> holds the rules, and every input path uses them:</p>
+    <table>
+      <thead>
+        <tr><th>Verifier</th><th>What it decides</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>Verify::Range(offset, size, limit)</code></td><td>the only place where the two untrusted values are combined; it subtracts instead of adding, so no pair of 32-bit fields can wrap the test</td></tr>
+        <tr><td><code>Verify::MainMemory(phys, size, ramSize)</code></td><td>a window in main memory, with the address masked the way the MI decodes it (the mask allows 64 MB, the allocation is 24 or 48 MB)</td></tr>
+        <tr><td><code>Verify::ImageSection(...)</code></td><td>a section of an executable image: present in the file <strong>and</strong> inside main memory</td></tr>
+        <tr><td><code>Verify::DiscRead(position, length, imageSize)</code></td><td>a disc read, with the signed seek the guest can drive</td></tr>
+        <tr><td><code>Verify::FstRoot / FstEntry / FstName</code></td><td>the disc file system table, whose entries come from the image</td></tr>
+        <tr><td><code>Verify::MemcardWindow(cardSize, offset, length)</code></td><td>a memory card transfer, the length included</td></tr>
+        <tr><td><code>Verify::ScriptLine / Verify::ScriptTrim</code></td><td>the bounded reader for <code>autoexec.cmd</code> and the other console scripts</td></tr>
+      </tbody>
+    </table>
+    <p>The memory interface gained length-aware accessors next to the old start-only ones (<code>MIGetMemoryPointerForIO(phys, size)</code>, <code>...ForDSP</code>, <code>...ForPI</code>, <code>...ForDebug</code>, <code>MIGetMemorySize()</code>), so a block copy can no longer start inside RAM and end outside it.</p>
+    <h2>Findings and fixes</h2>
+    <h3>Settings JSON (<code>src/json.cpp</code>, <code>src/config.cpp</code>)</h3>
+    <p>The settings parser is a hand-written JSON reader, and the settings file is the first thing the emulator reads.</p>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>String token copied into <code>wchar_t str[0x1000]</code>, bound as an <code>assert()</code></td><td>stack overflow</td><td>critical</td><td>a runtime limit; the terminator is written inside the array</td></tr>
+        <tr><td>Numeric token copied into <code>char number[0x100]</code>, bound as an <code>assert()</code></td><td>stack overflow</td><td>high</td><td>a runtime limit in both the integer and the float reader</td></tr>
+        <tr><td>No recursion depth limit while parsing; the depth limit in the writer was an assert</td><td>stack exhaustion</td><td>high</td><td>a depth counter in the parse context, enforced on both paths</td></tr>
+        <tr><td><code>DeserializeObject</code> spun forever when the document ended after a comma</td><td>infinite loop</td><td>high</td><td>the missing end-of-stream/default cases report a syntax error</td></tr>
+        <tr><td>Literal look-ahead computed <code>maxSize - 4</code> in <code>size_t</code>, which wraps for a 1-4 byte file</td><td>out-of-bounds read</td><td>low</td><td>a non-wrapping form of the test</td></tr>
+        <tr><td>UTF-8 continuation bytes read past the end of a truncated string</td><td>out-of-bounds read</td><td>medium</td><td>a real bound, including the escape fetch</td></tr>
+        <tr><td>The number readers recomputed "remaining bytes" and wrapped it after an overrun</td><td>out-of-bounds read</td><td>low</td><td>the remaining length is computed once, the invalid state is rejected</td></tr>
+        <tr><td>Element-count cap was <code>assert()</code>-only</td><td>resource exhaustion</td><td>medium</td><td>a real runaway-memory guard (high enough that no shipped JDI specification is affected)</td></tr>
+        <tr><td><code>strtoull</code> accepted <code>-1</code> and silently wrapped out-of-range numbers</td><td>integer overflow</td><td>low</td><td>canonical form and range are validated before the value is stored</td></tr>
+        <tr><td>A member name could be null when a document was serialized back</td><td>null dereference</td><td>low</td><td>an absent name serializes as an empty name</td></tr>
+        <tr><td>Missing colon was an <code>assert()</code>, so a malformed document aborted a Debug build</td><td>abort / mis-parse</td><td>high</td><td>a real check that rejects the document</td></tr>
+        <tr><td>Config accessors dereferenced a missing section (assert-only) and reinterpreted mistyped values</td><td>null dereference / wild pointer</td><td>high</td><td>a real section lookup and a real type check, failing closed with a report</td></tr>
+        <tr><td>A corrupt *user* settings file aborted the emulator</td><td>availability</td><td>medium</td><td>it is reported and ignored; the shipped defaults are kept</td></tr>
+      </tbody>
+    </table>
+    <h3>Executable images and the command line (<code>src/main.cpp</code>, <code>src/utils.cpp</code>)</h3>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>DOL section size was never checked against the end of the 24 MB RAM buffer</td><td>heap overflow</td><td>critical</td><td>the file range and the RAM window are both verified before the copy</td></tr>
+        <tr><td>DOL section destination pointer could be null (the address mask is 64 MB, the allocation 24 MB)</td><td>null dereference</td><td>high</td><td>the pointer is tested, and the RAM size comes from the memory interface</td></tr>
+        <tr><td>The same two defects in <code>LoadDOLFromMemory</code></td><td>heap overflow</td><td>critical</td><td>the same verifier, with the buffer size supplied by the caller</td></tr>
+        <tr><td>ELF <code>p_filesz</code> copied to <code>p_vaddr</code> with no RAM or file bound, and as a signed length</td><td>heap overflow</td><td>critical</td><td>unsigned length, the program-header table is validated, every section is verified</td></tr>
+        <tr><td><code>wcsrchr</code> result passed to <code>_wcsicmp</code> when the file name has no extension</td><td>null dereference</td><td>high</td><td>the extension is tested in both front ends</td></tr>
+        <tr><td>A disk image that failed to mount was ignored, so the boot sequence read zeroes from an empty drive (a hang)</td><td>hang / availability</td><td>high</td><td>the mount result is checked and the load fails cleanly</td></tr>
+        <tr><td>A failed load left the half-built Flipper object allocated, so the shutdown path crashed</td><td>crash on startup failure</td><td>high</td><td><code>EMUOpen</code> releases the partially built machine and rethrows</td></tr>
+        <tr><td><code>Report</code>/<code>Halt</code> formatted into <code>char buf[0x1000]</code> with unbounded <code>vsprintf</code></td><td>stack overflow</td><td>high</td><td><code>vsnprintf</code> with the real buffer size</td></tr>
+        <tr><td><code>sprintf</code> into 4 KB/512 B stack buffers when the UI builds a console command from a file name</td><td>stack overflow</td><td>high</td><td>bounded formatting; an over-long value is refused, not truncated</td></tr>
+        <tr><td><code>Util::SplitPath</code> copied path components with unsized copies</td><td>stack overflow</td><td>low</td><td>the copy takes the destination size; a long path fails the map autoload cleanly</td></tr>
+        <tr><td><code>Util::FileSave</code> opened files read-only on Linux; <code>FileLoad</code>/<code>FileSize</code> ignored failures</td><td>logic error</td><td>medium</td><td>the open mode and the error paths are correct</td></tr>
+        <tr><td>File/dump commands read <code>args[n]</code> without checking the argument count</td><td>out-of-bounds access</td><td>medium</td><td>every handler validates its arguments</td></tr>
+      </tbody>
+    </table>
+    <h3>Disc images (<code>src/dvd.cpp</code>, <code>src/rvz.cpp</code>, <code>src/dvddebug.cpp</code>)</h3>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>FST root <code>nextOffset</code> drove a byte-swap loop with no bound against the buffer read from the image</td><td>heap overflow</td><td>critical</td><td>the table must fit in the buffer before any entry is touched</td></tr>
+        <tr><td>Negative DVD seek: the sign passed the start-only checks and the length wrapped into a multi-gigabyte <code>fread</code></td><td>heap overflow</td><td>critical</td><td>the seek is rejected and the length is clamped in 64-bit arithmetic</td></tr>
+        <tr><td>FST size from the disc's boot info was read into an address near the end of RAM (up to ~255 MB past the allocation)</td><td>heap overflow</td><td>critical</td><td>the destination window is verified in the boot loader and the size is capped</td></tr>
+        <tr><td>FST entry walk and name-table pointer used image values with no bound</td><td>out-of-bounds read</td><td>medium</td><td>entry and name offsets are verified against the validated table size</td></tr>
+        <tr><td>RVZ: the compressor-data byte was read from a header of exactly minimum size</td><td>out-of-bounds read</td><td>low</td><td>the field is tested for existence before it is read, like every other field</td></tr>
+        <tr><td>RVZ: the chunk size was never compared with the disc, so a crafted header could force a ~4 GB allocation</td><td>resource exhaustion</td><td>medium</td><td>the chunk size is bounded by the disc size and by an absolute cap</td></tr>
+        <tr><td>RVZ: the image file handle leaked on a failed open</td><td>resource leak</td><td>low</td><td>every failure path closes the handle</td></tr>
+        <tr><td>Host paths copied into fixed <code>wchar_t[0x1000]</code> fields with unbounded copies</td><td>stack/heap overflow</td><td>medium</td><td>the length is checked against the destination</td></tr>
+        <tr><td><code>DumpFst</code> walked the image's FST byte-swapping 12 bytes per entry with no bound, and copied the name table into <code>char name[0x200]</code></td><td>heap and stack overflow</td><td>high</td><td>entry indices are verified, the FST is capped, names are built from a bounded range</td></tr>
+      </tbody>
+    </table>
+    <h3>Memory cards and the EXI bus (<code>src/memcard.cpp</code>, <code>src/bootrtc.cpp</code>)</h3>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Page program tested <code>offset &gt;= size + size</code> (a wrapped, start-only check) with an unbounded length</td><td>heap overflow</td><td>critical</td><td>the whole window is verified and the length is bounded by the card</td></tr>
+        <tr><td>Read array had the same check, copying host heap into guest DMA memory</td><td>out-of-bounds read (info leak)</td><td>high</td><td>the same window check on the card and on the main-memory side</td></tr>
+        <tr><td>Sector erase checked only the start of an 8 KB block</td><td>heap overflow</td><td>high</td><td>the whole erased block is verified</td></tr>
+        <tr><td>The DMA pointer was used without a null test, and a valid start could still overrun main memory</td><td>null dereference / heap overflow</td><td>high</td><td>the length-aware accessor is used instead of the start-only one</td></tr>
+        <tr><td>Immediate read shifted by a negative count</td><td>undefined behaviour</td><td>low</td><td>the same result without a negative shift</td></tr>
+        <tr><td>The "extra bytes" address form reported an error and then computed an offset anyway</td><td>logic error</td><td>medium</td><td>the helper fails closed and the callers reject the result</td></tr>
+        <tr><td>A card file larger than 4 GiB was truncated to 32 bits and accepted as valid</td><td>integer overflow</td><td>medium</td><td>the size comparison is done in 64 bits</td></tr>
+        <tr><td>A failing slot A short-circuited the connect (and the flush) of slot B</td><td>logic error</td><td>low</td><td>both slots are attempted</td></tr>
+        <tr><td>MX chip DMA used the transfer length raw for the font/ROM windows and for main memory</td><td>heap overflow</td><td>critical</td><td>both windows are verified at every copy site</td></tr>
+        <tr><td>The SRAM DMA read validated the length and then always copied 64 bytes</td><td>heap overflow</td><td>medium</td><td>it copies exactly what was requested, inside the verified window</td></tr>
+        <tr><td>The SRAM immediate read indexed the 64-byte SRAM with an 8-bit mask</td><td>out-of-bounds read</td><td>low</td><td>the same 6-bit index as the write path</td></tr>
+        <tr><td>The UART receive buffer index was never bounded</td><td>out-of-bounds write</td><td>high</td><td>the index is clamped and the buffer is reported when full</td></tr>
+      </tbody>
+    </table>
+    <h3>DMA engines and the command processor (<code>src/dsparam.cpp</code>, <code>src/dspdma.cpp</code>, <code>src/pi.cpp</code>, <code>src/cp.cpp</code>)</h3>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>ARAM DMA checked the start of the transfer only, against a 16 MB buffer</td><td>heap overflow</td><td>critical</td><td>both the ARAM and the main-memory window are verified</td></tr>
+        <tr><td>DSP DMA clipped the DSP side but not the main-memory side</td><td>heap overflow</td><td>high</td><td>the main-memory window is verified with the length-aware accessor</td></tr>
+        <tr><td>The CP FIFO write pointer was compared with nothing; a 32-byte burst could land anywhere in 64 MB</td><td>heap overflow</td><td>critical</td><td>the burst target and the other FIFO pointers are verified, reads included</td></tr>
+        <tr><td>The CP read pointer was used without any bound when feeding the GX</td><td>out-of-bounds read</td><td>high</td><td>the 32-byte burst is verified against main memory</td></tr>
+        <tr><td>A <code>CALL_DL</code> display list used the guest address and length with no bound</td><td>out-of-bounds read</td><td>high</td><td>the window is verified and clamped to what the memory holds</td></tr>
+        <tr><td>Vertex array fetches used the guest base/stride with no bound, and a null pointer was dereferenced</td><td>out-of-bounds read / null dereference</td><td>high</td><td>the whole component window is verified; an indirect attribute outside memory is skipped</td></tr>
+      </tbody>
+    </table>
+    <h3>Console scripts and debugger commands (<code>src/debug.cpp</code>, <code>src/jdiserver.cpp</code>, <code>src/gekkodebug.cpp</code>)</h3>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>The script line buffer was filled with no bound, and a script without a trailing newline ran off the end of the file</td><td>stack overflow</td><td>critical</td><td><code>Verify::ScriptLine</code>: bounded, NUL-safe, and an over-long line is skipped</td></tr>
+        <tr><td>Trimming an empty or all-blank line walked a pointer below the buffer</td><td>out-of-bounds read/write</td><td>medium</td><td><code>Verify::ScriptTrim</code> handles the empty line first</td></tr>
+        <tr><td>A script could re-enter itself through <code>script</code>/<code>load</code> without limit</td><td>stack exhaustion</td><td>medium</td><td>a recursion depth guard</td></tr>
+        <tr><td>An unterminated quote threw out of the tokenizer with no handler anywhere up to the loader</td><td>availability</td><td>medium</td><td>tokenizing reports the bad line and the script continues</td></tr>
+        <tr><td>The same throw in the JDI server for a console-supplied line</td><td>availability</td><td>medium</td><td>the tokenizer reports the failure; the callers answer with an empty reply</td></tr>
+        <tr><td>The control-character pre-pass normalised a local copy instead of the buffer</td><td>logic error</td><td>medium</td><td>the normalisation writes back</td></tr>
+        <tr><td>Profiler interval clamp was inverted</td><td>logic error</td><td>low</td><td>the documented 2-50 ms range is honoured</td></tr>
+        <tr><td>Register commands indexed <code>gpr/fpr/ps1/spr/sr</code> with an unvalidated argument</td><td>out-of-bounds access</td><td>high</td><td>the index is verified against the register file</td></tr>
+        <tr><td><code>r r0 &lt;&lt; 40</code> shifted by an unvalidated count</td><td>undefined behaviour</td><td>low</td><td>the count is masked to the operand width</td></tr>
+        <tr><td>Disassembly commands dereferenced absent hardware after <code>unload</code></td><td>null dereference</td><td>medium</td><td>they return early when no machine is loaded</td></tr>
+        <tr><td><code>sprintf</code> of a 64-bit register/parameter number into <code>char def[0x10]</code>/<code>def[8]</code></td><td>stack overflow</td><td>high</td><td>a wide enough buffer and <code>snprintf</code></td></tr>
+      </tbody>
+    </table>
+    <h3>Symbol maps and banner text (<code>src/sym.cpp</code>, <code>src/ui.cpp</code>, <code>src/uisdl.cpp</code>)</h3>
+    <table>
+      <thead>
+        <tr><th>Defect</th><th>Kind</th><th>Severity</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>RAW map reader copied an unbounded line into <code>char line[0x1000]</code></td><td>stack overflow</td><td>critical</td><td>the copy is bounded and an over-long line is skipped</td></tr>
+        <tr><td>Empty/comment-only map lines trimmed below the buffer</td><td>out-of-bounds read/write</td><td>high</td><td>the empty case is handled before the walk</td></tr>
+        <tr><td>A map line with an address but no symbol name walked past the end of the line</td><td>out-of-bounds read</td><td>low</td><td>the walk stops at the terminator and the line is skipped</td></tr>
+        <tr><td>CodeWarrior and GCC map readers used <code>sscanf("%s")</code> without field widths</td><td>stack overflow</td><td>high</td><td>field widths on every conversion</td></tr>
+        <tr><td><code>makemap.dat</code>'s function count was used to index the file with no size validation</td><td>out-of-bounds read</td><td>medium</td><td>the count and the name offsets are validated against the loaded file</td></tr>
+        <tr><td>Function names from <code>makemap.dat</code> were widened into <code>wchar_t[0x100]</code> with no bound</td><td>stack overflow</td><td>medium</td><td>the copy is bounded; the dead status block was removed</td></tr>
+        <tr><td>Saving a map cast a wide path to <code>char*</code>, creating a wrongly named file or failing silently</td><td>logic error</td><td>low</td><td>the path stays wide through the save</td></tr>
+        <tr><td>The DVD banner title was copied with an unbounded loop into fixed buffers in both front ends</td><td>stack/heap overflow</td><td>high</td><td>the copies are bounded by the destination</td></tr>
+        <tr><td>The SJIS-to-Unicode conversion kept reading past a title that ended with a lead byte</td><td>out-of-bounds read</td><td>medium</td><td>the second byte is checked before it is consumed; <code>malloc</code> failure is handled</td></tr>
+        <tr><td>Recent-file names shorter than three characters underflowed a length</td><td>out-of-bounds read</td><td>high</td><td>the short case is handled explicitly</td></tr>
+      </tbody>
+    </table>
+    <h2>Catching startup crashes</h2>
+    <p>A startup failure used to look the same from the outside as any other crash: the process disappeared. Two things were added so that it can be seen and reproduced:</p>
+    <ul>
+      <li><strong><code>--selftest</code>.</strong> The emulator runs its whole startup sequence - the debug interface specifications, the settings, the emulated hardware, the ROM and memory card files - without creating a window, prints a step-by-step report and exits with the number of failed steps as its status code. Every step runs in its own catch-all frame, so a broken settings file or a damaged image is reported instead of taking the process down. The file on the command line (if any) is loaded as part of the check.</li>
+    </ul>
+    <pre><code>
+  $ ./pureikyubu --selftest
+  [..] emulator core, debug interface specifications
+  [ok] emulator core, debug interface specifications
+  [..] settings
+  [ok] settings
+  [..] emulated hardware, ROM and memory card files
+  [ok] emulated hardware, ROM and memory card files
+  [..] shutdown
+  [ok] shutdown
+  selftest: the emulator starts, 0 failed step(s)
+</code></pre>
+    <ul>
+      <li><strong><code>testing/startup_cases.sh</code>.</strong> The same check run against deliberately broken inputs: a settings file truncated after <code>{</code>, a settings file with a missing colon, an over-long string, a corrupt default settings file, and random files renamed to <code>.dol</code> and <code>.rvz</code>. Each case must be reported and must not crash the process (before the fixes, the <code>.rvz</code> case hung forever and the <code>.dol</code> case dumped core while shutting down).</li>
+    </ul>
+    <p>For the unit tests, <code>vstest.console &lt;test.dll&gt; /Blame</code> names the test that crashed or hung instead of leaving the run without a summary.</p>
+    <h2>Tests</h2>
+    <p><code>testing/security_test.cpp</code> is part of the normal unit-test suite (<code>scripts/VS2026/pureikyubu_test.slnx</code>) and covers:</p>
+    <ul>
+      <li><strong>the verifiers</strong> - every predicate against the wrap-around cases the old hand-written checks got wrong (a 64 MB mask with a 24 MB allocation, an FST root pointing past the buffer, a card transfer starting exactly at the end of the card), plus a property test that compares <code>Verify::Range</code> with carry-based arithmetic on 200 000 random inputs;</li>
+      <li><strong>the script reader</strong> - ordinary scripts, a last line without a newline, a 5000-byte line, an embedded NUL, blank lines, and a property test that reads 3000 random binary buffers with canaries around the line buffer;</li>
+      <li><strong>the settings parser</strong> - the malformed documents that used to overflow, spin or exhaust the stack must now be rejected (an oversized string, an oversized number, 20000 nested arrays, a document truncated after a comma, a one-byte file, a truncated UTF-8 sequence, a stray comma, a missing colon), while a well-formed document still yields the same values;</li>
+      <li><strong>the shipped JDI specifications</strong> - all eleven specification texts are parsed through the hardened parser, so an over-strict limit cannot take the debug interface down with it.</li>
+    </ul>
+    <h2>What is not covered</h2>
+    <ul>
+      <li><strong>Deliberate simplifications.</strong> <code>testing/Readme.md</code> lists the places where the emulator knowingly simplifies the hardware (the DSP stacks, the missing DSP-side AI-DMA registers, the <code>ls</code> order). None of them is a memory-safety issue and none was changed here.</li>
+      <li><strong>Guest code is trusted with its own console memory.</strong> Guest code can still ask the emulator to fill main memory with DMA data, which is what the hardware does; the checks above ensure that a transfer cannot leave the memory the hardware has, not that the data is meaningful.</li>
+      <li><strong>The JDI console is not a boundary between local users.</strong> A console command can read and write guest memory and files by design; the fixes only remove the cases where a short or malformed command could corrupt the emulator instead of doing what it says.</li>
+      <li><strong>Still on <code>assert()</code>.</strong> A few internal invariants in the graphics pipeline (<code>FifoProcessor</code>'s "enough bytes left" checks, the FIFO overflow/underflow paths) are asserts, so a Debug build can still abort on a malformed display list. In a Release build those reads stay inside the buffer that was validated for the display list, so they are not memory-unsafe; making them runtime checks is left for a follow-up.</li>
+      <li><strong><code>PITranslatePhysicalAddress</code> ignores its length argument</strong>, so a debugger command that walks a structure near the end of RAM can read past it. The path is debugger-only.</li>
+    </ul>
+    <h2>Reproducing the review</h2>
+    <ul>
+      <li>The verifier rules are documented in <code>src/verify.h</code>, and each one is exercised by <code>testing/security_test.cpp</code>.</li>
+      <li>The startup checks are <code>--selftest</code> and <code>testing/startup_cases.sh</code>.</li>
+      <li>An AddressSanitizer build can be made with <code>-DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"</code> in the CMake build; the malformed artifacts described here are a good starting corpus.</li>
+    </ul>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Nintendo GameCube is a trademark of Nintendo; this emulator is not affiliated with Nintendo.</div>
+    <div><a href="security.html">Security</a> · <a href="index.html">Home</a> · <a href="release_notes_1.8.html">Release Notes 1.8</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

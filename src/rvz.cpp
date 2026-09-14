@@ -152,7 +152,9 @@ namespace
 
 			while (size > 0)
 			{
-				size_t take = min(size, sizeof(block) - blockSize);
+				// my_min, not std::min: windows.h defines a min() macro, which turns std::min
+				// into a syntax error in the Windows build.
+				size_t take = my_min(size, sizeof(block) - blockSize);
 				memcpy(block + blockSize, p, take);
 				blockSize += take;
 				p += take;
@@ -227,7 +229,7 @@ namespace
 		{
 			while (count > 0)
 			{
-				size_t length = min(count, K * 4 - position);
+				size_t length = my_min(count, K * 4 - position);
 
 				memcpy(out, (const uint8_t*)buffer.data() + position, length);
 
@@ -374,6 +376,14 @@ namespace DVD
 		if (path == nullptr)
 			return false;
 
+		// The path is copied into the fixed-size fileName member below, so one that cannot fit
+		// is refused instead of copied past the end of it.
+		if (wcslen(path) >= 0x1000)
+		{
+			Report(Channel::Error, "RVZ: image path is too long\n");
+			return false;
+		}
+
 		if (!Open(path))
 		{
 			Close();
@@ -433,18 +443,27 @@ namespace DVD
 		if (file == nullptr)
 			return false;
 
+		bool ok;
+
 #ifdef _WIN32
-		if (_fseeki64(file, 0, SEEK_END) != 0)
-			return false;
+		ok = _fseeki64(file, 0, SEEK_END) == 0;
 #else
-		if (fseeko(file, 0, SEEK_END) != 0)
-			return false;
+		ok = fseeko(file, 0, SEEK_END) == 0;
 #endif
 
-		imageSize = TellFile(file);
+		if (ok)
+		{
+			imageSize = TellFile(file);
+			ok = imageSize >= Header1Size + Header2MinSize;
+		}
 
-		if (imageSize < Header1Size + Header2MinSize)
+		if (!ok)
+		{
+			// Close the handle on every failure path: Mount also calls Close(), but Open must
+			// not leak one for callers that do not.
+			Close();
 			return false;
+		}
 
 		return true;
 	}
@@ -521,6 +540,14 @@ namespace DVD
 
 	bool RvzImage::ReadTables(const std::vector<uint8_t>& header2)
 	{
+		// ReadHeader accepts a header 2 of exactly Header2MinSize bytes, so every field is only
+		// read after the size that actually holds it has been checked.
+		if (header2.size() < Header2MinSize)
+		{
+			Report(Channel::DVD, "RVZ: header 2 is too small (%zi bytes)\n", header2.size());
+			return false;
+		}
+
 		const uint8_t* h = header2.data();
 
 		const uint32_t discType = ReadBE32(h + 0x00);
@@ -536,6 +563,17 @@ namespace DVD
 		const uint32_t numberOfGroupEntries = ReadBE32(h + 0xC4);
 		const uint64_t groupEntriesOffset = ReadBE64(h + 0xC8);
 		const uint32_t groupEntriesSize = ReadBE32(h + 0xD0);
+
+		// The size byte of the compressor data starts exactly at the end of the minimum header,
+		// so its own existence has to be tested before it is read: the old code read h[0xD4]
+		// (one past a Header2MinSize-byte vector) and only then ran the test that was meant to
+		// guard it.
+		if (header2.size() <= Header2MinSize)
+		{
+			Report(Channel::DVD, "RVZ: malformed compressor data\n");
+			return false;
+		}
+
 		const uint8_t compressorDataSize = h[0xD4];
 
 		if (compressorDataSize > 7 || header2.size() < Header2MinSize + compressorDataSize)
@@ -569,6 +607,16 @@ namespace DVD
 		if (discSize < DiscHeaderSize || discSize > 0x7FFFFFFF)
 		{
 			Report(Channel::DVD, "RVZ: bad disc size (%llu)\n", (unsigned long long)discSize);
+			return false;
+		}
+
+		// A chunk cannot be larger than the disc it belongs to. Without this test the chunk size
+		// is only bounded by itself, and the group reader sizes its intermediate buffer from it,
+		// so a crafted header can ask for a multi-gigabyte allocation.
+		if ((uint64_t)chunkSize > discSize)
+		{
+			Report(Channel::DVD, "RVZ: bad chunk size (%u) for a %llu byte disc\n",
+				chunkSize, (unsigned long long)discSize);
 			return false;
 		}
 
@@ -828,9 +876,11 @@ namespace DVD
 		// so that is the size zstd has to produce; the packed form then expands to the chunk size.
 		const uint64_t intermediateSize = rvzPackedSize ? rvzPackedSize : unpackedSize;
 
-		// The packed form is a chunk plus a few bytes per segment; a wildly larger value in a
-		// corrupted header must not turn into a huge allocation.
-		if (intermediateSize > (uint64_t)chunkSize * 2 + 0x10000)
+		// The packed form is a chunk plus a few bytes per 32 KiB block, never a multiple of the
+		// chunk size. The limit is the additive overhead of the real encoding, so a crafted
+		// rvzPackedSize cannot turn into a huge allocation out of the untrusted value itself
+		// (the chunk size is already known to be no larger than the disc).
+		if (intermediateSize > (uint64_t)chunkSize + (uint64_t)chunkSize / (BlockTotalSize / 8) + 0x1000)
 			return false;
 		std::vector<uint8_t> intermediate;
 

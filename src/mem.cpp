@@ -287,6 +287,44 @@ namespace Flipper
 		else return &mi.ram[phys_addr & RAMMASK];
 	}
 
+	size_t MemoryInterface::MIGetMemorySize()
+	{
+		return mi.ramSize;
+	}
+
+	// The length-aware accessors. The single-address calls above are safe only for the accesses
+	// that are known to be one word wide (the PI single-beat path and the debugger); everything
+	// that copies a block of an attacker-chosen length has to go through these, because a start
+	// address inside RAM says nothing about where the end of the transfer lands.
+
+	void* MemoryInterface::MIGetMemoryPointerForIO(uint32_t phys_addr, size_t size)
+	{
+		mi.io_counter.cnt++;
+
+		if (!Verify::MainMemory(phys_addr, size, mi.ramSize)) return nullptr;
+		else return &mi.ram[phys_addr & Verify::MainMemoryMask];
+	}
+
+	void* MemoryInterface::MIGetMemoryPointerForDSP(uint32_t phys_addr, size_t size)
+	{
+		mi.dsp_counter.cnt++;
+
+		if (!Verify::MainMemory(phys_addr, size, mi.ramSize)) return nullptr;
+		else return &mi.ram[phys_addr & Verify::MainMemoryMask];
+	}
+
+	void* MemoryInterface::MIGetMemoryPointerForPI(uint32_t phys_addr, size_t size)
+	{
+		if (!Verify::MainMemory(phys_addr, size, mi.ramSize)) return nullptr;
+		else return &mi.ram[phys_addr & Verify::MainMemoryMask];
+	}
+
+	void* MemoryInterface::MIGetMemoryPointerForDebug(uint32_t phys_addr, size_t size)
+	{
+		if (!Verify::MainMemory(phys_addr, size, mi.ramSize)) return nullptr;
+		else return &mi.ram[phys_addr & Verify::MainMemoryMask];
+	}
+
 	void MemoryInterface::MIReadBurst(uint32_t mem_addr, uint8_t burstData[32])
 	{
 		memcpy(burstData, &mi.ram[mem_addr], 32);
