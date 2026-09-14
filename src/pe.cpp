@@ -257,13 +257,21 @@ namespace GFX
 				pe.token_int.bits = value;
 				break;
 
+			// draw sync token
+			//
+			// The token is a synchronisation marker, not a frame boundary: a title loads it through
+			// the pipe to learn when the PE has walked the FIFO up to that point, and several demos
+			// put it in the middle of a frame (draw, sync, read the bounding box back, draw some
+			// more). Presenting the frame here swapped half a frame out and left the other buffer -
+			// which held only what was drawn after the token - as the finished picture, so
+			// frb-bound-box came out black. The picture is complete at GXDrawDone (PE_FINISH above)
+			// and at a full-frame display copy (GPDisplayCopy), which is where the frame is
+			// presented; the token only raises its interrupt.
 			case PE_TOKEN_ID:
 			{
 				pe.token.bits = value;
 				if (pe.token.token == pe.token_int.token)
 				{
-					gfx->GPFrameDone();
-
 					PE_TOKEN_INT();
 				}
 			}
