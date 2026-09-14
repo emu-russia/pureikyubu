@@ -986,8 +986,9 @@ namespace GBA
 
 		// NR43: r selects the divider and s the clock shift, so one LFSR step lasts
 		// divisor[r] * 2^s system cycles / 4 (see the table at the top). A clock shift of 14 or
-		// 15 stops the LFSR altogether (Pan Docs "Obscure Behavior").
-		if (noiseShift < 14)
+		// 15 stops the LFSR altogether (Pan Docs "Obscure Behavior"). The rate is checked as well
+		// so that the loop can never divide by zero, whatever the register bookkeeping did.
+		if (noiseShift < 14 && noiseSampleRate > 0)
 		{
 			noisePhase += sampleCounter;
 			while (noisePhase >= noiseSampleRate)
@@ -1135,6 +1136,13 @@ namespace GBA
 		noiseLfsr = noiseWidth ? 0x40 : 0x4000;
 		noiseSample = noiseLfsr & 1;
 		noisePhase = 0;
+
+		// The rate the mixer divides by is derived from NR43, so it has to be computed here as
+		// well as on the NR43 write: a trigger that follows a write the master enable swallowed
+		// (the registers at 0x060-0x081 are held at zero while SOUNDCNT_X bit 7 is clear) would
+		// otherwise leave the channel enabled with a divisor of zero, and the mixer would never
+		// leave its clocking loop.
+		noiseSampleRate = NoiseDivisor[noiseDivisor & 7] * NoiseGbaScale * (1 << (noiseShift & 0xF));
 		noiseEnabled = true;
 	}
 
