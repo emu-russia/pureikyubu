@@ -664,6 +664,48 @@ namespace pureikyubutest
 				L"the break point interrupt is reported to the PI");
 		}
 
+		// The break point has to be reported through the same path the CP thread drives the FIFO
+		// by (HasFifoWork -> PumpFifo). A read gate that hides the break point from HasFifoWork
+		// stops the reader but never raises the status bit or the interrupt, and a host that waits
+		// for either of them waits forever - which is exactly what happened to a retail title
+		// whose GX library arms a break point and blocks on its interrupt.
+		TEST_METHOD(CpSpec_BreakPointIsReportedThroughTheFifoThreadPath)
+		{
+			GfxTestMachine& m = M();
+
+			DisplayList list;
+			for (int i = 0; i < 4; i++)
+			{
+				list.CpReg(Flipper::CP_MATINDEX_A_ID, (uint32_t)i);
+			}
+			while (Bursts(list) < 4)
+			{
+				list.CpReg(Flipper::CP_MATINDEX_B_ID, (uint32_t)Bursts(list));
+			}
+			list.Align();
+
+			int bursts = SetupFifo(m, list.Bytes());
+
+			const uint32_t breakAt = FifoBase + 64;
+			PIRegWrite(PI_REGSPACE_CP | CP_FIFO_BRKL, breakAt & 0xffe0);
+			PIRegWrite(PI_REGSPACE_CP | CP_FIFO_BRKH, breakAt >> 16);
+
+			PIClearAssertedInterrupts();
+			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_RDEN | CP_CR_WPINC | CP_CR_BPEN | CP_CR_BPINTEN);
+
+			// Exactly the loop CommandProcessor::CPThread runs.
+			for (int i = 0; i < bursts * 4 && m.flipper->cp->HasFifoWork(); i++)
+			{
+				m.flipper->cp->PumpFifo();
+			}
+
+			Assert::AreEqual<uint32_t>(breakAt, CpReadPtr(m), L"the reader stops at the break point");
+			Assert::AreEqual<uint16_t>(CP_SR_BPINT, (uint16_t)(CpStatus(m) & CP_SR_BPINT),
+				L"the break flag is raised through the thread path");
+			Assert::AreEqual<uint32_t>(PI_INTERRUPT_CP, PIAssertedInterrupts() & PI_INTERRUPT_CP,
+				L"the break interrupt reaches the PI through the thread path");
+		}
+
 		// =========================================================================================
 		// 5. The command stream: the opcodes the CP owns
 		// =========================================================================================
@@ -775,6 +817,122 @@ namespace pureikyubutest
 			RunFifo(m, bursts);
 
 			Assert::IsTrue(TestHaltCount() > 0, L"an unsupported opcode must stop the emulator with a message");
+		}
+
+		// =========================================================================================
+		// 6. Display lists (Call_Object)
+		// =========================================================================================
+
+		// A display list is not a separate machine: the VCD / VAT registers a list loads stay
+		// loaded for the main stream when the call returns, and the list itself sees the formats
+		// the main stream had when it was called (command-processor.md 2.3 - the CP has one set of
+		// vertex format registers and a list is just another part of the same command stream).
+		//
+		// The parser sizes a draw from those registers *before* the vertex walk consumes the data,
+		// so the size it uses has to come from the same live state the walk uses ("sizes" were
+		// cached per stream once, and a format loaded inside a list left the main stream with the
+		// old size; a draw whose real vertex data was longer than the cached size was then started
+		// before its bytes had arrived).
+		TEST_METHOD(CpSpec_DisplayListVertexFormatStaysLoadedForTheMainStream)
+		{
+			GfxTestMachine& m = M();
+
+			// The list switches VAT A / vat 0 from three floats (12 bytes per vertex) to two
+			// bytes (x, y as ubytes).
+			const uint32_t displayListAddr = 0x00030000;
+			{
+				DisplayList displayList;
+				displayList.CpReg(Flipper::CP_VAT_A_ID | 0, VatPos(0 /* XY */, 0 /* U8 */, 0));
+				displayList.Align();
+				WriteMainMemory(displayListAddr, displayList.Bytes().data(), displayList.Bytes().size());
+			}
+
+			// The main stream: VCD Lo with a direct position, VAT A / vat 0 with three floats, the
+			// display list call, then a triangle whose three vertices are two bytes each.
+			DisplayList list;
+			list.CpReg(Flipper::CP_VCD_LO_ID, VcdLo(Flipper::VCD_DIRECT, Flipper::VCD_NONE, Flipper::VCD_NONE));
+			list.CpReg(Flipper::CP_VCD_HI_ID, 0);
+			list.CpReg(Flipper::CP_VAT_A_ID | 0, VatPos(1 /* XYZ */, 4 /* F32 */, 0));
+			list.U8((uint8_t)(Flipper::CP_CMD_CALL_DL | 0));
+			list.U32(displayListAddr);
+			list.U32(32);						// the list's size, in bytes
+			list.Draw((uint8_t)(Flipper::CP_CMD_DRAW_TRIANGLE | 0), 3);
+			for (int i = 0; i < 6; i++)			// three vertices of two bytes
+			{
+				list.U8(0x11);
+			}
+			list.Align();
+
+			// The list is two bursts and the draw starts 27 bytes into it, so even with both
+			// bursts pushed the CP has 37 bytes behind the draw: enough for the two bytes per
+			// vertex the list loaded, not enough for the twelve the main stream loaded before the
+			// call. That is exactly the case that used to break - the size cached from the main
+			// stream gated the walk, and the draw was never walked at all.
+			Assert::IsTrue(list.Size() <= 64, L"the stream has to fit two bursts");
+
+			int bursts = SetupFifo(m, list.Bytes());
+
+			Flipper::CommandProcessorStats before{};
+			m.flipper->cp->GetStats(&before);
+
+			ClearTestLog();
+			RunFifo(m, bursts);
+
+			Assert::AreEqual<int>(0, TestHaltCount(), Widen("the list's formats are the main stream's: " + TestLastHalt()).c_str());
+
+			Flipper::CommandProcessorStats after{};
+			m.flipper->cp->GetStats(&after);
+			Assert::AreEqual((size_t)1, (size_t)(after.tris - before.tris),
+				L"the draw behind the call is walked with the format the list loaded");
+		}
+
+		// Call_Object carries a 32-bit physical address and a 32-bit byte count. Only bits [25:5]
+		// of both are meaningful (the list is walked a 32-byte block at a time), so a list address
+		// that is not cache-line aligned must still resolve to the aligned block, and the count is
+		// rounded down to whole blocks.
+		TEST_METHOD(CpSpec_CallObjectAddressAndSizeAreBlockAligned)
+		{
+			GfxTestMachine& m = M();
+
+			const uint32_t displayListAddr = 0x00030040;
+			{
+				DisplayList displayList;
+				displayList.CpReg(Flipper::CP_MATINDEX_A_ID, 0x0badf00d);
+				displayList.Align();
+				WriteMainMemory(displayListAddr, displayList.Bytes().data(), displayList.Bytes().size());
+			}
+
+			DisplayList list;
+			list.U8((uint8_t)(Flipper::CP_CMD_CALL_DL | 0));
+			list.U32(displayListAddr | 0x1f);		// the low address bits are ignored
+			list.U32(32 + 0x1f);					// the count is rounded down to 32
+			list.Align();
+
+			int bursts = SetupFifo(m, list.Bytes());
+
+			Flipper::CommandProcessorStats before{};
+			m.flipper->cp->GetStats(&before);
+
+			ClearTestLog();
+			RunFifo(m, bursts);
+
+			Assert::AreEqual<int>(0, TestHaltCount(), Widen("the called list is walked: " + TestLastHalt()).c_str());
+
+			Flipper::CommandProcessorStats after{};
+			m.flipper->cp->GetStats(&after);
+			Assert::AreEqual((size_t)1, (size_t)(after.cpLoads - before.cpLoads), L"the list's register load is executed");
+		}
+
+		// The VCD / VAT builders of the tests above: the field positions are the ones of cp.h
+		// (VCD_Lo, VAT_group0).
+		static uint32_t VcdLo(int pos, int nrm, int col0)
+		{
+			return ((uint32_t)pos << 9) | ((uint32_t)nrm << 11) | ((uint32_t)col0 << 13);
+		}
+
+		static uint32_t VatPos(int count, int fmt, int shift)
+		{
+			return (uint32_t)count | ((uint32_t)fmt << 1) | ((uint32_t)shift << 4);
 		}
 
 	private:

@@ -85,10 +85,6 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 
 // Compile time macros for GekkoCore.
 
-#ifndef GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS
-#define GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS 10000		// The GatherBuffer has an undocumented feature - after a certain number of cycles the data in it is destroyed and it becomes free (WPAR[BNE] = 0)
-#endif
-
 #ifndef GEKKOCORE_USE_TLB
 #define GEKKOCORE_USE_TLB 1				// Use TLB for address translation
 #endif
@@ -580,8 +576,6 @@ namespace Gekko
 
 		GekkoCore* core;
 
-		int64_t retireTimeout = 0;
-
 	public:
 
 		GatherBuffer(GekkoCore* parent) : core(parent) {}
@@ -741,10 +735,9 @@ namespace Gekko
 		friend Jit;
 		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
-		// How many ticks Gekko takes to execute one instruction. 
-		// Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
-		// Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-		static const int CounterStep = 2;
+		// The time base counts the Gekko clock: one tick per instruction, 486,000,000 ticks per
+		// second, and the decrementer runs off the same clock, so it steps by one as well.
+		static const int CounterStep = 1;
 		static const int DecrementerStep = 1;
 
 		Thread* gekkoThread = nullptr;
@@ -759,7 +752,11 @@ namespace Gekko
 		bool break_on_exception = false;
 		bool trace_exceptions = false;
 		bool break_on_DSI = false;
-		bool break_on_ISI = true;
+		// The ISI break is off for the same reason the DSI one is: a title that drives the MMU
+		// page tables as its own virtual memory takes instruction page faults as a matter of
+		// course (Star Wars Rogue Squadron III faulting in its overlay code pages), and halting
+		// on the first one stops the title before its handler can map the page.
+		bool break_on_ISI = false;
 
 		bool TestBreakpoints();
 		void TestReadBreakpoints(uint32_t accessAddress);

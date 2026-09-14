@@ -481,6 +481,8 @@ namespace Flipper
 		size_t lines = 0;
 	};
 
+	class CommandProcessor;
+
 	class FifoProcessor
 	{
 		size_t fifoSize = 1024 * 1024;
@@ -489,14 +491,22 @@ namespace Flipper
 		size_t writePtr = 0;
 		bool allocated = false;
 
+		//! The CP that owns this stream. The vertex format state (VCD / VAT) belongs to the CP,
+		//! not to the stream: a display list sees the formats the main stream had when it was
+		//! called, and a list that loads them changes them for the main stream too. Keeping the
+		//! state in one place is also what the hardware does - the parser and the vertex fetch
+		//! read the same registers.
+		CommandProcessor* owner = nullptr;
+
 		SpinLock lock;
 
 	public:
 		size_t GetSize();
 		bool EnoughToExecute();
 
-		size_t vertexSize[8] = { 0 };
-		void RecalcVertexSize();		// Called every time the VCD / VAT settings are changed.
+		//! Size in bytes of one vertex of the given vertex attribute table, from the live VCD /
+		//! VAT registers.
+		size_t VertexSize(unsigned vat);
 
 		uint8_t Read8();
 		uint16_t Read16();
@@ -508,8 +518,8 @@ namespace Flipper
 
 		void ExecuteCommand();
 
-		FifoProcessor();
-		FifoProcessor(uint8_t* fifoPtr, size_t size);	// Call FIFO
+		FifoProcessor(CommandProcessor* owner);
+		FifoProcessor(uint8_t* fifoPtr, size_t size, CommandProcessor* owner);	// Call FIFO
 		~FifoProcessor();
 
 		void PushBytes(uint8_t dataPtr[32]);
@@ -519,6 +529,7 @@ namespace Flipper
 
 	class CommandProcessor
 	{
+	private:
 		// logging
 		bool logOpcode = false;
 		bool logDrawCommands = false;
@@ -528,6 +539,7 @@ namespace Flipper
 		size_t tris = 0, pts = 0, lines = 0;
 
 		void CP_BREAK();
+		bool AtBreakPoint() const;
 		void CP_OVF();
 		void CP_UVF();
 
@@ -553,7 +565,10 @@ namespace Flipper
 
 		Event fifoEvent;
 		int64_t lastDrainTick = 0;
-		bool HasFifoWork();
+
+		//! Serializes the FIFO drains, so that the reader cannot be re-entered from a second
+		//! thread while it is walking the command stream.
+		SpinLock fifoLock;
 
 		// Stats
 		size_t cpLoads = 0;
@@ -561,10 +576,9 @@ namespace Flipper
 		size_t bpLoads = 0;
 
 		void GXWriteFifo(uint8_t dataPtr[32]);
-		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
+		void loadCPReg(size_t index, uint32_t value);
 		std::string AttrToString(VertexAttr attr);
 		int gx_vtxsize(unsigned v);
-		void FifoReconfigure(FifoProcessor* gxfifo);
 		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
@@ -620,8 +634,24 @@ namespace Flipper
 		//! stream from the next; CPAbortFifo (CP_ABORT) is the guest-visible equivalent.
 		void ResetFifoProcessor();
 
+		//! Size in bytes of one vertex of the given vertex attribute table, computed from the live
+		//! VCD / VAT registers. The FIFO parser sizes a draw command with it before the vertex
+		//! walk consumes the data, so both have to use the same, current state.
+		size_t VertexSize(unsigned vat);
+
 		//! Drain the graphics FIFO once: exactly the work the CP thread does on one tick. The unit
 		//! tests use it to run the command stream deterministically, without the emulator threads.
 		void PumpFifo();
+
+		//! Drain the FIFO entries the emulated CP owes at the current point of the time base. The
+		//! reader's progress follows the emulated time, not how often the host happens to run the
+		//! CP thread; it is driven from that thread only.
+		void DrainFifo();
+
+		//! Whether the CP thread has anything to do this tick. It is what the CP thread tests
+		//! before calling PumpFifo, so a test that drives the FIFO by hand uses it too: the break
+		//! point is *reported* from PumpFifo, and a gate that hides it here would leave the status
+		//! bit and the CP interrupt unraised.
+		bool HasFifoWork();
 	};
 }

@@ -468,10 +468,11 @@ namespace GFX
 		size_t frames = 0;
 		size_t pe_done_num = 0;   // number of drawdone (PE_FINISH) events
 
-		//! The clear values of the last PE_COPY_CMD that asked for one, captured when the command was
-		//! issued. The clear itself runs at the next frame begin (it prepares the EFB for the frame
-		//! that follows the copy, and doing it on arrival would wipe the frame that is still to be
-		//! displayed), and by then the game may already have programmed the registers for its next
+		//! The clear values of a PE_COPY_CMD that asked for one, captured when the command was
+		//! issued. A texture copy's clear runs with the copy; a display copy's clear runs at the
+		//! next frame begin (it prepares the EFB for the frame that follows the copy, and doing it
+		//! on arrival would wipe the frame that is still to be displayed). Capturing the values
+		//! matters because by then the game may already have programmed the registers for its next
 		//! copy: reading the live registers there used the wrong Z, which left the depth buffer of
 		//! Metroid Prime at Z=0 and made its LEQUAL depth test reject every draw (issue #349).
 		struct CopyClearState
@@ -479,9 +480,26 @@ namespace GFX
 			PE_COPY_CLEAR_AR ar{};
 			PE_COPY_CLEAR_GB gb{};
 			PE_COPY_CLEAR_Z z{};
-			bool pending = false;
+
+			//! The rectangle the copy reads. The clear engine turns the quads it reads into the
+			//! clear colour and leaves the rest of the EFB alone (gfx-pe.md 5.1).
+			int x = 0, y = 0, w = 0, h = 0;
+
+			//! A display copy hands the frame over to the video interface, and this backend shows the
+			//! EFB where a console shows the XFB, so its clear has to cover the whole colour buffer:
+			//! whatever the copy does not read is still on screen, and leaving it there kept the
+			//! previous frame in the lower half of the bootrom's splash.
+			bool full = false;
 		};
-		CopyClearState copy_clear{};
+
+		//! The display copies of the frame that is being drawn each clear their own rectangle, and a
+		//! single frame can present in several of them: the bootrom writes its picture with three
+		//! copies per frame (one per field, their rectangles together covering the screen). They are
+		//! all kept until the frame is restarted - keeping only the last one cleared a two-row strip
+		//! and left the rest of the previous picture on the screen.
+		static const size_t MaxPendingCopyClears = 16;
+		CopyClearState pending_clears[MaxPendingCopyClears]{};
+		size_t pending_clear_count = 0;
 
 		PERegs peregs{};	// PE PI regs
 
@@ -508,11 +526,12 @@ namespace GFX
 		//! The copy engine's clear operation (PE_COPY_CMD with the clear bit set).
 		void ApplyCopyClear(const CopyClearState& clear);
 
-		//! Take the pending copy clear (see the PE_COPY_CMD handling). It is performed by the frame
-		//! begin, because it prepares the EFB for the frame that follows the copy: doing it the moment
-		//! the copy command arrives would wipe the frame that is about to be displayed (the swap
-		//! happens later, on PE_FINISH or on a full-frame display copy).
-		bool TakePendingCopyClear(CopyClearState* state);
+		//! Apply the clears the display copies of the previous frame asked for (see the PE_COPY_CMD
+		//! handling). They are performed by the frame begin, because they prepare the EFB for the
+		//! frame that follows the copy: doing it the moment the copy command arrives would wipe the
+		//! frame that is about to be displayed (the swap happens later, on PE_FINISH or on a
+		//! full-frame display copy). Returns false when nothing was pending.
+		bool ApplyPendingCopyClears();
 
 		PixelEngine(Flipper::Flipper* flipper, HWConfig *config, GFXCore *parent_gfx);
 		~PixelEngine();
@@ -524,6 +543,17 @@ namespace GFX
 
 		//! Put the PE register state back into the reset state and restore the GL state it owns.
 		void Reset();
+
+		//! The copy engine's texture copy (PE_COPY_CMD.opcode = texture): the EFB rectangle named
+		//! by the copy registers is re-packed into the tiled texture format of the destination and
+		//! written to main memory (gfx-pe.md 5.7). The clear that a copy may ask for is applied by
+		//! the frame begin instead (see ApplyCopyClear).
+		void TextureCopy();
+
+		//! Read a rectangle of the EFB into an RGB buffer, top row first. The rectangle is in screen
+		//! coordinates (the origin is the top left corner). Returns false when the frame loop does
+		//! not own the GL context, so that the caller can leave the EFB alone.
+		bool ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgb);
 
 		//! The PE register state (read-only; used by the debugger and the unit tests).
 		const PEState& State() const { return pe; }

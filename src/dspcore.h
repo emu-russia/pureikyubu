@@ -457,7 +457,10 @@ namespace DSP
 		std::list<DspAddress> watches;		// DMEM watches
 		SpinLock watchesSpinLock;
 
-		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		// The Gekko runs at 486 MHz and the DSP at 81 MHz, so the DSP retires one instruction per
+		// six time base ticks. The anchor `savedGekkoTicks` counts time base ticks (see Update).
+		static const int64_t GekkoTicksPerDspInstruction = 6;
+
 		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		DspInterpreter* interp = nullptr;
@@ -502,11 +505,10 @@ namespace DSP
 		int64_t wakeTick = 0;
 
 		/// <summary>
-		/// How many Gekko ticks one wakeup covers. The DSP wants one instruction every
-		/// `GekkoTicksPerDspInstruction` ticks, so a wakeup carries
-		/// `DspWakeTicks / GekkoTicksPerDspInstruction` instructions. Waking up once per Flipper tick
-		/// step would mean roughly a million scheduler wakeups per second, which costs more than the
-		/// DSP work itself.
+		/// How many Gekko time base ticks one wakeup covers, i.e. `DspWakeTicks /
+		/// GekkoTicksPerDspInstruction` instructions. Waking up on every Flipper tick step would
+		/// mean roughly half a million scheduler wakeups per second, which costs more than the DSP
+		/// work itself.
 		/// </summary>
 		static const int64_t DspWakeTicks = 1000;
 

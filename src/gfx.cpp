@@ -557,24 +557,9 @@ namespace GFX
 		return true;
 	}
 
-	//! Read a rectangle of the EFB into an RGB buffer, top row first.
-	static bool ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgb)
+	bool GFXCore::HasGLContext() const
 	{
-		rgb.resize((size_t)width * height * 3);
-
-		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
-
-		// glReadPixels returns the bottom row first
-		std::vector<uint8_t> flipped(rgb.size());
-		for (int row = 0; row < height; row++)
-		{
-			memcpy(&flipped[(size_t)row * width * 3],
-				&rgb[(size_t)(height - 1 - row) * width * 3], (size_t)width * 3);
-		}
-		rgb.swap(flipped);
-
-		return true;
+		return GLContextCurrent();
 	}
 
 	static Json::Value* CmdGxShot(std::vector<std::string>& args)
@@ -603,7 +588,7 @@ namespace GFX
 		}
 
 		std::vector<uint8_t> rgb;
-		ReadEfb(x, y, width, height, rgb);
+		gfx->pe->ReadEfb(x, y, width, height, rgb);
 
 		std::string filename = args[1];
 		bool saved = Util::SavePng(filename.c_str(), rgb.data(), (size_t)width, (size_t)height);
@@ -823,6 +808,22 @@ namespace GFX
 		vertex_data = new Vertex[GFX_MAX_VERTICES];
 		memset(vertex_data, 0, sizeof(Vertex) * GFX_MAX_VERTICES);
 		index_data = new uint32_t[GFX_MAX_INDICES];
+
+		{
+			const char* efbVar = getenv("GFX_EFB_DUMP");
+			if (efbVar != nullptr && efbVar[0] != 0)
+			{
+				efb_dump_enabled = true;
+				efb_dump_path = efbVar;
+				const char* everyVar = getenv("GFX_DUMP_EVERY");
+				if (everyVar != nullptr && everyVar[0] != 0)
+				{
+					efb_dump_every = atoi(everyVar);
+					if (efb_dump_every < 1)
+						efb_dump_every = 1;
+				}
+			}
+		}
 
 		// Frame dump
 		const char* dumpVar = getenv("GFX_DUMP");
@@ -1147,13 +1148,10 @@ namespace GFX
 
 		glDrawBuffer(GL_BACK);
 
-		PixelEngine::CopyClearState clear{};
-
-		if (pe->TakePendingCopyClear(&clear))
+		if (pe->ApplyPendingCopyClears())
 		{
-			// A copy command of the previous frame asked for the EFB to be cleared. It is the copy
-			// engine's clear, so it restores the PE state itself.
-			pe->ApplyCopyClear(clear);
+			// The display copies of the previous frame asked for their rectangles to be cleared. It
+			// is the copy engine's clear, so it restores the PE state itself.
 		}
 		else
 		{
@@ -1205,6 +1203,8 @@ namespace GFX
 		frameReady = false;
 		pe->frames++;
 		gfx_frame_counter++;
+
+
 		Flipper::HW->cp->ResetFrameStats();
 	}
 
@@ -1215,42 +1215,24 @@ namespace GFX
 
 		uint32_t w = scr_w, h = scr_h;
 
+		// glReadPixels hands back RGB triplets with the rows running bottom-up; the PNG wants
+		// them top-down, so the rows are copied out in reverse.
 		std::vector<uint8_t> pixels((size_t)w * h * 3);
 		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
 
-		// glReadPixels returns RGB triplets, while a 24-bit BMP stores them as BGR.
-		for (size_t i = 0; i < (size_t)w * h; i++)
+		std::vector<uint8_t> flipped((size_t)w * h * 3);
+		for (uint32_t y = 0; y < h; y++)
 		{
-			std::swap(pixels[i * 3 + 0], pixels[i * 3 + 2]);
+			memcpy(&flipped[(size_t)y * w * 3], &pixels[(size_t)(h - 1 - y) * w * 3], (size_t)w * 3);
 		}
 
-		// BMP is bottom-up, exactly like the GL framebuffer, so no flip is needed
-		uint8_t hdr[54] = { 0 };
-		uint32_t dataSize = w * h * 3;
-		uint32_t fileSize = 54 + dataSize;
-
-		hdr[0] = 'B'; hdr[1] = 'M';
-		memcpy(&hdr[2], &fileSize, 4);
-		hdr[10] = 54;
-		hdr[14] = 40;
-		memcpy(&hdr[18], &w, 4);
-		memcpy(&hdr[22], &h, 4);
-		hdr[26] = 1;
-		hdr[28] = 24;
-		memcpy(&hdr[34], &dataSize, 4);
-
 		char name[0x400];
-		sprintf(name, "%s_%06d.bmp", dump_path.c_str(), gfx_frame_counter);
+		sprintf(name, "%s_%06d.png", dump_path.c_str(), gfx_frame_counter);
 
-		FILE* f = fopen(name, "wb");
-		if (f == nullptr)
-			return;
-
-		fwrite(hdr, 1, sizeof(hdr), f);
-		fwrite(pixels.data(), 1, dataSize, f);
-		fclose(f);
-
-		Report(Channel::GP, "Frame dumped to %s\n", name);
+		if (Util::SavePng(name, flipped.data(), w, h))
+		{
+			Report(Channel::GP, "Frame dumped to %s\n", name);
+		}
 	}
 
 	void GFXCore::GPFrameBegin()
@@ -1264,8 +1246,35 @@ namespace GFX
 	}
 
 	// rendering complete, swap buffers, sync to vretrace
+	void GFXCore::DumpRenderTarget()
+	{
+		if ((gfx_frame_counter % efb_dump_every) != 0)
+		{
+			return;
+		}
+
+		std::vector<uint8_t> rgb;
+		if (!pe->ReadEfb(0, 0, (int)scr_w, (int)scr_h, rgb))
+		{
+			return;
+		}
+
+		char name[0x400];
+		sprintf(name, "%s_%06d.png", efb_dump_path.c_str(), gfx_frame_counter);
+
+		if (Util::SavePng(name, rgb.data(), scr_w, scr_h))
+		{
+			Report(Channel::GP, "Frame dumped to %s\n", name);
+		}
+	}
+
 	void GFXCore::GPFrameDone()
 	{
+		if (efb_dump_enabled)
+		{
+			DumpRenderTarget();
+		}
+
 		// PE_FINISH / PE_TOKEN (GXDrawDone and friends) are the frame boundary most titles use: the
 		// picture is complete by then. A frame that a full-frame display copy has already presented
 		// (the movie players) holds nothing new, so it is not swapped a second time.

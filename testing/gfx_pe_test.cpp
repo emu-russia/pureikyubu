@@ -438,17 +438,20 @@ namespace pureikyubutest
 		// The copy engine
 		// =========================================================================================
 
-		// PE_COPY_CMD with the clear bit set asks the copy engine to clear the EFB with the PE clear
-		// values while it copies the finished frame out (gfx-pe.md 5.6).
+		// PE_COPY_CMD with the clear bit set asks the copy engine to turn the quads it reads into
+		// the clear colour while it reads them out (gfx-pe.md 5.1). A *texture* copy reads the
+		// rectangle for the texture and clears the EFB with it, so the copies that follow it read
+		// the cleared region - that is how a title that renders through the EFB gets each pass
+		// isolated (the render-to-texture titles relied on it).
 		//
-		// A copy command is issued at the end of a frame: the finished EFB is handed over to the
-		// display and is prepared for the next frame. The clear must not run when the command arrives
-		// - it would erase the frame that is still to be shown (that is what turned the bootrom screen
-		// black) - so the frame begin performs it, with the values this copy was programmed with. The
-		// live registers cannot be used there: by then the game may have programmed them for its next
-		// copy, and Metroid Prime left the clear Z at 0 that way, which made its LEQUAL depth test
-		// reject every draw (issue #349).
-		TEST_METHOD(Pe_CopyClearKeepsTheCopiedFrameAndClearsTheNextOne)
+		// The clear of a *display* copy is the one that has to wait: the backend shows the EFB in
+		// place of the XFB the hardware would have written before the clear, so running it here
+		// would erase the frame that is still to be shown (that is what turned the bootrom screen
+		// black). The frame begin performs it instead, with the values this copy was programmed
+		// with: the live registers cannot be used there, because by then the game may have
+		// programmed them for its next copy, and Metroid Prime left the clear Z at 0 that way,
+		// which made its LEQUAL depth test reject every draw (issue #349).
+		TEST_METHOD(Pe_TextureCopyClearRunsWithTheCopyAndADisplayCopyClearIsKeptForTheNextFrame)
 		{
 			RequireGL();
 			GfxTestMachine& m = M();
@@ -460,15 +463,31 @@ namespace pureikyubutest
 			m.BeginFrame();
 			DrawQuad(m, 0x80, 0x80, 0x80);
 
-			// The clear colour of this copy, and the depth it must leave behind.
+			// The clear colour of this copy, and the depth it must leave behind. The clear only
+			// covers the rectangle the copy reads (gfx-pe.md 5.1), so the frame rectangle has to be
+			// programmed for the whole frame to be cleared.
+			m.BpLoad(PE_COPY_SRC_ADDR_ID, 0);
+			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() - 1) | ((m.gfx->RenderHeight() - 1) << 10));
 			m.BpLoad(PE_COPY_CLEAR_AR_ID, 0xff);			// red = 0xff, alpha = 0
 			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0);				// blue = 0, green = 0
 			m.BpLoad(PE_COPY_CLEAR_Z_ID, 0x800000);
 			m.BpLoad(PE_COPY_CMD_ID, 1u << 11);				// clear
 
+			// The clear ran with the copy: what the copy read out was the frame, and the EFB now
+			// holds the clear colour.
 			uint8_t rgb[3];
 			m.ReadColorPixel(320, 240, rgb);
-			Assert::AreEqual<int>(0x80, rgb[0], L"the copy clear must not wipe the frame it copies");
+			Assert::AreEqual<int>(0xff, rgb[0], L"the clear of a texture copy runs with the copy");
+
+			// A display copy's clear cannot run with the copy: the backend shows the EFB where the
+			// hardware would show the XFB the copy wrote, so clearing it right away would wipe the
+			// picture that is about to be presented. It waits for the frame begin instead, and it
+			// uses the values that copy was programmed with rather than the live registers, which
+			// by then hold the next copy's.
+			m.BpLoad(PE_COPY_CLEAR_AR_ID, 0xff);
+			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0);
+			m.BpLoad(PE_COPY_CLEAR_Z_ID, 0x800000);
+			m.BpLoad(PE_COPY_CMD_ID, (1u << 11) | (GFX::PE_COPY_CMD_DISPLAY << 14));	// clear + display copy
 
 			// Reprogram the clear registers, as a game does for its next copy.
 			m.BpLoad(PE_COPY_CLEAR_AR_ID, 0);
@@ -482,6 +501,66 @@ namespace pureikyubutest
 			Assert::AreEqual<int>(0, rgb[1], L"...");
 			Assert::AreEqual(0.5f, m.ReadDepthPixel(320, 240), 0.01f,
 				L"the clear Z is the Z of that copy, not the one programmed later");
+		}
+
+		// PE_COPY_CMD.opcode = texture turns the EFB rectangle into a tiled texture in main memory
+		// (gfx-pe.md 5.7): the destination holds the tiles of the format, the tile rows are a
+		// `stride` apart, and the rectangle is taken in screen coordinates.
+		TEST_METHOD(Pe_TextureCopyWritesTheRectangleAsATiledTexture)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+			SetupPassThrough(m);
+
+			m.BpLoad(PE_ZMODE_ID, 0);
+			m.BpLoad(PE_CMODE0_ID, 0x18);
+
+			m.BeginFrame();
+
+			// The upper half of the screen is red; the lower half keeps the colour the frame was
+			// cleared with. A copy of row 0 therefore has to hold red and a copy of row 240 none.
+			GFX::Vertex quad[4] = {
+				GfxTestMachine::MakeVertex(-1, 0, 0, 0xff, 0, 0, 0xff),
+				GfxTestMachine::MakeVertex(1, 0, 0, 0xff, 0, 0, 0xff),
+				GfxTestMachine::MakeVertex(1, 1, 0, 0xff, 0, 0, 0xff),
+				GfxTestMachine::MakeVertex(-1, 1, 0, 0xff, 0, 0, 0xff),
+			};
+			m.DrawQuad(quad);
+
+			const uint32_t red = 0x2000, dark = 0x3000;
+
+			// A 4x4 texel rectangle is one tile, and the tiles of the next row start four cache
+			// lines further on.
+			m.BpLoad(PE_COPY_DST_STRIDE_ID, 4);
+			m.BpLoad(PE_COPY_SRC_SIZE_ID, 3 | (3u << 10));
+
+			m.BpLoad(PE_COPY_SRC_ADDR_ID, 0);
+			m.BpLoad(PE_COPY_DST_BASE0_ID, red >> 5);
+			m.BpLoad(PE_COPY_CMD_ID, (uint32_t)GFX::TF_RGB565 << 4);
+
+			m.BpLoad(PE_COPY_SRC_ADDR_ID, 240u << 10);
+			m.BpLoad(PE_COPY_DST_BASE0_ID, dark >> 5);
+			m.BpLoad(PE_COPY_CMD_ID, (uint32_t)GFX::TF_RGB565 << 4);
+
+			const uint8_t* r = TestMainMemory(red, 32);
+			const uint8_t* d = TestMainMemory(dark, 32);
+			Assert::IsNotNull(r, L"the destination of the copy");
+			Assert::IsNotNull(d, L"the destination of the copy");
+
+			for (int texel = 0; texel < 16; texel++)
+			{
+				Assert::AreEqual<int>(0xf8, r[texel * 2], L"R5G6B5 is stored big endian: the red channel");
+				Assert::AreEqual<int>(0x00, r[texel * 2 + 1], L"... and green with blue");
+			}
+
+			Assert::AreEqual<int>(0, d[0], L"the rectangle starts at the screen row it names");
+
+			// The tile rows are a stride apart, so the cache lines that follow the tile are left
+			// as they were.
+			for (size_t i = 32; i < 32 * 4; i++)
+			{
+				Assert::AreEqual<int>(0, r[i], L"the row stride leaves the next cache lines alone");
+			}
 		}
 
 		// PE_COPY_CMD.opcode decides what the copy engine does with the EFB rectangle (gfx-pe.md 5.6,

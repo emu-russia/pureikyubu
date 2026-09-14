@@ -120,12 +120,23 @@ namespace GFX
 		std::string dump_path;
 		int dump_every = 1;
 
+		// Dump the render target to a PNG every N frames, wherever the frame is finished (even
+		// when the backend decides not to present it). Configured by GFX_EFB_DUMP.
+		bool efb_dump_enabled = false;
+		std::string efb_dump_path;
+		int efb_dump_every = 1;
+		void DumpRenderTarget();
+
 		void DumpFrame();
 
 		//! Restore the OpenGL state that the GFX registers are applied on top of.
 		void ApplyDefaultGLState();
 
 	public:
+
+		//! True while the frame loop owns the GL context. Reads of the render target are only valid
+		//! on that thread.
+		bool HasGLContext() const;
 		GFXCore(Flipper::Flipper* flipper, HWConfig* config);
 		~GFXCore();
 
