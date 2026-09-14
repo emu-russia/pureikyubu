@@ -580,6 +580,7 @@ namespace Flipper
 		std::string AttrToString(VertexAttr attr);
 		int gx_vtxsize(unsigned v);
 		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
+		void LoadIndexedXF(ArrayId arrayId, FifoProcessor* gxfifo);
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
 		GFX::Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
