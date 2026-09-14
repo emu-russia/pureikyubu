@@ -45,6 +45,10 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 		{
 			cmdline.dspJit = true;
 		}
+		else if (arg == "--selftest")
+		{
+			cmdline.selftest = true;
+		}
 		else if (arg == "--bench")
 		{
 			if (i + 1 < args.size())
@@ -102,6 +106,9 @@ void EMUPrintUsage()
 		"                        The default is the interpreter; see src/dspjit.h.\n"
 		"  --bench <file> [sec]  Run the file unattended for the given number of seconds (30 by\n"
 		"                        default) and print the throughput and the performance counters.\n"
+		"  --selftest            Run the startup sequence (settings, debug interface specifications,\n"
+		"                        emulated hardware, ROM and memory card files) without a window and\n"
+		"                        exit with the number of failed steps as the status code.\n"
 		"  -h, --help            Print this text and exit.\n"
 		"\n"
 		"With no option the game selector is shown, and a file is started from there (Enter or a\n"
@@ -121,6 +128,98 @@ void EMUPrintUsage()
 	Report(Channel::Norm, "%s", usage);
 }
 
+/// <summary>
+/// Run the emulator's startup sequence headlessly and report what failed.
+///
+/// The emulator has several ways of dying before its window appears: a corrupt settings file, a
+/// debug interface specification that no longer parses, a ROM or memory card file that is missing
+/// or malformed. Without this check all of them look the same from the outside - the process
+/// disappears. Each startup step is run in its own catch-all frame and reported, and the exit code
+/// is the number of steps that failed, so a build script or a human can tell "it started" from
+/// "it crashed on startup" without a debugger.
+/// </summary>
+int EMUSelfTest()
+{
+#ifdef _WINDOWS
+	// A windowed application has no console of its own; borrow the one it was started from, so the
+	// report is visible when the check runs from a command prompt. When stdout is already a pipe,
+	// a file or anything else that was handed to us (a build script capturing the output), it is
+	// left alone, otherwise the report would go to the console instead of into the capture.
+	HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+	bool consoleOutput = (out == nullptr || out == INVALID_HANDLE_VALUE || GetFileType(out) == FILE_TYPE_CHAR);
+
+	if (consoleOutput && AttachConsole(ATTACH_PARENT_PROCESS))
+	{
+		freopen("CONOUT$", "w", stdout);
+	}
+#endif
+
+	int failures = 0;
+
+	auto step = [&failures](const char* name, auto&& body) -> bool
+	{
+		printf("[..] %s\n", name);
+		fflush(stdout);
+
+		int before = failures;
+
+		try
+		{
+			body();
+			printf("[ok] %s\n", name);
+		}
+		catch (const char* text)
+		{
+			failures++;
+			printf("[!!] %s: %s\n", name, (text != nullptr) ? text : "(no message)");
+			Report(Channel::Error, "[!!] %s: %s\n", name, (text != nullptr) ? text : "(no message)");
+		}
+		catch (const std::exception& e)
+		{
+			failures++;
+			printf("[!!] %s: %s\n", name, e.what());
+			Report(Channel::Error, "[!!] %s: %s\n", name, e.what());
+		}
+		catch (...)
+		{
+			failures++;
+			printf("[!!] %s: unknown error\n", name);
+			Report(Channel::Error, "[!!] %s: unknown error\n", name);
+		}
+
+		fflush(stdout);
+
+		return failures == before;
+	};
+
+	// The debug interface specifications are parsed here and the Gekko/DSP cores are created.
+	bool coreOk = step("emulator core, debug interface specifications", [] { EMUCtor(); });
+
+	// The settings JSON - the shipped defaults merged with the user file - is read here.
+	bool settingsOk = step("settings", [] { HWConfig config{}; EMUGetHwConfig(&config); });
+
+	// The emulated machine: the Flipper devices, the DSP ROM images and the memory cards. With a
+	// file on the command line that file is loaded as well; otherwise the IPL/Bootrom path is used,
+	// which is the state the emulator is in before the user picks anything.
+	if (coreOk && settingsOk)
+	{
+		std::wstring file = cmdline.image.empty() ? std::wstring(L"Bootrom") : cmdline.image;
+		step("emulated hardware, ROM and memory card files", [file] { EMUOpen(file); });
+	}
+	else
+	{
+		// Starting the hardware on top of a failed core or settings step would only produce a
+		// second, less readable failure.
+		printf("[--] emulated hardware skipped: the core and the settings have to work first\n");
+	}
+
+	step("shutdown", [] { EMUClose(); EMUDtor(); });
+
+	printf("selftest: %s, %i failed step(s)\n", (failures == 0) ? "the emulator starts" : "FAILED", failures);
+
+	return failures;
+}
+
 void EMUParseCmdLine(const char* commandLine)
 {
 	if (commandLine == nullptr)
@@ -129,6 +228,8 @@ void EMUParseCmdLine(const char* commandLine)
 	}
 
 	// Split into arguments, honouring the quotes (arguments are not allowed to contain spaces otherwise).
+	// An unterminated quote only swallows the rest of the line into the last argument: the walk is
+	// bounded by the NUL terminator and never looks ahead, so it can neither loop nor read past it.
 
 	std::vector<std::string> args;
 	std::string arg;
@@ -264,6 +365,21 @@ void EMUGetHwConfig(HWConfig * config)
 	wcscpy (config->DspIromFilename, GetConfigString(USER_DSP_IROM, USER_HW));
 }
 
+// Free the emulated machine without touching the file-loaded state. EMUClose uses it on the normal
+// path; EMUOpen uses it to undo a partial startup. It is safe to call when nothing was created.
+static void EMUReleaseHardware()
+{
+	if (Flipper::HW) {
+		delete Flipper::HW;
+		Flipper::HW = nullptr;
+	}
+
+	if (Debug::Log) {
+		delete Debug::Log;
+		Debug::Log = nullptr;
+	}
+}
+
 // this function calls every time, after user loading new file
 void EMUOpen(const std::wstring& filename)
 {
@@ -280,9 +396,22 @@ void EMUOpen(const std::wstring& filename)
 	EMUGetHwConfig(&hwconfig);
 	Flipper::HW = new Flipper::Flipper(&hwconfig);
 
-	CallJdi("script autoexec.cmd");
-	LoadFile(filename);   // Gekko PC will be set here
-	HLEOpen();
+	// A file that cannot be loaded (a damaged image, an executable with a broken header, or a
+	// script that refuses to run) must leave the emulator in the state it was in before the
+	// attempt. Without this the half-built Flipper object stayed allocated, and the next shutdown
+	// walked into freed or never-initialised state - a crash on the way out of a startup failure.
+	try
+	{
+		CallJdi("script autoexec.cmd");
+		LoadFile(filename);   // Gekko PC will be set here
+		HLEOpen();
+	}
+	catch (...)
+	{
+		Report(Channel::Error, "Failed to open: %s\n", Util::WstringToString(filename).c_str());
+		EMUReleaseHardware();
+		throw;
+	}
 
 	Debug::g_PerfCounters->ResetAllCounters();
 
@@ -303,15 +432,7 @@ void EMUClose()
 	Core->Suspend();
 	Core->Reset();
 
-	if (Flipper::HW) {
-		delete Flipper::HW;
-		Flipper::HW = nullptr;
-	}
-
-	if (Debug::Log) {
-		delete Debug::Log;
-		Debug::Log = nullptr;
-	}
+	EMUReleaseHardware();
 
 	emu.loaded = false;
 }
@@ -411,6 +532,12 @@ void EMUStop()
 
 static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 {
+	if (args.size() < 2)
+	{
+		Report(Channel::Error, "FileLoad: file name expected\n");
+		return nullptr;
+	}
+
 	FILE* f;
 
 	f = fopen(args[1].c_str(), "rb");
@@ -420,24 +547,52 @@ static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 		return nullptr;
 	}
 
+	// The answer holds one Json value per byte, so this command is for small data files (fonts, FST
+	// dumps) and a bigger file is refused instead of being turned into gigabytes of Json values.
+	const size_t MaxFileLoadSize = 16 * 1024 * 1024;
+
+	size_t size = Util::FileSize(args[1]);
+	if (size == 0 || size > MaxFileLoadSize)
+	{
+		Report(Channel::Error, "FileLoad: refusing %s (%zi bytes)\n", args[1].c_str(), size);
+		fclose(f);
+		return nullptr;
+	}
+
+	std::vector<uint8_t> data(size);
+
+	// feof() only becomes true after a read has already failed, so the old loop appended one bogus
+	// element at the end; read the exact size and insist on getting it.
+	size_t bytesRead = fread(data.data(), 1, size, f);
+	fclose(f);
+
+	if (bytesRead != size)
+	{
+		Report(Channel::Error, "FileLoad: short read on %s (%zi of %zi bytes)\n", args[1].c_str(), bytesRead, size);
+		return nullptr;
+	}
+
 	Json::Value* output = new Json::Value();
 	output->type = Json::ValueType::Array;
 
-	while (!feof(f))
+	for (size_t i = 0; i < size; i++)
 	{
-		uint8_t AsByte = 0;
-		fread(&AsByte, 1, 1, f);
-		output->AddInt(nullptr, AsByte);
+		output->AddInt(nullptr, data[i]);
 	}
 
-	fclose(f);
-	Report(Channel::Norm, "Loaded: %s (%zi bytes)\n", args[1].c_str(), output->children.size());
+	Report(Channel::Norm, "Loaded: %s (%zi bytes)\n", args[1].c_str(), size);
 
 	return output;
 }
 
 static Json::Value* EmuFileSave(std::vector<std::string>& args)
 {
+	if (args.size() < 2)
+	{
+		Report(Channel::Error, "FileSave: file name expected\n");
+		return nullptr;
+	}
+
 	std::vector<std::string> cmdArgs;
 
 	cmdArgs.insert(cmdArgs.begin(), args.begin() + 2, args.end());
@@ -489,6 +644,12 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 // Sleep specified number of milliseconds
 static Json::Value* CmdSleep(std::vector<std::string>& args)
 {
+	if (args.size() < 2)
+	{
+		Report(Channel::Error, "sleep: milliseconds expected\n");
+		return nullptr;
+	}
+
 	Thread::Sleep(atoi(args[1].c_str()));
 	return nullptr;
 }
@@ -504,6 +665,12 @@ static Json::Value* CmdExit(std::vector<std::string>& args)
 
 static Json::Value* CmdLoad(std::vector<std::string>& args)
 {
+	if (args.size() < 2)
+	{
+		Report(Channel::Error, "load: file name expected\n");
+		return nullptr;
+	}
+
 	if (args[1] != "Bootrom")
 	{
 		if (!Util::FileExists(args[1]))
@@ -596,6 +763,12 @@ static Json::Value* CmdGetConfig(std::vector<std::string>& args)
 
 static Json::Value* CmdGetConfigString(std::vector<std::string>& args)
 {
+	if (args.size() < 3)
+	{
+		Report(Channel::Error, "GetConfigString: section and parameter expected\n");
+		return nullptr;
+	}
+
 	wchar_t* param = GetConfigString(args[2].c_str(), args[1].c_str());
 
 	Json::Value* output = new Json::Value();
@@ -608,12 +781,24 @@ static Json::Value* CmdGetConfigString(std::vector<std::string>& args)
 
 static Json::Value* CmdSetConfigString(std::vector<std::string>& args)
 {
+	if (args.size() < 4)
+	{
+		Report(Channel::Error, "SetConfigString: section, parameter and value expected\n");
+		return nullptr;
+	}
+
 	SetConfigString(args[2].c_str(), Util::StringToWstring(args[3]).c_str(), args[1].c_str());
 	return nullptr;
 }
 
 static Json::Value* CmdGetConfigInt(std::vector<std::string>& args)
 {
+	if (args.size() < 3)
+	{
+		Report(Channel::Error, "GetConfigInt: section and parameter expected\n");
+		return nullptr;
+	}
+
 	int param = GetConfigInt(args[2].c_str(), args[1].c_str());
 
 	Json::Value* output = new Json::Value();
@@ -626,12 +811,24 @@ static Json::Value* CmdGetConfigInt(std::vector<std::string>& args)
 
 static Json::Value* CmdSetConfigInt(std::vector<std::string>& args)
 {
+	if (args.size() < 4)
+	{
+		Report(Channel::Error, "SetConfigInt: section, parameter and value expected\n");
+		return nullptr;
+	}
+
 	SetConfigInt(args[2].c_str(), atoi(args[3].c_str()), args[1].c_str());
 	return nullptr;
 }
 
 static Json::Value* CmdGetConfigBool(std::vector<std::string>& args)
 {
+	if (args.size() < 3)
+	{
+		Report(Channel::Error, "GetConfigBool: section and parameter expected\n");
+		return nullptr;
+	}
+
 	bool param = GetConfigBool(args[2].c_str(), args[1].c_str());
 
 	Json::Value* output = new Json::Value();
@@ -644,6 +841,12 @@ static Json::Value* CmdGetConfigBool(std::vector<std::string>& args)
 
 static Json::Value* CmdSetConfigBool(std::vector<std::string>& args)
 {
+	if (args.size() < 4)
+	{
+		Report(Channel::Error, "SetConfigBool: section, parameter and value expected\n");
+		return nullptr;
+	}
+
 	SetConfigBool(args[2].c_str(), args[3] == "true" ? true : false, args[1].c_str());
 	return nullptr;
 }
@@ -737,8 +940,19 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	}
 
 	/* Load DOL header and swap it for loader. */
-	dol.read((char*)&dh, sizeof(DolHeader));
+	if (!dol.read((char*)&dh, sizeof(DolHeader)))
+	{
+		Report(Channel::Error, "Cannot read DOL header: %s\n", Util::WstringToString(dolname).c_str());
+		return 0;
+	}
 	Gekko::GekkoCore::SwapArea((uint32_t*)&dh, sizeof(DolHeader));
+
+	// A section has two ends that have to be checked separately: its window in the file (the size
+	// the stream can really deliver) and its window in main memory (the RAM the MI allocated, which
+	// is not the 64 MB the address mask allows). Neither a null destination nor an over-long read
+	// may be reached from a crafted header.
+	size_t fileSize = Util::FileSize(dolname);
+	size_t ramSize = Flipper::HW->mem->MIGetMemorySize();
 
 	Report(Channel::Loader, "Loading DOL %s (%i b).\n", dolname.data(), DOLSize(&dh));
 
@@ -747,7 +961,19 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	{
 		if(dh.textOffset[i])    /* If offset is 0, then section is empty */
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.textAddress[i] & 0x03ff'ffff);
+			if (!Verify::ImageSection(fileSize, dh.textOffset[i], dh.textSize[i], dh.textAddress[i], ramSize))
+			{
+				Report(Channel::Error, "DOL text section %i is out of range: file offset %08X, size %i b, address %08X\n",
+					i, dh.textOffset[i], dh.textSize[i], dh.textAddress[i]);
+				return 0;
+			}
+
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.textAddress[i], dh.textSize[i]);
+			if (ptr == nullptr)
+			{
+				Report(Channel::Error, "DOL text section %i has no memory at %08X\n", i, dh.textAddress[i]);
+				return 0;
+			}
 			char* addr = (char*)ptr;
 
 			dol.seekg(dh.textOffset[i]);
@@ -766,7 +992,19 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	{
 		if (dh.dataOffset[i])    /* If offset is 0, then section is empty */
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.dataAddress[i] & 0x03ff'ffff);
+			if (!Verify::ImageSection(fileSize, dh.dataOffset[i], dh.dataSize[i], dh.dataAddress[i], ramSize))
+			{
+				Report(Channel::Error, "DOL data section %i is out of range: file offset %08X, size %i b, address %08X\n",
+					i, dh.dataOffset[i], dh.dataSize[i], dh.dataAddress[i]);
+				return 0;
+			}
+
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dh.dataAddress[i], dh.dataSize[i]);
+			if (ptr == nullptr)
+			{
+				Report(Channel::Error, "DOL data section %i has no memory at %08X\n", i, dh.dataAddress[i]);
+				return 0;
+			}
 			char* addr = (char*)ptr;
 
 			dol.seekg(dh.dataOffset[i]);
@@ -795,14 +1033,21 @@ uint32_t LoadDOL(const std::wstring& dolname)
 	return dh.entryPoint;
 }
 
-// same as LoadDOL, but DOL is mapped in memory
-uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
+// same as LoadDOL, but DOL is mapped in memory at `dol`. The image is not necessarily a file, so
+// the caller has to pass the number of readable bytes that start at `dol` (`imageSize`); every
+// section is validated against that window and against the allocated RAM before it is copied.
+// NOTE: there is no caller of this function in the tree right now; a new one must pass the real
+// size of its buffer (for a mounted image, `Util::FileSize` of the image file).
+uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs, uint32_t imageSize)
 {
 	int i;
 	#define ADDPTR(p1, p2) (uint8_t *)((uint8_t*)(p1)+(uint32_t)(p2))
 
 	// swap DOL header
 	Gekko::GekkoCore::SwapArea((uint32_t *)dol, sizeof(DolHeader));
+
+	// The MI allocation, not the 64 MB the address mask spans.
+	size_t ramSize = Flipper::HW->mem->MIGetMemorySize();
 
 	Report(Channel::Loader, "Loading DOL from %08X (%i b).\n",
 		   ofs, DOLSize(dol) );
@@ -812,9 +1057,21 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 	{
 		if(dol->textOffset[i])  // if offset is 0, then section is empty
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->textAddress[i] & 0x03ff'ffff);
-			uint8_t* addr = ptr;
-			memcpy(addr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
+			if (!Verify::ImageSection(imageSize, dol->textOffset[i], dol->textSize[i], dol->textAddress[i], ramSize))
+			{
+				Report(Channel::Error, "DOL text section %i is out of range: image offset %08X, size %i b, address %08X\n",
+					i, dol->textOffset[i], dol->textSize[i], dol->textAddress[i]);
+				return 0;
+			}
+
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->textAddress[i], dol->textSize[i]);
+			if (ptr == nullptr)
+			{
+				Report(Channel::Error, "DOL text section %i has no memory at %08X\n", i, dol->textAddress[i]);
+				return 0;
+			}
+
+			memcpy(ptr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
 
 			Report(Channel::Loader,
 				"   text section %08X->%08X, size %i b\n",
@@ -829,9 +1086,21 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 	{
 		if(dol->dataOffset[i])  // if offset is 0, then section is empty
 		{
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->dataAddress[i] & 0x03ff'ffff);
-			uint8_t *addr = ptr;
-			memcpy(addr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
+			if (!Verify::ImageSection(imageSize, dol->dataOffset[i], dol->dataSize[i], dol->dataAddress[i], ramSize))
+			{
+				Report(Channel::Error, "DOL data section %i is out of range: image offset %08X, size %i b, address %08X\n",
+					i, dol->dataOffset[i], dol->dataSize[i], dol->dataAddress[i]);
+				return 0;
+			}
+
+			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(dol->dataAddress[i], dol->dataSize[i]);
+			if (ptr == nullptr)
+			{
+				Report(Channel::Error, "DOL data section %i has no memory at %08X\n", i, dol->dataAddress[i]);
+				return 0;
+			}
+
+			memcpy(ptr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
 
 			Report(Channel::Loader,
 				"   data section %08X->%08X, size %i b\n", 
@@ -950,7 +1219,12 @@ uint32_t LoadELF(const std::wstring& elfname)
 	}
 
 	// check header
-	file.read((char*)&hdr, sizeof(ElfEhdr));
+	if (!file.read((char*)&hdr, sizeof(ElfEhdr)))
+	{
+		Report(Channel::Error, "Cannot read ELF header: %s\n", Util::WstringToString(elfname).c_str());
+		file.close();
+		return 0;
+	}
 	if(CheckELFHeader(&hdr) == 0)
 	{
 		file.close();
@@ -972,31 +1246,68 @@ uint32_t LoadELF(const std::wstring& elfname)
 	// load all segments
 	//
 
-	file.seekg(Elf_SwapOff(hdr.e_phoff));
-	for(int i = 0; i < Elf_SwapHalf(hdr.e_phnum); i++)
+	// The program header table has to be inside the file before any header is read out of it:
+	// e_phoff and e_phnum come straight from the file and e_phnum was previously only the loop
+	// bound.
+	size_t fileSize = Util::FileSize(elfname);
+	size_t ramSize = Flipper::HW->mem->MIGetMemorySize();
+	uint64_t phoff = Elf_SwapOff(hdr.e_phoff);
+	uint64_t phnum = Elf_SwapHalf(hdr.e_phnum);
+
+	if (!Verify::Range(phoff, phnum * sizeof(ElfPhdr), fileSize))
+	{
+		Report(Channel::Error, "ELF program header table is out of range: offset %llu, count %llu, file size %zi\n",
+			(unsigned long long)phoff, (unsigned long long)phnum, fileSize);
+		file.close();
+		return 0;
+	}
+
+	file.seekg((std::streamoff)phoff);
+	for(uint64_t i = 0; i < phnum; i++)
 	{
 		std::streampos old;
 
-		file.read((char*)&phdr, sizeof(ElfPhdr));
+		if (!file.read((char*)&phdr, sizeof(ElfPhdr)))
+		{
+			Report(Channel::Error, "Cannot read ELF program header %llu\n", (unsigned long long)i);
+			file.close();
+			return 0;
+		}
 		old = file.tellg();
 
 		// load one segment
 		{
-			unsigned long vend, vaddr;
-			long size;
+			uint64_t vaddr;
+			uint32_t size;
 
 			if(Elf_SwapWord(phdr.p_type) == PT_LOAD)
 			{
 				vaddr = Elf_SwapAddr(phdr.p_vaddr);
-				
+
+				// p_filesz is a 32-bit field. Held in a signed long (as the old code did) a segment
+				// of 0x80000000 bytes or more became a negative length.
 				size = Elf_SwapWord(phdr.p_filesz);
 				if(size == 0) continue;
 
-				vend = vaddr + size;
+				// The segment has to be inside the file *and* inside main memory; a segment that
+				// is not is a malformed image, not something to half-load.
+				if (!Verify::ImageSection(fileSize, Elf_SwapOff(phdr.p_offset), size, (uint32_t)vaddr, ramSize))
+				{
+					Report(Channel::Error, "ELF segment %llu is out of range: file offset %08X, size %08X, address %08X\n",
+						(unsigned long long)i, (uint32_t)Elf_SwapOff(phdr.p_offset), size, (uint32_t)vaddr);
+					file.close();
+					return 0;
+				}
 
-				file.seekg(Elf_SwapOff(phdr.p_offset));
-				uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug(vaddr & 0x03ff'ffff);
-				file.read((char*)ptr, vend - vaddr);
+				file.seekg((std::streamoff)Elf_SwapOff(phdr.p_offset));
+				uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDebug((uint32_t)vaddr, size);
+				if (ptr == nullptr)
+				{
+					Report(Channel::Error, "ELF segment %llu has no memory at %08X\n", (unsigned long long)i, (uint32_t)vaddr);
+					file.close();
+					return 0;
+				}
+				file.read((char*)ptr, size);
 			}
 		}
 
@@ -1016,11 +1327,17 @@ static void AutoloadMap(HWConfig* config, const std::wstring & filename, bool dv
 	std::wstring mapname{};
 	char drive[0x100], dir[0x1000], name[0x100], ext[0x100];
 
-	Util::SplitPath(Util::WstringToString(filename).c_str(),
-		drive, 
-		dir, 
-		name,
-		ext);
+	// Every component is copied with its destination size: a name with an over-long component (or a
+	// UNC prefix) used to overflow these stack buffers, and an empty split would invent a map path.
+	if (!Util::SplitPath(Util::WstringToString(filename).c_str(),
+		drive, sizeof(drive),
+		dir, sizeof(dir),
+		name, sizeof(name),
+		ext, sizeof(ext)))
+	{
+		Report(Channel::Error, "Cannot split the path of %s, map autoload skipped\n", Util::WstringToString(filename).c_str());
+		return;
+	}
 
 	// Step 1: try to load map from Data directory
 	if (dvd)
@@ -1103,9 +1420,15 @@ void LoadFile(const std::wstring& filename)
 	}
 	else
 	{
-		wchar_t* extension = wcsrchr((wchar_t*)filename.c_str(), L'.');
-		
-		if (!_wcsicmp(extension, L".dol"))
+		// wcsrchr returns NULL for a name without a dot; _wcsicmp(NULL, ...) aborts (MSVC) or
+		// segfaults (Linux, where it maps to wcscasecmp), so the extension has to be tested first.
+		const wchar_t* extension = wcsrchr(filename.c_str(), L'.');
+
+		if (extension == nullptr)
+		{
+			Report(Channel::Error, "Unknown file type: %s\n", Util::WstringToString(filename).c_str());
+		}
+		else if (!_wcsicmp(extension, L".dol"))
 		{
 			entryPoint = LoadDOL(filename);
 			dvd = false;
@@ -1115,23 +1438,23 @@ void LoadFile(const std::wstring& filename)
 			entryPoint = LoadELF(filename);
 			dvd = false;
 		}
-		else if (!_wcsicmp(extension, L".iso"))
+		else if (!_wcsicmp(extension, L".iso") || !_wcsicmp(extension, L".gcm") || !_wcsicmp(extension, L".rvz"))
 		{
-			DVD::MountFile(filename);
+			// A disk image that cannot be mounted (a truncated or renamed file whose boot info
+			// does not check out) must fail the load. Ignoring the result used to leave the DVD
+			// layer with no image mounted and the boot sequence reading zeroes from it forever.
+			if (!DVD::MountFile(filename))
+			{
+				Report(Channel::Error, "Failed to mount the disk image: %s\n", Util::WstringToString(filename).c_str());
+				throw "Cannot load file!";
+			}
+
 			GetDiskId(diskId);
 			dvd = true;
 		}
-		else if (!_wcsicmp(extension, L".gcm"))
+		else
 		{
-			DVD::MountFile(filename);
-			GetDiskId(diskId);
-			dvd = true;
-		}
-		else if (!_wcsicmp(extension, L".rvz"))
-		{
-			DVD::MountFile(filename);
-			GetDiskId(diskId);
-			dvd = true;
+			Report(Channel::Error, "Unknown file type: %s\n", Util::WstringToString(filename).c_str());
 		}
 	}
 

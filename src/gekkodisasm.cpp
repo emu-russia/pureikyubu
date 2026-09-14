@@ -793,8 +793,10 @@ namespace Gekko
 			case 1022: return "THRM3";
 		}
 
-		char def[0x10] = { 0, };
-		sprintf(def, "%zd", spr);
+		// A size_t printed in full can be 20 digits, so the buffer has to hold that plus the
+		// terminator: the caller may hand in a 64-bit value straight from a console command.
+		char def[24] = { 0, };
+		snprintf(def, sizeof(def), "%zd", spr);
 		return def;
 	}
 
@@ -807,8 +809,8 @@ namespace Gekko
 			case (int)TBR::TBU: return "TBU";
 		}
 
-		char def[8] = { 0, };
-		sprintf(def, "%zd", tbr);
+		char def[24] = { 0, };
+		snprintf(def, sizeof(def), "%zd", tbr);
 		return def;
 	}
 

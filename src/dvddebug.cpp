@@ -298,8 +298,24 @@ namespace DVD
 		return output;
 	}
 
-	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry, Json::Value * parent, int dumpMode)
+	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry, uint32_t entryCount, int depth, Json::Value * parent, int dumpMode)
 	{
+		// The pointer comes from an FST walk, so it can be anywhere; only entries of the loaded
+		// table may be touched (the swap below writes 12 bytes at it).
+		if (entry < fst || !Verify::FstEntry(entryCount, entry - fst))
+		{
+			Report(Channel::Error, "DumpFst: bad FST entry index\n");
+			return nullptr;
+		}
+
+		// A crafted table can nest directories as deep as it is long; a real path cannot be
+		// longer than DVD_MAXPATH, so the recursion stops there instead of on the stack limit.
+		if (depth >= DVD_MAXPATH)
+		{
+			Report(Channel::Error, "DumpFst: directory nesting is too deep\n");
+			return nullptr;
+		}
+
 		entry->nameOffsetLo = _BYTESWAP_UINT16(entry->nameOffsetLo);
 		entry->fileOffset = _BYTESWAP_UINT32(entry->fileOffset);
 		entry->fileLength = _BYTESWAP_UINT32(entry->fileLength);
@@ -321,15 +337,24 @@ namespace DVD
 			sprintf(dirNameAsInt, "%i", ((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo);
 			Json::Value* dir = parent->AddObject(dirNameAsInt);
 
+			// The end of the directory is image data: a table that does not fit is refused
+			// instead of walked through the heap (Verify::FstRoot allows 1..entryCount).
+			if (!Verify::FstRoot((uint64_t)entryCount * sizeof(DVDFileEntry), entry->nextOffset))
+			{
+				Report(Channel::Error, "DumpFst: bad directory end offset 0x%X\n", entry->nextOffset);
+				return nullptr;
+			}
+
 			DVDFileEntry* until = &fst[entry->nextOffset];
 			DVDFileEntry* next = entry + 1;
-			DVDFileEntry* last = next;
 
 			while (next < until)
 			{
-				next = DumpFstDir(fst, next, dir, dumpMode);
-				assert(next >= last);
-				last = next;
+				next = DumpFstDir(fst, next, entryCount, depth + 1, dir, dumpMode);
+				if (next == nullptr)
+				{
+					return nullptr;
+				}
 			}
 
 			return until;
@@ -416,24 +441,37 @@ namespace DVD
 		DVDBB2 bb2 = { 0 };
 
 		Seek (DVD_BB2_OFFSET);
-		Read(&bb2, sizeof(bb2));
+		if (!Read(&bb2, sizeof(bb2)))
+		{
+			Report(Channel::Error, "DumpFst: failed to read the BB2\n");
+			return nullptr;
+		}
 		SwapArea(&bb2, sizeof(bb2));
 
-		// Load FST
+		// Load FST. Its length comes from the image, so it is capped and kept in a vector: a
+		// bad one cannot over-allocate the heap or throw out of the command.
+		if (bb2.FSTLength < sizeof(DVDFileEntry) || bb2.FSTLength > DVD_FST_MAX_SIZE)
+		{
+			Report(Channel::Error, "DumpFst: bad FST length (0x%X)\n", bb2.FSTLength);
+			return nullptr;
+		}
 
-		uint8_t* fst = new uint8_t[bb2.FSTLength];
-		assert(fst);
-
-		memset(fst, 0, bb2.FSTLength);
+		const uint32_t fstLength = bb2.FSTLength;
+		const uint32_t entryCount = fstLength / sizeof(DVDFileEntry);
+		std::vector<uint8_t> fst(fstLength, 0);
 
 		Seek(bb2.FSTPosition);
-		Read(fst, bb2.FSTLength);
+		if (!Read(fst.data(), fstLength))
+		{
+			Report(Channel::Error, "DumpFst: failed to read the FST\n");
+			return nullptr;
+		}
 
 		// Output FST contents
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
-		for (uint32_t i = 0; i < bb2.FSTLength; i++)
+		for (uint32_t i = 0; i < fstLength; i++)
 		{
 			output->AddInt(nullptr, fst[i]);
 		}
@@ -444,27 +482,32 @@ namespace DVD
 
 		root.root.AddObject(nullptr);
 
-		char * stringsTable = (char*)DumpFstDir((DVDFileEntry*)fst, (DVDFileEntry*)fst, &root.root, dumpMode);
-		size_t stringsTableSize = bb2.FSTLength - (stringsTable - (char*)fst);
+		char * stringsTable = (char*)DumpFstDir((DVDFileEntry*)fst.data(), (DVDFileEntry*)fst.data(), entryCount, 0, &root.root, dumpMode);
+		if (stringsTable == nullptr)
+		{
+			delete output;
+			return nullptr;
+		}
+		size_t stringsTableSize = fstLength - (stringsTable - (char*)fst.data());
 
 		// Dump strings
 
 		size_t offset = 0, savedOffset = offset;
-		char name[0x200] = { 0, };
-		char* namePtr = name;
 		std::map<uint32_t, std::string> stringsMap;
 
 		while (offset < stringsTableSize)
 		{
-			*namePtr++ = stringsTable[offset];
 			if (stringsTable[offset] == 0)
 			{
+				// A name is the run of bytes up to its terminator; building it from the bounded
+				// range keeps an unterminated name table from running off any buffer.
+				std::string name(stringsTable + savedOffset, offset - savedOffset);
+
 				if (dumpMode)
 				{
-					Report(Channel::Norm, "name[0x%X]: %s\n", savedOffset, name);
+					Report(Channel::Norm, "name[0x%X]: %s\n", savedOffset, name.c_str());
 				}
 				stringsMap[(uint32_t)savedOffset] = name;
-				namePtr = name;
 				savedOffset = offset + 1;
 			}
 			offset++;
@@ -476,8 +519,6 @@ namespace DVD
 		{
 			DumpFstEntry(root.root.children.back(), stringsMap, 0);
 		}
-
-		delete[] fst;
 
 		return output;
 	}

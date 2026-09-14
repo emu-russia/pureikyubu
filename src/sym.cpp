@@ -252,8 +252,14 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
 
 	while(!feof(map))
 	{
-		fgets(buf, 1024, map);
-		sscanf(buf, "%s", token1);
+		// A failed read leaves the buffer untouched, and everything below scans it
+		if (fgets(buf, sizeof(buf), map) == NULL) break;
+
+		// The field widths are what keeps a long line inside token1 / procName: a map
+		// is an untrusted file and %s without a width writes past the end of the buffer.
+		token1[0] = 0;
+		sscanf(buf, "%255s", token1);
+		token1[sizeof(token1) - 1] = 0;
 
 		// check section type (we need only code sections)
 		if(!strcmp(buf, ".init section layout\n")) { started = true; continue; }
@@ -267,11 +273,11 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
 		IFIS(-----------------------);
 		IFIS(UNUSED);
 
-		if(token1[strlen(token1) - 1] == ']') continue;
+		if(token1[0] != 0 && token1[strlen(token1) - 1] == ']') continue;
 		if(started == false) continue;
 
 		// parse symbols
-		if(sscanf(buf, "%08x %08x %08x %i %s", 
+		if(sscanf(buf, "%08x %08x %08x %i %511s", 
 			&moduleOffset, &procSize, &procAddr,
 			&flags,
 			procName) != 5) continue;
@@ -305,10 +311,11 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
 
 	while(!feof(map))
 	{
-		fgets(buf, 1024, map);
+		// A failed read leaves the buffer untouched, and everything below scans it
+		if (fgets(buf, sizeof(buf), map) == NULL) break;
 
-		// parse symbols
-		if(sscanf(buf, "%s %s", par1, par2) != 2) continue;
+		// parse symbols. The field widths keep a long line inside par1 / par2.
+		if(sscanf(buf, "%511s %511s", par1, par2) != 2) continue;
 
 		if(strcmp(par1, ".init") == 0) { started = true; continue; }
 		if(strcmp(par1, ".text") == 0) { started = true; continue; }
@@ -356,8 +363,27 @@ static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 		// cut string
 		while (*ptr == '\n') ptr++;
 		if (!*ptr) break;
-		while (*ptr != '\n' && *ptr) line[i++] = *ptr++;
-		line[i++] = 0;
+
+		// The copy is bounded: a single map line longer than the buffer used to run the
+		// stack over with file-controlled bytes. An over-long line is dropped as a whole
+		// instead of the truncated head being handed to the parser as a symbol.
+		bool overlong = false;
+		while (*ptr != '\n' && *ptr)
+		{
+			if (i >= (int)sizeof(line) - 1)
+			{
+				overlong = true;
+				break;
+			}
+			line[i++] = *ptr++;
+		}
+		line[i] = 0;
+
+		if (overlong)
+		{
+			while (*ptr != '\n' && *ptr) ptr++;	// skip the rest of the line
+			continue;
+		}
 
 		// remove comments
 		char* p = line;
@@ -371,22 +397,22 @@ static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 			p++;
 		}
 
-		// remove spaces at the end
-		p = &line[strlen(line) - 1];
-		while (*p <= ' ') p--;
-		if (*p) p[1] = 0;
-
-		// remove spaces at the beginning
-		p = line;
-		while (*p <= ' ' && *p) p++;
+		// remove spaces at the end and the beginning. ScriptTrim handles the empty
+		// line: the old walk started at line[strlen(line) - 1] and went below line.
+		p = Verify::ScriptTrim(line);
 
 		// empty string ?
-		if (!*p) continue;
+		if (!p) continue;
 
 		// add symbol
 		char* name;
 		uint32_t addr = strtoul(p, &name, 16);
-		while (*name <= ' ') name++;
+
+		// The address may be the whole line, in which case name points at the NUL and
+		// there is no symbol name to save
+		while (*name != 0 && *name <= ' ') name++;
+		if (*name == 0) continue;
+
 		SYMAddNew(addr, name);
 	}
 
@@ -406,7 +432,14 @@ MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add)
 		SYMKill();
 	}
 
-	// copy name for MAP saver (with SaveMAP "this" parameter)
+	// copy name for MAP saver (with SaveMAP "this" parameter).
+	// The buffer is fixed, so an over-long name is rejected instead of overrunning it.
+	if (wcslen(mapname) >= _countof(hle.mapfile))
+	{
+		Report(Channel::Error, "MAP file name is too long\n");
+		hle.mapfile[0] = 0;
+		return MAP_FORMAT::BAD;
+	}
 	wcscpy(hle.mapfile, mapname);
 
 	// try to open
@@ -418,9 +451,11 @@ MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add)
 		return MAP_FORMAT::BAD;
 	}
 
-	// recognize map format
-	fread(sign, 1, 256, f);
+	// recognize map format. A short read leaves the tail of the buffer untouched, so the
+	// terminator has to be written by hand before the strncmp sees it.
+	size_t signLen = fread(sign, 1, sizeof(sign) - 1, f);
 	fclose(f);
+	sign[signLen] = 0;
 
 	MAP_FORMAT format;
 	if(!strncmp(sign, "Link map", 8)) format = LoadMapCW(mapname);
@@ -437,6 +472,15 @@ MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add)
 MAP_FORMAT LoadMAP(const char* mapname, bool add)
 {
 	wchar_t wcharStr[0x1000] = { 0, };
+
+	// one wide character per input byte plus the terminator, so the buffer can take
+	// exactly _countof(wcharStr) - 1 bytes. Longer names are rejected instead of overrun.
+	if (mapname == nullptr || strlen(mapname) >= _countof(wcharStr))
+	{
+		Report(Channel::Error, "MAP file name is too long\n");
+		return MAP_FORMAT::BAD;
+	}
+
 	wchar_t* wcharPtr = wcharStr;
 	char* charPtr = (char*)mapname;
 
@@ -444,7 +488,7 @@ MAP_FORMAT LoadMAP(const char* mapname, bool add)
 	{
 		*wcharPtr++ = *charPtr++;
 	}
-	*wcharPtr++ = 0;
+	*wcharPtr = 0;
 
 	return LoadMAP(wcharStr, add);
 }
@@ -473,6 +517,7 @@ uint8_t * Map_buffer;
 int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
+size_t Map_functionsNamesTableSize;
 
 #define MAPDAT_FILE   "./Data/makemap.dat"
 #define MAP_MAXFUNCNAME 100
@@ -541,10 +586,28 @@ static void MAPOpen ()
 	
 	Map_buffer = temp.data();
 	if (Map_buffer == NULL) return;
-	Map_functionsSize = *(uint32_t *)(Map_buffer);
+
+	// makemap.dat is an external file: the function count in its header describes arrays
+	// that have to fit in the bytes that were actually read, so it is validated before it
+	// is ever used as a subscript (or, below, to walk to the names table).
+	if (temp.size() < sizeof(uint32_t))
+	{
+		Map_buffer = NULL;
+		return;
+	}
+
+	uint32_t functionsSize = *(uint32_t *)(Map_buffer);
+	if (functionsSize == 0 || functionsSize > (temp.size() - sizeof(uint32_t)) / sizeof(funcDesc))
+	{
+		Map_buffer = NULL;
+		return;
+	}
+
+	Map_functionsSize = (int)functionsSize;
 	Map_functions = (funcDesc *)(Map_buffer + sizeof(uint32_t));
 	Map_functionsNamesTable = (char *)((char *)Map_functions 
 										+ Map_functionsSize * sizeof(funcDesc));
+	Map_functionsNamesTableSize = temp.size() - sizeof(uint32_t) - (size_t)Map_functionsSize * sizeof(funcDesc);
 
 	/*
 	// This just prints a list of all the common functions
@@ -565,6 +628,7 @@ static void MAPClose ()
 	Map_functionsSize = 0;
 	Map_functions = NULL;
 	Map_functionsNamesTable = NULL;
+	Map_functionsNamesTableSize = 0;
 }
 
 static char * MAPFind (uint32_t checksum)
@@ -577,7 +641,18 @@ static char * MAPFind (uint32_t checksum)
 	while (inf <= sup) {
 		med = (inf + sup) / 2;
 		if (Map_functions[med].checksum == checksum)
-			return &Map_functionsNamesTable[Map_functions[med].nameoffset];
+		{
+			// The name is a C string inside the names table, so the offset has to leave
+			// room for it and it has to be terminated inside the table. Without this the
+			// caller's strlen/strchr run off the end of the mapped file.
+			uint32_t nameoffset = Map_functions[med].nameoffset;
+			if (nameoffset >= Map_functionsNamesTableSize) return NULL;
+
+			const char* name = &Map_functionsNamesTable[nameoffset];
+			if (memchr(name, 0, Map_functionsNamesTableSize - nameoffset) == NULL) return NULL;
+
+			return (char*)name;
+		}
 		if (checksum < Map_functions[med].checksum)
 			sup = med - 1;
 		else
@@ -716,22 +791,12 @@ void MAPFinish()
 					sprintf (buf, "[0x%08x]", Checksum);
 				}
 
-				// show status
-				{
-					wchar_t wideName[0x100] = { 0, };
-
-					wchar_t* wideNamePtr = wideName;
-					char* namePtr = name;
-					while (*namePtr)
-					{
-						*wideNamePtr++ = *namePtr++;
-					}
-					*wideNamePtr++ = 0;
-				}
-
 				namelen = strlen(name);
 				if (namelen >= MAP_MAXFUNCNAME) {
+					// Copy one byte less than the buffer, so the terminator always fits:
+					// memcpy left the buffer unterminated and fprintf ran past its end.
 					memcpy (namebuf, name, MAP_MAXFUNCNAME - 1);
+					namebuf[MAP_MAXFUNCNAME - 1] = 0;
 					fprintf(Map, "%08x %s\n", Map_marks[i].offset, namebuf);
 				}
 				else 
@@ -760,14 +825,20 @@ void MAPFinish()
 #define HEX
 
 static MAP_FORMAT mapFormat;
-static char *mapName;
+// The map path is kept wide: it is a wchar_t path, and handing it to fopen as if it were
+// ANSI truncated it at the first embedded zero byte ("mygame.map" became "m").
+static std::wstring mapName;
 static FILE* mapFile = NULL;
 static bool appendStarted;
 static int itemsUpdated;
 
 static void AppendMAPBySymbol(uint32_t address, char *symbol)
 {
-	mapFile = fopen(mapName, "a");
+#ifdef _LINUX
+	mapFile = fopen(Util::WstringToString(mapName).c_str(), "a");
+#else
+	if (_wfopen_s(&mapFile, mapName.c_str(), L"a") != 0) mapFile = NULL;
+#endif
 	if(!mapFile) return;
 
 	// linefeed
@@ -821,7 +892,8 @@ static void SaveMAP2(const wchar_t *mapname)
 		else mapname = hle.mapfile;
 	}
 
-	Report(Channel::HLE, "Saving/updating map: %s ...\n\n", mapname);
+	// %s takes a narrow string: passing the wide path made Report read it one byte at a time
+	Report(Channel::HLE, "Saving/updating map: %s ...\n\n", Util::WstringToString(mapname).c_str());
 
 	// load MAP symbols
 	SYMSetWorkspace(mapSet);
@@ -829,7 +901,7 @@ static void SaveMAP2(const wchar_t *mapname)
 	if(mapFormat == MAP_FORMAT::BAD) return;  // :(
 
 	// find new map entries to append file
-	mapName = (char *)mapname;
+	mapName = mapname;
 	appendStarted = 0;
 	itemsUpdated = 0;
 	SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
@@ -849,12 +921,21 @@ void SaveMAP(const char* mapname)
 	}
 
 	wchar_t wcharStr[0x1000] = { 0, };
+
+	// one wide character per input byte plus the terminator, so the buffer can take
+	// exactly _countof(wcharStr) - 1 bytes. Longer names are rejected instead of overrun.
+	if (strlen(mapname) >= _countof(wcharStr))
+	{
+		Report(Channel::Error, "MAP file name is too long\n");
+		return;
+	}
+
 	char* ansiPtr = (char*)mapname;
 	wchar_t* wcharPtr = wcharStr;
 	while (*ansiPtr)
 	{
 		*wcharPtr++ = *ansiPtr++;
 	}
-	*wcharPtr++ = 0;
+	*wcharPtr = 0;
 	SaveMAP2(wcharStr);
 }

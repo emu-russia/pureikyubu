@@ -39,6 +39,14 @@ namespace DVD
 
 	bool MountFile(const std::string& file)
 	{
+		// The path is copied into a fixed wchar_t buffer below, so one that cannot fit (the
+		// check counts the terminator) is refused instead of walked past the end of it.
+		if (file.size() >= 0x1000)
+		{
+			Report(Channel::Error, "Disc image path is too long\n");
+			return false;
+		}
+
 		wchar_t path[0x1000] = { 0, };
 		wchar_t* tcharPtr = path;
 		char* ansiPtr = (char *)file.c_str();
@@ -52,6 +60,12 @@ namespace DVD
 
 	bool MountFile(const std::wstring& file)
 	{
+		if (file.size() >= 0x1000)
+		{
+			Report(Channel::Error, "Disc image path is too long\n");
+			return false;
+		}
+
 		wchar_t path[0x1000] = { 0, };
 		wchar_t* tcharPtr = path;
 		wchar_t* widePtr = (wchar_t*)file.c_str();
@@ -91,6 +105,12 @@ namespace DVD
 
 	bool MountSdk(std::string path)
 	{
+		if (path.size() >= 0x1000)
+		{
+			Report(Channel::Error, "DolphinSDK path is too long\n");
+			return false;
+		}
+
 		wchar_t tcharStr[0x1000] = { 0, };
 		wchar_t* tcharPtr = tcharStr;
 		char* ansiPtr = (char*)path.c_str();
@@ -406,6 +426,14 @@ namespace DVD
 
 	MountDolphinSdk::MountDolphinSdk(const wchar_t* DolphinSDKPath)
 	{
+		// wcscpy into the fixed-size member directory: a path that does not fit is refused
+		// here, before the rest of the constructor uses the (empty) directory.
+		if (DolphinSDKPath == nullptr || wcslen(DolphinSDKPath) >= 0x1000)
+		{
+			Report(Channel::Error, "DolphinSDK path is too long\n");
+			return;
+		}
+
 		wcscpy(directory, DolphinSDKPath);
 
 		try
@@ -1076,6 +1104,8 @@ namespace DVD
 static DVDBB2           bb2;
 static DVDFileEntry* FstStart;            // Loaded FST (byte-swapped as little-endian)
 static uint32_t         fstSize;        // Size of loaded FST in bytes (not greater DVD_FST_MAX_SIZE)
+static uint32_t         fstEntryCount;    // Number of 12-byte entries in the loaded FST (including root)
+static uint32_t         fstNameTableSize; // Size of the name table that follows the entries
 static char* FstStringStart;          // Strings(name) table
 
 #define FSTOFS(lo, hi) (((uint32_t)hi << 16) | lo)
@@ -1094,9 +1124,20 @@ static void SwapArea(uint32_t* addr, int count)
 
 // swap bytes in FST (little-endian)
 // return beginning of strings table (or NULL, if bad FST)
-static char *fst_prepare(DVDFileEntry *root)
+static char *fst_prepare(DVDFileEntry *root, uint32_t size)
 {
 	char* nameTablePtr = nullptr;
+
+	// The root entry comes straight from the image. Its table size must be validated before the
+	// first field is swapped (the swap itself already touches the entry's 12 bytes) and before
+	// the entry count is used as a subscript: nextOffset counts entries, so the whole table has
+	// to fit in what was read. Verify::FstRoot also requires nextOffset >= 1.
+	if (!Verify::FstRoot(size, _BYTESWAP_UINT32(root->nextOffset)))
+	{
+		Report(Channel::Error, "FST: bad root entry count (0x%X, %u bytes)\n",
+			_BYTESWAP_UINT32(root->nextOffset), size);
+		return nullptr;
+	}
 
 	root->nameOffsetLo = _BYTESWAP_UINT16(root->nameOffsetLo);
 	root->fileOffset   = _BYTESWAP_UINT32(root->fileOffset);
@@ -1172,28 +1213,52 @@ bool dvd_fs_init()
 		fstSize = 0;
 	}
 
-	// create new FST
+	fstEntryCount = 0;
+	fstNameTableSize = 0;
+
+	// create new FST. A table smaller than one entry cannot even hold the root, and the upper
+	// bound keeps the allocation (and the walk below) sane.
 	fstSize = bb2.FSTLength;
-	if(fstSize > DVD_FST_MAX_SIZE)
+	if(fstSize < sizeof(DVDFileEntry) || fstSize > DVD_FST_MAX_SIZE)
 	{
+		Report(Channel::Error, "FST: bad table length (0x%X)\n", fstSize);
+		fstSize = 0;
 		return false;
 	}
 	FstStart = (DVDFileEntry *)malloc(fstSize);
 	if(FstStart == NULL)
 	{
+		fstSize = 0;
 		return false;
 	}
+	// Zero the buffer first: a read that is cut short by the end of the image leaves the rest
+	// untouched, and fst_prepare must not parse uninitialised heap.
+	memset(FstStart, 0, fstSize);
+
 	DVD::Seek(bb2.FSTPosition);
-	DVD::Read(FstStart, fstSize);
-		
+	if (!DVD::Read(FstStart, fstSize))
+	{
+		Report(Channel::Error, "FST: failed to read the file system table\n");
+		free(FstStart);
+		FstStart = NULL;
+		fstSize = 0;
+		return false;
+	}
+
 	// swap bytes in FST and find offset of string table
-	FstStringStart = fst_prepare(FstStart);
+	FstStringStart = fst_prepare(FstStart, fstSize);
 	if(!FstStringStart)
 	{
 		free(FstStart);
 		FstStart = NULL;
+		fstSize = 0;
 		return false;
 	}
+
+	// The root entry is validated now, so the size of the two tables is known for good: the
+	// entries are 12 bytes each and the name table is everything that is left.
+	fstEntryCount = FstStart[0].nextOffset;
+	fstNameTableSize = fstSize - fstEntryCount * sizeof(DVDFileEntry);
 
 	// FST loaded ok
 	return true;
@@ -1207,6 +1272,10 @@ void dvd_fs_shutdown()
 		FstStart = NULL;
 		fstSize = 0;
 	}
+
+	fstEntryCount = 0;
+	fstNameTableSize = 0;
+	FstStringStart = nullptr;
 }
 
 // Based on reversing of original method.
@@ -1235,17 +1304,31 @@ static int DVDConvertPathToEntrynum(const char* _path)
 
 		if (path[0] == '.')
 		{
+			// Every index used from here on comes out of the table, so it has to point at an
+			// entry of the table that was actually loaded.
+			if (!Verify::FstEntry(fstEntryCount, (uint64_t)entry))
+				return -1;
+
 			if (path[1] == '.')
 			{
 				if (path[2] == '/')
 				{
 					entry = FstStart[entry].parentOffset;
+
+					if (!Verify::FstEntry(fstEntryCount, (uint64_t)entry))
+						return -1;
+
 					path += 3;
 					continue;   // Loop1
 				}
 				if (path[2] == 0)
 				{
-					return FstStart[entry].parentOffset;
+					int parent = FstStart[entry].parentOffset;
+
+					if (!Verify::FstEntry(fstEntryCount, (uint64_t)parent))
+						return -1;
+
+					return parent;
 				}
 			}
 			else
@@ -1284,7 +1367,19 @@ static int DVDConvertPathToEntrynum(const char* _path)
 		// Loop2
 		while (true)
 		{
-			if ((int)FstStart[prevEntry].nextOffset <= entry)   // Walk forward only
+			// Both the running entry and the parent whose end offset bounds the level are
+			// indices into the loaded table, so they are checked before anything is read.
+			if (!Verify::FstEntry(fstEntryCount, (uint64_t)prevEntry) ||
+				!Verify::FstEntry(fstEntryCount, (uint64_t)entry))
+				return -1;      // Bad FST
+
+			// The level ends at the parent's nextOffset, which is image data: a value past the
+			// table is clamped to the table so that the walk cannot leave it.
+			uint32_t levelEnd = FstStart[prevEntry].nextOffset;
+			if (levelEnd > fstEntryCount)
+				levelEnd = fstEntryCount;
+
+			if (levelEnd <= (uint32_t)entry)   // Walk forward only
 				return -1;      // Bad FST
 
 			// Loop2 - Group 1  -- Compare names
@@ -1292,11 +1387,26 @@ static int DVDConvertPathToEntrynum(const char* _path)
 			{
 				char* r21 = path;      // r21 -- current pathPtr to inner loop
 				int nameOffset = (FstStart[entry].nameOffsetHi << 16) | FstStart[entry].nameOffsetLo;
+
+				// The name offset is an image value: it must point inside the name table, and
+				// the comparison has to stop at the end of the table as well (the old loop read
+				// on until it happened to find a zero byte).
+				if (!Verify::FstName(fstNameTableSize, nameOffset & 0xFFFFFF))
+					return -1;
+
 				char* r20 = &FstStringStart[nameOffset & 0xFFFFFF];     // r20 -- ptr to current entry name
+				char* nameTableEnd = FstStringStart + fstNameTableSize;
 
 				bool same;
 				while (true)
 				{
+					if (r20 == nameTableEnd)
+					{
+						// The name is not terminated inside the table: it cannot match.
+						same = false;
+						break;
+					}
+
 					if (*r20 == 0)
 					{
 						same = (*r21 == '/' || *r21 == 0);
@@ -1337,6 +1447,13 @@ int dvd_open(const char *path)
 		return 0;
 	}
 
+	// The entry number comes from the table walk; the check keeps the subscript honest even if
+	// the walk ever returns an index that was not produced by a validated FstStart access.
+	if (!Verify::FstEntry(fstEntryCount, (uint64_t)entry))
+	{
+		return 0;
+	}
+
 	return (int)FstStart[entry].fileOffset;
 }
 
@@ -1358,6 +1475,13 @@ bool GCMMountFile(const wchar_t*file)
 	if (file == nullptr)
 	{
 		return true;
+	}
+
+	// The name is copied into the fixed-size dvd.gcm_filename below.
+	if (wcslen(file) >= 0x1000)
+	{
+		Report(Channel::Error, "Disc image path is too long\n");
+		return false;
 	}
 
 	// Is this a compressed RVZ image? The container is recognized by its magic, not by the
@@ -1419,6 +1543,17 @@ bool GCMRead(uint8_t*buf, size_t length)
 		return true;
 	}
 
+	// The seek value is a signed int and the value it was derived from is guest-controlled, so
+	// a negative position is refused here: an int comparison lets it through, and the length
+	// arithmetic below would then wrap into a multi-gigabyte read written into the caller's
+	// (small) buffer.
+	if (dvd.seekval < 0)
+	{
+		Report(Channel::Error, "DVD read at a negative seek position (%i)\n", dvd.seekval);
+		memset(buf, 0, length);     // fill by zeroes
+		return false;
+	}
+
 	// out of DVD
 	if(dvd.seekval >= DVD_SIZE)
 	{
@@ -1436,16 +1571,20 @@ bool GCMRead(uint8_t*buf, size_t length)
 		return true;
 	}
 
-	// wrap, if seek is near to out of DVD
-	if( (dvd.seekval + length) >= DVD_SIZE)
+	// The requested range is clamped in 64-bit arithmetic against both the DVD size and the
+	// mounted image. The clamp can only shrink the caller's length and it never turns a
+	// position that is inside the image into a longer read than the image holds, which is what
+	// the old int/size_t mixed comparisons did.
+	uint64_t dvdBound = (uint64_t)dvd.gcm_size;
+	if (dvdBound > DVD_SIZE)
 	{
-		length = DVD_SIZE - dvd.seekval;
+		dvdBound = DVD_SIZE;
 	}
 
-	// wrap, if seek is near to out of the image
-	if( (dvd.seekval + length) >= dvd.gcm_size)
+	if (!Verify::DiscRead(dvd.seekval, length, (int64_t)dvdBound))
 	{
-		length = dvd.gcm_size - dvd.seekval;
+		// The image ends inside the requested range: read only what is left of it.
+		length = (size_t)(dvdBound - (uint64_t)dvd.seekval);
 	}
 
 	// read data

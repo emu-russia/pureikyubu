@@ -355,17 +355,44 @@ void DSPUpdateInt()
 		if (aram.masked)
 			return;
 
+		// cnt is a 26-bit guest field (up to 0x03FFFFE0), while ARAM is 16 MB and main memory is
+		// only 24 or 48 MB, so the *end* of every window this transfer touches has to be checked
+		// before a byte is moved. The old code tested only `araddr >= ARAMSIZE` and then copied
+		// cnt bytes, which runs ~48 MB past the ARAM allocation (or past main memory in the other
+		// direction). Both tests are 64-bit so that no cnt can wrap them.
+		bool aramOk = Verify::Range(aram.araddr, cnt, ARAMSIZE);
+		bool memOk = Verify::MainMemory(aram.mmaddr, cnt, Flipper::HW->mem->MIGetMemorySize());
+
 		// Main memory can be seen only through the DSP window.
 		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
 		bool beyondAram = aram.araddr >= ARAMSIZE;
 
 		if (beyondAram)
 		{
-			// No expansion module is installed: a read returns zeros, a write is discarded
+			// No expansion module is installed: a read returns zeros, a write is discarded.
+			// This case is emulated on purpose (the AR driver probes for a module by moving test
+			// blocks at and past the 16 MB boundary) and does not touch ARAM at all.
 			if (type == ARAM_TO_RAM && ptr != nullptr)
-				memset(ptr, 0, cnt);
+			{
+				if (memOk)
+					memset(ptr, 0, cnt);
+				else
+					Report(Channel::AR, "ARAM DMA out of main memory: mmaddr:0x%08X cnt:0x%08X\n", aram.mmaddr, cnt);
+			}
 		}
-		else if (ptr != nullptr)
+		else if (!aramOk || !memOk || ptr == nullptr)
+		{
+			// A window that starts inside a buffer but ends outside it - or in main memory this
+			// window cannot see - is not a transfer the emulated hardware can perform: refuse the
+			// copy and say which side failed, instead of writing past the buffer. The transfer
+			// still completes below, exactly as the "address not in RAM" case already did, so a
+			// driver waiting for the completion interrupt or polling the AMBL counter runs on.
+			if (!aramOk)
+				Report(Channel::AR, "ARAM DMA out of ARAM: araddr:0x%08X cnt:0x%08X\n", aram.araddr, cnt);
+			if (!memOk || ptr == nullptr)
+				Report(Channel::AR, "ARAM DMA out of main memory: mmaddr:0x%08X cnt:0x%08X\n", aram.mmaddr, cnt);
+		}
+		else
 		{
 			if (type == RAM_TO_ARAM)
 				memcpy(&ARAM[aram.araddr], ptr, cnt);

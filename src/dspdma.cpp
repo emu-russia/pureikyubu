@@ -71,9 +71,22 @@ namespace DSP
 		TraceMark(0xD000'0000u | ((DmaRegs.control.Imem ? 0x1u : 0u) << 20) |
 			((DmaRegs.control.Dsp2Mmem ? 0x1u : 0u) << 21) | DmaRegs.dspAddr);
 
-		uint8_t* mem_ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(DmaRegs.mmemAddr.bits);
-		if (mem_ptr && count > 0)
+		// The DSP-side clip above says nothing about main memory: mmemAddr is a 26-bit guest
+		// register (up to 0x03FFFFFC, i.e. 64 MB - 4, while only 24 or 48 MB are allocated), so a
+		// block that starts inside RAM can still end past the end of the allocation. Ask the
+		// memory interface for the whole window - it returns nullptr unless all of it is inside.
+		uint8_t* mem_ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(DmaRegs.mmemAddr.bits, count);
+		if (count > 0)
 		{
+			if (mem_ptr == nullptr)
+			{
+				// Abandon the transfer instead of copying past main memory (the DSP memory was
+				// not written either way, so there is no stale JIT block to invalidate).
+				Report(Channel::DSP, "Dsp16::DoDma: 0x%zX bytes at mmem 0x%08X are outside main memory\n",
+					count, DmaRegs.mmemAddr.bits);
+				return;
+			}
+
 			if (DmaRegs.control.Dsp2Mmem)
 			{
 				memcpy(mem_ptr, ptr, count);

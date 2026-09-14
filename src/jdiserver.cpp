@@ -7,7 +7,11 @@
 #define quot    ( line[p] == '\'' )
 #define dquot   ( line[p] == '\"' )
 
-static void Tokenize(const char* line, std::vector<std::string>& args)
+// Splits a console command line into arguments. Returns false (with the argument list cleared)
+// when the line has an unterminated quotation: this used to throw, and the throw travelled all
+// the way out of the emulator loop (nothing between here and the caller catches it), so a single
+// mistyped quotation in autoexec.cmd or in a console command killed the process.
+static bool Tokenize(const char* line, std::vector<std::string>& args)
 {
 	int p, start, end;
 	p = start = end = 0;
@@ -27,8 +31,8 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
 			{
 				if (endl)
 				{
-					throw "Open single quotation";
-					return;
+					args.clear();
+					return false;
 				}
 
 				if (quot)
@@ -50,8 +54,8 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
 			{
 				if (endl)
 				{
-					throw "Open double quotation";
-					return;
+					args.clear();
+					return false;
 				}
 
 				if (dquot)
@@ -82,6 +86,8 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
 			args.push_back(std::string(line + start, end - start));
 		}
 	}
+
+	return true;
 }
 
 #undef space
@@ -94,7 +100,11 @@ CallJdi(const char* request)
 {
 	std::vector<std::string> args;
 
-	Tokenize(request, args);
+	if (!Tokenize(request, args))
+	{
+		Debug::Report(Debug::Channel::Error, "Open quotation in command: %s\n", request);
+		return nullptr;
+	}
 
 	return JDI::Hub.Execute(args);
 }
@@ -249,9 +259,25 @@ CallJdiReturnJson(const char* request, char * reply, size_t replySize)
 {
 	std::vector<std::string> args;
 
-	Tokenize(request, args);
+	if (!Tokenize(request, args))
+	{
+		Debug::Report(Debug::Channel::Error, "Open quotation in command: %s\n", request);
+		reply[0] = '{';
+		reply[1] = '}';
+		reply[2] = 0;
+		return;
+	}
 
 	Json::Value *value = JDI::Hub.Execute(args);
+
+	// The command may not exist or may have rejected its arguments; the caller expects a reply.
+	if (value == nullptr)
+	{
+		reply[0] = '{';
+		reply[1] = '}';
+		reply[2] = 0;
+		return;
+	}
 
 	Json json;
 

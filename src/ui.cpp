@@ -329,10 +329,10 @@ namespace UI
 			ofn.nMaxCustFilter = 0;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = szFileName;
-			ofn.nMaxFile = sizeof(szFileName);
+			ofn.nMaxFile = _countof(szFileName);
 			ofn.lpstrInitialDir = Util::StringToWstring(lastDir).c_str();
 			ofn.lpstrFileTitle = szFileTitle;
-			ofn.nMaxFileTitle = sizeof(szFileTitle);
+			ofn.nMaxFileTitle = _countof(szFileTitle);
 			ofn.lpstrTitle = L"Open File\0";
 			ofn.lpstrDefExt = L"";
 			ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
@@ -441,10 +441,10 @@ namespace UI
 			ofn.nMaxCustFilter = 0;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = szFileName;
-			ofn.nMaxFile = sizeof(szFileName);
+			ofn.nMaxFile = _countof(szFileName);
 			ofn.lpstrInitialDir = Util::StringToWstring(lastDir).c_str();
 			ofn.lpstrFileTitle = szFileTitle;
-			ofn.nMaxFileTitle = sizeof(szFileTitle);
+			ofn.nMaxFileTitle = _countof(szFileTitle);
 			ofn.lpstrTitle = L"Save File\0";
 			ofn.lpstrDefExt = L"";
 			ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
@@ -499,6 +499,17 @@ namespace UI
 
 		wchar_t* ptr = (wchar_t*)filename;
 
+		// A name shorter than the fixed prefix has to be handled before anything indexes
+		// or measures it: wcslen(&ptr[3]) is 0 for a 3 character name, and len - 1 then
+		// walked backwards out of the string from (size_t)-1.
+		size_t len = wcslen(ptr);
+
+		if (len <= 3)
+		{
+			swprintf_s(tempBuf, _countof(tempBuf), L"%s", ptr);
+			return tempBuf;
+		}
+
 		tempBuf[0] = ptr[0];
 		tempBuf[1] = ptr[1];
 		tempBuf[2] = ptr[2];
@@ -529,6 +540,15 @@ namespace UI
 		size_t i = 0;
 
 		wchar_t* ptr = (wchar_t*)filename.data();
+
+		// Same as above: the short name must not be indexed past its end.
+		size_t len = wcslen(ptr);
+
+		if (len <= 3)
+		{
+			swprintf_s(tempBuf, _countof(tempBuf), L"%s", ptr);
+			return tempBuf;
+		}
 
 		tempBuf[0] = ptr[0];
 		tempBuf[1] = ptr[1];
@@ -679,6 +699,17 @@ int WINAPI WinMain(
 	UNREFERENCED_PARAMETER(nShowCmd);
 
 	EMUParseCmdLine(lpCmdLine);
+
+	if (cmdline.help)
+	{
+		EMUPrintUsage();
+		return 0;
+	}
+
+	if (cmdline.selftest)
+	{
+		return EMUSelfTest();
+	}
 
 	DWORD attribs = GetFileAttributes(L"Data");
 	if (attribs == INVALID_FILE_ATTRIBUTES || (attribs & FILE_ATTRIBUTE_DIRECTORY) == 0) {
@@ -999,7 +1030,9 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 				if (newsize == -1) return TRUE;
 				newsize = Memcard_ValidSizes[newsize];
 
-				SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)256, (LPARAM)(LPCTSTR)buf);
+				// WM_GETTEXT takes a character count, not a byte count: buf is a wchar_t
+				// array, so the old value let a long path write past its end.
+				SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)_countof(buf), (LPARAM)(LPCTSTR)buf);
 				filename = NewMemcardFileProc(hwndDlg, buf);
 				if (filename == NULL) return TRUE;
 				wcscpy_s(buf, _countof(buf) - 1, filename);
@@ -1024,7 +1057,8 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 				return TRUE;
 
 			case IDC_MEMCARD_CHOOSEFILE:
-				SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)256, (LPARAM)(LPCTSTR)buf);
+				// See above: the count is in characters.
+				SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)_countof(buf), (LPARAM)(LPCTSTR)buf);
 				filename = ChooseMemcardFileProc(hwndDlg, buf);
 				if (filename == NULL) return TRUE;
 				wcscpy_s(buf, _countof(buf) - 1, filename);
@@ -1047,6 +1081,21 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 				EndDialog(hwndDlg, 0);
 				return TRUE;
 			case IDOK:
+			{
+				// The text has to fit in the wchar_t buffers as well as in
+				// Memcard_filename (see below). WM_GETTEXT takes a character count, so a
+				// count taken from WM_GETTEXTLENGTH is one too large for the buffer when
+				// the text fills it completely.
+				size_t Fnlen = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
+				size_t Pathlen = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
+
+				if (Pathlen >= _countof(buf) || Fnlen >= _countof(buf2)) {
+					swprintf_s(buf, _countof(buf) - 1, L"File full path must be less than %zi characters.", _countof(buf) - 1);
+					MessageBox(hwndDlg, buf, L"Invalid filename", 0);
+					return TRUE;
+				}
+			}
+
 				if (um_filechanged == TRUE)
 				{
 					size_t Fnsize, Pathsize;
@@ -1113,7 +1162,6 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 				EndDialog(hwndDlg, 0);
 				return TRUE;
 			}
-			return FALSE;
 		default:
 			return FALSE;
 	}
@@ -2420,15 +2468,23 @@ static void add_item(size_t index)
 	ListView_InsertItem(usel.hSelectorWindow, &lvi);
 }
 
-static void CopyAnsiStringAsWcharString(wchar_t* dest, const char* src)
+// destSize is the capacity of dest in characters and srcSize is how many bytes of src may
+// be read: the banner fields are fixed size arrays without a guaranteed terminator, so the
+// unbounded loop used to run off the banner and over the destination buffer.
+static void CopyAnsiStringAsWcharString(wchar_t* dest, size_t destSize, const char* src, size_t srcSize)
 {
-	char* ansiPtr = (char*)src;
-	wchar_t* wcharPtr = (wchar_t*)dest;
-	while (*ansiPtr)
+	size_t i = 0;
+
+	for (size_t j = 0; j < srcSize && src[j] != 0; j++)
 	{
-		*wcharPtr++ = (uint8_t)*ansiPtr++;
+		if (i + 1 >= destSize) break;
+		dest[i++] = (wchar_t)(uint8_t)src[j];
 	}
-	*wcharPtr++ = 0;
+
+	if (destSize > 0)
+	{
+		dest[i] = 0;
+	}
 }
 
 /* Insert new file into filelist. */
@@ -2528,8 +2584,8 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 
 		/* Use banner info and remove line-feeds. */
 		DVDBanner2* bnr = (DVDBanner2*)banner.data();
-		CopyAnsiStringAsWcharString(item->title, (char*)bnr->comments[0].longTitle);
-		CopyAnsiStringAsWcharString(item->comment, (char*)bnr->comments[0].comment);
+		CopyAnsiStringAsWcharString(item->title, _countof(item->title), (char*)bnr->comments[0].longTitle, sizeof(bnr->comments[0].longTitle));
+		CopyAnsiStringAsWcharString(item->comment, _countof(item->comment), (char*)bnr->comments[0].comment, sizeof(bnr->comments[0].comment));
 		fix_string(item->title);
 		fix_string(item->comment);
 
@@ -2642,7 +2698,13 @@ uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
 
 	*size = (wcslen(sjisText) + 1) * sizeof(wchar_t);
 	unicodeText = (uint16_t*)malloc(*size);
-	assert(unicodeText);
+
+	if (unicodeText == nullptr)
+	{
+		*chars = 0;
+		return nullptr;
+	}
+
 	memset(unicodeText, 0, *size);
 
 	ptrU = unicodeText;
@@ -2652,12 +2714,20 @@ uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
 	schar = *ptrS;
 	while (schar != 0)
 	{
-		uchar = SjisTable[schar];
+		uchar = SjisTable[schar & 0xFFFF];
 		if (uchar == 0xFFFF)
 		{
+			// Two-byte sequence. The second byte has to be there: a title that ends with a lead
+			// byte used to consume the terminator and then keep reading past the string.
+			wchar_t next = ptrS[1];
+			if (next == 0)
+			{
+				break;
+			}
+
 			ptrS++;
-			schar = (schar << 8) | *ptrS;
-			uchar = SjisTable[schar];
+			schar = (schar << 8) | (uint16_t)next;
+			uchar = SjisTable[schar & 0xFFFF];
 		}
 		*ptrU = uchar;
 
@@ -4257,14 +4327,9 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
 		wchar_t longTitle[0x200];
 
-		char* ansiPtr = (char*)bnr->comments[0].longTitle;
-		wchar_t* wcharPtr = longTitle;
-
-		while (*ansiPtr)
-		{
-			*wcharPtr++ = (uint8_t)*ansiPtr++;
-		}
-		*wcharPtr++ = 0;
+		// The banner field has no guaranteed terminator, so the copy has to be bounded by
+		// both the source field and the destination buffer (this one is on the stack).
+		CopyAnsiStringAsWcharString(longTitle, _countof(longTitle), (char*)bnr->comments[0].longTitle, sizeof(bnr->comments[0].longTitle));
 
 		// Convert SJIS Title to Unicode
 
@@ -4276,14 +4341,16 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
 			if (widePtr)
 			{
-				wcharPtr = longTitle;
+				wchar_t* wcharPtr = longTitle;
 				unicodePtr = widePtr;
 
-				while (*unicodePtr)
+				// The conversion is in place and an SJIS pair becomes one wide character,
+				// so the result always fits, but the copy is bounded anyway.
+				while (*unicodePtr && wcharPtr < (longTitle + _countof(longTitle) - 1))
 				{
 					*wcharPtr++ = *unicodePtr++;
 				}
-				*wcharPtr++ = 0;
+				*wcharPtr = 0;
 
 				free(widePtr);
 			}

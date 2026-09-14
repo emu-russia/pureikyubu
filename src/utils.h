@@ -164,11 +164,16 @@ namespace Util
 	bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data);
 	bool FileSave(const wchar_t* filename, std::vector<uint8_t>& data);
 
-	void SplitPath(const char* _Path,
-		char* _Drive,
-		char* _Dir,
-		char* _Filename,
-		char* _Ext);
+	// Split a path into its drive, directory, file name and extension. Every destination is passed
+	// together with its capacity, so an over-long component (or a UNC prefix, which has no size
+	// limit of its own) fails the split instead of overflowing the caller's buffers. On failure the
+	// destinations are left empty and false is returned.
+
+	bool SplitPath(const char* _Path,
+		char* _Drive, size_t _DriveSize,
+		char* _Dir, size_t _DirSize,
+		char* _Filename, size_t _FilenameSize,
+		char* _Ext, size_t _ExtSize);
 
 	// Get a list of files and directories, relative to the root directory
 

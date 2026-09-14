@@ -270,6 +270,13 @@ namespace Debug
 
 	static Json::Value* CmdGetSetReg(std::vector<std::string>& args)
 	{
+		// The JDI layer only enforces a minimum argument count for some commands.
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "r: register name expected\n");
+			return nullptr;
+		}
+
 		uint32_t(*op)(uint32_t a, uint32_t b) = NULL;
 
 		uint32_t* n = getreg(args[1].c_str());
@@ -310,13 +317,17 @@ namespace Debug
 		if (m == NULL)
 		{
 			int i = strtoul(args[3].c_str(), NULL, 0);
+			// The value is not validated, but a uint32_t can only be shifted by [0,31].
+			if (op == op_shl || op == op_shr) i &= 31;
 			Report(Channel::Norm, "%s %s %i (0x%X)\n", args[1].c_str(), args[2].c_str(), i, i);
 			*n = op(*n, i);
 		}
 		else
 		{
 			Report(Channel::Norm, "%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
-			*n = op(*n, *m);
+			// The register value is a shift count too, so it needs the same masking.
+			uint32_t operand = (op == op_shl || op == op_shr) ? (*m & 31) : *m;
+			*n = op(*n, operand);
 		}
 
 		return nullptr;
@@ -324,6 +335,12 @@ namespace Debug
 
 	static Json::Value* CmdBreakExec(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "b: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		Core->AddBreakpoint(addr);
 		return nullptr;
@@ -331,6 +348,12 @@ namespace Debug
 
 	static Json::Value* CmdBreakRead(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "br: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		Core->AddReadBreak(addr);
 		return nullptr;
@@ -338,6 +361,12 @@ namespace Debug
 
 	static Json::Value* CmdBreakWrite(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "bw: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		Core->AddWriteBreak(addr);
 		return nullptr;
@@ -351,6 +380,12 @@ namespace Debug
 
 	static Json::Value* CmdCacheLog(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "CacheLog: log level expected\n");
+			return nullptr;
+		}
+
 		Gekko::CacheLogLevel level = (Gekko::CacheLogLevel)atoi(args[1].c_str());
 		Core->cache->SetLogLevel(level);
 		return nullptr;
@@ -397,9 +432,37 @@ namespace Debug
 		return nullptr;
 	}
 
+	// Index of a register file, taken from a script, the debugger GUI or a JDI client. The JDI
+	// layer checks the argument count only, so the value must be bounded before subscripting.
+	static bool ParseRegIndex(const char* text, int maxIndex, int& index)
+	{
+		char* end = nullptr;
+		long value = strtol(text, &end, 0);
+
+		if (end == text || value < 0 || value > maxIndex)
+		{
+			Report(Channel::Norm, "register index out of range: %s\n", text);
+			return false;
+		}
+
+		index = (int)value;
+
+		return true;
+	}
+
 	static Json::Value* CmdGetGpr(std::vector<std::string>& args)
 	{
-		int n = atoi(args[1].c_str());
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GetGpr: register index expected\n");
+			return nullptr;
+		}
+
+		int n;
+		if (!ParseRegIndex(args[1].c_str(), 31, n))
+		{
+			return nullptr;
+		}
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -411,7 +474,17 @@ namespace Debug
 
 	static Json::Value* CmdGetPs0(std::vector<std::string>& args)
 	{
-		int n = atoi(args[1].c_str());
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GetPs0: register index expected\n");
+			return nullptr;
+		}
+
+		int n;
+		if (!ParseRegIndex(args[1].c_str(), 31, n))
+		{
+			return nullptr;
+		}
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -423,7 +496,17 @@ namespace Debug
 
 	static Json::Value* CmdGetPs1(std::vector<std::string>& args)
 	{
-		int n = atoi(args[1].c_str());
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GetPs1: register index expected\n");
+			return nullptr;
+		}
+
+		int n;
+		if (!ParseRegIndex(args[1].c_str(), 31, n))
+		{
+			return nullptr;
+		}
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -475,7 +558,17 @@ namespace Debug
 
 	static Json::Value* CmdGetSpr(std::vector<std::string>& args)
 	{
-		int n = atoi(args[1].c_str());
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GetSpr: register index expected\n");
+			return nullptr;
+		}
+
+		int n;
+		if (!ParseRegIndex(args[1].c_str(), 1023, n))
+		{
+			return nullptr;
+		}
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -487,7 +580,17 @@ namespace Debug
 
 	static Json::Value* CmdGetSr(std::vector<std::string>& args)
 	{
-		int n = atoi(args[1].c_str());
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GetSr: register index expected\n");
+			return nullptr;
+		}
+
+		int n;
+		if (!ParseRegIndex(args[1].c_str(), 15, n))
+		{
+			return nullptr;
+		}
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
@@ -519,6 +622,12 @@ namespace Debug
 
 	static Json::Value* CmdTranslateDMmu(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "TranslateDMmu: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		uint32_t pa = Gekko::BadAddress;
@@ -541,6 +650,12 @@ namespace Debug
 
 	static Json::Value* CmdTranslateIMmu(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "TranslateIMmu: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		uint32_t pa = Gekko::BadAddress;
@@ -563,6 +678,12 @@ namespace Debug
 
 	static Json::Value* CmdVirtualToPhysicalDMmu(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "VirtualToPhysicalDMmu: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		uint32_t pa = Gekko::BadAddress;
@@ -583,6 +704,12 @@ namespace Debug
 
 	static Json::Value* CmdVirtualToPhysicalIMmu(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "VirtualToPhysicalIMmu: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		uint32_t pa = Gekko::BadAddress;
@@ -603,6 +730,12 @@ namespace Debug
 
 	static Json::Value* CmdGekkoTestBreakpoint(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GekkoTestBreakpoint: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		Json::Value* output = new Json::Value();
@@ -615,6 +748,12 @@ namespace Debug
 
 	static Json::Value* CmdGekkoToggleBreakpoint(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GekkoToggleBreakpoint: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		Core->ToggleBreakpoint(addr);
@@ -624,6 +763,12 @@ namespace Debug
 
 	static Json::Value* CmdGekkoAddOneShotBreakpoint(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GekkoAddOneShotBreakpoint: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
 		Core->AddOneShotBreakpoint(addr);
@@ -634,7 +779,22 @@ namespace Debug
 	// Disassemble instruction at Gekko virtual memory address
 	static Json::Value* CmdGekkoDisasm(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GekkoDisasm: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		// Flipper::HW is null before the first image is loaded and after `unload` (EMUClose),
+		// so the dereference below must not happen then. `IsLoaded` is not enough on its own:
+		// the autoexec script runs after EMUOpen created HW but before IsLoaded is set.
+		if (Flipper::HW == nullptr)
+		{
+			Report(Channel::Norm, "GekkoDisasm: nothing is loaded\n");
+			return nullptr;
+		}
 
 		uint32_t pa = Gekko::BadAddress;
 
@@ -670,6 +830,12 @@ namespace Debug
 	// Disassemble the instruction without accessing memory (all necessary information is passed through parameters)
 	static Json::Value* CmdGekkoDisasmNoMemAccess(std::vector<std::string>& args)
 	{
+		if (args.size() < 5)
+		{
+			Report(Channel::Norm, "GekkoDisasmNoMemAccess: pc, opcode, showAddress and showBytes expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		uint32_t instr = strtoul(args[2].c_str(), nullptr, 0);
 		bool showAddress = strtoul(args[3].c_str(), nullptr, 0) != 0;
@@ -690,7 +856,21 @@ namespace Debug
 
 	static Json::Value* CmdGekkoIsBranch(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GekkoIsBranch: address expected\n");
+			return nullptr;
+		}
+
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		// Same as CmdGekkoDisasm: Flipper::HW is null before an image is loaded and after
+		// `unload`, and the dereference below must stay behind this check.
+		if (Flipper::HW == nullptr)
+		{
+			Report(Channel::Norm, "GekkoIsBranch: nothing is loaded\n");
+			return nullptr;
+		}
 
 		uint32_t pa = Gekko::BadAddress;
 
@@ -727,6 +907,12 @@ namespace Debug
 
 	static Json::Value* CmdNop(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "nop: address expected\n");
+			return nullptr;
+		}
+
 		if (!JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			return nullptr;
@@ -776,6 +962,12 @@ namespace Debug
 
 	static Json::Value* CmdEnableOpcodeStats(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "EnableOpcodeStats: 0 or 1 expected\n");
+			return nullptr;
+		}
+
 		bool enable = strtoul(args[1].c_str(), nullptr, 0) != 0 ? true : false;
 		Core->EnableOpcodeStats(enable);
 		return nullptr;
@@ -784,6 +976,12 @@ namespace Debug
 	// Displays the most commonly used Gekko opcodes
 	static Json::Value* CmdPrintOpcodeStats(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "PrintOpcodeStats: opcode count expected\n");
+			return nullptr;
+		}
+
 		size_t maxCount = strtoul(args[1].c_str(), nullptr, 0);
 		Core->PrintOpcodeStats(maxCount);
 		return nullptr;
@@ -813,6 +1011,12 @@ namespace Debug
 	// Parse Gekko instruction
 	static Json::Value* CmdGekkoAnalyze(std::vector<std::string>& args)
 	{
+		if (args.size() < 3)
+		{
+			Report(Channel::Norm, "GekkoAnalyze: pc and opcode expected\n");
+			return nullptr;
+		}
+
 		uint32_t pc = strtoul(args[1].c_str(), nullptr, 0);
 		uint32_t opcode = strtoul(args[2].c_str(), nullptr, 0);
 
@@ -868,6 +1072,12 @@ namespace Debug
 	// Return the name of the Gekko instruction (Gekko::Instruction)
 	static Json::Value* CmdGekkoInstrToString(std::vector<std::string>& args)
 	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "GekkoInstrToString: instruction expected\n");
+			return nullptr;
+		}
+
 		Gekko::DecoderInfo info = { 0 };
 		info.instr = (Gekko::Instruction)strtoul(args[1].c_str(), nullptr, 0);
 
@@ -884,6 +1094,12 @@ namespace Debug
 	// Return the parameter name of a Gekko instruction (Gekko::Param)
 	static Json::Value* CmdGekkoInstrParamToString(std::vector<std::string>& args)
 	{
+		if (args.size() < 4)
+		{
+			Report(Channel::Norm, "GekkoInstrParamToString: param, paramBits and immediate expected\n");
+			return nullptr;
+		}
+
 		Gekko::DecoderInfo info = { 0 };
 
 		info.param[0] = (Gekko::Param)strtoul(args[1].c_str(), nullptr, 0);

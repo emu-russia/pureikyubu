@@ -50,7 +50,13 @@ static uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
 
 	*size = (wcslen(sjisText) + 1) * sizeof(wchar_t);
 	unicodeText = (uint16_t*)malloc(*size);
-	assert(unicodeText);
+
+	if (unicodeText == nullptr)
+	{
+		*chars = 0;
+		return nullptr;
+	}
+
 	memset(unicodeText, 0, *size);
 
 	ptrU = unicodeText;
@@ -60,12 +66,20 @@ static uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
 	schar = *ptrS;
 	while (schar != 0)
 	{
-		uchar = SjisTable[schar];
+		uchar = SjisTable[schar & 0xFFFF];
 		if (uchar == 0xFFFF)
 		{
+			// Two-byte sequence. The second byte has to be there: a title that ends with a lead
+			// byte used to consume the terminator and then keep reading past the string.
+			wchar_t next = ptrS[1];
+			if (next == 0)
+			{
+				break;
+			}
+
 			ptrS++;
-			schar = (schar << 8) | *ptrS;
-			uchar = SjisTable[schar];
+			schar = (schar << 8) | (uint16_t)next;
+			uchar = SjisTable[schar & 0xFFFF];
 		}
 		*ptrU = uchar;
 
@@ -1618,7 +1632,14 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
 	if (!bootrom)
 	{
-		wchar_t* extension = wcsrchr((wchar_t*)currentFileName, L'.');
+		// A name without an extension must not be handed to _wcsicmp: it dereferences its
+		// arguments, and wcsrchr answers NULL here.
+		const wchar_t* extension = wcsrchr(currentFileName, L'.');
+
+		if (extension == nullptr)
+		{
+			extension = L"";
+		}
 
 		if (!_wcsicmp(extension, L".dol"))
 		{
@@ -1671,14 +1692,20 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
 		wchar_t longTitle[0x200];
 
-		char* ansiPtr = (char*)bnr->comments[0].longTitle;
-		wchar_t* wcharPtr = longTitle;
+		// The banner field has no guaranteed terminator, so the copy has to be bounded by
+		// both the source field and the destination buffer (this one is on the stack).
+		std::wstring boundedTitle = CopyAnsiStringAsWcharString(bnr->comments[0].longTitle, sizeof(bnr->comments[0].longTitle));
 
-		while (*ansiPtr)
 		{
-			*wcharPtr++ = (uint8_t)*ansiPtr++;
+			size_t n = boundedTitle.size();
+			if (n > _countof(longTitle) - 1)
+			{
+				n = _countof(longTitle) - 1;
+			}
+
+			memcpy(longTitle, boundedTitle.c_str(), n * sizeof(wchar_t));
+			longTitle[n] = 0;
 		}
-		*wcharPtr++ = 0;
 
 		// Convert SJIS Title to Unicode
 
@@ -1690,14 +1717,14 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
 			if (widePtr)
 			{
-				wcharPtr = longTitle;
+				wchar_t* wcharPtr = longTitle;
 				unicodePtr = widePtr;
 
-				while (*unicodePtr)
+				while (*unicodePtr && wcharPtr < (longTitle + _countof(longTitle) - 1))
 				{
 					*wcharPtr++ = *unicodePtr++;
 				}
-				*wcharPtr++ = 0;
+				*wcharPtr = 0;
 
 				free(widePtr);
 			}
@@ -2711,6 +2738,11 @@ int WINAPI WinMain(
 		return 0;
 	}
 
+	if (cmdline.selftest)
+	{
+		return EMUSelfTest();
+	}
+
 	return ui_main();
 }
 
@@ -2724,6 +2756,11 @@ int main(int argc, char** argv)
 	{
 		EMUPrintUsage();
 		return 0;
+	}
+
+	if (cmdline.selftest)
+	{
+		return EMUSelfTest();
 	}
 
 	return ui_main();

@@ -21,6 +21,54 @@ static bool SettingsLoaded = false;
 static Json defaultSettings;		// singleton. Autodeleted at exit
 static Json settings;		// singleton. Autodeleted at exit
 
+// Returned to callers that ask for a settings value that is not there. It is writable on purpose:
+// the accessors hand out a wchar_t*, exactly like a value stored in the document would be.
+static wchar_t EmptyConfigString[] = L"";
+
+// The settings document is the last Object child of the root (Deserialize puts it there). A file
+// whose top level is not an object must not be mistaken for it - the old code used children.back()
+// and then dereferenced whatever it found.
+static Json::Value* GetSettingsRoot()
+{
+	for (auto it = settings.root.children.rbegin(); it != settings.root.children.rend(); ++it)
+	{
+		if ((*it)->type == Json::ValueType::Object)
+		{
+			return *it;
+		}
+	}
+
+	return settings.root.children.empty() ? nullptr : settings.root.children.back();
+}
+
+// A missing section or a value of the wrong type is not fatal: these accessors are called all over
+// the emulator during startup, so the problem is reported once and answered with the default.
+static void ReportConfigError(const char* var, const char* path)
+{
+	static bool reported = false;
+
+	if (!reported)
+	{
+		reported = true;
+		Debug::Report(Debug::Channel::Error, "Config: cannot read \"%s\" from section \"%s\"", var, path ? path : "");
+	}
+}
+
+static Json::Value* GetConfigSection(const char* var, const char* path)
+{
+	Json::Value* root = GetSettingsRoot();
+
+	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+
+	if (section == nullptr || section->type != Json::ValueType::Object)
+	{
+		ReportConfigError(var, path);
+		return nullptr;
+	}
+
+	return section;
+}
+
 static void LoadSettings()
 {
 	if (SettingsLoaded)
@@ -38,7 +86,26 @@ static void LoadSettings()
 		throw "Default settings missing!";
 	}
 
-	defaultSettings.Deserialize(jsonText.data(), jsonText.size());
+	// The default settings are shipped data, so a broken one is a build problem and still throws -
+	// but it must not leave a partially parsed document behind, hence the local.
+	Json defaultFile;
+
+	try
+	{
+		defaultFile.Deserialize(jsonText.data(), jsonText.size());
+	}
+	catch (const char* error)
+	{
+		Debug::Report(Debug::Channel::Error, "Default settings are corrupt: %s", error);
+		throw "Default settings missing!";
+	}
+	catch (...)
+	{
+		Debug::Report(Debug::Channel::Error, "Default settings are corrupt: the file is not a valid Json document");
+		throw "Default settings missing!";
+	}
+
+	defaultSettings.Clone(&defaultFile);
 
 	// Merge with current settings.
 	settings.Clone(&defaultSettings);
@@ -46,13 +113,33 @@ static void LoadSettings()
 	if (Util::FileExists(EMU_SETTINGS))
 	{
 		jsonText = Util::FileLoad(EMU_SETTINGS);
-		assert(!jsonText.empty());
 
-		Json currentSettings;
+		if (jsonText.empty())
+		{
+			Debug::Report(Debug::Channel::Error, "User settings are empty and were ignored");
+		}
+		else
+		{
+			Json currentSettings;
 
-		currentSettings.Deserialize(jsonText.data(), jsonText.size());
+			// The user's file is untrusted: whatever is wrong with it (syntax, an over-long
+			// string, too deep nesting), the defaults cloned above are what the emulator runs
+			// with, instead of a crash or a hang at startup.
+			try
+			{
+				currentSettings.Deserialize(jsonText.data(), jsonText.size());
 
-		settings.Merge(&currentSettings);
+				settings.Merge(&currentSettings);
+			}
+			catch (const char* error)
+			{
+				Debug::Report(Debug::Channel::Error, "User settings were ignored: %s", error);
+			}
+			catch (...)
+			{
+				Debug::Report(Debug::Channel::Error, "User settings were ignored: the file is not a valid Json document");
+			}
+		}
 	}
 
 	SettingsLoaded = true;
@@ -60,7 +147,6 @@ static void LoadSettings()
 
 static void SaveSettings()
 {
-	uint8_t bogus[0x100] = { 0, };
 	size_t textSize = 0;
 
 	// Calculate Json size
@@ -69,7 +155,9 @@ static void SaveSettings()
 		return;
 	}
 
-	settings.GetSerializedTextSize(bogus, -1, textSize);
+	// The size-only pass does not touch the buffer (EmitChar writes only when sizeOnly is false),
+	// so there is no stack buffer here that a stray write could overflow.
+	settings.GetSerializedTextSize(nullptr, -1, textSize);
 
 	// Serialize and save current settings.
 	std::vector<uint8_t> text(2 * textSize, 0);
@@ -90,8 +178,13 @@ wchar_t* GetConfigString(const char* var, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
-	assert(section);
+	Json::Value* section = GetConfigSection(var, path);
+
+	if (section == nullptr)
+	{
+		settingsLock.Unlock();
+		return EmptyConfigString;
+	}
 
 	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
@@ -99,7 +192,12 @@ wchar_t* GetConfigString(const char* var, const char* path)
 		value = section->AddString(var, L"");
 	}
 
-	assert(value->type == Json::ValueType::String);
+	if (value->type != Json::ValueType::String)
+	{
+		ReportConfigError(var, path);
+		settingsLock.Unlock();
+		return EmptyConfigString;
+	}
 
 	settingsLock.Unlock();
 
@@ -112,8 +210,13 @@ void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 
 	LoadSettings();
 
-	Json::Value * section = settings.root.children.back()->ByName(path);
-	assert(section);
+	Json::Value* section = GetConfigSection(var, path);
+
+	if (section == nullptr)
+	{
+		settingsLock.Unlock();
+		return;
+	}
 
 	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
@@ -121,7 +224,12 @@ void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 		value = section->AddString(var, newVal);
 	}
 
-	assert(value->type == Json::ValueType::String);
+	if (value->type != Json::ValueType::String)
+	{
+		ReportConfigError(var, path);
+		settingsLock.Unlock();
+		return;
+	}
 
 	value->ReplaceString(newVal);
 
@@ -136,8 +244,13 @@ int GetConfigInt(const char* var, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
-	assert(section);
+	Json::Value* section = GetConfigSection(var, path);
+
+	if (section == nullptr)
+	{
+		settingsLock.Unlock();
+		return 0;
+	}
 
 	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
@@ -145,7 +258,12 @@ int GetConfigInt(const char* var, const char* path)
 		value = section->AddInt(var, 0);
 	}
 
-	assert(value->type == Json::ValueType::Int);
+	if (value->type != Json::ValueType::Int)
+	{
+		ReportConfigError(var, path);
+		settingsLock.Unlock();
+		return 0;
+	}
 
 	settingsLock.Unlock();
 
@@ -158,8 +276,13 @@ void SetConfigInt(const char* var, int newVal, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
-	assert(section);
+	Json::Value* section = GetConfigSection(var, path);
+
+	if (section == nullptr)
+	{
+		settingsLock.Unlock();
+		return;
+	}
 
 	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
@@ -167,7 +290,12 @@ void SetConfigInt(const char* var, int newVal, const char* path)
 		value = section->AddInt(var, newVal);
 	}
 
-	assert(value->type == Json::ValueType::Int);
+	if (value->type != Json::ValueType::Int)
+	{
+		ReportConfigError(var, path);
+		settingsLock.Unlock();
+		return;
+	}
 
 	value->value.AsInt = (uint64_t)newVal;
 
@@ -182,8 +310,13 @@ bool GetConfigBool(const char* var, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
-	assert(section);
+	Json::Value* section = GetConfigSection(var, path);
+
+	if (section == nullptr)
+	{
+		settingsLock.Unlock();
+		return false;
+	}
 
 	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
@@ -191,7 +324,12 @@ bool GetConfigBool(const char* var, const char* path)
 		value = section->AddBool(var, false);
 	}
 
-	assert(value->type == Json::ValueType::Bool);
+	if (value->type != Json::ValueType::Bool)
+	{
+		ReportConfigError(var, path);
+		settingsLock.Unlock();
+		return false;
+	}
 
 	settingsLock.Unlock();
 
@@ -204,8 +342,13 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
-	assert(section);
+	Json::Value* section = GetConfigSection(var, path);
+
+	if (section == nullptr)
+	{
+		settingsLock.Unlock();
+		return;
+	}
 
 	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
@@ -213,7 +356,12 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 		value = section->AddBool(var, newVal);
 	}
 
-	assert(value->type == Json::ValueType::Bool);
+	if (value->type != Json::ValueType::Bool)
+	{
+		ReportConfigError(var, path);
+		settingsLock.Unlock();
+		return;
+	}
 
 	value->value.AsBool = newVal;
 

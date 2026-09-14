@@ -56,6 +56,7 @@
 #define my_min(a,b) (((a) < (b)) ? (a) : (b))
 
 #include "utils.h"
+#include "verify.h"
 #include "json.h"
 #include "jdi.h"
 #include "jdiserver.h"

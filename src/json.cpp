@@ -1,5 +1,8 @@
 #include "pch.h"
 
+#include <cerrno>
+#include <cfloat>
+
 void Json::DestroyValue(Value* value)
 {
 	while (!value->children.empty())
@@ -52,7 +55,12 @@ wchar_t* Json::CloneAnsiStr(const char* str)
 
 void Json::EmitChar(SerializeContext* ctx, uint8_t val, bool sizeOnly)
 {
-	assert(*ctx->actualSize < ctx->maxSize);
+	// A size-only pass is asking for the size, so it is allowed to run past any buffer; a real
+	// pass must never write past maxSize. assert() is no bound at all in Release.
+	if (!sizeOnly && *ctx->actualSize >= ctx->maxSize)
+	{
+		throw "Json buffer overflow";
+	}
 
 	if (!sizeOnly)
 	{
@@ -182,7 +190,10 @@ bool Json::IsControl(uint8_t value)
 bool Json::GetLiteral(Json::DeserializeContext* ctx, Token& token)
 {
 	// :p
-	if (ctx->offset < (ctx->maxSize - 4))
+	// The window has to be tested without subtracting from maxSize: for a short input the
+	// subtraction wrapped and the look-ahead below read past the end of the buffer. Note that a
+	// literal ending exactly on the last byte is valid, hence the inclusive bound.
+	if (Verify::Range(ctx->offset, 4, ctx->maxSize))
 	{
 		if (ctx->ptr[0] == 'n' && ctx->ptr[1] == 'u' && ctx->ptr[2] == 'l' && ctx->ptr[3] == 'l')
 		{
@@ -200,7 +211,7 @@ bool Json::GetLiteral(Json::DeserializeContext* ctx, Token& token)
 		}
 	}
 
-	if (ctx->offset < (ctx->maxSize - 5))
+	if (Verify::Range(ctx->offset, 5, ctx->maxSize))
 	{
 		if (ctx->ptr[0] == 'f' && ctx->ptr[1] == 'a' && ctx->ptr[2] == 'l' && ctx->ptr[3] == 's' && ctx->ptr[4] == 'e')
 		{
@@ -218,7 +229,11 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 {
 	// http://www.zedwood.com/article/cpp-utf8-char-to-codepoint
 
-	assert(ctx->offset < ctx->maxSize);
+	// Every continuation byte is read only after the offset has been checked for real: a truncated
+	// UTF-8 sequence used to walk past the end of the buffer (the asserts are gone in Release).
+	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
+		throw "Invalid utf8 codepoint";
+
 	unsigned char u0 = ctx->ptr[0]; if (u0 >= 0 && u0 <= 127)
 	{
 		ctx->offset++;
@@ -228,7 +243,9 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	ctx->offset++;
 	ctx->ptr++;
 
-	assert(ctx->offset < ctx->maxSize);
+	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
+		throw "Invalid utf8 codepoint";
+
 	unsigned char u1 = ctx->ptr[0]; if (u0 >= 192 && u0 <= 223)
 	{
 		ctx->offset++;
@@ -240,7 +257,9 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 
 	if (u0 == 0xed && (u1 & 0xa0) == 0xa0) throw "code points, 0xd800 to 0xdfff";
 
-	assert(ctx->offset < ctx->maxSize);
+	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
+		throw "Invalid utf8 codepoint";
+
 	unsigned char u2 = ctx->ptr[0]; if (u0 >= 224 && u0 <= 239)
 	{
 		ctx->offset++;
@@ -250,7 +269,9 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	ctx->offset++;
 	ctx->ptr++;
 
-	assert(ctx->offset < ctx->maxSize);
+	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
+		throw "Invalid utf8 codepoint";
+
 	unsigned char u3 = ctx->ptr[0]; if (u0 >= 240 && u0 <= 247)
 	{
 		ctx->offset++;
@@ -276,7 +297,12 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 
 	while (ctx->offset < ctx->maxSize)
 	{
-		assert(strSize < MaxStringSize);
+		// One slot is reserved for the terminator written on the closing quote, so a string of
+		// MaxStringSize - 1 characters no longer fits. In Release the assert() was not a bound.
+		if (!Verify::Range(strSize, 1, MaxStringSize - 1))
+		{
+			throw "Json string too long";
+		}
 
 		int cp = FetchCodepoint(ctx);
 
@@ -294,6 +320,13 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 
 		if (cp == '\\')
 		{
+			// The escape needs a byte of its own; without this a trailing backslash walks off the
+			// end of the buffer (FetchCodepoint checks too, this keeps the requirement local).
+			if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
+			{
+				throw "Invalid utf8 codepoint";
+			}
+
 			cp = FetchCodepoint(ctx);
 			switch (cp)
 			{
@@ -336,9 +369,22 @@ bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 
 	size_t offset = 0;
 
-	while (offset < (ctx->maxSize - ctx->offset))
+	// The bound is computed once: "offset < (ctx->maxSize - ctx->offset)" wrapped as soon as
+	// ctx->offset had walked past the end of the buffer and then looped over the heap.
+	if (ctx->offset >= ctx->maxSize)
 	{
-		assert(numberLen < (sizeof(number) - 1));
+		return false;
+	}
+
+	const size_t remaining = ctx->maxSize - ctx->offset;
+
+	while (offset < remaining)
+	{
+		// The token has to leave room for the terminator appended below.
+		if (numberLen > (int)sizeof(number) - 2)
+		{
+			throw "Json number too long";
+		}
 
 		if (IsWhiteSpace(ctx->ptr[offset]) || IsControl(ctx->ptr[offset]))
 		{
@@ -356,8 +402,19 @@ bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 	if (numberLen != 0)
 	{
 		number[numberLen] = 0;
+
+		char* end = nullptr;
+		double parsed = strtod(number, &end);
+
+		// A malformed token must not be silently turned into half a number, and a value that does
+		// not fit the stored float must not turn into infinity.
+		if (end == number || *end != 0 || parsed > FLT_MAX || parsed < -FLT_MAX)
+		{
+			throw "Float out of range";
+		}
+
 		token.type = TokenType::Float;
-		token.value.AsFloat = (float)atof(number);
+		token.value.AsFloat = (float)parsed;
 		ctx->offset += numberLen;
 		ctx->ptr += numberLen;
 		return true;
@@ -374,9 +431,22 @@ bool Json::GetInt(DeserializeContext* ctx, Token& token)
 
 	size_t offset = 0;
 
-	while (offset < (ctx->maxSize - ctx->offset))
+	// The bound is computed once: "offset < (ctx->maxSize - ctx->offset)" wrapped as soon as
+	// ctx->offset had walked past the end of the buffer and then looped over the heap.
+	if (ctx->offset >= ctx->maxSize)
 	{
-		assert(numberLen < (sizeof(number) - 1));
+		return false;
+	}
+
+	const size_t remaining = ctx->maxSize - ctx->offset;
+
+	while (offset < remaining)
+	{
+		// The token has to leave room for the terminator appended below.
+		if (numberLen > (int)sizeof(number) - 2)
+		{
+			throw "Json number too long";
+		}
 
 		if (IsWhiteSpace(ctx->ptr[offset]) || IsControl(ctx->ptr[offset]))
 		{
@@ -394,8 +464,22 @@ bool Json::GetInt(DeserializeContext* ctx, Token& token)
 	if (numberLen != 0)
 	{
 		number[numberLen] = 0;
+
+		errno = 0;
+
+		char* end = nullptr;
+		unsigned long long parsed = strtoull(number, &end, 10);
+
+		// strtoull folds a negative value onto ULLONG_MAX and saturates an out-of-range one, so
+		// both are rejected here; the whole token also has to be consumed, otherwise "12+3" would
+		// quietly become 12.
+		if (number[0] == '-' || end == number || *end != 0 || errno == ERANGE)
+		{
+			throw "Integer out of range";
+		}
+
 		token.type = TokenType::Int;
-		token.value.AsInt = strtoull(number, nullptr, 10);
+		token.value.AsInt = parsed;
 		ctx->offset += numberLen;
 		ctx->ptr += numberLen;
 		return true;
@@ -517,7 +601,12 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 	{
 		Value* child = nullptr;
 
-		assert(counter < MaxElements);
+		// A runaway guard, not the format's limit: without it a document with millions of members
+		// exhausts memory before anything else notices (assert() did nothing in Release).
+		if (++counter > MaxElements)
+		{
+			throw "Too many Json elements";
+		}
 
 		Json::GetToken(token, ctx);
 
@@ -526,7 +615,14 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 			case TokenType::String:
 
 				Json::GetToken(colon, ctx);
-				assert(colon.type == TokenType::Colon);
+
+				// This has to be a real check rather than an assert(): a missing colon is a
+				// malformed document, and in a Debug build the assert would pop a blocking
+				// "abort()" dialog instead of rejecting the file.
+				if (colon.type != TokenType::Colon)
+				{
+					throw "Json Object Syntax Error";
+				}
 
 				child = new Value(this);
 				children.push_back(child);
@@ -536,8 +632,6 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 				{
 					delete[] token.value.AsString;
 				}
-
-				counter++;
 
 				Json::GetToken(comma, ctx);
 				if (comma.type == TokenType::Comma)
@@ -557,6 +651,12 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 
 			case TokenType::ObjectEnd:
 				return;
+
+			case TokenType::EndOfStream:
+			default:
+				// GetToken does not advance on end of stream, so without this the loop spun at
+				// 100% CPU forever on a truncated document such as "{".
+				throw "Json Object Syntax Error";
 		}
 	}
 }
@@ -571,7 +671,12 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 
 	while (true)
 	{
-		assert(counter < MaxElements);
+		// A runaway guard, not the format's limit: without it a document with millions of elements
+		// exhausts memory before anything else notices (assert() did nothing in Release).
+		if (++counter > MaxElements)
+		{
+			throw "Too many Json elements";
+		}
 
 		// Check empty arrays
 
@@ -602,8 +707,6 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 		children.push_back(child);
 		child->Deserialize(ctx, nullptr);
 
-		counter++;
-
 		Json::GetToken(token, ctx);
 
 		switch (token.type)
@@ -624,7 +727,12 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 {
 	wchar_t temp[0x100] = { 0, };
 
-	assert(depth < MaxDepth);
+	// The same bound the parser enforces on the way in: a tree deep enough to run this recursion
+	// out of stack must be refused, not walked (assert() is compiled out in Release).
+	if (depth >= MaxDepth)
+	{
+		throw "Json max depth exceeded";
+	}
 
 	switch (type)
 	{
@@ -643,7 +751,13 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 
 				Indent(ctx, depth + 1, sizeOnly);
 				Json::EmitChar(ctx, '\"', sizeOnly);
-				Json::EmitText(ctx, child->name, sizeOnly);
+
+				// A member name is optional, so it may be null - EmitText(nullptr) used to crash.
+				if (child->name != nullptr)
+				{
+					Json::EmitText(ctx, child->name, sizeOnly);
+				}
+
 				Json::EmitChar(ctx, '\"', sizeOnly);
 				Json::EmitText(ctx, " : ", sizeOnly);
 
@@ -699,6 +813,13 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 {
 	Token token, key;
 
+	// The containers below come back through here for every nested value, so the depth belongs to
+	// the context. Without this a document of 20000 '[' ran the stack out before anything noticed.
+	if (++ctx->depth > MaxDepth)
+	{
+		throw "Json max depth exceeded";
+	}
+
 	this->name = CloneWcharName(keyName);
 
 	Json::GetToken(token, ctx);
@@ -748,6 +869,8 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 			throw "Json Syntax Error";
 			break;
 	}
+
+	ctx->depth--;
 }
 
 // Dynamic modification
@@ -845,7 +968,10 @@ Json::Value* Json::Value::AddAnsiString(const char* keyName, const char* str)
 
 Json::Value* Json::Value::ReplaceString(const wchar_t* str)
 {
-	assert(type == ValueType::String);
+	if (type != ValueType::String)
+	{
+		throw "Json type mismatch";
+	}
 	if (value.AsString)
 	{
 		delete[] value.AsString;
@@ -1051,7 +1177,10 @@ void Json::Deserialize(void* text, size_t textSize)
 {
 	DeserializeContext ctx = { 0 };
 
-	assert(text);
+	if (text == nullptr || textSize == 0)
+	{
+		throw "Json input is empty";
+	}
 
 	ctx.ptr = (uint8_t*)text;
 	ctx.offset = 0;

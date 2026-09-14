@@ -45,7 +45,13 @@ namespace UI
 	{
 		char cmd[0x1000] = { 0 };
 
-		sprintf(cmd, "MountIso \"%s\"", path.c_str());
+		int length = snprintf(cmd, sizeof(cmd), "MountIso \"%s\"", path.c_str());
+		if (length < 0 || (size_t)length >= sizeof(cmd))
+		{
+			// A truncated path would silently mount another image.
+			Debug::Report(Debug::Channel::Error, "MountIso: the image path is too long (%i chars).\n", (int)path.size());
+			return false;
+		}
 
 		bool mountResult = false;
 
@@ -62,7 +68,13 @@ namespace UI
 	{
 		char cmd[0x1000] = { 0 };
 
-		sprintf(cmd, "MountSDK \"%s\"", path.c_str());
+		int length = snprintf(cmd, sizeof(cmd), "MountSDK \"%s\"", path.c_str());
+		if (length < 0 || (size_t)length >= sizeof(cmd))
+		{
+			// A truncated path would silently mount another image.
+			Debug::Report(Debug::Channel::Error, "MountSDK: the image path is too long (%i chars).\n", (int)path.size());
+			return false;
+		}
 
 		bool mountResult = false;
 
@@ -145,7 +157,7 @@ namespace UI
 		char regionName[0x20] = { 0, };
 
 		char cmd[0x20];
-		sprintf(cmd, "DvdRegionById %c%c%c%c", DiskId[0], DiskId[1], DiskId[2], DiskId[3]);
+		snprintf(cmd, sizeof(cmd), "DvdRegionById %c%c%c%c", DiskId[0], DiskId[1], DiskId[2], DiskId[3]);
 
 		CallJdiReturnString(cmd, regionName, sizeof(regionName) - 1);
 
@@ -195,7 +207,15 @@ namespace UI
 	void JdiClient::SetConfigString(const std::string& var, const std::string& newVal, const std::string& path)
 	{
 		char cmd[0x200] = { 0, };
-		sprintf(cmd, "SetConfigString %s %s \"%s\"", path.c_str(), var.c_str(), newVal.c_str());
+
+		int length = snprintf(cmd, sizeof(cmd), "SetConfigString %s %s \"%s\"", path.c_str(), var.c_str(), newVal.c_str());
+		if (length < 0 || (size_t)length >= sizeof(cmd))
+		{
+			// Sending the truncated command would set a different value.
+			Debug::Report(Debug::Channel::Error, "SetConfigString: the command does not fit into the buffer.\n");
+			return;
+		}
+
 		CallJdi(cmd);
 	}
 
@@ -231,7 +251,13 @@ namespace UI
 	{
 		char cmd[0x1000] = { 0 };
 
-		sprintf(cmd, "load \"%s\"", filename.c_str());
+		int length = snprintf(cmd, sizeof(cmd), "load \"%s\"", filename.c_str());
+		if (length < 0 || (size_t)length >= sizeof(cmd))
+		{
+			// A truncated path would silently load another file.
+			Debug::Report(Debug::Channel::Error, "load: the file path is too long (%i chars).\n", (int)filename.size());
+			return;
+		}
 
 		bool res = CallJdiNoReturn(cmd);
 		if (!res)
