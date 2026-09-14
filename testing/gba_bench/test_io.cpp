@@ -465,6 +465,53 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 	GBA_CHECK(!f.bus.apu.FifoRequest(1));
 }
 
+GBA_TEST(Dma, VideoMemoryTransferLandsWhereItShould)
+{
+	// The GBA BIOS's boot animation copies its graphics into VRAM with the DMA (and so do games),
+	// so a transfer whose destination is video memory has to land at the address DAD names - a
+	// comparison against the EWRAM tests would not catch a destination path that is off by a
+	// window. The source is EWRAM, the destination VRAM at 0x06001C40, 512 bytes, 16-bit units.
+	Fixture f;
+
+	// 512 halfwords of source data in EWRAM: the first transfer moves the first half, the second
+	// one the second half (a transfer that runs off the end of the payload would move zeros and
+	// hide a broken destination path).
+	for (int i = 0; i < 512; i++)
+		f.WriteMem16(0x02000000 + i * 2, (u16)(0x1000 + i));
+
+	f.Write(0x0D4, 0x0000);				// DMA3 SAD
+	f.Write(0x0D6, 0x0200);
+	f.Write(0x0D8, 0x1C40);				// DMA3 DAD
+	f.Write(0x0DA, 0x0600);
+	f.Write(0x0DC, 256);				// 256 halfwords
+	f.Write(0x0DE, (u16)(0x8000));		// immediate, 16-bit units, enable
+
+	// The first and the last word of the block are in VRAM now, and the rest of the area is not.
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C40), 0x00);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C41), 0x10);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C42), 0x01);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C43), 0x10);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C40 + 510), 0xFF);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C40 + 511), 0x10);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C40 + 512), 0x00);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C3F), 0x00);
+
+	// A 32-bit transfer into the object tile area behaves the same way (the BIOS puts the
+	// animation's sprites there). Its source continues where the first transfer stopped, at
+	// 0x02000200, so the first halfword it moves is payload halfword 256 = 0x1100.
+	f.Write(0x0D8, 0x0000);
+	f.Write(0x0DA, 0x0601);
+	f.Write(0x0DC, 64);
+	f.Write(0x0DE, (u16)(0x8400));		// immediate, 32-bit units, enable
+
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000), 0x00);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10001), 0x11);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000 + 254), 0x7F);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000 + 255), 0x11);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000 + 256), 0x00);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x0FFFF), 0x00);
+}
+
 GBA_TEST(Dma, EepromTransferCompletesInsideTheEnableWrite)
 {
 	Fixture f;

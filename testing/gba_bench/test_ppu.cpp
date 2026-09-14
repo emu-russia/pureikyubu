@@ -28,6 +28,7 @@ namespace
 	const u32 BG0CNT = 0x008;
 	const u32 BG1CNT = 0x00A;
 	const u32 BG2CNT = 0x00C;
+	const u32 BG3CNT = 0x00E;
 	const u32 BG0HOFS = 0x010;
 	const u32 BG0VOFS = 0x012;
 	const u32 BG2PA = 0x020;
@@ -623,6 +624,45 @@ GBA_TEST(Ppu, AffineBgRotationAndReferenceAdvance)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x03E0);
 }
 
+GBA_TEST(Ppu, AffineBgWithTheBiosAnimationRegisters)
+{
+	// The register values the real BIOS's boot animation programs for BG3: 256 colours (bit 7),
+	// character base block 0, screen base block 23 (0x0600B800), size 1 (a 256x256 dot map) and
+	// the area overflow bit (bit 13, the map repeats through its own size). PA = PD = 1.0 and
+	// PB = PC = 0, with a *negative* reference point, which is what the animation scrolls with.
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	WriteReg(bus, BG3CNT, 0x7780);
+	FillVram(bus, 0x0000, 64, 5);				// tile 0 is solid palette entry 5
+	WritePal16(bus, 5 * 2, 0x001F);
+
+	WriteReg(bus, 0x030, 0x0100);				// BG3PA = 1.0
+	WriteReg(bus, 0x032, 0x0000);				// BG3PB
+	WriteReg(bus, 0x034, 0x0000);				// BG3PC
+	WriteReg(bus, 0x036, 0x0100);				// BG3PD = 1.0
+
+	// The reference point (-26, -10) dots, 8.8 fixed point: -26 * 256 = 0xFFFFE600 (28 bits).
+	WriteReg(bus, 0x038, 0xE600);
+	WriteReg(bus, 0x03A, 0x0FFF);
+	WriteReg(bus, 0x03C, 0xF600);
+	WriteReg(bus, 0x03E, 0x0FFF);
+
+	WriteReg(bus, DISPCNT, 0x0002 | 0x0800);	// mode 2, BG3
+
+	// Screen dot (100, 80) samples src (74, 70): the reference is the origin of the topmost line
+	// and PD advances it per scanline, so the source Y is -10 + 80. Its map entry is
+	// (70 / 8) * 32 + 74 / 8 = 265, which the test left at zero, i.e. tile 0 of the solid tile.
+	bus.ppu.RenderLine(bus, 80);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x001F);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x001F);		// srcX = -26 wraps to 230 under the
+														// area overflow bit, still tile 0
+	// Screen dot (20, 0) samples srcX = -6, which is outside the map unless the area overflow bit
+	// wraps it: it does, so the tile is displayed there as well.
+	bus.ppu.RenderLine(bus, 0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x001F);
+}
+
 GBA_TEST(Ppu, Mode3DirectColor)
 {
 	GbaBus bus;
@@ -1141,6 +1181,45 @@ GBA_TEST(Ppu, ObjWindowMasksTheLayers)
 	bus.ppu.RenderLine(bus, 20);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+}
+
+GBA_TEST(Ppu, ObjWindowOfALargeSprite)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// The GBA BIOS's boot animation hides its mode 2 background inside the window of *large*
+	// sprites (32x64 and 64x64 dots), so the window has to work for more than one tile: this is
+	// the same check with a 64x64 OBJ (shape 0, size 3) whose tiles are all opaque.
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
+	WritePal16(bus, 0x0002, 0x03E0);
+	FillVram(bus, 0x0000, 32, 0x11);
+
+	// Every tile of the OBJ area is solid colour index 1, so whichever tile of the 64x64 matrix
+	// the window samples is opaque (in the default 2-dimensional mapping a 64x64 OBJ built from
+	// tile 0 uses tiles 0-3 of the first tile row, 32-35 of the next, and so on).
+	FillVram(bus, OBJ_TILES, 0x8000, 0x11);
+	WriteOam16(bus, 0x00, 20 | (2 << 10));			// Y = 20, OBJ mode 2
+	WriteOam16(bus, 0x02, 10 | (3 << 14));			// X = 10, size 3 (64x64)
+	WriteOam16(bus, 0x04, 0 | (1 << 10));			// tile 0, priority 1
+
+	WriteReg(bus, WINOUT, 0x2100);
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ | DC_OBJ_WIN);
+
+	bus.ppu.RenderLine(bus, 40);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(73), 0x03E0);		// the last dot of the 64 dot wide OBJ
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(74), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x0000);
+
+	// Vertically the window covers the lines 20..83.
+	bus.ppu.RenderLine(bus, 19);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(40), 0x0000);
+	bus.ppu.RenderLine(bus, 83);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(40), 0x03E0);
+	bus.ppu.RenderLine(bus, 84);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(40), 0x0000);
 }
 
 GBA_TEST(Ppu, ForcedBlankIsWhite)
