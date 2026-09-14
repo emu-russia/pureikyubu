@@ -26,8 +26,20 @@ The whole point is minimalism: the user types a command, the debugger answers wi
 
 The UI is a space filled with panels. A panel is either a leaf that holds a queue of items, or it
 is split vertically (into side-by-side columns) or horizontally (into stacked rows) into sub-panels.
-A panel can also carry the "has a command line" flag - in the mockup only the message history panel
-has one.
+A third arrangement is tabs: the sub-panels are stacked in the same space and only one of them is
+shown at a time, while their titles make the tab strip. A panel can also carry the "has a command
+line" flag - in the mockup only the message history panel has one.
+
+The header of a panel shows its title and, to the right edge, a short line of "info" text. The
+debugger is the one that fills it in (the main panel reports the frame rate, the disassembler the
+state of the processor), so the front end does not have to know what the numbers mean; a front end
+that has no room for it is free to ignore the field.
+
+The panel under the pointer is the one with the focus: the front end marks it (the reference front
+end draws a thicker border) and it is the one the wheel scrolls. When a panel has more content than
+it can show, the front end also draws a vertical scrollbar for it - only for the panel that has the
+focus, so that the other panels keep their full width. The scroll position of a panel is kept by
+the front end, not by the debugger: the debugger only publishes what is to be drawn.
 
 An item is a MarkdownItem: a piece of source Markdown. `MarkdownToView` forms the view (a list of
 styled lines) from that source, and the front end wraps and draws those lines. Items are queued in
@@ -135,17 +147,20 @@ namespace Debug2
 	};
 
 	// A vertical split puts the sub-panels side by side (columns), a horizontal one stacks them
-	// (rows). `None` means the panel is a leaf and holds items.
+	// (rows), and `Tabs` stacks them in place: the sub-panels are the tabs and only the active
+	// one is shown. `None` means the panel is a leaf and holds items.
 	enum class Split
 	{
 		None = 0,
 		Vertical,
 		Horizontal,
+		Tabs,
 	};
 
 	class Panel
 	{
 		std::string title;
+		std::string info;
 		Split split = Split::None;
 		std::vector<Panel*> subs;
 		std::deque<Item> items;
@@ -162,10 +177,15 @@ namespace Debug2
 		const std::string& Title() const { return title; }
 		void SetTitle(const std::string& value) { title = value; }
 
+		// A short line the front end shows in the panel header, to the right of the title.
+		const std::string& Info() const { return info; }
+		void SetInfo(const std::string& value) { info = value; }
+
 		Split GetSplit() const { return split; }
 
-		// Turn the panel into `count` empty sub-panels. The panel keeps its title and the
-		// command line flag; the items it had are dropped (a split panel is not a leaf anymore).
+		// Turn the panel into `count` empty sub-panels. The panel keeps its title, its info and
+		// the command line flag; the items it had are dropped (a split panel is not a leaf
+		// anymore).
 		void SplitInto(Split direction, size_t count);
 		size_t SubCount() const { return subs.size(); }
 		Panel& Sub(size_t n) { return *subs[n]; }
@@ -226,8 +246,10 @@ namespace Debug2
 		virtual void Close() = 0;
 		virtual bool IsOpen() const = 0;
 
-		// Draw one frame. Called from the thread that owns the window.
-		virtual void Render(const View& view) = 0;
+		// Draw one frame. Called from the thread that owns the window. The snapshot is immutable
+		// and shared, so the front end may keep it for as long as it needs it (the reference
+		// front end holds on to the one it drew last, to route the mouse events).
+		virtual void Render(const std::shared_ptr<const View>& view) = 0;
 	};
 
 	// The reference front end: an SDL window with an OpenGL 3.3 context and a glyph atlas built
@@ -258,6 +280,12 @@ namespace Debug2
 
 		uint64_t lastRefresh = 0;
 
+		// The frame rate shown in the header of the main panel (see UpdatePanelInfo).
+		float fps = 0;
+		uint64_t fpsCounter = 0;
+		uint64_t fpsTime = 0;
+		bool fpsSampled = false;
+
 		// ---- shared with the UI thread ----
 
 		SpinLock lock;
@@ -277,10 +305,12 @@ namespace Debug2
 		void ExecuteCommand(const std::string& cmdline);
 		void PumpMessages();
 		void RefreshLivePanels();
+		void UpdatePanelInfo();
 		void Publish();
 
 		void AppendItem(Panel* panel, const std::string& markdown, ItemAlign align);
 		void ReplaceItems(Panel* panel, const std::string& markdown);
+		void SetPanelInfo(Panel* panel, const std::string& value);
 
 		// Ask JDI and turn the answer into the source of an item. An empty result means the
 		// command had nothing to say (the handlers report their problems through Debug::Report).

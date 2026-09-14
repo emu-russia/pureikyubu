@@ -773,10 +773,13 @@ namespace Debug
 				return Flipper::DSP->core->GetInstructionCounter();
 				break;
 			case PerfCounter::VIs:
-				return Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::VI);
+				// The hardware counters belong to the emulated machine, which is built when an
+				// image is loaded (EMUOpen) and freed when it is closed: before that there is
+				// nothing to count, and walking the null Flipper used to crash the emulator.
+				return (Flipper::HW != nullptr) ? Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::VI) : 0;
 				break;
 			case PerfCounter::PEs:
-				return Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::PE_FINISH);
+				return (Flipper::HW != nullptr) ? Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::PE_FINISH) : 0;
 				break;
 
 			case PerfCounter::GekkoCompiledSegments:
@@ -801,10 +804,12 @@ namespace Debug
 				Flipper::DSP->core->ResetInstructionCounter();
 				break;
 			case PerfCounter::VIs:
-				Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::VI);
+				if (Flipper::HW != nullptr)
+					Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::VI);
 				break;
 			case PerfCounter::PEs:
-				Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::PE_FINISH);
+				if (Flipper::HW != nullptr)
+					Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::PE_FINISH);
 				break;
 
 			case PerfCounter::GekkoCompiledSegments:
