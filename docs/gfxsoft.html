@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — the software GFX pipeline</title>
+<meta name="description" content="The software (CPU) rendering pipeline of the Flipper GFX in pureikyubu: the XF, the setup unit, the quad-based rasterizers, a real TMEM, the TEV and a pixel engine with a real EFB memory array that writes the XFB the video interface scans out. Issue #384.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="gba.html">GBA</a>
+      <a href="gfxsoft.html" aria-current="page">Soft GFX</a>
+      <a href="release_notes_1.8.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="gfxsoft.html" class="active" hreflang="en">EN</a>
+      <a href="gfxsoft_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>The software GFX pipeline</h1>
+    <p class="lead">
+      The Flipper graphics subsystem has a second rendering path: a software (CPU) implementation of
+      the same hardware blocks. It is written from the GameCube specifications — the transform unit,
+      the setup unit, the three rasterizers, the texture unit with a <strong>real TMEM</strong>, the
+      TEV and a pixel engine with a <strong>real EFB memory array</strong> — and it never opens an
+      OpenGL context. The finished frame is converted into the XFB in main memory by the copy engine
+      and the video interface scans it out, exactly like a real console.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/emu-russia/pureikyubu/issues/384">Issue #384</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">Wiki: Software GFX</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfx.md">Wiki: GFX (shader backend)</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/testing/gfx_soft_test.cpp">The tests</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>The two pipelines</h2>
+      <p class="sub" style="max-width:none">
+        The shader backend maps the two programmable stages of the Flipper onto the two programmable
+        stages of OpenGL (the XF onto a vertex shader, the TEV onto a fragment shader) and lets GL
+        rasterize. The software pipeline walks the whole pipeline itself, in the same modules
+        (<code>xf.cpp</code>, <code>su.cpp</code>, <code>ras.cpp</code>, <code>tx.cpp</code>,
+        <code>tev.cpp</code>, <code>pe.cpp</code>), with the software methods of a block carrying the
+        <code>Soft</code> prefix. The two paths share no rendering state, which is what makes the
+        pipeline a configuration variable rather than a compile-time choice — it can be switched on
+        the fly, and the choice is written back to the settings file.
+      </p>
+      <table>
+        <tr><th>Setting</th><th>Meaning</th></tr>
+        <tr><td><code>hardware.GFX_PIPELINE</code></td><td><code>0</code> = the shader (OpenGL) backend, <code>1</code> = the software pipeline. Read at start-up.</td></tr>
+        <tr><td><code>gxpipeline</code></td><td>The debugger / JDI command: reports the active pipeline or switches it (<code>gxpipeline soft</code>, <code>gxpipeline shader</code>). The switch takes effect on the next frame and is stored in the settings.</td></tr>
+      </table>
+      <pre><code>Gekko --PI FIFO--> CP --commands--> XF(soft) --> SU(soft) --> RAS(soft) --> TEV(soft) --> PE(soft)
+                                                                 ^            ^
+                                                         TX(soft, TMEM)      |
+                                                                             v
+                                                             EFB memory --(copy engine)--> XFB
+                                                                                             |
+                                                                                     vi.cpp scans it out</code></pre>
+    </section>
+
+    <section>
+      <h2>The blocks</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>XF — the transform</h3>
+          <p>
+            A high-level transformation of the vertex, not an interpreter of the XF microcode: the
+            geometry and texture matrix multiplies, the projection combine, the per-vertex lighting
+            of the two channels and the texture coordinate generation (regular, colour and the dual
+            transform). The bottom of the pipe then divides by the homogeneous component and maps
+            the result through the viewport registers into <strong>window space</strong> — EFB pixels
+            with the origin at the top left corner, a 24-bit depth and <code>1/w</code> for the
+            perspective correction of the rasterizers.
+          </p>
+        </div>
+        <div class="card">
+          <h3>SU — the setup</h3>
+          <p>
+            The primitive assembler and the setup stage. Points, lines, strips, fans and the Flipper
+            quads become triangles, and every triangle gets the record the rasterizer walks with: the
+            bounding box, the three edge coefficients and the interpolation plane of every
+            attribute. The perspective-correct parameters are carried as planes of
+            <code>value/w</code> next to the plane of <code>1/w</code> — the division the hardware
+            performs at the pixel centres.
+          </p>
+        </div>
+        <div class="card">
+          <h3>RAS — the quad walk</h3>
+          <p>
+            The rasterizers walk the primitive the way the hardware does: on the <strong>2×2-pixel
+            quad grid</strong>, one quad at a time, with a <strong>12-bit coverage mask</strong>
+            (three sub-samples per pixel) and the top-left rule on the shared edges. Only the pixels
+            with a covered sub-sample are shaded, at their centre or at one of their covered
+            sub-samples. The sub-sample positions come from <code>GEN_MSLOC0..3</code>.
+          </p>
+        </div>
+        <div class="card">
+          <h3>TX — a real TMEM</h3>
+          <p>
+            The 32 banks of 16K × 16-bit words of the texture memory, in the two 512 KB halves.
+            <code>TX_LOADBLOCK0..3</code> and <code>TX_LOADTLUT0/1</code> stream main-memory tiles and
+            palette entries into it, hardware-managed images are fetched through a tag cache in it,
+            and the sampler follows the LOD computation, the clamp / repeat / mirror coordinate
+            operations and the filter datapath: all the texel formats including the colour-index
+            ones through the TLUT, bilinear S/T lerps with 6-bit fractions and the trilinear blend.
+          </p>
+        </div>
+        <div class="card">
+          <h3>TEV — the combine</h3>
+          <p>
+            The stage datapath, run per shaded sample: up to 16 combine stages over the colour
+            register file, the Rev-B K constants, the alpha compare modes, the Z-texture environment,
+            the fog unit and the final alpha function.
+          </p>
+        </div>
+        <div class="card">
+          <h3>PE — the EFB and the XFB</h3>
+          <p>
+            A real EFB memory array, addressed like the CPU window of the hardware (the colour word
+            of the pixel <em>(x, y)</em> sits at <code>y * 1024 + x</code>, the address bit 22
+            selects the Z plane). It performs the Z test, the blend and the logic ops with the write
+            masks, and the copy engine: the display copy that turns a rectangle into the packed
+            YUV 4:2:2 <strong>XFB</strong> in main memory, the texture copy into the tiled texture
+            formats, and the clear a copy may ask for.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What it draws</h2>
+      <p class="sub" style="max-width:none">
+        The pictures below are rendered by the unit tests and published into the test report. The
+        first one is a scene the software pipeline drew in the order a title would submit it: a
+        full-screen quad with a colour gradient (the four-corner interpolation of the colour
+        rasterizer), a triangle whose vertex colours interpolate across it, a red quad that is nearer
+        than the triangle — the Z unit rejects the samples behind it — and a quad whose texels are
+        read out of TMEM.
+      </p>
+      <p><img src="imgstore/gfx_soft_scene.png" alt="A scene rendered by the software GFX pipeline" style="width:100%;max-width:640px;image-rendering:pixelated"></p>
+      <p class="sub" style="max-width:none">
+        The second one is the same frame after <code>GXCopyDisp</code>: the copy engine converted the
+        EFB rectangle into packed YUV 4:2:2 in main memory, and this is that XFB decoded back to RGB.
+        The chroma of every pixel pair is averaged by the 4:2:2 downsampling, which is why the edges
+        of the two rectangles show a chroma transition.
+      </p>
+      <p><img src="imgstore/gfx_soft_xfb.png" alt="The XFB the copy engine wrote, decoded back to RGB" style="width:100%;max-width:640px;image-rendering:pixelated"></p>
+    </section>
+
+    <section>
+      <h2>The tests drive the hardware API, not the backend</h2>
+      <p class="sub" style="max-width:none">
+        <code>testing/gfx_soft_test.cpp</code> programs the pipeline the way the console is
+        programmed: the XF register space (the geometry matrix, the projection combine and the
+        viewport registers, exactly the registers <code>GXSetProjection</code> /
+        <code>GXSetViewport</code> write), the bypass register space (the shared GEN registers, the
+        rasterizer texture bindings, the texture load commands, the TEV stage environments and the
+        pixel engine state) and object-space vertices. What it reads back is the hardware's own
+        output: the EFB memory of the pixel engine and the XFB the copy engine wrote. No OpenGL call
+        is involved — the software pipeline never opens a GL context.
+      </p>
+      <pre><code>cd scripts/VS2026
+MSBuild pureikyubu_test.vcxproj -p:Configuration=Debug -p:Platform=x64
+vstest.console.exe x64/Debug/pureikyubu_test.dll /Tests:Soft_</code></pre>
+    </section>
+
+    <section>
+      <h2>What is not there yet</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Implemented</h3>
+          <p>
+            The XF transform and viewport mapping, the setup (planes and edges, culling, zfreeze), the
+            quad walk with the 12-bit coverage masks and the scissor, the perspective-correct
+            interpolation of the colours and the texture coordinates, the level of detail and the
+            point / bilinear / trilinear filtering out of TMEM (all texel formats, the TLUT, CMPR),
+            the 16-stage TEV combine with the K constants, the Z-texture environment, the fog and the
+            alpha function, the EFB Z test / blend / logic ops / write masks / constant alpha, and
+            the copy engine's clear, display copy (XFB) and texture copy.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Not implemented (yet)</h3>
+          <p>
+            The indirect (bump) texturing of the TEV; the anisotropic filtering and the
+            <code>diag_lod</code> / <code>lodclamp</code> refinements; the <code>round</code> and
+            <code>field_predict</code> motion-compensation modes; the anti-aliased EFB (a 12-bit
+            coverage mask selects the sample to shade, but the EFB stores one colour per pixel) and
+            the EFB pixel types other than RGB8 — which is also why the dither matrix is not applied,
+            since for RGB8 it is the identity; the vertical filter coefficients of the display copy
+            and the YUV/4:2:0 copy modes; and the EFB CPU window (<code>Cpu2Efb</code>).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Documentation</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Wiki: Software GFX</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">The whole page</a>:
+             the blocks, the specification each one is written from, the model's deliberate choices
+             and what is still missing.</p>
+        </div>
+        <div class="card">
+          <h3>Wiki: GFX</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfx.md">The shader backend</a>:
+             the vertex and fragment programs, the textures, the indirect texturing and the JDI
+             commands.</p>
+        </div>
+        <div class="card">
+          <h3>The specifications</h3>
+          <p>The hardware pages the software pipeline is written from:
+             <code>gfx-xf.md</code>, <code>gfx-su.md</code>, <code>gfx-ras0/1/2.md</code>,
+             <code>gfx-tc.md</code>, <code>gfx-tf.md</code>, <code>gfx-tev.md</code>,
+             <code>gfx-pe.md</code> and <code>video-interface.md</code>.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. GameCube and Game Boy are trademarks of Nintendo; this emulator is not affiliated with Nintendo. No BIOS image and no game is distributed with it.</div>
+    <div><a href="security.html">Security</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

@@ -22,6 +22,7 @@
       <a href="index.html" aria-current="page">Home</a>
       <a href="digest.html">Digest</a>
       <a href="gba.html">GBA</a>
+      <a href="gfxsoft.html">Soft GFX</a>
       <a href="release_notes_1.8.html">Release Notes 1.8</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
@@ -149,6 +150,25 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
 ./pureikyubu pong.dol</code></pre>
         </div>
       </div>
+    </section>
+
+    <section>
+      <h2>The software GFX pipeline</h2>
+      <p class="sub" style="max-width:none">
+        The Flipper graphics subsystem now has a second rendering path: a software (CPU) implementation
+        of the same hardware blocks, written from the GameCube specifications, switchable on the fly
+        through the <code>GFX_PIPELINE</code> configuration variable and drawing through a real EFB
+        memory array whose copy-engine output (the XFB) the video interface scans out.
+      </p>
+      <p>
+        <a href="gfxsoft.html"><img src="imgstore/gfx_soft_scene.png" alt="A scene rendered by the software GFX pipeline" style="width:100%;max-width:420px;image-rendering:pixelated"></a>
+      </p>
+      <p class="sub" style="max-width:none">
+        <a href="gfxsoft.html">Read the page</a> ·
+        <a href="gfxsoft_ru.html">По-русски</a> ·
+        <a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">Wiki</a> ·
+        <a href="https://github.com/emu-russia/pureikyubu/issues/384">Issue #384</a>
+      </p>
     </section>
 
     <section>

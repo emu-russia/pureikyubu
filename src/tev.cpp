@@ -1094,5 +1094,420 @@ void main()
 				break;
 			}
 		}
+
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// The software TEV (GFX_PIPELINE = soft, issue #384)
+	//
+	// The pixel datapath of gfx-tev.md 3, run once per rasterized sample:
+	//
+	//   * the combine chain (3.1/3.2) - up to 16 stages, each
+	//         result = ( D +/- lerp(A, B, C) + bias ) << shift, then clamped
+	//     with the four colour registers as the inter-stage feedback store (3.3);
+	//   * the Z-texture environment (3.5), which may replace the sample's depth;
+	//   * the fog unit (3.6/3.7) and the final alpha function (3.8).
+	//
+	// The arithmetic is carried in the units of the hardware: the colour values are 0..255 (the
+	// design treats 255 as 1.0), the register file holds 11-bit signed components and the blend
+	// factor C is an 8-bit fraction, so a stage result is quantised to an integer.
+	// -------------------------------------------------------------------------------------------
+
+	//! One 11-bit signed component of a colour register (gfx-tev.md 4.4).
+	static float SoftSign11(unsigned v)
+	{
+		int value = (int)(v & 0x7FF);
+		if (value & 0x400)
+			value -= 0x800;
+		return (float)value;
+	}
+
+	void TextureEnvironmentUnit::SoftLoadRegisters(float reg[4][4], float kreg[4][4]) const
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			// The low register word carries red and alpha, the high one blue and green (4.4)
+			reg[i][0] = SoftSign11(tev.regl[i].r);
+			reg[i][1] = SoftSign11(tev.regh[i].g);
+			reg[i][2] = SoftSign11(tev.regh[i].b);
+			reg[i][3] = SoftSign11(tev.regl[i].a);
+
+			kreg[i][0] = (float)tev.kregl[i].r;
+			kreg[i][1] = (float)tev.kregh[i].g;
+			kreg[i][2] = (float)tev.kregh[i].b;
+			kreg[i][3] = (float)tev.kregl[i].a;
+		}
+	}
+
+	//! The value a K-constant selector names (gfx-tev.md 3.4). The selector space is the one the
+	//! GX API programs: 0..7 are the fixed fractions 1 .. 1/8, 8..11 are black, 12..15 name a whole
+	//! K register and 16..31 name one channel of K0..K3.
+	float TextureEnvironmentUnit::SoftKonst(unsigned sel, int component, const float kreg[4][4]) const
+	{
+		if (sel < 8u)
+		{
+			static const float fractions[8] = { 255.0f, 223.0f, 191.0f, 159.0f, 128.0f, 96.0f, 64.0f, 32.0f };
+			return fractions[sel];
+		}
+		if (sel < 12u)
+			return 0.0f;
+		if (sel < 16u)
+			return kreg[sel - 12u][component];
+
+		unsigned channel = (sel - 16u) >> 2;
+		unsigned reg = (sel - 16u) & 3u;
+		return kreg[reg][(int)channel];
+	}
+
+	//! The stage combine of gfx-tev.md 3.2. `raw` receives the pre-clamp value, which the alpha
+	//! compare modes (`tev_mode_ge0`/`eq0`/`le0`) test.
+	static float SoftCombine(float a, float b, float c, float d, int bias, int shift, bool sub,
+		bool clampLow, float* raw)
+	{
+		float lerp = a + (c / 255.0f) * (b - a);
+		float r = sub ? (d - lerp) : (d + lerp);
+
+		if (bias == 1) r += 128.0f;
+		else if (bias == 2) r -= 128.0f;
+
+		if (shift == 1) r *= 2.0f;
+		else if (shift == 2) r *= 4.0f;
+		else if (shift == 3) r *= 0.5f;
+
+		*raw = r;
+
+		// tev_clamp_low clamps to the 0..255 output range, tev_clamp_high keeps the wide signed
+		// result of the 11-bit register file (gfx-tev.md 3.2)
+		if (clampLow)
+			r = (r < 0.0f) ? 0.0f : ((r > 255.0f) ? 255.0f : r);
+		else
+			r = (r < -1024.0f) ? -1024.0f : ((r > 1023.0f) ? 1023.0f : r);
+
+		return floorf(r + 0.5f);
+	}
+
+	void TextureEnvironmentUnit::SoftStage(int stage, const float* texel, const float* raster,
+		float reg[4][4], const float kreg[4][4]) const
+	{
+		const TEV_ColorEnv& ce = tev.color_env[stage];
+		const TEV_AlphaEnv& ae = tev.alpha_env[stage];
+
+		// The Rev-B constant selectors of the stage (gfx-tev.md 3.4, 4.10)
+		unsigned kcsel, kasel;
+		{
+			const TEV_KSel& k = tev.ksel[(stage >> 1) & 7];
+			if (stage & 1)
+			{
+				kcsel = k.kcsel1 & 31;
+				kasel = k.kasel1 & 31;
+			}
+			else
+			{
+				kcsel = k.kcsel0 & 31;
+				kasel = k.kasel0 & 31;
+			}
+		}
+
+		// ---- operand selection (gfx-tev.md 3.2) ----
+		//
+		// The D operand is the accumulator of the 11-bit register file and keeps its full width;
+		// A, B and C only use the low 8 bits of a stored component.
+
+		auto colorOperand = [&](unsigned sel, bool isD, int comp) -> float
+		{
+			if (sel < 8u)
+			{
+				const float* r = reg[sel >> 1];
+				float v = ((sel & 1u) != 0u) ? r[3] : r[comp];
+				return isD ? v : (v - floorf(v / 256.0f) * 256.0f);
+			}
+
+			switch (sel)
+			{
+				case 8u: return texel[comp];		// texel colour
+				case 9u: return texel[3];			// texel alpha
+				case 10u: return raster[comp];		// rasterized colour
+				case 11u: return raster[3];			// rasterized alpha
+				case 12u: return 255.0f;			// 1.0
+				case 13u: return 128.0f;			// 0.5
+				case 14u: return SoftKonst(kcsel, comp, kreg);	// KONST
+				default: return 0.0f;				// 0.0
+			}
+		};
+
+		auto alphaOperand = [&](unsigned sel, bool isD) -> float
+		{
+			if (sel < 4u)
+			{
+				float v = reg[sel][3];
+				return isD ? v : (v - floorf(v / 256.0f) * 256.0f);
+			}
+
+			switch (sel)
+			{
+				case 4u: return texel[3];
+				case 5u: return raster[3];
+				case 6u: return SoftKonst(kasel, 3, kreg);
+				default: return 0.0f;
+			}
+		};
+
+		// ---- colour combine ----
+
+		float raw = 0.0f;
+		float result[3];
+
+		for (int i = 0; i < 3; i++)
+		{
+			float a = colorOperand(ce.sela, false, i);
+			float b = colorOperand(ce.selb, false, i);
+			float c = colorOperand(ce.selc, false, i);
+			float d = colorOperand(ce.seld, true, i);
+
+			result[i] = SoftCombine(a, b, c, d, ce.bias, ce.shift, ce.sub != 0, ce.clamp != 0, &raw);
+		}
+
+		int cdest = ce.dest & 3;
+		reg[cdest][0] = result[0];
+		reg[cdest][1] = result[1];
+		reg[cdest][2] = result[2];
+
+		// ---- alpha combine ----
+
+		float aa = alphaOperand(ae.sela, false);
+		float ab = alphaOperand(ae.selb, false);
+		float ac = alphaOperand(ae.selc, false);
+		float ad = alphaOperand(ae.seld, true);
+
+		float araw = 0.0f;
+		float ares = SoftCombine(aa, ab, ac, ad, ae.bias, ae.shift, ae.sub != 0, ae.clamp != 0, &araw);
+
+		// The alpha `mode` turns the result into a full-scale comparison mask (gfx-tev.md 3.2)
+		switch (ae.mode & 3)
+		{
+			case 1: ares = (araw >= 0.0f) ? 255.0f : 0.0f; break;
+			case 2: ares = (araw == 0.0f) ? 255.0f : 0.0f; break;
+			case 3: ares = (araw <= 0.0f) ? 255.0f : 0.0f; break;
+			default: break;
+		}
+
+		reg[ae.dest & 3][3] = ares;
+	}
+
+	bool TextureEnvironmentUnit::SoftShade(const SoftFragment& fragment, float rgba[4], float* depth)
+	{
+		float reg[4][4], kreg[4][4];
+		SoftLoadRegisters(reg, kreg);
+
+		int stages = ((int)(gfx->genmode.ntev & 0xF)) + 1;
+		if (stages > 16)
+			stages = 16;
+
+		float lastTexel[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
+
+		for (int stage = 0; stage < stages; stage++)
+		{
+			const RAS1_TREF* tref = gfx->ras->GetTref(stage);
+			bool odd = (stage & 1) != 0;
+
+			int ti = odd ? (int)tref->ti1 : (int)tref->ti0;		// texture image
+			int tc = odd ? (int)tref->tc1 : (int)tref->tc0;		// texture coordinate
+			int te = odd ? (int)tref->te1 : (int)tref->te0;		// texture enable
+			int cc = odd ? (int)tref->cc1 : (int)tref->cc0;		// rasterized colour source
+
+			// The rasterized colour of the stage (gfx-ras2.md 3.3)
+			float raster[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			if (cc == 0)
+			{
+				for (int i = 0; i < 4; i++) raster[i] = fragment.color[0][i];
+			}
+			else if (cc == 1)
+			{
+				for (int i = 0; i < 4; i++) raster[i] = fragment.color[1][i];
+			}
+
+			// The texel of the stage comes from the texture unit (its TMEM). A stage with the
+			// texture disabled works on the opaque white texel the datapath substitutes.
+			float texel[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
+
+			if (te)
+			{
+				if (!gfx->tx->SoftSample(ti & 7, tc & 7, fragment.tex[tc & 7][0], fragment.tex[tc & 7][1],
+					fragment.dtex[tc & 7], texel))
+				{
+					texel[0] = texel[1] = texel[2] = texel[3] = 255.0f;
+				}
+			}
+
+			for (int i = 0; i < 4; i++)
+				lastTexel[i] = texel[i];
+
+			// The texel component swap of the alpha environment (gfx-tev.md 3.2)
+			switch (tev.alpha_env[stage].swap & 3)
+			{
+				case 1: texel[1] = texel[2] = texel[0]; break;
+				case 2: texel[0] = texel[2] = texel[1]; break;
+				case 3: texel[0] = texel[1] = texel[2]; break;
+				default: break;
+			}
+
+			SoftStage(stage, texel, raster, reg, kreg);
+		}
+
+		// The finished quad leaves the chain from colour register 0 (gfx-tev.md 3.1)
+		float result[4] = { reg[0][0], reg[0][1], reg[0][2], reg[0][3] };
+
+		// ---- fog (gfx-tev.md 3.6 / 3.7) ----
+
+		int fsel = tev.fog_param3.fsel & 7;
+
+		if (fsel != 0)
+		{
+			float z24 = *depth;
+
+			auto s11e8 = [](unsigned sign, unsigned expn, unsigned mant) -> float
+			{
+				float m = 1.0f + (float)mant / 2048.0f;
+				float v = (float)ldexp((double)m, (int)expn - 127);
+				return sign ? -v : v;
+			};
+
+			float view_z;
+
+			if (tev.fog_param3.proj != 0)
+			{
+				// Orthographic: the depth is used directly
+				view_z = z24 / 16777215.0f;
+			}
+			else
+			{
+				// Perspective: the depth is remapped by B and its reciprocal is taken
+				float b = (float)tev.fog_param1.b_mag - floorf(z24 / exp2f((float)tev.fog_param2.b_shft));
+				view_z = (b > 0.0f) ? (1.0f / b) : 0.0f;
+			}
+
+			float eye = s11e8(tev.fog_param0.a_sign, tev.fog_param0.a_expn, tev.fog_param0.a_mant) * view_z;
+
+			// The range adjustment scales the depth-to-fog mapping across the screen (3.6.1)
+			if (tev.rangeadj_control.enb)
+			{
+				float t = fabsf(fragment.x - (float)tev.rangeadj_control.center) / 256.0f;
+				if (t > 8.999f) t = 8.999f;
+
+				int i0 = (int)t;
+
+				float coef[10];
+				for (int i = 0; i < 5; i++)
+				{
+					coef[i * 2 + 0] = (float)tev.range_adj[i].r0 / 256.0f;
+					coef[i * 2 + 1] = (float)tev.range_adj[i].r1 / 256.0f;
+				}
+
+				eye *= coef[i0] + (coef[i0 + 1] - coef[i0]) * (t - (float)i0);
+			}
+
+			float c = s11e8(tev.fog_param3.c_sign, tev.fog_param3.c_expn, tev.fog_param3.c_mant);
+			float x = eye - c;
+			if (x < 0.0f) x = 0.0f;
+			if (x > 1.0f) x = 1.0f;
+
+			int family = (fsel >> 1) & 3;
+			bool square = (fsel & 1) != 0;
+			float fog;
+
+			if (family == 0)
+			{
+				fog = 0.0f;
+			}
+			else
+			{
+				float v = x;
+
+				if (family == 3)
+					v = 1.0f - v;			// the backward exponentials complement first
+				if (square)
+					v = v * v;
+
+				if (family == 2) fog = 1.0f - exp2f(-8.0f * v);
+				else if (family == 3) fog = exp2f(-8.0f * v);
+				else fog = v;				// family 1: linear
+			}
+
+			float fogc[3] = {
+				(float)tev.fog_color.r, (float)tev.fog_color.g, (float)tev.fog_color.b
+			};
+
+			for (int i = 0; i < 3; i++)
+				result[i] = result[i] + (fogc[i] - result[i]) * fog;
+		}
+
+		// ---- alpha function (gfx-tev.md 3.8) ----
+
+		struct
+		{
+			int op;
+			float ref;
+		} cmp[2] = {
+			{ (int)tev.alpha_func.op0, (float)tev.alpha_func.a0 },
+			{ (int)tev.alpha_func.op1, (float)tev.alpha_func.a1 },
+		};
+
+		bool pass[2];
+
+		for (int i = 0; i < 2; i++)
+		{
+			float v = result[3];
+
+			switch (cmp[i].op & 7)
+			{
+				case 0: pass[i] = false; break;						// never
+				case 1: pass[i] = v < cmp[i].ref; break;			// less
+				case 2: pass[i] = v == cmp[i].ref; break;			// equal
+				case 3: pass[i] = v <= cmp[i].ref; break;			// less or equal
+				case 4: pass[i] = v > cmp[i].ref; break;			// greater
+				case 5: pass[i] = v != cmp[i].ref; break;			// not equal
+				case 6: pass[i] = v >= cmp[i].ref; break;			// greater or equal
+				default: pass[i] = true; break;						// always
+			}
+		}
+
+		bool alive;
+
+		switch (tev.alpha_func.logic & 3)
+		{
+			case 0: alive = pass[0] && pass[1]; break;			// and
+			case 1: alive = pass[0] || pass[1]; break;			// or
+			case 2: alive = pass[0] != pass[1]; break;			// xor
+			default: alive = pass[0] == pass[1]; break;			// xnor
+		}
+
+		if (!alive)
+			return false;
+
+		// ---- Z-texture environment (gfx-tev.md 3.5) ----
+
+		if ((tev.zenv1.op & 3) != 0)
+		{
+			float base = ((tev.zenv1.op & 3) == 2) ? 0.0f : *depth;
+			float ztex;
+
+			switch (tev.zenv1.type & 3)
+			{
+				case 0: ztex = lastTexel[3]; break;							// u8 from the alpha byte
+				case 1: ztex = lastTexel[1] * 256.0f + lastTexel[2]; break;	// u16
+				default: ztex = lastTexel[0] * 65536.0f + lastTexel[1] * 256.0f + lastTexel[2]; break;
+			}
+
+			float z = base + ztex + (float)tev.zenv0.zoff;
+			if (z < 0.0f) z = 0.0f;
+			if (z > 16777215.0f) z = 16777215.0f;
+
+			*depth = z;
+		}
+
+		for (int i = 0; i < 4; i++)
+			rgba[i] = result[i];
+
+		return true;
 	}
 }

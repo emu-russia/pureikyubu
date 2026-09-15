@@ -57,13 +57,15 @@ namespace Flipper
 
 		if (!yuvbuf || !rgbbuf) return;
 
-		// simple blitting, without effects
+		// Simple blitting, without effects. The XFB holds packed YUV 4:2:2 as Y0 U0 Y1 V0, four
+		// bytes per pixel pair (video-interface.md 3.1), so the chroma of the pair is the Cb (U) in
+		// the second byte and the Cr (V) in the fourth one.
 		while (count--)
 		{
 			int y1 = *yuvbuf++,
-				v = *yuvbuf++,
+				u = *yuvbuf++,
 				y2 = *yuvbuf++,
-				u = *yuvbuf++;
+				v = *yuvbuf++;
 
 			*rgbbuf++ = yuv2bs(y1, u, v) | yuv2gs(y1, u, v) | yuv2rs(y1, u, v);
 			*rgbbuf++ = yuv2bs(y2, u, v) | yuv2gs(y2, u, v) | yuv2rs(y2, u, v);

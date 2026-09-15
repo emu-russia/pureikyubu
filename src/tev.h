@@ -345,6 +345,25 @@ namespace GFX
 		GLProgram* program = nullptr;		//!< Static TEV (fragment) program; created once
 		bool programFlat = false;			//!< Whether that program is the flat-shaded variant
 
+		// -------------------------------------------------------------------------------------
+		// Software pipeline (GFX_PIPELINE = soft, issue #384)
+		//
+		// The software TEV is the combine datapath of gfx-tev.md 3: a stage loop over the colour
+		// register file (3.3), the Z-texture environment (3.5), the fog unit (3.6-3.7) and the
+		// final alpha function (3.8). The arithmetic is carried in the units of the hardware -
+		// colours 0..255, an 11-bit signed register file, an 8-bit blend fraction.
+		// -------------------------------------------------------------------------------------
+
+		//! Decode the colour register file (and the Rev-B K constants) for the software combine.
+		void SoftLoadRegisters(float reg[4][4], float kreg[4][4]) const;
+
+		//! Run one combine stage over the colour register file (gfx-tev.md 3.2).
+		void SoftStage(int stage, const float* texel, const float* raster,
+			float reg[4][4], const float kreg[4][4]) const;
+
+		//! The K constant a `kcsel`/`kasel` selector names (gfx-tev.md 3.4).
+		float SoftKonst(unsigned sel, int component, const float kreg[4][4]) const;
+
 	public:
 		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEnvironmentUnit();
@@ -370,6 +389,12 @@ namespace GFX
 
 		//! Upload the whole TEV register state to the program.
 		void UploadUniforms(GLProgram& program);
+
+		//! Shade one rasterized sample with the software TEV: the combine stages, the fog and the
+		//! alpha function (gfx-tev.md 3.2, 3.6, 3.8). `rgba` comes back in 0..255 units and
+		//! `depth` may have been replaced by the Z-texture environment (gfx-tev.md 3.5).
+		//! Returns false when the alpha function killed the fragment.
+		bool SoftShade(const SoftFragment& fragment, float rgba[4], float* depth);
 
 		//! Put the TEV register state back into the reset state.
 		void Reset();

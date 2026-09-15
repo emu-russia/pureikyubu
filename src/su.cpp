@@ -278,5 +278,344 @@ namespace GFX
 		su.scis1.suh = SU_SCISSOR_ORIGIN + h - 1;
 
 		ApplyScissor();
+
+		soft_vertices.clear();
+		soft_zfreeze = SoftPlane{};
+		soft_zfreeze_valid = false;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// The software Setup Unit (GFX_PIPELINE = soft, issue #384)
+	//
+	// The SU is the primitive assembler and the setup stage of the pipeline: it turns the vertex
+	// stream of the XF into triangles (points, lines, strips and fans are all expanded here, see
+	// gfx-su.md 3.1) and computes, for every triangle, the numbers the quad rasterizer walks with:
+	// the bounding box, the three edge coefficients and the interpolation plane of every
+	// interpolated parameter (gfx-su.md 3.4, gfx-su.md 2.3 `su_data_a`/`su_data_b`).
+	// -------------------------------------------------------------------------------------------
+
+	//! The value of one attribute of one vertex, in the plane space.
+	//!
+	//! The perspective-correct parameters (colours, texture coordinates) are carried divided by w,
+	//! together with the plane of 1/w (gfx-ras1.md 3.3: the divisions s/w, t/w and 1/w happen at
+	//! the pixel centres). Depth is screen-linear, like the Z plane of RAS0/RAS2.
+	static void SoftBuildPlane(const float v[3], const float* x, const float* y, SoftPlane* plane)
+	{
+		// The barycentric solution of `v(x, y) = o + dx*x + dy*y` through the three vertices.
+		float d = (x[1] - x[0]) * (y[2] - y[0]) - (x[2] - x[0]) * (y[1] - y[0]);
+
+		if (fabsf(d) < 1e-9f)
+		{
+			// A degenerate (zero-area) triangle: a constant plane is the only sane answer.
+			plane->o = v[0];
+			plane->dx = 0.0f;
+			plane->dy = 0.0f;
+			return;
+		}
+
+		plane->dx = ((v[1] - v[0]) * (y[2] - y[0]) - (v[2] - v[0]) * (y[1] - y[0])) / d;
+		plane->dy = ((v[2] - v[0]) * (x[1] - x[0]) - (v[1] - v[0]) * (x[2] - x[0])) / d;
+		plane->o = v[0] - plane->dx * x[0] - plane->dy * y[0];
+	}
+
+	//! The screen-space signed area of the triangle, in the window coordinate system of the EFB
+	//! (the origin is the top left corner, Y grows downward).
+	static float SoftSignedArea(const float* x, const float* y)
+	{
+		return (x[1] - x[0]) * (y[2] - y[0]) - (x[2] - x[0]) * (y[1] - y[0]);
+	}
+
+	//! Front/back rejection of GEN_MODE.reject_en (gfx-su.md 3.6).
+	//!
+	//! The two pipelines have to reject the same triangles, so this follows the shader backend's
+	//! mapping (SetupUnit::GL_SetCullMode, which sets `glFrontFace(GL_CW)` and culls the GL *back*
+	//! faces for `reject_front` - the enum names look inverted there and the code carries a TODO
+	//! saying so). The software window has Y growing downward while the GL window has it growing
+	//! upward, so a triangle with a positive signed area here is the one the shader backend keeps
+	//! for `reject_front`: that mode drops the negative-area triangles and `reject_back` the
+	//! positive-area ones.
+	static bool SetupUnitSoftReject(int reject, float area)
+	{
+		switch (reject)
+		{
+			case GEN_REJECT_FRONT: return area < 0.0f;
+			case GEN_REJECT_BACK: return area > 0.0f;
+			case GEN_REJECT_ALL: return true;
+			default: return false;
+		}
+	}
+
+	void SetupUnit::SoftSetupTriangle(const SoftVertex& v0, const SoftVertex& v1, const SoftVertex& v2)
+	{
+		const SoftVertex* v[3] = { &v0, &v1, &v2 };
+
+		float x[3], y[3], z[3], w[3];
+		for (int i = 0; i < 3; i++)
+		{
+			x[i] = v[i]->x;
+			y[i] = v[i]->y;
+			z[i] = v[i]->z;
+			w[i] = (v[i]->invW != 0.0f) ? v[i]->invW : 1.0f;
+		}
+
+		float area = SoftSignedArea(x, y);
+
+		if (area == 0.0f)
+			return;
+
+		if (SetupUnitSoftReject(gfx->genmode.reject_en, area))
+			return;
+
+		SoftTriangle tri;
+		for (int i = 0; i < 3; i++)
+		{
+			tri.x[i] = x[i];
+			tri.y[i] = y[i];
+		}
+		tri.area = area;
+
+		// The edge coefficients, normalized so that the interior is positive (the `su_edge` stage of
+		// gfx-su.md 3.4). `e[i]` is the edge opposite to vertex i: e0 = (v1, v2), e1 = (v2, v0),
+		// e2 = (v0, v1); the coefficient vector is the edge direction rotated so that a point
+		// inside the triangle gives a positive value.
+		{
+			float s = (area > 0.0f) ? 1.0f : -1.0f;
+
+			tri.e[0][0] = -(y[2] - y[1]) * s;
+			tri.e[0][1] = (x[2] - x[1]) * s;
+			tri.e[0][2] = -tri.e[0][0] * x[1] - tri.e[0][1] * y[1];
+
+			tri.e[1][0] = -(y[0] - y[2]) * s;
+			tri.e[1][1] = (x[0] - x[2]) * s;
+			tri.e[1][2] = -tri.e[1][0] * x[2] - tri.e[1][1] * y[2];
+
+			tri.e[2][0] = -(y[1] - y[0]) * s;
+			tri.e[2][1] = (x[1] - x[0]) * s;
+			tri.e[2][2] = -tri.e[2][0] * x[0] - tri.e[2][1] * y[0];
+		}
+
+		// The raster bounding box, clamped to the EFB (the walk is done in 2x2 quads, the rasterizer
+		// aligns the box itself).
+		{
+			float minx = x[0], maxx = x[0], miny = y[0], maxy = y[0];
+			for (int i = 1; i < 3; i++)
+			{
+				if (x[i] < minx) minx = x[i];
+				if (x[i] > maxx) maxx = x[i];
+				if (y[i] < miny) miny = y[i];
+				if (y[i] > maxy) maxy = y[i];
+			}
+
+			int iw = (int)gfx->RenderWidth();
+			int ih = (int)gfx->RenderHeight();
+
+			tri.minx = (int)floorf(minx);
+			tri.miny = (int)floorf(miny);
+			tri.maxx = (int)ceilf(maxx) - 1;
+			tri.maxy = (int)ceilf(maxy) - 1;
+
+			if (tri.minx < 0) tri.minx = 0;
+			if (tri.miny < 0) tri.miny = 0;
+			if (tri.maxx > iw - 1) tri.maxx = iw - 1;
+			if (tri.maxy > ih - 1) tri.maxy = ih - 1;
+		}
+
+		// Depth. GEN_MODE.zfreeze holds the Z plane of the last triangle (gfx-su.md 3.4).
+		if (gfx->genmode.zfreeze != 0 && soft_zfreeze_valid)
+		{
+			tri.z = soft_zfreeze;
+		}
+		else
+		{
+			SoftBuildPlane(z, x, y, &tri.z);
+
+			if (gfx->genmode.zfreeze != 0)
+			{
+				soft_zfreeze = tri.z;
+				soft_zfreeze_valid = true;
+			}
+		}
+
+		// 1/w (the perspective correction of RAS1/RAS2)
+		SoftBuildPlane(w, x, y, &tri.invW);
+
+		// The rasterized colours (RAS2) and the texture coordinates (RAS1), divided by w.
+		//
+		// Both channels and all eight coordinate pairs get a plane: the GEN_MODE counts (ncol,
+		// ntex) pace the setup stream of the hardware, they do not switch the attributes off, and
+		// the TEV stage bindings decide which of them a draw really reads.
+		//
+		// For flat shading the colour planes have zero gradients (gfx-ras2.md 3.1): every
+		// coefficient of the value plane is the provoking vertex's colour times the 1/w plane, so
+		// that the ratio `value / (1/w)` is the constant colour of that vertex.
+		bool flat = (gfx->genmode.flat_en != 0);
+
+		for (int ch = 0; ch < 2; ch++)
+		{
+			for (int c = 0; c < 4; c++)
+			{
+				float val[3];
+				for (int i = 0; i < 3; i++)
+					val[i] = v[i]->color[ch][c] * 255.0f * w[i];
+
+				SoftBuildPlane(val, x, y, &tri.color[ch][c]);
+
+				if (flat)
+				{
+					float k = v[2]->color[ch][c] * 255.0f;
+					tri.color[ch][c].o = tri.invW.o * k;
+					tri.color[ch][c].dx = tri.invW.dx * k;
+					tri.color[ch][c].dy = tri.invW.dy * k;
+				}
+			}
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			for (int c = 0; c < 2; c++)
+			{
+				float val[3];
+				for (int k = 0; k < 3; k++)
+					val[k] = v[k]->tex[i][c] * w[k];
+
+				SoftBuildPlane(val, x, y, &tri.tex[i][c]);
+			}
+		}
+
+		gfx->ras->SoftDrawTriangle(tri);
+	}
+
+	// A point is expanded into the square quad of `psize` around it (gfx-su.md 3.3: the sequencer
+	// adds/subtracts the point size to/from the vertex coordinates to build the geometry the edge
+	// walker scans). SU_LPSIZE holds the size in 1/16 pixel units.
+	void SetupUnit::SoftEmitPoint(const SoftVertex& v)
+	{
+		float size = (float)su.lpsize.psize / 16.0f;
+		if (size <= 0.0f)
+			size = 1.0f;
+
+		float h = size * 0.5f;
+
+		SoftVertex quad[4] = { v, v, v, v };
+		quad[0].x = v.x - h; quad[0].y = v.y - h;
+		quad[1].x = v.x + h; quad[1].y = v.y - h;
+		quad[2].x = v.x + h; quad[2].y = v.y + h;
+		quad[3].x = v.x - h; quad[3].y = v.y + h;
+
+		gfx->xf->SoftClipTriangle(quad[0], quad[1], quad[2]);
+		gfx->xf->SoftClipTriangle(quad[0], quad[2], quad[3]);
+	}
+
+	// A line is expanded into the quad strip of `lsize` around it, with the attributes of its two
+	// endpoints (gfx-su.md 3.3). The width is programmed in 1/16 pixel units as well.
+	void SetupUnit::SoftEmitLine(const SoftVertex& a, const SoftVertex& b)
+	{
+		float size = (float)su.lpsize.lsize / 16.0f;
+		if (size <= 0.0f)
+			size = 1.0f;
+
+		float dx = b.x - a.x;
+		float dy = b.y - a.y;
+		float len = sqrtf(dx * dx + dy * dy);
+		if (len <= 0.0f)
+			return;
+
+		// The half-width normal of the line direction
+		float nx = -dy / len * size * 0.5f;
+		float ny = dx / len * size * 0.5f;
+
+		SoftVertex quad[4];
+		quad[0] = a; quad[0].x = a.x + nx; quad[0].y = a.y + ny;
+		quad[1] = b; quad[1].x = b.x + nx; quad[1].y = b.y + ny;
+		quad[2] = b; quad[2].x = b.x - nx; quad[2].y = b.y - ny;
+		quad[3] = a; quad[3].x = a.x - nx; quad[3].y = a.y - ny;
+
+		gfx->xf->SoftClipTriangle(quad[0], quad[1], quad[2]);
+		gfx->xf->SoftClipTriangle(quad[0], quad[2], quad[3]);
+	}
+
+	void SetupUnit::SoftBeginPrimitive(RAS_Primitive prim, size_t vtx_num)
+	{
+		soft_prim = prim;
+		soft_vertices.clear();
+
+		if (vtx_num > GFX_MAX_VERTICES)
+			vtx_num = GFX_MAX_VERTICES;
+		soft_vertices.reserve(vtx_num);
+	}
+
+	void SetupUnit::SoftSendVertex(const SoftVertex* v)
+	{
+		if (soft_vertices.size() < GFX_MAX_VERTICES)
+			soft_vertices.push_back(*v);
+	}
+
+	void SetupUnit::SoftEndPrimitive()
+	{
+		const size_t n = soft_vertices.size();
+		if (n == 0)
+			return;
+
+		switch (soft_prim)
+		{
+			case RAS_QUAD:
+				for (size_t q = 0; q + 4 <= n; q += 4)
+				{
+					gfx->xf->SoftClipTriangle(soft_vertices[q + 0], soft_vertices[q + 1], soft_vertices[q + 2]);
+					gfx->xf->SoftClipTriangle(soft_vertices[q + 0], soft_vertices[q + 2], soft_vertices[q + 3]);
+				}
+				break;
+
+			case RAS_QUAD_STRIP:
+				// Quad n uses the vertices (2n, 2n+1, 2n+3, 2n+2) as a fan (the expansion the CP
+				// and the shader pipeline's index builder use)
+				if (n >= 4)
+				{
+					for (size_t q = 0; q + 4 <= n; q += 2)
+					{
+						gfx->xf->SoftClipTriangle(soft_vertices[q + 0], soft_vertices[q + 1], soft_vertices[q + 3]);
+						gfx->xf->SoftClipTriangle(soft_vertices[q + 0], soft_vertices[q + 3], soft_vertices[q + 2]);
+					}
+				}
+				break;
+
+			case RAS_TRIANGLE:
+				for (size_t q = 0; q + 3 <= n; q += 3)
+					gfx->xf->SoftClipTriangle(soft_vertices[q + 0], soft_vertices[q + 1], soft_vertices[q + 2]);
+				break;
+
+			case RAS_TRIANGLE_STRIP:
+				for (size_t i = 0; i + 3 <= n; i++)
+				{
+					// The winding alternates on every triangle (gfx-su.md 3.1)
+					if ((i & 1) == 0)
+						gfx->xf->SoftClipTriangle(soft_vertices[i + 0], soft_vertices[i + 1], soft_vertices[i + 2]);
+					else
+						gfx->xf->SoftClipTriangle(soft_vertices[i + 1], soft_vertices[i + 0], soft_vertices[i + 2]);
+				}
+				break;
+
+			case RAS_TRIANGLE_FAN:
+				for (size_t i = 1; i + 1 < n; i++)
+					gfx->xf->SoftClipTriangle(soft_vertices[0], soft_vertices[i], soft_vertices[i + 1]);
+				break;
+
+			case RAS_LINE:
+				for (size_t i = 0; i + 2 <= n; i += 2)
+					SoftEmitLine(soft_vertices[i + 0], soft_vertices[i + 1]);
+				break;
+
+			case RAS_LINE_STRIP:
+				for (size_t i = 0; i + 1 < n; i++)
+					SoftEmitLine(soft_vertices[i], soft_vertices[i + 1]);
+				break;
+
+			case RAS_POINT:
+				for (size_t i = 0; i < n; i++)
+					SoftEmitPoint(soft_vertices[i]);
+				break;
+		}
+
+		soft_vertices.clear();
 	}
 }

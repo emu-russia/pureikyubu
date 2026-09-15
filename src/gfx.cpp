@@ -8,6 +8,11 @@
 //
 // This module owns the GL context, the frame loop and the geometry buffers; the shaders themselves
 // live with the pipeline blocks they emulate.
+//
+// A second, completely software rendering path of the same blocks lives next to the shader one
+// (issue #384). It is selected by the GFX_PIPELINE configuration variable and can be switched at
+// run time; the picture then leaves through the XFB the copy engine writes and the video interface,
+// so this pipeline never opens a GL context at all. See "Software pipeline" in wiki/gfx.md.
 
 using namespace Debug;
 
@@ -39,6 +44,7 @@ namespace GFX
 	static Json::Value* CmdGxShot(std::vector<std::string>& args);
 	static Json::Value* CmdGxPixel(std::vector<std::string>& args);
 	static Json::Value* CmdGxReset(std::vector<std::string>& args);
+	static Json::Value* CmdGxPipeline(std::vector<std::string>& args);
 	static Json::Value* CmdGxTexDump(std::vector<std::string>& args);
 
 	static void gfx_init_handlers()
@@ -51,6 +57,7 @@ namespace GFX
 		JDI::Hub.AddCmd("gxshot", CmdGxShot);
 		JDI::Hub.AddCmd("gxpixel", CmdGxPixel);
 		JDI::Hub.AddCmd("gxreset", CmdGxReset);
+		JDI::Hub.AddCmd("gxpipeline", CmdGxPipeline);
 		JDI::Hub.AddCmd("gxtexdump", CmdGxTexDump);
 	}
 
@@ -136,6 +143,8 @@ namespace GFX
 		common->AddBool("ms_en", gfx->genmode.ms_en != 0);
 		common->AddBool("flat_en", gfx->genmode.flat_en != 0);
 		common->AddInt("backend_started", gfx->BackendStarted() ? 1 : 0);
+		common->AddInt("pipeline", gfx->Pipeline());
+		common->AddAnsiString("pipelineName", gfx->SoftPipeline() ? "soft" : "shader");
 		common->AddInt("scr_w", (int)gfx->RenderWidth());
 		common->AddInt("scr_h", (int)gfx->RenderHeight());
 
@@ -579,7 +588,7 @@ namespace GFX
 			return GLErrorValue(L"gxshot: the file name is missing");
 		}
 
-		if (!GLContextCurrent())
+		if (!gfx->SoftPipeline() && !GLContextCurrent())
 		{
 			return GLErrorValue(L"gxshot: no OpenGL context on the calling thread "
 				L"(call it from the emulator thread while a frame is being rendered)");
@@ -620,7 +629,7 @@ namespace GFX
 			return GLErrorValue(L"gxpixel: x and y are required");
 		}
 
-		if (!GLContextCurrent())
+		if (!gfx->SoftPipeline() && !GLContextCurrent())
 		{
 			return GLErrorValue(L"gxpixel: no OpenGL context on the calling thread");
 		}
@@ -636,6 +645,27 @@ namespace GFX
 
 		uint8_t rgba[4] = { 0 };
 		GLfloat depth = 0.0f;
+
+		if (gfx->SoftPipeline())
+		{
+			// The software EFB is a plain array, so the pixel can be read on any thread.
+			uint32_t z24 = 0;
+			if (!gfx->pe->SoftPixel(x, y, rgba, &z24))
+			{
+				return GLErrorValue(L"gxpixel: the coordinates are outside the render target");
+			}
+
+			Json::Value* output = MakeObject();
+			output->AddInt("x", x);
+			output->AddInt("y", y);
+			output->AddInt("r", rgba[0]);
+			output->AddInt("g", rgba[1]);
+			output->AddInt("b", rgba[2]);
+			output->AddInt("a", rgba[3]);
+			output->AddInt("z24", (int)z24);
+			output->AddFloat("z", (float)z24 / 16777215.0f);
+			return output;
+		}
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		glReadPixels(x, (int)gfx->RenderHeight() - 1 - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
@@ -669,7 +699,7 @@ namespace GFX
 		int id = atoi(args[1].c_str()) & 7;
 		std::string filename = args[2];
 
-		if (!GLContextCurrent())
+		if (!gfx->SoftPipeline() && !GLContextCurrent())
 		{
 			return GLErrorValue(L"gxtexdump: no OpenGL context on the calling thread");
 		}
@@ -707,6 +737,41 @@ namespace GFX
 
 		Json::Value* output = MakeObject();
 		output->AddBool("reset", true);
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// gxpipeline - read or switch the rendering pipeline at run time
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxPipeline(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		if (args.size() > 1)
+		{
+			int value;
+
+			if (args[1] == "shader" || args[1] == "gl")
+				value = GFX_PIPELINE_SHADER;
+			else if (args[1] == "soft" || args[1] == "sw")
+				value = GFX_PIPELINE_SOFT;
+			else
+				value = atoi(args[1].c_str());
+
+			if (!gfx->SetPipeline(value))
+			{
+				return GLErrorValue(L"gxpipeline: the pipeline is 0 (shader) or 1 (soft)");
+			}
+		}
+
+		Json::Value* output = MakeObject();
+		output->AddInt("pipeline", gfx->Pipeline());
+		output->AddAnsiString("name", gfx->SoftPipeline() ? "soft" : "shader");
 		return output;
 	}
 
@@ -844,13 +909,20 @@ namespace GFX
 			}
 		}
 
+		// The rendering pipeline (issue #384): the shader (OpenGL) backend or the software one.
+		// The choice is a configuration variable so that it survives a restart, and the debugger
+		// can switch it at run time (SetPipeline).
+		pipeline = (config->gfxPipeline == GFX_PIPELINE_SOFT) ? GFX_PIPELINE_SOFT : GFX_PIPELINE_SHADER;
+
 		xf = new TransformUnit(config, this);
 		su = new SetupUnit(config, this);
-		ras = new Rasterizer(config, this);			// TODO: For now, only single instance; will be developed for software rendering.
+		ras = new Rasterizer(config, this);
 		pe = new PixelEngine(flipper, config, this);
 		bump = new BumpMappingUnit(config, this);
 		tx = new TextureEngine(config, this);
 		tev = new TextureEnvironmentUnit(config, this);
+
+		Report(Channel::GP, "GFX pipeline: %s\n", SoftPipeline() ? "software" : "shader (OpenGL)");
 
 		// The GX debug commands (issue #87). The node is registered from here so that the commands
 		// exist exactly as long as the GFX subsystem does.
@@ -877,6 +949,45 @@ namespace GFX
 		vertex_data = nullptr;
 		delete[] index_data;
 		index_data = nullptr;
+	}
+
+	bool GFXCore::SetPipeline(int value)
+	{
+		if (value != GFX_PIPELINE_SHADER && value != GFX_PIPELINE_SOFT)
+			return false;
+
+		if (value == pipeline)
+			return true;
+
+		pipeline = value;
+
+		// The choice is a configuration variable (issue #384: "keep the current pipeline as a
+		// configuration variable"), so the console picks it up again on the next start.
+		SetConfigInt(USER_GFX_PIPELINE, pipeline, USER_HW);
+
+		// Switching to the software pipeline drops the GL context: the picture is drawn into the
+		// software EFB from now on and the video interface shows the XFB the copy engine writes.
+		// Switching back restarts the shader backend, which the next frame does on its own.
+		if (SoftPipeline())
+		{
+			if (backend_started)
+				GL_CloseSubsystem();
+
+			frameReady = false;
+			frame_dirty = false;
+			frame_done = true;
+
+			pe->SoftBeginFrame();
+		}
+		else
+		{
+			frameReady = false;
+			frame_dirty = false;
+			frame_done = true;
+		}
+
+		Report(Channel::GP, "GFX pipeline switched to %s\n", SoftPipeline() ? "software" : "shader (OpenGL)");
+		return true;
 	}
 
 	bool GFXCore::GL_LazyOpenSubsystem()
@@ -1056,6 +1167,10 @@ namespace GFX
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			}
 		}
+
+		// The software EFB is a buffer of its own; a reset starts it empty.
+		if (SoftPipeline())
+			pe->SoftBeginFrame();
 	}
 
 	void GFXCore::GL_CloseSubsystem()
@@ -1229,7 +1344,7 @@ namespace GFX
 
 	void GFXCore::DumpFrame()
 	{
-		if ((gfx_frame_counter % dump_every) != 0)
+		if (SoftPipeline() || (gfx_frame_counter % dump_every) != 0)
 			return;
 
 		uint32_t w = scr_w, h = scr_h;
@@ -1256,6 +1371,19 @@ namespace GFX
 
 	void GFXCore::GPFrameBegin()
 	{
+		if (SoftPipeline())
+		{
+			// The software pipeline has no frame buffer to open and no GL state to program: the
+			// copy engine's clear (and the clears the display copies of the previous frame asked
+			// for) is all a frame needs, and the picture leaves through the XFB.
+			if (frame_done)
+			{
+				pe->SoftBeginFrame();
+				frame_done = false;
+			}
+			return;
+		}
+
 		if (frame_done)
 		{
 			GL_OpenSubsystem();
@@ -1289,6 +1417,29 @@ namespace GFX
 
 	void GFXCore::GPFrameDone()
 	{
+		if (SoftPipeline())
+		{
+			// Nothing to present: the display copy has already written the XFB and the video
+			// interface scans it out (the console's picture does not depend on this call). The
+			// frame counters are the same ones the shader backend keeps, so the debugger and the
+			// frame dumps see a frame in both pipelines.
+			if (efb_dump_enabled)
+			{
+				DumpRenderTarget();
+			}
+
+			pe->frames++;
+			gfx_frame_counter++;
+
+			if (Flipper::HW != nullptr && Flipper::HW->cp != nullptr)
+			{
+				Flipper::HW->cp->ResetFrameStats();
+			}
+
+			frame_done = true;
+			return;
+		}
+
 		if (efb_dump_enabled)
 		{
 			DumpRenderTarget();
@@ -1317,6 +1468,14 @@ namespace GFX
 	// See the PE copy command for why only the full-frame copies present.
 	void GFXCore::GPDisplayCopy()
 	{
+		if (SoftPipeline())
+		{
+			// The display copy itself wrote the XFB in main memory (PixelEngine::SoftDisplayCopy);
+			// the video interface shows it. There is no back buffer to swap.
+			frame_done = true;
+			return;
+		}
+
 		if (frame_dirty)
 		{
 			GL_EndFrame();
@@ -1328,6 +1487,16 @@ namespace GFX
 
 	void GFXCore::ResizeRenderTarget(size_t width, size_t height)
 	{
+		if (SoftPipeline())
+		{
+			scr_w = (uint32_t)width;
+			scr_h = (uint32_t)height;
+
+			su->ResizeScissor((int)scr_w, (int)scr_h);
+			pe->SoftBeginFrame();
+			return;
+		}
+
 		if (backend_started) {
 			scr_w = (uint32_t)width;
 			scr_h = (uint32_t)height;

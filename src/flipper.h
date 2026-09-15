@@ -50,6 +50,9 @@ struct HWConfig
 	bool        vi_xfb;
 	int         videoEncoderFuse;       // 1 - PAL, 0 - NTSC
 
+	// GFX
+	int         gfxPipeline;            // 0: shader (OpenGL) pipeline, 1: software pipeline
+
 	// PI
 	uint32_t    consoleVer;
 	bool		pi_log;

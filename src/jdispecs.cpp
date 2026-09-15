@@ -1235,6 +1235,21 @@ namespace JdiSpecs
 			"help": "Reset the GFX pipeline register state (the software equivalent of a GX reset)"
 		},
 
+		"gxpipeline":
+		{
+			"help": "Read or switch the GFX rendering pipeline (0 = shader backend, 1 = software)",
+			"args": 0,
+			"hints": "[shader|soft]",
+			"usage": [
+				"Syntax: gxpipeline [shader|soft|0|1]\n",
+				"Without an argument the active pipeline is reported. With one, the emulator switches\n",
+				"between the OpenGL shader pipeline and the software (CPU) pipeline of the same GFX\n",
+				"blocks and stores the choice in the GFX_PIPELINE configuration variable.\n",
+				"Example of use: gxpipeline soft\n"
+			],
+			"output": "Object with pipeline and name"
+		},
+
 		"gxtexdump":
 		{
 			"help": "Save the image of one texture map as a PNG file",

@@ -39,6 +39,7 @@ constexpr auto EMU_SETTINGS = L"./Data/SettingsWin.json";
 #define USER_BOOTROM	"BOOTROM"		// Bootrom
 #define USER_DSP_DROM	"DSP_DROM"      // DSP DROM
 #define USER_DSP_IROM	"DSP_IROM"		// DSP IROM
+#define USER_GFX_PIPELINE "GFX_PIPELINE"	// 0: shader (GL) GFX pipeline, 1: software GFX pipeline
 
 // TODO: Add more
 #define USER_PI_LOG "PI_LOG"			// PI interrupts & fifo

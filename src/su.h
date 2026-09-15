@@ -220,6 +220,31 @@ namespace GFX
 		//! Program the GL scissor box from SU_SCIS0/SU_SCIS1.
 		void ApplyScissor();
 
+		// -------------------------------------------------------------------------------------
+		// Software pipeline (GFX_PIPELINE = soft, issue #384)
+		//
+		// The software SU assembles the vertex stream the software XF produces into triangles and
+		// performs the setup the quad rasterizer walks with: the bounding box, the three edge
+		// coefficients and the interpolation plane of every attribute (gfx-su.md 3.4 `su_area` /
+		// `su_param`, gfx-su.md 2.3). Lines and points are expanded into rasterisable geometry the
+		// same way the hardware sequencer expands them (gfx-su.md 3.3).
+		// -------------------------------------------------------------------------------------
+
+		//! The primitive the software SU is assembling and its vertices.
+		RAS_Primitive soft_prim = RAS_QUAD;
+		std::vector<SoftVertex> soft_vertices;
+
+		//! The depth plane of the last triangle, held while GEN_MODE.zfreeze is set (gfx-su.md 3.6).
+		SoftPlane soft_zfreeze{};
+		bool soft_zfreeze_valid = false;
+
+		//! Build the setup record of one triangle and hand it to the software rasterizer.
+		void SoftEmitTriangle(const SoftVertex& v0, const SoftVertex& v1, const SoftVertex& v2);
+
+		//! Expand a line or a point into the quad geometry the edge walker scans (gfx-su.md 3.3).
+		void SoftEmitPoint(const SoftVertex& v);
+		void SoftEmitLine(const SoftVertex& a, const SoftVertex& b);
+
 	public:
 		SetupUnit(HWConfig* config, GFXCore* parent_gfx);
 		~SetupUnit();
@@ -248,6 +273,16 @@ namespace GFX
 		void BeginPrimitive(RAS_Primitive prim, size_t vtx_num);
 		void SendVertex(const Vertex* v);
 		void EndPrimitive();
+
+		//! The software counterpart of BeginPrimitive/SendVertex/EndPrimitive (the XF hands over
+		//! window-space vertices, see TransformUnit::SoftTransform).
+		void SoftBeginPrimitive(RAS_Primitive prim, size_t vtx_num);
+		void SoftSendVertex(const SoftVertex* v);
+		void SoftEndPrimitive();
+
+		//! Build the setup record of one triangle whose vertices the XF clipper has already
+		//! clipped (TransformUnit::SoftClipTriangle calls it for every triangle that survives).
+		void SoftSetupTriangle(const SoftVertex& v0, const SoftVertex& v1, const SoftVertex& v2);
 
 		//! Put the SU register state back into the reset state.
 		void Reset();
