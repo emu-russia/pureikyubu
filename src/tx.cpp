@@ -1767,7 +1767,8 @@ namespace GFX
 		}
 	}
 
-	bool TextureEngine::SoftSample(int map, int coordIndex, float s, float t, const float* deriv,
+	//! Sample one texture map at a coordinate that is already in texels.
+	bool TextureEngine::SoftSampleTexel(int map, float us, float vt, const float* deriv,
 		float rgba[4])
 	{
 		map &= 7;
@@ -1781,28 +1782,15 @@ namespace GFX
 		if (width <= 0 || height <= 0)
 			return false;
 
-		// The coordinate scale of the setup unit: the SU_SSIZE/SU_TSIZE pair holds the size of the
-		// texture (minus one) when the API programmed it, and the real size is the automatic scale
-		// otherwise (see SetupUnit::CoordScale).
-		float ss = 0.0f, ts = 0.0f;
-		if (gfx != nullptr)
-			gfx->su->CoordScale(coordIndex, &ss, &ts);
-
-		if (ss <= 0.0f) ss = (float)width;
-		if (ts <= 0.0f) ts = (float)height;
-
-		float us = s * ss;
-		float vt = t * ts;
-
 		// ---- level of detail (gfx-tc.md 3.3) ----
 		//
 		// The texel-to-pixel ratio across the quad: the largest of the screen-space derivatives of
 		// the coordinate, converted to a level by the log2. The hardware computes it once per quad;
 		// the software model computes it for the sample it is shading.
-		float dsdx = fabsf(deriv[0] * ss);
-		float dtdx = fabsf(deriv[1] * ts);
-		float dsdy = fabsf(deriv[2] * ss);
-		float dtdy = fabsf(deriv[3] * ts);
+		float dsdx = fabsf(deriv[0]);
+		float dtdx = fabsf(deriv[1]);
+		float dsdy = fabsf(deriv[2]);
+		float dtdy = fabsf(deriv[3]);
 
 		float rho = dsdx;
 		if (dtdx > rho) rho = dtdx;
@@ -1976,5 +1964,31 @@ namespace GFX
 			rgba[i] = lo[i];
 
 		return true;
+	}
+
+	bool TextureEngine::SoftSample(int map, int coordIndex, float s, float t, const float* deriv,
+		float rgba[4])
+	{
+		map &= 7;
+
+		int width = tx.teximg0[map].width + 1;
+		int height = tx.teximg0[map].height + 1;
+
+		if (width <= 0 || height <= 0)
+			return false;
+
+		// The coordinate scale of the setup unit: the SU_SSIZE/SU_TSIZE pair holds the size of the
+		// texture minus one when the API programmed it, and the real size is the automatic scale
+		// otherwise (see SetupUnit::CoordScale).
+		float ss = 0.0f, ts = 0.0f;
+		if (gfx != nullptr)
+			gfx->su->CoordScale(coordIndex, &ss, &ts);
+
+		if (ss <= 0.0f) ss = (float)width;
+		if (ts <= 0.0f) ts = (float)height;
+
+		float d[4] = { deriv[0] * ss, deriv[1] * ts, deriv[2] * ss, deriv[3] * ts };
+
+		return SoftSampleTexel(map, s * ss, t * ts, d, rgba);
 	}
 }

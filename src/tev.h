@@ -364,6 +364,10 @@ namespace GFX
 		//! The K constant a `kcsel`/`kasel` selector names (gfx-tev.md 3.4).
 		float SoftKonst(unsigned sel, int component, const float kreg[4][4]) const;
 
+		//! The offset an indirect (bump) stage adds to the coordinate it samples with, in the S17.7
+		//! texel space of the texture unit (gfx-bump.md 3.3-3.8).
+		void SoftBumpOffset(int stage, float coordS, float coordT, float* ds, float* dt) const;
+
 	public:
 		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEnvironmentUnit();

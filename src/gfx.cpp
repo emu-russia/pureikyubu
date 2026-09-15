@@ -922,7 +922,8 @@ namespace GFX
 		tx = new TextureEngine(config, this);
 		tev = new TextureEnvironmentUnit(config, this);
 
-		Report(Channel::GP, "GFX pipeline: %s\n", SoftPipeline() ? "software" : "shader (OpenGL)");
+		Report(Channel::GP, "GFX pipeline: %s\n",
+			SoftPipeline() ? "software (experimental, issue #384)" : "shader (OpenGL)");
 
 		// The GX debug commands (issue #87). The node is registered from here so that the commands
 		// exist exactly as long as the GFX subsystem does.
@@ -986,7 +987,8 @@ namespace GFX
 			frame_done = true;
 		}
 
-		Report(Channel::GP, "GFX pipeline switched to %s\n", SoftPipeline() ? "software" : "shader (OpenGL)");
+		Report(Channel::GP, "GFX pipeline switched to %s\n",
+			SoftPipeline() ? "software (experimental, issue #384)" : "shader (OpenGL)");
 		return true;
 	}
 

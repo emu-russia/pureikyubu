@@ -362,6 +362,8 @@ namespace GFX
 		//! The 16-bit texel word (or the two words of a 32-bit texel) of a texel, out of TMEM.
 		bool SoftFetchTexel(int map, int level, int u, int v, float rgba[4]);
 
+
+
 		//! The palette entry a colour index names (gfx-tf.md 3.7, gfx-tc.md 5.4).
 		bool SoftTlutEntry(int map, uint32_t index, float rgba[4]);
 
@@ -407,6 +409,10 @@ namespace GFX
 		//! the screen-space derivatives (ds/dx, dt/dx, ds/dy, dt/dy) the LOD is computed from.
 		//! Returns false when the map is not usable.
 		bool SoftSample(int map, int coordIndex, float s, float t, const float* deriv, float rgba[4]);
+
+		//! The same sampler with a coordinate that is already in texels. The indirect (bump) fetch
+		//! of a TEV stage works in that space (gfx-bump.md 3.3), so it comes through here.
+		bool SoftSampleTexel(int map, float uTexel, float vTexel, const float* deriv, float rgba[4]);
 
 		//! Decode and upload all dirty texture maps and bind them to their texture units.
 		void UpdateAndBindTextures();

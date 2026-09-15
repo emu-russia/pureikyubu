@@ -285,6 +285,33 @@ namespace pureikyubutest
 			Restore();
 		}
 
+		TEST_METHOD(Soft_TheFrameClearColourReachesTheEfb)
+		{
+			GfxTestMachine& m = M();
+
+			SetupIdentityMatrices(m);
+			SetupOrthoProjection(m);
+			SetupFullViewport(m);
+			SetupDefaultPixelState(m);
+
+			// GXSetCopyClear: the clear the frame begins with. The three channels are told apart so
+			// that a channel order mistake cannot pass (the clear word is an EFB lane).
+			SetClearColor(m, Color(32, 64, 128), 0xFFFFFF);
+
+			m.BeginFrame();
+
+			uint8_t pixel[4] = { 0 };
+			ReadEfbPixel(m, 320, 240, pixel);
+
+			Assert::AreEqual((int)32, (int)pixel[0], L"the clear red is wrong");
+			Assert::AreEqual((int)64, (int)pixel[1], L"the clear green is wrong");
+			Assert::AreEqual((int)128, (int)pixel[2], L"the clear blue is wrong");
+			Assert::AreEqual((int)255, (int)pixel[3], L"the clear alpha is wrong");
+
+			m.EndFrame();
+			Restore();
+		}
+
 		// ---------------------------------------------------------------------------------------
 		// The quad walk (RAS0)
 		// ---------------------------------------------------------------------------------------
@@ -1195,6 +1222,98 @@ namespace pureikyubutest
 			Restore();
 		}
 
+		TEST_METHOD(Soft_AnIndirectStageSamplesItsTextureThroughTheBumpOffset)
+		{
+			GfxTestMachine& m = M();
+
+			SetupIdentityMatrices(m);
+			SetupOrthoProjection(m);
+			SetupFullViewport(m);
+			SetupDefaultPixelState(m);
+			SetClearColor(m, Color(0, 0, 0));
+
+			// The base image (map 0): an 8x4 I8 texture whose left half is 0x40 and right half 0xC0
+			const uint32_t baseAddr = 0x00460000;
+			std::vector<uint8_t> base(32, 0);
+			for (int v = 0; v < 4; v++)
+				for (int u = 4; u < 8; u++)
+					base[v * 8 + u] = 0xC0;
+			for (int v = 0; v < 4; v++)
+				for (int u = 0; u < 4; u++)
+					base[v * 8 + u] = 0x40;
+			WriteMainMemory(baseAddr, base.data(), base.size());
+
+			// The indirect image (map 1): the same layout, every texel 0x80. Its fields are the
+			// offset directive the bump unit multiplies by the matrix.
+			const uint32_t indAddr = 0x00470000;
+			std::vector<uint8_t> ind(32, 0x80);
+			WriteMainMemory(indAddr, ind.data(), ind.size());
+
+			m.BpLoad(TX_SETIMAGE0_I0_ID, (8 - 1) | ((4 - 1) << 10) | ((uint32_t)GFX::TF_I8 << 20));
+			m.BpLoad(TX_SETIMAGE1_I0_ID, 16u | (1u << 21));
+			m.BpLoad(TX_SETIMAGE3_I0_ID, baseAddr >> 5);
+			m.BpLoad(TX_SETMODE0_I0_ID, 0);
+			m.BpLoad(TX_SETMODE1_I0_ID, 10u << 8);
+			m.BpLoad(TX_LOADBLOCK0_ID, baseAddr >> 5);
+			m.BpLoad(TX_LOADBLOCK1_ID, 16);
+			m.BpLoad(TX_LOADBLOCK3_ID, 1u | (2u << 15));
+
+			m.BpLoad(TX_SETIMAGE0_I1_ID, (8 - 1) | ((4 - 1) << 10) | ((uint32_t)GFX::TF_I8 << 20));
+			m.BpLoad(TX_SETIMAGE1_I1_ID, 32u | (1u << 21));
+			m.BpLoad(TX_SETIMAGE3_I1_ID, indAddr >> 5);
+			m.BpLoad(TX_SETMODE0_I1_ID, 0);
+			m.BpLoad(TX_SETMODE1_I1_ID, 10u << 8);
+			m.BpLoad(TX_LOADBLOCK0_ID, indAddr >> 5);
+			m.BpLoad(TX_LOADBLOCK1_ID, 32);
+			m.BpLoad(TX_LOADBLOCK3_ID, 1u | (2u << 15));
+
+			// One TEV stage: the texel of map 0 sampled with texture coordinate 0
+			m.BpLoad(GEN_MODE_ID, 0);
+			m.BpLoad(RAS1_TREF0_ID, 0u | (1u << 6));
+			m.BpLoad(TEV_COLOR_ENV_0_ID, ColorEnv(ZERO, ZERO, ZERO, TEXC));
+			m.BpLoad(TEV_ALPHA_ENV_0_ID, AlphaEnv(AZERO, AZERO, AZERO, 4 /*texa*/));
+
+			// A quad over the EFB pixels (200,200)-(300,300) with the texture coordinates running
+			// from (0,0) at the top left to (1,1) at the bottom right
+			GFX::Vertex quad[4];
+			quad[0] = MakeVertex(ObjectX(200), ObjectY(300), 0.0f, Color(0, 0, 0));
+			quad[1] = MakeVertex(ObjectX(300), ObjectY(300), 0.0f, Color(0, 0, 0));
+			quad[2] = MakeVertex(ObjectX(300), ObjectY(200), 0.0f, Color(0, 0, 0));
+			quad[3] = MakeVertex(ObjectX(200), ObjectY(200), 0.0f, Color(0, 0, 0));
+
+			quad[0].TexCoord[0][0] = 0.0f; quad[0].TexCoord[0][1] = 1.0f;
+			quad[1].TexCoord[0][0] = 1.0f; quad[1].TexCoord[0][1] = 1.0f;
+			quad[2].TexCoord[0][0] = 1.0f; quad[2].TexCoord[0][1] = 0.0f;
+			quad[3].TexCoord[0][0] = 0.0f; quad[3].TexCoord[0][1] = 0.0f;
+
+			uint8_t pixel[4] = { 0 };
+
+			// Without an indirect command the stage samples the base texture directly: the pixel a
+			// little left of the texture boundary is in the 0x40 half.
+			m.BpLoad(BUMP_CMD_ID, 0);
+
+			m.BeginFrame();
+			m.DrawQuad(quad);
+			ReadEfbPixel(m, 245, 250, pixel);
+			Assert::AreEqual((int)0x40, (int)pixel[0], L"the base texture was not sampled directly");
+
+			// The indirect command of stage 0: the texel of map 1 (`bt` = 1), the 8-bit field
+			// format, no bias, mode `bp_m_0` (matrix 0, scale 0). Matrix 0 is the identity with a
+			// scale of 23, which turns the texel's 0x80 into a one-texel shift.
+			m.BpLoad(BUMP_MATRIX_A0_ID, 1u | (3u << 22));			// ma = 1, s0 = 3
+			m.BpLoad(BUMP_MATRIX_B0_ID, (1u << 11) | (1u << 22));	// md = 1, s1 = 1
+			m.BpLoad(BUMP_MATRIX_C0_ID, (1u << 22));				// s2 = 1  -> scale 23
+			m.BpLoad(BUMP_CMD_ID + 0, 1u | (1u << 9));				// bt = 1, fmt = 8 bit, m = matrix 0
+
+			m.BeginFrame();
+			m.DrawQuad(quad);
+			ReadEfbPixel(m, 245, 250, pixel);
+			Assert::AreEqual((int)0xC0, (int)pixel[0], L"the indirect offset was not applied");
+
+			m.EndFrame();
+			Restore();
+		}
+
 		// ---------------------------------------------------------------------------------------
 		// The copy engine: EFB -> XFB
 		// ---------------------------------------------------------------------------------------
@@ -1212,8 +1331,10 @@ namespace pureikyubutest
 
 			m.BeginFrame();
 
-			// A white frame: the copy engine converts it to the studio-range YUV of the XFB
-			DrawPixelRect(m, 0.0f, 0.0f, 640.0f, 480.0f, Color(255, 255, 255));
+			// A pure red frame: the copy engine converts it to the studio-range YUV of the XFB.
+			// Red separates the two chroma channels (U is well below 128, V well above it), which
+			// is what pins the Y0 U0 Y1 V0 byte order of the destination (video-interface.md 3.1).
+			DrawPixelRect(m, 0.0f, 0.0f, 640.0f, 480.0f, Color(255, 0, 0));
 
 			// GXCopyDisp: the whole EFB, a 640-pixel line (40 cache lines of stride) at the XFB
 			// address, opcode = display copy (gfx-pe.md 5.6, 6.9-6.15).
@@ -1228,10 +1349,13 @@ namespace pureikyubutest
 			uint8_t* xfb = TestMainMemory(xfbAddr, 8);
 			Assert::IsTrue(xfb != nullptr, L"the XFB is not in the emulated main memory");
 
-			Assert::IsTrue(xfb[0] > 230 && xfb[0] < 240, Widen("the luma of the XFB is " +
-				std::to_string((int)xfb[0]) + " instead of about 235").c_str());
-			Assert::IsTrue(xfb[1] > 120 && xfb[1] < 136, Widen("the chroma of the XFB is " +
-				std::to_string((int)xfb[1]) + " instead of about 128").c_str());
+			// Y = 0.257*255 + 16 = 82, Cb (U) = -0.148*255 + 128 = 90, Cr (V) = 0.439*255 + 128 = 240
+			Assert::IsTrue(xfb[0] > 78 && xfb[0] < 86, Widen("the luma of the XFB is " +
+				std::to_string((int)xfb[0]) + " instead of about 82").c_str());
+			Assert::IsTrue(xfb[1] > 86 && xfb[1] < 94, Widen("the Cb of the XFB is " +
+				std::to_string((int)xfb[1]) + " instead of about 90").c_str());
+			Assert::IsTrue(xfb[3] > 236, Widen("the Cr of the XFB is " +
+				std::to_string((int)xfb[3]) + " instead of about 240").c_str());
 			Assert::AreEqual((int)xfb[0], (int)xfb[2], L"the two pixels of the pair differ");
 
 			m.EndFrame();

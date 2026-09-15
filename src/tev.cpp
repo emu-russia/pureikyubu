@@ -1294,6 +1294,190 @@ void main()
 		reg[ae.dest & 3][3] = ares;
 	}
 
+	// -------------------------------------------------------------------------------------------
+	// Indirect (bump) texturing, the part the TEV plays in it (gfx-bump.md 3.3-3.8)
+	//
+	// The TEV stage that has an indirect command programmed does not sample its own texture at the
+	// coordinate the rasterizer interpolated: the texels of the indirect map named by `bt` are
+	// turned into per-pixel s/t offsets by the bump unit's matrices and the stage samples its
+	// texture at the perturbed coordinate. The bump unit is a coordinate rewrite between RAS1 and
+	// the texture unit, so from the TEV's point of view this is a fetch and an add; the matrices,
+	// the wraps and the scale are the registers of gfx-bump.md 4.
+	// -------------------------------------------------------------------------------------------
+
+	//! One 11-bit signed matrix entry of the bump unit.
+	static float SoftBumpMatrixEntry(unsigned raw)
+	{
+		int v = (int)(raw & 0x7FF);
+		if (v & 0x400)
+			v -= 0x800;
+		return (float)v;
+	}
+
+	//! The 5-bit shift a matrix's three registers carry: 2 + 2 bits from the first two and one from
+	//! the third (gfx-bump.md 3.7, where the FDL/RTL width difference is flagged).
+	static float SoftBumpMatrixScale(const BumpMatrix& m)
+	{
+		unsigned s0 = m.a.s & 3;
+		unsigned s1 = m.b.s & 3;
+		unsigned s2 = m.c.s & 1;
+		return (float)(s0 | (s1 << 2) | (s2 << 4));
+	}
+
+	//! The size the wrap mask of a `bp_wrap` value confines the coordinate to (gfx-bump.md 3.4): the
+	//! mask keeps `size * 128 - 1`, so the size itself is the mask plus one.
+	static float SoftBumpWrapSize(int wrap)
+	{
+		switch (wrap & 7)
+		{
+			case 0: return 33554432.0f;		// 2^25, no wrapping
+			case 1: return 32768.0f;		// 256 texels
+			case 2: return 16384.0f;		// 128
+			case 3: return 8192.0f;			// 64
+			case 4: return 4096.0f;			// 32
+			case 5: return 2048.0f;			// 16
+			default: return 0.0f;			// bp_wrap_zero (and the undefined value 7)
+		}
+	}
+
+	//! One field of an indirect command word (the fields are listed in gfx-bump.md 4.4).
+	static unsigned SoftBumpBits(const BumpCommand& cmd, int off, int len)
+	{
+		return (cmd.bits >> off) & ((1u << len) - 1u);
+	}
+
+	//! The 25-bit signed window the coordinate arithmetic works in (S17.7 texels).
+	static float SoftBumpWindow25(float value)
+	{
+		float m = fmodf(floorf(value), 33554432.0f);
+		if (m < 0.0f)
+			m += 33554432.0f;
+		return (m >= 16777216.0f) ? (m - 33554432.0f) : m;
+	}
+
+	//! The coordinate window bits [15:5] of an S17.7 coordinate, which the special matrix modes use
+	//! as matrix entries (gfx-bump.md 3.7).
+	static float SoftBumpCoordWindow(float coord17)
+	{
+		float m = fmodf(floorf(coord17), 33554432.0f);
+		if (m < 0.0f)
+			m += 33554432.0f;
+		return floorf(m / 32.0f) - floorf(m / 65536.0f) * 2048.0f;
+	}
+
+	//! The three texel fields an indirect fetch contributes (gfx-bump.md 3.6, 5.2).
+	static void SoftBumpDecodeTexel(const float texel[4], int fmt, int field[3])
+	{
+		field[0] = (int)(texel[0] + 0.5f);
+		field[1] = (int)(texel[1] + 0.5f);
+		field[2] = (int)(texel[2] + 0.5f);
+
+		int shift = (fmt == BUMP_FMT_8) ? 0 : ((fmt == BUMP_FMT_5) ? 3 : ((fmt == BUMP_FMT_4) ? 4 : 5));
+		for (int i = 0; i < 3; i++)
+			field[i] >>= shift;
+	}
+
+	//! The bias of the three fields (gfx-bump.md 3.5): bit 0 is S, bit 1 T and bit 2 U; an 8-bit
+	//! component is centred on zero, the narrower ones get one extra bit.
+	static void SoftBumpBiasFields(int field[3], int fmt, int bias)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if ((bias & (1 << i)) == 0)
+				continue;
+
+			field[i] = (fmt == BUMP_FMT_8) ? (field[i] - 128) : (field[i] + 1);
+		}
+	}
+
+	void TextureEnvironmentUnit::SoftBumpOffset(int stage, float coordS, float coordT, float* ds,
+		float* dt) const
+	{
+		const BUMPState& bump = gfx->bump->State();
+		const BumpCommand& cmd = bump.cmd[stage & 15];
+
+		int mode = (int)cmd.m;
+
+		*ds = 0.0f;
+		*dt = 0.0f;
+
+		if (mode == 0 || mode == 4 || mode == 8 || mode >= 12)
+			return;				// bp_m_off (and the unassigned encodings): the offsets stay zero
+
+		// The indirect texel: the map named by `bt` is sampled at the stage's own (already wrapped)
+		// coordinate, which is the S17.7 value converted back to texels.
+		int map = (int)SoftBumpBits(cmd, 0, 2) & 7;
+		float mapW = (float)(gfx->tx->State().teximg0[map].width + 1);
+		float mapH = (float)(gfx->tx->State().teximg0[map].height + 1);
+
+		if (mapW < 1.0f) mapW = 1.0f;
+		if (mapH < 1.0f) mapH = 1.0f;
+
+		float deriv[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		float texel[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+		if (!gfx->tx->SoftSampleTexel(map, coordS / 128.0f, coordT / 128.0f, deriv, texel))
+			return;
+
+		int field[3];
+		SoftBumpDecodeTexel(texel, (int)SoftBumpBits(cmd, 2, 2), field);
+		SoftBumpBiasFields(field, (int)SoftBumpBits(cmd, 2, 2), (int)SoftBumpBits(cmd, 4, 3));
+
+		// The matrix selection (gfx-bump.md 3.7): bits [3:2] of `m` choose the mode group and bits
+		// [1:0] the scale. The plain group uses the three stored matrices; the two special groups
+		// replace two entries by the windows of the stage's own rasterized coordinate.
+		float ab[2] = { 0.0f, 0.0f };
+		float cd[2] = { 0.0f, 0.0f };
+		float ef[2] = { 0.0f, 0.0f };
+		float scale = 0.0f;
+
+		int group = (mode >> 2) & 3;
+		int scaleIndex = (mode & 3) - 1;
+
+		if (group == 0)
+		{
+			int matrix = scaleIndex;
+			if (matrix < 0)
+				return;
+
+			const BumpMatrix& m = bump.matrix[matrix & 3];
+			ab[0] = SoftBumpMatrixEntry(m.a.ma);
+			ab[1] = SoftBumpMatrixEntry(m.a.mb);
+			cd[0] = SoftBumpMatrixEntry(m.b.mc);
+			cd[1] = SoftBumpMatrixEntry(m.b.md);
+			ef[0] = SoftBumpMatrixEntry(m.c.me);
+			ef[1] = SoftBumpMatrixEntry(m.c.mf);
+			scale = SoftBumpMatrixScale(m);
+		}
+		else
+		{
+			// The windows of the rasterized coordinate: bits [15:5] of the S17.7 word
+			float sw = SoftBumpCoordWindow(coordS);
+			float tw = SoftBumpCoordWindow(coordT);
+
+			if (group == 1)
+			{
+				ab[0] = sw;
+				ab[1] = tw;
+			}
+			else
+			{
+				cd[0] = sw;
+				cd[1] = tw;
+			}
+
+			if (scaleIndex >= 0)
+				scale = SoftBumpMatrixScale(bump.matrix[scaleIndex & 3]);
+		}
+
+		float dotS = (float)field[0] * ab[0] + (float)field[1] * cd[0] + (float)field[2] * ef[0];
+		float dotT = (float)field[0] * ab[1] + (float)field[1] * cd[1] + (float)field[2] * ef[1];
+
+		// `(dot << scale)[44:20]`: the 25-bit coordinate window of the shifted sum
+		*ds = SoftBumpWindow25(floorf(dotS * exp2f(scale) / 1048576.0f));
+		*dt = SoftBumpWindow25(floorf(dotT * exp2f(scale) / 1048576.0f));
+	}
+
 	bool TextureEnvironmentUnit::SoftShade(const SoftFragment& fragment, float rgba[4], float* depth)
 	{
 		float reg[4][4], kreg[4][4];
@@ -1304,6 +1488,18 @@ void main()
 			stages = 16;
 
 		float lastTexel[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
+
+		// The texture coordinates the stages sample with. An indirect stage rewrites its own, and the
+		// feedback path of the bump unit (`fb`) hands the previous stage's offset to the next one
+		// (gfx-bump.md 3.8).
+		float texCoord[8][2];
+		for (int i = 0; i < 8; i++)
+		{
+			texCoord[i][0] = fragment.tex[i][0];
+			texCoord[i][1] = fragment.tex[i][1];
+		}
+
+		float bumpFeedback[2] = { 0.0f, 0.0f };
 
 		for (int stage = 0; stage < stages; stage++)
 		{
@@ -1326,13 +1522,70 @@ void main()
 				for (int i = 0; i < 4; i++) raster[i] = fragment.color[1][i];
 			}
 
+			// ---- indirect (bump) texturing of this stage (gfx-bump.md 3.3) ----
+
+			const BumpCommand& bumpCmd = gfx->bump->State().cmd[stage & 15];
+
+			if ((bumpCmd.m & 0xF) != 0)
+			{
+				// The coordinate the indirect fetch works in is the S17.7 texel one: the stage's
+				// coordinate, scaled by the coordinate size of its pair and the real size of the
+				// map it samples (the same space the emulator's indirect arithmetic uses).
+				int map = ti & 7;
+				float sizeW = (float)(gfx->tx->State().teximg0[map].width + 1);
+				float sizeH = (float)(gfx->tx->State().teximg0[map].height + 1);
+
+				if (sizeW < 1.0f) sizeW = 1.0f;
+				if (sizeH < 1.0f) sizeH = 1.0f;
+
+				float scaleS = 0.0f, scaleT = 0.0f;
+				gfx->su->CoordScale(tc & 7, &scaleS, &scaleT);
+				if (scaleS <= 0.0f) scaleS = sizeW;
+				if (scaleT <= 0.0f) scaleT = sizeH;
+
+				float unitS = scaleS * sizeW * 128.0f;
+				float unitT = scaleT * sizeH * 128.0f;
+
+				float coordS = texCoord[tc & 7][0] * unitS;
+				float coordT = texCoord[tc & 7][1] * unitT;
+
+				// The coordinate shift scale of the indirect stage (RAS1_SS0/SS1): the fetch, and
+				// the offset added to it, work in the scaled coordinate.
+				float indS = gfx->ras->IndirectScale((int)SoftBumpBits(bumpCmd, 0, 2), false);
+				float indT = gfx->ras->IndirectScale((int)SoftBumpBits(bumpCmd, 0, 2), true);
+
+				if (indS != 1.0f) coordS = floorf(coordS * indS);
+				if (indT != 1.0f) coordT = floorf(coordT * indT);
+
+				// The coordinate is masked to its wrap window before the offset is added
+				float wrapS = SoftBumpWrapSize((int)SoftBumpBits(bumpCmd, 13, 3));
+				float wrapT = SoftBumpWrapSize((int)SoftBumpBits(bumpCmd, 16, 3));
+
+				coordS = (wrapS > 0.0f) ? fmodf(coordS, wrapS) : 0.0f;
+				coordT = (wrapT > 0.0f) ? fmodf(coordT, wrapT) : 0.0f;
+
+				float ds = 0.0f, dt = 0.0f;
+				SoftBumpOffset(stage, coordS, coordT, &ds, &dt);
+
+				float fbS = (SoftBumpBits(bumpCmd, 20, 1) != 0u) ? bumpFeedback[0] : 0.0f;
+				float fbT = (SoftBumpBits(bumpCmd, 20, 1) != 0u) ? bumpFeedback[1] : 0.0f;
+				bumpFeedback[0] = ds;
+				bumpFeedback[1] = dt;
+
+				float resultS = SoftBumpWindow25(coordS + ds + fbS);
+				float resultT = SoftBumpWindow25(coordT + dt + fbT);
+
+				texCoord[tc & 7][0] = (unitS != 0.0f) ? (resultS / unitS) : 0.0f;
+				texCoord[tc & 7][1] = (unitT != 0.0f) ? (resultT / unitT) : 0.0f;
+			}
+
 			// The texel of the stage comes from the texture unit (its TMEM). A stage with the
 			// texture disabled works on the opaque white texel the datapath substitutes.
 			float texel[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
 
 			if (te)
 			{
-				if (!gfx->tx->SoftSample(ti & 7, tc & 7, fragment.tex[tc & 7][0], fragment.tex[tc & 7][1],
+				if (!gfx->tx->SoftSample(ti & 7, tc & 7, texCoord[tc & 7][0], texCoord[tc & 7][1],
 					fragment.dtex[tc & 7], texel))
 				{
 					texel[0] = texel[1] = texel[2] = texel[3] = 255.0f;

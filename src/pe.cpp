@@ -1305,12 +1305,13 @@ namespace GFX
 				int x1 = (x + 1 < w) ? (x + 1) : x;
 				SoftRgbToYuv(rgb[(size_t)x1 * 3 + 0], rgb[(size_t)x1 * 3 + 1], rgb[(size_t)x1 * 3 + 2], &y1, &u1, &v1);
 
-				int ur0, ug0, ub0, ur1, ug1, ub1;
-				SoftRgbToYuv(rgb[(size_t)l * 3 + 0], rgb[(size_t)l * 3 + 1], rgb[(size_t)l * 3 + 2], &ur0, &ug0, &ub0);
-				SoftRgbToYuv(rgb[(size_t)r * 3 + 0], rgb[(size_t)r * 3 + 1], rgb[(size_t)r * 3 + 2], &ur1, &ug1, &ub1);
+				// The left and right neighbours of the pair, in the same (Y, U, V) form
+				int yl, ul, vl, yr, ur, vr;
+				SoftRgbToYuv(rgb[(size_t)l * 3 + 0], rgb[(size_t)l * 3 + 1], rgb[(size_t)l * 3 + 2], &yl, &ul, &vl);
+				SoftRgbToYuv(rgb[(size_t)r * 3 + 0], rgb[(size_t)r * 3 + 1], rgb[(size_t)r * 3 + 2], &yr, &ur, &vr);
 
-				int u = (ug0 + 2 * u0 + 2 * u1 + ug1 + 2) / 6;
-				int v = (ub0 + 2 * v0 + 2 * v1 + ub1 + 2) / 6;
+				int u = (ul + 2 * u0 + 2 * u1 + ur + 2) / 6;
+				int v = (vl + 2 * v0 + 2 * v1 + vr + 2) / 6;
 
 				yuv[(size_t)x * 2 + 0] = (uint8_t)y0;
 				yuv[(size_t)x * 2 + 1] = (uint8_t)((u < 0) ? 0 : ((u > 255) ? 255 : u));

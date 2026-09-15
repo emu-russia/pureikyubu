@@ -1,4 +1,9 @@
-# Flipper GFX - the software pipeline
+# Flipper GFX - the software pipeline (experimental)
+
+> **The software pipeline is experimental.** It renders the whole pipeline by itself and the
+> DolphinSDK demo sweep agrees with the shader backend on most of the demos, but a few titles still
+> have picture defects (the anti-aliased framebuffer demos, a handful of texture and copy cases);
+> they are being worked through one by one. The default stays the shader backend.
 
 The second rendering path of the GFX subsystem, selected by the `GFX_PIPELINE` configuration
 variable (`0` = the OpenGL shader backend of [gfx.md](gfx.md), `1` = software) and switchable at run
@@ -12,7 +17,8 @@ carry the `Soft` prefix.
 
 There is no GL frame in this pipeline at all. The blocks render into a **real EFB memory array**
 and the copy engine converts the finished frame into the **XFB in main memory**, which `vi.cpp`
-scans out exactly like a real console:
+scans out exactly like a real console (the number of active lines comes from `VI_VERT_TIMING`, so a
+title that copies the 448 visible lines of an NTSC frame does not show the rest of the buffer):
 
 ```
 Gekko --PI FIFO--> CP --commands--> XF(soft) --> SU(soft) --> RAS(soft) --> TEV(soft) --> PE(soft)
@@ -116,6 +122,15 @@ over the colour register file (`result = ( D +/- lerp(A, B, C) + bias ) << shift
 the Rev-B K constants, the alpha compare modes, the Z-texture environment (which may replace the
 depth), the fog unit and the final alpha function.
 
+**Indirect (bump) texturing** is implemented as well (gfx-bump.md 3.3-3.8): a stage whose indirect
+command is not `bp_m_off` fetches its *indirect* map through the texture unit, masks the coordinate
+to its wrap window, decodes the texel fields with the format and the bias of the command, multiplies
+them by the selected 3x2 matrix (including the two coordinate-window modes), shifts the result into
+the 25-bit S17.7 coordinate window and adds it to the stage's own coordinate, together with the
+feedback of the previous indirect stage. The arithmetic is the one the shader backend uses, so the
+two pipelines produce the same picture; the unit tests pin it with an indirect fetch that shifts a
+stage by one texel (`Soft_AnIndirectStageSamplesItsTextureThroughTheBumpOffset`).
+
 The pixel engine owns a real **EFB memory array**, addressed like the CPU window of the hardware
 (gfx-pe.md 3.3): the colour word of the pixel (x, y) sits at `y * 1024 + x` and the address bit 22
 selects the Z plane. It performs the RMW datapath of gfx-pe.md 4 - the Z test of the Z unit and the
@@ -128,7 +143,8 @@ video interface scans out (`vi.cpp`), exactly like a real console.
 
 ## What the software pipeline does not do yet
 
-- The indirect (bump) texturing of the TEV: the texel a stage fetches is always its own direct map.
+- The per-vertex "emboss" bump texgen of the XF (texgen type 1): the incoming coordinate is passed
+  through.
 - The anisotropic filtering (`maxaniso`), the `diag_lod` and `lodclamp` refinements of the LOD, and
   the `round` / `field_predict` motion-compensation modes of the filter.
 - The anti-aliased EFB (a 12-bit coverage mask selects the sample to shade, but the EFB stores one
@@ -137,7 +153,9 @@ video interface scans out (`vi.cpp`), exactly like a real console.
 - The `PE_COPY_VFILTER` coefficients (the display copy scales vertically with the `PE_COPY_SCALE`
   lerp, but the 7-tap filter is a no-op), the YUV/4:2:0 copy modes and the EFB CPU window
   (`Cpu2Efb`).
-- The indirect-stage coordinate shift scales and the Rev-B `PE_CHICKEN` behaviours.
+- The Rev-B `PE_CHICKEN` behaviours (`tx_copy_fmt`, `txcpy_ccv`, the Rev-A/Rev-B blend-op and CPU
+  Z-mask fixes) and the `BUMP_IMASK` stream mask, which routes register words on the hardware and
+  has no stream to route here.
 
 The unit tests of the software pipeline (`testing/gfx_soft_test.cpp`) drive it through the
 hardware API only - the XF register space, the BP register space and the object-space vertex

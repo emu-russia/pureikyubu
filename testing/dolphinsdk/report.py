@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Build the HTML report for a DolphinSDK demo sweep (issue #385).
+"""Build the HTML report for a DolphinSDK demo sweep (issue #385, issue #384).
 
 Reads the folder produced by sweep.ps1 and writes report.html next to it (plus a shots/ folder
-with the screenshots the page embeds).
+with the screenshots the page embeds, and - when a second sweep is given - a shots_soft/ folder
+with the same demos rendered by the software GFX pipeline).
 
 The verdict is derived from the evidence (finished frames, the picture, the OSReport text) and
 refined by notes.json, which holds the per-demo analysis of the interesting cases.
 
-Usage: report.py <sweep-dir> <notes.json> <out-dir>
+Usage: report.py <sweep-dir> <notes.json> <out-dir> [soft-sweep-dir]
 """
 
 import base64
@@ -23,6 +24,24 @@ from collections import Counter
 def read(path):
     with open(path, "r", encoding="utf-8", errors="replace") as f:
         return f.read()
+
+
+def compare(a, b):
+    """(mean abs difference, fraction of differing pixels) of two PNGs, or (None, None)."""
+    try:
+        from PIL import Image, ImageChops
+        import numpy as np
+    except ImportError:
+        return None, None
+    if not (os.path.exists(a) and os.path.exists(b)):
+        return None, None
+    with Image.open(a) as ia, Image.open(b) as ib:
+        ia = ia.convert("RGB").resize((160, 120))
+        ib = ib.convert("RGB").resize((160, 120))
+        na = np.asarray(ia, dtype=np.int16)
+        nb = np.asarray(ib, dtype=np.int16)
+    diff = np.abs(na - nb).max(axis=2)
+    return float(diff.mean()), float((diff > 32).mean())
 
 
 def dominant(path):
@@ -91,12 +110,27 @@ def verdict(d):
 
 def main():
     sweep_dir, notes_path, out_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+    soft_dir = sys.argv[4] if len(sys.argv) > 4 else None
     notes = json.load(open(notes_path, encoding="utf-8")) if os.path.exists(notes_path) else {}
     demos = collect(sweep_dir)
+    soft = {d["tag"]: d for d in collect(soft_dir)} if soft_dir else {}
+
     for d in demos:
         d["verdict"] = verdict(d)
         d["note"] = notes.get(d["tag"], {}).get("note", "")
         d["analysis"] = notes.get(d["tag"], {}).get("analysis", "")
+
+        # The same demo through the software GFX pipeline (issue #384)
+        s = soft.get(d["tag"])
+        d["soft"] = s
+        d["soft_verdict"] = verdict(s) if s else None
+        d["diff"] = None
+        d["diff_pixels"] = None
+
+        if s:
+            diff, changed = compare(os.path.join(sweep_dir, d["tag"] + ".png"),
+                                    os.path.join(soft_dir, d["tag"] + ".png"))
+            d["diff"], d["diff_pixels"] = diff, changed
 
     shots = os.path.join(out_dir, "shots")
     os.makedirs(shots, exist_ok=True)
@@ -105,7 +139,18 @@ def main():
         if os.path.exists(src):
             shutil.copyfile(src, os.path.join(shots, d["tag"] + ".png"))
 
+    if soft_dir:
+        shots_soft = os.path.join(out_dir, "shots_soft")
+        os.makedirs(shots_soft, exist_ok=True)
+        for tag in soft:
+            src = os.path.join(soft_dir, tag + ".png")
+            if os.path.exists(src):
+                shutil.copyfile(src, os.path.join(shots_soft, tag + ".png"))
+
     counts = Counter(d["verdict"] for d in demos)
+    soft_counts = Counter(d["soft_verdict"] for d in demos if d.get("soft_verdict"))
+    soft_same = len([d for d in demos if d.get("diff") is not None and d["diff"] < 6.0])
+    soft_diff = len([d for d in demos if d.get("diff") is not None and d["diff"] >= 6.0])
     noted = [d for d in demos if d["tag"] in notes]
     problems = [d for d in demos if d["verdict"] != "ok" or d["tag"] in notes]
     problems.sort(key=lambda d: (d["verdict"] == "ok", d["tag"]))
@@ -114,6 +159,31 @@ def main():
 
     def esc(s):
         return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    if soft_dir:
+        soft_section = f"""<h2>SoftGPU: the same demos through the software GFX pipeline</h2>
+<p>The right-hand column of the table is the same demo rendered by the <b>software (CPU) pipeline</b>
+of issue #384 (the <code>GFX_PIPELINE = 1</code> configuration, see
+<a href="../../../wiki/gfxsoft.md">wiki/gfxsoft.md</a>): the XF, the setup unit, the quad-based
+rasterizers, a real TMEM, the TEV and a pixel engine with a real EFB memory array, with the copy
+engine writing the XFB that the video interface scans out. No OpenGL call is involved in that path.
+The runs use the same method, the same settle time and the same build as the shader column.</p>
+<p class="summary"><span><b>{len(soft)}</b> captured</span>
+<span class="ok"><b>{soft_counts['ok']}</b> drew a picture</span>
+<span class="flat"><b>{soft_counts['flat']}</b> flat</span>
+<span class="no-frame"><b>{soft_counts['no-frame']}</b> never finished a frame</span>
+<span><b>{soft_same}</b> match the shader picture</span>
+<span><b>{soft_diff}</b> differ</span></p>
+<p><i>match/differ</i> is the mean absolute pixel difference of the two 160x120 captures: below 6
+counts as a match (the demos animate, so two runs of the same demo never match exactly), above it
+the two pictures are visibly different and the row is worth looking at. A demo that is already
+broken under the shader backend can differ in both columns without telling anything about the
+software pipeline.</p>
+"""
+    else:
+        soft_section = ""
+    soft_same = soft_same if soft_dir else 0
+    soft_diff = soft_diff if soft_dir else 0
 
     parts = []
     parts.append(f"""<!doctype html>
@@ -127,6 +197,8 @@ def main():
  th {{ background:#1d2129; position: sticky; top: 0; }}
  .ok {{ color:#6ee787; }} .flat {{ color:#ffd166; }} .no-frame {{ color:#ff7b72; }}
  .shot {{ width: 320px; height: 240px; object-fit: contain; background:#000; border:1px solid #2b2f38; }}
+ .shot.soft {{ border-color:#6b4f2a; }}
+ .same {{ color:#6ee787; font-size:12px; }} .differ {{ color:#ffd166; font-size:12px; }}
  .kv {{ display:inline-block; min-width: 74px; color:#9aa4b2; }}
  pre {{ background:#0f1115; padding:10px; overflow:auto; font-size:12px; border-radius:6px; }}
  .card {{ background:#1a1d24; border:1px solid #2b2f38; border-radius:8px; padding:16px; margin:14px 0; }}
@@ -165,21 +237,36 @@ first case.</p>
     <code>PE_PI_XBOUND0/1</code>, <code>YBOUND0/1</code> pair reads back as 0, so
     <code>GXReadBoundingBox</code> always answers <code>(0,0,0,0)</code> (gfx-pe 6.17, gfx-pe 8).</li>
 </ul>
+{soft_section}
 <h2>Per-demo result</h2>
-<table><tr><th>demo</th><th>shot</th><th>frames</th><th>verdict</th><th>what the log and the source say</th></tr>""")
+<table><tr><th>demo</th><th>shader backend</th><th>SoftGPU</th><th>frames</th><th>verdict</th><th>what the log and the source say</th></tr>""")
 
     for d in problems + ok:
         note = d["note"]
         src = d["analysis"]
         cells = f"<b>{esc(d['name'])}</b><br><span style='color:#9aa4b2'>{esc(d['title'])}</span>"
         img = f'<img class="shot" src="shots/{d["tag"]}.png">' if d["shot"] else "(none)"
+
+        if d.get("soft"):
+            simg = f'<img class="shot soft" src="shots_soft/{d["tag"]}.png">'
+            if d["diff"] is None:
+                badge = ""
+            elif d["diff"] < 6.0:
+                badge = f"<div class='same'>match (diff {d['diff']:.1f})</div>"
+            else:
+                badge = (f"<div class='differ'>differs ({d['diff']:.1f}; "
+                         f"{d['diff_pixels']*100:.0f}% of the pixels)</div>")
+            simg += badge
+        else:
+            simg = "(none)"
+
         info = (f"<span class='kv'>pe</span>{d['pe']}<br>"
                 f"<span class='kv'>vi</span>{d['vi']}<br>"
                 f"<span class='kv'>CP 0x20</span>{d['cp20']}")
         detail = esc(note)
         if src:
             detail += f"<pre>{esc(src)}</pre>"
-        parts.append(f"<tr><td>{cells}</td><td>{img}</td><td>{info}</td>"
+        parts.append(f"<tr><td>{cells}</td><td>{img}</td><td>{simg}</td><td>{info}</td>"
                      f"<td class='{d['verdict']}'>{d['verdict']}</td><td>{detail}</td></tr>")
 
     parts.append("</table></body></html>")

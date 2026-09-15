@@ -36,8 +36,12 @@
 
 <section class="hero">
   <div class="wrap">
-    <h1>The software GFX pipeline</h1>
+    <h1>The software GFX pipeline <span style="font-size:0.5em;color:#ffd166">(experimental)</span></h1>
     <p class="lead">
+      <strong>Experimental.</strong> The pipeline is complete and the DolphinSDK demo sweep below
+      renders the same pictures as the shader backend for most of the demos, but a few titles still
+      have picture defects (the anti-aliased framebuffer demos among them). The default remains the
+      shader backend.<br><br>
       The Flipper graphics subsystem has a second rendering path: a software (CPU) implementation of
       the same hardware blocks. It is written from the GameCube specifications — the transform unit,
       the setup unit, the three rasterizers, the texture unit with a <strong>real TMEM</strong>, the

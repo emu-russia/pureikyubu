@@ -96,6 +96,8 @@ namespace Flipper
 	struct VIState
 	{
 		volatile uint16_t    disp_cr;    // display configuration register
+		volatile uint16_t    vert_timing; // vertical timing register: the active line count is
+										  // `ACV` (bits 13:4), see ActiveLines()
 		volatile uint32_t    tfbl;       // video buffer (top field)
 		volatile uint32_t    bfbl;       // video buffer (bottom field)
 		volatile VIPosition  pos;        // beam position
@@ -121,9 +123,17 @@ namespace Flipper
 		int         videoEncoderFuse;
 	};
 
+	// The XFB the video interface scans: 640 pixels wide (1280 bytes per line of packed YUV 4:2:2)
+	// and 480 lines high, which is the picture the emulator's window shows.
+	#define VI_XFB_WIDTH 640
+	#define VI_XFB_HEIGHT 480
+
 	class VideoInterface
 	{
 		VIState vi{};		//!< VI state (registers and other data)
+
+		//! The number of XFB lines the VI scans out (the active picture of `VI_VERT_TIMING`).
+		uint32_t ActiveLines() const;
 
 		void YUVBlit(uint8_t* yuvbuf, RGB* dib);
 		void vi_set_timing();
