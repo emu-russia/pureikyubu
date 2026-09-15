@@ -37,17 +37,14 @@ wchar_t* Json::CloneStr(const wchar_t* str)
 	return clone;
 }
 
-wchar_t* Json::CloneAnsiStr(const char* str)
+wchar_t* Json::CloneUtf8Str(const char* str)
 {
-	size_t len = strlen(str);
-	wchar_t* clone = new wchar_t[len + 1];
-	wchar_t* wcharPtr = clone;
-	char* charPtr = (char*)str;
-	while (*charPtr)
-	{
-		*wcharPtr++ = *charPtr++;
-	}
-	*wcharPtr++ = 0;
+	// The narrow string of the project is UTF-8, so the shared codec does the whole job (including
+	// the code points that wchar_t cannot hold on Windows: they become a surrogate pair there).
+	std::wstring wide = Util::StringToWstring(str);
+
+	wchar_t* clone = new wchar_t[wide.size() + 1];
+	wcscpy(clone, wide.c_str());
 	return clone;
 }
 
@@ -102,6 +99,19 @@ void Json::EmitWcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly)
 	while (*ptr)
 	{
 		int cp = (int)*ptr;
+
+#if defined(_WINDOWS)
+
+		// UTF-8 carries code points, not UTF-16 code units: a pair that stands for a code point
+		// outside the BMP has to be put together again before it can be encoded (the surrogate
+		// block itself is not encodable, so EmitCodePoint would refuse it).
+		if (cp >= 0xD800 && cp <= 0xDBFF && ptr[1] >= 0xDC00 && ptr[1] <= 0xDFFF)
+		{
+			cp = 0x10000 + ((cp - 0xD800) << 10) + ((int)ptr[1] - 0xDC00);
+			ptr++;
+		}
+
+#endif
 
 		// Escaping
 
@@ -343,6 +353,25 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 			}
 		}
 
+#if defined(_WINDOWS)
+
+		// On Windows wchar_t is one UTF-16 code unit wide, so a code point outside the BMP takes
+		// two of them; the extra slot is checked for rather than assumed.
+		if (cp > 0xFFFF)
+		{
+			if (!Verify::Range(strSize, 2, MaxStringSize - 1))
+			{
+				throw "Json string too long";
+			}
+
+			cp -= 0x10000;
+			str[strSize++] = (wchar_t)(0xD800 + (cp >> 10));
+			str[strSize++] = (wchar_t)(0xDC00 + (cp & 0x3FF));
+			continue;
+		}
+
+#endif
+
 		str[strSize++] = (wchar_t)cp;
 	}
 
@@ -577,15 +606,11 @@ char* Json::Value::CloneWcharName(const wchar_t* otherName)
 	if (otherName == nullptr)		// Name can be null
 		return nullptr;
 
-	size_t len = wcslen(otherName);
-	char* clone = new char[len + 1];
+	// The name of a member is kept as UTF-8, like every narrow string of the project.
+	std::string name = Util::WstringToString(otherName);
 
-	for (size_t i = 0; i < len; i++)
-	{
-		clone[i] = (char)otherName[i];
-	}
-	clone[len] = 0;
-
+	char* clone = new char[name.size() + 1];
+	memcpy(clone, name.c_str(), name.size() + 1);
 	return clone;
 }
 
@@ -956,12 +981,12 @@ Json::Value* Json::Value::AddString(const char* keyName, const wchar_t* str)
 	return child;
 }
 
-Json::Value* Json::Value::AddAnsiString(const char* keyName, const char* str)
+Json::Value* Json::Value::AddUtf8String(const char* keyName, const char* str)
 {
 	Value* child = new Value(this);
 	child->type = ValueType::String;
 	child->name = CloneName(keyName);
-	child->value.AsString = CloneAnsiStr(str);
+	child->value.AsString = CloneUtf8Str(str);
 	children.push_back(child);
 	return child;
 }

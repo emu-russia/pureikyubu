@@ -182,7 +182,7 @@ namespace Flipper
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Object;
-		output->AddAnsiString("markdown", md.c_str());
+		output->AddUtf8String("markdown", md.c_str());
 
 		return output;
 	}

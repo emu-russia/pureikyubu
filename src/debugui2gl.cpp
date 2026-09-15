@@ -26,10 +26,11 @@ handful of draw calls at most.
 The `y` a line of text is drawn at is the top of the line; a glyph quad is placed against the
 baseline, which is what `stbtt_GetPackedQuad` expects, so `DrawText` adds the ascent itself.
 
-The atlas carries more than ASCII on purpose. The JDI interface is ASCII for now (UTF-8 is a
-separate task), but the renderer should not have to be rewritten when that changes: the ranges
-cover Latin, Greek, Cyrillic, the box drawing and block elements, arrows, mathematical operators
-and the common symbols.
+The atlas carries more than ASCII on purpose: the text of a panel is UTF-8 (the JDI interface, the
+session path and the messages it shows all are, see issue #372), and the renderer decodes it into
+code points and looks each one up in the atlas. The ranges cover Latin, Greek, Cyrillic, the box
+drawing and block elements, arrows, mathematical operators and the common symbols; a code point
+that is not packed is skipped, so an unsupported script costs its advance and nothing else.
 
 ## Threading
 
@@ -334,6 +335,7 @@ namespace Debug2
 			uint8_t* bitmap, int width, int height);
 		stbtt_packedchar* FindGlyph(int codepoint);
 		float CharAdvance(int codepoint);
+		float CodepointAdvance(uint32_t codepoint);
 		float MeasureText(const std::string& text);
 
 		// ---- the batch ----
@@ -519,14 +521,38 @@ namespace Debug2
 		return adv * stbtt_ScaleForPixelHeight(&font, fontSize);
 	}
 
+	// The room one code point of the text takes. The font is monospaced, so in practice this is the
+	// same number for every packed glyph; the ASCII advances are cached because they are asked for
+	// on every frame, and a code point with no glyph in the atlas falls back to the default.
+	float GlUi::CodepointAdvance(uint32_t codepoint)
+	{
+		if (codepoint < 128)
+		{
+			return advance[codepoint];
+		}
+
+		stbtt_packedchar* glyph = FindGlyph((int)codepoint);
+
+		if (glyph != nullptr)
+		{
+			return glyph->xadvance;
+		}
+
+		return defaultAdvance;
+	}
+
 	float GlUi::MeasureText(const std::string& text)
 	{
 		float width = 0;
 
-		for (size_t i = 0; i < text.size(); i++)
+		// The text is UTF-8, so the loop walks code points rather than bytes.
+		for (size_t i = 0; i < text.size(); )
 		{
-			unsigned char c = (unsigned char)text[i];
-			width += (c < 128) ? advance[c] : defaultAdvance;
+			size_t length = 0;
+			uint32_t codepoint = Util::Utf8Codepoint(text, i, length);
+
+			width += CodepointAdvance(codepoint);
+			i += length;
 		}
 
 		return width;
@@ -602,11 +628,16 @@ namespace Debug2
 		// `y` is the top of the line; stbtt_GetPackedQuad() places a glyph against the baseline.
 		float baseline = y + ascent;
 
-		for (size_t i = 0; i < text.size(); i++)
+		// The text is UTF-8: every step is one code point, and a code point the atlas does not carry
+		// is skipped (it still takes its advance, so the following glyphs stay where they belong).
+		for (size_t i = 0; i < text.size(); )
 		{
-			unsigned char c = (unsigned char)text[i];
+			size_t length = 0;
+			uint32_t codepoint = Util::Utf8Codepoint(text, i, length);
 
-			stbtt_packedchar* glyph = (c < 128) ? FindGlyph(c) : nullptr;
+			// A stray byte and the NUL of an empty cell produce nothing; FindGlyph() answers nullptr
+			// for them anyway, this only keeps the tables out of the way.
+			stbtt_packedchar* glyph = (codepoint > 0) ? FindGlyph((int)codepoint) : nullptr;
 
 			if (glyph != nullptr)
 			{
@@ -618,7 +649,8 @@ namespace Debug2
 				EmitQuad(q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1, TexMode::Glyph, color);
 			}
 
-			x += (c < 128) ? advance[c] : defaultAdvance;
+			x += CodepointAdvance(codepoint);
+			i += length;
 		}
 	}
 
@@ -794,15 +826,19 @@ namespace Debug2
 							continue;		// the space that caused the break is swallowed
 					}
 
-					// A word longer than the whole line is cut into pieces that fit.
+					// A word longer than the whole line is cut into pieces that fit. The cuts are made
+					// between code points: half of a UTF-8 sequence is not a character.
 					if (wordWidth > maxWidth)
 					{
 						std::string piece;
 						float pieceWidth = 0;
 
-						for (size_t c = 0; c < word.size(); c++)
+						for (size_t c = 0; c < word.size(); )
 						{
-							float cw = MeasureText(word.substr(c, 1));
+							size_t charLen = 0;
+							uint32_t codepoint = Util::Utf8Codepoint(word, c, charLen);
+
+							float cw = CodepointAdvance(codepoint);
 
 							if (!piece.empty() && (pieceWidth + cw) > maxWidth)
 							{
@@ -823,8 +859,10 @@ namespace Debug2
 								pieceWidth = 0;
 							}
 
-							piece += word[c];
+							piece += word.substr(c, charLen);
 							pieceWidth += cw;
+
+							c += charLen;
 						}
 
 						if (!piece.empty())
@@ -1298,19 +1336,26 @@ namespace Debug2
 
 	void GlUi::InsertText(const char* utf8)
 	{
-		// The JDI talks ASCII for now, so anything above it is dropped rather than stored in a
-		// form the command line could not send back.
-		for (size_t i = 0; utf8[i] != 0; i++)
+		// The command line is UTF-8, like the interface it feeds (issue #372). The text arrives from
+		// SDL already encoded, so only the control characters are left out; a sequence is inserted
+		// whole, never a byte of it.
+		std::string text = utf8;
+
+		for (size_t i = 0; i < text.size(); )
 		{
-			unsigned char c = (unsigned char)utf8[i];
-			if (c < 32 || c > 126)
-				continue;
+			size_t length = 0;
+			uint32_t codepoint = Util::Utf8Codepoint(text, i, length);
 
-			if (cmdline.size() >= 512)
-				break;
+			if (codepoint >= 0x20 && codepoint != 0x7F)
+			{
+				if (cmdline.size() + length > 512)
+					break;
 
-			cmdline.insert(cmdline.begin() + cursor, (char)c);
-			cursor++;
+				cmdline.insert(cursor, text, i, length);
+				cursor += length;
+			}
+
+			i += length;
 		}
 	}
 
@@ -1335,24 +1380,28 @@ namespace Debug2
 			case SDL_SCANCODE_BACKSPACE:
 				if (cursor > 0)
 				{
-					cmdline.erase(cmdline.begin() + (cursor - 1));
-					cursor--;
+					// A whole character: the cursor sits on a code point boundary, so the byte
+					// before it has to be walked back to the start of its sequence.
+					size_t previous = Util::Utf8PrevOffset(cmdline, cursor);
+					cmdline.erase(previous, cursor - previous);
+					cursor = previous;
 				}
 				break;
 
 			case SDL_SCANCODE_DELETE:
 				if (cursor < cmdline.size())
-					cmdline.erase(cmdline.begin() + cursor);
+				{
+					size_t next = Util::Utf8NextOffset(cmdline, cursor);
+					cmdline.erase(cursor, next - cursor);
+				}
 				break;
 
 			case SDL_SCANCODE_LEFT:
-				if (cursor > 0)
-					cursor--;
+				cursor = Util::Utf8PrevOffset(cmdline, cursor);
 				break;
 
 			case SDL_SCANCODE_RIGHT:
-				if (cursor < cmdline.size())
-					cursor++;
+				cursor = Util::Utf8NextOffset(cmdline, cursor);
 				break;
 
 			case SDL_SCANCODE_HOME:

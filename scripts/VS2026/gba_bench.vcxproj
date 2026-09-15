@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   gba_bench: the standalone harness of the integrated GBA emulator (issue #388).
 
@@ -73,6 +73,8 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>..\..\src\gba;..\..\testing\gba_bench;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- The sources are UTF-8 (issue #372): see pureikyubu.vcxproj. -->
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

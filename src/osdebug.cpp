@@ -137,7 +137,7 @@ namespace HLE
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, name ? name : "");
+		output->AddUtf8String(nullptr, name ? name : "");
 		return output;
 	}
 
@@ -157,7 +157,7 @@ namespace HLE
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, timeStr.c_str());
+		output->AddUtf8String(nullptr, timeStr.c_str());
 
 		return output;
 	}
@@ -178,7 +178,7 @@ namespace HLE
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, timeStr.c_str());
+		output->AddUtf8String(nullptr, timeStr.c_str());
 
 		return output;
 	}
@@ -196,7 +196,7 @@ namespace HLE
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Object;
 
-		output->AddAnsiString("name", nearestName);
+		output->AddUtf8String("name", nearestName);
 		output->AddInt("offset", (int)offset);
 
 		return output;

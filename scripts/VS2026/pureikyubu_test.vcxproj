@@ -56,6 +56,7 @@
     <ClCompile Include="..\..\testing\dsp_jit_test.cpp" />
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <ClCompile Include="..\..\testing\security_test.cpp" />
+    <ClCompile Include="..\..\testing\jdi_utf8_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
       The DSP core, its decoder, its disassembler and the DSP device (memory engine + mailboxes)
@@ -87,6 +88,11 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\jdi.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <!-- The local JDI host (the tokenizer and the CallJdi* entry points). The UTF-8 suite drives the
+         interface through it, exactly as the front ends do. -->
+    <ClCompile Include="..\..\src\jdiserver.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <!-- The JDI node descriptions: dsp.cpp and gfx.cpp register their nodes with the texts from
@@ -221,6 +227,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <!-- The sources are UTF-8 (issue #372): the emulator sources are linked into this project as they
+       are, so the same charset has to be used here (see pureikyubu.vcxproj). -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>

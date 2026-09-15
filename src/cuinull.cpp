@@ -26,7 +26,7 @@ namespace Debug
 
 	void Cui::SetWindowFocus(const std::string& name) {}
 
-	void Cui::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl) {}
+	void Cui::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl) {}
 
 	void Cui::ShowCursor(bool show) {}
 	void Cui::SetCursor(int x, int y) {}

@@ -1,4 +1,8 @@
 // Local JDI Host
+//
+// A JDI request is a UTF-8 command line: the command name and every argument are UTF-8, and only
+// the ASCII characters ' ', '\'' and '\"' have a meaning to the tokenizer, which is what makes the
+// byte-wise scan below safe for it (a UTF-8 continuation byte is never an ASCII character).
 
 #include "pch.h"
 
@@ -17,6 +21,13 @@ static bool Tokenize(const char* line, std::vector<std::string>& args)
 	p = start = end = 0;
 
 	args.clear();
+
+	// A command line that was read from a file may still carry the UTF-8 byte order mark; without
+	// this the mark becomes part of the first argument and the command it names is not found.
+	if ((uint8_t)line[0] == 0xEF && (uint8_t)line[1] == 0xBB && (uint8_t)line[2] == 0xBF)
+	{
+		p = 3;
+	}
 
 	// while not end line
 	while (!endl)
@@ -177,26 +188,21 @@ CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
 		return false;
 	}
 
-	// Check string size
+	// The answer is handed over as UTF-8, so a code point outside the ASCII range keeps its
+	// meaning (a wide character used to be truncated to its low byte here).
 
-	size_t sizeInChars = wcslen(child->value.AsString);
-	size_t sizeInBytes = sizeInChars * sizeof(wchar_t);
-	if (sizeInBytes >= valueSize)
+	std::string utf8 = Util::WstringToString(child->value.AsString);
+	size_t sizeInBytes = utf8.size() + 1;
+
+	// The callers hand over `sizeof(buffer) - 1`, so `valueSize` is the room left for the text
+	// itself and the terminator still has to fit next to it.
+	if (sizeInBytes > (valueSize + 1))
 	{
 		delete value;
 		return false;
 	}
-	
-	// Copy out
 
-	wchar_t* tstrPtr = child->value.AsString;
-	char* valuePtr = valueOut;
-
-	for (size_t i = 0; i < sizeInChars; i++)
-	{
-		*valuePtr++ = (char)*tstrPtr++;
-	}
-	*valuePtr++ = 0;
+	memcpy(valueOut, utf8.c_str(), sizeInBytes);
 
 	delete value;
 

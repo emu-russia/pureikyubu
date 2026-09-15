@@ -1,4 +1,4 @@
-﻿// Unit tests for the module's two disassemblers (src/gba/gba_disasm.cpp and gb_disasm.cpp).
+// Unit tests for the module's two disassemblers (src/gba/gba_disasm.cpp and gb_disasm.cpp).
 //
 // Every expected text is written from the encoding tables themselves - the ARM Architecture
 // Reference Manual's A3/A4 instruction encodings and the SM83 opcode map the Pan Docs reproduce -

@@ -141,7 +141,7 @@ namespace Debug
 		}
 	}
 
-	void ReportWindow::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void ReportWindow::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		// Up, Down, Home, End, PageUp, PageDown
 
@@ -270,7 +270,7 @@ namespace Debug
 		Print(CuiColor::Cyan, CuiColor::Black, 2, 0, text);
 	}
 
-	void StatusWindow::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void StatusWindow::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 	}
 
@@ -304,12 +304,17 @@ namespace Debug
 		Print(CuiColor::Black, CuiColor::Normal, 0, 0, prompt);
 		Print(CuiColor::Black, CuiColor::Normal, (int)promptSize, 0, text);
 
-		SetCursor((int)(promptSize + curpos), 0);
+		// The cursor position is a byte offset into the UTF-8 text, while the console column it
+		// has to be put on counts the characters before it (one cell each).
+		SetCursor((int)(promptSize + Util::StringToWstring(text.substr(0, curpos)).size()), 0);
 	}
 
-	void CmdlineWindow::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void CmdlineWindow::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
-		if (Ascii >= 0x20 && Ascii < 128)
+		// A character that the key produced is inserted at the cursor as it is: it is already UTF-8,
+		// like the buffer, so a name outside the ASCII range arrives at the JDI command line
+		// unchanged. A character that the console renders as a blank cell is not inserted.
+		if (Text != nullptr && Text[0] != 0 && (uint8_t)Text[0] >= 0x20 && (uint8_t)Text[0] != 0x7F)
 		{
 			// Add character at cursor position
 
@@ -318,34 +323,26 @@ namespace Debug
 			if (curpos >= (width - promptSize))
 				return;
 
-			if (curpos == text.size())
-			{
-				text.push_back(Ascii);
-			}
-			else
-			{
-				text = text.substr(0, curpos) + Ascii +
-					text.substr(curpos);
-			}
-			curpos++;
+			std::string encoded = Text;
+
+			text.insert(curpos, encoded);
+			curpos += encoded.size();
 		}
 		else
 		{
 			// Enter, Up, Down, Home, End, Left, Right, Backspace, Delete
 
-			size_t editlen = text.size();
-
 			switch (Vkey)
 			{
 				case CuiVkey::Left:
 					if (ctrl) SearchLeft();
-					else if (curpos != 0) curpos--;
+					else curpos = Util::Utf8PrevOffset(text, curpos);
 					break;
 				case CuiVkey::Right:
-					if (editlen != 0 && (curpos != editlen))
+					if (curpos < text.size())
 					{
 						if (ctrl) SearchRight();
-						else if (curpos < editlen) curpos++;
+						else curpos = Util::Utf8NextOffset(text, curpos);
 					}
 					break;
 				case CuiVkey::Enter:
@@ -354,28 +351,24 @@ namespace Debug
 				case CuiVkey::Backspace:
 					if (curpos != 0)
 					{
-						if (editlen == curpos)
-						{
-							text = text.substr(0, editlen - 1);
-						}
-						else
-						{
-							text = text.substr(0, curpos - 1) + text.substr(curpos);
-						}
-						curpos--;
+						// A whole character, not a byte of one: half of a UTF-8 sequence is not text.
+						size_t previous = Util::Utf8PrevOffset(text, curpos);
+						text.erase(previous, curpos - previous);
+						curpos = previous;
 					}
 					break;
 				case CuiVkey::Delete:
-					if (editlen != 0)
+					if (curpos < text.size())
 					{
-						text = text.substr(0, curpos) + (((curpos + 1) < editlen) ? text.substr(curpos + 1) : "");
+						size_t next = Util::Utf8NextOffset(text, curpos);
+						text.erase(curpos, next - curpos);
 					}
 					break;
 				case CuiVkey::Home:
 					curpos = 0;
 					break;
 				case CuiVkey::End:
-					curpos = editlen;
+					curpos = text.size();
 					break;
 				case CuiVkey::Up:
 					historyPos--;
@@ -416,56 +409,42 @@ namespace Debug
 	// Searching for beginning of each word left
 	void CmdlineWindow::SearchLeft()
 	{
-		size_t editlen = text.size();
-
-		if (curpos == 0 || editlen == 0)
+		if (curpos == 0 || text.empty())
 			return;
 
-		// While spaces
-		while (text[curpos - 1] == ' ')
+		// The cursor moves by whole characters: ' ' is an ASCII byte, which never appears inside
+		// a UTF-8 sequence, so the tests below are safe on the raw bytes.
+		while (curpos != 0 && text[curpos - 1] == ' ')
 		{
-			curpos--;
-			if (curpos == 0)
-				break;
+			curpos = Util::Utf8PrevOffset(text, curpos);
 		}
 
 		if (curpos == 0)
 			return;
 
-		// While non-space
-		while (text[curpos - 1] != ' ')
+		while (curpos != 0 && text[curpos - 1] != ' ')
 		{
-			curpos--;
-			if (curpos == 0)
-				break;
+			curpos = Util::Utf8PrevOffset(text, curpos);
 		}
 	}
 
 	// Searching for beginning of each word right
 	void CmdlineWindow::SearchRight()
 	{
-		size_t editlen = text.size();
-
-		if (curpos == editlen || editlen == 0)
+		if (curpos >= text.size() || text.empty())
 			return;
 
-		// While non-space
-		while (text[curpos] != ' ')
+		while (curpos < text.size() && text[curpos] != ' ')
 		{
-			curpos++;
-			if (curpos == editlen)
-				break;
+			curpos = Util::Utf8NextOffset(text, curpos);
 		}
 
-		if (curpos == editlen)
+		if (curpos >= text.size())
 			return;
 
-		// While spaces
-		while (text[curpos] == ' ')
+		while (curpos < text.size() && text[curpos] == ' ')
 		{
-			curpos++;
-			if (curpos == editlen)
-				break;
+			curpos = Util::Utf8NextOffset(text, curpos);
 		}
 	}
 
@@ -1269,9 +1248,10 @@ namespace Debug
 		SetWindowFocus("Cmdline");
 	}
 
-	void Debugger::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Debugger::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
-		if ((Vkey == CuiVkey::Backspace || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
+		// Any key that types something (or erases) brings the focus back to the command line.
+		if ((Vkey == CuiVkey::Backspace || (Text != nullptr && Text[0] != 0)) && !cmdline->IsActive())
 		{
 			SetWindowFocus("Cmdline");
 			status->SetMode(DebugMode::Ready);
@@ -1515,12 +1495,12 @@ namespace Debug
 		}
 	}
 
-	void Disasm::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Disasm::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t targetAddress = 0;
 
 		if (mode == DisasmMode::DSPDisasm) {
-			DspImemOnKeyPress(Ascii, Vkey, shift, ctrl);
+			DspImemOnKeyPress(Text, Vkey, shift, ctrl);
 			return;
 		}
 
@@ -1822,7 +1802,7 @@ namespace Debug
 		}
 	}
 
-	void Disasm::DspImemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Disasm::DspImemOnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t targetAddress = 0;
 
@@ -2007,7 +1987,7 @@ namespace Debug
 		}
 	}
 
-	void DebugRegs::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void DebugRegs::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		switch (Vkey)
 		{
@@ -2598,14 +2578,14 @@ namespace Debug
 		}
 	}
 
-	void MemoryView::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void MemoryView::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t* cursor = nullptr;
 		uint32_t top = 0;
 		uint32_t bottom = 0;
 
 		if (mode == MemoryViewMode::DSP_DMEM) {
-			DspDmemOnKeyPress(Ascii, Vkey, shift, ctrl);
+			DspDmemOnKeyPress(Text, Vkey, shift, ctrl);
 			return;
 		}
 
@@ -2775,8 +2755,10 @@ namespace Debug
 
 		if (ptr)
 		{
+			// Only the printable ASCII range is text: the dump line is a UTF-8 string now, so a
+			// byte above 0x7F is not a character of its own (it used to be drawn as a blank cell).
 			uint8_t data = *ptr;
-			if ((data >= 32) && (data <= 255)) return (char)data;
+			if ((data >= 32) && (data <= 126)) return (char)data;
 			else return '.';
 		}
 		else
@@ -2838,7 +2820,7 @@ namespace Debug
 		}
 	}
 
-	void MemoryView::DspDmemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void MemoryView::DspDmemOnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		size_t lines = height - 1;
 

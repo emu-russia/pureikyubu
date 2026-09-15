@@ -184,7 +184,7 @@ static void swap_double(void* srcPtr)
 	Memory operations
 --------------------------------------------------------------------------- */
 
-// void *memcpy( void *dest, const void *src, size_t count�);
+// void *memcpy( void *dest, const void *src, size_t count );
 void HLE_memcpy()
 {
 	int WIMG;
@@ -205,7 +205,7 @@ void HLE_memcpy()
 	memcpy(ptrDst, ptrSrc, cnt);
 }
 
-// void *memset( void *dest, int c, size_t count�);
+// void *memset( void *dest, int c, size_t count );
 void HLE_memset()
 {
 	int WIMG;

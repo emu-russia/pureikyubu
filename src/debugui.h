@@ -61,7 +61,7 @@ namespace Debug
 		~ReportWindow();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -85,7 +85,7 @@ namespace Debug
 		~StatusWindow();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void SetMode(DebugMode mode);
 	};
@@ -116,7 +116,7 @@ namespace Debug
 		~CmdlineWindow();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -250,7 +250,7 @@ namespace Debug
 		std::vector<std::pair<uint32_t, uint32_t>> dspBrowseHist;
 
 		void DspImemOnDraw();
-		void DspImemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		void DspImemOnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void RotateView(bool forward);
 
@@ -259,7 +259,7 @@ namespace Debug
 		~Disasm();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 		uint32_t GetCursor();
 		void SetCursor(uint32_t address);
@@ -355,7 +355,7 @@ namespace Debug
 		~DebugRegs();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -390,14 +390,14 @@ namespace Debug
 		uint32_t dmem_current = 0;
 
 		void DspDmemOnDraw();
-		void DspDmemOnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		void DspDmemOnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 	public:
 		MemoryView(CuiRect& rect, std::string name, Cui* parent);
 		~MemoryView();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void SetCursor(uint32_t address);
 	};
@@ -430,7 +430,7 @@ namespace Debug
 	public:
 		Debugger();
 
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void SetMemoryCursor(uint32_t virtualAddress);
 		void SetDisasmCursor(uint32_t virtualAddress);

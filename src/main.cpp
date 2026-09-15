@@ -675,7 +675,7 @@ static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 
 	FILE* f;
 
-	f = fopen(args[1].c_str(), "rb");
+	f = Util::FileOpen(Util::StringToWstring(args[1]), "rb");
 	if (!f)
 	{
 		Report(Channel::Error, "Failed to open: %s\n", args[1].c_str());
@@ -744,7 +744,7 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 
 		FILE* f;
 
-		f = fopen(args[1].c_str(), "wb");
+		f = Util::FileOpen(Util::StringToWstring(args[1]), "wb");
 		if (!f)
 		{
 			Report(Channel::Error, "Failed to create file: %s\n", args[1].c_str());

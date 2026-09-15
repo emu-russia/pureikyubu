@@ -62,23 +62,26 @@ namespace Debug
 		}
 	}
 
-	static bool SdlEventToCuiKeypress(SDL_Event& event, char& Ascii, CuiVkey& Vkey, bool& shift, bool& ctrl)
+	// Translate one SDL event into a CUI key event. `Text` receives the UTF-8 of the character(s)
+	// the key produced (empty for a key that produces none): SDL reports text through its own
+	// SDL_TEXTINPUT event, which is the one that knows about the keyboard layout and the IME, while
+	// SDL_KEYDOWN is only used here for the keys that produce no text at all.
+	static bool SdlEventToCuiKeypress(SDL_Event& event, const char*& Text, CuiVkey& Vkey, bool& shift, bool& ctrl)
 	{
+		Text = "";
+
+		if (event.type == SDL_TEXTINPUT) {
+
+			Text = event.text.text;
+			return true;
+		}
+
 		if (event.type == SDL_KEYDOWN) {
 
 			shift = (event.key.keysym.mod & KMOD_LSHIFT) || (event.key.keysym.mod & KMOD_RSHIFT);
 			ctrl = (event.key.keysym.mod & KMOD_LCTRL) || (event.key.keysym.mod & KMOD_RCTRL);
 
-			if (event.key.keysym.sym >= ' ' && event.key.keysym.sym < 127) {
-
-				// TODO: All the @ # * and stuff.
-
-				Ascii = event.key.keysym.sym;
-				if (shift)
-					Ascii = toupper(Ascii);
-			}
-
-			else switch (event.key.keysym.scancode)
+			switch (event.key.keysym.scancode)
 			{
 				case SDL_Scancode::SDL_SCANCODE_UP: Vkey = CuiVkey::Up; break;
 				case SDL_Scancode::SDL_SCANCODE_DOWN: Vkey = CuiVkey::Down; break;
@@ -176,7 +179,33 @@ namespace Debug
 					ImVec4 color = ImGui::ColorConvertU32ToFloat4(
 						_BYTESWAP_UINT32(CuiColorToImguiColor((CuiColor)(char_info->Attributes & 0xf))));
 					ImGui::SameLine();
-					ImGui::TextColored(color, "%c", char_info->Char.AsciiChar);
+
+					// The cell holds a wide character, and ImGui speaks UTF-8. A cell that holds the
+					// first half of a character outside the BMP is drawn together with the cell that
+					// holds the second half, and that second cell is left to the next iteration as a
+					// blank (the two halves are one glyph, so they take one column and then nothing).
+					wchar_t cell = char_info->Char.UnicodeChar;
+
+					std::string glyph;
+
+					if (cell != 0)
+					{
+						wchar_t units[2] = { cell, 0 };
+
+						if (cell >= 0xD800 && cell <= 0xDBFF && x + 1 < conWidth)
+						{
+							wchar_t low = frontBuf[conWidth * y + x + 1].Char.UnicodeChar;
+
+							if (low >= 0xDC00 && low <= 0xDFFF)
+							{
+								units[1] = low;
+							}
+						}
+
+						glyph = Util::WstringToString(units);
+					}
+
+					ImGui::TextColored(color, "%s", glyph.c_str());
 				}
 				if (y != conHeight - 1)
 					ImGui::Text("\n");
@@ -202,14 +231,14 @@ namespace Debug
 
 			// OnKeyPress
 
-			char ascii;
+			const char* text;
 			CuiVkey cui_vk;
 			bool shiftPressed;
 			bool ctrlPressed;
 
-			if (SdlEventToCuiKeypress(event, ascii, cui_vk, shiftPressed, ctrlPressed)) {
+			if (SdlEventToCuiKeypress(event, text, cui_vk, shiftPressed, ctrlPressed)) {
 
-				cui->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
+				cui->OnKeyPress(text, cui_vk, shiftPressed, ctrlPressed);
 
 				for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
 				{
@@ -217,7 +246,7 @@ namespace Debug
 
 					if (wnd->active)
 					{
-						wnd->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
+						wnd->OnKeyPress(text, cui_vk, shiftPressed, ctrlPressed);
 					}
 				}
 			}
@@ -240,7 +269,7 @@ namespace Debug
 		}
 	}
 
-	void Cui::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Cui::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 	}
 
@@ -307,7 +336,7 @@ namespace Debug
 		delete[] backBuf;
 	}
 
-	void CuiWindow::PutChar(CuiColor back, CuiColor front, int x, int y, char c)
+	void CuiWindow::PutChar(CuiColor back, CuiColor front, int x, int y, wchar_t c)
 	{
 		if (x < 0 || x >= width)
 			return;
@@ -317,22 +346,28 @@ namespace Debug
 		CHAR_INFO* info = &backBuf[y * width + x];
 
 		info->Attributes = ((int)back << 4) | (int)front;
-		info->Char.AsciiChar = c;
+		info->Char.UnicodeChar = c;
 	}
 
 	void CuiWindow::Print(CuiColor back, CuiColor front, int x, int y, std::string text)
 	{
-		for (auto it = text.begin(); it != text.end(); ++it)
+		// The text is UTF-8; a cell holds one wide character, and a code point outside the BMP
+		// (two of them on Windows) takes the cells it renders as.
+		std::wstring wide = Util::StringToWstring(text);
+
+		for (auto it = wide.begin(); it != wide.end(); ++it)
 		{
-			PutChar(back, front, x++, y, *it >= ' ' ? *it : ' ');
+			PutChar(back, front, x++, y, *it >= L' ' ? *it : L' ');
 		}
 	}
 
 	void CuiWindow::Print(CuiColor front, int x, int y, std::string text)
 	{
-		for (auto it = text.begin(); it != text.end(); ++it)
+		std::wstring wide = Util::StringToWstring(text);
+
+		for (auto it = wide.begin(); it != wide.end(); ++it)
 		{
-			PutChar(CuiColor::Black, front, x++, y, *it >= ' ' ? *it : ' ');
+			PutChar(CuiColor::Black, front, x++, y, *it >= L' ' ? *it : L' ');
 		}
 	}
 

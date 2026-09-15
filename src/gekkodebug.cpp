@@ -822,7 +822,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, text.c_str());
+		output->AddUtf8String(nullptr, text.c_str());
 
 		return output;
 	}
@@ -849,7 +849,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, text.c_str());
+		output->AddUtf8String(nullptr, text.c_str());
 
 		return output;
 	}
@@ -1086,7 +1086,7 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, instrName.c_str());
+		output->AddUtf8String(nullptr, instrName.c_str());
 
 		return output;
 	}
@@ -1127,8 +1127,8 @@ namespace Debug
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, paramName.c_str());
-		output->AddAnsiString(nullptr, paramText.c_str());
+		output->AddUtf8String(nullptr, paramName.c_str());
+		output->AddUtf8String(nullptr, paramText.c_str());
 
 		return output;
 	}
@@ -1294,7 +1294,7 @@ namespace Debug
 		// The answer of a JDI command is Markdown: the new debugger puts it into a panel as is.
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Object;
-		output->AddAnsiString("markdown", md.c_str());
+		output->AddUtf8String("markdown", md.c_str());
 
 		return output;
 	}

@@ -39,22 +39,19 @@ namespace DVD
 
 	bool MountFile(const std::string& file)
 	{
+		// The path arrives as UTF-8 (the JDI command line and the front ends speak nothing else).
+		std::wstring wfile = Util::StringToWstring(file);
+
 		// The path is copied into a fixed wchar_t buffer below, so one that cannot fit (the
 		// check counts the terminator) is refused instead of walked past the end of it.
-		if (file.size() >= 0x1000)
+		if (wfile.size() >= 0x1000)
 		{
 			Report(Channel::Error, "Disc image path is too long\n");
 			return false;
 		}
 
 		wchar_t path[0x1000] = { 0, };
-		wchar_t* tcharPtr = path;
-		char* ansiPtr = (char *)file.c_str();
-		while (*ansiPtr)
-		{
-			*tcharPtr++ = *ansiPtr++;
-		}
-		*tcharPtr++ = 0;
+		wcscpy(path, wfile.c_str());
 		return MountFile(path);
 	}
 
@@ -105,20 +102,16 @@ namespace DVD
 
 	bool MountSdk(std::string path)
 	{
-		if (path.size() >= 0x1000)
+		std::wstring wpath = Util::StringToWstring(path);
+
+		if (wpath.size() >= 0x1000)
 		{
 			Report(Channel::Error, "DolphinSDK path is too long\n");
 			return false;
 		}
 
 		wchar_t tcharStr[0x1000] = { 0, };
-		wchar_t* tcharPtr = tcharStr;
-		char* ansiPtr = (char*)path.c_str();
-		while (*ansiPtr)
-		{
-			*tcharPtr++ = *ansiPtr++;
-		}
-		*tcharPtr++ = 0;
+		wcscpy(tcharStr, wpath.c_str());
 		return MountSdk(tcharStr);
 	}
 
@@ -543,8 +536,7 @@ namespace DVD
 			{
 				maxSize = my_min(requestedSize, (startingOffset + size) - offset);
 
-				FILE* f;
-				f = fopen(Util::WstringToString(file).c_str(), "rb");
+				FILE* f = Util::FileOpen(file, "rb");
 				assert(f);
 
 				fseek(f, offset - startingOffset, SEEK_SET);
@@ -1505,7 +1497,7 @@ bool GCMMountFile(const wchar_t*file)
 	}
 
 	// open GCM file
-	FILE* gcm_file = fopen(Util::WstringToString(file).c_str(), "rb");
+	FILE* gcm_file = Util::FileOpen(file, "rb");
 	if(!gcm_file) return false;
 
 	// get file size
@@ -1601,7 +1593,7 @@ bool GCMRead(uint8_t*buf, size_t length)
 			return true;
 		}
 
-		FILE* gcm_file = fopen ( Util::WstringToString(dvd.gcm_filename).c_str(), "rb");
+		FILE* gcm_file = Util::FileOpen(dvd.gcm_filename, "rb");
 
 		if (!gcm_file)
 		{

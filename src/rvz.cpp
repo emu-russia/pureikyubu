@@ -354,7 +354,7 @@ namespace DVD
 		if (path == nullptr)
 			return false;
 
-		FILE* f = fopen(Util::WstringToString(path).c_str(), "rb");
+		FILE* f = Util::FileOpen(path, "rb");
 		if (f == nullptr)
 			return false;
 
@@ -439,7 +439,7 @@ namespace DVD
 
 	bool RvzImage::Open(const wchar_t* path)
 	{
-		file = fopen(Util::WstringToString(path).c_str(), "rb");
+		file = Util::FileOpen(path, "rb");
 		if (file == nullptr)
 			return false;
 

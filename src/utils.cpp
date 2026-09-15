@@ -277,14 +277,144 @@ void Thread::Sleep(size_t milliseconds)
 
 namespace Util
 {
+	// -------------------------------------------------------------------------------------------
+	// UTF-8
+	//
+	// The narrow strings of the project are UTF-8 (see the note in utils.h). These are the two
+	// conversion directions plus the cursor arithmetic the console command line needs to insert and
+	// delete whole characters.
+
+	namespace
+	{
+		const uint32_t Utf8Replacement = 0xFFFD;
+
+		bool Utf8IsContinuation(uint8_t value)
+		{
+			return (value & 0xC0) == 0x80;
+		}
+
+		// The length of the sequence a leading byte announces, or 0 when the byte cannot start one
+		// (a stray continuation byte, or one of the two lengths that would encode an over-long form).
+		int Utf8LeadLength(uint8_t lead)
+		{
+			if (lead < 0x80) return 1;
+			if (lead >= 0xC2 && lead <= 0xDF) return 2;
+			if (lead >= 0xE0 && lead <= 0xEF) return 3;
+			if (lead >= 0xF0 && lead <= 0xF4) return 4;
+			return 0;
+		}
+
+		// Decode the UTF-8 sequence at `offset`. Returns the code point and its length, or an
+		// invalid marker (-1) for a byte that cannot begin a code point here.
+		int32_t Utf8Decode(const std::string& str, size_t offset, size_t& length)
+		{
+			length = 1;
+
+			uint8_t lead = (uint8_t)str[offset];
+			int size = Utf8LeadLength(lead);
+
+			if (size == 0)
+			{
+				return -1;
+			}
+
+			if (size == 1)
+			{
+				return lead;
+			}
+
+			if ((offset + size) > str.size())
+			{
+				return -1;
+			}
+
+			int32_t cp = lead & (0x7F >> size);
+
+			for (int n = 1; n < size; n++)
+			{
+				uint8_t next = (uint8_t)str[offset + n];
+
+				if (!Utf8IsContinuation(next))
+				{
+					return -1;
+				}
+
+				cp = (cp << 6) | (next & 0x3F);
+			}
+
+			// The shortest form of a code point, and the surrogate block, which is not a code
+			// point at all: a decoder that accepted them would produce text that cannot be encoded
+			// back.
+			int32_t shortest = (size == 2) ? 0x80 : (size == 3) ? 0x800 : 0x10000;
+
+			if (cp < shortest || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+			{
+				return -1;
+			}
+
+			length = (size_t)size;
+			return cp;
+		}
+
+		void Utf8Encode(std::string& str, uint32_t cp)
+		{
+			if (cp < 0x80)
+			{
+				str.push_back((char)cp);
+			}
+			else if (cp < 0x800)
+			{
+				str.push_back((char)(0xC0 | (cp >> 6)));
+				str.push_back((char)(0x80 | (cp & 0x3F)));
+			}
+			else if (cp < 0x10000)
+			{
+				str.push_back((char)(0xE0 | (cp >> 12)));
+				str.push_back((char)(0x80 | ((cp >> 6) & 0x3F)));
+				str.push_back((char)(0x80 | (cp & 0x3F)));
+			}
+			else
+			{
+				str.push_back((char)(0xF0 | (cp >> 18)));
+				str.push_back((char)(0x80 | ((cp >> 12) & 0x3F)));
+				str.push_back((char)(0x80 | ((cp >> 6) & 0x3F)));
+				str.push_back((char)(0x80 | (cp & 0x3F)));
+			}
+		}
+	}
+
 	std::string WstringToString(const std::wstring& wstr)
 	{
 		std::string str;
 		str.reserve(wstr.size());
-		for (auto it = wstr.begin(); it != wstr.end(); ++it)
+
+		for (size_t i = 0; i < wstr.size(); i++)
 		{
-			str.push_back((char)*it);
+			uint32_t cp = (uint32_t)wstr[i];
+
+#if defined(_WINDOWS)
+
+			// A code point outside the BMP is a pair of 16-bit code units here, and the two have to
+			// be put together again before they can become four UTF-8 bytes.
+			if (cp >= 0xD800 && cp <= 0xDBFF && (i + 1) < wstr.size() &&
+				(uint32_t)wstr[i + 1] >= 0xDC00 && (uint32_t)wstr[i + 1] <= 0xDFFF)
+			{
+				cp = 0x10000 + ((cp - 0xD800) << 10) + ((uint32_t)wstr[i + 1] - 0xDC00);
+				i++;
+			}
+
+#endif
+
+			// A code unit that is half of a pair on its own is not text; it becomes the
+			// replacement character instead of three bytes that no decoder would accept.
+			if (cp >= 0xD800 && cp <= 0xDFFF)
+			{
+				cp = Utf8Replacement;
+			}
+
+			Utf8Encode(str, cp);
 		}
+
 		return str;
 	}
 
@@ -292,21 +422,132 @@ namespace Util
 	{
 		std::wstring wstr;
 		wstr.reserve(str.size());
-		for (auto it = str.begin(); it != str.end(); ++it)
+
+		size_t offset = 0;
+
+		while (offset < str.size())
 		{
-			wstr.push_back((wchar_t)*it);
+			size_t length = 0;
+			int32_t cp = Utf8Decode(str, offset, length);
+
+			if (cp < 0)
+			{
+				// Not a sequence: the byte stands for itself, so nothing is lost on the way.
+				wstr.push_back((wchar_t)(uint8_t)str[offset]);
+				offset++;
+				continue;
+			}
+
+			offset += length;
+
+#if defined(_WINDOWS)
+
+			if (cp > 0xFFFF)
+			{
+				cp -= 0x10000;
+				wstr.push_back((wchar_t)(0xD800 + (cp >> 10)));
+				wstr.push_back((wchar_t)(0xDC00 + (cp & 0x3FF)));
+			}
+			else
+
+#endif
+			{
+				wstr.push_back((wchar_t)cp);
+			}
 		}
+
 		return wstr;
+	}
+
+	size_t Utf8NextOffset(const std::string& str, size_t offset)
+	{
+		if (offset >= str.size())
+		{
+			return str.size();
+		}
+
+		size_t length = 0;
+		size_t remaining = str.size() - offset;
+
+		Utf8Codepoint(str, offset, length);
+
+		// A sequence that is cut short by the end of the string is one code point of its own.
+		if (length > remaining)
+		{
+			length = remaining;
+		}
+
+		return offset + length;
+	}
+
+	uint32_t Utf8Codepoint(const std::string& str, size_t offset, size_t& length)
+	{
+		if (offset >= str.size())
+		{
+			length = 0;
+			return 0;
+		}
+
+		int32_t cp = Utf8Decode(str, offset, length);
+
+		if (cp < 0)
+		{
+			// Not a sequence: the byte stands for itself.
+			length = 1;
+			return (uint8_t)str[offset];
+		}
+
+		return (uint32_t)cp;
+	}
+
+	size_t Utf8PrevOffset(const std::string& str, size_t offset)
+	{
+		if (offset == 0)
+		{
+			return 0;
+		}
+
+		if (offset > str.size())
+		{
+			offset = str.size();
+		}
+
+		size_t pos = offset - 1;
+
+		// Walk back over the continuation bytes of the sequence that ends here. A stray
+		// continuation byte is a code point of its own, which is what the loop leaves behind.
+		size_t limit = (offset >= 4) ? (offset - 4) : 0;
+
+		while (pos > limit && Utf8IsContinuation((uint8_t)str[pos]))
+		{
+			pos--;
+		}
+
+		return pos;
+	}
+
+	FILE* FileOpen(const std::wstring& filename, const char* mode)
+	{
+		FILE* f = nullptr;
+
+#ifdef _LINUX
+		f = fopen(WstringToString(filename).c_str(), mode);
+#else
+		std::wstring wmode(mode, mode + strlen(mode));
+		_wfopen_s(&f, filename.c_str(), wmode.c_str());
+#endif
+
+		return f;
+	}
+
+	FILE* FileOpen(const wchar_t* filename, const char* mode)
+	{
+		return FileOpen(std::wstring(filename), mode);
 	}
 
 	size_t FileSize(const std::wstring& filename)
 	{
-		FILE* f;
-#ifdef _LINUX
-		f = fopen(Util::WstringToString(filename).c_str(), "rb");
-#else
-		_wfopen_s(&f, filename.c_str(), L"rb");
-#endif
+		FILE* f = FileOpen(filename, "rb");
 		if (!f)
 			return 0;
 
@@ -337,12 +578,7 @@ namespace Util
 
 	bool FileExists(const std::wstring& filename)
 	{
-		FILE* f;
-#ifdef _LINUX
-		f = fopen(Util::WstringToString(filename).c_str(), "rb");
-#else
-		_wfopen_s(&f, filename.c_str(), L"rb");
-#endif
+		FILE* f = FileOpen(filename, "rb");
 		if (!f)
 			return false;
 		fclose(f);
@@ -363,12 +599,7 @@ namespace Util
 
 	std::vector<uint8_t> FileLoad(const std::wstring& filename)
 	{
-		FILE* f;
-#ifdef _LINUX
-		f = fopen(Util::WstringToString(filename).c_str(), "rb");
-#else
-		_wfopen_s(&f, filename.c_str(), L"rb");
-#endif
+		FILE* f = FileOpen(filename, "rb");
 		if (!f)
 		{
 			return std::vector<uint8_t>();
@@ -412,13 +643,8 @@ namespace Util
 
 	bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data)
 	{
-		FILE* f;
-#ifdef _LINUX
 		// "rb" would make every save fail on the first write; the file has to be opened for writing.
-		f = fopen(Util::WstringToString(filename).c_str(), "wb");
-#else
-		_wfopen_s(&f, filename.c_str(), L"wb");
-#endif
+		FILE* f = FileOpen(filename, "wb");
 		if (!f)
 			return false;
 
@@ -805,7 +1031,7 @@ namespace Util
 		PngChunk(png, "IDAT", zlib.data(), zlib.size());
 		PngChunk(png, "IEND", nullptr, 0);
 
-		FILE* f = fopen(filename, "wb");
+		FILE* f = FileOpen(StringToWstring(filename), "wb");
 		if (f == nullptr)
 		{
 			return false;

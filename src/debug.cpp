@@ -281,7 +281,9 @@ namespace Debug
 
 		for (int i = 0; i < len; i++)
 		{
-			if (str[i] > ' ') return false;
+			// Unsigned, like the trim above: a UTF-8 byte is never "blank", and a plain char is
+			// signed on Windows, where the high bytes would all look like control characters.
+			if ((uint8_t)str[i] > ' ') return false;
 		}
 
 		return true;
@@ -682,10 +684,10 @@ namespace Debug
 		Json::Value* ts = entry->AddUInt64("ts", Core->GetTicks());
 		assert(ts);
 
-		Json::Value* ph = entry->AddAnsiString("ph", "B");
+		Json::Value* ph = entry->AddUtf8String("ph", "B");
 		assert(ph);
 
-		Json::Value* name = entry->AddAnsiString("name", s);
+		Json::Value* name = entry->AddUtf8String("name", s);
 		assert(name);
 
 		eventLock.Unlock();
@@ -707,7 +709,7 @@ namespace Debug
 		Json::Value* ts = entry->AddUInt64("ts", Core->GetTicks());
 		assert(ts);
 
-		Json::Value* ph = entry->AddAnsiString("ph", "E");
+		Json::Value* ph = entry->AddUtf8String("ph", "E");
 		assert(ph);
 
 		eventLock.Unlock();
@@ -729,10 +731,10 @@ namespace Debug
 		Json::Value* ts = entry->AddUInt64("ts", Core->GetTicks());
 		assert(ts);
 
-		Json::Value* ph = entry->AddAnsiString("ph", "I");
+		Json::Value* ph = entry->AddUtf8String("ph", "I");
 		assert(ph);
 
-		Json::Value* name = entry->AddAnsiString("name", text);
+		Json::Value* name = entry->AddUtf8String("name", text);
 		assert(name);
 
 		eventLock.Unlock();
