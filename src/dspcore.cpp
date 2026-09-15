@@ -478,7 +478,17 @@ namespace DSP
 			{
 				if (intr.pendingDelay[i] <= 0)
 				{
-					if (!regs.pcs->push(regs.pc))
+					// A wait is over when the interrupt it waited for is taken: the program counter
+					// advances past it, so the handler's reti resumes the microcode with the
+					// instruction that follows (see DspCore::waitHalted).
+					DspAddress returnPc = regs.pc;
+					if (waitHalted)
+					{
+						waitHalted = false;
+						returnPc++;
+					}
+
+					if (!regs.pcs->push(returnPc))
 					{
 						TraceDump();
 						Report(Channel::DSP, "DSPSTACK pcs=%d pss=%d eas=%d lcs=%d top=%04X\n",
@@ -3305,8 +3315,12 @@ namespace DSP
 
 	void DspInterpreter::wait()
 	{
-		// In a real DSP, Clk is disabled and only the interrupt generation circuitry remains active. 
-		// In the emulator, due to the fact that the instruction is flowControl, pc changes will not occur and the emulated DSP will "hang" on the execution of the `wait` instruction until an interrupt occurs.
+		// In a real DSP, Clk is disabled and only the interrupt generation circuitry remains active.
+		// The program counter stays on this instruction until an interrupt arrives (the decoder
+		// marks it as a control transfer, so the dispatch does not advance the pc); the interrupt
+		// itself then resumes the microcode with the following instruction (see
+		// DspCore::CheckInterrupts and waitHalted).
+		core->waitHalted = true;
 	}
 
 	void DspInterpreter::exec()
