@@ -4382,6 +4382,19 @@ namespace Gekko
 		{
 			core->cache->Flush(pa);
 		}
+		else if (core->MmuLastResult == MmuResult::DirectStore)
+		{
+			// A cache management instruction that lands in a direct-store segment is a no-op: the
+			// segment describes no memory, so there is no block to flush and nothing to fault on.
+			// The DSI the architecture reserves for a direct-store access is the one a load or a
+			// store takes (the exception table of the Gekko specification), and the dcbi and the
+			// dcbt/dcbtst of this file already ignore a translation that did not produce an
+			// address. The Dolphin SDK depends on it: __OSInitMemoryProtection calls
+			// OSProtectRange(0, NULL, 0x80000000), and the DCFlushRange inside it walks dcbf over
+			// the whole lower half of the address space, all of it direct-store until the OS maps
+			// it. The DSI that used to come out of there sent Super Mario Sunshine into the SDK's
+			// unhandled-exception halt (issue #300).
+		}
 		else
 		{
 			core->regs.spr[Gekko::SPR::DAR] = ea;
@@ -4431,6 +4444,10 @@ namespace Gekko
 		if (pa != Gekko::BadAddress)
 		{
 			core->cache->Store(pa);
+		}
+		else if (core->MmuLastResult == MmuResult::DirectStore)
+		{
+			// No-op in a direct-store segment, exactly like dcbf above.
 		}
 		else
 		{
@@ -4492,6 +4509,10 @@ namespace Gekko
 		if (pa != Gekko::BadAddress)
 		{
 			core->cache->Zero(pa);
+		}
+		else if (core->MmuLastResult == MmuResult::DirectStore)
+		{
+			// No-op in a direct-store segment, exactly like dcbf above.
 		}
 		else
 		{
