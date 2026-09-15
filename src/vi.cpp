@@ -36,10 +36,12 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 	// drawing of XFB
 
-	// YUV to RGB conversion
-	#define yuv2rs(y, u, v) ( (uint32_t)bound((76283*(y - 16) + 104595*(v - 128))>>16) )
+	// YUV to RGB conversion. The result is an `RGB` word, whose bytes are (Blue, Green, Red,
+	// unused) - the order both the GDI DIB of the Windows port and the SDL window surface expect -
+	// so red goes into bits [23:16] and blue into bits [7:0].
+	#define yuv2rs(y, u, v) ( (uint32_t)bound((76283*(y - 16) + 104595*(v - 128))>>16) << 16 )
 	#define yuv2gs(y, u, v) ( (uint32_t)bound((76283*(y - 16) - 53281 *(v - 128) - 25624*(u - 128))>>16) << 8 )
-	#define yuv2bs(y, u, v) ( (uint32_t)bound((76283*(y - 16) + 132252*(u - 128))>>16) << 16 )
+	#define yuv2bs(y, u, v) ( (uint32_t)bound((76283*(y - 16) + 132252*(u - 128))>>16) )
 
 	// clamping routine
 	static inline int bound(int x)
@@ -49,24 +51,58 @@ namespace Flipper
 		return x;
 	}
 
+	// The number of lines of the XFB the VI scans out (the active picture). `VI_VERT_TIMING` holds
+	// the active-video count `ACV` in bits [13:4]: the SDK programs half the picture height for an
+	// interlaced mode (each field carries every other line), so the two fields together give the
+	// full height. A value that does not describe a picture (the register was never written, or it
+	// is out of range) means "the whole XFB", which is what the emulator showed before this was
+	// decoded.
+	uint32_t VideoInterface::ActiveLines() const
+	{
+		uint32_t acv = (vi.vert_timing >> 4) & 0x3FF;
+		uint32_t lines = vi.inter ? (acv * 2) : acv;
+
+		if (lines < 64 || lines > 1024)
+			lines = VI_XFB_HEIGHT;
+
+		if (lines > VI_XFB_HEIGHT)
+			lines = VI_XFB_HEIGHT;
+
+		return lines;
+	}
+
 	// copy XFB to screen
 	void VideoInterface::YUVBlit(uint8_t* yuvbuf, RGB* dib)
 	{
 		uint32_t* rgbbuf = (uint32_t*)dib;
-		int count = 320 * 480;
 
 		if (!yuvbuf || !rgbbuf) return;
 
-		// simple blitting, without effects
-		while (count--)
-		{
-			int y1 = *yuvbuf++,
-				v = *yuvbuf++,
-				y2 = *yuvbuf++,
-				u = *yuvbuf++;
+		// The active picture is scaled over the window: a title that copies 640x448 (the visible
+		// area of an NTSC frame) leaves the rest of the XFB alone, and those lines are part of the
+		// vertical blanking rather than picture - showing them showed whatever the memory happened
+		// to hold.
+		uint32_t active = ActiveLines();
 
-			*rgbbuf++ = yuv2bs(y1, u, v) | yuv2gs(y1, u, v) | yuv2rs(y1, u, v);
-			*rgbbuf++ = yuv2bs(y2, u, v) | yuv2gs(y2, u, v) | yuv2rs(y2, u, v);
+		// Simple blitting, without effects. The XFB holds packed YUV 4:2:2 as Y0 U0 Y1 V0, four
+		// bytes per pixel pair (video-interface.md 3.1), so the chroma of the pair is the Cb (U) in
+		// the second byte and the Cr (V) in the fourth one, and a line of a 640-pixel frame is
+		// 1280 bytes.
+		for (uint32_t y = 0; y < VI_XFB_HEIGHT; y++)
+		{
+			uint32_t src = (uint32_t)((uint64_t)y * active / VI_XFB_HEIGHT);
+			const uint8_t* line = yuvbuf + (size_t)src * VI_XFB_WIDTH * 2;
+
+			for (uint32_t x = 0; x < VI_XFB_WIDTH / 2; x++)
+			{
+				int y1 = line[x * 4 + 0],
+					u = line[x * 4 + 1],
+					y2 = line[x * 4 + 2],
+					v = line[x * 4 + 3];
+
+				*rgbbuf++ = yuv2bs(y1, u, v) | yuv2gs(y1, u, v) | yuv2rs(y1, u, v);
+				*rgbbuf++ = yuv2bs(y2, u, v) | yuv2gs(y2, u, v) | yuv2rs(y2, u, v);
+			}
 		}
 
 		VideoOutRefresh();
@@ -191,6 +227,9 @@ namespace Flipper
 			case VI_DISP_CR:
 				vi->vi.disp_cr = (uint16_t)data;
 				vi->vi_set_timing();
+				break;
+			case VI_VERT_TIMING:
+				vi->vi.vert_timing = (uint16_t)data;
 				break;
 			case VI_TFBL:
 				vi->vi.tfbl &= 0x0000ffff;

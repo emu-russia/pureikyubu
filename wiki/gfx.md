@@ -98,6 +98,14 @@ Each pipeline class (`xf`, `su`, `ras`, `tx`, `tev`, `pe`, `bump`) holds a refer
 and owns its slice of the register state; `ras` turns the accumulated vertices of a draw command into a GL draw
 call and binds the program, the uniforms and the textures.
 
+## Software pipeline
+
+A second, completely software rendering path of the same Flipper blocks exists next to the shader
+backend. It is selected by the `GFX_PIPELINE` configuration variable (`0` = shader, `1` = software),
+can be switched at run time with the `gxpipeline` JDI command, and draws the picture into a real EFB
+memory array whose copy-engine output (the XFB) the video interface scans out - it never opens an
+OpenGL context. See [gfxsoft.md](gfxsoft.md) for the whole page.
+
 ## Not emulated yet
 
 - **Bump mapping and indirect texturing.** The indirect texturing *is* implemented (see below); the
@@ -262,6 +270,7 @@ state is reachable from the debugger and from the JDI server (issue #87):
 | `gxshot <file.png> [x y w h]` | Save the emulated EFB as a PNG (the whole render target by default) |
 | `gxpixel <x> <y>` | Read one EFB pixel: colour and depth |
 | `gxreset` | Reset the GFX register state (the software equivalent of a GX reset) |
+| `gxpipeline [shader\|soft]` | Report or switch the rendering pipeline (`GFX_PIPELINE`) |
 
 The commands that read the EFB (`gxshot`, `gxpixel`, `gxtexdump`) need a current OpenGL context, so
 they report an error instead of crashing when they are called from a thread that does not drive the

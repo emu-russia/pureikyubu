@@ -32,6 +32,7 @@
     <ClCompile Include="..\..\testing\gfx_su_ras_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_tev_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_pe_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_soft_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_bp_map_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_xf_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_cp_test.cpp" />

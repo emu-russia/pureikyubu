@@ -5,9 +5,11 @@
 // - RAS1: texture coordinate rasterization
 // - RAS2: color rasterization
 //
-// In this emulator the rasterizers are not emulated geometrically: the primitives are handed to the
-// OpenGL backend as-is. What *is* emulated here is the register state that the rasterizers own and
+// The shader backend does not emulate the rasterizers geometrically: the primitives are handed to
+// the OpenGL backend as-is, and what is emulated here is the register state the rasterizers own and
 // that the rest of the pipeline (mainly TEV) needs - the per-stage texture bindings (RAS1_TREF).
+// The software pipeline does walk the primitives: Rasterizer::SoftDrawTriangle rasterizes them on
+// the 2x2-pixel quad grid of the hardware, with a 12-bit coverage mask per quad.
 
 namespace GFX
 {
@@ -95,6 +97,21 @@ namespace GFX
 		void SetUpPipeline();
 		void DrawPrimitive();
 
+		// -------------------------------------------------------------------------------------
+		// Software pipeline (GFX_PIPELINE = soft, issue #384)
+		//
+		// The software rasterizers walk the primitive the way the hardware does: on the 2x2-pixel
+		// quad grid, one quad at a time, producing a 12-bit coverage mask (three sub-samples per
+		// pixel) for each quad and shading the pixels whose mask is not empty
+		// (gfx-ras0.md 3.2/3.3, gfx-ras1.md 3.2, gfx-ras2.md 3.2).
+		// -------------------------------------------------------------------------------------
+
+		//! Rasterize one quad of the triangle: the coverage mask and the shaded pixels.
+		void SoftQuad(const SoftTriangle& tri, int qx, int qy);
+
+		//! Shade one covered pixel of a quad and hand it to the pixel engine.
+		void SoftShadePixel(const SoftTriangle& tri, int px, int py, float sx, float sy);
+
 	public:
 		bool ras_wireframe = false;			//!< Enable wireframe drawing of primitives (DEBUG)
 
@@ -104,6 +121,10 @@ namespace GFX
 		void RAS_Begin(RAS_Primitive prim, size_t vtx_num);
 		void RAS_End();
 		void RAS_SendVertex(const Vertex* v);
+
+		//! Draw one triangle the software Setup Unit produced (the name avoids shadowing the
+		//! SetupUnit record type inside the class scope).
+		void SoftDrawTriangle(const SoftTriangle& tri);
 		
 		void loadRASReg(size_t index, uint32_t value);
 

@@ -356,6 +356,11 @@ namespace GFX
 		uint32_t xfRdData = 0;			// XFrdData: register read-back value
 		bool xfRdValid = false;			// XFrdValid: XFrdData holds a value for the CP
 
+		//! Whether the viewport registers (0x101A-0x101F) have ever been written. The shader
+		//! pipeline falls back to the default GL viewport when they have not; the software
+		//! pipeline uses the whole render target in that case (see SoftViewport).
+		bool viewportSet = false;
+
 		//! Write one word of the XF register space (gfx-xf.md 4)
 		void WriteXFReg(size_t index, uint32_t value);
 
@@ -390,6 +395,34 @@ namespace GFX
 		//! Upload the whole XF register state to the XF vertex program.
 		void UploadUniforms(GLProgram& program);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
+
+		// -------------------------------------------------------------------------------------
+		// Software pipeline (GFX_PIPELINE = soft, issue #384)
+		//
+		// The software XF is a high-level transformation of the vertex (the same arithmetic the
+		// vertex shader above performs), not an interpreter of the XF microcode: the geometry and
+		// texture matrix multiplies, the projection combine, the per-vertex lighting, the texture
+		// coordinate generation and the bottom-of-pipe divide + viewport mapping of gfx-xf.md 3.2.
+		// -------------------------------------------------------------------------------------
+
+		//! Transform one CP vertex row into the XF output stream the SU consumes.
+		void SoftTransform(const Vertex* in, SoftVertex* out);
+
+		//! The effective viewport mapping of the software bottom of the pipe (gfx-xf.md 3.2):
+		//! `X'' = (Xc/Wc)*Sx + Ox`, where the registers carry the hardware -342 origin bias of the
+		//! window coordinate system (gfx-su.md 4.1). A viewport that was never programmed maps the
+		//! whole render target, which is the default the shader pipeline gets from GL.
+		void SoftViewport(float* scale, float* offset) const;
+
+		//! The window-space position, `1/w` and the depth of a transformed vertex, derived from its
+		//! clip-space position (the bottom of the pipe, gfx-xf.md 3.2).
+		void SoftVertexToWindow(SoftVertex* v) const;
+
+		//! Clip one triangle against the six guard-band planes of the XF clipper and hand every
+		//! triangle that survives to the Setup Unit (gfx-xf.md 3.5). The clipper runs in clip space,
+		//! where the attributes are linear, so a vertex the clipper inserts interpolates them with
+		//! the same parameter as the clip position.
+		void SoftClipTriangle(const SoftVertex& v0, const SoftVertex& v1, const SoftVertex& v2);
 
 		// -------------------------------------------------------------------------------------
 		// CP -> XF interface (gfx-xf.md 2.1)

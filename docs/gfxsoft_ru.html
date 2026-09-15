@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — программный конвейер GFX</title>
+<meta name="description" content="Программный (CPU) конвейер рендеринга Flipper GFX в pureikyubu: XF, блок setup, квадовые растеризаторы, настоящая TMEM, TEV и пиксельный движок с настоящим массивом памяти EFB, который пишет XFB для видеовыхода. Задача #384.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index_ru.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index_ru.html">Главная</a>
+      <a href="digest_ru.html">Дайджест</a>
+      <a href="gba_ru.html">GBA</a>
+      <a href="gfxsoft_ru.html" aria-current="page">Soft GFX</a>
+      <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Язык">
+      <a href="gfxsoft.html" hreflang="en">EN</a>
+      <a href="gfxsoft_ru.html" class="active" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Светлая</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Программный конвейер GFX <span style="font-size:0.5em;color:#ffd166">(экспериментально)</span></h1>
+    <p class="lead">
+      <strong>Экспериментально.</strong> Конвейер реализован целиком, и прогон демок DolphinSDK ниже
+      на большинстве демок даёт те же картинки, что и шейдерный бэкенд, но в некоторых заголовках
+      ещё есть дефекты картинки (среди них демки сглаженного framebuffer). По умолчанию остаётся
+      шейдерный бэкенд.<br><br>
+      У графической подсистемы Flipper есть второй путь рендеринга: программная (CPU) реализация тех
+      же аппаратных блоков. Она написана по спецификациям GameCube — блок трансформации, блок setup,
+      три растеризатора, блок текстур с <strong>настоящей TMEM</strong>, TEV и пиксельный движок с
+      <strong>настоящим массивом памяти EFB</strong> — и не открывает контекст OpenGL вообще.
+      Готовый кадр превращается блоком копирования в XFB в основной памяти, а видеоинтерфейс
+      выводит его на экран — всё как на настоящей консоли.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/emu-russia/pureikyubu/issues/384">Задача #384</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">Wiki: программный GFX</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfx.md">Wiki: GFX (шейдерный бэкенд)</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/testing/gfx_soft_test.cpp">Тесты</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>Два конвейера</h2>
+      <p class="sub" style="max-width:none">
+        Шейдерный бэкенд отображает две программируемые ступени Flipper на две программируемые
+        ступени OpenGL (XF — на вершинный шейдер, TEV — на фрагментный) и отдаёт растеризацию
+        драйверу. Программный конвейер проходит весь конвейер сам, в тех же модулях
+        (<code>xf.cpp</code>, <code>su.cpp</code>, <code>ras.cpp</code>, <code>tx.cpp</code>,
+        <code>tev.cpp</code>, <code>pe.cpp</code>); программные методы блока помечены префиксом
+        <code>Soft</code>. Два пути не делят между собой состояние рендеринга — поэтому конвейер и
+        является переменной конфига, а не выбором на этапе сборки: его можно переключать на лету, и
+        выбор сохраняется в настройках.
+      </p>
+      <table>
+        <tr><th>Настройка</th><th>Значение</th></tr>
+        <tr><td><code>hardware.GFX_PIPELINE</code></td><td><code>0</code> — шейдерный (OpenGL) бэкенд, <code>1</code> — программный конвейер. Читается при запуске.</td></tr>
+        <tr><td><code>gxpipeline</code></td><td>Команда отладчика / JDI: показывает активный конвейер или переключает его (<code>gxpipeline soft</code>, <code>gxpipeline shader</code>). Переключение вступает в силу со следующего кадра и сохраняется в настройках.</td></tr>
+      </table>
+      <pre><code>Gekko --PI FIFO--> CP --команды--> XF(soft) --> SU(soft) --> RAS(soft) --> TEV(soft) --> PE(soft)
+                                                              ^            ^
+                                                      TX(soft, TMEM)      |
+                                                                          v
+                                                          EFB-память --(блок копирования)--> XFB
+                                                                                            |
+                                                                                    vi.cpp выводит его</code></pre>
+    </section>
+
+    <section>
+      <h2>Блоки</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>XF — трансформация</h3>
+          <p>
+            Высокоуровневая трансформация вершины, а не интерпретатор микрокода XF: умножения на
+            матрицы геометрии и текстур, объединение с проекцией, освещение двух каналов и генерация
+            текстурных координат (обычная, цветовая и двойная трансформация). Затем низ конвейера
+            делит на однородную компоненту и отображает результат через регистры viewport в
+            <strong>экранное пространство</strong>: пиксели EFB с началом в левом верхнем углу,
+            24-битная глубина и <code>1/w</code> для перспективной коррекции растеризаторов.
+          </p>
+        </div>
+        <div class="card">
+          <h3>SU — setup</h3>
+          <p>
+            Сборка примитивов и ступень setup. Точки, линии, полосы, веера и квады Flipper становятся
+            треугольниками, и каждый треугольник получает запись, по которой идёт растеризатор:
+            ограничивающий прямоугольник, три коэффициента рёбер и плоскость интерполяции каждого
+            атрибута. Параметры с перспективной коррекцией хранятся плоскостями <code>значение/w</code>
+            рядом с плоскостью <code>1/w</code> — то самое деление, которое аппаратура делает в центрах
+            пикселей.
+          </p>
+        </div>
+        <div class="card">
+          <h3>RAS — обход квадами</h3>
+          <p>
+            Растеризаторы обходят примитив как аппаратура: по <strong>сетке квадов 2×2 пикселя</strong>,
+            по одному кваду за шаг, с <strong>12-битной маской покрытия</strong> (три подвыборки на
+            пиксель) и правилом top-left на общих рёбрах. Затеняются только пиксели с покрытой
+            подвыборкой — в центре пикселя или в одной из его покрытых подвыборок. Позиции подвыборок
+            задают регистры <code>GEN_MSLOC0..3</code>.
+          </p>
+        </div>
+        <div class="card">
+          <h3>TX — настоящая TMEM</h3>
+          <p>
+            32 банка по 16K × 16 бит, две половины по 512 КБ. Команды <code>TX_LOADBLOCK0..3</code> и
+            <code>TX_LOADTLUT0/1</code> заливают в неё тайлы и палитры из основной памяти, кэшируемые
+            изображения подтягиваются через кэш тегов в той же памяти, а сэмплер выполняет расчёт LOD,
+            операции clamp / repeat / mirror и фильтрацию: все форматы текселей, включая
+            индексированные через TLUT, билинейные S/T-интерполяции с 6-битными дробями и трилинейное
+            смешивание.
+          </p>
+        </div>
+        <div class="card">
+          <h3>TEV — комбайн</h3>
+          <p>
+            Datapath ступеней, выполняемый на каждую затенённую выборку: до 16 ступеней комбинирования
+            над файлом цветовых регистров, константы K ревизии B, режимы сравнения альфы, окружение
+            Z-текстуры, блок тумана и финальная альфа-функция.
+          </p>
+        </div>
+        <div class="card">
+          <h3>PE — EFB и XFB</h3>
+          <p>
+            Настоящий массив памяти EFB, адресуемый как окно CPU у аппаратуры (цветовое слово пикселя
+            <em>(x, y)</em> лежит по адресу <code>y * 1024 + x</code>, бит 22 адреса выбирает плоскость
+            Z). Он выполняет Z-тест, смешивание и логические операции с масками записи, а также работу
+            блока копирования: display-копию, превращающую прямоугольник в упакованный YUV 4:2:2
+            <strong>XFB</strong> в основной памяти, texture-копию в тайловые форматы текстур и очистку,
+            которую может запросить копия.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Что он рисует</h2>
+      <p class="sub" style="max-width:none">
+        Картинки ниже отрисованы модульными тестами и публикуются в отчёте тестов. Первая — сцена,
+        которую программный конвейер нарисовал в том порядке, в каком её отправила бы игра: квад на
+        весь экран с градиентом цвета (интерполяция по четырём углам цветового растеризатора),
+        треугольник с интерполяцией цветов вершин, красный квад, который ближе треугольника — блок Z
+        отбрасывает выборки за ним — и квад, тексели которого читаются из TMEM.
+      </p>
+      <p><img src="imgstore/gfx_soft_scene.png" alt="Сцена, отрисованная программным конвейером GFX" style="width:100%;max-width:640px;image-rendering:pixelated"></p>
+      <p class="sub" style="max-width:none">
+        Вторая — тот же кадр после <code>GXCopyDisp</code>: блок копирования превратил прямоугольник
+        EFB в упакованный YUV 4:2:2 в основной памяти, и это тот XFB, декодированный обратно в RGB.
+        Хрома каждой пары пикселей усредняется при переходе к 4:2:2, поэтому на границах двух
+        прямоугольников видно смешение хромы.
+      </p>
+      <p><img src="imgstore/gfx_soft_xfb.png" alt="XFB, записанный блоком копирования, декодированный в RGB" style="width:100%;max-width:640px;image-rendering:pixelated"></p>
+    </section>
+
+    <section>
+      <h2>Тесты работают через аппаратный API, а не через бэкенд</h2>
+      <p class="sub" style="max-width:none">
+        <code>testing/gfx_soft_test.cpp</code> программирует конвейер так, как программируют консоль:
+        регистровое пространство XF (матрица геометрии, объединение с проекцией и регистры viewport —
+        ровно те, что пишут <code>GXSetProjection</code> и <code>GXSetViewport</code>), bypass-пространство
+        регистров (общие регистры GEN, привязки текстур растеризатора, команды загрузки текстур,
+        окружения ступеней TEV и состояние пиксельного движка) и вершины в объектном пространстве.
+        Читается обратно собственный вывод аппаратуры: память EFB пиксельного движка и XFB, записанный
+        блоком копирования. Ни одного вызова OpenGL — программный конвейер вообще не открывает
+        GL-контекст.
+      </p>
+      <pre><code>cd scripts/VS2026
+MSBuild pureikyubu_test.vcxproj -p:Configuration=Debug -p:Platform=x64
+vstest.console.exe x64/Debug/pureikyubu_test.dll /Tests:Soft_</code></pre>
+    </section>
+
+    <section>
+      <h2>Чего пока нет</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Реализовано</h3>
+          <p>
+            Трансформация и viewport XF, setup (плоскости и рёбра, отсечение, zfreeze), обход квадами с
+            12-битными масками покрытия и scissor, перспективно-корректная интерполяция цветов и
+            текстурных координат, расчёт LOD и точечная / билинейная / трилинейная фильтрация из TMEM
+            (все форматы текселей, TLUT, CMPR), 16-ступенчатый TEV с константами K, окружение Z-текстуры,
+            туман и альфа-функция, Z-тест / смешивание / логические операции / маски записи / константная
+            альфа в EFB, а также очистка, display-копия (XFB) и texture-копия блока копирования.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Не реализовано (пока)</h3>
+          <p>
+            Косвенное (bump) текстурирование TEV; анизотропная фильтрация и уточнения
+            <code>diag_lod</code> / <code>lodclamp</code>; режимы компенсации движения
+            <code>round</code> и <code>field_predict</code>; сглаженный EFB (12-битная маска покрытия
+            выбирает выборку для затенения, но EFB хранит один цвет на пиксель) и типы пикселей EFB
+            кроме RGB8 — поэтому же не применяется матрица дизеринга: для RGB8 она единичная;
+            коэффициенты вертикального фильтра display-копии и режимы копирования YUV/4:2:0; и окно
+            EFB для CPU (<code>Cpu2Efb</code>).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Документация</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Wiki: программный GFX</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">Вся страница</a>:
+             блоки, спецификации, по которым написан каждый из них, осознанные решения модели и то, чего
+             ещё нет.</p>
+        </div>
+        <div class="card">
+          <h3>Wiki: GFX</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfx.md">Шейдерный бэкенд</a>:
+             вершинная и фрагментная программы, текстуры, косвенное текстурирование и команды JDI.</p>
+        </div>
+        <div class="card">
+          <h3>Спецификации</h3>
+          <p>Аппаратные страницы, по которым написан программный конвейер:
+             <code>gfx-xf.md</code>, <code>gfx-su.md</code>, <code>gfx-ras0/1/2.md</code>,
+             <code>gfx-tc.md</code>, <code>gfx-tf.md</code>, <code>gfx-tev.md</code>,
+             <code>gfx-pe.md</code> и <code>video-interface.md</code>.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© проект pureikyubu. GameCube и Game Boy — торговые марки Nintendo; эмулятор не связан с Nintendo. Ни BIOS, ни игры вместе с ним не распространяются.</div>
+    <div><a href="security_ru.html">Безопасность</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

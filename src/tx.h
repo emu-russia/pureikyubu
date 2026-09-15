@@ -309,6 +309,64 @@ namespace GFX
 
 		bool active = false;
 
+		// -------------------------------------------------------------------------------------
+		// Software pipeline (GFX_PIPELINE = soft, issue #384)
+		//
+		// The software texture unit owns a real TMEM: the 32 x 16K x 16-bit embedded memory of
+		// gfx-tc.md 3.1, one 32-byte cache line per (bank, word) column. The explicit load
+		// commands stream main-memory tiles into it (3.6) and the hardware-managed images are
+		// fetched through a tag cache in it (3.5); the filter datapath of gfx-tf.md 3 then
+		// filters the texels it reads - point, bilinear or trilinear, with the format expansion
+		// of gfx-tf.md 5.2 and the TLUT dereference of colour-index texels.
+		// -------------------------------------------------------------------------------------
+
+		//! The 32 banks of the texture memory, 16K 16-bit words each (1 MB in total).
+		static const int SoftTmemBankCount = 32;
+		std::vector<uint16_t> tmem;
+
+		//! One tag per line slot of the cache of an image: the main-memory line it holds.
+		struct SoftCacheTag
+		{
+			uint32_t line = 0xFFFFFFFF;
+			bool valid = false;
+		};
+
+		SoftCacheTag softCacheTags[GFX_MAX_TEXTURES][4096];
+
+		void SoftTmemInit();
+
+		//! One 16-bit word of the texture memory. A line address beyond the low half addresses the
+		//! upper half (the two 512 KB halves of gfx-tc.md 3.1).
+		uint16_t& SoftTmemWord(uint32_t line, int bank);
+
+		//! Copy one 32-byte line of main memory into the texture memory through the sixteen banks
+		//! of a half (a cache line is 16 banks x 16 bits, gfx-tc.md 2.4).
+		void SoftWriteLine(uint32_t line, const uint8_t* data);
+
+		//! One byte of a 32-byte TMEM line (its bytes are the sixteen bank words, big-endian).
+		uint8_t SoftLineByte(uint32_t line, int index);
+
+		//! `Load_TextureBlock` (0x60-0x63): stream `count` 32-byte tiles of the image at `base`
+		//! into the two TMEM offsets the load registers name (gfx-tc.md 3.6, 4.2).
+		void SoftLoadBlock(uint32_t base, uint32_t off0, uint32_t off1, uint32_t count, unsigned format);
+
+		//! `Load_TextureTLUT` (0x64/0x65): move `count` blocks of sixteen 16-bit palette entries
+		//! into the upper half of the texture memory (gfx-tc.md 3.6, 4.2).
+		void SoftLoadTlut(uint32_t base, uint32_t tmemOffset, uint32_t count);
+
+		//! The 32-byte line of the tile `tile` of mip level `level` of an image: its TMEM line
+		//! address for a pre-loaded image, or - for a hardware-managed one - the line it was
+		//! fetched into through the tag cache.
+		bool SoftTileLine(int map, int level, uint32_t tile, bool gb, uint32_t* line);
+
+		//! The 16-bit texel word (or the two words of a 32-bit texel) of a texel, out of TMEM.
+		bool SoftFetchTexel(int map, int level, int u, int v, float rgba[4]);
+
+
+
+		//! The palette entry a colour index names (gfx-tf.md 3.7, gfx-tc.md 5.4).
+		bool SoftTlutEntry(int map, uint32_t index, float rgba[4]);
+
 		//! What DecodeTexture did with a map.
 		enum class DecodeResult
 		{
@@ -341,6 +399,20 @@ namespace GFX
 
 		//! The decoded state of a texture map (read-only).
 		const TexMap& Map(int id) const { return texMap[id & 7]; }
+
+		//! The raw texture memory (the debugger and the unit tests can look into it).
+		const uint16_t* Tmem() const { return tmem.empty() ? nullptr : tmem.data(); }
+
+		//! Sample one texture map with the software texture unit: the coordinate operations and the
+		//! level of detail of gfx-tc.md 3.3/3.4 followed by the filter datapath of gfx-tf.md 3.
+		//! `coordIndex` names the SU_SSIZE/SU_TSIZE pair the coordinate is scaled by and `deriv`
+		//! the screen-space derivatives (ds/dx, dt/dx, ds/dy, dt/dy) the LOD is computed from.
+		//! Returns false when the map is not usable.
+		bool SoftSample(int map, int coordIndex, float s, float t, const float* deriv, float rgba[4]);
+
+		//! The same sampler with a coordinate that is already in texels. The indirect (bump) fetch
+		//! of a TEV stage works in that space (gfx-bump.md 3.3), so it comes through here.
+		bool SoftSampleTexel(int map, float uTexel, float vTexel, const float* deriv, float rgba[4]);
 
 		//! Decode and upload all dirty texture maps and bind them to their texture units.
 		void UpdateAndBindTextures();

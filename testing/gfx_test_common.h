@@ -90,6 +90,16 @@ namespace GfxUnitTest
 		/// <summary>True when the OpenGL context is up; otherwise GLEnabled() explains why not.</summary>
 		bool GLEnabled() const { return glOpen; }
 
+		/// <summary>
+		/// Switch the rendering pipeline (issue #384): GFX_PIPELINE_SHADER or GFX_PIPELINE_SOFT.
+		/// The machine then drives the corresponding backend; both render into the same EFB
+		/// rectangle, so the same test can compare the two pictures.
+		/// </summary>
+		void SetPipeline(int pipeline);
+
+		/// <summary>True while the machine drives the software (CPU) pipeline.</summary>
+		bool SoftPipeline() const;
+
 		const std::string& LastError() const { return lastError; }
 
 		/// <summary>Put every pipeline block back into its reset state and restore the default GL state.</summary>

@@ -60,12 +60,14 @@ void VideoOutRefresh()
 
 	Uint32* const pixels = (Uint32*)surface->pixels;
 
+	// The window surface can be RGB or BGR (the SDL back ends differ), so the pixel is built with
+	// the surface's own format instead of assuming the byte order of the emulator's RGB word.
 	for (int y = 0; y < xfb_height; y++)
 	{
 		for (int x = 0; x < xfb_width; x++)
 		{
 			RGB color = video_buffer[xfb_width * y + x];
-			pixels[x + y * surface->w] = color.raw;
+			pixels[x + y * surface->w] = SDL_MapRGB(surface->format, color.Red, color.Green, color.Blue);
 		}
 	}
 

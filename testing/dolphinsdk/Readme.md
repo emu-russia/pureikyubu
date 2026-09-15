@@ -113,6 +113,10 @@ For every demo:
 |---|---|
 | `sweep.ps1` | Runs a list of demos, captures the `Video Output` client area as a PNG, saves the `EMU_LOG` and the extracted `OSReport` text next to it, and writes a CSV summary |
 | `summarize.py` | Turns a sweep folder into a table/JSON: frames per demo, unknown CP loads, exceptions, whether the shot is a single flat colour |
+| `report.py` | Builds `report.html` from a sweep folder, `notes.json` and an output directory; with a fourth argument (a second sweep folder) it adds the **same demos rendered by the software GFX pipeline** side by side and marks every picture that differs from the shader backend's |
+| `notes.json` | The per-demo analysis of the interesting cases |
+| `shots/` | The screenshots `report.html` embeds (the shader backend) |
+| `shots_soft/` | The same demos through the software pipeline of issue #384 (`GFX_PIPELINE = 1`) |
 
 Example:
 
@@ -120,4 +124,16 @@ Example:
 powershell -ExecutionPolicy Bypass -File testing\dolphinsdk\sweep.ps1 `
     -List demos_gx.txt -OutDir C:\Work\sweep_gx
 python testing\dolphinsdk\summarize.py C:\Work\sweep_gx
+
+rem ... and the same demos through the software GFX pipeline, then the two-panel report
+powershell -ExecutionPolicy Bypass -File testing\dolphinsdk\sweep.ps1 `
+    -List demos_gx.txt -OutDir C:\Work\sweep_gx_soft `
+    -Exe C:\Work\pureikyubu\scripts\VS2026\x64\Release SDL\pureikyubu.exe
+python testing\dolphinsdk\report.py C:\Work\sweep_gx testing\dolphinsdk\notes.json `
+    testing\dolphinsdk C:\Work\sweep_gx_soft
 ```
+
+The software-pipeline sweep needs `"GFX_PIPELINE": 1` in the `hardware` section of
+`Data\SettingsSdl.json` (or `gxpipeline soft` in the debugger); the shader sweep is the default.
+Both runs use the same emulator build, the same settle time and the same demo list, so a difference
+between the two columns is a difference between the two rendering paths.

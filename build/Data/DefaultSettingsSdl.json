@@ -29,6 +29,7 @@
 		"OS_REPORT": true,
 		"VI_LOG": false,
 		"VI_XFB": true,
+		"GFX_PIPELINE": 0,
 		"PI_LOG": false,
 		"DI_LOG": false,
 		"SI_LOG": false,

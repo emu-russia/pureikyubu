@@ -301,12 +301,20 @@ namespace GfxUnitTest
 	{
 		Assert::IsTrue(Start(), L"the GFX test machine could not be started");
 
-		if (!glOpen)
+		// The software pipeline owns no GL objects at all, so it is reset without a context.
+		if (!SoftPipeline())
 		{
-			glOpen = gfx->GL_OpenSubsystem();
-		}
+			if (!glOpen)
+			{
+				glOpen = gfx->GL_OpenSubsystem();
 
-		Assert::IsTrue(glOpen, Widen("the OpenGL backend could not be started: " + lastError).c_str());
+				// A fresh context has fresh object names: the transform feedback program and buffer
+				// of the previous one do not exist in it any more.
+				tfProgram = tfFragShader = tfBuf = 0;
+			}
+
+			Assert::IsTrue(glOpen, Widen("the OpenGL backend could not be started: " + lastError).c_str());
+		}
 
 		gfx->ResetPipelineState();
 
@@ -318,22 +326,40 @@ namespace GfxUnitTest
 		flipper->si = serialInterface;
 	}
 
+	bool GfxTestMachine::SoftPipeline() const
+	{
+		return gfx != nullptr && gfx->SoftPipeline();
+	}
+
+	void GfxTestMachine::SetPipeline(int pipeline)
+	{
+		Assert::IsTrue(Start(), L"the GFX test machine could not be started");
+
+		gfx->SetPipeline(pipeline);
+
+		// Switching the pipeline drops the OpenGL context (the software pipeline renders without
+		// one), so the machine has to open a fresh one when it comes back to the shader pipeline.
+		glOpen = false;
+
+		Reset();
+	}
+
 	void GfxTestMachine::BpLoad(unsigned index, uint32_t value)
 	{
-		Assert::IsTrue(glOpen, L"no OpenGL context");
+		Assert::IsTrue(started, L"the GFX test machine is not running");
 		gfx->xf->CPSuCommand(index, value);
 	}
 
 	void GfxTestMachine::XfLoad(unsigned index, uint32_t value)
 	{
-		Assert::IsTrue(glOpen, L"no OpenGL context");
+		Assert::IsTrue(started, L"the GFX test machine is not running");
 		gfx->xf->CPRegLoadBegin(index, 1);
 		gfx->xf->CPRegLoadData(value);
 	}
 
 	void GfxTestMachine::XfLoadBlock(unsigned start, const uint32_t* words, size_t count)
 	{
-		Assert::IsTrue(glOpen, L"no OpenGL context");
+		Assert::IsTrue(started, L"the GFX test machine is not running");
 		gfx->xf->CPRegLoadBegin(start, count);
 		for (size_t i = 0; i < count; i++)
 		{
@@ -353,7 +379,7 @@ namespace GfxUnitTest
 
 	uint32_t GfxTestMachine::XfRead(unsigned index)
 	{
-		Assert::IsTrue(glOpen, L"no OpenGL context");
+		Assert::IsTrue(started, L"the GFX test machine is not running");
 
 		gfx->xf->CPRegRead(index);
 
@@ -364,6 +390,18 @@ namespace GfxUnitTest
 
 	void GfxTestMachine::BeginFrame()
 	{
+		if (SoftPipeline())
+		{
+			// The software pipeline has no GL frame: the copy engine's clear is what starts a frame
+			// (GFXCore::GPFrameBegin), and the picture leaves through the XFB. A frame has to be
+			// finished before the next one starts - the shader path above does the same with
+			// GL_EndFrame - otherwise the frame begin does not clear the EFB and the tests would see
+			// the pixels of the previous frame.
+			gfx->GPFrameDone();
+			gfx->GPFrameBegin();
+			return;
+		}
+
 		Assert::IsTrue(glOpen, L"no OpenGL context");
 
 		// A frame must be finished before the next one starts, otherwise GL_BeginFrame() skips the
@@ -379,6 +417,12 @@ namespace GfxUnitTest
 
 	void GfxTestMachine::EndFrame()
 	{
+		if (SoftPipeline())
+		{
+			gfx->GPFrameDone();
+			return;
+		}
+
 		Assert::IsTrue(glOpen, L"no OpenGL context");
 		gfx->GL_EndFrame();
 	}
@@ -400,6 +444,14 @@ namespace GfxUnitTest
 
 	void GfxTestMachine::ReadColor(int x, int y, int width, int height, std::vector<uint8_t>& rgb)
 	{
+		if (SoftPipeline())
+		{
+			// The software EFB is a plain array with the origin at the top left corner, which is
+			// already the order the tests expect.
+			Assert::IsTrue(gfx->pe->ReadEfb(x, y, width, height, rgb), L"the software EFB could not be read");
+			return;
+		}
+
 		Assert::IsTrue(glOpen, L"no OpenGL context");
 
 		rgb.resize((size_t)width * height * 3);
@@ -428,6 +480,15 @@ namespace GfxUnitTest
 
 	float GfxTestMachine::ReadDepthPixel(int x, int y)
 	{
+		if (SoftPipeline())
+		{
+			uint8_t rgba[4] = { 0 };
+			uint32_t z24 = 0;
+
+			Assert::IsTrue(gfx->pe->SoftPixel(x, y, rgba, &z24), L"the software EFB could not be read");
+			return (float)z24 / 16777215.0f;
+		}
+
 		Assert::IsTrue(glOpen, L"no OpenGL context");
 
 		float depth = -1.0f;
@@ -803,4 +864,24 @@ bool PADReadButtons(long padnum, PADState* state)
 bool PADSetRumble(long padnum, long cmd)
 {
 	return true;
+}
+
+// -------------------------------------------------------------------------------------------
+// The settings double. The GFX pipeline choice is stored in the configuration (see
+// GFXCore::SetPipeline); a unit test has no Data/Settings file to write, so the store below keeps
+// the last value in memory and the getters answer from it.
+// -------------------------------------------------------------------------------------------
+
+static std::map<std::string, int> gfxTestConfigInts;
+
+int GetConfigInt(const char* var, const char* path)
+{
+	auto it = gfxTestConfigInts.find(var != nullptr ? var : "");
+	return (it == gfxTestConfigInts.end()) ? 0 : it->second;
+}
+
+void SetConfigInt(const char* var, int newVal, const char* path)
+{
+	if (var != nullptr)
+		gfxTestConfigInts[var] = newVal;
 }

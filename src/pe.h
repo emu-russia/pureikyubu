@@ -1,5 +1,9 @@
 #pragma once
 
+// The Pixel Engine of both backends: the GL render target of the shader pipeline, and the EFB
+// memory array of the software pipeline (GFX_PIPELINE = soft, issue #384), which also performs the
+// copy engine's display copy into the XFB the video interface scans out.
+
 namespace GFX
 {
 	// PE Registers (from CPU side). 16-bit access.
@@ -511,6 +515,34 @@ namespace GFX
 		void PE_DONE_INT();
 		void PE_TOKEN_INT();
 
+		// -------------------------------------------------------------------------------------
+		// Software pipeline (GFX_PIPELINE = soft, issue #384)
+		//
+		// The software Pixel Engine owns a CPU-side EFB: a colour buffer with one 32-bit word per
+		// pixel and the matching 24-bit Z buffer (gfx-pe.md 3). It performs the RMW datapath of
+		// gfx-pe.md 4 - the Z test, the blend / logic op with the write masks (4.2, 4.3) - and the
+		// copy engine: the display copy that turns the EFB into the XFB the video interface scans
+		// out (5.6) and the texture copy that re-packs a rectangle into main memory (5.7).
+		//
+		// There is no GL frame at all in this pipeline, so the EFB is not a render target that is
+		// presented: the XFB in main memory is what the console shows.
+		// -------------------------------------------------------------------------------------
+
+		//! The EFB memory array (gfx-pe.md 3.3). It is addressed like the CPU window of the
+		//! hardware: the word of the colour pixel (x, y) sits at `y * 1024 + x` and the address
+		//! bit 22 selects the Z plane (`PixelEngine::EfbZPlane` words into the array). The colour
+		//! word is the CPU view of the eDRAM lane - `{blue, green, red, alpha}` from the low byte
+		//! up - and the Z word carries the 24-bit depth.
+		std::vector<uint32_t> efb;
+		int soft_w = 0, soft_h = 0;
+
+		void SoftAlloc();
+		void SoftClearRect(int x, int y, int w, int h, uint32_t rgba, uint32_t z);
+
+		//! The copy engine's display copy (gfx-pe.md 5.6): the EFB rectangle is converted to the
+		//! packed YUV 4:2:2 XFB in main memory that the video interface reads.
+		void SoftDisplayCopy();
+
 		// Pixel Engine mapped regs
 		static void PERegRead(uint32_t addr, uint32_t* reg, void* context);
 		static void PERegWrite(uint32_t addr, uint32_t data, void* context);
@@ -549,6 +581,19 @@ namespace GFX
 		//! written to main memory (gfx-pe.md 5.7). The clear that a copy may ask for is applied by
 		//! the frame begin instead (see ApplyCopyClear).
 		void TextureCopy();
+
+		//! The software EFB (GFX_PIPELINE = soft). `SoftBeginFrame` applies the clears the display
+		//! copies of the previous frame asked for and is the equivalent of the GL frame begin.
+		void SoftBeginFrame();
+
+		//! Depth test, blend and write one shaded sample into the software EFB (the RMW datapath of
+		//! gfx-pe.md 4). Returns false when the depth test rejected the sample or the coordinate is
+		//! outside the EFB.
+		bool SoftWritePixel(int x, int y, const float rgba[4], float depth);
+
+		//! The software EFB of the debugger's `gxpixel`: the colour and the depth of one pixel.
+		bool SoftPixel(int x, int y, uint8_t rgba[4], uint32_t* z);
+
 
 		//! Read a rectangle of the EFB into an RGB buffer, top row first. The rectangle is in screen
 		//! coordinates (the origin is the top left corner). Returns false when the frame loop does
