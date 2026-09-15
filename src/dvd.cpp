@@ -2076,7 +2076,11 @@ namespace DVD
 		uint16_t sample[2] = { 0, 0 };
 		DduCore* core = (DduCore*)Parameter;
 
-		while (true)
+		// One sample per call, and the procedure returns. It must not loop inside: the ringleader
+		// holds the thread's own suspension mutex for as long as the procedure runs (see the notes
+		// on threads in utils.h), so a procedure that never returns can never be suspended - and
+		// the AI control register (AIControl -> EnableAudioStreamClock) writes that stop the
+		// stream clock would block on that mutex for ever.
 		{
 			// If AISCLK is enabled but streaming is not enabled by the DDU command, DVD Audio will output only zeros.
 
@@ -2084,7 +2088,7 @@ namespace DVD
 			int64_t ticks = Core->GetTicks();
 			if (ticks < core->nextGekkoTicksToSample)
 			{
-				continue;
+				return;
 			}
 			core->nextGekkoTicksToSample = ticks + core->TicksPerSample();
 

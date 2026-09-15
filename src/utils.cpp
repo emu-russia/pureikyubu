@@ -188,8 +188,12 @@ void* Thread::RingleaderThreadProc(void* args)
 
 		pthread_mutex_unlock(&thread->mutex);
 
-		// it's important to give main thread few time after unlock 'this'
-		pthread_yield();
+		// Deliberately no sched_yield() here. The worker procedure is the hottest path of the whole
+		// emulator - the recompiler calls it once per basic block - so a yield costs a system call
+		// per block: on Super Mario Sunshine it held the Gekko thread at 3.7 MIPS against 81.9
+		// without it (0.12x real time against 2.6x). A thread that has to wait parks on the
+		// condition variable below or blocks in the device it drives, and the Windows ringleader
+		// (see above) never yielded either.
 	}
 
 	thread->terminated = false;
@@ -259,6 +263,18 @@ void Thread::Suspend()
 	{
 		running = false;
 		suspendCounter++;
+
+		// The worker procedure runs with the thread's own mutex held (RingleaderThreadProc), so a
+		// thread that suspends *itself* would deadlock on the second lock: a pthread mutex is not
+		// recursive. Both the AI thread (which parks itself while no DMA is armed) and the DSP one
+		// (which parks itself on a breakpoint) do exactly that. Writing the command without the
+		// lock is enough: the ringleader parks on the condition variable at the top of its next
+		// iteration, and Resume is what signals it.
+		if (pthread_equal(pthread_self(), threadId))
+		{
+			command = 0;
+			return;
+		}
 
 		pthread_mutex_lock(&mutex);
 		command = 0;
