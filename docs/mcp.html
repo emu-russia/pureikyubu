@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — the MCP server</title>
+<meta name="description" content="pureikyubu runs a local MCP (Model Context Protocol) server: every command of its Json Debug Interface becomes a tool an LLM agent can call — load a game, read the Gekko registers, dump memory, take a screenshot. Issue #383.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="gba.html">GBA</a>
+      <a href="gfxsoft.html">Soft GFX</a>
+      <a href="mcp.html" aria-current="page">MCP</a>
+      <a href="release_notes_1.8.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="mcp.html" class="active" hreflang="en">EN</a>
+      <a href="mcp_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>The MCP server</h1>
+    <p class="lead">
+      The emulator has one control surface — the Json Debug Interface — and every front end is a thin
+      layer over it. The MCP server exposes that same interface to an <strong>LLM agent</strong>: the
+      client starts the emulator as its own child process, and every debug command of the emulator
+      appears as a <strong>tool</strong>.<br><br>
+      Load a disc image, run it, read the Gekko registers, add a breakpoint, disassemble, dump main
+      memory, watch the hardware counters, take a screenshot — the agent calls the commands the
+      debugger console would have typed, and the answers come back as Json.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/emu-russia/pureikyubu/issues/383">Issue #383</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/mcp.md">Wiki: the MCP server</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/testing/mcp_test.cpp">The tests</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>What it is</h2>
+      <p class="sub" style="max-width:none">
+        MCP (the Model Context Protocol) is how an agent application — Claude Desktop, Claude Code,
+        an IDE, a script of your own — uses a program as a set of tools. The server of this emulator
+        speaks the protocol over its own <strong>stdin/stdout</strong> (the "local server" transport:
+        the client starts the emulator, one JSON-RPC message per line), and the tools it publishes are
+        the commands of the debug interface, described by the specifications the emulator already
+        carries.
+      </p>
+      <pre><code>MCP client  -- stdio --&gt;  pureikyubu --mcp  --&gt;  the Json Debug Interface  --&gt;  the emulator
+     |                          |
+     |  tools/call "memdump"    +--&gt; the window stays open and usable (windowed builds)
+     +--------------------------+--&gt; no window at all (the headless build)</code></pre>
+      <table>
+        <tr><th>Command</th><th>Meaning</th></tr>
+        <tr><td><code>pureikyubu --mcp</code></td><td>Start the local MCP server. A file on the command line is loaded and run first, so the client attaches to a running game.</td></tr>
+        <tr><td><code>mcp 1</code> / <code>mcp 0</code></td><td>Start or stop it at run time from the debugger console; <code>mcp</code> alone reports whether it is running.</td></tr>
+        <tr><td><code>McpRequest &lt;json&gt;</code></td><td>The whole protocol as one debug command: a message in, a message out. The transport is only a carrier of those answers.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Connect a client</h2>
+      <p class="sub" style="max-width:none">
+        A client that starts its servers as child processes is configured with the executable and
+        <code>--mcp</code>. The headless build is the one to use for an unattended run; a windowed
+        build works the same way when you want to watch (and use) the emulator yourself.
+      </p>
+      <pre><code>{
+  "mcpServers": {
+    "pureikyubu": {
+      "command": "C:\\pureikyubu\\pureikyubu_headless.exe",
+      "args": ["--mcp"]
+    }
+  }
+}</code></pre>
+      <p class="sub" style="max-width:none">
+        There is no port, no listener and no authentication: the server is a child process of its
+        client, so whoever started it is the only thing that can talk to it. One client at a time.
+      </p>
+    </section>
+
+    <section>
+      <h2>The tools</h2>
+      <p class="sub" style="max-width:none">
+        Around 150 commands are published before a machine is loaded and around 170 after: the nodes
+        that belong to the emulated hardware (the Flipper, the GFX pipeline, the disc drive) appear
+        once a file is running. Every tool carries the help text and the usage of the command, the
+        arguments taken from the command's own specification, and a description of what it answers.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Control</h3>
+          <p><code>load</code>, <code>unload</code>, <code>reset</code>, <code>run</code>,
+             <code>stop</code>, <code>IsLoaded</code>, <code>GetLoaded</code>,
+             <code>MountIso</code>, <code>OpenLid</code>, <code>DvdRead</code>, <code>DumpFst</code>.</p>
+        </div>
+        <div class="card">
+          <h3>The Gekko debugger</h3>
+          <p><code>r</code> (registers), <code>regs</code> (a Markdown dump),
+             <code>b</code>/<code>bc</code> (breakpoints), <code>u</code>, <code>GekkoDisasm</code>,
+             <code>syms</code>, <code>NameByAddress</code>, <code>dtlb</code>, <code>nop</code>.</p>
+        </div>
+        <div class="card">
+          <h3>The DSP</h3>
+          <p><code>dregs</code>, <code>dreg</code>, <code>dmem</code>, <code>imem</code>,
+             <code>du</code> (disassembly), <code>dbrk</code>, <code>dspjit</code>,
+             <code>dspmbox</code>.</p>
+        </div>
+        <div class="card">
+          <h3>The hardware</h3>
+          <p><code>memdump</code> (main memory as Markdown), <code>ramload</code>,
+             <code>gx</code> (the whole GFX pipeline state), <code>gxregs</code>,
+             <code>gxtex</code>, <code>gxpixel</code>, <code>gxshot</code> (a PNG),
+             <code>hwprofile</code> (the interface profiler).</p>
+        </div>
+      </div>
+      <pre><code>tools/call  load       { "args": ["D:\\Isos\\zelda.iso"] }
+tools/call  run        {}
+tools/call  r          { "args": ["pc"] }
+tools/call  qd         {}                       &lt;- the debug message queue (the output of `r`)
+tools/call  memdump    { "address": "0x80000000", "lines": "16" }
+tools/call  gxshot     { "filename": "frame.png" }
+tools/call  hwprofile  { "value": "text" }</code></pre>
+      <p class="sub" style="max-width:none">
+        The arguments may be named (from the hints of the command: <code>&lt;address&gt;
+        &lt;lines&gt;</code>) or handed over as the whole command line in <code>args</code>. A
+        command that only reports — and most of the debugger's commands do — answers nothing; its
+        report is in the debug message queue, which the <code>qd</code> tool reads.
+      </p>
+    </section>
+
+    <section>
+      <h2>Why it is built this way</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Nothing new to learn</h3>
+          <p>The server does not implement a second interface: it publishes the one the debugger, the
+             console and the front ends already use. A command that works in the console works as a
+             tool, and a command added to the emulator tomorrow appears in the tool list by itself.</p>
+        </div>
+        <div class="card">
+          <h3>The protocol is a command</h3>
+          <p><code>McpRequest</code> takes one MCP message and answers with the message the server
+             produced, so the protocol can be driven (and tested) without any transport at all — and
+             the stdio server is a hundred-line reader on top of it.</p>
+        </div>
+        <div class="card">
+          <h3>An agent is a client, not a user</h3>
+          <p>A failed command is reported as a failed <em>tool</em>, with the usage of the command, so
+             the model can correct itself and the session survives. Only an unknown tool name is a
+             protocol error.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Limits</h2>
+      <p class="sub" style="max-width:none">
+        No HTTP or SSE transport, no resources, no prompts, no sampling: this is the local transport
+        of the specification and the tools are what the emulator has. The commands that end the
+        process (<code>exit</code> and its aliases) are deliberately not tools — a tool call would
+        kill the server in the middle of its own answer; the client closes the stream instead, and the
+        emulator shuts down by itself. An answer of a tool call is capped at 4 MB of text, because a
+        command like <code>FileLoad</code> would otherwise turn a whole binary file into Json and push
+        it into the context of the model.
+      </p>
+    </section>
+
+    <section>
+      <h2>Documentation</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Wiki: the MCP server</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/mcp.md">The whole page</a>:
+             the protocol in one page, how a specification becomes a tool, what a tool call answers,
+             and what the server is not.</p>
+        </div>
+        <div class="card">
+          <h3>The tests</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/testing/mcp_test.cpp">testing/mcp_test.cpp</a>:
+             the handshake, the errors of the protocol, the tool table over a node of its own and over
+             every specification the emulator ships.</p>
+        </div>
+        <div class="card">
+          <h3>The debug interface</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/main.md">wiki/main.md</a>
+             describes the emulator's control surface and the command line; the commands themselves
+             are declared in <code>src/jdispecs.cpp</code> and listed by <code>help</code> in the
+             debugger console.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. GameCube and Game Boy are trademarks of Nintendo; this emulator is not affiliated with Nintendo. No BIOS image and no game is distributed with it.</div>
+    <div><a href="security.html">Security</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

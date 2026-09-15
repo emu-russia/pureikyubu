@@ -14,7 +14,10 @@ What it exists for:
     too, but it does not need a window to be useful: in the headless build the benchmark is the
     primary way to run an image;
   * `--selftest`, which already ran without a window and now does not need the SDL/ImGui parts of
-    the windowed front end to be linked either.
+    the windowed front end to be linked either;
+  * `--mcp`, the local MCP server (issue #383): the client that started the emulator drives its
+    whole debug interface over stdin/stdout, and the front end only waits for it. stdout belongs
+    to the protocol then, so the text of this file goes to stderr.
 
 Everything the emulator core asks of a UI goes through the Json Debug Interface, so the headless
 front end is small:
@@ -125,11 +128,26 @@ static bool RunPump()
 // Running an image
 // -------------------------------------------------------------------------------------------
 
+// The front end talks to the console it was started from. While the MCP server owns the streams
+// (`--mcp`), stdout carries the JSON-RPC messages of the client and nothing else, so the text of
+// the front end goes to stderr - which is where the MCP specification expects a server's log.
+static void Say(const char* format, ...)
+{
+	va_list arg;
+	va_start(arg, format);
+
+	FILE* out = cmdline.mcp ? stderr : stdout;
+	vfprintf(out, format, arg);
+	fflush(out);
+
+	va_end(arg);
+}
+
 //! Load `file`, run it and measure it. `seconds` is the benchmark duration; 0 means "until the user
 //! interrupts it" (the plain headless run).
 static void RunImage(const std::wstring& file, uint32_t seconds)
 {
-	printf("Loading %s...\n", Util::WstringToString(file).c_str());
+	Say("Loading %s...\n", Util::WstringToString(file).c_str());
 
 	UI::Jdi->LoadFile(Util::WstringToString(file));
 	UI::Jdi->Run();
@@ -154,15 +172,25 @@ static int HeadlessMain()
 		return EMUSelfTest();
 	}
 
-	// From this point on the reports are also written to the console.
-	ConsoleEcho = true;
+	// The GBA and the Game Boy are presented by a windowed SDL2 frontend of their own, which is not
+	// part of this build (see EMURunGba).
+	if (cmdline.gba)
+	{
+		Say("headless: the GBA and Game Boy machines need a window.\n");
+		return -1;
+	}
 
-	if (!cmdline.bench && cmdline.image.empty() && !cmdline.ipl)
+	// From this point on the reports are also written to the console - except when the MCP server
+	// owns stdout, where anything but a JSON-RPC message would break the protocol.
+	ConsoleEcho = !cmdline.mcp;
+
+	// An MCP session needs no image of its own: the client loads what it wants with a tool call.
+	if (!cmdline.bench && cmdline.image.empty() && !cmdline.ipl && !cmdline.mcp)
 	{
 		// There is no selector to show, so say what is missing instead of waiting for input that
 		// can never arrive.
-		printf("headless: nothing to run.\n");
-		printf("Pass an image, or use --image <file>, --ipl or --bench <file> [sec]. `--help` lists the options.\n");
+		Say("headless: nothing to run.\n");
+		Say("Pass an image, or use --image <file>, --ipl, --bench <file> [sec] or --mcp. `--help` lists the options.\n");
 		return -1;
 	}
 
@@ -176,7 +204,7 @@ static int HeadlessMain()
 	// Add the UI methods
 	JdiAddNode("UI_JDI_JSON", JdiSpecs::UiJdi, UIReflector);
 
-	printf("pureikyubu (headless), Nintendo GameCube emulator version %s\n", UI::Jdi->GetVersion().c_str());
+	Say("pureikyubu (headless), Nintendo GameCube emulator version %s\n", UI::Jdi->GetVersion().c_str());
 
 	int status = 0;
 
@@ -184,14 +212,41 @@ static int HeadlessMain()
 	{
 		if (cmdline.bench)
 		{
-			printf("Benchmark run: %u second(s).\n", cmdline.benchSeconds);
+			Say("Benchmark run: %u second(s).\n", cmdline.benchSeconds);
 			RunImage(cmdline.benchFile, cmdline.benchSeconds);
+		}
+		else if (cmdline.mcp)
+		{
+			// The local MCP server (issue #383): the client that started the emulator drives it
+			// through the debug interface, so the front end steps aside and only waits for it. An
+			// image on the command line is started right away, which is how a client attaches to a
+			// running game.
+			if (!cmdline.image.empty())
+			{
+				Say("Loading %s...\n", Util::WstringToString(cmdline.image).c_str());
+				UI::Jdi->LoadFile(Util::WstringToString(cmdline.image));
+				UI::Jdi->Run();
+			}
+
+			Mcp::StartTransport();
+			Say("MCP server: the messages are read from stdin. Close the stream to stop the emulator.\n");
+
+			while (Mcp::TransportRunning() && !interrupted)
+			{
+				Thread::Sleep(20);
+			}
+
+			Say("MCP server: the client is gone, stopping the emulation.\n");
+
+			UI::Jdi->Stop();
+			Thread::Sleep(200);
+			UI::Jdi->Unload();
 		}
 		else
 		{
 			// The Bootrom runs by itself, so `--ipl` is a complete request.
 			std::wstring file = cmdline.image.empty() ? std::wstring(L"Bootrom") : cmdline.image;
-			printf("Press Ctrl+C to stop the emulation.\n");
+			Say("Press Ctrl+C to stop the emulation.\n");
 			RunImage(file, 0);
 		}
 	}
@@ -213,12 +268,13 @@ static int HeadlessMain()
 
 	// Unload
 
+	Mcp::StopTransport();
 	JdiRemoveNode("UI_JDI_JSON");
 	delete UI::Jdi;
 	UI::Jdi = nullptr;
 	EMUDtor();
 
-	printf("\nThank you for flying pureikyubu airlines!\n");
+	Say("\nThank you for flying pureikyubu airlines!\n");
 	return status;
 }
 

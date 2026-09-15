@@ -52,17 +52,21 @@ namespace JdiSpecs
     },
 
     "exit": {
+      "mcp": false,
       "help": "Exit (also: x, quit, q)"
     },
     "quit": {
+      "mcp": false,
       "internal": true,
       "help": "Exit"
     },
     "x": {
+      "mcp": false,
       "internal": true,
       "help": "Exit"
     },
     "q": {
+      "mcp": false,
       "internal": true,
       "help": "Exit"
     },
@@ -605,7 +609,7 @@ namespace JdiSpecs
 
     "nop": {
       "help": "Insert `nop` at virtual address",
-      "hint": "<vaddr>",
+      "hints": "<vaddr>",
       "args": 1,
       "usage": [
         "Syntax: nop <virtual_address>",
@@ -949,7 +953,7 @@ namespace JdiSpecs
 		"DspWatch": {
 			"help": "Adds DSP DMEM address for tracking",
 			"args": 1,
-			"hint": "<addr>",
+			"hints": "<addr>",
 			"usage": [
 				"Syntax: DspUnwatch <dsp_addr>\n",
 				"Adds DSP DMEM address for tracking\n",
@@ -960,7 +964,7 @@ namespace JdiSpecs
 		"DspUnwatch": {
 			"help": "Removes DSP DMEM address tracking",
 			"args": 1,
-			"hint": "<addr>",
+			"hints": "<addr>",
 			"usage": [
 				"Syntax: DspUnwatch <dsp_addr>\n",
 				"Removes DSP DMEM address tracking\n",
@@ -974,7 +978,7 @@ namespace JdiSpecs
 
 		"DspWatchList": {
 			"help": "List DSP DMEM addresses for tracking",
-			"hint": "[hide]",
+			"hints": "[hide]",
 			"output": "Array: [address1, address2, ...]"
 		}
 
@@ -1410,7 +1414,7 @@ namespace JdiSpecs
     "OSDateTime": {
       "internal": true,
       "help": "Convert Gekko ticks to human-readable time (including date)",
-      "hint": "[value]",
+      "hints": "[value]",
       "usage": [
         "Syntax: OSDateTime [value]"
       ],
@@ -1420,7 +1424,7 @@ namespace JdiSpecs
     "OSTime": {
       "internal": true,
       "help": "Convert Gekko ticks to human-readable time (no date)",
-      "hint": "[value]",
+      "hints": "[value]",
       "usage": [
         "Syntax: OSTime [value]"
       ],
@@ -1475,6 +1479,49 @@ namespace JdiSpecs
       "internal": true,
       "help": "Return UI Render Target object (example: HWND). Flipper GFX will use to output graphics",
       "output": "Int"
+    }
+
+  }
+
+}
+)json";
+
+	const char* McpJdi = R"json(
+{
+  "info": {
+    "description": "MCP (Model Context Protocol) server (issue #383). The server speaks JSON-RPC 2.0 and publishes every command of the other nodes as an MCP tool, so that an LLM agent can drive the emulator the way the debugger console does. The whole protocol is the McpRequest command; the local transport (`--mcp`, or `mcp 1`) only carries its messages over stdin/stdout, one per line.",
+    "helpGroup": "MCP Server Commands"
+  },
+
+  "can": {
+
+    "mcp": {
+      "mcp": false,
+      "help": "Start, stop or report the local MCP server",
+      "hints": "[0|1]",
+      "usage": [
+        "Syntax: mcp [0|1]\n",
+        "Without an argument the state of the server is reported.\n",
+        "1 - start the local transport: the MCP messages are read from stdin (one per line) and the answers are written to stdout, which is how an MCP client speaks to the emulator it started.\n",
+        "0 - stop it. The message being handled is answered first: a read from stdin cannot be interrupted, so a client that is holding the stream open ends the session by closing it.\n",
+        "The `--mcp` command line option starts the server at startup (see wiki/mcp.md).\n",
+        "Example of use: mcp 1\n"
+      ],
+      "output": "Bool - the server is running"
+    },
+
+    "McpRequest": {
+      "mcp": false,
+      "help": "Hand one MCP message to the server and answer with the message it produced",
+      "args": 1,
+      "hints": "<json>",
+      "usage": [
+        "Syntax: McpRequest '<json>'\n",
+        "The whole protocol of the server is this command: the transport is only a carrier of the answers.\n",
+        "A notification (a message without an \"id\") is answered with an empty string.\n",
+        "Example of use: McpRequest '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}'\n"
+      ],
+      "output": "Array: [String] - the answer of the server, or [ \"\" ] for a notification"
     }
 
   }

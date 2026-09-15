@@ -757,6 +757,13 @@ int WINAPI WinMain(
 		PostMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_IPLMENU, 0);
 	}
 
+	// The local MCP server (issue #383): an MCP client that started the emulator drives its debug
+	// interface over stdin/stdout while the window stays open and usable.
+	if (cmdline.mcp)
+	{
+		Mcp::StartTransport();
+	}
+
 	// Main loop
 	MSG msg = { 0 };
 	while (true)

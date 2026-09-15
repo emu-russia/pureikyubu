@@ -1,8 +1,12 @@
 // Emulator controls
 #include "pch.h"
 
-// The GBA mode of the application (issue #388): its own machine and its own SDL2 frontend.
+// The GBA mode of the application (issue #388): its own machine and its own SDL2 frontend. The
+// frontend opens a window of its own, so the headless build (GFX_NULL) does not compile it in at
+// all - it is the one part of the application that cannot exist without SDL.
+#ifndef GFX_NULL
 #include "gba/gba_sdl.h"
+#endif
 
 using namespace Debug;
 
@@ -51,6 +55,10 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 		else if (arg == "--selftest")
 		{
 			cmdline.selftest = true;
+		}
+		else if (arg == "--mcp")
+		{
+			cmdline.mcp = true;
 		}
 		else if (arg == "--gba")
 		{
@@ -143,6 +151,7 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 	// A Game Boy cartridge on the command line selects the portable emulator by itself, exactly
 	// like a disk image selects the GameCube one. The Game Boy Advance and the Game Boy are two
 	// machines of the same module, and the extension says which one runs the file.
+#ifndef GFX_NULL
 	if (!cmdline.image.empty() && GBA::IsGameBoyImage(Util::WstringToString(cmdline.image)))
 	{
 		cmdline.gba = true;
@@ -152,6 +161,7 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 			cmdline.gb = true;
 		}
 	}
+#endif
 }
 
 /// <summary>
@@ -160,6 +170,12 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 /// </summary>
 int EMURunGba()
 {
+#ifdef GFX_NULL
+	// The portable machines are presented by a windowed SDL2 frontend of their own, which the
+	// headless build does not have (and the emulation of the machine itself is not part of it).
+	Report(Channel::Error, "the GBA emulator needs a window: this is the headless build\n");
+	return -1;
+#else
 	GBA::GbaSettings settings;
 	std::string usedPath;
 	std::string error;
@@ -197,6 +213,7 @@ int EMURunGba()
 	}
 
 	return GBA::RunSdlFrontend(rom, cmdline.gbaLink, settings);
+#endif
 }
 
 // The `--help` text. It is printed to the console (when the application has one) and to the report
@@ -221,6 +238,9 @@ void EMUPrintUsage()
 		"  --selftest            Run the startup sequence (settings, debug interface specifications,\n"
 		"                        emulated hardware, ROM and memory card files) without a window and\n"
 		"                        exit with the number of failed steps as the status code.\n"
+		"  --mcp                 Start the local MCP server: an MCP client (an LLM agent) starts the\n"
+		"                        emulator and drives its whole debug interface over stdin/stdout, one\n"
+		"                        JSON-RPC message per line. See wiki/mcp.md.\n"
 		"  -h, --help            Print this text and exit.\n"
 		"\n"
 		"GBA emulator (issue #388):\n"
@@ -609,6 +629,12 @@ void EMUCtor()
 			(dspJit != nullptr && dspJit->IsSupported()) ? "on" : "not available on this host, staying on the interpreter");
 	}
 	JDI::Hub.AddNode(L"EMU_JDI_JSON", JdiSpecs::EmuJdi, EmuReflector);
+
+	// The MCP server (issue #383) publishes the commands of every node as its tools, so its own
+	// node is registered here with the rest of them. Its local transport is started by the front
+	// end (`--mcp`), which is the one that owns stdin/stdout.
+	JDI::Hub.AddNode(L"MCP_JDI_JSON", JdiSpecs::McpJdi, Mcp::Reflector);
+
 	DVD::InitSubsystem();
 	HLEInit();
 	Debug::g_PerfCounters = new Debug::PerfCounters();
@@ -621,6 +647,12 @@ void EMUDtor()
 	{
 		return;
 	}
+
+	// The server is shut down before the nodes it publishes go away, so that a client that is
+	// still connected cannot call into a half-destroyed debug interface.
+	Mcp::StopTransport();
+
+	JDI::Hub.RemoveNode(L"MCP_JDI_JSON");
 	JDI::Hub.RemoveNode(L"EMU_JDI_JSON");
 	DVD::Unmount();
 	DVD::ShutdownSubsystem();

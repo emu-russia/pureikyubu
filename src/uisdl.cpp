@@ -2189,6 +2189,13 @@ static int ui_main()
 	JdiAddNode("DEBUG_UI_JDI_JSON", JdiSpecs::DebugUiJdi, Debug::DebugUIReflector);
 	JdiAddNode("DEBUG_UI2_JDI_JSON", JdiSpecs::DebugUi2Jdi, Debug2::Reflector);
 
+	// The local MCP server (issue #383): an MCP client that started the emulator drives its debug
+	// interface over stdin/stdout while the window stays open and usable.
+	if (cmdline.mcp)
+	{
+		Mcp::StartTransport();
+	}
+
 	// Start the user interface
 
 	fileOpenDialog.SetTitle("Open File");

@@ -37,6 +37,12 @@ struct CmdLineOptions
 	bool    noDisc = false;     // `--no-disc`: start with the DVD lid open (no disk), so that the IPL takes its "no disk" path
 	bool    dspJit = false;     // `--dspjit`: run the DSP on the experimental recompiler instead of the interpreter
 
+	// `--mcp`: start the local MCP server, the way an MCP client (an LLM agent) drives an
+	// application it started: the JSON-RPC messages are read from stdin and the answers are written
+	// to stdout, one message per line (src/mcp.cpp, wiki/mcp.md). The front end starts it as soon
+	// as the debug interface is up, so that the client can call any of its commands.
+	bool    mcp = false;
+
 	// `--selftest`: run the whole startup sequence (the settings, the debug interface
 	// specifications, the emulated hardware and the ROM/memory card files) without creating a
 	// window, print a report and exit with the number of failed steps as the status code. This is

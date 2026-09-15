@@ -632,6 +632,7 @@ namespace SecurityUnitTest
 				JdiSpecs::GfxJdi,
 				JdiSpecs::HleJdi,
 				JdiSpecs::UiJdi,
+				JdiSpecs::McpJdi,
 			};
 
 			for (const char* text : specs)

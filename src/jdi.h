@@ -48,6 +48,19 @@ namespace JDI
 		bool CommandExists(const std::string& cmd);
 
 		void Dump(Json::Value* value, int depth = 0);
+
+		// One command of the interface, as its node declares it.
+		struct CommandInfo
+		{
+			const char* name;		// The name of the "can" record, which is the name of the command
+			Json::Value* spec;		// The record itself (help, hints, args, usage, output, ...)
+		};
+
+		// Hand every registered command to the caller. It is how a component that presents the
+		// interface rather than runs it - the MCP server (`mcp.cpp`), which publishes the whole
+		// command list as its tools - enumerates what there is. The records belong to the nodes
+		// and stay valid until a node is removed.
+		void EnumCommands(std::vector<CommandInfo>& commands);
 	};
 
 	// External API
