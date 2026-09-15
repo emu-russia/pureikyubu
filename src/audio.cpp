@@ -34,6 +34,11 @@ namespace Flipper
 		desc.lpwfxFormat = &waveFmt;
 		desc.guid3DAlgorithm = GUID_NULL;
 
+		// A machine without a sound device has no mixer to render into: the ring keeps its
+		// software state (the circular buffer and the frame pacing) and drops the audio.
+		if (!mixer->IsActive())
+			return;
+
 		hr = mixer->lpds->CreateSoundBuffer(&desc, &DSBuffer, NULL);
 		assert(hr == DS_OK);
 
@@ -80,6 +85,9 @@ namespace Flipper
 		HRESULT hr = DS_OK;
 		DWORD dwWriteCursor, dwPlayCursor;
 
+		if (DSBuffer == nullptr)
+			return;
+
 		hr = DSBuffer->GetCurrentPosition(&dwPlayCursor, &dwWriteCursor);
 		assert(hr == DS_OK);
 
@@ -97,7 +105,7 @@ namespace Flipper
 	{
 		HRESULT hr = DS_OK;
 
-		if (!enabled)
+		if (!enabled || DSBuffer == nullptr)
 			return;
 
 		// Wait
@@ -140,6 +148,14 @@ namespace Flipper
 	{
 		HRESULT hr = DS_OK;
 
+		if (DSBuffer == nullptr)
+		{
+			// No device: only the software pacing is kept, so that a title which asks for the
+			// audio state still sees it change.
+			enabled = false;
+			return;
+		}
+
 		if (enable)
 		{
 			hr = DSBuffer->Play(0, 0, bufferMode);
@@ -163,6 +179,9 @@ namespace Flipper
 
 	void AudioRing::SetSampleRate(AudioSampleRate value)
 	{
+		if (DSBuffer == nullptr)
+			return;
+
 		HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 : 48000);
 		assert(hr == DS_OK);
 	}
@@ -196,6 +215,9 @@ namespace Flipper
 	void AudioRing::DumpDSBuffer()
 	{
 		HRESULT hr = DS_OK;
+
+		if (DSBuffer == nullptr)
+			return;
 
 		char filename[0x100] = { 0, };
 		sprintf_s(filename, sizeof(filename), "Data\\AXDSBuffer_%04i.bin", (int)frameCounter);
@@ -251,11 +273,24 @@ namespace Flipper
 	AudioMixer::AudioMixer(HWConfig* config)
 	{
 		HRESULT hr = DirectSoundCreate8(NULL, &lpds, NULL);
-		assert(hr == DS_OK);
-		assert(lpds);
+
+		// No sound device (a VM, a remote session, a machine whose audio endpoint is disabled) is
+		// not a fatal condition: the emulator runs without audio, like the SDL backend does when
+		// SDL_OpenAudioDevice fails.
+		if (hr != DS_OK || lpds == nullptr)
+		{
+			Report(Channel::AX, "AX: DirectSound is not available (0x%08X), the audio output is disabled\n", (unsigned)hr);
+			return;
+		}
 
 		hr = lpds->SetCooperativeLevel((HWND)config->renderTarget, DSSCL_PRIORITY);
-		assert(hr == DS_OK);
+		if (hr != DS_OK)
+		{
+			Report(Channel::AX, "AX: DirectSound could not take the window (0x%08X), the audio output is disabled\n", (unsigned)hr);
+			lpds->Release();
+			lpds = nullptr;
+			return;
+		}
 
 		// Create primary buffer
 		DSBUFFERDESC bufferDesc = { 0 };
@@ -270,7 +305,13 @@ namespace Flipper
 		bufferDesc.guid3DAlgorithm = GUID_NULL;
 
 		hr = lpds->CreateSoundBuffer(&bufferDesc, &PrimaryBuffer, NULL);
-		assert(hr == DS_OK);
+		if (hr != DS_OK || PrimaryBuffer == nullptr)
+		{
+			Report(Channel::AX, "AX: the DirectSound primary buffer could not be created (0x%08X), the audio output is disabled\n", (unsigned)hr);
+			lpds->Release();
+			lpds = nullptr;
+			return;
+		}
 
 		// Setup the format of the primary sound bufffer.
 		waveFormat.wFormatTag = WAVE_FORMAT_PCM;
@@ -282,7 +323,17 @@ namespace Flipper
 		waveFormat.cbSize = 0;
 
 		hr = PrimaryBuffer->SetFormat(&waveFormat);
-		assert(hr == DS_OK);
+		if (hr != DS_OK)
+		{
+			Report(Channel::AX, "AX: the DirectSound format was rejected (0x%08X), the audio output is disabled\n", (unsigned)hr);
+			PrimaryBuffer->Release();
+			PrimaryBuffer = nullptr;
+			lpds->Release();
+			lpds = nullptr;
+			return;
+		}
+
+		active = true;
 
 		// Create rings
 		Sources = new AudioRing * [numSources];
@@ -302,33 +353,58 @@ namespace Flipper
 	AudioMixer::~AudioMixer()
 	{
 		// Release rings
-		for (int i = 0; i < numSources; i++)
+		if (Sources != nullptr)
 		{
-			delete Sources[i];
+			for (int i = 0; i < numSources; i++)
+			{
+				delete Sources[i];
+			}
+			delete[] Sources;
+			Sources = nullptr;
 		}
-		delete[] Sources;
 
-		PrimaryBuffer->Release();
-		lpds->Release();
+		if (PrimaryBuffer != nullptr)
+		{
+			PrimaryBuffer->Release();
+			PrimaryBuffer = nullptr;
+		}
+
+		if (lpds != nullptr)
+		{
+			lpds->Release();
+			lpds = nullptr;
+		}
 	}
 
 	void AudioMixer::Enable(AxChannel channel, bool enable)
 	{
+		if (Sources == nullptr)
+			return;
+
 		Sources[(int)channel]->Enable(enable);
 	}
 
 	bool AudioMixer::IsEnabled(AxChannel channel)
 	{
+		if (Sources == nullptr)
+			return false;
+
 		return Sources[(int)channel]->IsEnabled();
 	}
 
 	void AudioMixer::SetSampleRate(AxChannel channel, AudioSampleRate value)
 	{
+		if (Sources == nullptr)
+			return;
+
 		Sources[(int)channel]->SetSampleRate(value);
 	}
 
 	void AudioMixer::PushBytes(AxChannel channel, uint8_t* sampleData, size_t sampleDataSize)
 	{
+		if (Sources == nullptr)
+			return;
+
 		Sources[(int)channel]->PushBytes(sampleData, sampleDataSize);
 	}
 

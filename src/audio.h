@@ -78,9 +78,18 @@ namespace Flipper		// really flipper? this is external DAC
 		LPDIRECTSOUND8 lpds = nullptr;
 		LPDIRECTSOUNDBUFFER PrimaryBuffer = nullptr;
 
+		//! Whether DirectSound came up. A machine without a sound device (a VM, a session without
+		//! an audio endpoint) fails the device creation; the emulator then runs without audio
+		//! instead of stopping on an assertion, the same way the SDL backend reports the failure
+		//! and carries on.
+		bool active = false;
+
 	public:
 		AudioMixer(HWConfig* config);
 		~AudioMixer();
+
+		//! True when the audio device is usable; the rings do nothing when it is not.
+		bool IsActive() const { return active; }
 
 		void Enable(AxChannel channel, bool enable);
 		bool IsEnabled(AxChannel channel);
