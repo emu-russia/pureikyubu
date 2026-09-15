@@ -491,6 +491,15 @@ namespace DSP
 		static const int64_t MailboxHoldTicks = 100;
 
 		/// <summary>
+		/// The core is sitting on a `wait` instruction. The clock stops there until an interrupt
+		/// arrives, and the wait is over once one does: the interrupt resumes the microcode with
+		/// the instruction that follows the wait (dsp-isa.md: a wait stops "until reset or an
+		/// unmasked interrupt"), which is where every microcode keeps what it wants to run next.
+		/// Leaving the program counter on the wait instead would make that code unreachable.
+		/// </summary>
+		bool waitHalted = false;
+
+		/// <summary>
 		/// Called by the CPU side after a mailbox half-write: hold the DSP off for a few ticks so
 		/// that it cannot read the mailbox between the two halves of a message (see mailboxHoldTick).
 		/// Tolerates a null Core, which is what the DSP unit tests have (they drive the mailbox
