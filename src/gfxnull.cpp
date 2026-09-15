@@ -81,6 +81,29 @@ namespace GFX
 			params[1] = 1.0f;
 		}
 
+		// The viewport query of the hardware OSD (gfxosd.cpp). There is no render target to draw the
+		// overlay into, and an empty viewport is exactly what the caller reads as "there is nowhere
+		// to draw": it returns before it touches the pipeline.
+		void GetIntegerv(GLenum pname, GLint* params)
+		{
+			if (params == nullptr)
+			{
+				return;
+			}
+
+			if (pname == GL_VIEWPORT)
+			{
+				params[0] = 0;
+				params[1] = 0;
+				params[2] = 0;
+				params[3] = 0;
+			}
+			else
+			{
+				*params = 0;
+			}
+		}
+
 		void GetShaderiv(GLuint shader, GLenum pname, GLint* params)
 		{
 			if (params == nullptr)

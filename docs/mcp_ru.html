@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pureikyubu — MCP-сервер</title>
+<meta name="description" content="pureikyubu запускает локальный MCP-сервер (Model Context Protocol): каждая команда его отладочного интерфейса (JDI) становится инструментом, который может вызвать LLM-агент — загрузить игру, прочитать регистры Gekko, снять дамп памяти, сделать скриншот. Issue #383.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index_ru.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index_ru.html">Главная</a>
+      <a href="digest_ru.html">Дайджест</a>
+      <a href="gba_ru.html">GBA</a>
+      <a href="gfxsoft_ru.html">Soft GFX</a>
+      <a href="mcp_ru.html" aria-current="page">MCP</a>
+      <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Язык">
+      <a href="mcp.html" hreflang="en">EN</a>
+      <a href="mcp_ru.html" class="active" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>MCP-сервер</h1>
+    <p class="lead">
+      У эмулятора одна поверхность управления — Json Debug Interface (JDI) — и каждый фронтенд
+      представляет собой тонкий слой над ней. MCP-сервер открывает этот же интерфейс
+      <strong>LLM-агенту</strong>: клиент запускает эмулятор как свой дочерний процесс, и каждая
+      отладочная команда эмулятора становится <strong>инструментом</strong> (tool).<br><br>
+      Загрузить образ диска, запустить его, прочитать регистры Gekko, поставить точку останова,
+      дизассемблировать, снять дамп основной памяти, посмотреть счётчики железа, сделать скриншот —
+      агент вызывает те же команды, которые набрал бы в консоли отладчика, и получает ответы в виде
+      Json.
+    </p>
+    <div class="btn-row">
+      <a class="btn" href="https://github.com/emu-russia/pureikyubu/issues/383">Issue #383</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/mcp.md">Wiki: MCP-сервер</a>
+      <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu/blob/master/testing/mcp_test.cpp">Тесты</a>
+    </div>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>Что это</h2>
+      <p class="sub" style="max-width:none">
+        MCP (Model Context Protocol) — это способ, которым агентское приложение (Claude Desktop,
+        Claude Code, IDE, собственный скрипт) пользуется программой как набором инструментов.
+        Сервер этого эмулятора говорит по протоколу через свои <strong>stdin/stdout</strong>
+        (транспорт «локального сервера»: клиент запускает эмулятор сам, одно JSON-RPC сообщение на
+        строку), а публикуемые инструменты — это команды отладочного интерфейса, описанные теми
+        спецификациями, которые в эмуляторе уже есть.
+      </p>
+      <pre><code>MCP-клиент  -- stdio --&gt;  pureikyubu --mcp  --&gt;  Json Debug Interface  --&gt;  эмулятор
+     |                          |
+     |  tools/call "memdump"    +--&gt; окно остаётся открытым и рабочим (оконные сборки)
+     +--------------------------+--&gt; окна нет вообще (headless-сборка)</code></pre>
+      <table>
+        <tr><th>Команда</th><th>Что делает</th></tr>
+        <tr><td><code>pureikyubu --mcp</code></td><td>Запускает локальный MCP-сервер. Файл в командной строке загружается и запускается до этого, так что клиент подключается к уже работающей игре.</td></tr>
+        <tr><td><code>mcp 1</code> / <code>mcp 0</code></td><td>Включить или выключить сервер на ходу из консоли отладчика; просто <code>mcp</code> сообщает, работает ли он.</td></tr>
+        <tr><td><code>McpRequest &lt;json&gt;</code></td><td>Весь протокол одной отладочной командой: сообщение на вход, сообщение на выход. Транспорт — лишь переносчик этих ответов.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Подключение клиента</h2>
+      <p class="sub" style="max-width:none">
+        Клиент, который запускает свои серверы как дочерние процессы, настраивается на исполняемый
+        файл и <code>--mcp</code>. Для автономной работы (без окна) предназначена headless-сборка;
+        оконная сборка работает так же — если вы хотите видеть эмулятор и сами им пользоваться.
+      </p>
+      <pre><code>{
+  "mcpServers": {
+    "pureikyubu": {
+      "command": "C:\\pureikyubu\\pureikyubu_headless.exe",
+      "args": ["--mcp"]
+    }
+  }
+}</code></pre>
+      <p class="sub" style="max-width:none">
+        Ни порта, ни слушающего сокета, ни аутентификации: сервер — дочерний процесс своего клиента,
+        поэтому разговаривать с ним может только тот, кто его запустил. Один клиент за раз.
+      </p>
+    </section>
+
+    <section>
+      <h2>Инструменты</h2>
+      <p class="sub" style="max-width:none">
+        До загрузки машины публикуется около 150 команд, после — около 170: узлы, относящиеся к
+        эмулируемому железу (Flipper, конвейер GFX, привод диска), появляются, когда файл уже
+        работает. У каждого инструмента есть текст подсказки и справка команды, аргументы из её
+        собственной спецификации и описание того, что она возвращает.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <h3>Управление</h3>
+          <p><code>load</code>, <code>unload</code>, <code>reset</code>, <code>run</code>,
+             <code>stop</code>, <code>IsLoaded</code>, <code>GetLoaded</code>,
+             <code>MountIso</code>, <code>OpenLid</code>, <code>DvdRead</code>, <code>DumpFst</code>.</p>
+        </div>
+        <div class="card">
+          <h3>Отладчик Gekko</h3>
+          <p><code>r</code> (регистры), <code>regs</code> (дамп в Markdown),
+             <code>b</code>/<code>bc</code> (точки останова), <code>u</code>, <code>GekkoDisasm</code>,
+             <code>syms</code>, <code>NameByAddress</code>, <code>dtlb</code>, <code>nop</code>.</p>
+        </div>
+        <div class="card">
+          <h3>DSP</h3>
+          <p><code>dregs</code>, <code>dreg</code>, <code>dmem</code>, <code>imem</code>,
+             <code>du</code> (дизассемблер), <code>dbrk</code>, <code>dspjit</code>,
+             <code>dspmbox</code>.</p>
+        </div>
+        <div class="card">
+          <h3>Железо</h3>
+          <p><code>memdump</code> (основная память в Markdown), <code>ramload</code>,
+             <code>gx</code> (состояние всего конвейера GFX), <code>gxregs</code>,
+             <code>gxtex</code>, <code>gxpixel</code>, <code>gxshot</code> (PNG),
+             <code>hwprofile</code> (профайлер интерфейсов).</p>
+        </div>
+      </div>
+      <pre><code>tools/call  load       { "args": ["D:\\Isos\\zelda.iso"] }
+tools/call  run        {}
+tools/call  r          { "args": ["pc"] }
+tools/call  qd         {}                       &lt;- очередь отладочных сообщений (вывод `r`)
+tools/call  memdump    { "address": "0x80000000", "lines": "16" }
+tools/call  gxshot     { "filename": "frame.png" }
+tools/call  hwprofile  { "value": "text" }</code></pre>
+      <p class="sub" style="max-width:none">
+        Аргументы можно называть (по подсказкам команды: <code>&lt;address&gt; &lt;lines&gt;</code>)
+        или передать всей командной строкой в <code>args</code>. Команда, которая только печатает
+        отчёт — а таких в отладчике большинство — не возвращает ничего; её отчёт попадает в очередь
+        отладочных сообщений, которую читает инструмент <code>qd</code>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Почему сделано именно так</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Ничего нового учить не нужно</h3>
+          <p>Сервер не реализует второй интерфейс: он публикует тот, которым уже пользуются отладчик,
+             консоль и фронтенды. Команда, работающая в консоли, работает и как инструмент, а команда,
+             добавленная в эмулятор завтра, появится в списке инструментов сама.</p>
+        </div>
+        <div class="card">
+          <h3>Протокол — это команда</h3>
+          <p><code>McpRequest</code> принимает одно MCP-сообщение и возвращает ответ сервера, поэтому
+             протокол можно прогнать (и протестировать) вообще без транспорта — а stdio-сервер
+             представляет собой сотню строк чтения поверх этого.</p>
+        </div>
+        <div class="card">
+          <h3>Агент — это клиент, а не пользователь</h3>
+          <p>Неудачная команда возвращается как неудачный <em>инструмент</em>, вместе со справкой по
+             команде, так что модель может исправиться, а сессия продолжается. Ошибкой протокола
+             считается только неизвестное имя инструмента.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Ограничения</h2>
+      <p class="sub" style="max-width:none">
+        Ни HTTP, ни SSE, ни ресурсов, ни промптов, ни сэмплинга: это локальный транспорт
+        спецификации, а инструменты — то, что у эмулятора есть. Команды, завершающие процесс
+        (<code>exit</code> и её синонимы), намеренно не являются инструментами — вызов убил бы сервер
+        посреди собственного ответа; клиент вместо этого закрывает поток, и эмулятор завершается сам.
+        Ответ вызова инструмента ограничен 4 МБ текста: иначе команда вроде <code>FileLoad</code>
+        превратила бы целый бинарный файл в Json и втиснула бы его в контекст модели.
+      </p>
+    </section>
+
+    <section>
+      <h2>Документация</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Wiki: MCP-сервер</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/mcp.md">Вся страница</a>:
+             протокол на одной странице, как спецификация становится инструментом, что возвращает
+             вызов инструмента и чем сервер не является.</p>
+        </div>
+        <div class="card">
+          <h3>Тесты</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/testing/mcp_test.cpp">testing/mcp_test.cpp</a>:
+             рукопожатие, ошибки протокола, таблица инструментов на собственном узле и на всех
+             спецификациях, которые поставляет эмулятор.</p>
+        </div>
+        <div class="card">
+          <h3>Отладочный интерфейс</h3>
+          <p><a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/main.md">wiki/main.md</a>
+             описывает поверхность управления эмулятора и командную строку; сами команды объявлены в
+             <code>src/jdispecs.cpp</code> и перечисляются командой <code>help</code> в консоли
+             отладчика.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. GameCube и Game Boy — торговые марки Nintendo; эмулятор не связан с Nintendo. Ни BIOS, ни игры вместе с ним не распространяются.</div>
+    <div><a href="security_ru.html">Безопасность</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a> · <a href="https://discord.gg/Ehz8PYA">Discord</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

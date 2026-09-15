@@ -23,6 +23,7 @@
       <a href="digest.html">Digest</a>
       <a href="gba.html">GBA</a>
       <a href="gfxsoft.html">Soft GFX</a>
+      <a href="mcp.html">MCP</a>
       <a href="release_notes_1.8.html">Release Notes 1.8</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
@@ -168,6 +169,27 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
         <a href="gfxsoft_ru.html">По-русски</a> ·
         <a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">Wiki</a> ·
         <a href="https://github.com/emu-russia/pureikyubu/issues/384">Issue #384</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>The MCP server</h2>
+      <p class="sub" style="max-width:none">
+        The emulator can run as a local <strong>MCP</strong> (Model Context Protocol) server: an LLM
+        agent starts it as its own child process and drives the whole debug interface through it —
+        every command of the emulator becomes a tool. Load a disc image, read the Gekko registers,
+        dump main memory, watch the hardware counters, take a screenshot.
+      </p>
+      <pre><code>{
+  "mcpServers": {
+    "pureikyubu": { "command": "pureikyubu_headless", "args": ["--mcp"] }
+  }
+}</code></pre>
+      <p class="sub" style="max-width:none">
+        <a href="mcp.html">Read the page</a> ·
+        <a href="mcp_ru.html">По-русски</a> ·
+        <a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/mcp.md">Wiki</a> ·
+        <a href="https://github.com/emu-russia/pureikyubu/issues/383">Issue #383</a>
       </p>
     </section>
 

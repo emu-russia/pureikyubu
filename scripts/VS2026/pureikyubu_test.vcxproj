@@ -58,6 +58,7 @@
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <ClCompile Include="..\..\testing\security_test.cpp" />
     <ClCompile Include="..\..\testing\jdi_utf8_test.cpp" />
+    <ClCompile Include="..\..\testing\mcp_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
       The DSP core, its decoder, its disassembler and the DSP device (memory engine + mailboxes)
@@ -99,6 +100,11 @@
     <!-- The JDI node descriptions: dsp.cpp and gfx.cpp register their nodes with the texts from
          JdiSpecs, so the module has to be linked in as well. -->
     <ClCompile Include="..\..\src\jdispecs.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <!-- The MCP server: its protocol half is a pure function over the JDI, so the test DLL drives
+         it directly (testing/mcp_test.cpp). -->
+    <ClCompile Include="..\..\src\mcp.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\json.cpp">
@@ -168,6 +174,7 @@
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\hwprof.h" />
+    <ClInclude Include="..\..\src\mcp.h" />
     <ClInclude Include="..\..\src\gfx.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\xf.h" />

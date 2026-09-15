@@ -67,6 +67,7 @@
 #include "jdi.h"
 #include "jdiserver.h"
 #include "jdispecs.h"
+#include "mcp.h"
 
 #include "gekkodec.h"
 #include "gekko.h"

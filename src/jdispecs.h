@@ -19,4 +19,5 @@ namespace JdiSpecs
 	extern const char* GfxJdi;			// GFX (GX) debug commands (gfx.cpp)
 	extern const char* HleJdi;			// High-level (HLE) commands (os.cpp)
 	extern const char* UiJdi;			// User interface commands (uijdi.cpp)
+	extern const char* McpJdi;			// MCP server commands (mcp.cpp)
 }

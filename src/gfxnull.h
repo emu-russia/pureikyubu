@@ -17,9 +17,9 @@ test, a DolphinSDK demo sweep) needs.
 It is selected by the `GFX_NULL` macro, defined by the Headless build configurations; the OpenGL
 backend is untouched without it (see gfx.cpp). The handful of entry points whose *return value*
 the pipeline looks at (shader/program/buffer creation, the compile and link status, the uniform
-locations and `glReadPixels`) are implemented in gfxnull.cpp; everything else is a no-op.
-
-The header has to be included after the OpenGL headers (it redefines the GLEW macros).
+locations, the viewport the hardware OSD draws into, and `glReadPixels`) are implemented in
+gfxnull.cpp; everything else is a no-op. The header has to be included after the OpenGL headers
+(it redefines the GLEW macros).
 
 */
 
@@ -41,6 +41,7 @@ namespace GFX
 		void   GenVertexArrays(GLsizei n, GLuint* ids);
 		void   GenTextures(GLsizei n, GLuint* ids);
 		void   GetFloatv(GLenum pname, GLfloat* params);
+		void   GetIntegerv(GLenum pname, GLint* params);
 		void   GetShaderiv(GLuint shader, GLenum pname, GLint* params);
 		void   GetProgramiv(GLuint program, GLenum pname, GLint* params);
 		void   GetShaderInfoLog(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
@@ -188,6 +189,8 @@ namespace GFX
 #define glGenTextures(n, ids) GFX::Null::GenTextures(n, ids)
 #undef glGetFloatv
 #define glGetFloatv(pname, params) GFX::Null::GetFloatv(pname, params)
+#undef glGetIntegerv
+#define glGetIntegerv(pname, params) GFX::Null::GetIntegerv(pname, params)
 #undef glGetShaderiv
 #define glGetShaderiv(shader, pname, params) GFX::Null::GetShaderiv(shader, pname, params)
 #undef glGetProgramiv

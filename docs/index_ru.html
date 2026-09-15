@@ -23,6 +23,7 @@
       <a href="digest_ru.html">Дайджест</a>
       <a href="gba_ru.html">GBA</a>
       <a href="gfxsoft_ru.html">Soft GFX</a>
+      <a href="mcp_ru.html">MCP</a>
       <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
@@ -170,6 +171,28 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
         <a href="gfxsoft.html">In English</a> ·
         <a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/gfxsoft.md">Wiki</a> ·
         <a href="https://github.com/emu-russia/pureikyubu/issues/384">Задача #384</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>MCP-сервер</h2>
+      <p class="sub" style="max-width:none">
+        Эмулятор умеет работать как локальный <strong>MCP</strong>-сервер (Model Context Protocol):
+        LLM-агент запускает его своим дочерним процессом и управляет через него всем отладочным
+        интерфейсом — каждая команда эмулятора становится инструментом (tool). Загрузить образ диска,
+        прочитать регистры Gekko, снять дамп основной памяти, посмотреть счётчики железа, сделать
+        скриншот.
+      </p>
+      <pre><code>{
+  "mcpServers": {
+    "pureikyubu": { "command": "pureikyubu_headless", "args": ["--mcp"] }
+  }
+}</code></pre>
+      <p class="sub" style="max-width:none">
+        <a href="mcp_ru.html">Читать страницу</a> ·
+        <a href="mcp.html">In English</a> ·
+        <a href="https://github.com/emu-russia/pureikyubu/blob/master/wiki/mcp.md">Wiki</a> ·
+        <a href="https://github.com/emu-russia/pureikyubu/issues/383">Задача #383</a>
       </p>
     </section>
 

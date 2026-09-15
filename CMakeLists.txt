@@ -86,6 +86,7 @@ set (PUREIKYUBU_CORE
 	src/jdispecs.cpp
 	src/json.cpp
 	src/main.cpp
+	src/mcp.cpp
 	src/mem.cpp
 	src/memcard.cpp
 	src/os.cpp

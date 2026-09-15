@@ -407,4 +407,40 @@ namespace JDI
 		}
 	}
 
+	// Hand every registered command to the caller, in the shape of the "can" records the nodes
+	// declare. The nodes are kept in a hash map, so the order is the order of the map.
+	void JdiHub::EnumCommands(std::vector<CommandInfo>& commands)
+	{
+		commands.clear();
+
+		for (auto it = nodes.begin(); it != nodes.end(); ++it)
+		{
+			Json* node = it->second;
+			if (node->root.children.size() == 0)
+				continue;
+
+			Json::Value* rootObj = node->root.children.back();
+			if (rootObj->type != Json::ValueType::Object)
+				continue;
+
+			Json::Value* can = rootObj->ByName("can");
+			if (can == nullptr)
+				continue;
+
+			for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
+			{
+				Json::Value* next = *cmd;
+
+				if (next->name == nullptr)
+					continue;
+
+				CommandInfo command;
+				command.name = next->name;
+				command.spec = next;
+
+				commands.push_back(command);
+			}
+		}
+	}
+
 }

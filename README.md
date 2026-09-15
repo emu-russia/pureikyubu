@@ -49,10 +49,12 @@ selector, so an image, the Bootrom or a benchmark has to be requested:
 pureikyubu_headless "D:\Isos\game.gcm"      # run it until Ctrl+C
 pureikyubu_headless --ipl                   # run the Bootrom
 pureikyubu_headless --bench game.gcm 30     # measure it and print the report
+pureikyubu_headless --mcp                   # serve the debug interface to an MCP client
 ```
 
 The reports are also written to the console and to the `EMU_LOG` file, and `--help` lists the
-accepted options.
+accepted options. `--mcp` runs the emulator as a local MCP server (an LLM agent starts it and
+drives its whole debug interface, see [wiki/mcp.md](wiki/mcp.md)).
 
 ### Generic Linux (Ubuntu)
 
