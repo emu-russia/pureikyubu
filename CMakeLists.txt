@@ -78,6 +78,9 @@ set (PUREIKYUBU_CORE
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
 	src/gfx.cpp
+	src/gfxosd.cpp
+	src/hwosd.cpp
+	src/hwprof.cpp
 	src/jdi.cpp
 	src/jdiserver.cpp
 	src/jdispecs.cpp

@@ -2074,6 +2074,8 @@ namespace Flipper
 		if (vtxnum == 0)
 			return;
 
+		size_t primsBefore = tris + pts + lines;
+
 		switch (prim)
 		{
 			case GFX::RAS_QUAD:				tris += (vtxnum / 4) / 2; break;
@@ -2085,6 +2087,12 @@ namespace Flipper
 			case GFX::RAS_LINE_STRIP:		lines += vtxnum - 1; break;
 			case GFX::RAS_POINT:			pts += vtxnum; break;
 		}
+
+		// The frame counters are cleared at every frame end, so the profiler keeps its own copy of
+		// what this draw produced (issue #394): it reports the primitives and the vertices of the
+		// last second, which is how a title that has stopped feeding the FIFO shows up.
+		HwProfile::Count(HwProfile::Counter::GfxPrimitives, tris + pts + lines - primsBefore);
+		HwProfile::Count(HwProfile::Counter::GfxVertices, vtxnum);
 
 		// The default matrix indexes live in the XF; read them over the CP -> XF read-back path.
 

@@ -550,6 +550,10 @@ void EMUOpen(const std::wstring& filename)
 
 	Debug::g_PerfCounters->ResetAllCounters();
 
+	// The HW interface profiler (issue #394) counts the traffic of the machine that was just
+	// built, so the counters of the previous one (and the window measured over them) go away.
+	Debug::HwProfile::Reset();
+
 	emu.loaded = true;
 	emu.lastLoaded = filename;
 }

@@ -8,6 +8,7 @@
 	{
 		"DOLDEBUG": false,
 		"FILTER": 4294967295,
+		"HW_OSD": false,
 		"LASTDIR_ALL": "./",
 		"LASTDIR_DVD": "./",
 		"LASTDIR_MAP": "./Data",

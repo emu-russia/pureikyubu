@@ -1530,6 +1530,10 @@ namespace Gekko
 
 	void GatherBuffer::WriteBytes(uint8_t* data, size_t size)
 	{
+		// The Write Gather Buffer is one of the profiled channels (issue #394): what the CPU
+		// pushes into it is the display list traffic on its way to the CP.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::WriteGather, size);
+
 		if (log)
 		{
 			char byteText[10];

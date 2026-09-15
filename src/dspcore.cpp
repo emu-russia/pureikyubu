@@ -1727,7 +1727,13 @@ namespace DSP
 					break;
 			}
 
-			core->instructionCounter += 2;
+			// A paired (parallel) word is one instruction: the upper and the lower half are two
+			// opcodes of the same cycle, so the prologue is not enough to say how fast the core
+			// runs. Issue #394: "the number of instructions per second, with a paired DSP
+			// instruction counted as one". The clock model does not depend on this counter (the
+			// DSP thread advances the time base by the words a block retired), so counting
+			// instructions here is what the report reads.
+			core->instructionCounter++;
 		}
 
 		CommitCounter();

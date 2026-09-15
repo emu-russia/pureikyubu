@@ -123,6 +123,8 @@ namespace Flipper
 #include "osdebug.h"
 
 #include "debug.h"
+#include "hwprof.h"
+#include "hwosd.h"
 #include "cui.h"
 #include "debugui.h"
 #include "debugui2.h"

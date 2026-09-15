@@ -22,9 +22,37 @@ namespace Flipper
 
 	// Actually, all memory errors should generate a PI interrupt, but we keep it simple and just output debug messages.
 
-	void ProcessorInterface::PIReadByte(uint32_t pa, uint32_t* reg)
+	// The HW profiler (issue #394) watches two buses here. Every access the CPU makes crosses the
+	// 60x bus, whatever it ends up talking to; only the accesses that land in main memory are also
+	// traffic on the Flipper <-> Splash bus (a register access, an EFB access or a BootROM read is
+	// not). The cache line transfers are counted on the 60x bus here and on the Splash bus inside
+	// MemoryInterface::MIReadBurst / MIWriteBurst, which is where they actually move.
+
+	static inline void CountPIRead(uint32_t bytes)
 	{
 		Gekko::stats.piReads++;
+		HwProfile::Count(HwProfile::Counter::Bus60xRead, bytes);
+	}
+
+	static inline void CountPIWrite(uint32_t bytes)
+	{
+		Gekko::stats.piWrites++;
+		HwProfile::Count(HwProfile::Counter::Bus60xWrite, bytes);
+	}
+
+	static inline void CountSplashRead(uint32_t bytes)
+	{
+		HwProfile::Count(HwProfile::Counter::SplashRead, bytes);
+	}
+
+	static inline void CountSplashWrite(uint32_t bytes)
+	{
+		HwProfile::Count(HwProfile::Counter::SplashWrite, bytes);
+	}
+
+	void ProcessorInterface::PIReadByte(uint32_t pa, uint32_t* reg)
+	{
+		CountPIRead(1);
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -45,6 +73,7 @@ namespace Flipper
 		ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(pa);
 		if (ptr)
 		{
+			CountSplashRead(1);
 			*reg = (uint32_t)*ptr;
 		}
 		else
@@ -56,7 +85,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteByte(uint32_t pa, uint32_t data)
 	{
-		Gekko::stats.piWrites++;
+		CountPIWrite(1);
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -68,6 +97,7 @@ namespace Flipper
 		ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(pa);
 		if (ptr)
 		{
+			CountSplashWrite(1);
 			*ptr = (uint8_t)data;
 		}
 		else
@@ -78,7 +108,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadHalf(uint32_t pa, uint32_t* reg)
 	{
-		Gekko::stats.piReads++;
+		CountPIRead(2);
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -108,6 +138,7 @@ namespace Flipper
 		ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(pa);
 		if (ptr)
 		{
+			CountSplashRead(2);
 			*reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
 		}
 		else
@@ -119,7 +150,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteHalf(uint32_t pa, uint32_t data)
 	{
-		Gekko::stats.piWrites++;
+		CountPIWrite(2);
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -140,6 +171,7 @@ namespace Flipper
 		ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(pa);
 		if (ptr)
 		{
+			CountSplashWrite(2);
 			*(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
 		}
 		else
@@ -150,13 +182,14 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadWord(uint32_t pa, uint32_t* reg)
 	{
-		Gekko::stats.piReads++;
+		CountPIRead(4);
 		uint8_t* ptr;
 
 		// bus load word
 		ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(pa);
 		if (ptr)
 		{
+			CountSplashRead(4);
 			*reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 			return;
 		}
@@ -202,7 +235,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteWord(uint32_t pa, uint32_t data)
 	{
-		Gekko::stats.piWrites++;
+		CountPIWrite(4);
 		uint8_t* ptr;
 
 		if (pa >= PI_MEMSPACE_BOOTROM)
@@ -232,6 +265,7 @@ namespace Flipper
 		ptr = (uint8_t*)HW->mem->MIGetMemoryPointerForPI(pa);
 		if (ptr)
 		{
+			CountSplashWrite(4);
 			*(uint32_t*)ptr = _BYTESWAP_UINT32(data);
 		}
 		else
@@ -246,7 +280,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadDouble(uint32_t pa, uint64_t* reg)
 	{
-		Gekko::stats.piReads++;
+		CountPIRead(8);
 		if (pa >= PI_MEMSPACE_BOOTROM)
 		{
 			Halt("PI: Attempting to read uint64_t from BootROM\n");
@@ -264,12 +298,13 @@ namespace Flipper
 		uint8_t* buf = ptr;
 
 		// bus load doubleword
+		CountSplashRead(8);
 		*reg = _BYTESWAP_UINT64(*(uint64_t*)buf);
 	}
 
 	void ProcessorInterface::PIWriteDouble(uint32_t pa, uint64_t* data)
 	{
-		Gekko::stats.piWrites++;
+		CountPIWrite(8);
 		if (pa >= PI_MEMSPACE_BOOTROM)
 		{
 			Halt("PI: Attempting to write uint64_t to BootROM\n");
@@ -286,6 +321,7 @@ namespace Flipper
 		uint8_t* buf = ptr;
 
 		// bus store doubleword
+		CountSplashWrite(8);
 		*(uint64_t*)buf = _BYTESWAP_UINT64(*data);
 	}
 
@@ -298,6 +334,8 @@ namespace Flipper
 		// array with the address it is given, so it gets the decoded (masked) one.
 		uint32_t mem_addr = phys_addr & Verify::MainMemoryMask;
 
+		CountPIRead(32);
+
 		if (HW->mem->MIGetMemoryPointerForPI(phys_addr, 32) == nullptr)
 		{
 			Report(Channel::PI, "PI: Read burst outside main memory: 0x%08X\n", phys_addr);
@@ -309,6 +347,8 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 	{
+		CountPIWrite(32);
+
 		// You can actually write anywhere on the page
 		if ((phys_addr & ~0xfff) == PI_REGSPACE_GFX_FIFO)
 		{
@@ -324,6 +364,8 @@ namespace Flipper
 				Report(Channel::PI, "PI: CP FIFO write burst outside main memory: wrptr:0x%08X\n", (uint32_t)pi.cp_wrptr);
 				return;
 			}
+
+			HwProfile::Count(HwProfile::Counter::CpFifo, 32);
 
 			HW->mem->MIWriteBurst(pi.cp_wrptr & Verify::MainMemoryMask, burstData);
 			pi.cp_wrptr += 32;
@@ -453,6 +495,8 @@ namespace Flipper
 	// assert interrupt
 	void ProcessorInterface::PIAssertInt(uint32_t mask)
 	{
+		HwProfile::Count(HwProfile::Counter::PiInterrupts, 1);
+
 		pi.intsr |= mask;
 		if (pi.intmr & mask)
 		{

@@ -621,7 +621,7 @@ namespace Debug2
 
 		Panel& right = root.Sub(1);
 		right.SetTitle("Gekko");
-		right.SplitInto(Split::Tabs, 3);
+		right.SplitInto(Split::Tabs, 4);
 
 		regs = &right.Sub(0);
 		regs->SetTitle("Registers");
@@ -632,12 +632,16 @@ namespace Debug2
 		memdump = &right.Sub(2);
 		memdump->SetTitle("Memory");
 
+		profile = &right.Sub(3);
+		profile->SetTitle("Profiler");
+
 		// Whatever the panels will show, they are never empty: this is also the hint about why
 		// the live panels stay blank until something is running.
 		AppendItem(log, "**debugui2**: the new debugger is running. The command line is at the bottom of this panel.\n", ItemAlign::Left);
 		AppendItem(regs, "_Load an image to see the live registers._\n", ItemAlign::Left);
 		AppendItem(disasm, "_Load an image to see the live disassembly._\n", ItemAlign::Left);
 		AppendItem(memdump, "_Load an image to see the physical memory._\n", ItemAlign::Left);
+		AppendItem(profile, "_Load an image to see the HW interface profile._\n", ItemAlign::Left);
 
 		// The window is the only part that needs a GL context, so it is optional: without it the
 		// debugger still works (the session and the commands are there for JDI).
@@ -1032,6 +1036,20 @@ namespace Debug2
 			if (!markdown.empty())
 			{
 				ReplaceItems(memdump, markdown);
+			}
+		}
+
+		// 2.4: the HW interface profile. The command renders the table into a picture next to the
+		// session, so the panel shows the same numbers an offline look at the session would; the
+		// table covers one emulated second, so there is nothing to gain from asking more often.
+		if (NowMs() - profileRefresh >= 1000)
+		{
+			profileRefresh = NowMs();
+
+			std::string markdown = JdiCommandToMarkdown("hwprofile image");
+			if (!markdown.empty())
+			{
+				ReplaceItems(profile, markdown);
 			}
 		}
 	}

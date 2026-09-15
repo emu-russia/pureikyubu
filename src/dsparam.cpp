@@ -398,6 +398,13 @@ void DSPUpdateInt()
 				memcpy(&ARAM[aram.araddr], ptr, cnt);
 			else
 				memcpy(ptr, &ARAM[aram.araddr], cnt);
+
+			// The ARAM DMA is one of the profiled channels (issue #394). It moves the data between
+			// main memory and ARAM, so it is Splash traffic on the main-memory side as well.
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::DmaAram, cnt);
+			Debug::HwProfile::Count(
+				(type == RAM_TO_ARAM) ? Debug::HwProfile::Counter::SplashRead : Debug::HwProfile::Counter::SplashWrite,
+				cnt);
 		}
 
 		aram.araddr += cnt;

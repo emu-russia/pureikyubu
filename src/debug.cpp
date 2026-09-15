@@ -647,6 +647,10 @@ namespace Debug
 		JDI::Hub.AddCmd("IsCommandExists", IsCommandExists);
 		JDI::Hub.AddCmd("GetPerformanceCounter", CmdGetPerformanceCounter);
 		JDI::Hub.AddCmd("ResetPerformanceCounter", CmdResetPerformanceCounter);
+
+		// The HW interface profiler (issue #394): `hwprofile` is the report, `hwsod` is the
+		// overlay it draws over the emulated picture.
+		HwOsd::Reflector();
 	}
 }
 

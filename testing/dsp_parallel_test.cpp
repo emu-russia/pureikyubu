@@ -159,6 +159,23 @@ namespace DspUnitTest
 			Assert::AreEqual((uint16_t)0x7777, m.core->regs.a.l);
 		}
 
+		TEST_METHOD(Packed_CountsAsOneInstruction)
+		{
+			// Issue #394: a paired word is one instruction. The two halves are two opcodes of the
+			// same cycle, and the HW interface profiler reports the DSP rate from this counter, so
+			// counting the halves separately made the core look twice as fast as the clock model
+			// (which advances the time base by the *words* a block retired) says it is.
+			int64_t before = m.core->GetInstructionCounter();
+
+			RunOne(Enc::Add(0, R8P_X1, Enc::PLd(R8A_X0, REG_R0, 0)));
+			Assert::AreEqual(before + 1, m.core->GetInstructionCounter(),
+				L"a word with an ALU half and a memory half retires one instruction");
+
+			RunOne(Enc::Nop());
+			Assert::AreEqual(before + 2, m.core->GetInstructionCounter(),
+				L"a plain word retires one instruction as well");
+		}
+
 		// ---------------------------------------------------------------
 		// Dual load (ldd) and load-and-store (ls)
 		// ---------------------------------------------------------------

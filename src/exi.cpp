@@ -347,6 +347,15 @@ namespace Flipper
 			exi.chan = chan;
 			exi_cb[exi.chan][exi.sel](this);
 
+			// The transfer the device just performed moved `len` bytes between it and main memory
+			// when it was a DMA one (issue #394). The emulator completes EXI transfers instantly
+			// and does not touch main memory here - the device callback did - so this is where the
+			// channel is accounted for.
+			if (regs->cr & EXI_CR_DMA)
+			{
+				HwProfile::Count(HwProfile::Counter::DmaExi, regs->len);
+			}
+
 			// complete transfer
 			regs->cr &= ~EXI_CR_TSTART;
 

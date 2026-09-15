@@ -191,6 +191,15 @@ namespace GFX
 	// Current emulated GFX frame (for frame dump file names)
 	extern int gfx_frame_counter;
 
+	//! Draw the HW profiler overlay (issue #394) over the finished frame. The caller owns the GL
+	//! context (it is the same thread that renders the frame); the function is a no-op while the
+	//! overlay is off. The picture it draws is built by Debug::HwOsd, which pulls the report
+	//! through the debug interface.
+	void OsdDraw();
+
+	//! Release the GL objects the overlay owns. Called when the GL context goes away.
+	void OsdDispose();
+
 	GLuint CompileShaderStage(GLenum type, const char* source, const char* label);
 
 	/// <summary>
