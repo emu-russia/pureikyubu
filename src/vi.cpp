@@ -105,6 +105,12 @@ namespace Flipper
 			}
 		}
 
+		// The picture the software GFX pipeline leaves in the XFB is presented by this path (the
+		// OpenGL backend is not the one showing it), so the HW profiler overlay goes on here - the
+		// shader pipeline draws the same picture from GFXCore::GL_EndFrame (issue #394).
+		HwOsd::Update();
+		HwOsd::Blit((uint8_t*)dib, VI_XFB_WIDTH, VI_XFB_HEIGHT);
+
 		VideoOutRefresh();
 	}
 
@@ -162,6 +168,12 @@ namespace Flipper
 				// draw XFB
 				if (vi.xfb)
 				{
+					// One frame scanned out: the XFB is read out of main memory (packed YUV 4:2:2,
+					// two bytes per pixel of a 640 pixel line) and handed to the display.
+					HwProfile::Count(HwProfile::Counter::ViFrames, 1);
+					HwProfile::Count(HwProfile::Counter::SplashRead,
+						(uint64_t)VI_XFB_WIDTH * 2 * ActiveLines());
+
 					YUVBlit(vi.xfbbuf, vi.gfxbuf);
 					vi.frames++;
 				}

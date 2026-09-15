@@ -264,6 +264,38 @@ namespace JdiSpecs
       "internal": true,
       "args": 1,
       "help": "Reset the value of the performance counter"
+    },
+
+    "hwprofile": {
+      "help": "Profile the main information-exchange channels of the emulated console",
+      "hints": "[text|image|osd|reset]",
+      "usage": [
+        "Syntax: hwprofile [text|image|osd|reset]\n",
+        "The channels are the 60x bus, the Flipper <-> Splash bus, the PI interrupts, the Write Gather\n",
+        "Buffer, the PI/CP FIFO, the audio mixer input, the EXI/DI/DSP/AI/ARAM DMA, the GFX primitives,\n",
+        "the VI frames and the instructions per second (a paired DSP instruction counts as one).\n",
+        "The rates are measured over one emulated second, so they do not depend on how fast the host\n",
+        "runs the emulator; the ratio to the real time is reported with them.\n",
+        "text  - the Markdown table (the default).\n",
+        "image - the same table as a PNG picture stored next to the debugger session, plus the Markdown\n",
+        "        that shows it (the new debugger draws it in its own panel).\n",
+        "osd   - the fixed-width text the GFX overlay draws (`hwsod`).\n",
+        "reset - put every counter back to zero and start a new measuring window.\n",
+        "Example of use: hwprofile image\n"
+      ],
+      "output": "{ markdown: String } or an Array of the report lines for `osd`"
+    },
+
+    "hwsod": {
+      "help": "Draw the HW interface profiler over the emulated picture",
+      "hints": "[0|1]",
+      "usage": [
+        "Syntax: hwsod [0|1]\n",
+        "Without an argument the current state is reported. The choice is stored in the settings\n",
+        "(HW_OSD) and the overlay is refreshed once a second.\n",
+        "Example of use: hwsod 1\n"
+      ],
+      "output": "Bool"
     }
 
   }

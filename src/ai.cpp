@@ -195,6 +195,10 @@ namespace Flipper
 			ai->ai.streamFifoPtr = 0;
 			// Feed mixer
 			HW->Mixer->PushBytes(AxChannel::DvdAudio, ai->ai.streamFifo, sizeof(ai->ai.streamFifo));
+
+			// The DVD audio stream is the mixer's second input (issue #394); the samples come from
+			// the disc, not from main memory, so this is mixer traffic only.
+			HwProfile::Count(HwProfile::Counter::AudioMixer, sizeof(ai->ai.streamFifo));
 		}
 
 		// Adjust volume and swap endianess

@@ -885,3 +885,32 @@ void SetConfigInt(const char* var, int newVal, const char* path)
 	if (var != nullptr)
 		gfxTestConfigInts[var] = newVal;
 }
+
+// -------------------------------------------------------------------------------------------
+// The HW interface profiler overlay double (issue #394). The GL backend draws the overlay from
+// GFX::OsdDraw (gfxosd.cpp, linked into this project); the picture it draws is built by
+// Debug::HwOsd, which pulls the report through the debug interface and rasterizes it with the
+// debugger's font. That machinery needs a debugger session and the shipped font data, so the
+// tests answer with "there is no picture": the overlay stays off, which is its default state
+// anyway, and the GL side of it is still linked and exercised.
+// -------------------------------------------------------------------------------------------
+
+namespace Debug
+{
+	namespace HwOsd
+	{
+		void Update()
+		{
+		}
+
+		bool CopyImage(std::vector<uint8_t>& rgba, int* width, int* height)
+		{
+			return false;
+		}
+
+		uint64_t Version()
+		{
+			return 0;
+		}
+	}
+}

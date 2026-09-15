@@ -95,6 +95,13 @@ namespace DSP
 			{
 				memcpy(ptr, mem_ptr, count);
 			}
+
+			// The DSP memory DMA is one of the profiled channels (issue #394); it moves the data
+			// between the DSP memories and main memory, so it is Splash traffic as well.
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::DmaDsp, count);
+			Debug::HwProfile::Count(
+				DmaRegs.control.Dsp2Mmem ? Debug::HwProfile::Counter::SplashWrite : Debug::HwProfile::Counter::SplashRead,
+				count);
 		}
 
 		// The DSP just rewrote instruction memory: every block compiled from it is stale. (The

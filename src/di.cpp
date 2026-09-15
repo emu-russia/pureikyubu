@@ -157,6 +157,10 @@ namespace Flipper
 					memcpy(ptr, di->di.dmaFifo, 32);
 					di->DIMAR += 32;
 					di->DILEN -= 32;
+
+					// A 32-byte block the DI DMA wrote into main memory (issue #394).
+					HwProfile::Count(HwProfile::Counter::DmaDi, 32);
+					HwProfile::Count(HwProfile::Counter::SplashWrite, 32);
 				}
 
 				if (di->DILEN == 0)
@@ -222,6 +226,9 @@ namespace Flipper
 					memcpy(memptr, di->di.dmaFifo, 32);
 					di->DIMAR += 32;
 					di->DILEN -= 32;
+
+					HwProfile::Count(HwProfile::Counter::DmaDi, 32);
+					HwProfile::Count(HwProfile::Counter::SplashWrite, 32);
 				}
 
 				if (di->DILEN == 0)

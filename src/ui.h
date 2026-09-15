@@ -34,6 +34,7 @@ void UIReflector();
 #define USER_LASTDIR_MAP "LASTDIR_MAP"		// last used directory (map)
 #define USER_LASTFILE "LASTFILE"			// last loaded file
 #define USER_ONTOP "ONTOP"				// window is always on top, if 1
+#define USER_HW_OSD "HW_OSD"			// 1: draw the HW interface profiler overlay over the emulated picture (issue #394)
 #define USER_PATH "PATH"				// path string for selector
 #define USER_PROFILE "PROFILE"			// 1: enable emu profiler
 #define USER_RECENT "RECENT%i"			// recent file entry

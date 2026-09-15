@@ -90,7 +90,8 @@ template <auto Fn>
 uint32_t Jit::ParallelLowerTrampoline(DspInterpreter* interp, uint32_t pc)
 {
 	(interp->*Fn)();
-	interp->core->instructionCounter += 2;
+	// One instruction, not two: see the note in DspInterpreter::Dispatch (issue #394).
+	interp->core->instructionCounter++;
 	return DspInterpreter::JitCommit(interp, pc);
 }
 
@@ -116,7 +117,7 @@ void Jit::ParallelNopUpperTrampoline(DspInterpreter* interp, DecoderInfo* info)
 
 uint32_t Jit::ParallelNopLowerTrampoline(DspInterpreter* interp, uint32_t pc)
 {
-	interp->core->instructionCounter += 2;
+	interp->core->instructionCounter++;
 	return DspInterpreter::JitCommit(interp, pc);
 }
 

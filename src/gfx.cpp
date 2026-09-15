@@ -1185,6 +1185,9 @@ namespace GFX
 		tx->TexFree();
 		DisposeGeometryBuffers();
 
+		// The overlay owns GL objects of its own; they belong to the context that is going away.
+		OsdDispose();
+
 		//if(frameReady) GL_EndFrame();
 
 #ifdef GFX_NULL
@@ -1325,6 +1328,10 @@ namespace GFX
 
 		if (dump_enabled)
 			DumpFrame();
+
+		// The profiler overlay goes on last: the frame is complete, the dump has been taken, and
+		// the text is what the viewer sees on top of the picture (issue #394).
+		OsdDraw();
 
 		glFinish();
 

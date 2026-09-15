@@ -329,12 +329,18 @@ namespace Flipper
 	{
 		memcpy(burstData, &mi.ram[mem_addr], 32);
 		mi.pi_read_counter.cnt++;
+
+		// A whole 32-byte line left Splash for the Flipper side (issue #394: the profiler counts
+		// the traffic on the Flipper <-> Splash bus where it actually moves).
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::SplashRead, 32);
 	}
 
 	void MemoryInterface::MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32])
 	{
 		memcpy(&mi.ram[mem_addr], burstData, 32);
 		mi.pi_write_counter.cnt++;
+
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::SplashWrite, 32);
 	}
 
 	void MemoryInterface::MemRst()

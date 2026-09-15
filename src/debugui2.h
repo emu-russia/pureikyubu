@@ -271,6 +271,7 @@ namespace Debug2
 		Panel* regs = nullptr;
 		Panel* disasm = nullptr;
 		Panel* memdump = nullptr;
+		Panel* profile = nullptr;
 
 		std::string sessionPath;
 		std::string sessionName;
@@ -279,6 +280,11 @@ namespace Debug2
 		size_t cmdHistoryPos = 0;
 
 		uint64_t lastRefresh = 0;
+
+		// The profile panel covers a whole emulated second, so it is refreshed on that cadence
+		// rather than on the panel cadence (which also keeps the session folder from being
+		// rewritten twice a second).
+		uint64_t profileRefresh = 0;
 
 		// The frame rate shown in the header of the main panel (see UpdatePanelInfo).
 		float fps = 0;

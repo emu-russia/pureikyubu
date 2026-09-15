@@ -8,6 +8,7 @@
 	{
 		"DOLDEBUG": false,
 		"FILTER": 4294967295,
+		"HW_OSD": false,
 		"LASTFILE": "",
 		"PATH": "./",
 		"SELECTOR": true,

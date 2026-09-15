@@ -170,7 +170,14 @@ namespace DSP
 			Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, (uint8_t *)Flipper::HW->mem->MIGetMemoryPointerForDSP(dsp_ai.currentDmaAddr), bytes);
 			dsp_ai.currentDmaAddr += bytes;
 			dsp_ai.dcnt--;
+
+			// The AI DMA reads the sample block out of main memory (issue #394).
+			HwProfile::Count(HwProfile::Counter::SplashRead, bytes);
 		}
+
+		// ... and either way the block is what goes into the mixer.
+		HwProfile::Count(HwProfile::Counter::DmaAi, bytes);
+		HwProfile::Count(HwProfile::Counter::AudioMixer, bytes);
 
 		dsp_ai.dmaTime = Core->GetTicks() + AIGetTime(bytes, dsp_ai.dmaRate);
 	}
