@@ -60,10 +60,10 @@ shader, one batched quad per glyph.
 
 The font is a Data file (`Data/DebugUiMono.ttf`, DejaVu Sans Mono - the Bitstream Vera licence it
 comes under travels with it as `Data/DebugUiMono.LICENSE`), so that it can be replaced without
-rebuilding. Right now the JDI input and output is ASCII (UTF-8 is a separate task), but the atlas
-is not limited to ASCII: it packs the ranges the renderer is likely to be asked for (Latin, Greek,
-Cyrillic, box drawing, arrows, mathematical operators and the common symbols), so the text side is
-ready for the day the interface switches to UTF-8.
+rebuilding. The text of the interface is UTF-8 (issue #372), so both the input line and the drawing
+decode it into code points; the atlas packs the ranges the renderer is likely to be asked for
+(Latin, Greek, Cyrillic, box drawing, arrows, mathematical operators and the common symbols), and a
+code point outside them is skipped rather than drawn as a wrong glyph.
 
 ## Sessions
 

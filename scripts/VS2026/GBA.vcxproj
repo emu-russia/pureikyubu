@@ -76,6 +76,8 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>..\..\src\gba;..\..\thirdparty\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- The sources are UTF-8 (issue #372): see pureikyubu.vcxproj. -->
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">

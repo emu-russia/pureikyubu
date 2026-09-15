@@ -184,6 +184,31 @@ namespace JDI
 		}
 	}
 
+	// Compare the name of a command from the specification with the one that was typed. Only the
+	// ASCII range is folded: the command names are ASCII, and a byte-wise comparison stays valid
+	// for UTF-8 (a continuation byte can never be mistaken for an ASCII letter).
+	static bool CommandNameEquals(const char* left, const char* right)
+	{
+		while (*left && *right)
+		{
+			char a = *left;
+			char b = *right;
+
+			if (a >= 'A' && a <= 'Z') a += 'a' - 'A';
+			if (b >= 'A' && b <= 'Z') b += 'a' - 'A';
+
+			if (a != b)
+			{
+				return false;
+			}
+
+			left++;
+			right++;
+		}
+
+		return *left == 0 && *right == 0;
+	}
+
 	// Get "can" entry by command name. Iterates over all available JDI nodes.
 	Json::Value* JdiHub::CommandByName(std::string& name)
 	{
@@ -205,7 +230,7 @@ namespace JDI
 			{
 				Json::Value* next = *cmd;
 
-				if (!_stricmp(next->name, name.c_str()))
+				if (next->name != nullptr && CommandNameEquals(next->name, name.c_str()))
 				{
 					return next;
 				}

@@ -8,6 +8,17 @@ This section contains common API that have almost atomic significance for all pr
 - String: String utilities
 - ByteSwap: Portable byte-swap API
 
+# Note on Strings
+
+The project keeps its text in std::wstring (Unicode code units: UTF-16 on Windows, UTF-32
+elsewhere), while every interface that leaves the emulator speaks UTF-8: the Json documents, the
+JDI command line and its arguments, the reports, the ImGui/SDL and Win32 front ends.
+
+`WstringToString` and `StringToWstring` are the two directions of that conversion, so a narrow
+`std::string` in this code base is UTF-8 and never an ANSI code page. A byte sequence that is not
+valid UTF-8 is carried through as the code point of the byte itself rather than dropped, so a name
+that came from an unknown source still reaches the file system in one piece.
+
 # Note on Threads
 
 Emulator uses Suspend/Resume methods as control primitives.
@@ -136,9 +147,35 @@ public:
 
 namespace Util
 {
+	// Encode wide text as UTF-8.
+
 	std::string WstringToString(const std::wstring& wstr);
 
+	// Decode UTF-8 into wide text.
+
 	std::wstring StringToWstring(const std::string& str);
+
+	// Cursor arithmetic over a UTF-8 string: the byte offset of the code point after (or before)
+	// the one that starts at `offset`. The result is clamped to the string, and a byte that cannot
+	// start a sequence counts as a code point of its own, so walking a string forwards and then
+	// backwards always comes back to where it started, whatever the input is.
+
+	size_t Utf8NextOffset(const std::string& str, size_t offset);
+	size_t Utf8PrevOffset(const std::string& str, size_t offset);
+
+	// The code point that starts at `offset`, with `length` set to the number of bytes it takes. A
+	// byte that cannot start a sequence is returned as the code point of the byte itself with a
+	// length of one, so a caller that walks a string always makes progress and never reads past it.
+	// `offset` has to be inside the string (offsets are obtained from Utf8NextOffset/Utf8PrevOffset).
+
+	uint32_t Utf8Codepoint(const std::string& str, size_t offset, size_t& length);
+
+	// Open a file by its (wide) name. fopen() cannot be handed a name that leaves the ANSI code
+	// page, so on Windows the call goes through _wfopen_s; elsewhere the name is converted to the
+	// UTF-8 the C library expects.
+
+	FILE* FileOpen(const std::wstring& filename, const char* mode);
+	FILE* FileOpen(const wchar_t* filename, const char* mode);
 
 	// Get the size of a file.
 

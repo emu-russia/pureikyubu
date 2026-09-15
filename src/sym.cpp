@@ -247,7 +247,7 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
 	int     flags;
 	char    procName[512];
 
-	map = fopen ( Util::WstringToString(mapname).c_str(), "r");
+	map = Util::FileOpen(mapname, "r");
 	if(!map) return MAP_FORMAT::BAD;
 
 	while(!feof(map))
@@ -306,7 +306,7 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
 	char    par1[512];
 	char    par2[512];
 
-	map = fopen ( Util::WstringToString(mapname).c_str(), "r");
+	map = Util::FileOpen(mapname, "r");
 	if(!map) return MAP_FORMAT::BAD;
 
 	while(!feof(map))
@@ -443,7 +443,7 @@ MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add)
 	wcscpy(hle.mapfile, mapname);
 
 	// try to open
-	f = fopen ( Util::WstringToString(mapname).c_str(), "r");
+	f = Util::FileOpen(mapname, "r");
 	if(!f)
 	{
 		Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Util::WstringToString(mapname).c_str());
@@ -666,7 +666,7 @@ static char * MAPFind (uint32_t checksum)
 void MAPInit(const wchar_t * mapname)
 {
 	MAPOpen ();
-	Map = fopen( Util::WstringToString(mapname).c_str(), "w");
+	Map = Util::FileOpen(mapname, "w");
 
 	Map_marksMaxSize = 500;
 	Map_marksSize = 0;
@@ -834,11 +834,7 @@ static int itemsUpdated;
 
 static void AppendMAPBySymbol(uint32_t address, char *symbol)
 {
-#ifdef _LINUX
-	mapFile = fopen(Util::WstringToString(mapName).c_str(), "a");
-#else
-	if (_wfopen_s(&mapFile, mapName.c_str(), L"a") != 0) mapFile = NULL;
-#endif
+	mapFile = Util::FileOpen(mapName, "a");
 	if(!mapFile) return;
 
 	// linefeed
@@ -922,20 +918,15 @@ void SaveMAP(const char* mapname)
 
 	wchar_t wcharStr[0x1000] = { 0, };
 
-	// one wide character per input byte plus the terminator, so the buffer can take
-	// exactly _countof(wcharStr) - 1 bytes. Longer names are rejected instead of overrun.
-	if (strlen(mapname) >= _countof(wcharStr))
+	// The name arrives as UTF-8 (the JDI command line); one code point can take more than one
+	// byte of it, so the buffer is checked against the converted length rather than the byte count.
+	std::wstring wname = Util::StringToWstring(mapname);
+	if (wname.size() >= _countof(wcharStr))
 	{
 		Report(Channel::Error, "MAP file name is too long\n");
 		return;
 	}
 
-	char* ansiPtr = (char*)mapname;
-	wchar_t* wcharPtr = wcharStr;
-	while (*ansiPtr)
-	{
-		*wcharPtr++ = *ansiPtr++;
-	}
-	*wcharPtr = 0;
+	wcscpy(wcharStr, wname.c_str());
 	SaveMAP2(wcharStr);
 }

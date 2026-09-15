@@ -501,7 +501,7 @@ bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id) {
 	}
 
 	newfile = nullptr;
-	newfile = fopen(Util::WstringToString(path).c_str(), "wb");
+	newfile = Util::FileOpen(path, "wb");
 
 	if (newfile == NULL) {
 		Halt("MC: Error while trying to create memcard file.\n");
@@ -611,7 +611,7 @@ bool MCConnect(int cardnum) {
 			size_t memcardSize = Util::FileSize(memcard[cardnum].filename);
 
 			memcard[cardnum].file = nullptr;
-			memcard[cardnum].file = fopen(Util::WstringToString(memcard[cardnum].filename).c_str(), "r+b");
+			memcard[cardnum].file = Util::FileOpen(memcard[cardnum].filename, "r+b");
 			if (memcard[cardnum].file == nullptr) {
 				static char slt[2] = { 'A', 'B' };
 

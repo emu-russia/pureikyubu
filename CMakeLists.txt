@@ -36,6 +36,15 @@ endif ()
 add_compile_options(-Wno-attributes)
 add_compile_options(-lstdc++fs)
 
+# The sources are UTF-8 (issue #372). GCC and Clang read them as UTF-8 by themselves; MSVC has to
+# be told, or it falls back to the ANSI code page of whoever builds the project and misreads the
+# non-ASCII text the sources contain (the Japanese application name in ui.h, the arithmetic signs
+# in the comments). The narrow literals become UTF-8 bytes as well, which is the encoding the
+# emulator's interfaces speak.
+if (MSVC)
+  add_compile_options(/utf-8)
+endif ()
+
 # The emulator core: everything that is not tied to a particular front end or output device.
 
 set (PUREIKYUBU_CORE

@@ -92,7 +92,7 @@ namespace GFX
 		char hex[16];
 		sprintf(hex, "0x%X", value);
 		obj->AddUInt32(name, value);
-		obj->AddAnsiString((std::string(name) + "Hex").c_str(), hex);
+		obj->AddUtf8String((std::string(name) + "Hex").c_str(), hex);
 	}
 
 	// A GL context is only current on the thread that drives the frame loop; the copy commands below
@@ -114,7 +114,7 @@ namespace GFX
 	static Json::Value* GLErrorValue(const wchar_t* text)
 	{
 		Json::Value* output = MakeObject();
-		output->AddAnsiString("error", Util::WstringToString(text).c_str());
+		output->AddUtf8String("error", Util::WstringToString(text).c_str());
 		return output;
 	}
 
@@ -144,7 +144,7 @@ namespace GFX
 		common->AddBool("flat_en", gfx->genmode.flat_en != 0);
 		common->AddInt("backend_started", gfx->BackendStarted() ? 1 : 0);
 		common->AddInt("pipeline", gfx->Pipeline());
-		common->AddAnsiString("pipelineName", gfx->SoftPipeline() ? "soft" : "shader");
+		common->AddUtf8String("pipelineName", gfx->SoftPipeline() ? "soft" : "shader");
 		common->AddInt("scr_w", (int)gfx->RenderWidth());
 		common->AddInt("scr_h", (int)gfx->RenderHeight());
 
@@ -473,7 +473,7 @@ namespace GFX
 				return 0;
 			}
 
-			FILE* f = fopen(name.c_str(), "wb");
+			FILE* f = Util::FileOpen(Util::StringToWstring(name), "wb");
 			if (f == nullptr)
 			{
 				return 0;
@@ -489,9 +489,9 @@ namespace GFX
 		size_t fragSize = writeText(fragName, gfx->tev->FragmentShaderSource());
 
 		Json::Value* output = MakeObject();
-		output->AddAnsiString("vertexShader", vertName.c_str());
+		output->AddUtf8String("vertexShader", vertName.c_str());
 		output->AddInt("vertexShaderSize", (int)vertSize);
-		output->AddAnsiString("fragmentShader", fragName.c_str());
+		output->AddUtf8String("fragmentShader", fragName.c_str());
 		output->AddInt("fragmentShaderSize", (int)fragSize);
 		return output;
 	}
@@ -607,7 +607,7 @@ namespace GFX
 		bool saved = Util::SavePng(filename.c_str(), rgb.data(), (size_t)width, (size_t)height);
 
 		Json::Value* output = MakeObject();
-		output->AddAnsiString("file", filename.c_str());
+		output->AddUtf8String("file", filename.c_str());
 		output->AddInt("x", x);
 		output->AddInt("y", y);
 		output->AddInt("width", width);
@@ -706,7 +706,7 @@ namespace GFX
 
 		Json::Value* output = MakeObject();
 		output->AddInt("map", id);
-		output->AddAnsiString("file", filename.c_str());
+		output->AddUtf8String("file", filename.c_str());
 
 		// The image is decoded from main memory on demand, which is what the draw path does as well
 		std::vector<uint8_t> rgb;
@@ -715,7 +715,7 @@ namespace GFX
 		if (!gfx->tx->DumpTexture(id, rgb, &width, &height))
 		{
 			output->AddBool("saved", false);
-			output->AddAnsiString("reason", "the texture map is not valid");
+			output->AddUtf8String("reason", "the texture map is not valid");
 			return output;
 		}
 
@@ -771,7 +771,7 @@ namespace GFX
 
 		Json::Value* output = MakeObject();
 		output->AddInt("pipeline", gfx->Pipeline());
-		output->AddAnsiString("name", gfx->SoftPipeline() ? "soft" : "shader");
+		output->AddUtf8String("name", gfx->SoftPipeline() ? "soft" : "shader");
 		return output;
 	}
 

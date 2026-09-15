@@ -554,7 +554,7 @@ namespace DVD
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
-		output->AddAnsiString(nullptr, name.c_str());
+		output->AddUtf8String(nullptr, name.c_str());
 
 		return output;
 	}

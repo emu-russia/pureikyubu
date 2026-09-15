@@ -59,3 +59,17 @@ measurements in `testing/gekko_bench/Readme.md`).
 
 To avoid using configuration from the HW component, all Flipper hardware emulation settings are aggregated
 into the HWConfig structure.
+
+## Text encoding
+
+The sources are UTF-8 without a BOM. The MSVC projects pass `/utf-8` (and GCC/Clang read UTF-8 by
+themselves), so a non-ASCII comment or string literal is read the same way by every compiler, and the
+narrow literals of a source file come out as UTF-8 bytes.
+
+Narrow (`char`) strings are UTF-8 everywhere: the JDI command line and its arguments, the Json
+documents, the reports, the console and both front ends. The emulator's own text stays
+`std::wstring`; `Util::WstringToString` and `Util::StringToWstring` are the two directions of the
+conversion, and they also assemble and split the surrogate pairs of the code points outside the BMP.
+A file name that leaves the ANSI code page therefore travels through the interface as UTF-8 and is
+opened with `Util::FileOpen` (which is `_wfopen_s` on Windows and `fopen` of the UTF-8 name
+elsewhere). See also the note at the top of `src/utils.h`.

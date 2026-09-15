@@ -222,6 +222,21 @@ run for exactly as many instructions as the recompiler actually retired.
 check without Visual Studio, plus a wall-clock benchmark of both engines. See its
 `Readme.md`.
 
+# The UTF-8 suite (issue #372)
+
+The narrow string of the project is UTF-8 — the JDI command line and its arguments, the Json
+documents, the reports and both front ends — while the emulator's own text stays wide (`wchar_t`).
+`jdi_utf8_test.cpp` pins the three layers of that convention down:
+
+| Class | Contents |
+|---|---|
+| `Util_Utf8Test` | Both directions of `WstringToString`/`StringToWstring` (ASCII, Cyrillic, CJK, a code point outside the BMP, and the malformed and over-long byte sequences, which have to be carried through instead of dropped), the code point cursor arithmetic the console command line edits its buffer with, and the file helpers on a name outside the ANSI code page (which is the case the issue is about: the file has to be created, found, sized, read and removed). |
+| `Json_Utf8Test` | A document with a non-ASCII member name (which used to be truncated to one byte per character), a value added from a narrow source with `AddUtf8String`, and the round trip of a surrogate pair. |
+| `Jdi_Utf8Test` | The interface itself: the tokenizer, the argument a handler receives, the UTF-8 answer of `CallJdiReturnString`, the byte order mark a script file may start with, and a quoted path that has to arrive unchanged. |
+
+The bytes are written as escapes and the code points as `\uXXXX`, so the suite does not depend on
+how the compiler or the editor treats a non-ASCII source file.
+
 # GFX (Flipper graphics) tests
 
 The graphics subsystem has its own suite (`gfx_*_test.cpp`, `gfx_test_common.h`,

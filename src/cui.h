@@ -1,4 +1,10 @@
 // Universal code for interacting with the debug console.
+//
+// The console is Unicode: the key events carry the typed text as UTF-8 (the Win32 console reports
+// the character the key stands for, SDL the text of the event), and the text of a window is a UTF-8
+// string that is decoded one code point per cell of the back buffer (issue #372). The command line
+// therefore keeps its buffer in UTF-8 and moves its cursor by code point, so a file name outside
+// the ASCII range can be typed, edited and sent to JDI.
 
 #pragma once
 
@@ -88,7 +94,7 @@ namespace Debug
 		// Window layout in CUI.
 		CuiRect wndRect{};
 
-		void PutChar(CuiColor back, CuiColor front, int x, int y, char c);
+		void PutChar(CuiColor back, CuiColor front, int x, int y, wchar_t c);
 
 	protected:
 		size_t width = 0;
@@ -104,8 +110,13 @@ namespace Debug
 		// Redraw itself if invalidated.
 		virtual void OnDraw() = 0;
 
-		// Key event. Comes only if the window is active (SetFocus true)
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl) = 0;
+		// Key event. Comes only if the window is active (SetFocus true).
+		// `Text` is the UTF-8 of the character(s) the key produced, and is empty for a key that
+		// produces none (an arrow, a function key, or a control combination). It is a string rather
+		// than one wide character because that is what the input sides have: the Win32 console
+		// reports one UTF-16 code unit (two of which can stand for a character outside the BMP),
+		// and SDL reports the whole UTF-8 of the typed text.
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl) = 0;
 
 		void Invalidate() { invalidated = true; }
 		bool NeedRedraw() { return invalidated; }
@@ -113,6 +124,7 @@ namespace Debug
 		void SetFocus(bool flag) { active = flag; Invalidate(); }
 		bool IsActive() { return active; }
 
+		// The text is UTF-8 (`Print` decodes it), the single characters of Fill are plain cells.
 		void Print(CuiColor back, CuiColor front, int x, int y, std::string text);
 		void Print(CuiColor front, int x, int y, std::string text);
 		void Print(CuiColor back, CuiColor front, int x, int y, const char* fmt, ...);
@@ -157,7 +169,7 @@ namespace Debug
 		// A global CUI key event handler (for example, to switch focus between windows). 
 		// In addition, each active window also receives key event.
 
-		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void ShowCursor(bool show);
 		void SetCursor(int x, int y);

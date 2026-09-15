@@ -755,7 +755,7 @@ namespace DSP
 
 		output->AddBool(nullptr, info.flowControl);
 		output->AddInt(nullptr, (int)info.sizeInBytes / sizeof(uint16_t));
-		output->AddAnsiString(nullptr, text.c_str());
+		output->AddUtf8String(nullptr, text.c_str());
 
 		return output;
 	}

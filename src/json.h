@@ -1,5 +1,9 @@
 // Json serialization engine. Json is used to store emulator settings, as well as for the JDI system (Json Debug Interface).
 
+// The text of a Json document is UTF-8, and so are the names of the object members and the strings
+// that are added from a narrow (char*) source: the narrow string of the project is UTF-8 (see the
+// note in utils.h). The values themselves are kept wide, because the emulator works in wchar_t.
+
 // All errors during deserialization are thrown by exceptions.
 // During serializing, in theory, there shouldn't be any mistakes (if we are not enemies to ourselves and have not changed, for example, the Value type to some non-standard one).
 
@@ -21,7 +25,7 @@ private:
 	void DestroyValue(Value* value);
 
 	static wchar_t* CloneStr(const wchar_t* str);
-	static wchar_t* CloneAnsiStr(const char* str);
+	static wchar_t* CloneUtf8Str(const char* str);
 
 #pragma region "Serialization Related"
 
@@ -138,8 +142,7 @@ public:
 	public:
 		Value* parent = nullptr;
 		ValueType type = ValueType::Unknown;
-		// Name of object members. 
-		// For simplicity, we do not support Non-Ansi Json value names (although full use of Utf-8 is allowed in the values)
+		// Name of object members, as UTF-8.
 		char* name = nullptr;
 		union
 		{
@@ -204,7 +207,7 @@ public:
 		Value* AddNull(const char* keyName);
 		Value* AddBool(const char* keyName, bool _value);
 		Value* AddString(const char* keyName, const wchar_t* str);
-		Value* AddAnsiString(const char* keyName, const char* str);
+		Value* AddUtf8String(const char* keyName, const char* str);
 		Value* ReplaceString(const wchar_t* str);
 		Value* AddObject(const char* keyName);
 		Value* AddArray(const char* keyName);

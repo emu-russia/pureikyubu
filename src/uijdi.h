@@ -2,7 +2,10 @@
 
 // This module is used to communicate with the JDI host. The host can be on the network, in a pluggable DLL or statically linked.
 
-// Now there is a fundamental limitation - all strings are Ansi (std::string). Historically, this is due to the fact that all commands were typed in the debug console. In time, we will move to Unicode (std::wstring).
+// Every string of the interface is UTF-8 (issue #372): a path that is handed to DvdMount/LoadFile,
+// a value that goes through SetConfigString and a string that comes back from GetConfigString or
+// DvdIsMounted are UTF-8. The front ends keep their own text wide, so they convert on their side
+// with Util::WstringToString / Util::StringToWstring.
 
 namespace UI
 {

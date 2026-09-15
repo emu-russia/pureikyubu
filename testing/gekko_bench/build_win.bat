@@ -26,7 +26,8 @@ copy /y "%REPO%\src\gekkojit_ps.h"    "%BLD%\src\" >nul
 copy /y "%REPO%\src\gqr.h"            "%BLD%\src\" >nul
 
 pushd "%HERE%"
-cl /nologo /O2 /Oi /GL /EHsc /std:c++17 /MT /W3 /wd4996 /DBENCH_WITH_JIT /D_WINDOWS ^
+rem /utf-8: the sources are UTF-8 and contain non-ASCII text in their comments (issue #372).
+cl /nologo /O2 /Oi /GL /EHsc /std:c++17 /MT /W3 /wd4996 /utf-8 /DBENCH_WITH_JIT /D_WINDOWS ^
    /I. /I"%BLD%\src" /I"%REPO%\src" ^
    "%BLD%\src\gekko.cpp" "%BLD%\src\gekkoc.cpp" "%BLD%\src\gekkodec.cpp" ^
    "%BLD%\src\gekkojit.cpp" "%BLD%\src\gekkojit_ps.cpp" "%BLD%\src\gekkodisasm.cpp" ^

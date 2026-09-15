@@ -1082,7 +1082,7 @@ namespace Debug2
 	{
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
-		output->AddAnsiString(nullptr, g_Debugger != nullptr ? g_Debugger->SessionPath().c_str() : "");
+		output->AddUtf8String(nullptr, g_Debugger != nullptr ? g_Debugger->SessionPath().c_str() : "");
 		return output;
 	}
 
@@ -1095,7 +1095,7 @@ namespace Debug2
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
-		output->AddAnsiString(nullptr, path.c_str());
+		output->AddUtf8String(nullptr, path.c_str());
 		return output;
 	}
 
@@ -1184,7 +1184,7 @@ namespace Debug2
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Object;
-		output->AddAnsiString("markdown", markdown.c_str());
+		output->AddUtf8String("markdown", markdown.c_str());
 
 		return output;
 	}

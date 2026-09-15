@@ -38,7 +38,8 @@ namespace Debug
 		SetConsoleWindowInfo(StdOutput, TRUE, &rect);
 		SetConsoleScreenBufferSize(StdOutput, coord);
 
-		SetConsoleTitleA(title.c_str());
+		// The title is UTF-8 like every other string of the project, and the console wants Unicode.
+		SetConsoleTitleW(Util::StringToWstring(title).c_str());
 
 		cuiThread = EMUCreateThread(CuiThreadProc, false, this, "CuiThread");
 	}
@@ -105,6 +106,11 @@ namespace Debug
 
 		Cui* cui = (Cui*)Parameter;
 
+		// The first half of a character outside the BMP is held here until the second one arrives:
+		// the console reports the two halves as two key events, and only the pair is text (one
+		// UTF-16 half on its own is not a code point, and would become a replacement character).
+		wchar_t pendingHighSurrogate = 0;
+
 		Thread::Sleep(10);
 
 		// Update
@@ -127,20 +133,58 @@ namespace Debug
 		if (!count)
 			return;
 
-		ReadConsoleInput(cui->StdInput, &record, 1, &count);
+		// The wide variant: it is the one that reports the character the key stands for, which the
+		// ANSI one can only do inside the console code page.
+		ReadConsoleInputW(cui->StdInput, &record, 1, &count);
 		if (!count)
 			return;
 
 		if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown)
 		{
-			char ascii = record.Event.KeyEvent.uChar.AsciiChar;
+			wchar_t unicode = record.Event.KeyEvent.uChar.UnicodeChar;
 			int vcode = record.Event.KeyEvent.wVirtualKeyCode;
 			int ctrl = record.Event.KeyEvent.dwControlKeyState;
 			bool shiftPressed = (ctrl & SHIFT_PRESSED) != 0;
 			bool ctrlPressed = (ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
 
 			CuiVkey cui_vk = WindowVKToCuiVkey(vcode);
-			cui->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
+
+			// The key event carries the UTF-8 of the character it produced, and an empty string for
+			// a key that produced none. A control character is not text: the keys that produce one
+			// (Enter, Escape, the arrows) are the ones a window reads from `Vkey`.
+			if (unicode < 0x20 || unicode == 0x7F)
+			{
+				unicode = 0;
+			}
+
+			std::string text;
+
+			// Windows reports a character outside the BMP as the two halves of its UTF-16 pair, in
+			// two key events. The first half is held back until the second one arrives so that the
+			// pair becomes one character again: a half on its own is not a code point.
+			if (pendingHighSurrogate != 0)
+			{
+				wchar_t high = pendingHighSurrogate;
+				pendingHighSurrogate = 0;
+
+				if (unicode >= 0xDC00 && unicode <= 0xDFFF)
+				{
+					wchar_t pair[3] = { high, unicode, 0 };
+					text = Util::WstringToString(pair);
+					unicode = 0;
+				}
+			}
+
+			if (unicode >= 0xD800 && unicode <= 0xDBFF)
+			{
+				pendingHighSurrogate = unicode;
+			}
+			else if (unicode != 0)
+			{
+				text = Util::WstringToString(std::wstring(1, unicode));
+			}
+
+			cui->OnKeyPress(text.c_str(), cui_vk, shiftPressed, ctrlPressed);
 
 			for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
 			{
@@ -148,7 +192,7 @@ namespace Debug
 
 				if (wnd->active)
 				{
-					wnd->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
+					wnd->OnKeyPress(text.c_str(), cui_vk, shiftPressed, ctrlPressed);
 				}
 			}
 		}
@@ -168,7 +212,7 @@ namespace Debug
 		}
 	}
 
-	void Cui::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void Cui::OnKeyPress(const char* Text, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 	}
 
@@ -212,7 +256,9 @@ namespace Debug
 		rgn.Right = (SHORT)wnd->wndRect.right;
 		rgn.Bottom = (SHORT)wnd->wndRect.bottom;
 
-		WriteConsoleOutput(StdOutput, wnd->backBuf, sz, pos, &rgn);
+		// The wide variant, so a character outside the console code page reaches the screen as
+		// itself (the buffer carries UnicodeChar; the ANSI entry point would read its low byte).
+		WriteConsoleOutputW(StdOutput, wnd->backBuf, sz, pos, &rgn);
 	}
 
 	void Cui::InvalidateAll()
@@ -252,7 +298,7 @@ namespace Debug
 		delete[] backBuf;
 	}
 
-	void CuiWindow::PutChar(CuiColor back, CuiColor front, int x, int y, char c)
+	void CuiWindow::PutChar(CuiColor back, CuiColor front, int x, int y, wchar_t c)
 	{
 		if (x < 0 || x >= width)
 			return;
@@ -262,22 +308,29 @@ namespace Debug
 		CHAR_INFO* info = &backBuf[y * width + x];
 
 		info->Attributes = ((int)back << 4) | (int)front;
-		info->Char.AsciiChar = c;
+		info->Char.UnicodeChar = c;
 	}
 
 	void CuiWindow::Print(CuiColor back, CuiColor front, int x, int y, std::string text)
 	{
-		for (auto it = text.begin(); it != text.end(); ++it)
+		// The text is UTF-8; the console buffer holds one wide character per cell. A code point
+		// outside the BMP is a pair of them on Windows, which is exactly the two cells it renders
+		// as, so the pair is stored as it is.
+		std::wstring wide = Util::StringToWstring(text);
+
+		for (auto it = wide.begin(); it != wide.end(); ++it)
 		{
-			PutChar(back, front, x++, y, *it >= ' ' ? *it : ' ');
+			PutChar(back, front, x++, y, *it >= L' ' ? *it : L' ');
 		}
 	}
 
 	void CuiWindow::Print(CuiColor front, int x, int y, std::string text)
 	{
-		for (auto it = text.begin(); it != text.end(); ++it)
+		std::wstring wide = Util::StringToWstring(text);
+
+		for (auto it = wide.begin(); it != wide.end(); ++it)
 		{
-			PutChar(CuiColor::Black, front, x++, y, *it >= ' ' ? *it : ' ');
+			PutChar(CuiColor::Black, front, x++, y, *it >= L' ' ? *it : L' ');
 		}
 	}
 
