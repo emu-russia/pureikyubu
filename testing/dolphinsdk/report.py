@@ -101,10 +101,14 @@ def collect(sweep_dir):
 
 
 def verdict(d):
-    if d["pe"] == 0:
-        return "no-frame"
-    if d["colours"] is not None and d["colours"] <= 1:
-        return "flat"
+    # The sweep used to count the PE finish interrupts the emulator reported per frame; the build
+    # no longer prints that line, so the picture is the evidence that a frame was finished and
+    # presented. A single-colour shot is a frame that did not draw (or one that never came up),
+    # anything richer is a picture the demo drew.
+    if d["colours"] is None:
+        return "no-shot"
+    if d["colours"] <= 1:
+        return "flat" if d["pe"] > 0 else "no-frame"
     return "ok"
 
 
