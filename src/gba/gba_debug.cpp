@@ -6,11 +6,16 @@
 // states, latching the open bus or advancing a serial port: a debugger looks at the machine, it
 // does not run it.
 //
-// The emulator's precompiled header lives one directory up, because this file is the bridge
-// between the portable module and the host: it is the only file of the module that speaks JDI and
-// Markdown, and the only one that has to be compiled with the GameCube side of the emulator.
+// This file is the bridge between the portable module and the host, and it is the only file of the
+// module that is compiled with the host: the JDI hub, the Markdown the debugger renders and the
+// debugger itself all live on the GameCube side, and their headers (the precompiled one included)
+// need the third-party paths the GBA library deliberately does not have (see src/gba/Readme.md).
+// It is therefore a source of the `pureikyubu` project in the MSVC build - not of `GBA.vcxproj`,
+// which is the portable core - the way `debugui2.cpp` is. The path of the include is the path the
+// project declares for the precompiled header (`pureikyubu.vcxproj`), which is the way MSVC tells
+// that this file took the header it was given; on the other compilers the two are the same file.
 
-#include "../pch.h"
+#include "pch.h"
 
 #include "gba_debug.h"
 #include "gba.h"
