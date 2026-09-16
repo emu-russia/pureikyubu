@@ -582,9 +582,15 @@ void main()
         }
         else
         {
-            // Perspective projection: remap the depth (b_mag - (z >> b_shf)) and take the reciprocal
+            // Perspective projection: the depth is remapped to `b_mag - (z >> b_shf)` and the
+            // reciprocal table turns that into the eye value. The remapped depth is a fraction of
+            // the 24-bit depth range, not a count of it - the hardware normalises it before the
+            // lookup - so the reciprocal is 2^24 / b and not 1 / b. With 1 / b the eye value lands
+            // around 1e-8 while the C the same registers carry is around 1e-2, `eye - C` is
+            // negative at every depth and the fog factor stays 0: every exponential and linear fog
+            // came out unfogged (pix-fog, issue #385).
             float b = tevFogBMag - floor(z24 / exp2(tevFogBShf));
-            view_z = (b > 0.0) ? (1.0 / b) : 0.0;
+            view_z = (b > 0.0) ? (16777216.0 / b) : 0.0;
         }
 
         float eye = tevFogA * view_z;
