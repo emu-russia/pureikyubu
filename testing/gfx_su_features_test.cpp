@@ -144,11 +144,15 @@ namespace pureikyubutest
 		//! A full screen quad whose window depth ramps from 1 (the far plane) at the bottom of the
 		//! screen to 0 (the near plane) at the top, in one colour. The window depth of a screen row is
 		//! then `(row + 0.5) / 480`.
+		//!
+		//! The two depths are the GX clip z values that the hardware's projection produces for them:
+		//! the GX clip range is (-w, 0], so z = -1 is the near plane and z = 0 the far one, and the
+		//! shader maps that range onto GL's (-w, w) (see TransformUnit's vertex shader).
 		void DrawDepthRampQuad(GfxTestMachine& m, const Rgba& c)
 		{
 			GFX::Vertex quad[4];
-			quad[0] = GfxTestMachine::MakeVertex(-1, -1, 1, c.R, c.G, c.B, c.A);		// bottom: depth 1
-			quad[1] = GfxTestMachine::MakeVertex(1, -1, 1, c.R, c.G, c.B, c.A);
+			quad[0] = GfxTestMachine::MakeVertex(-1, -1, 0, c.R, c.G, c.B, c.A);		// bottom: depth 1
+			quad[1] = GfxTestMachine::MakeVertex(1, -1, 0, c.R, c.G, c.B, c.A);
 			quad[2] = GfxTestMachine::MakeVertex(1, 1, -1, c.R, c.G, c.B, c.A);		// top: depth 0
 			quad[3] = GfxTestMachine::MakeVertex(-1, 1, -1, c.R, c.G, c.B, c.A);
 			m.DrawQuad(quad);

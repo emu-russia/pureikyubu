@@ -209,10 +209,12 @@ namespace pureikyubutest
 
 			Assert::IsTrue(m.RunVertexShader(in, out), Widen(m.LastError()).c_str());
 
-			// row0 . (1,2,3,1) = 2 + 10 = 12; row1 . p = 6 + 20 = 26; row2 . p = 12 + 30 = 42
+			// row0 . (1,2,3,1) = 2 + 10 = 12; row1 . p = 6 + 20 = 26; row2 . p = 12 + 30 = 42.
+			// The projection combine leaves the eye z there, and the shader then maps the GX clip
+			// range (-w, 0] onto GL's (-w, w): z' = 2z + w (see TransformUnit's vertex shader).
 			Assert::AreEqual(12.0f, out[0].Position[0], 0.0001f, L"x");
 			Assert::AreEqual(26.0f, out[0].Position[1], 0.0001f, L"y");
-			Assert::AreEqual(42.0f, out[0].Position[2], 0.0001f, L"z");
+			Assert::AreEqual(2.0f * 42.0f + 1.0f, out[0].Position[2], 0.0001f, L"z");
 			Assert::AreEqual(1.0f, out[0].Position[3], 0.0001f, L"w");
 		}
 
@@ -241,7 +243,8 @@ namespace pureikyubutest
 
 			Assert::AreEqual(2.0f * 1 + 0.5f * -4, out[0].Position[0], 0.0001f, L"clip x");
 			Assert::AreEqual(3.0f * 2 + 0.25f * -4, out[0].Position[1], 0.0001f, L"clip y");
-			Assert::AreEqual(4.0f * -4 + 0.125f, out[0].Position[2], 0.0001f, L"clip z");
+			// ... and the same GX-to-GL range mapping on top of the combine
+			Assert::AreEqual(2.0f * (4.0f * -4 + 0.125f) + 4.0f, out[0].Position[2], 0.0001f, L"clip z");
 			Assert::AreEqual(4.0f, out[0].Position[3], 0.0001f, L"clip w = -eye z");
 		}
 

@@ -88,7 +88,8 @@ namespace pureikyubutest
 
 			Assert::AreEqual(0.25f, out[0].Position[0], 0.0001f, L"clip x");
 			Assert::AreEqual(-0.5f, out[0].Position[1], 0.0001f, L"clip y");
-			Assert::AreEqual(0.75f, out[0].Position[2], 0.0001f, L"clip z");
+			// The GX clip z of the vertex, mapped onto GL's range by the shader: z' = 2z + w
+			Assert::AreEqual(2.0f * 0.75f + 1.0f, out[0].Position[2], 0.0001f, L"clip z");
 			Assert::AreEqual(1.0f, out[0].Position[3], 0.0001f, L"clip w");
 		}
 

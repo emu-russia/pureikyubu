@@ -899,7 +899,7 @@ namespace pureikyubutest
 			m.BpLoad(TEV_Z_ENV_0_ID, 1000);			// the bias
 			m.BpLoad(TEV_Z_ENV_1_ID, 0u | (1u << 2));	// type = u8, op = add
 
-			DrawZQuad(m, 0.0f);						// the window depth of the quad is 0.5
+			DrawZQuad(m, -0.5f);						// the GX clip z that gives a window depth of 0.5
 
 			float depth = m.ReadDepthPixel(320, 240);
 
@@ -929,7 +929,7 @@ namespace pureikyubutest
 			m.BpLoad(TEV_Z_ENV_0_ID, 1000);
 			m.BpLoad(TEV_Z_ENV_1_ID, 0u | (2u << 2));	// type = u8, op = replace
 
-			DrawZQuad(m, 0.0f);
+			DrawZQuad(m, -0.5f);
 
 			float depth = m.ReadDepthPixel(320, 240);
 
@@ -959,7 +959,7 @@ namespace pureikyubutest
 			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(7, 7, 7, 7, 0, 0, 1, 0, 0));
 			m.BpLoad(TEV_Z_ENV_1_ID, 0);				// op = disable
 
-			DrawZQuad(m, 0.0f);
+			DrawZQuad(m, -0.5f);
 
 			Assert::AreEqual(0.5f, m.ReadDepthPixel(320, 240), 0.001f, L"the rasterized depth");
 		}

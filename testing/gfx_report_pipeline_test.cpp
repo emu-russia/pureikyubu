@@ -128,8 +128,10 @@ namespace pureikyubutest
 		void DrawDepthRampQuad(GfxTestMachine& m, const Rgba& bl, const Rgba& br, const Rgba& tr, const Rgba& tl)
 		{
 			GFX::Vertex quad[4];
-			quad[0] = GfxTestMachine::MakeVertex(-1, -1, 1, bl.R, bl.G, bl.B, bl.A);
-			quad[1] = GfxTestMachine::MakeVertex(1, -1, 1, br.R, br.G, br.B, br.A);
+			// The GX clip z values of the far plane (0) and the near one (-1): the shader maps the GX
+			// range (-w, 0] onto GL's, so those are the window depths 1 and 0.
+			quad[0] = GfxTestMachine::MakeVertex(-1, -1, 0, bl.R, bl.G, bl.B, bl.A);
+			quad[1] = GfxTestMachine::MakeVertex(1, -1, 0, br.R, br.G, br.B, br.A);
 			quad[2] = GfxTestMachine::MakeVertex(1, 1, -1, tr.R, tr.G, tr.B, tr.A);
 			quad[3] = GfxTestMachine::MakeVertex(-1, 1, -1, tl.R, tl.G, tl.B, tl.A);
 			m.DrawQuad(quad);

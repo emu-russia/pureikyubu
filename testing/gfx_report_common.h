@@ -258,11 +258,13 @@ namespace GfxGallery
 		const Rgba& bl, const Rgba& br, const Rgba& tr, const Rgba& tl,
 		float s0 = 0.0f, float t0 = 0.0f, float s1 = 1.0f, float t1 = 1.0f)
 	{
+		// The GX clip z of the middle of the depth range: the GX range is (-w, 0] and the shader maps
+		// it onto GL's, so -0.5 is the window depth 0.5.
 		GFX::Vertex quad[4];
-		quad[0] = GfxTestMachine::MakeVertex(x0, y0, 0, bl.R, bl.G, bl.B, bl.A);
-		quad[1] = GfxTestMachine::MakeVertex(x1, y0, 0, br.R, br.G, br.B, br.A);
-		quad[2] = GfxTestMachine::MakeVertex(x1, y1, 0, tr.R, tr.G, tr.B, tr.A);
-		quad[3] = GfxTestMachine::MakeVertex(x0, y1, 0, tl.R, tl.G, tl.B, tl.A);
+		quad[0] = GfxTestMachine::MakeVertex(x0, y0, -0.5f, bl.R, bl.G, bl.B, bl.A);
+		quad[1] = GfxTestMachine::MakeVertex(x1, y0, -0.5f, br.R, br.G, br.B, br.A);
+		quad[2] = GfxTestMachine::MakeVertex(x1, y1, -0.5f, tr.R, tr.G, tr.B, tr.A);
+		quad[3] = GfxTestMachine::MakeVertex(x0, y1, -0.5f, tl.R, tl.G, tl.B, tl.A);
 
 		// s runs left to right, t runs bottom to top
 		quad[0].TexCoord[0][0] = s0; quad[0].TexCoord[0][1] = t0;
