@@ -3982,14 +3982,17 @@ namespace Gekko
 		core->regs.msr |= core->regs.spr[SPR::SRR1] & 0x87C0FF73;
 		core->regs.pc = core->regs.spr[SPR::SRR0] & ~3;
 
-		// Only SRR1's view of MSR[IR]/[DR] can change what a compiled block translates to; the
-		// rest of the restored bits are read at run time by the helper the block calls. Dropping
-		// the whole block cache for them is what made rfi (and mtmsr) free to interrupt the
-		// recompiler thousands of times a second - see the benchmark notes in `testing/gekko_bench`.
+		// A compiled block bakes in the instruction stream it was compiled from, and the
+		// lookup checks the physical address the entry was compiled for against the one the
+		// current MSR/BAT/TLB state translates the pc to. Restoring MSR[IR]/[DR] therefore
+		// does not invalidate anything: if the translation changed, the old entries are not
+		// found and the block is translated again; if it did not, the instructions are the
+		// same and the block is still right. The float/exception bits SRR1 restores are read
+		// at run time, by the block's helpers or by BranchCheck. This used to drop all ~16K
+		// blocks on every rfi, which in Metroid Prime's audio driver is every 600 us.
 		if (((oldMsr ^ core->regs.msr) & (MSR_IR | MSR_DR)) != 0)
 		{
 			Gekko::stats.invRfi++;
-			if (core->jit != nullptr) core->jit->InvalidateAll();
 		}
 	}
 
@@ -4155,13 +4158,15 @@ namespace Gekko
 		core->regs.msr = core->regs.gpr[info.paramBits[0]];
 
 		// The OS toggles MSR[EE] around every critical section, and that cannot change what a
-		// compiled block translates to: only MSR[IR]/[DR] can, because they decide what the cached
-		// instruction fetch means. Dropping the whole block cache on every mtmsr cost more
-		// re-translations than the rest of the recompiler together (see `testing/gekko_bench`).
+		// compiled block translates to. MSR[IR]/[DR] can, but the block lookup compares the
+		// physical address each entry was compiled for, so a block translated under the old
+		// setting is not found once the new one maps its pc elsewhere (see the correctness
+		// model in gekkojit.h) - the block cache is not dropped for it. The TLBs *are*
+		// invalidated, because they are keyed on the effective page alone and would otherwise
+		// keep handing out translations made with translation enabled after it is turned off.
 		if (((oldMsr ^ core->regs.msr) & (MSR_IR | MSR_DR)) != 0)
 		{
 			Gekko::stats.invMtmsr++;
-			if (core->jit != nullptr) core->jit->InvalidateAll();
 		}
 
 		if ((oldMsr & MSR_IR) != (core->regs.msr & MSR_IR))
@@ -4182,13 +4187,25 @@ namespace Gekko
 	{
 		size_t spr = info.paramBits[0];
 
-		// Any SPR that changes address translation or the caches invalidates the
-		// compiled blocks.
-		if (spr == SPR::SDR1 || spr == SPR::HID0 || spr == SPR::HID2 ||
-			(spr >= SPR::IBAT0U && spr <= SPR::DBAT3L))
+		// What a written SPR can change about a compiled block is only the paired-single
+		// gating of HID2, which decides at translation time whether a psq_* is translated
+		// at all; HID2's write-gather bits are read at run time by the store helpers and
+		// are not baked in. Everything else is either validated on every block entry (the
+		// lookup compares the physical address the entry was compiled for with the one
+		// SDR1 / the BATs / the segment registers translate the pc to now) or read at run
+		// time by a helper - including HID0: [ICE] reaches the block through the icache
+		// check in Run() and [ICFI]/[DCFI] through the flash invalidate.
+		//
+		// The game writes HID2 about a thousand times a second (the write-gather pipe),
+		// which used to discard the whole block cache on each one.
+		if (spr == SPR::HID2)
 		{
-			Gekko::stats.invMtspr++;
-			if (core->jit != nullptr) core->jit->InvalidateAll();
+			uint32_t now = core->regs.gpr[info.paramBits[1]];
+			if (((core->regs.spr[SPR::HID2] ^ now) & (HID2_PSE | HID2_LSQE)) != 0)
+			{
+				Gekko::stats.invMtspr++;
+				if (core->jit != nullptr) core->jit->InvalidateAll();
+			}
 		}
 
 		// Diagnostic output when the BAT registers are changed.

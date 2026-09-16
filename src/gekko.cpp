@@ -302,9 +302,19 @@ namespace Gekko
 			}
 		}
 
-		// disable address translation
+		// Disable address translation.
+		//
+		// This used to drop every compiled block, and it was the single largest source
+		// of re-translation in a running game (an exception every 600 us in Metroid
+		// Prime's audio driver, each one discarding ~16K blocks). It does not have to:
+		// what a block bakes in is the *instruction stream* it was compiled from, and
+		// the lookup compares the physical address the entry was compiled for with the
+		// one the current MSR/BAT/TLB state translates the pc to, so a block compiled
+		// under a different MSR[IR]/[DR] is simply not found when the translation
+		// differs - and when it does not differ, the instructions are the same and the
+		// block is still valid. Data accesses go through the helpers and translate per
+		// access, exactly as the interpreter does.
 		stats.invException++;
-		if (jit != nullptr) jit->InvalidateAll();
 		regs.msr &= ~(MSR_IR | MSR_DR);
 
 		regs.msr &= ~MSR_RI;

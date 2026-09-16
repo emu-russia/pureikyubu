@@ -34,9 +34,20 @@ identically.
   constants, so it must be dropped as soon as the instruction stream at its
   address, or the address itself, can have changed. `InvalidateAll` is called from
   `icbi` (what a guest does after writing code), from a cache flash invalidate,
-  from `mtspr` of BAT/SDR1/HID0/HID2, from `mtmsr`, from `rfi` and from
-  `Exception` (both flip MSR[IR]/[DR]), from `tlbie`/`tlbsync` and from a CPU
-  reset.
+  from `mtspr` of HID2 when its paired-single gating changes, from
+  `tlbie`/`tlbsync` and from a CPU reset.
+
+  A change of the address translation itself - the BATs, `SDR1`, the segment
+  registers, MSR[IR]/[DR] on `mtmsr`, `rfi` and `Exception` - deliberately does
+  *not* invalidate, because the lookup below compares the physical address every
+  entry was compiled for. A block compiled under the old translation is simply not
+  found when the new one maps its pc elsewhere, and when both map it to the same
+  place the instruction stream is the same and the block is still right. Data
+  accesses translate per access inside the helper the block calls. Dropping the
+  whole table for those events used to be the largest source of re-translation in a
+  running game: Metroid Prime's audio driver takes an exception or returns from one
+  about every 600 us and writes HID2 about a thousand times a second, and each of
+  them discarded every compiled block.
 
   Invalidation is a generation counter, not a walk over the table: a guest
   invalidates its caches one line at a time (`ICInvalidateRange` and friends, one
@@ -47,10 +58,10 @@ identically.
   returns, so the interpreter keeps executing the old line until an `icbi` - and so
   does a compiled block.
 
-* As a backstop for any path that forgets to invalidate, every lookup also compares
-  the physical address the entry was compiled for. A block is used only when the pc
-  *and* its translation match, so a translation change can never make the
-  recompiler execute instructions the interpreter would not have executed.
+* The physical address in the lookup is what makes the events above safe, not just
+  a backstop for a forgotten invalidation: a block is used only when the pc *and*
+  its translation match, so a translation change can never make the recompiler
+  execute instructions the interpreter would not have executed.
 * Exceptions raised by a helper set `regs.pc` themselves (to the exception
   vector). The generated code checks the flag after every operation that can
   fault and abandons the block without touching the pc.

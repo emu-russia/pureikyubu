@@ -660,10 +660,14 @@ namespace Gekko
 		uint64_t jitInstrs = 0;			// Instructions retired inside those blocks
 		uint64_t jitCompiles = 0;		// Basic blocks translated
 		uint64_t jitInvalidations = 0;		// Times the whole block cache was dropped
-		uint64_t invException = 0;		// ... on an exception entry
-		uint64_t invRfi = 0;			// ... on rfi
-		uint64_t invMtmsr = 0;			// ... on mtmsr
-		uint64_t invMtspr = 0;			// ... on mtspr of a BAT/SDR1/HID0/HID2
+		// What dropped it. Only the first group actually has to - the rest are the
+		// address-translation events that the (pc, physical address) lookup handles on
+		// its own (see the correctness model in gekkojit.h); they are counted because
+		// the rate is what makes them worth not invalidating.
+		uint64_t invException = 0;		// MSR[IR]/[DR] cleared by an exception entry
+		uint64_t invRfi = 0;			// ... restored by rfi
+		uint64_t invMtmsr = 0;			// ... changed by mtmsr
+		uint64_t invMtspr = 0;			// HID2 paired-single gating changed by mtspr
 		uint64_t invIcbi = 0;			// ... on icbi
 		uint64_t invTlb = 0;			// ... on tlbie/tlbsync
 		uint64_t invFlash = 0;			// ... on a cache flash invalidate
