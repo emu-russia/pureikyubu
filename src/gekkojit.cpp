@@ -46,6 +46,12 @@ namespace
 		CycleScope cycles(&stats.memHelperCycles);
 		core->ReadByte(addr, reg);
 	}
+	void JitReadHalf(GekkoCore* core, uint32_t addr, uint32_t* reg)
+	{
+		stats.memHelperCalls++;
+		CycleScope cycles(&stats.memHelperCycles);
+		core->ReadHalf(addr, reg);
+	}
 	void JitReadWord(GekkoCore* core, uint32_t addr, uint32_t* reg)
 	{
 		stats.memHelperCalls++;
@@ -823,20 +829,22 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 
 		// ---- loads ------------------------------------------------------
 
-		// Halfword loads (lhz/lha and their indexed and update forms) are left to the
-		// interpreter. Random-program differential testing still found rare
-		// disagreements between the two engines in exactly that family, so it is kept
-		// on the interpreter until they are understood; the byte and word loads are
-		// clean and stay translated.
-
 		case Instruction::lbz: case Instruction::lbzu: case Instruction::lbzx: case Instruction::lbzux:
+		case Instruction::lhz: case Instruction::lhzu: case Instruction::lhzx: case Instruction::lhzux:
+		case Instruction::lha: case Instruction::lhau: case Instruction::lhax: case Instruction::lhaux:
 		case Instruction::lwz: case Instruction::lwzu: case Instruction::lwzx: case Instruction::lwzux:
 		{
 			bool indexed = (di.instr == Instruction::lbzx || di.instr == Instruction::lbzux ||
+				di.instr == Instruction::lhzx || di.instr == Instruction::lhzux ||
+				di.instr == Instruction::lhax || di.instr == Instruction::lhaux ||
 				di.instr == Instruction::lwzx || di.instr == Instruction::lwzux);
 			bool update = (di.instr == Instruction::lbzu || di.instr == Instruction::lbzux ||
+				di.instr == Instruction::lhzu || di.instr == Instruction::lhzux ||
+				di.instr == Instruction::lhau || di.instr == Instruction::lhaux ||
 				di.instr == Instruction::lwzu || di.instr == Instruction::lwzux);
-			bool zeroRa = !indexed && !update && ra == 0;
+			bool arithmetic = (di.instr == Instruction::lha || di.instr == Instruction::lhau ||
+				di.instr == Instruction::lhax || di.instr == Instruction::lhaux);
+			bool zeroRa = !update && ra == 0;
 
 			emitEffectiveAddress(ra, rb, indexed, zeroRa, (int32_t)di.Imm.Signed);
 			e.mov_r32_r32(RegEa, X64::RAX);
@@ -850,6 +858,9 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 			{
 			case Instruction::lbz: case Instruction::lbzu: case Instruction::lbzx: case Instruction::lbzux:
 				fn = (uint64_t)(void*)&JitReadByte; break;
+			case Instruction::lhz: case Instruction::lhzu: case Instruction::lhzx: case Instruction::lhzux:
+			case Instruction::lha: case Instruction::lhau: case Instruction::lhax: case Instruction::lhaux:
+				fn = (uint64_t)(void*)&JitReadHalf; break;
 			default:
 				fn = (uint64_t)(void*)&JitReadWord; break;
 			}
@@ -860,6 +871,24 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 			e.call_abs(fn);
 
 			emitExcCheck(exceptionExits);
+
+			// lha/lhau/lhax/lhaux sign-extend the halfword the helper read zero-extended.
+			// The extension is the interpreter's own expression - `if (rd & 0x8000)
+			// rd |= 0xffff0000` - and not a movsx, because the two differ when the helper
+			// does not write rd at all: Cache::ReadHalf returns without touching it when
+			// the physical address is past the cache, and the interpreter then leaves the
+			// *whole* old register in place (movsx would truncate it to the old low half).
+			// The random-instruction fuzzer in testing/gekko_bench found exactly that as a
+			// rare disagreement, which is why this family used to stay on the interpreter.
+			if (arithmetic)
+			{
+				loadGpr(T0, rd);
+				e.test_r32_imm(T0, 0x8000);
+				size_t noSign = e.jcc_rel32(X64::CcE);
+				e.alu_r32_imm(X64::AluOr, T0, 0xffff'0000);
+				e.patch32(noSign, e.rel(noSign));
+				storeGpr(rd, T0);
+			}
 
 			if (update)
 			{
@@ -881,7 +910,7 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 			bool update = (di.instr == Instruction::stbu || di.instr == Instruction::stbux ||
 				di.instr == Instruction::sthu || di.instr == Instruction::sthux ||
 				di.instr == Instruction::stwu || di.instr == Instruction::stwux);
-			bool zeroRa = !indexed && !update && ra == 0;
+			bool zeroRa = !update && ra == 0;
 
 			emitEffectiveAddress(ra, rb, indexed, zeroRa, (int32_t)di.Imm.Signed);
 			e.mov_r32_r32(RegEa, X64::RAX);

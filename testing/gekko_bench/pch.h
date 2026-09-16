@@ -61,6 +61,17 @@ namespace Debug
 
 	void Halt(const char* text, ...);
 	void Report(Channel chan, const char* text, ...);
+
+	// The HW interface profiler (src/hwprof.h). The core bumps the write-gather
+	// counter on every store that the gather pipe swallows, so the harness needs the
+	// same one call the real profiler offers - a no-op here, because the benchmark
+	// measures the CPU alone and never reads the report back.
+	class HwProfile
+	{
+	public:
+		enum class Counter { Read60x, Write60x, ReadSplash, WriteSplash, PIInt, WriteGather };
+		static void Count(Counter counter, size_t bytes) {}
+	};
 }
 
 // ---------------------------------------------------------------------------
