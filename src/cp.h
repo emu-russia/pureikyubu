@@ -540,6 +540,9 @@ namespace Flipper
 
 		void CP_BREAK();
 		bool AtBreakPoint() const;
+		bool ReaderIdle(bool ignoreEnable = false) const;
+		void UpdateReaderStatus();
+		uint16_t Status();
 		void CP_OVF();
 		void CP_UVF();
 
@@ -554,9 +557,6 @@ namespace Flipper
 		//! stop that is not followed by a pointer write (a plain "pause the reader") clears the
 		//! flag again, so it keeps its plain meaning.
 		bool catchUpArmed = false;
-
-		// Debug
-		void DumpCPFIFO();
 
 		CPHostRegs cpregs{};	// Mapped command processor registers
 		CPState cp{};			// Internal registers (for setting VCD/VAT, etc.)
@@ -637,6 +637,9 @@ namespace Flipper
 
 		//! The frame counters, for the debug interface (`gxframes`, `gxregs cp`).
 		void GetStats(CommandProcessorStats* stats) const;
+
+		//! Dump the FIFO registers through the report log (the debug interface's `cpfifo`).
+		void DumpCPFIFO();
 
 		//! Drop the decoded command stream the CP has buffered (the CP-side FIFO), so that a new
 		//! command stream starts from an empty buffer. The unit tests use it to isolate one test
