@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>pureikyubu — эмулятор Nintendo GameCube</title>
-<meta name="description" content="pureikyubu — разрабатываемый эмулятор Nintendo GameCube для исследований и реверс-инжиниринга. Лендинг, заметки о релизе 1.8 и архив прошлых релизов.">
+<meta name="description" content="pureikyubu — разрабатываемый эмулятор Nintendo GameCube для исследований и реверс-инжиниринга. Лендинг, заметки о релизе 1.9 и архив прошлых релизов.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="imgstore/favicon-32.png">
 <link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
@@ -24,7 +24,7 @@
       <a href="gba_ru.html">GBA</a>
       <a href="gfxsoft_ru.html">Soft GFX</a>
       <a href="mcp_ru.html">MCP</a>
-      <a href="release_notes_1.8_ru.html">Release Notes 1.8</a>
+      <a href="release_notes_1.9_ru.html">Release Notes 1.9</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Язык">
@@ -46,7 +46,7 @@
       большое удовольствие.
     </p>
     <div class="btn-row">
-      <a class="btn" href="release_notes_1.8_ru.html">Заметки о релизе 1.8</a>
+      <a class="btn" href="release_notes_1.9_ru.html">Заметки о релизе 1.9</a>
       <a class="btn secondary" href="digest_ru.html">Что изменилось после 1.6</a>
       <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu">Исходники на GitHub</a>
     </div>
@@ -59,78 +59,83 @@
     <section>
       <h2>Что нового</h2>
       <p class="sub">
-        Релиз 1.8 — релиз производительности: рекомпилятор Gekko в x86-64, Paired-Single на SSE и
-        событийные потоки устройств, которые больше не крутятся на тайм-базе. Вместе с
-        исправлениями агрегатных линий прерываний именно это позволяет загрузиться
-        <em>Zelda: The Wind Waker</em> и выпускает <em>Animal Crossing</em> из обработчика
-        исключений.
+        Релиз 1.9 — релиз новых возможностей: встроенный Game Boy Advance и Game Boy, полная программная
+        реализация графических блоков Flipper, новый отладчик, MCP-сервер для LLM-агентов,
+        профилировщик аппаратных интерфейсов, headless-сборка и рекомпилятор DSP — плюс исправления,
+        благодаря которым вступление <em>Metroid Prime</em> доходит до титульного экрана, а
+        <em>Super Mario Sunshine</em> загружается.
       </p>
       <div class="grid">
         <div class="card">
-          <span class="badge">Процессор</span>
-          <h3>Рекомпилятор Gekko</h3>
-          <p>Компилятор базовых блоков в x86-64 держит гостевые регистры в регистрах хоста и поднимает
-             эмулируемый процессор с 39.7 до 155.9 MIPS; код, насыщенный АЛУ, ускоряется в 8.6 раза.
-             Команды <code>jit 0</code> и <code>jit 1</code> переключают движки на ходу.</p>
+          <span class="badge">Новая машина</span>
+          <h3>Game Boy Advance и Game Boy</h3>
+          <p><code>src/gba</code> — вторая консоль, написанная по публичным спецификациям, со свободным
+             boot ROM, рисующим логотип pureikyubu, собственным SDL2-интерфейсом и собственным стендом.
+             <code>pureikyubu --gba game.gba</code> запускает картридж;
+             <code>pureikyubu game.gbc</code> запускает Game Boy внутри него.</p>
         </div>
         <div class="card">
-          <span class="badge">Процессор</span>
-          <h3>Paired-Single на SSE</h3>
-          <p>Все арифметические инструкции PS и обе квантизованные загрузки/сохранения
-             транслируются в SSE/SSE2; нагрузка с преобладанием PS растёт с 59 до 435 MIPS.</p>
+          <span class="badge">Графика</span>
+          <h3>Программный конвейер GFX</h3>
+          <p>У блоков Flipper появилась реализация на CPU рядом с OpenGL: настоящий массив памяти EFB,
+             настоящий TMEM и движок копирования, который пишет XFB, сканируемый видеоинтерфейсом.
+             <code>GFX_PIPELINE</code> переключает конвейеры на ходу.</p>
         </div>
         <div class="card">
-          <span class="badge">Производительность</span>
-          <h3>Конец активного ожидания</h3>
-          <p>Развёртка VI и опрос последовательного порта переехали в поток процессора, а потоки CP,
-             AI DMA и DSP блокируются на событиях. Ikaruga вышла на 4.58x реального времени,
-             Luigi's Mansion — на 4.26x.</p>
+          <span class="badge">Отладка</span>
+          <h3>DebugUI2</h3>
+          <p>Новый отладчик с собственным потоком, собственным окном OpenGL и сессией на каждый запуск.
+             Каждая панель — Markdown команды JDI: тринадцать вкладок от Gekko до профилировщика, плюс
+             машины GBA и Game Boy.</p>
         </div>
         <div class="card">
-          <span class="badge">Совместимость</span>
-          <h3>Чёрные экраны исправлены</h3>
-          <p>Агрегатные линии прерываний DSP и дискового интерфейса заработали, а опрос
-             последовательного порта идёт по расписанию видеолиний: Zelda: The Wind Waker доходит до
-             титульного экрана, Animal Crossing показывает логотип Nintendo.</p>
+          <span class="badge">Инструменты</span>
+          <h3>MCP-сервер</h3>
+          <p><code>pureikyubu --mcp</code> публикует весь отладочный интерфейс как инструменты Model
+             Context Protocol — около 170 штук — и LLM-агент управляет эмулятором через stdin/stdout.</p>
         </div>
         <div class="card">
-          <span class="badge">Образы дисков</span>
-          <h3>Поддержка RVZ</h3>
-          <p>Сжатые образы GameCube в контейнере RVZ из Dolphin (Zstandard) монтируются только для
-             чтения — рядом с ISO и GCM.</p>
+          <span class="badge">Диагностика</span>
+          <h3>Профилировщик интерфейсов</h3>
+          <p>Что реально переносят каналы консоли за эмулируемую секунду: шины 60x и Splash, FIFO PI/CP,
+             каждый движок DMA, вход аудиомикшера, примитивы GFX и кадры VI — таблицей, PNG или
+             оверлеем.</p>
         </div>
         <div class="card">
-          <span class="badge">Интерфейс</span>
-          <h3>Настройка контроллеров в SDL</h3>
-          <p>У SDL-сборки появился собственный бэкенд контроллеров и полное окно
-             «Configure Controller N»: привязки клавиатуры и геймпада, аналоговые стики и триггеры.</p>
+          <span class="badge">Платформа</span>
+          <h3>Headless-сборка и JIT для DSP</h3>
+          <p>Консольная цель без окна для бенчмарков и запусков MCP (с offscreen-бэкендом OpenGL в
+             Windows), аудит безопасности за небольшим слоем проверок, UTF-8 во всём интерфейсе и
+             рекомпилятор базовых блоков DSP, который в 1.5–1.8 раза быстрее.</p>
         </div>
       </div>
     </section>
 
     <section>
       <h2>Скриншоты</h2>
-      <p class="sub">Снято с текущей сборки (линейка релиза 1.8).</p>
+      <p class="sub">Снято с текущей сборки (линейка релиза 1.9).</p>
       <div class="shots">
         <figure>
-          <img src="imgstore/metroid_prime.png" alt="Титульный экран Metroid Prime в pureikyubu">
-          <figcaption><strong>Metroid Prime</strong>Титульный экран после исправлений декодера
-            текстур и вывода изображения.</figcaption>
+          <img src="imgstore/debugui2.png" alt="Новый отладчик DebugUI2 с регистрами Gekko и памятью">
+          <figcaption><strong>Новый отладчик</strong>Каждая панель — Markdown команды JDI: история
+            сессии и командная строка рядом с регистрами Gekko, дизассемблером и физической
+            памятью.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/zelda_wind_waker.png" alt="Титульный экран The Legend of Zelda: The Wind Waker">
-          <figcaption><strong>Zelda: The Wind Waker</strong>Доходит до титульного экрана, как только
-            векторы DSP и запрос через почтовый ящик обрабатываются так, как на железе.</figcaption>
+          <img src="imgstore/sms_intro.png" alt="Super Mario Sunshine доходит до вступительной сцены">
+          <figcaption><strong>Super Mario Sunshine</strong>Загружается, проигрывает вступительный ролик
+            и доходит до следующей сцены — после того как инструкции управления кэшем перестали
+            вызывать исключение на сегменте прямого доступа.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/controller_settings.png" alt="Окно Configure Controller 1 в SDL-интерфейсе">
-          <figcaption><strong>Настройка контроллеров</strong>Портированное окно Win32 в SDL-сборке:
-            привязки клавиатуры и геймпада рядом.</figcaption>
+          <img src="imgstore/gba_metroid_fusion.png" alt="Metroid Fusion на встроенном Game Boy Advance">
+          <figcaption><strong>Metroid Fusion</strong>Встроенный Game Boy Advance, запущенный
+            собственным свободным boot ROM эмулятора, отрисовка на 60 к/с.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/gc_linux_console.png" alt="Ядро GC-Linux загружается до консоли gcnfb">
-          <figcaption><strong>GC-Linux</strong>Ядро Linux 2004 года загружается до консоли
-            <code>gcnfb</code> с драйверами Broadband Adapter и SI.</figcaption>
+          <img src="imgstore/soulcalibur2.png" alt="Soul Calibur II, отрисованная pureikyubu">
+          <figcaption><strong>Soul Calibur II</strong>Сторонняя 3D-игра, отрисованная через
+            shader-конвейер XF/TEV.</figcaption>
         </figure>
       </div>
     </section>
@@ -196,14 +201,31 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       </p>
     </section>
 
+    <section id="next">
+      <h2>Что дальше</h2>
+      <p class="sub" style="max-width:none">
+        Релиз 2.0 станет следующим мажорным релизом — <strong>релизом периферии</strong>. Он нацелен на периферийные устройства
+        консоли — шину EXI и устройства на ней (карты памяти, Broadband Adapter, RTC), последовательный
+        интерфейс и контроллеры, дисковый интерфейс и привод, а также порт связи, который уже есть у
+        стороны GBA, — и должен <strong>замкнуть множество возможностей эмулятора</strong>, чтобы список
+        «ещё не реализовано» сократился до того, что действительно не имеет значения.
+      </p>
+      <p class="sub" style="max-width:none">
+        После этого проект переходит в своё устойчивое состояние: <strong>планомерное улучшение</strong> —
+        производительность и исправление ошибок от релиза к релизу, а не очередной рывок за новыми
+        возможностями. Архитектура уже на месте; остаётся сделать то, что есть, быстрее, точнее и полнее.
+        Подробности — в <a href="release_notes_1.9_ru.html#next">заметках о релизе 1.9</a>.
+      </p>
+    </section>
+
     <section>
       <h2>Документация</h2>
       <div class="grid">
         <div class="card">
-          <h3>Release Notes 1.8</h3>
-          <p><a href="release_notes_1.8.html">English release notes</a> ·
-             <a href="release_notes_1.8_ru.html">Заметки о релизе на русском</a> ·
-             <a href="RELEASE_NOTES_1.8.md">Markdown</a></p>
+          <h3>Release Notes 1.9</h3>
+          <p><a href="release_notes_1.9.html">English release notes</a> ·
+             <a href="release_notes_1.9_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.9.md">Markdown</a></p>
         </div>
         <div class="card">
           <h3>Дайджест после 1.6</h3>
@@ -221,6 +243,12 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Архив</h2>
       <p class="sub">Прошлые релизы, оставлены для справки.</p>
       <div class="grid">
+        <div class="card">
+          <h3>Release Notes 1.8</h3>
+          <p><a href="release_notes_1.8.html">English release notes</a> ·
+             <a href="release_notes_1.8_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.8.md">Markdown</a></p>
+        </div>
         <div class="card">
           <h3>Release Notes 1.7</h3>
           <p><a href="release_notes_1.7.html">English release notes</a> ·

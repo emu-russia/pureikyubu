@@ -12,9 +12,11 @@ yourself.
 ## Progress
 
 The emulator boots and runs more titles with every release — the per-title throughput of the current
-release is listed in the [1.8 release notes](docs/RELEASE_NOTES_1.8.md). The screenshots below are
-captures from earlier builds; the status bar shows the emulated MIPS, VI and PE rates. Some titles
-still fail to render or hang — compatibility is a work in progress.
+release is listed in the [1.9 release notes](docs/RELEASE_NOTES_1.9.md). Release 1.9 also adds a
+second machine (an integrated Game Boy Advance and Game Boy, in `src/gba`), a software (CPU)
+rendering path next to the OpenGL one, a new debugger and a local MCP server. The screenshots below
+are captures from earlier builds; the status bar shows the emulated MIPS, VI and PE rates. Some
+titles still fail to render or hang — compatibility is a work in progress.
 
 |![progress_bs2](wiki/imgstore/progress_bs2.png)|![progress_ikaruga](wiki/imgstore/progress_ikaruga.png)|![progress_luigi](wiki/imgstore/progress_luigi.png)|
 |---|---|---|
