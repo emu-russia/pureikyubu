@@ -133,6 +133,22 @@ namespace GFX
 				*reg = pe->pe.token.token;
 				break;
 
+			// The bounding box belongs to the pixel engine and the CPU reads it one half at a time
+			// (gfx-pe.md 6.17, 7). The BP writes latch it and every quad the rasterizer hands over
+			// extends it (see Rasterizer::ExtendBoundingBox).
+			case PE_PI_XBOUND0:
+				*reg = pe->pe.xbound.left;
+				break;
+			case PE_PI_XBOUND1:
+				*reg = pe->pe.xbound.right;
+				break;
+			case PE_PI_YBOUND0:
+				*reg = pe->pe.ybound.top;
+				break;
+			case PE_PI_YBOUND1:
+				*reg = pe->pe.ybound.bottom;
+				break;
+
 			default:
 				*reg = 0;
 				break;
@@ -473,6 +489,29 @@ namespace GFX
 
 		bool zfreeze = (gfx != nullptr) && (gfx->genmode.zfreeze != 0);
 		glDepthMask((pe.zmode.mask && !zfreeze) ? GL_TRUE : GL_FALSE);
+	}
+
+	//! Extend the bounding box with one drawn rectangle (gfx-pe.md 6.17). The registers hold a
+	//! minimum and a maximum per axis in ten bits, so a title clears the box by writing the empty
+	//! range (the minimum at its largest value, the maximum at its smallest) and the two take care
+	//! of each other from there.
+	void PixelEngine::ExtendBoundingBox(int left, int top, int right, int bottom)
+	{
+		int maxX = (int)gfx->RenderWidth() - 1;
+		int maxY = (int)gfx->RenderHeight() - 1;
+
+		if (left < 0) left = 0;
+		if (top < 0) top = 0;
+		if (right > maxX) right = maxX;
+		if (bottom > maxY) bottom = maxY;
+
+		if (right < left || bottom < top)
+			return;
+
+		if (left < (int)pe.xbound.left) pe.xbound.left = (unsigned)left & 0x3FF;
+		if (right > (int)pe.xbound.right) pe.xbound.right = (unsigned)right & 0x3FF;
+		if (top < (int)pe.ybound.top) pe.ybound.top = (unsigned)top & 0x3FF;
+		if (bottom > (int)pe.ybound.bottom) pe.ybound.bottom = (unsigned)bottom & 0x3FF;
 	}
 
 	void PixelEngine::ApplyColorMode()

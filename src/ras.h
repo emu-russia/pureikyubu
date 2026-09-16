@@ -97,6 +97,10 @@ namespace GFX
 		void SetUpPipeline();
 		void DrawPrimitive();
 
+		//! Extend the pixel engine's bounding box with the window extent of the vertices of the
+		//! primitive being drawn (gfx-pe.md 6.17).
+		void ExtendBoundingBox();
+
 		// -------------------------------------------------------------------------------------
 		// Software pipeline (GFX_PIPELINE = soft, issue #384)
 		//

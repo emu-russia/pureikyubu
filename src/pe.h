@@ -576,6 +576,12 @@ namespace GFX
 		//! Apply the blending, logic-op, write-mask and dither state of PE_CMODE0 / PE_CMODE1.
 		void ApplyColorMode();
 
+		//! Extend the bounding box of the drawn quads (gfx-pe.md 6.17) so that it covers the window
+		//! rectangle given, in EFB pixels with the origin at the top left corner. The box itself is
+		//! latched by the BP writes (a title clears it with GXClearBoundingBox) and read back through
+		//! the CPU register window; the rasterizer calls this once per primitive it draws.
+		void ExtendBoundingBox(int left, int top, int right, int bottom);
+
 		//! The copy engine's clear operation (PE_COPY_CMD with the clear bit set).
 		void ApplyCopyClear(const CopyClearState& clear);
 

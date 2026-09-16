@@ -25,6 +25,66 @@ namespace GFX
 		}
 	}
 
+	//! Extend the pixel engine's bounding box with the window extent of the vertices of this draw
+	//! (gfx-pe.md 6.17). The hardware extends the box while it walks the quads that produce pixels;
+	//! the shader pipeline leaves the transform to the vertex program, so the window positions are
+	//! formed here from the same XF registers that program reads - the geometry matrix of the
+	//! vertex's slot, the projection combine and the viewport scale/offset - and the rasterizer cuts
+	//! them where the clipper would have (a vertex at or behind the eye has no window position).
+	void Rasterizer::ExtendBoundingBox()
+	{
+		const XFState& xf = gfx->xf->xf;
+
+		float sc[3], off[3];
+		gfx->xf->SoftViewport(sc, off);
+
+		int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+
+		for (size_t i = 0; i < vertex_count; i++)
+		{
+			const Vertex* v = &gfx->vertex_data[i];
+			size_t mbase = (size_t)(v->matIdx0.PosNrmMatIdx & 0x3F) * 4;
+
+			float ex = xf.mvTexMtx[mbase + 0] * v->Position[0] + xf.mvTexMtx[mbase + 1] * v->Position[1] +
+				xf.mvTexMtx[mbase + 2] * v->Position[2] + xf.mvTexMtx[mbase + 3];
+			float ey = xf.mvTexMtx[mbase + 4] * v->Position[0] + xf.mvTexMtx[mbase + 5] * v->Position[1] +
+				xf.mvTexMtx[mbase + 6] * v->Position[2] + xf.mvTexMtx[mbase + 7];
+			float ez = xf.mvTexMtx[mbase + 8] * v->Position[0] + xf.mvTexMtx[mbase + 9] * v->Position[1] +
+				xf.mvTexMtx[mbase + 10] * v->Position[2] + xf.mvTexMtx[mbase + 11];
+
+			float cx, cy, cw;
+
+			if (xf.projectOrtho)
+			{
+				cx = xf.projectionParam[0] * ex + xf.projectionParam[1];
+				cy = xf.projectionParam[2] * ey + xf.projectionParam[3];
+				cw = 1.0f;
+			}
+			else
+			{
+				cx = xf.projectionParam[0] * ex + xf.projectionParam[1] * ez;
+				cy = xf.projectionParam[2] * ey + xf.projectionParam[3] * ez;
+				cw = -ez;
+			}
+
+			if (cw <= 0.0f)
+				continue;
+
+			int x = (int)floorf(cx / cw * sc[0] + off[0] + 0.5f);
+			int y = (int)floorf(cy / cw * sc[1] + off[1] + 0.5f);
+
+			if (x < minX) minX = x;
+			if (x > maxX) maxX = x;
+			if (y < minY) minY = y;
+			if (y > maxY) maxY = y;
+		}
+
+		if (minX > maxX || minY > maxY)
+			return;
+
+		gfx->pe->ExtendBoundingBox(minX, minY, maxX, maxY);
+	}
+
 	void Rasterizer::SetUpPipeline()
 	{
 		GLProgram* program = gfx->tev->GetTevProgram();
@@ -181,6 +241,10 @@ namespace GFX
 		// The frame now holds content: the display copy that closes it presents this picture
 		// (see GFXCore::GPDisplayCopy).
 		gfx->GPFrameDrawn();
+
+		// The bounding box follows what is drawn, and it is read from the CPU in the middle of a
+		// frame, so it is extended before the primitive goes to the GPU.
+		ExtendBoundingBox();
 
 		SetUpPipeline();
 		DrawPrimitive();
