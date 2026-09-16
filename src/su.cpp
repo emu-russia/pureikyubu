@@ -490,17 +490,40 @@ namespace GFX
 	// walker scans). SU_LPSIZE holds the size in 1/16 pixel units.
 	void SetupUnit::SoftEmitPoint(const SoftVertex& v)
 	{
+		// The size is in sixteenths of a pixel and the rasterizer never draws a point smaller than
+		// one pixel (the shader backend floors it the same way, and a sub-pixel quad's sub-samples
+		// fall between the sample points and lose the point altogether).
 		float size = (float)su.lpsize.psize / 16.0f;
-		if (size <= 0.0f)
+		if (size < 1.0f)
 			size = 1.0f;
 
 		float h = size * 0.5f;
 
+		// As for a line, the square lives in window space but the clipper works in clip space, so
+		// the half size is carried into the clip position with the vertex's own w and the viewport
+		// scale. Offsetting only X/Y left all four corners with the same clip position, the quad
+		// had no area and no point could ever be drawn.
+		float sc[3], off[3];
+		gfx->xf->SoftViewport(sc, off);
+		if (sc[0] == 0.0f) sc[0] = 1.0f;
+		if (sc[1] == 0.0f) sc[1] = 1.0f;
+
+		float w = v.clip[3];
+		float hx = h * w / sc[0];
+		float hy = h * w / sc[1];
+		float wx = (w != 0.0f) ? (v.clip[0] / w * sc[0] + off[0]) : v.x;
+		float wy = (w != 0.0f) ? (v.clip[1] / w * sc[1] + off[1]) : v.y;
+
 		SoftVertex quad[4] = { v, v, v, v };
-		quad[0].x = v.x - h; quad[0].y = v.y - h;
-		quad[1].x = v.x + h; quad[1].y = v.y - h;
-		quad[2].x = v.x + h; quad[2].y = v.y + h;
-		quad[3].x = v.x - h; quad[3].y = v.y + h;
+		quad[0].clip[0] = v.clip[0] - hx; quad[0].clip[1] = v.clip[1] - hy;
+		quad[1].clip[0] = v.clip[0] + hx; quad[1].clip[1] = v.clip[1] - hy;
+		quad[2].clip[0] = v.clip[0] + hx; quad[2].clip[1] = v.clip[1] + hy;
+		quad[3].clip[0] = v.clip[0] - hx; quad[3].clip[1] = v.clip[1] + hy;
+
+		quad[0].x = wx - h; quad[0].y = wy - h;
+		quad[1].x = wx + h; quad[1].y = wy - h;
+		quad[2].x = wx + h; quad[2].y = wy + h;
+		quad[3].x = wx - h; quad[3].y = wy + h;
 
 		gfx->xf->SoftClipTriangle(quad[0], quad[1], quad[2]);
 		gfx->xf->SoftClipTriangle(quad[0], quad[2], quad[3]);
@@ -510,8 +533,12 @@ namespace GFX
 	// endpoints (gfx-su.md 3.3). The width is programmed in 1/16 pixel units as well.
 	void SetupUnit::SoftEmitLine(const SoftVertex& a, const SoftVertex& b)
 	{
+		// SU_LPSIZE carries the line width in sixteenths of a pixel, and the rasterizer never draws
+		// a line thinner than one pixel - the sub-samples of a thinner quad fall between the
+		// sample points and the line disappears (the GX API's own width defaults to 1.0, and a
+		// title that programs a smaller one still expects a hairline).
 		float size = (float)su.lpsize.lsize / 16.0f;
-		if (size <= 0.0f)
+		if (size < 1.0f)
 			size = 1.0f;
 
 		// The window position is formed here rather than read from the vertex: the clipper is what
