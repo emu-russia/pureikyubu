@@ -1039,6 +1039,11 @@ namespace JdiSpecs
 	  "help": "Run emulation until the next PE interrupt (Done/Token). You can perform frame-by-frame emulation from the GFX Engine perspective"
 	},
 
+	"cpfifo": {
+	  "help": "Dump the CP FIFO registers (status, enable, base, top, watermarks, pointers)",
+	  "output": "none (the command reports into the debug message queue; the qd tool reads it)"
+	},
+
 	"memdump": {
 	  "help": "Dump physical memory (Splash)",
 	  "args": 2,

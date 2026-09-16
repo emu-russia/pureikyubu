@@ -708,14 +708,18 @@ namespace Flipper
 		char lw = (cpregs.cr & CP_CR_UVFEN) ? ('U') : ('u');    // low-wmark
 		char hw = (cpregs.cr & CP_CR_OVFEN) ? ('O') : ('o');    // high-wmark
 
+		// The occupancy follows from the two pointers, not from the copy the fetch leaves behind.
+		uint32_t count = 0;
+		FifoCount(&count);
+
 		Report(Channel::Norm, "CP %sfifo configuration:%c%c%c\n", md, bp, lw, hw);
-		Report(Channel::Norm, " status :0x%08X\n", cpregs.sr);
+		Report(Channel::Norm, " status :0x%08X\n", Status());
 		Report(Channel::Norm, " enable :0x%08X\n", cpregs.cr);
 		Report(Channel::Norm, "   base :0x%08X\n", cpregs.base);
 		Report(Channel::Norm, "   top  :0x%08X\n", cpregs.top);
 		Report(Channel::Norm, "   low  :0x%08X\n", cpregs.lomark);
 		Report(Channel::Norm, "   high :0x%08X\n", cpregs.himark);
-		Report(Channel::Norm, "   cnt  :0x%08X\n", cpregs.cnt);
+		Report(Channel::Norm, "   cnt  :0x%08X\n", count);
 		Report(Channel::Norm, "   wrptr:0x%08X\n", cpregs.wrptr);
 		Report(Channel::Norm, "   rdptr:0x%08X\n", cpregs.rdptr);
 		Report(Channel::Norm, "   break:0x%08X\n", cpregs.bpptr);

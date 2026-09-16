@@ -187,8 +187,23 @@ namespace Flipper
 		return output;
 	}
 
+	// The CP FIFO registers. They are the other half of a GFX bug hunt: `gxframes` shows what the
+	// CP has drawn, this shows where the reader is (and whether it is running at all).
+	static Json::Value* cmd_cpfifo(std::vector<std::string>& args)
+	{
+		if (HW == nullptr || HW->cp == nullptr)
+		{
+			Report(Channel::Norm, "cpfifo: nothing is running\n");
+			return nullptr;
+		}
+
+		HW->cp->DumpCPFIFO();
+		return nullptr;
+	}
+
 	void hw_init_handlers()
 	{
+		JDI::Hub.AddCmd("cpfifo", cmd_cpfifo);
 		JDI::Hub.AddCmd("ramload", cmd_ramload);
 		JDI::Hub.AddCmd("ramsave", cmd_ramsave);
 		JDI::Hub.AddCmd("aramload", cmd_aramload);
