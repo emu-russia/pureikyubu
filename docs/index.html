@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>pureikyubu — Nintendo GameCube emulator</title>
-<meta name="description" content="pureikyubu is a work-in-progress Nintendo GameCube emulator for research and reverse engineering. Landing page, release notes 1.8 and the archive of earlier releases.">
+<meta name="description" content="pureikyubu is a work-in-progress Nintendo GameCube emulator for research and reverse engineering. Landing page, release notes 1.9 and the archive of earlier releases.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="imgstore/favicon-32.png">
 <link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
@@ -24,7 +24,7 @@
       <a href="gba.html">GBA</a>
       <a href="gfxsoft.html">Soft GFX</a>
       <a href="mcp.html">MCP</a>
-      <a href="release_notes_1.8.html">Release Notes 1.8</a>
+      <a href="release_notes_1.9.html">Release Notes 1.9</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Language">
@@ -46,7 +46,7 @@
       it apart and understand it.
     </p>
     <div class="btn-row">
-      <a class="btn" href="release_notes_1.8.html">Release Notes 1.8</a>
+      <a class="btn" href="release_notes_1.9.html">Release Notes 1.9</a>
       <a class="btn secondary" href="digest.html">What changed after 1.6</a>
       <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu">Source on GitHub</a>
     </div>
@@ -59,76 +59,84 @@
     <section>
       <h2>What is new</h2>
       <p class="sub">
-        Release 1.8 is the performance release: a Gekko x86-64 recompiler, Paired-Single on SSE and
-        event-driven device threads that no longer spin on the time base. Together with the
-        interrupt-line fixes this is what boots <em>Zelda: The Wind Waker</em> and lets
-        <em>Animal Crossing</em> leave its exception handler.
+        Release 1.9 is the feature release: an integrated Game Boy Advance and Game Boy, a complete
+        software implementation of the Flipper graphics blocks, a new debugger, an MCP server for LLM
+        agents, a hardware-interface profiler, a headless build and a DSP recompiler — plus the fixes
+        that run the <em>Metroid Prime</em> intro to its title screen and boot <em>Super Mario
+        Sunshine</em>.
       </p>
       <div class="grid">
         <div class="card">
-          <span class="badge">CPU</span>
-          <h3>Gekko recompiler</h3>
-          <p>An x86-64 basic-block compiler keeps the guest registers in host registers and lifts the
-             emulated CPU from 39.7 to 155.9 MIPS; ALU-heavy code runs 8.6x faster. <code>jit 0</code>
-             and <code>jit 1</code> switch engines at run time.</p>
+          <span class="badge">New machine</span>
+          <h3>Game Boy Advance and Game Boy</h3>
+          <p><code>src/gba</code> is a second console written from the public specifications, with a
+             free boot ROM that draws the pureikyubu logo, its own SDL2 front end and its own test
+             harness. <code>pureikyubu --gba game.gba</code> runs a cartridge;
+             <code>pureikyubu game.gbc</code> runs the Game Boy inside it.</p>
         </div>
         <div class="card">
-          <span class="badge">CPU</span>
-          <h3>Paired-Single on SSE</h3>
-          <p>Every arithmetic PS instruction and both quantised loads and stores are translated to
-             SSE/SSE2; a PS-heavy workload goes from 59 to 435 MIPS.</p>
+          <span class="badge">Graphics</span>
+          <h3>The software GFX pipeline</h3>
+          <p>The Flipper blocks have a CPU implementation next to the OpenGL one: a real EFB memory
+             array, a real TMEM and a copy engine that writes the XFB the video interface scans out.
+             <code>GFX_PIPELINE</code> switches pipelines on the fly.</p>
         </div>
         <div class="card">
-          <span class="badge">Performance</span>
-          <h3>No more busy-waiting</h3>
-          <p>The VI scan-out and the serial poll moved onto the CPU thread, and the CP, AI DMA and DSP
-             threads block on events. Ikaruga reached 4.58x real time, Luigi's Mansion 4.26x.</p>
+          <span class="badge">Debugging</span>
+          <h3>DebugUI2</h3>
+          <p>A new debugger with its own thread, its own OpenGL window and a session per run. Every
+             panel is the Markdown of a JDI command: thirteen tabs from Gekko to the profiler, plus
+             the GBA and Game Boy machines.</p>
         </div>
         <div class="card">
-          <span class="badge">Compatibility</span>
-          <h3>Black screens fixed</h3>
-          <p>The DSP and disk-interface aggregate interrupt lines now work and the serial poll follows
-             the video-line schedule: Zelda: The Wind Waker boots to its title screen and Animal
-             Crossing shows the Nintendo logo.</p>
+          <span class="badge">Tooling</span>
+          <h3>The MCP server</h3>
+          <p><code>pureikyubu --mcp</code> publishes the whole debug interface as Model Context
+             Protocol tools — around 170 of them — so an LLM agent drives the emulator over
+             stdin/stdout.</p>
         </div>
         <div class="card">
-          <span class="badge">Disc images</span>
-          <h3>RVZ support</h3>
-          <p>Compressed GameCube images in Dolphin's RVZ container (Zstandard) can be mounted
-             read-only, next to ISO and GCM images.</p>
+          <span class="badge">Diagnostics</span>
+          <h3>HW interface profiler</h3>
+          <p>What the console's channels actually move, per emulated second: the 60x and Splash buses,
+             the PI/CP FIFOs, every DMA engine, the audio mixer input, the GFX primitives and the VI
+             frames — as a table, a PNG or an overlay.</p>
         </div>
         <div class="card">
-          <span class="badge">UI</span>
-          <h3>Controller settings in SDL</h3>
-          <p>The SDL build has a pad backend of its own and the full "Configure Controller N" dialog:
-             keyboard and gamepad bindings, analog sticks and triggers.</p>
+          <span class="badge">Platform</span>
+          <h3>Headless build and DSP JIT</h3>
+          <p>A windowless console target for benchmarks and MCP runs (with an offscreen OpenGL
+             backend on Windows), a security review behind a small verifier layer, UTF-8 throughout
+             the interface, and a DSP basic-block recompiler that is 1.5–1.8x faster.</p>
         </div>
       </div>
     </section>
 
     <section>
       <h2>Screenshots</h2>
-      <p class="sub">Captured from the current development build (release 1.8 line).</p>
+      <p class="sub">Captured from the current development build (release 1.9 line).</p>
       <div class="shots">
         <figure>
-          <img src="imgstore/metroid_prime.png" alt="Metroid Prime title screen rendered by pureikyubu">
-          <figcaption><strong>Metroid Prime</strong>The title screen after the texture-decoder and
-            presentation fixes.</figcaption>
+          <img src="imgstore/debugui2.png" alt="The new DebugUI2 debugger with the Gekko registers and memory">
+          <figcaption><strong>The new debugger</strong>Every panel is the Markdown of a JDI command:
+            the session history and the command line next to the Gekko registers, the disassembly and
+            the physical memory.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/zelda_wind_waker.png" alt="The Legend of Zelda: The Wind Waker title screen">
-          <figcaption><strong>Zelda: The Wind Waker</strong>Boots to its title screen once the DSP
-            vectors and the mailbox request are handled the way the hardware does.</figcaption>
+          <img src="imgstore/sms_intro.png" alt="Super Mario Sunshine reaching its intro cutscene">
+          <figcaption><strong>Super Mario Sunshine</strong>Boots, plays its intro FMV and reaches the
+            scene after it, once the cache-management instructions stop faulting on a direct-store
+            segment.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/controller_settings.png" alt="Configure Controller 1 dialog in the SDL UI">
-          <figcaption><strong>Controller settings</strong>The ported Win32 dialog in the SDL build:
-            keyboard and game controller bindings side by side.</figcaption>
+          <img src="imgstore/gba_metroid_fusion.png" alt="Metroid Fusion on the integrated Game Boy Advance">
+          <figcaption><strong>Metroid Fusion</strong>The integrated Game Boy Advance, booted by the
+            emulator's own free boot ROM and drawn at 60 fps.</figcaption>
         </figure>
         <figure>
-          <img src="imgstore/gc_linux_console.png" alt="GC-Linux kernel booting to the gcnfb console">
-          <figcaption><strong>GC-Linux</strong>A 2004 Linux kernel boots to the <code>gcnfb</code>
-            console with the Broadband Adapter and SI drivers loaded.</figcaption>
+          <img src="imgstore/soulcalibur2.png" alt="Soul Calibur II rendered by pureikyubu">
+          <figcaption><strong>Soul Calibur II</strong>A third-party 3D title rendered through the
+            XF/TEV shader pipeline.</figcaption>
         </figure>
       </div>
     </section>
@@ -193,14 +201,33 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       </p>
     </section>
 
+    <section id="next">
+      <h2>Up next</h2>
+      <p class="sub" style="max-width:none">
+        Release 2.0 will be the next major version, the <strong>peripheral release</strong>. It is aimed at the console's
+        peripheral devices — the EXI bus and the devices on it (memory cards, the Broadband Adapter,
+        the RTC), the serial interface and the pads, the disk interface and the drive, and the link
+        port the GBA side already has — and it should <strong>close out many of the emulator's
+        features</strong>, so that the list of what is not implemented yet shrinks to what genuinely
+        does not matter.
+      </p>
+      <p class="sub" style="max-width:none">
+        After that the project moves into its steady state: <strong>planned, methodical
+        improvement</strong> — performance work and bug fixing release after release, rather than
+        another feature push. The architecture is in place; what remains is making what is there
+        faster, more exact and more complete. The details are in the
+        <a href="release_notes_1.9.html#next">1.9 release notes</a>.
+      </p>
+    </section>
+
     <section>
       <h2>Documentation</h2>
       <div class="grid">
         <div class="card">
-          <h3>Release Notes 1.8</h3>
-          <p><a href="release_notes_1.8.html">English release notes</a> ·
-             <a href="release_notes_1.8_ru.html">Заметки о релизе на русском</a> ·
-             <a href="RELEASE_NOTES_1.8.md">Markdown</a></p>
+          <h3>Release Notes 1.9</h3>
+          <p><a href="release_notes_1.9.html">English release notes</a> ·
+             <a href="release_notes_1.9_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.9.md">Markdown</a></p>
         </div>
         <div class="card">
           <h3>Digest since 1.6</h3>
@@ -218,6 +245,12 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Archive</h2>
       <p class="sub">Earlier releases, kept for reference.</p>
       <div class="grid">
+        <div class="card">
+          <h3>Release Notes 1.8</h3>
+          <p><a href="release_notes_1.8.html">English release notes</a> ·
+             <a href="release_notes_1.8_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.8.md">Markdown</a></p>
+        </div>
         <div class="card">
           <h3>Release Notes 1.7</h3>
           <p><a href="release_notes_1.7.html">English release notes</a> ·

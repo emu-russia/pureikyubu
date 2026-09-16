@@ -14,9 +14,11 @@ OPT="${OPT:--O2}"
 
 mkdir -p $BLD
 
-# gba_sdl.cpp is the SDL2 frontend of the emulator: it is not part of the standalone core (the
-# core has no SDL dependency at all), so it is left out here.
-CORE_SOURCES=$(ls $REPO/src/gba/*.cpp | grep -v '/gba_sdl\.cpp$')
+# gba_sdl.cpp is the SDL2 frontend of the emulator and gba_debug.cpp is the debug interface that
+# frontend drives (it speaks JDI and Markdown and includes the emulator's precompiled header);
+# neither is part of the standalone core, which has no SDL, OpenGL or ImGui dependency at all, so
+# both are left out here - exactly as the gba_bench.vcxproj project does on Windows.
+CORE_SOURCES=$(ls $REPO/src/gba/*.cpp | grep -vE '/(gba_sdl|gba_debug)\.cpp$')
 
 g++ -std=c++17 $OPT -w -fno-strict-aliasing \
     -I$REPO/src/gba -I$HERE \
