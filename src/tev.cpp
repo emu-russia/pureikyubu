@@ -582,9 +582,15 @@ void main()
         }
         else
         {
-            // Perspective projection: remap the depth (b_mag - (z >> b_shf)) and take the reciprocal
+            // Perspective projection: the depth is remapped to `b_mag - (z >> b_shf)` and the
+            // reciprocal table turns that into the eye value. The remapped depth is a fraction of
+            // the 24-bit depth range, not a count of it - the hardware normalises it before the
+            // lookup - so the reciprocal is 2^24 / b and not 1 / b. With 1 / b the eye value lands
+            // around 1e-8 while the C the same registers carry is around 1e-2, `eye - C` is
+            // negative at every depth and the fog factor stays 0: every exponential and linear fog
+            // came out unfogged (pix-fog, issue #385).
             float b = tevFogBMag - floor(z24 / exp2(tevFogBShf));
-            view_z = (b > 0.0) ? (1.0 / b) : 0.0;
+            view_z = (b > 0.0) ? (16777216.0 / b) : 0.0;
         }
 
         float eye = tevFogA * view_z;
@@ -644,8 +650,18 @@ void main()
     //
     // The whole datapath is in 1/255 units, so the final alpha is already the 0..255 value the
     // reference arguments are compared against.
+    //
+    // The register file keeps a stage's result as an 11-bit signed value, but what the alpha
+    // function compares - and what the pixel engine stores - is the low 8 bits of the completed
+    // alpha (gfx-tev.md 3.2, 3.8). A stage whose clamping is turned off can leave a negative value
+    // in the register, and taking the low 8 bits is what turns it into its two's complement: that
+    // is how the cartoon-outline demo reads the same edge from either side of it, and why its
+    // tolerance is stated in whole 8-bit steps (issue #385).
+    float alphaOut = result.a - floor(result.a / 256.0) * 256.0;
+    if (alphaOut < 0.0)
+        alphaOut += 256.0;
 
-    float alphaValue = result.a;
+    float alphaValue = alphaOut;
     bool p0 = TevAlphaCompare(tevAlphaOp0, alphaValue, tevAlphaRef0);
     bool p1 = TevAlphaCompare(tevAlphaOp1, alphaValue, tevAlphaRef1);
     bool pass;
@@ -680,7 +696,7 @@ void main()
 
     // The whole TEV datapath works in units of 1/255 (the hardware stores 8-bit colours and 11-bit
     // signed colour registers), so the result is scaled down to the [0,1] range expected by GL.
-    fragColor = result / 255.0;
+    fragColor = vec4(result.rgb / 255.0, alphaOut / 255.0);
 }
 )glsl";
 
@@ -1634,9 +1650,13 @@ void main()
 			}
 			else
 			{
-				// Perspective: the depth is remapped by B and its reciprocal is taken
+				// Perspective: the depth is remapped by B and its reciprocal is taken. The remapped
+				// depth is a fraction of the 24-bit range - the hardware normalises it before the
+				// reciprocal table - so the lookup is 2^24 / b and not 1 / b, which lands around
+				// 1e-8 against a C of about 1e-2 and leaves the fog factor at 0 (see the shader
+				// backend's fog branch for the register values that pin the scale down).
 				float b = (float)tev.fog_param1.b_mag - floorf(z24 / exp2f((float)tev.fog_param2.b_shft));
-				view_z = (b > 0.0f) ? (1.0f / b) : 0.0f;
+				view_z = (b > 0.0f) ? (16777216.0f / b) : 0.0f;
 			}
 
 			float eye = s11e8(tev.fog_param0.a_sign, tev.fog_param0.a_expn, tev.fog_param0.a_mant) * view_z;

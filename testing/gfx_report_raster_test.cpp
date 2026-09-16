@@ -335,9 +335,10 @@ namespace pureikyubutest
 				"the cool colour survived is the truth table of the function:\n"
 				"  0 never, 1 less, 2 equal, 3 less or equal, 4 greater, 5 not equal, 6 greater or equal, 7 always.");
 
-			// The six depth pairs of the grid, as clip-space z (the window depth is (z + 1) / 2)
-			const float srcDepth[6] = { -0.6f, 0.0f, 0.6f, 0.0f, 0.6f, -0.6f };
-			const float dstDepth[6] = { 0.6f, 0.0f, -0.6f, 0.6f, 0.0f, 0.0f };
+			// The six depth pairs of the grid, as GX clip-space z: the GX range is (-w, 0] and the
+			// shader maps it onto GL's, so the window depth of a GX clip z is z + 1.
+			const float srcDepth[6] = { -0.8f, -0.5f, -0.2f, -0.5f, -0.2f, -0.8f };
+			const float dstDepth[6] = { -0.2f, -0.5f, -0.8f, -0.2f, -0.5f, -0.5f };
 
 			for (int func = 0; func < 8; func++)
 			{

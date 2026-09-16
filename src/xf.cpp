@@ -107,7 +107,12 @@ float CosineAttenuation(int ch, vec3 n, vec3 ldir, bool isAlpha, int i)
     if (att.y < 0.5)
         cosAtten = clamp(dot(n, lightDhx[i].xyz), 0.0, 1.0);
     else
-        cosAtten = clamp(dot(ldir, -lightDhx[i].xyz), 0.0, 1.0);
+        // L.L_dir, straight: the SDK stores the spot axis negated (GXInitLightDir puts the
+        // direction the cone points into the H/D words with the opposite sign, GXInitLightSpot
+        // then writes the coefficients against it), so the cosine of the angle between the axis
+        // and the vertex-to-light vector is dot(L, Ldir) as it stands. Adding a negation here
+        // turned every spot attenuation into 0, which left the whole surface black (issue #385).
+        cosAtten = clamp(dot(ldir, lightDhx[i].xyz), 0.0, 1.0);
 
     return clamp(lightA[i].x + lightA[i].y * cosAtten + lightA[i].z * cosAtten * cosAtten, 0.0, 1.0);
 }
@@ -388,6 +393,16 @@ void main()
             xfProjParam[4] * eye.z + xfProjParam[5],
             -eye.z);
     }
+
+    // The GX clip space keeps z in the (-w, 0) range: the SDK's projection matrices scale z that
+    // way for this hardware (mtx44.c, the EPPC build), so the near plane is z = -w and the far
+    // plane is z = 0, while the viewport z registers map that range onto the depth range the title
+    // programmed. OpenGL's clip volume is (-w, w), so the range is doubled here (z' = 2z + w):
+    // without it only the lower half of the depth range is used, geometry that sits exactly on the
+    // near plane lands on the GL clip boundary and is dropped, and the programmed viewport z
+    // registers no longer describe the depth range the backend gives GL. The software pipeline
+    // applies the same mapping in SoftVertexToWindow, so the two pipelines keep the same depth.
+    clip.z = 2.0 * clip.z + clip.w;
 
     gl_Position = clip;
 }
@@ -1064,7 +1079,9 @@ void main()
 		if (att->AttenSelect == 0)
 			cosAtten = SoftClamp(n[0] * lp.dhx[i][0] + n[1] * lp.dhx[i][1] + n[2] * lp.dhx[i][2], 0.0f, 1.0f);
 		else
-			cosAtten = SoftClamp(-(ldir[0] * lp.dhx[i][0] + ldir[1] * lp.dhx[i][1] + ldir[2] * lp.dhx[i][2]), 0.0f, 1.0f);
+			// L.Ldir, straight - see CosineAttenuation in the vertex shader for why there is no
+			// negation here (the stored direction is already the negated spot axis).
+			cosAtten = SoftClamp(ldir[0] * lp.dhx[i][0] + ldir[1] * lp.dhx[i][1] + ldir[2] * lp.dhx[i][2], 0.0f, 1.0f);
 
 		return SoftClamp(lp.a[i][0] + lp.a[i][1] * cosAtten + lp.a[i][2] * cosAtten * cosAtten, 0.0f, 1.0f);
 	}
@@ -1546,19 +1563,13 @@ void main()
 		poly[1] = v1;
 		poly[2] = v2;
 
-		// A vertex that lands exactly on the near plane has `w = 0`, and its window position is at
-		// infinity: the clipper therefore cuts a hair in front of it (a ten-thousandth of the
-		// triangle's own depth extent, so the cut is scale independent) and the divide stays
-		// finite. The hardware has the same singularity and answers it with the saturated 14-bit
-		// screen position of the setup unit (gfx-su.md 5.1).
-		float wEps = 1e-6f;
-		for (int i = 0; i < 3; i++)
-		{
-			float w = fabsf(poly[i].clip[3]);
-			if (w * 1e-4f > wEps)
-				wEps = w * 1e-4f;
-		}
-
+		// The near plane is inclusive, as it is on the hardware: a vertex exactly on it (z = -w)
+		// is inside the view volume and belongs to the picture. Only a vertex *at the eye* has
+		// w = 0 and a window position at infinity, and the divide of SoftVertexToWindow answers
+		// that case on its own (it falls back to 1/w = 1). The clipper used to cut a hair in
+		// front of the plane instead, which threw away every primitive that lies exactly on it -
+		// a title that draws a flat overlay at z = -1 lost all of it, and the demo lines of
+		// pix-fog, whose vertices sit on the plane, never rasterized.
 		for (int p = 0; p < 6 && count > 0; p++)
 		{
 			SoftVertex out[16];
@@ -1571,12 +1582,6 @@ void main()
 
 				float da = SoftClipDistance(SoftClipPlanes[p], a);
 				float db = SoftClipDistance(SoftClipPlanes[p], b);
-
-				if (p == 0)
-				{
-					da -= wEps;
-					db -= wEps;
-				}
 
 				if (da >= 0.0f && outCount < 16)
 					out[outCount++] = a;

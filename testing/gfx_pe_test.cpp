@@ -194,13 +194,15 @@ namespace pureikyubutest
 				const wchar_t* name;
 			};
 
-			// The quad is drawn at a depth that maps to about 0.5 in the window; the clear depth is 1.0
+			// The quad is drawn at a window depth of 0.5; the clear depth is 1.0. The z below is the GX
+			// clip z that produces it: the GX clip range is (-w, 0] and the shader maps it onto GL's,
+			// so the window depth is z + 1 for an orthographic pass-through.
 			const Case cases[] = {
-				{ 0, 0.5f, false, L"never" },
-				{ 1, 0.5f, true,  L"less (0.5 < 1.0)" },
-				{ 3, 0.5f, true,  L"lequal" },
-				{ 4, 0.5f, false, L"greater (0.5 > 1.0 is false)" },
-				{ 7, 0.5f, true,  L"always" },
+				{ 0, -0.5f, false, L"never" },
+				{ 1, -0.5f, true,  L"less (0.5 < 1.0)" },
+				{ 3, -0.5f, true,  L"lequal" },
+				{ 4, -0.5f, false, L"greater (0.5 > 1.0 is false)" },
+				{ 7, -0.5f, true,  L"always" },
 			};
 
 			for (const Case& c : cases)
@@ -208,8 +210,9 @@ namespace pureikyubutest
 				GfxTestMachine& m = M();
 				SetupPassThrough(m);
 
-				// The vertex z is the clip space z; with the default depth range [0,1] a clip z of
-				// 0.5 maps to a window depth of 0.75 for an orthographic projection.
+				// The vertex z is the GX clip space z; with the default depth range [0,1] the shader
+				// maps a GX clip z of -0.25 to a window depth of 0.75 (the GX far plane, z = 0, is the
+				// window depth 1).
 				m.BpLoad(PE_COPY_CLEAR_Z_ID, 0xFFFFFF);	// clear the depth to the far value
 				m.BpLoad(PE_ZMODE_ID, 1u | ((unsigned)c.func << 1) | (1u << 4));
 				m.BpLoad(PE_CMODE0_ID, 0x18);
@@ -257,10 +260,10 @@ namespace pureikyubutest
 				Assert::AreEqual<int>(mask ? 1 : 0, writeMask ? 1 : 0, L"GL_DEPTH_WRITEMASK");
 
 				GFX::Vertex quad[4] = {
-					GfxTestMachine::MakeVertex(-1, -1, 0.5f, 0xff, 0xff, 0xff, 0xff),
-					GfxTestMachine::MakeVertex(1, -1, 0.5f, 0xff, 0xff, 0xff, 0xff),
-					GfxTestMachine::MakeVertex(1, 1, 0.5f, 0xff, 0xff, 0xff, 0xff),
-					GfxTestMachine::MakeVertex(-1, 1, 0.5f, 0xff, 0xff, 0xff, 0xff),
+					GfxTestMachine::MakeVertex(-1, -1, -0.25f, 0xff, 0xff, 0xff, 0xff),
+					GfxTestMachine::MakeVertex(1, -1, -0.25f, 0xff, 0xff, 0xff, 0xff),
+					GfxTestMachine::MakeVertex(1, 1, -0.25f, 0xff, 0xff, 0xff, 0xff),
+					GfxTestMachine::MakeVertex(-1, 1, -0.25f, 0xff, 0xff, 0xff, 0xff),
 				};
 				m.DrawQuad(quad);
 
