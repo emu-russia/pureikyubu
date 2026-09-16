@@ -1650,9 +1650,13 @@ void main()
 			}
 			else
 			{
-				// Perspective: the depth is remapped by B and its reciprocal is taken
+				// Perspective: the depth is remapped by B and its reciprocal is taken. The remapped
+				// depth is a fraction of the 24-bit range - the hardware normalises it before the
+				// reciprocal table - so the lookup is 2^24 / b and not 1 / b, which lands around
+				// 1e-8 against a C of about 1e-2 and leaves the fog factor at 0 (see the shader
+				// backend's fog branch for the register values that pin the scale down).
 				float b = (float)tev.fog_param1.b_mag - floorf(z24 / exp2f((float)tev.fog_param2.b_shft));
-				view_z = (b > 0.0f) ? (1.0f / b) : 0.0f;
+				view_z = (b > 0.0f) ? (16777216.0f / b) : 0.0f;
 			}
 
 			float eye = s11e8(tev.fog_param0.a_sign, tev.fog_param0.a_expn, tev.fog_param0.a_mant) * view_z;
