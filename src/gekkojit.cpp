@@ -385,6 +385,47 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 		excJumps.push_back(e.jcc_rel32(X64::CcNE));
 	};
 
+	// The branch condition of a bc / bclr / bcctr, inlined for the forms that are a plain
+	// CR test or a plain CTR decrement - which is all a compiler emits in practice, and in
+	// particular the `bdnz`/`blt` of a loop and the `bclr` of a return. The general BO/BI
+	// combination still goes through BcTest / BctrTest.
+	//
+	// The BO fields are the ones Interpreter::BcTest decodes: bit 4 leaves CR alone, bit 3
+	// takes the branch when CR[BI] is set, bit 2 leaves CTR alone, bit 1 takes it when CTR
+	// is zero. `ctrBranch` is false for bcctr / bcctrl, whose test (Interpreter::BctrTest)
+	// ignores CTR completely - it is not decremented there - so only the CR half is inlined
+	// and a set bit 4 means "always taken". Returns the offset of a rel32 that lands on the
+	// not-taken path, -1 when the branch is unconditional, or -2 when the caller has to
+	// emit the helper call.
+	auto emitBranchCondition = [&](uint32_t bo, uint32_t bi, bool ctrBranch) -> int64_t
+	{
+		if (!ctrBranch)
+		{
+			if (bo & 0x10)
+			{
+				return -1;								// CR ignored: always taken
+			}
+			e.test_m32_imm(RegRegs, CrOff, 0x8000'0000u >> bi);
+			return (int64_t)e.jcc_rel32((bo & 0x08) ? X64::CcE : X64::CcNE);
+		}
+
+		if ((bo & 0x14) == 0x14)
+		{
+			return -1;									// CR and CTR both ignored
+		}
+		if ((bo & 0x14) == 0x10)
+		{
+			e.sub_m32_imm8(RegRegs, CtrOff, 1);			// bdnz / bdz
+			return (int64_t)e.jcc_rel32((bo & 0x02) ? X64::CcNE : X64::CcE);
+		}
+		if ((bo & 0x14) == 0x04)
+		{
+			e.test_m32_imm(RegRegs, CrOff, 0x8000'0000u >> bi);
+			return (int64_t)e.jcc_rel32((bo & 0x08) ? X64::CcE : X64::CcNE);
+		}
+		return -2;
+	};
+
 	//
 	// Prologue
 	//
@@ -405,9 +446,38 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	e.mov_r32_m(RegPc, RegRegs, PcOff);
 	e.xor_r32_r32_same(RegCount);
 
+	// The frame slots a self-looping block uses (see emitBackEdge).
+	e.mov_m32_imm(X64::RSP, LoopTicksSlot, 0);
+	e.mov_m32_imm(X64::RSP, LoopBudgetSlot, LoopBudget);
+
+	// Where a back edge has to return to: the first instruction of the block, after the
+	// prologue, so that the loop body is not re-entered through the saves.
+	size_t bodyStart = e.pos;
+
 	std::vector<size_t> normalExits;		// jump to the normal epilogue
 	std::vector<size_t> takenExits;			// jump to the taken branch epilogue
 	std::vector<size_t> exceptionExits;		// jump to the exception epilogue
+
+	// A taken branch that targets the start of the block it is in is translated as an
+	// internal back edge instead of a block exit: the loop body is already in this block,
+	// so jumping back to it keeps the loop out of the block cache and the dispatcher. The
+	// budget bounds how many iterations run before the block leaves, so the deferred time
+	// base update (and with it the Flipper-side scheduling) stays as fine grained as the
+	// basic-block cut was designed to keep it, and `LoopTicksSlot` counts the taken
+	// branches so that Run() can tick them exactly as the interpreter does.
+	auto emitBackEdge = [&](uint32_t targetPc)
+	{
+		e.mov_r32_imm(RegPc, targetPc);
+		e.add_m32_imm8(X64::RSP, LoopTicksSlot, 1);
+		e.sub_m32_imm8(X64::RSP, LoopBudgetSlot, 1);
+
+		size_t again = e.jcc_rel32(X64::CcNE);
+		takenExits.push_back(e.jmp_rel32());		// budget exhausted: leave with pc = target
+		e.patch32(again, e.rel(again));
+
+		size_t back = e.jmp_rel32();
+		e.patch32(back, (uint32_t)((int64_t)bodyStart - (int64_t)(back + 4)));
+	};
 
 	uint32_t curPc = pc;
 	uint32_t count = 0;
@@ -969,13 +1039,20 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 		case Instruction::bcl:
 		case Instruction::bcla:
 		{
-			e.mov_r64_r64(Arg0, RegCore);
-			e.mov_r32_imm(Arg1, (uint32_t)di.paramBits[0]);
-			e.mov_r32_imm(Arg2, (uint32_t)di.paramBits[1]);
-			e.call_abs((uint64_t)(void*)&Jit::BcTest);
-			e.movzx_r32_r8(X64::RAX, X64::RAX);		// bool comes back in AL only
-			e.test_r32_r32(X64::RAX, X64::RAX);
-			size_t notTaken = e.jcc_rel32(X64::CcE);
+			uint32_t bo = (uint32_t)di.paramBits[0];
+			uint32_t bi = (uint32_t)di.paramBits[1];
+			int64_t notTaken = emitBranchCondition(bo, bi, true);
+
+			if (notTaken == -2)
+			{
+				e.mov_r64_r64(Arg0, RegCore);
+				e.mov_r32_imm(Arg1, bo);
+				e.mov_r32_imm(Arg2, bi);
+				e.call_abs((uint64_t)(void*)&Jit::BcTest);
+				e.movzx_r32_r8(X64::RAX, X64::RAX);		// bool comes back in AL only
+				e.test_r32_r32(X64::RAX, X64::RAX);
+				notTaken = (int64_t)e.jcc_rel32(X64::CcE);
+			}
 
 			if (di.instr == Instruction::bcl || di.instr == Instruction::bcla)
 			{
@@ -983,25 +1060,56 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 				e.mov_m32_r(RegRegs, LrOff, T0);
 			}
 
-			e.mov_r32_imm(RegPc, di.Imm.Address);
-			takenExits.push_back(e.jmp_rel32());
+			if (di.Imm.Address == pc && count > 1)
+			{
+				// A branch back to this block's own first instruction: the loop body is in
+				// this block already, so keep the iteration here and leave only when the
+				// budget runs out.
+				emitBackEdge(di.Imm.Address);
+				endBlock = true;
+			}
+			else
+			{
+				e.mov_r32_imm(RegPc, di.Imm.Address);
+				takenExits.push_back(e.jmp_rel32());
 
-			e.patch32(notTaken, e.rel(notTaken));
+				// A conditional branch does not end the block: the not-taken path is the
+				// next instruction and belongs to the same straight-line run. That is what
+				// lets a loop whose body contains a conditional branch - the search loops
+				// the audio driver spends its time in are written that way - be compiled in
+				// one piece, so that the backward branch at its end can become a back edge
+				// instead of a block exit. An unconditional BO leaves nothing to fall into.
+				if (notTaken == -1)
+				{
+					endBlock = true;
+				}
+			}
+
+			if (notTaken >= 0)
+			{
+				e.patch32((size_t)notTaken, e.rel((size_t)notTaken));
+			}
 			e.add_r32_imm(RegPc, 4);				// not taken: pc += 4
-			endBlock = true;
 			break;
 		}
 
 		case Instruction::bclr:
 		case Instruction::bclrl:
 		{
-			e.mov_r64_r64(Arg0, RegCore);
-			e.mov_r32_imm(Arg1, (uint32_t)di.paramBits[0]);
-			e.mov_r32_imm(Arg2, (uint32_t)di.paramBits[1]);
-			e.call_abs((uint64_t)(void*)&Jit::BcTest);
-			e.movzx_r32_r8(X64::RAX, X64::RAX);
-			e.test_r32_r32(X64::RAX, X64::RAX);
-			size_t notTaken = e.jcc_rel32(X64::CcE);
+			uint32_t bo = (uint32_t)di.paramBits[0];
+			uint32_t bi = (uint32_t)di.paramBits[1];
+			int64_t notTaken = emitBranchCondition(bo, bi, true);
+
+			if (notTaken == -2)
+			{
+				e.mov_r64_r64(Arg0, RegCore);
+				e.mov_r32_imm(Arg1, bo);
+				e.mov_r32_imm(Arg2, bi);
+				e.call_abs((uint64_t)(void*)&Jit::BcTest);
+				e.movzx_r32_r8(X64::RAX, X64::RAX);
+				e.test_r32_r32(X64::RAX, X64::RAX);
+				notTaken = (int64_t)e.jcc_rel32(X64::CcE);
+			}
 
 			// The target is the *old* LR: it has to be read before the new one is
 			// written (bclrl is how the IPL2 entry code calls subroutines).
@@ -1016,7 +1124,10 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 
 			takenExits.push_back(e.jmp_rel32());
 
-			e.patch32(notTaken, e.rel(notTaken));
+			if (notTaken >= 0)
+			{
+				e.patch32((size_t)notTaken, e.rel((size_t)notTaken));
+			}
 			e.add_r32_imm(RegPc, 4);
 			endBlock = true;
 			break;
@@ -1025,13 +1136,20 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 		case Instruction::bcctr:
 		case Instruction::bcctrl:
 		{
-			e.mov_r64_r64(Arg0, RegCore);
-			e.mov_r32_imm(Arg1, (uint32_t)di.paramBits[0]);
-			e.mov_r32_imm(Arg2, (uint32_t)di.paramBits[1]);
-			e.call_abs((uint64_t)(void*)&Jit::BctrTest);
-			e.movzx_r32_r8(X64::RAX, X64::RAX);
-			e.test_r32_r32(X64::RAX, X64::RAX);
-			size_t notTaken = e.jcc_rel32(X64::CcE);
+			uint32_t bo = (uint32_t)di.paramBits[0];
+			uint32_t bi = (uint32_t)di.paramBits[1];
+			int64_t notTaken = emitBranchCondition(bo, bi, false);
+
+			if (notTaken == -2)
+			{
+				e.mov_r64_r64(Arg0, RegCore);
+				e.mov_r32_imm(Arg1, bo);
+				e.mov_r32_imm(Arg2, bi);
+				e.call_abs((uint64_t)(void*)&Jit::BctrTest);
+				e.movzx_r32_r8(X64::RAX, X64::RAX);
+				e.test_r32_r32(X64::RAX, X64::RAX);
+				notTaken = (int64_t)e.jcc_rel32(X64::CcE);
+			}
 
 			if (di.instr == Instruction::bcctrl)
 			{
@@ -1043,7 +1161,10 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 			e.and_r32_imm(RegPc, ~3u);
 			takenExits.push_back(e.jmp_rel32());
 
-			e.patch32(notTaken, e.rel(notTaken));
+			if (notTaken >= 0)
+			{
+				e.patch32((size_t)notTaken, e.rel((size_t)notTaken));
+			}
 			e.add_r32_imm(RegPc, 4);
 			endBlock = true;
 			break;
@@ -1116,6 +1237,8 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 		e.mov_r64_r64(T0, RegExit);
 		e.mov_m64_r(T0, 0, RegCount);
 		e.mov_m32_imm(T0, 8, (uint32_t)kind);
+		e.mov_r32_m(T1, X64::RSP, LoopTicksSlot);
+		e.mov_m32_r(T0, 12, T1);
 	};
 
 	auto emitEpilogue = [&]()
@@ -1265,24 +1388,28 @@ void Jit::RunInner()
 	stats.jitBlocks++;
 	stats.jitInstrs += n;
 
+	// `exit.ticks` is the number of taken back edges the block retired on top of its
+	// instructions. The interpreter ticks every taken branch twice (once in BranchCheck and
+	// once in the instruction loop), so a block that looped on its own back edge owes one
+	// extra tick per iteration even though it left the dispatcher only once.
+	uint32_t ticks = n + exit.ticks;
+
 	// Mirror Interpreter::ExecuteOpcode: an instruction that raises an exception
 	// does not advance the tick, and a taken branch is ticked once by BranchCheck
 	// and once more by the instruction loop.
 	switch ((JitExitKind)exit.kind)
 	{
 	case JitExitKind::Exception:
-		if (n > 0) core->TickN(n - 1);
+		if (ticks > 0) core->TickN(ticks - 1);
 		break;
 
 	case JitExitKind::TakenBranch:
-		// The n instructions include the taken branch itself, which the interpreter
-		// ticks twice: once inside BranchCheck and once at the end of the loop.
-		if (n > 0) core->TickN(n);
+		if (ticks > 0) core->TickN(ticks);
 		interp->BranchCheck();
 		break;
 
 	default:
-		if (n > 0) core->TickN(n);
+		if (ticks > 0) core->TickN(ticks);
 		break;
 	}
 
