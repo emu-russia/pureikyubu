@@ -600,8 +600,17 @@ namespace GFX
 			return GLErrorValue(L"gxshot: the rectangle is outside the render target");
 		}
 
-		std::vector<uint8_t> rgb;
-		gfx->pe->ReadEfb(x, y, width, height, rgb);
+		std::vector<uint8_t> rgba;
+		gfx->pe->ReadEfb(x, y, width, height, rgba);
+
+		// The EFB read-back carries the alpha plane; a PNG of the picture keeps the three colours.
+		std::vector<uint8_t> rgb((size_t)width * height * 3);
+		for (size_t i = 0; i < rgb.size() / 3; i++)
+		{
+			rgb[i * 3 + 0] = rgba[i * 4 + 0];
+			rgb[i * 3 + 1] = rgba[i * 4 + 1];
+			rgb[i * 3 + 2] = rgba[i * 4 + 2];
+		}
 
 		std::string filename = args[1];
 		bool saved = Util::SavePng(filename.c_str(), rgb.data(), (size_t)width, (size_t)height);
@@ -1058,6 +1067,9 @@ namespace GFX
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		// The EFB has an alpha plane and the copy engine can read it back (the a8 texture copy of
+		// the cartoon-outline demo does), so the render target needs an alpha channel of its own.
+		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
 		context = SDL_GL_CreateContext(render_window);
 		if (context == nullptr)
@@ -1490,10 +1502,18 @@ namespace GFX
 			return;
 		}
 
-		std::vector<uint8_t> rgb;
-		if (!pe->ReadEfb(0, 0, (int)scr_w, (int)scr_h, rgb))
+		std::vector<uint8_t> rgba;
+		if (!pe->ReadEfb(0, 0, (int)scr_w, (int)scr_h, rgba))
 		{
 			return;
+		}
+
+		std::vector<uint8_t> rgb((size_t)scr_w * scr_h * 3);
+		for (size_t i = 0; i < rgb.size() / 3; i++)
+		{
+			rgb[i * 3 + 0] = rgba[i * 4 + 0];
+			rgb[i * 3 + 1] = rgba[i * 4 + 1];
+			rgb[i * 3 + 2] = rgba[i * 4 + 2];
 		}
 
 		char name[0x400];

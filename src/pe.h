@@ -306,6 +306,27 @@ namespace GFX
 		PE_COPY_CMD_DISPLAY = 1,		// the rectangle becomes the XFB the video interface shows
 	};
 
+	// PE_COPY_CMD's four format bits (tex_format | tex_format_h << 3) name the destination format of
+	// a texture copy (gfx-pe.md 5.7). It is the copy engine's own 4-bit set, not the texture unit's
+	// TexFormat: a copy destination has no palette, so the codes 8..10 are the single-channel
+	// r8/g8/b8 rather than the paletted c4/c8/c14 (see PixelEngine::TextureCopy).
+	enum CopyTexFormat
+	{
+		CTF_I4 = 0,
+		CTF_I8 = 1,
+		CTF_IA4 = 2,
+		CTF_IA8 = 3,
+		CTF_RGB565 = 4,
+		CTF_RGB5A3 = 5,
+		CTF_RGBA8 = 6,
+		CTF_A8 = 7,
+		CTF_R8 = 8,
+		CTF_G8 = 9,
+		CTF_B8 = 10,
+		CTF_RG8 = 11,
+		CTF_GB8 = 12,
+	};
+
 	// 0x52
 	union PE_COPY_CMD
 	{
@@ -598,7 +619,7 @@ namespace GFX
 		//! Read a rectangle of the EFB into an RGB buffer, top row first. The rectangle is in screen
 		//! coordinates (the origin is the top left corner). Returns false when the frame loop does
 		//! not own the GL context, so that the caller can leave the EFB alone.
-		bool ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgb);
+		bool ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgba);
 
 		//! The PE register state (read-only; used by the debugger and the unit tests).
 		const PEState& State() const { return pe; }

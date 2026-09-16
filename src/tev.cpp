@@ -644,8 +644,18 @@ void main()
     //
     // The whole datapath is in 1/255 units, so the final alpha is already the 0..255 value the
     // reference arguments are compared against.
+    //
+    // The register file keeps a stage's result as an 11-bit signed value, but what the alpha
+    // function compares - and what the pixel engine stores - is the low 8 bits of the completed
+    // alpha (gfx-tev.md 3.2, 3.8). A stage whose clamping is turned off can leave a negative value
+    // in the register, and taking the low 8 bits is what turns it into its two's complement: that
+    // is how the cartoon-outline demo reads the same edge from either side of it, and why its
+    // tolerance is stated in whole 8-bit steps (issue #385).
+    float alphaOut = result.a - floor(result.a / 256.0) * 256.0;
+    if (alphaOut < 0.0)
+        alphaOut += 256.0;
 
-    float alphaValue = result.a;
+    float alphaValue = alphaOut;
     bool p0 = TevAlphaCompare(tevAlphaOp0, alphaValue, tevAlphaRef0);
     bool p1 = TevAlphaCompare(tevAlphaOp1, alphaValue, tevAlphaRef1);
     bool pass;
@@ -680,7 +690,7 @@ void main()
 
     // The whole TEV datapath works in units of 1/255 (the hardware stores 8-bit colours and 11-bit
     // signed colour registers), so the result is scaled down to the [0,1] range expected by GL.
-    fragColor = result / 255.0;
+    fragColor = vec4(result.rgb / 255.0, alphaOut / 255.0);
 }
 )glsl";
 

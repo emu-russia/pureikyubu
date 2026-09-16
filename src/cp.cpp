@@ -1528,9 +1528,11 @@ namespace Flipper
 		XFSync();
 		HW->gfx->xf->CPRegLoadBegin(xfAddr, count);
 
+		// The array entry is guest memory, so its words are big-endian like every other word the
+		// CP reads through an indexed array (see FetchComp): the XF wants the numeric word.
 		for (size_t i = 0; i < count; i++)
 		{
-			HW->gfx->xf->CPRegLoadData(src[i]);
+			HW->gfx->xf->CPRegLoadData(_BYTESWAP_UINT32(src[i]));
 		}
 	}
 

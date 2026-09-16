@@ -596,26 +596,33 @@ namespace GFX
 			return;
 
 		// The shape of a tile follows the texel size of the format (gfx-pe.md 5.7).
+		//
+		// The four bits of PE_COPY_CMD name the destination format of the copy, which is the 4-bit
+		// set of the copy engine, not the texture unit's TexFormat: a copy destination has no
+		// palette, so the codes 8..10 stand for the single-channel r8/g8/b8 (8 bits per texel) where
+		// TexFormat has the paletted c4/c8/c14. Only the codes the copy engine really has are
+		// handled: a8 is the one the cartoon-outline demo copies its ID map into (issue #385).
 		int tileW = 4, tileH = 4;
 
 		switch (fmt)
 		{
-			case TF_I4:
-			case TF_C4:
+			case TF_I4:			// 0: i4, 4 bits per texel
 				tileW = 8; tileH = 8;
 				break;
 
-			case TF_I8:
-			case TF_IA4:
-			case TF_C8:
+			case TF_I8:			// 1: i8
+			case TF_IA4:		// 2: ia4
+			case CTF_A8:		// 7: a8 (the alpha byte of the EFB lane)
+			case CTF_R8:		// 8: r8
+			case CTF_G8:		// 9: g8
+			case CTF_B8:		// 10: b8
 				tileW = 8; tileH = 4;
 				break;
 
-			case TF_IA8:
-			case TF_RGB565:
-			case TF_RGB5A3:
-			case TF_C14:
-			case TF_RGBA8:
+			case TF_IA8:		// 3: ia8
+			case TF_RGB565:		// 4: r5g6b5
+			case TF_RGB5A3:		// 5: rgb5a3
+			case TF_RGBA8:		// 6: rgba8
 				tileW = 4; tileH = 4;
 				break;
 
@@ -634,8 +641,8 @@ namespace GFX
 		// EFB is addressed top down like the window.
 		int readY = gfx->SoftPipeline() ? srcY : ((int)gfx->RenderHeight() - srcY - h);
 
-		std::vector<uint8_t> rgb;
-		if (!ReadEfb(srcX, readY, w, h, rgb))
+		std::vector<uint8_t> rgba;
+		if (!ReadEfb(srcX, readY, w, h, rgba))
 			return;
 
 		auto texel = [&](int x, int y, int c) -> uint8_t
@@ -644,7 +651,7 @@ namespace GFX
 			if (y >= h) y = h - 1;
 			if (x < 0) x = 0;
 			if (y < 0) y = 0;
-			return rgb[((size_t)y * w + x) * 3 + c];
+			return rgba[((size_t)y * w + x) * 4 + c];
 		};
 
 		// The intensity formats take the luma of the EFB colour: the RGB to Y conversion of the
@@ -693,6 +700,23 @@ namespace GFX
 						for (int v = 0; v < tileH; v++)
 							for (int u = 0; u < tileW; u++)
 								*p++ = luma(bx + u, by + v);
+						break;
+					}
+
+					// The single-channel formats take the matching byte of the EFB lane
+					// (gfx-pe.md 5.7). The alpha one is what the cartoon-outline demo copies its
+					// object-ID plane out with: it samples the result back as an I8 texture, so the
+					// bytes go out with the I8 tiling and the alpha is the whole texel.
+					case CTF_A8:
+					case CTF_R8:
+					case CTF_G8:
+					case CTF_B8:
+					{
+						int channel = (fmt == CTF_A8) ? 3 : (fmt == CTF_R8) ? 0 : (fmt == CTF_G8) ? 1 : 2;
+
+						for (int v = 0; v < tileH; v++)
+							for (int u = 0; u < tileW; u++)
+								*p++ = texel(bx + u, by + v, channel);
 						break;
 					}
 
@@ -1323,11 +1347,15 @@ namespace GFX
 		}
 	}
 
-	//! Read a rectangle of the EFB into an RGB buffer, top row first. This is the only way back
+	//! Read a rectangle of the EFB into an RGBA buffer, top row first. This is the only way back
 	//! from the copy engine's round trip through the colour buffer, which is what makes it a pixel
 	//! engine operation (gfx-pe.md 5). The software pipeline reads its own EFB memory, the shader
 	//! pipeline the GL render target.
-	bool PixelEngine::ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgb)
+	//!
+	//! The alpha byte is part of what is read back, not just the colour: the copy engine's
+	//! single-channel formats (a8 and friends, gfx-pe.md 5.7) copy that plane into a texture, and
+	//! the cartoon-outline demo builds its object-ID map in it (issue #385).
+	bool PixelEngine::ReadEfb(int x, int y, int width, int height, std::vector<uint8_t>& rgba)
 	{
 		if (width <= 0 || height <= 0)
 			return false;
@@ -1336,7 +1364,7 @@ namespace GFX
 		{
 			SoftAlloc();
 
-			rgb.resize((size_t)width * height * 3);
+			rgba.resize((size_t)width * height * 4);
 
 			for (int row = 0; row < height; row++)
 			{
@@ -1345,11 +1373,11 @@ namespace GFX
 				for (int col = 0; col < width; col++)
 				{
 					int px = x + col;
-					uint8_t* p = &rgb[((size_t)row * width + col) * 3];
+					uint8_t* p = &rgba[((size_t)row * width + col) * 4];
 
 					if (px < 0 || py < 0 || px >= soft_w || py >= soft_h)
 					{
-						p[0] = p[1] = p[2] = 0;
+						p[0] = p[1] = p[2] = p[3] = 0;
 						continue;
 					}
 
@@ -1359,6 +1387,7 @@ namespace GFX
 					p[0] = (uint8_t)r;
 					p[1] = (uint8_t)g;
 					p[2] = (uint8_t)b;
+					p[3] = (uint8_t)a;
 				}
 			}
 
@@ -1370,19 +1399,19 @@ namespace GFX
 			return false;
 		}
 
-		rgb.resize((size_t)width * height * 3);
+		rgba.resize((size_t)width * height * 4);
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgb.data());
+		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
 
 		// glReadPixels returns the bottom row first
-		std::vector<uint8_t> flipped(rgb.size());
+		std::vector<uint8_t> flipped(rgba.size());
 		for (int row = 0; row < height; row++)
 		{
-			memcpy(&flipped[(size_t)row * width * 3],
-				&rgb[(size_t)(height - 1 - row) * width * 3], (size_t)width * 3);
+			memcpy(&flipped[(size_t)row * width * 4],
+				&rgba[(size_t)(height - 1 - row) * width * 4], (size_t)width * 4);
 		}
-		rgb.swap(flipped);
+		rgba.swap(flipped);
 
 		return true;
 	}
