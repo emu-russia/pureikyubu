@@ -189,5 +189,8 @@ namespace Flipper
 		/// and a wrap of the counter is a new frame.
 		/// </summary>
 		void SIPoll(uint32_t line);
+
+		//! The SI state, for the debug interface (`siregs` and the debugui2 "Serial" panel).
+		const SIState& State() const { return si; }
 	};
 }

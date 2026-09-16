@@ -85,6 +85,15 @@ namespace GBA
 		u8 ReadSave(u32 offset);
 		void WriteSave(u32 offset, u8 value);
 
+		/// <summary>
+		/// The same read without a side effect: SRAM is answered from the memory itself and every
+		/// other save type answers 0xFF. The Flash bus advances its command state machine on a
+		/// read (and the EEPROM has no read window at all), which is a side effect a debugger must
+		/// not have - its memory panel walks the window continuously. This is what `GbaBus::Peek16`
+		/// calls, so a debugger sees the memory the game wrote and never moves it.
+		/// </summary>
+		u8 PeekSave(u32 offset) const;
+
 		// -- save files ----------------------------------------------------------------------
 
 		SaveType GetSaveType() const { return saveType; }
@@ -101,6 +110,10 @@ namespace GBA
 		std::string SaveFilePath() const { return savePath; }
 		void SetSaveFilePath(const std::string& path) { savePath = path; }
 		bool SaveDirty() const { return saveDirty; }
+
+		/// <summary>True while the Flash chip answers the chip-identification command instead of
+		/// its data (the debugger prints it).</summary>
+		bool FlashReadId() const { return flashIdMode == 1; }
 
 		// -- GPIO / RTC ----------------------------------------------------------------------
 
@@ -187,8 +200,7 @@ namespace GBA
 		u8 RtcHourByte() const;
 
 		void FlashWrite(u32 offset, u8 value);
-		u8 FlashRead(u32 offset);
-		bool FlashReadId() const { return flashIdMode == 1; }
+		u8 FlashRead(u32 offset) const;
 
 		void EepromWriteBit(u16 value);
 		void EepromFinish();

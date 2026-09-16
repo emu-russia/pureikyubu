@@ -216,5 +216,8 @@ namespace Flipper
 		/// and RST is also forwarded to the 1T-SRAM chips to reset the rich internal world of Splash.
 		/// </summary>
 		void MemRst();
+
+		//! The MI state, for the debug interface (`miregs` and the debugui2 "Memory Interface" panel).
+		const MIState& State() const { return mi; }
 	};
 }

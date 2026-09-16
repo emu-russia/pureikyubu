@@ -187,5 +187,8 @@ namespace Flipper
 
 		int64_t PIGetInterruptCounter(PIInterruptSource src);
 		void PIResetInterruptCounter(PIInterruptSource src);
+
+		//! The PI state, for the debug interface (`piregs` and the debugui2 "Processor Interface" panel).
+		const PIState& State() const { return pi; }
 	};
 }

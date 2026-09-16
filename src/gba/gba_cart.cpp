@@ -656,6 +656,15 @@ namespace GBA
 		}
 	}
 
+	// The debugger's read of the save window: no state machine, so no side effect (see the header).
+	u8 Cart::PeekSave(u32 offset) const
+	{
+		if (saveType == SaveType::Sram32K && !save.empty())
+			return save[offset & (u32)(save.size() - 1)];
+
+		return 0xFF;
+	}
+
 	void Cart::WriteSave(u32 offset, u8 value)
 	{
 		switch (saveType)
@@ -680,7 +689,7 @@ namespace GBA
 	// Flash (the SST command set, GBATEK "GBA Cart Backup Flash ROM")
 	// ---------------------------------------------------------------------------------------
 
-	u8 Cart::FlashRead(u32 offset)
+	u8 Cart::FlashRead(u32 offset) const
 	{
 		if (save.empty())
 			return 0xFF;

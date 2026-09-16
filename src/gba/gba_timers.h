@@ -38,12 +38,14 @@ namespace GBA
 		/// <summary>True when the timer is enabled (for tests and the debugger).</summary>
 		bool Running(int index) const { return (control[index] & 0x80) != 0; }
 
+		/// <summary>The prescaler of a TMxCNT_H value as the shift it applies to the clock (the
+		/// debugger prints the divider, which is `1 &lt;&lt; PrescaleShift`).</summary>
+		static int PrescaleShift(u16 control);
+
 	private:
 		u16 reload[4]{};		// TMxCNT_L
 		u16 control[4]{};		// TMxCNT_H
 		u16 counter[4]{};
 		int prescaleAccum[4]{};	// cycles accumulated towards the next prescaler tick
-
-		static int PrescaleShift(u16 control);
 	};
 }

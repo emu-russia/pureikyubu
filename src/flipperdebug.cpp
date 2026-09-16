@@ -1,5 +1,6 @@
 // Various commands for debugging hardware (Flipper). Available only after emulation has been started.
 #include "pch.h"
+#include "hwdebug.h"
 
 using namespace Debug;
 
@@ -211,5 +212,9 @@ namespace Flipper
 		JDI::Hub.AddCmd("nvi", cmd_nextvi);
 		JDI::Hub.AddCmd("npe", cmd_nextpe);
 		JDI::Hub.AddCmd("memdump", cmd_memdump);
+
+		// The per-subsystem state reports (hwdebug.cpp): the same node, because they are the
+		// same kind of command - a look at the hardware from the outside.
+		hwdebug_init_handlers();
 	}
 };

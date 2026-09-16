@@ -164,5 +164,8 @@ namespace Flipper
 		void VIGunTrigger(int num);
 
 		void VIDisableXfb();
+
+		//! The VI state, for the debug interface (`viregs` and the debugui2 "Video" panel).
+		const VIState& State() const { return vi; }
 	};
 }

@@ -1,8 +1,16 @@
 // The SDL2 frontend of the GBA and Game Boy emulators (see gba_sdl.h).
+//
+// The portable machines carry the new debugger (debugui2) with them. This file cannot talk to it
+// directly - the debugger's headers are part of the GameCube side, which needs the emulator's own
+// precompiled header, and this module deliberately does not pull that in (see src/gba/Readme.md).
+// The bridge in gba_debug.cpp is the host-facing half of it instead: this frontend starts and
+// stops the debugger session through `DebugStart` / `DebugStop` and drives it from its event loop
+// with `DebugPumpEvents` / `DebugFrame`.
 
 #include "gba_sdl.h"
 #include "gba.h"
 #include "gba_bootrom.h"
+#include "gba_debug.h"
 #include "gb.h"
 
 #define SDL_MAIN_HANDLED
@@ -264,7 +272,7 @@ namespace GBA
 			return SDL_GetQueuedAudioSize(audio) < target;
 		}
 
-		void HandleHotkey(SDL_Keycode key, bool down, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow)
+		void HandleHotkey(SDL_Keycode key, bool down, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow, bool& debugger)
 		{
 			if (!down)
 			{
@@ -277,6 +285,7 @@ namespace GBA
 				case SDLK_F5: saveNow = true; break;
 				case SDLK_F11: fullscreen = !fullscreen; break;
 				case SDLK_F12: screenshot = true; break;
+				case SDLK_F2: debugger = true; break;
 				default: break;
 			}
 		}
@@ -617,6 +626,12 @@ namespace GBA
 
 		system.SetSampleRate(host.sampleRate);
 
+		// The debug interface of the portable machine and the new debugger. The node is
+		// registered here (and not for the whole program), because only this path runs a machine
+		// the portable commands can answer for.
+		SetDebugMachine(&system);
+		DebugStart();
+
 		GbaInput input(settings);
 
 		std::vector<s16> samples;
@@ -631,17 +646,30 @@ namespace GBA
 		{
 			bool screenshot = false;
 			bool saveNow = false;
+			bool debugger = false;
+
+			// The debugger window has its own events; the ones that are not its own are put back
+			// into the queue and end up in the poll loop below.
+			DebugPumpEvents();
 
 			SDL_Event event;
 			while (SDL_PollEvent(&event))
 			{
 				host.HandleHotkey(event.type == SDL_KEYDOWN ? event.key.keysym.sym : SDLK_UNKNOWN,
-					event.type == SDL_KEYDOWN, fastForward, fullscreen, screenshot, saveNow);
+					event.type == SDL_KEYDOWN, fastForward, fullscreen, screenshot, saveNow, debugger);
 
 				if (!input.Handle(event, fastForward, fullscreen, screenshot, saveNow))
 				{
 					running = false;
 				}
+			}
+
+			if (debugger)
+			{
+				if (DebugActive())
+					DebugStop();
+				else
+					DebugStart();
 			}
 
 			if (!running)
@@ -701,8 +729,12 @@ namespace GBA
 				SDL_SetWindowTitle(host.window, title);
 			}
 
+			DebugFrame();
 			host.PaceFrame(frames, paceStart, GbaFrameMilliseconds, paceStart, paceFrames);
 		}
+
+		// The debugger is torn down from here, not from its own window callback (see debugui2.h).
+		DebugStop();
 
 		std::string saveError;
 		system.SaveBattery(&saveError);
@@ -763,6 +795,11 @@ namespace GBA
 
 		system.SetSampleRate(host.sampleRate);
 
+		// The debug interface of the Game Boy and the new debugger (the same arrangement as the
+		// GBA frontend above).
+		SetDebugMachine(&system);
+		DebugStart();
+
 		GbInput input;
 
 		std::vector<s16> samples;
@@ -777,17 +814,28 @@ namespace GBA
 		{
 			bool screenshot = false;
 			bool saveNow = false;
+			bool debugger = false;
+
+			DebugPumpEvents();
 
 			SDL_Event event;
 			while (SDL_PollEvent(&event))
 			{
 				host.HandleHotkey(event.type == SDL_KEYDOWN ? event.key.keysym.sym : SDLK_UNKNOWN,
-					event.type == SDL_KEYDOWN, fastForward, fullscreen, screenshot, saveNow);
+					event.type == SDL_KEYDOWN, fastForward, fullscreen, screenshot, saveNow, debugger);
 
 				if (!input.Handle(event, fastForward, fullscreen, screenshot, saveNow))
 				{
 					running = false;
 				}
+			}
+
+			if (debugger)
+			{
+				if (DebugActive())
+					DebugStop();
+				else
+					DebugStart();
 			}
 
 			if (!running)
@@ -843,8 +891,11 @@ namespace GBA
 				SDL_SetWindowTitle(host.window, title);
 			}
 
+			DebugFrame();
 			host.PaceFrame(frames, paceStart, GbFrameMilliseconds, paceStart, paceFrames);
 		}
+
+		DebugStop();
 
 		std::string saveError;
 		system.SaveBattery(&saveError);
