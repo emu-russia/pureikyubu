@@ -18,7 +18,7 @@ shaders without an OpenGL context:
 
 #include "pch.h"
 
-#ifdef GFX_NULL
+#if defined(GFX_NULL) && !defined(GFX_OFFSCREEN)
 
 namespace GFX
 {
@@ -190,4 +190,4 @@ namespace GFX
 	}
 }
 
-#endif // GFX_NULL
+#endif // GFX_NULL && !GFX_OFFSCREEN

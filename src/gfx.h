@@ -253,6 +253,19 @@ namespace GFX
 		HDC hdcgl = 0;
 #endif
 
+#ifdef GFX_OFFSCREEN
+		//! The offscreen target of the headless build: a window that is never shown, to hang a real
+		//! OpenGL context on, and a framebuffer the pipeline draws into, so that a frame can be
+		//! read back without anything appearing on the screen.
+		GLuint offscreenFbo = 0;
+		GLuint offscreenColor = 0;
+		GLuint offscreenDepth = 0;
+
+		void CreateOffscreenWindow();
+		bool CreateOffscreenTarget();
+		void DestroyOffscreenTarget();
+#endif
+
 		uint32_t scr_w = 640, scr_h = 480;
 
 		// Frame dump (debug). Configured by the GFX_DUMP / GFX_DUMP_EVERY environment variables.

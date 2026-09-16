@@ -46,7 +46,11 @@
 
 // The headless build redirects the OpenGL entry points to the null backend. It has to happen after
 // the GL headers, because it redefines the GLEW macros (see gfxnull.h).
-#ifdef GFX_NULL
+//
+// `GFX_OFFSCREEN` is the headless build that still draws: it keeps the real OpenGL entry points and
+// creates its context on a window that is never shown (see GFXCore::GL_OpenSubsystem), so the null
+// layer must not be compiled in.
+#if defined(GFX_NULL) && !defined(GFX_OFFSCREEN)
 #include "gfxnull.h"
 #endif
 
