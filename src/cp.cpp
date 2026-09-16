@@ -112,15 +112,42 @@ namespace Flipper
 			((cpregs.rdptr & ~0x1f) == (cpregs.bpptr & ~0x1f));
 	}
 
-	//! Nothing is waiting for the reader: the ring is empty, the guest stopped it, or it sits on
-	//! the break point. `ignoreEnable` is the catch-up case (see CatchUpFifo), which runs after the
-	//! guest cleared FIFORD on purpose.
-	bool CommandProcessor::ReaderIdle(bool ignoreEnable) const
+	//! The read unit has nothing left to take: the ring is empty. This is CP_STATUS[RD_IDLE] as
+	//! the hardware forms it - the read pointer has caught up with the write pointer and no fetch
+	//! is in flight (a block is taken eagerly here, so there is never one in flight). Neither the
+	//! read enable nor the break point enters it: the bit describes the *reader*, not whether the
+	//! guest has let it run, and a guest that waits on it after stopping the reader would still
+	//! wait for the entries already in the ring.
+	bool CommandProcessor::ReaderIdle() const
 	{
 		uint32_t count = 0;
 		FifoCount(&count);
 
-		return count == 0 || ((cpregs.cr & CP_CR_RDEN) == 0 && !ignoreEnable) || AtBreakPoint();
+		return count == 0;
+	}
+
+	//! Whether the reader may take another block. The hardware issues the request while the FIFO
+	//! reads are enabled, the ring has an entry, the break point is not armed on it and the
+	//! CP-side stream buffer has room; that last one is the back pressure - the reader stops
+	//! there, the ring fills up and the guest waits for space, exactly as it does on hardware.
+	bool CommandProcessor::CanFetch()
+	{
+		uint32_t count = 0;
+		FifoCount(&count);
+
+		return count != 0 &&
+			(cpregs.cr & CP_CR_RDEN) != 0 &&
+			!AtBreakPoint() &&
+			!StreamBufferFull();
+	}
+
+	//! The stream buffer is holding as many blocks as it is allowed to. The hardware stops the
+	//! reader when the CP-side FIFO is nearly full (its occupancy plus the requests in flight
+	//! passes the mark); the buffer here is far larger than the hardware's, so the limit is on
+	//! the blocks it holds rather than on its size, and it is what keeps the ring meaningful.
+	bool CommandProcessor::StreamBufferFull()
+	{
+		return fifo->GetSize() >= StreamBufferBlocks * 32;
 	}
 
 	//! Bring the idle bits of CP_STATUS up to date with the reader's current state. They used to
@@ -133,11 +160,23 @@ namespace Flipper
 	{
 		if (ReaderIdle())
 		{
-			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cpregs.sr |= CP_SR_RD_IDLE;
 		}
 		else
 		{
-			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			cpregs.sr &= ~CP_SR_RD_IDLE;
+		}
+
+		// The command processor itself is idle while its own stream buffer has nothing left to
+		// parse - the hardware's StmBuf_Empty, and with it the sub-units the CP feeds. The two
+		// bits are independent: the reader can be idle while a command is still being run.
+		if (fifo->GetSize() == 0)
+		{
+			cpregs.sr |= CP_SR_CMD_IDLE;
+		}
+		else
+		{
+			cpregs.sr &= ~CP_SR_CMD_IDLE;
 		}
 	}
 
@@ -284,10 +323,17 @@ namespace Flipper
 		{
 			lastDrainTick += budget * (int64_t)tickPerFifo;
 
-			while (budget-- > 0 && HasFifoWork())
+			// The reader has already taken what the guest wrote (FifoWriteBurst), so the work
+			// left here is the parse: the stream buffer holds the commands and ExecuteFifo runs
+			// every complete one. The budget bounds how often the parse runs, not how much it
+			// runs - half a command left behind would stall the stream.
+			while (FetchFifoEntry())
 			{
-				PumpFifo();
+				// Whatever the reader could not take earlier (the buffer had no room then).
 			}
+
+			ExecuteFifo();
+			UpdateReaderStatus();
 		}
 
 		fifoLock.Unlock();
@@ -306,7 +352,7 @@ namespace Flipper
 	// Move one 32-byte entry of the main-memory ring into the CP-side stream buffer. The read
 	// pointer comes from the FIFO base/top registers the guest writes, so the whole burst has to be
 	// inside main memory before it is handed to the GX.
-	bool CommandProcessor::FetchFifoEntry(bool ignoreEnable)
+	bool CommandProcessor::FetchFifoEntry()
 	{
 		// Calculate count
 		if (cpregs.wrptr >= cpregs.rdptr)
@@ -337,20 +383,18 @@ namespace Flipper
 		}
 
 		// Advance read pointer.
-		if (ReaderIdle(ignoreEnable))
+		UpdateReaderStatus();
+
+		if (!CanFetch())
 		{
-			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 			return false;
 		}
-
-		cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 
 		uint8_t* fifoBurst = (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr);
 
 		if (fifoBurst == nullptr || !Verify::MainMemory(cpregs.rdptr, 32, HW->mem->MIGetMemorySize()))
 		{
 			Report(Channel::CP, "CP FIFO read pointer is out of main memory: %08X\n", cpregs.rdptr);
-			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 			return false;
 		}
 
@@ -361,6 +405,9 @@ namespace Flipper
 			cpregs.rdptr = cpregs.base;
 		}
 
+		// The block is the reader's, so the occupancy and both status bits have moved on.
+		UpdateReaderStatus();
+
 		return true;
 	}
 
@@ -369,17 +416,6 @@ namespace Flipper
 		while (fifo->EnoughToExecute())
 		{
 			GxCommand(fifo);
-		}
-	}
-
-	void CommandProcessor::CatchUpFifo()
-	{
-		// The reader was stopped by the guest before the repoint (GXSetGPFifo clears FIFORD
-		// first), so the enable gate is deliberately ignored here: the entries were written
-		// while the reader was running and hardware would have fetched them already.
-		while (FetchFifoEntry(true))
-		{
-			// Buffered only; the CP thread runs the commands.
 		}
 	}
 
@@ -517,29 +553,6 @@ namespace Flipper
 		// the FIFO is exactly that - is overwritten by the stale advance and the CP skips the
 		// first 32-byte entry of the new FIFO. mgt-fifo-brkpt depends on the switch being atomic.
 		fifoLock.Lock();
-
-		// Clearing FIFORD stops the reader with entries still in the ring: arm the carry-over for
-		// the repoint that follows. Setting FIFORD again without one clears it, so a plain stop
-		// keeps its meaning. The entries themselves are buffered by the first pointer write below,
-		// while the read pointer is still where the old stream left it.
-		if (addr == CP_ENABLE)
-		{
-			if ((cpregs.cr & CP_CR_RDEN) != 0 && (value & CP_CR_RDEN) == 0)
-			{
-				catchUpArmed = (cpregs.wrptr != cpregs.rdptr);
-			}
-			else if ((value & CP_CR_RDEN) != 0)
-			{
-				catchUpArmed = false;
-			}
-		}
-		else if (catchUpArmed &&
-			((addr >= CP_FIFO_BASEL && addr <= CP_FIFO_TOPH) ||
-				(addr >= CP_FIFO_WPTRL && addr <= CP_FIFO_RPTRH)))
-		{
-			CatchUpFifo();
-			catchUpArmed = false;
-		}
 
 		switch (addr)
 		{
@@ -695,7 +708,25 @@ namespace Flipper
 				cpregs.wrptr = cpregs.base;
 			}
 
-			// All other work is done by CommandProcessor thread.
+			// ... and it is the reader's immediately: on hardware the read unit chases the write
+			// pointer and gives up only when the ring runs dry, the reads are disabled, a break
+			// point is armed or its own stream buffer is full. Taking the block here is what keeps
+			// the ring empty while the guest runs, so a repoint of the FIFO (GXSetGPFifo rewrites
+			// base / top / pointers and re-enables the reader) can never strand entries that were
+			// written but never fetched: they are already in the CP's buffer, and the occupancy
+			// the guest reads is what the CP still has to parse.
+			fifoLock.Lock();
+			while (FetchFifoEntry())
+			{
+				// Buffered; the CP thread runs the commands.
+			}
+			fifoLock.Unlock();
+
+			// The CP thread has something to parse now.
+			if (fifo->GetSize() >= FifoBatch * 32)
+			{
+				fifoEvent.Signal();
+			}
 		}
 	}
 
