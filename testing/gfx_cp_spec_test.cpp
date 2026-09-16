@@ -472,9 +472,9 @@ namespace pureikyubutest
 				L"an empty ring means the read unit is idle");
 		}
 
-		// The same bits have to follow the enable gate: with FIFO reads disabled the reader cannot
-		// make progress, so it is idle even while the ring still holds entries.
-		TEST_METHOD(CpSpec_StoppingTheReaderReportsItIdle)
+		// ... and it is the *ring* the bit describes, not the enable: stopping the reader with
+		// entries still in it leaves the reader busy, because they are still to be taken.
+		TEST_METHOD(CpSpec_StoppingTheReaderLeavesTheRingReported)
 		{
 			GfxTestMachine& m = M();
 
@@ -485,15 +485,44 @@ namespace pureikyubutest
 			SetupFifo(m, list.Bytes());
 
 			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_WPINC);
-			Assert::AreEqual<uint16_t>((uint16_t)(CP_SR_RD_IDLE | CP_SR_CMD_IDLE),
-				(uint16_t)(CpStatus(m) & (CP_SR_RD_IDLE | CP_SR_CMD_IDLE)),
-				L"a stopped reader is idle");
-
-			// And the entries are still there to be read once it is enabled again.
-			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_RDEN | CP_CR_WPINC);
 			Assert::AreEqual<uint16_t>(0,
-				(uint16_t)(CpStatus(m) & (CP_SR_RD_IDLE | CP_SR_CMD_IDLE)),
-				L"an enabled reader with entries waiting is not idle");
+				(uint16_t)(CpStatus(m) & CP_SR_RD_IDLE),
+				L"a reader stopped on a full ring is not idle");
+
+			// With the reader running again the entries are read, and then the reader is idle.
+			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_RDEN | CP_CR_WPINC);
+			RunFifo(m, CpCount(m) / 32);
+			Assert::AreEqual<uint16_t>((uint16_t)CP_SR_RD_IDLE,
+				(uint16_t)(CpStatus(m) & CP_SR_RD_IDLE),
+				L"an empty ring is what the idle bit reports");
+		}
+
+		// A block that arrives through the FIFO window is the reader's the moment it lands: the
+		// read unit chases the write pointer, which is what keeps a repoint of the FIFO from
+		// stranding entries the guest has already written (and what makes the guest's own
+		// "wait for the reader" meaningful).
+		TEST_METHOD(CpSpec_TheReaderTakesABurstAsItIsWritten)
+		{
+			GfxTestMachine& m = M();
+
+			DisplayList list;
+			ProgramList(list);
+			list.Align();
+
+			// The list is in the ring and the guest hands the first block over: this is what the
+			// PI's FIFO window does on every 32-byte burst (see FifoWriteBurst).
+			SetupFifo(m, list.Bytes());
+
+			SetFifoRegs(m, FifoBase, FifoTop, FifoBase, FifoBase);
+			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_RDEN | CP_CR_WPINC);
+			m.flipper->cp->FifoWriteBurst();
+
+			Assert::AreEqual<uint32_t>(FifoBase + 32, CpReadPtr(m),
+				L"the reader took the block on its own");
+			Assert::AreEqual<uint32_t>(0, CpCount(m), L"and the ring is empty again");
+			Assert::AreEqual<uint16_t>((uint16_t)CP_SR_RD_IDLE,
+				(uint16_t)(CpStatus(m) & CP_SR_RD_IDLE),
+				L"so the reader reports itself idle");
 		}
 
 		// =========================================================================================
