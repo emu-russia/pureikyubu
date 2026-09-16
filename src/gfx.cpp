@@ -100,7 +100,7 @@ namespace GFX
 	// thread).
 	static bool GLContextCurrent()
 	{
-#ifdef GFX_NULL
+#if defined(GFX_NULL) && !defined(GFX_OFFSCREEN)
 		// Headless: there is no context, and every GL call is a no-op (see gfxnull.h), so the
 		// read-back commands are always allowed.
 		return true;
@@ -866,6 +866,14 @@ namespace GFX
 		render_window = (SDL_Window*)config->renderTarget;
 #else
 		hwndMain = (HWND)config->renderTarget;
+#ifdef GFX_OFFSCREEN
+		// The headless build is given no window by its front end, so the hidden one the context
+		// hangs on is created here, before the subsystem asks for that context.
+		if (hwndMain == nullptr)
+		{
+			CreateOffscreenWindow();
+		}
+#endif
 #endif
 
 		bool res = GL_LazyOpenSubsystem();
@@ -1034,7 +1042,7 @@ namespace GFX
 		if (backend_started)
 			return true;
 
-#ifdef GFX_NULL
+#if defined(GFX_NULL) && !defined(GFX_OFFSCREEN)
 		// Headless: there is no window to draw into and no driver to ask for a context. The null
 		// backend (gfxnull.h) accepts every GL call, so the pipeline is simply marked as running;
 		// the shaders, the geometry buffers and the textures are "created" as no-op handles, and
@@ -1055,6 +1063,41 @@ namespace GFX
 		if (context == nullptr)
 		{
 			Report(Channel::GP, "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+			return false;
+		}
+#elif defined(GFX_OFFSCREEN)
+		// Headless with a real driver: the context is created on a window that is never shown and
+		// the frame is drawn into a framebuffer of its own (see CreateOffscreenTarget). Nothing
+		// appears on the screen and no window is ever mapped.
+		if (hwndMain == nullptr)
+		{
+			Report(Channel::GP, "GFX: no offscreen window to create the context on\n");
+			return false;
+		}
+
+		hdcgl = GetDC(hwndMain);
+		if (hdcgl == NULL) return false;
+
+		if (GL_SetPixelFormat(hdcgl) == 0)
+		{
+			Report(Channel::GP, "GFX: no suitable pixel format for the offscreen context\n");
+			ReleaseDC(hwndMain, hdcgl);
+			return false;
+		}
+
+		hglrc = wglCreateContext(hdcgl);
+		if (hglrc == NULL)
+		{
+			Report(Channel::GP, "GFX: wglCreateContext failed for the offscreen context\n");
+			ReleaseDC(hwndMain, hdcgl);
+			return false;
+		}
+
+		if (wglMakeCurrent(hdcgl, hglrc) == FALSE)
+		{
+			Report(Channel::GP, "GFX: wglMakeCurrent failed for the offscreen context\n");
+			wglDeleteContext(hglrc);
+			ReleaseDC(hwndMain, hdcgl);
 			return false;
 		}
 #else
@@ -1100,6 +1143,13 @@ namespace GFX
 
 		// Texture objects can only be created once a context is current
 		tx->TexInit();
+
+#ifdef GFX_OFFSCREEN
+		if (!CreateOffscreenTarget())
+		{
+			return false;
+		}
+#endif
 
 		ApplyDefaultGLState();
 
@@ -1190,14 +1240,34 @@ namespace GFX
 
 		//if(frameReady) GL_EndFrame();
 
-#ifdef GFX_NULL
+#if defined(GFX_NULL) && !defined(GFX_OFFSCREEN)
 		// Headless: nothing was created, so there is no context to destroy.
 #elif GFX_USE_SDL_WINDOW
 		SDL_GL_DeleteContext(context);
 		context = nullptr;
 #else
+#ifdef GFX_OFFSCREEN
+		DestroyOffscreenTarget();
+
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hglrc);
+		hglrc = 0;
+
+		if (hdcgl != 0)
+		{
+			ReleaseDC(hwndMain, hdcgl);
+			hdcgl = 0;
+		}
+
+		if (hwndMain != nullptr)
+		{
+			DestroyWindow(hwndMain);
+			hwndMain = nullptr;
+		}
+#else
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(hglrc);
+#endif
 #endif
 
 		backend_started = false;
@@ -1335,10 +1405,13 @@ namespace GFX
 
 		glFinish();
 
-#ifdef GFX_NULL
+#if defined(GFX_NULL) && !defined(GFX_OFFSCREEN)
 		// Headless: the frame was "drawn" into nowhere, so there is nothing to present.
 #elif GFX_USE_SDL_WINDOW
 		SDL_GL_SwapWindow(render_window);
+#elif defined(GFX_OFFSCREEN)
+		// The frame lives in the offscreen framebuffer; there is no window to swap it into. A
+		// read-back (GFX_DUMP / GFX_EFB_DUMP / gxshot) is what takes it out of there.
 #else
 		SwapBuffers(hdcgl);
 #endif
@@ -1509,6 +1582,14 @@ namespace GFX
 		if (backend_started) {
 			scr_w = (uint32_t)width;
 			scr_h = (uint32_t)height;
+
+#ifdef GFX_OFFSCREEN
+			// The offscreen target has the size of the emulated render target, so a video mode
+			// change reallocates it. The attachments are recreated here, while nothing is drawing.
+			DestroyOffscreenTarget();
+			CreateOffscreenTarget();
+#endif
+
 			glViewport(0, 0, scr_w, scr_h);
 
 			// The scissor box of the setup unit is expressed in screen coordinates, so it has to be
@@ -1516,4 +1597,81 @@ namespace GFX
 			su->ResizeScissor((int)scr_w, (int)scr_h);
 		}
 	}
+
+#ifdef GFX_OFFSCREEN
+
+	//! Create the hidden window the offscreen context hangs on. It is never shown: it exists so
+	//! that WGL has an HDC to attach a context and a pixel format to, which is the only way to get
+	//! real OpenGL on Windows without putting anything on the screen.
+	void GFXCore::CreateOffscreenWindow()
+	{
+		WNDCLASSA wc = { 0 };
+		wc.lpfnWndProc = DefWindowProcA;
+		wc.hInstance = GetModuleHandleA(nullptr);
+		wc.lpszClassName = "pureikyubu-offscreen";
+		RegisterClassA(&wc);			// A second registration of the same class fails harmlessly.
+
+		hwndMain = CreateWindowExA(0, wc.lpszClassName, "pureikyubu (offscreen)",
+			WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, (int)scr_w, (int)scr_h,
+			nullptr, nullptr, wc.hInstance, nullptr);
+	}
+
+	//! The framebuffer the pipeline draws into. The color attachment is a texture, which is what a
+	//! read-back of the frame (and a unit test of the pipeline) can look at without a window.
+	bool GFXCore::CreateOffscreenTarget()
+	{
+		glGenFramebuffers(1, &offscreenFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, offscreenFbo);
+
+		glGenTextures(1, &offscreenColor);
+		glBindTexture(GL_TEXTURE_2D, offscreenColor);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)scr_w, (GLsizei)scr_h, 0,
+			GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, offscreenColor, 0);
+
+		glGenRenderbuffers(1, &offscreenDepth);
+		glBindRenderbuffer(GL_RENDERBUFFER, offscreenDepth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, (GLsizei)scr_w, (GLsizei)scr_h);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, offscreenDepth);
+
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			Report(Channel::GP, "GFX: the offscreen framebuffer is incomplete (0x%04X)\n", status);
+			DestroyOffscreenTarget();
+			return false;
+		}
+
+		glViewport(0, 0, (GLsizei)scr_w, (GLsizei)scr_h);
+
+		Report(Channel::GP, "GFX: the offscreen backend is running (%ux%u, nothing is presented)\n",
+			scr_w, scr_h);
+
+		return true;
+	}
+
+	void GFXCore::DestroyOffscreenTarget()
+	{
+		if (offscreenDepth != 0)
+		{
+			glDeleteRenderbuffers(1, &offscreenDepth);
+			offscreenDepth = 0;
+		}
+
+		if (offscreenColor != 0)
+		{
+			glDeleteTextures(1, &offscreenColor);
+			offscreenColor = 0;
+		}
+
+		if (offscreenFbo != 0)
+		{
+			glDeleteFramebuffers(1, &offscreenFbo);
+			offscreenFbo = 0;
+		}
+	}
+
+#endif // GFX_OFFSCREEN
 }
