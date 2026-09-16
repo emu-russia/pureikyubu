@@ -547,6 +547,14 @@ namespace Flipper
 
 		FifoProcessor* fifo = nullptr;	// Internal CP FIFO
 
+		//! The guest stopped the reader with entries still in the ring, which is how the repoint
+		//! that `GXSetGPFifo` performs begins (clear FIFORD, rewrite base / top / write / read
+		//! pointers, set FIFORD again). The entries are carried into the stream buffer by the first
+		//! pointer write, before it moves the read pointer away from them (see CatchUpFifo). A
+		//! stop that is not followed by a pointer write (a plain "pause the reader") clears the
+		//! flag again, so it keeps its plain meaning.
+		bool catchUpArmed = false;
+
 		// Debug
 		void DumpCPFIFO();
 
@@ -643,6 +651,29 @@ namespace Flipper
 		//! Drain the graphics FIFO once: exactly the work the CP thread does on one tick. The unit
 		//! tests use it to run the command stream deterministically, without the emulator threads.
 		void PumpFifo();
+
+		//! Move one 32-byte entry of the main-memory ring into the CP-side stream buffer and
+		//! advance the read pointer. Reports the watermark and break-point status on the way, so
+		//! it is the one place the fetch conditions live. `ignoreEnable` is for the catch-up below,
+		//! which runs while the guest has already stopped the reader. Returns false when nothing was
+		//! fetched.
+		bool FetchFifoEntry(bool ignoreEnable = false);
+
+		//! Run every complete command the stream buffer now holds. The CP thread is the only
+		//! caller that matters (the unit tests drive it directly); the graphics pipeline is
+		//! entered from one thread at a time.
+		void ExecuteFifo();
+
+		//! Buffer everything the guest has written but the emulated CP has not fetched yet,
+		//! without running any of it. The guest repoints the FIFO (GXSetGPFifo: clear FIFORD,
+		//! rewrite base / top / write / read pointers, set FIFORD again) on the assumption that
+		//! the reader has already consumed the old stream, while the emulated reader drains on the
+		//! emulated clock and can be a few entries behind. Those entries still belong to the stream
+		//! being parsed, and skipping them shifts the parse by a few bytes - a command split across
+		//! the repoint would then be completed from the wrong data (Metroid Prime's boot used to
+		//! crash on an unknown CP opcode that way). Fetching them here keeps the stream buffer in
+		//! the order the guest wrote it, and the CP thread still runs the commands.
+		void CatchUpFifo();
 
 		//! Drain the FIFO entries the emulated CP owes at the current point of the time base. The
 		//! reader's progress follows the emulated time, not how often the host happens to run the

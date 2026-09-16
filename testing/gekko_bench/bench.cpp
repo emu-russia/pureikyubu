@@ -766,8 +766,10 @@ static int BranchTest()
     const uint32_t codePa = 0x200000, effPc = 0x80200000;
     uint8_t* ram = Flipper::ProcessorInterface::ram;
 
-    // 8 nops after the branch so that either outcome lands on real code.
-    for (int i = 1; i < 12; i++)
+    // NOPs after the branch so that either outcome lands on real code. A conditional branch
+    // no longer ends a recompiled block (its fall-through is compiled with it), so this has
+    // to cover the whole block - MaxBlockInstrs - and not just the two branch outcomes.
+    for (int i = 1; i < 40; i++)
         *(uint32_t*)&ram[codePa + i * 4] = _BYTESWAP_UINT32(0x60000000);
 
     struct Case { const char* name; uint32_t word; };
@@ -818,16 +820,20 @@ static int BranchTest()
             };
 
             init();
-            Core->Step();
-            uint32_t ipc = Core->regs.pc, ilr = Core->regs.spr[(int)Gekko::SPR::LR], ictr = Core->regs.spr[(int)Gekko::SPR::CTR], icr = Core->regs.cr;
-
-            init();
 #if defined(BENCH_WITH_JIT)
             Core->jit->Run();
 #else
             Core->Step();
 #endif
+            uint64_t jn = Core->GetInstructionCounter();
             uint32_t jpc = Core->regs.pc, jlr = Core->regs.spr[(int)Gekko::SPR::LR], jctr = Core->regs.spr[(int)Gekko::SPR::CTR], jcr = Core->regs.cr;
+
+            // A block is whatever the recompiler made of the instruction stream, not the one
+            // branch any more, so the interpreter is run for exactly what the block retired.
+            init();
+            for (uint64_t k = 0; k < jn && k < 1000; k++)
+                Core->Step();
+            uint32_t ipc = Core->regs.pc, ilr = Core->regs.spr[(int)Gekko::SPR::LR], ictr = Core->regs.spr[(int)Gekko::SPR::CTR], icr = Core->regs.cr;
 
             if (ipc != jpc || ilr != jlr || ictr != jctr || icr != jcr)
             {

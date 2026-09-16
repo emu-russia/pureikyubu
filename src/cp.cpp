@@ -161,11 +161,7 @@ namespace Flipper
 	void CommandProcessor::GXWriteFifo(uint8_t dataPtr[32])
 	{
 		fifo->PushBytes(dataPtr);
-
-		while (fifo->EnoughToExecute())
-		{
-			GxCommand(fifo);
-		}
+		ExecuteFifo();
 	}
 
 	bool CommandProcessor::HasFifoWork()
@@ -264,6 +260,17 @@ namespace Flipper
 	// drive by hand to run a display list deterministically.
 	void CommandProcessor::PumpFifo()
 	{
+		if (FetchFifoEntry())
+		{
+			ExecuteFifo();
+		}
+	}
+
+	// Move one 32-byte entry of the main-memory ring into the CP-side stream buffer. The read
+	// pointer comes from the FIFO base/top registers the guest writes, so the whole burst has to be
+	// inside main memory before it is handed to the GX.
+	bool CommandProcessor::FetchFifoEntry(bool ignoreEnable)
+	{
 		// Calculate count
 		if (cpregs.wrptr >= cpregs.rdptr)
 		{
@@ -293,31 +300,49 @@ namespace Flipper
 		}
 
 		// Advance read pointer.
-		if (cpregs.cnt != 0 && cpregs.cr & CP_CR_RDEN && !AtBreakPoint())
-		{
-			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
-
-			// The read pointer comes from the FIFO base/top registers the guest writes, so the
-			// whole 32-byte burst has to be inside main memory before it is handed to the GX.
-			uint8_t* fifoBurst = (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr);
-
-			if (fifoBurst == nullptr || !Verify::MainMemory(cpregs.rdptr, 32, HW->mem->MIGetMemorySize()))
-			{
-				Report(Channel::CP, "CP FIFO read pointer is out of main memory: %08X\n", cpregs.rdptr);
-				cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
-				return;
-			}
-
-			GXWriteFifo(fifoBurst);
-			cpregs.rdptr += 32;
-			if (cpregs.rdptr == cpregs.top)
-			{
-				cpregs.rdptr = cpregs.base;
-			}
-		}
-		else
+		if (cpregs.cnt == 0 || ((cpregs.cr & CP_CR_RDEN) == 0 && !ignoreEnable) || AtBreakPoint())
 		{
 			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			return false;
+		}
+
+		cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+
+		uint8_t* fifoBurst = (uint8_t*)HW->mem->MIGetMemoryPointerForCP(cpregs.rdptr);
+
+		if (fifoBurst == nullptr || !Verify::MainMemory(cpregs.rdptr, 32, HW->mem->MIGetMemorySize()))
+		{
+			Report(Channel::CP, "CP FIFO read pointer is out of main memory: %08X\n", cpregs.rdptr);
+			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+			return false;
+		}
+
+		fifo->PushBytes(fifoBurst);
+		cpregs.rdptr += 32;
+		if (cpregs.rdptr == cpregs.top)
+		{
+			cpregs.rdptr = cpregs.base;
+		}
+
+		return true;
+	}
+
+	void CommandProcessor::ExecuteFifo()
+	{
+		while (fifo->EnoughToExecute())
+		{
+			GxCommand(fifo);
+		}
+	}
+
+	void CommandProcessor::CatchUpFifo()
+	{
+		// The reader was stopped by the guest before the repoint (GXSetGPFifo clears FIFORD
+		// first), so the enable gate is deliberately ignored here: the entries were written
+		// while the reader was running and hardware would have fetched them already.
+		while (FetchFifoEntry(true))
+		{
+			// Buffered only; the CP thread runs the commands.
 		}
 	}
 
@@ -455,6 +480,29 @@ namespace Flipper
 		// the FIFO is exactly that - is overwritten by the stale advance and the CP skips the
 		// first 32-byte entry of the new FIFO. mgt-fifo-brkpt depends on the switch being atomic.
 		fifoLock.Lock();
+
+		// Clearing FIFORD stops the reader with entries still in the ring: arm the carry-over for
+		// the repoint that follows. Setting FIFORD again without one clears it, so a plain stop
+		// keeps its meaning. The entries themselves are buffered by the first pointer write below,
+		// while the read pointer is still where the old stream left it.
+		if (addr == CP_ENABLE)
+		{
+			if ((cpregs.cr & CP_CR_RDEN) != 0 && (value & CP_CR_RDEN) == 0)
+			{
+				catchUpArmed = (cpregs.wrptr != cpregs.rdptr);
+			}
+			else if ((value & CP_CR_RDEN) != 0)
+			{
+				catchUpArmed = false;
+			}
+		}
+		else if (catchUpArmed &&
+			((addr >= CP_FIFO_BASEL && addr <= CP_FIFO_TOPH) ||
+				(addr >= CP_FIFO_WPTRL && addr <= CP_FIFO_RPTRH)))
+		{
+			CatchUpFifo();
+			catchUpArmed = false;
+		}
 
 		switch (addr)
 		{

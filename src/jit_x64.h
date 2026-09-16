@@ -267,6 +267,34 @@ public:
 		u32(imm);
 	}
 
+	// test r/m32, imm32 - the inlined branch condition tests a CR bit with it (see the
+	// branch translations in gekkojit.cpp).
+	void test_m32_imm(uint8_t base, int32_t disp, uint32_t imm)
+	{
+		rex(false, 0, RSP, base);
+		u8(0xF7);
+		mem(0, base, RSP, 0, disp);
+		u32(imm);
+	}
+
+	// sub r/m32, imm8 - the CTR decrement of a `bdnz`/`bdz` the translator inlines.
+	void sub_m32_imm8(uint8_t base, int32_t disp, uint8_t imm)
+	{
+		rex(false, 0, RSP, base);
+		u8(0x83);
+		mem(5, base, RSP, 0, disp);
+		u8(imm);
+	}
+
+	// add r/m32, imm8 - the taken-branch counter of a block that loops on its back edge.
+	void add_m32_imm8(uint8_t base, int32_t disp, uint8_t imm)
+	{
+		rex(false, 0, RSP, base);
+		u8(0x83);
+		mem(0, base, RSP, 0, disp);
+		u8(imm);
+	}
+
 	void cmp_r32_r32(uint8_t a, uint8_t b) { alu_r32_r32(AluCmp, a, b); }
 
 	void imul_r32_r32(uint8_t dst, uint8_t src)

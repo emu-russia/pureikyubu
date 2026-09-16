@@ -47,9 +47,22 @@ static const uint8_t RegExit = X64::R12;		// JitExit* for the whole block
 // stack spills, so a misaligned frame happens not to fail anything, while a wrong
 // shadow space layout does.
 static const int32_t ShadowSpace = 32;
-static const int32_t FrameSize = 40;
+static const int32_t FrameSize = 56;
 static_assert(FrameSize >= ShadowSpace, "the frame must cover the Win64 shadow space");
 static_assert(FrameSize % 16 == 8, "rsp must be 16 byte aligned at the helper calls");
+
+// Two frame slots above the shadow space (nothing of ours may live below `ShadowSpace`,
+// because a Win64 callee may spill its register arguments there). A block that loops on
+// its own back edge keeps the remaining iteration budget and the number of taken branches
+// it has already retired here.
+static const int32_t LoopBudgetSlot = ShadowSpace;
+static const int32_t LoopTicksSlot = ShadowSpace + 8;
+
+// How many times a block may take its own back edge before it leaves and lets the
+// dispatcher re-enter it. Small enough that the deferred time base update stays within a
+// couple of microseconds of emulated time (16 iterations of a six instruction loop is
+// under 100 ticks), large enough that the dispatcher is out of the loop's inner path.
+static const uint32_t LoopBudget = 16;
 
 static const int32_t GprOff = offsetof(GekkoRegs, gpr);
 static const int32_t SprOff = offsetof(GekkoRegs, spr);
@@ -73,7 +86,11 @@ struct JitExit
 {
 	uint64_t count;
 	uint32_t kind;
-	uint32_t pad;
+
+	// Taken branches the block retired on a back edge of its own, on top of `count`
+	// instructions. The interpreter ticks every taken branch twice, so Run() has to
+	// advance the time base by `count + ticks` (see emitBackEdge in gekkojit.cpp).
+	uint32_t ticks;
 };
 
 // Paired-Single register file. An FPR holds PS0 in fpr[n] and PS1 in ps1[n],

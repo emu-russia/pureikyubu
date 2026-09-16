@@ -138,13 +138,14 @@ namespace Bench
 			st.jitBlocks ? (double)st.jitCompiles / (double)st.jitBlocks * 100.0 : 0.0);
 		Debug::Report(Debug::Channel::Norm, "block invalidations: %llu (%.0f/s)\n",
 			(unsigned long long)st.jitInvalidations, (double)st.jitInvalidations / wall);
-		Debug::Report(Debug::Channel::Norm, "  exception entry  : %llu\n", (unsigned long long)st.invException);
-		Debug::Report(Debug::Channel::Norm, "  rfi              : %llu\n", (unsigned long long)st.invRfi);
-		Debug::Report(Debug::Channel::Norm, "  mtmsr            : %llu\n", (unsigned long long)st.invMtmsr);
-		Debug::Report(Debug::Channel::Norm, "  mtspr bat/sdr/hid: %llu\n", (unsigned long long)st.invMtspr);
 		Debug::Report(Debug::Channel::Norm, "  icbi             : %llu\n", (unsigned long long)st.invIcbi);
 		Debug::Report(Debug::Channel::Norm, "  tlbie/tlbsync    : %llu\n", (unsigned long long)st.invTlb);
 		Debug::Report(Debug::Channel::Norm, "  cache flush      : %llu\n", (unsigned long long)st.invFlash);
+		Debug::Report(Debug::Channel::Norm, "  mtspr HID2 PSQ   : %llu\n", (unsigned long long)st.invMtspr);
+		Debug::Report(Debug::Channel::Norm, "translation events left to the (pc, pa) lookup:\n");
+		Debug::Report(Debug::Channel::Norm, "  exception entry  : %llu\n", (unsigned long long)st.invException);
+		Debug::Report(Debug::Channel::Norm, "  rfi              : %llu\n", (unsigned long long)st.invRfi);
+		Debug::Report(Debug::Channel::Norm, "  mtmsr            : %llu\n", (unsigned long long)st.invMtmsr);
 		Debug::Report(Debug::Channel::Norm, "jit fallbacks      : %llu (%.2f%% of the instructions)\n",
 			(unsigned long long)st.jitFallbacks, ops ? (double)st.jitFallbacks / (double)ops * 100.0 : 0.0);
 		Debug::Report(Debug::Channel::Norm, "interp instructions: %llu\n", (unsigned long long)st.interpInstrs);
