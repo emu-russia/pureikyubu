@@ -163,6 +163,9 @@
     <ClInclude Include="..\..\src\hwdebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gba\gba_debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\hwprof.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -370,6 +373,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\hwdebug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gba\gba_debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\hwprof.cpp">

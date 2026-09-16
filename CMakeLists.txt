@@ -133,7 +133,9 @@ else ()
 	src/videosdl.cpp
 
 	# The integrated GBA emulator (issue #388). The core is self contained (see src/gba/Readme.md);
-	# gba_sdl.cpp is the SDL2 frontend the `--gba` mode uses.
+	# gba_sdl.cpp is the SDL2 frontend the `--gba` mode uses and gba_debug.cpp is the debug
+	# interface that frontend drives, which is the one file of the module the host compiles (it
+	# speaks JDI and Markdown, and its headers need the third-party paths the core does not have).
 	src/gba/arm7tdmi.cpp
 	src/gba/gba.cpp
 	src/gba/gba_apu.cpp
@@ -184,7 +186,10 @@ add_executable (pureikyubu
 
 target_compile_features(pureikyubu PRIVATE cxx_std_17)
 
-include_directories( thirdparty/imgui thirdparty/stb thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
+# `src` is on the include path because the debug interface of the portable machines
+# (`src/gba/gba_debug.cpp`) includes the emulator's precompiled header the way the MSVC project
+# declares it, and because the sources of the portable module include their own headers by name.
+include_directories( src thirdparty/imgui thirdparty/stb thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
 
 if (HEADLESS)
   # The headless build has no GL context and no window, so it neither needs nor wants the SDL,

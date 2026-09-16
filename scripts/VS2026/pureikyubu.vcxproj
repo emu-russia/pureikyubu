@@ -92,6 +92,7 @@
     <ClInclude Include="..\..\src\hwdebug.h" />
     <ClInclude Include="..\..\src\hwprof.h" />
     <ClInclude Include="..\..\src\hwosd.h" />
+    <ClInclude Include="..\..\src\gba\gba_debug.h" />
     <ClInclude Include="..\..\src\gfx.h" />
     <ClInclude Include="..\..\src\gfxnull.h" />
     <ClInclude Include="..\..\src\jdi.h" />
@@ -210,6 +211,21 @@
     <ClCompile Include="..\..\src\hwdebug.cpp" />
     <ClCompile Include="..\..\src\hwprof.cpp" />
     <ClCompile Include="..\..\src\hwosd.cpp" />
+    <!--
+      The debug interface of the portable machines lives in src/gba, and the precompiled header it
+      includes is named as the project declares it, so that the compiler matches the `#include` in
+      the source against the header the project told it to use.
+    -->
+    <ClCompile Include="..\..\src\gba\gba_debug.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug SDL|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release SDL|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug SDL|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release SDL|x64'">pch.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="..\..\src\gfxosd.cpp" />
     <ClCompile Include="..\..\src\gfx.cpp" />
     <ClCompile Include="..\..\src\jdi.cpp" />
