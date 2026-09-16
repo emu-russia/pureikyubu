@@ -147,7 +147,18 @@ namespace Flipper
 	//! the blocks it holds rather than on its size, and it is what keeps the ring meaningful.
 	bool CommandProcessor::StreamBufferFull()
 	{
-		return fifo->GetSize() >= StreamBufferBlocks * 32;
+		// The mark is on the blocks the buffer holds, but it must never stop the reader in the
+		// middle of the command at the head. A draw carries up to 64K vertices and is far larger
+		// than the mark; stopping there leaves the command incomplete for good, the guest waits
+		// for FIFO space that can no longer be freed, and the machine hangs. The reader therefore
+		// keeps going while the command at the head still needs more, and the mark applies again
+		// once there is none (the buffer itself is sized for the largest one, see MaxCommandBytes).
+		size_t limit = StreamBufferBlocks * 32;
+		size_t pending = fifo->PendingCommandBytes();
+		if (pending > limit)
+			limit = pending;
+
+		return fifo->GetSize() >= limit;
 	}
 
 	//! Bring the idle bits of CP_STATUS up to date with the reader's current state. They used to
@@ -1240,9 +1251,28 @@ namespace Flipper
 		return fifo[ptr];
 	}
 
-	uint8_t FifoProcessor::Peek16(size_t offset)
+	//! The 16-bit unit at `offset`, big-endian like every other word in the stream. The count of a
+	//! draw command is the word this reads: returning it as a byte truncated the count to its low
+	//! eight bits, and a draw of more than 255 vertices then looked complete to
+	//! FifoProcessor::EnoughToExecute while most of its vertex data was still on its way in. The
+	//! command processor ran it anyway and read whatever followed in the buffer, so the tail of
+	//! every long draw decoded as zeros (the lit-atn-func half-cylinder stopped a quarter of the
+	//! way round, issue #385).
+	size_t FifoProcessor::PendingCommandBytes()
 	{
-		return ((uint16_t)Peek8(offset) << 8) | Peek8(offset + 1);
+		if (GetSize() < 3)
+			return 0;
+
+		uint8_t cmd = Peek8(0);
+		if (cmd < (uint8_t)CPCommand::CP_CMD_DRAW_QUAD || cmd > ((uint8_t)CPCommand::CP_CMD_DRAW_POINT | 7))
+			return 0;
+
+		return (size_t)Peek16(1) * VertexSize(cmd & 7) + 3;
+	}
+
+	uint16_t FifoProcessor::Peek16(size_t offset)
+	{
+		return (uint16_t)(((uint16_t)Peek8(offset) << 8) | Peek8(offset + 1));
 	}
 
 	//! The CP owns the vertex format state (VCD / VAT); the stream only asks it for the sizes.

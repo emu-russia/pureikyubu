@@ -514,7 +514,12 @@ namespace Flipper
 		float ReadFloat();
 
 		uint8_t Peek8(size_t offset);
-		uint8_t Peek16(size_t offset);
+		uint16_t Peek16(size_t offset);
+
+		//! How many bytes the command at the head of the stream needs before it can run, or 0 when
+		//! that cannot be told yet or the command is one of the fixed-size ones. Only a draw
+		//! command carries a variable - and potentially very large - amount of vertex data.
+		size_t PendingCommandBytes();
 
 		void ExecuteCommand();
 

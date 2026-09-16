@@ -107,7 +107,12 @@ float CosineAttenuation(int ch, vec3 n, vec3 ldir, bool isAlpha, int i)
     if (att.y < 0.5)
         cosAtten = clamp(dot(n, lightDhx[i].xyz), 0.0, 1.0);
     else
-        cosAtten = clamp(dot(ldir, -lightDhx[i].xyz), 0.0, 1.0);
+        // L.L_dir, straight: the SDK stores the spot axis negated (GXInitLightDir puts the
+        // direction the cone points into the H/D words with the opposite sign, GXInitLightSpot
+        // then writes the coefficients against it), so the cosine of the angle between the axis
+        // and the vertex-to-light vector is dot(L, Ldir) as it stands. Adding a negation here
+        // turned every spot attenuation into 0, which left the whole surface black (issue #385).
+        cosAtten = clamp(dot(ldir, lightDhx[i].xyz), 0.0, 1.0);
 
     return clamp(lightA[i].x + lightA[i].y * cosAtten + lightA[i].z * cosAtten * cosAtten, 0.0, 1.0);
 }
@@ -1074,7 +1079,9 @@ void main()
 		if (att->AttenSelect == 0)
 			cosAtten = SoftClamp(n[0] * lp.dhx[i][0] + n[1] * lp.dhx[i][1] + n[2] * lp.dhx[i][2], 0.0f, 1.0f);
 		else
-			cosAtten = SoftClamp(-(ldir[0] * lp.dhx[i][0] + ldir[1] * lp.dhx[i][1] + ldir[2] * lp.dhx[i][2]), 0.0f, 1.0f);
+			// L.Ldir, straight - see CosineAttenuation in the vertex shader for why there is no
+			// negation here (the stored direction is already the negated spot axis).
+			cosAtten = SoftClamp(ldir[0] * lp.dhx[i][0] + ldir[1] * lp.dhx[i][1] + ldir[2] * lp.dhx[i][2], 0.0f, 1.0f);
 
 		return SoftClamp(lp.a[i][0] + lp.a[i][1] * cosAtten + lp.a[i][2] * cosAtten * cosAtten, 0.0f, 1.0f);
 	}
