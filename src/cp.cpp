@@ -112,6 +112,43 @@ namespace Flipper
 			((cpregs.rdptr & ~0x1f) == (cpregs.bpptr & ~0x1f));
 	}
 
+	//! Nothing is waiting for the reader: the ring is empty, the guest stopped it, or it sits on
+	//! the break point. `ignoreEnable` is the catch-up case (see CatchUpFifo), which runs after the
+	//! guest cleared FIFORD on purpose.
+	bool CommandProcessor::ReaderIdle(bool ignoreEnable) const
+	{
+		uint32_t count = 0;
+		FifoCount(&count);
+
+		return count == 0 || ((cpregs.cr & CP_CR_RDEN) == 0 && !ignoreEnable) || AtBreakPoint();
+	}
+
+	//! Bring the idle bits of CP_STATUS up to date with the reader's current state. They used to
+	//! be latched only by a fetch, but the CP thread is now woken only when the ring has entries,
+	//! so after the last entry was taken the bits stayed clear forever and a guest that polls
+	//! CP_STATUS in a loop never saw the reader go idle. That is a real wait: Super Monkey Ball 2
+	//! spins on bit 2 (`GXGetGPStatus`) before it starts drawing, so the game never got past its
+	//! first frame.
+	void CommandProcessor::UpdateReaderStatus()
+	{
+		if (ReaderIdle())
+		{
+			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+		}
+		else
+		{
+			cpregs.sr &= ~(CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+		}
+	}
+
+	//! CP_STATUS as the guest sees it: the latched water mark / break point flags plus the idle
+	//! bits of the reader's current state.
+	uint16_t CommandProcessor::Status()
+	{
+		UpdateReaderStatus();
+		return cpregs.sr;
+	}
+
 	// The read pointer has reached the break point. The break point itself stops the reader; the
 	// status flag is raised whenever the break point is enabled (CP_ENABLE[FIFOBRK]) and cleared
 	// when it is disabled (command-processor.md 4.3: "the FIFO read pointer reached the break
@@ -300,7 +337,7 @@ namespace Flipper
 		}
 
 		// Advance read pointer.
-		if (cpregs.cnt == 0 || ((cpregs.cr & CP_CR_RDEN) == 0 && !ignoreEnable) || AtBreakPoint())
+		if (ReaderIdle(ignoreEnable))
 		{
 			cpregs.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
 			return false;
@@ -376,7 +413,7 @@ namespace Flipper
 		switch (addr)
 		{
 			case CP_STATUS:
-				return cpregs.sr;
+				return Status();
 			case CP_ENABLE:
 				return cpregs.cr;
 			case CP_CLR:

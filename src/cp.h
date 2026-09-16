@@ -540,6 +540,9 @@ namespace Flipper
 
 		void CP_BREAK();
 		bool AtBreakPoint() const;
+		bool ReaderIdle(bool ignoreEnable = false) const;
+		void UpdateReaderStatus();
+		uint16_t Status();
 		void CP_OVF();
 		void CP_UVF();
 

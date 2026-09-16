@@ -447,6 +447,55 @@ namespace pureikyubutest
 			Assert::AreEqual<uint32_t>(before, CpReadPtr(m), L"an empty FIFO does not advance the pointer");
 		}
 
+		// The idle bits of CP_STATUS describe the reader *now*: the ring is empty, the reader is
+		// disabled, or it sits on the break point. They must not depend on another fetch having run,
+		// because the CP thread is only woken when there is work - after the last entry of a stream
+		// was taken, no fetch follows, and a guest that polls the bits (Super Monkey Ball 2 waits
+		// for the read unit with GXGetGPStatus before it draws its first frame) would spin forever.
+		TEST_METHOD(CpSpec_ReaderGoesIdleWhenTheRingDrains)
+		{
+			GfxTestMachine& m = M();
+
+			DisplayList list;
+			ProgramList(list);
+			list.Align();
+
+			int bursts = SetupFifo(m, list.Bytes());
+
+			// The last fetch of the stream is the one that empties the ring: it clears the idle
+			// bits on its way in and nothing runs afterwards to put them back.
+			RunFifo(m, bursts);
+
+			Assert::AreEqual<uint32_t>(0, CpCount(m), L"the stream has been consumed");
+			Assert::AreEqual<uint16_t>((uint16_t)(CP_SR_RD_IDLE | CP_SR_CMD_IDLE),
+				(uint16_t)(CpStatus(m) & (CP_SR_RD_IDLE | CP_SR_CMD_IDLE)),
+				L"an empty ring means the read unit is idle");
+		}
+
+		// The same bits have to follow the enable gate: with FIFO reads disabled the reader cannot
+		// make progress, so it is idle even while the ring still holds entries.
+		TEST_METHOD(CpSpec_StoppingTheReaderReportsItIdle)
+		{
+			GfxTestMachine& m = M();
+
+			DisplayList list;
+			ProgramList(list);
+			list.Align();
+
+			SetupFifo(m, list.Bytes());
+
+			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_WPINC);
+			Assert::AreEqual<uint16_t>((uint16_t)(CP_SR_RD_IDLE | CP_SR_CMD_IDLE),
+				(uint16_t)(CpStatus(m) & (CP_SR_RD_IDLE | CP_SR_CMD_IDLE)),
+				L"a stopped reader is idle");
+
+			// And the entries are still there to be read once it is enabled again.
+			PIRegWrite(PI_REGSPACE_CP | CP_ENABLE, CP_CR_RDEN | CP_CR_WPINC);
+			Assert::AreEqual<uint16_t>(0,
+				(uint16_t)(CpStatus(m) & (CP_SR_RD_IDLE | CP_SR_CMD_IDLE)),
+				L"an enabled reader with entries waiting is not idle");
+		}
+
 		// =========================================================================================
 		// 3. The water marks
 		// =========================================================================================
