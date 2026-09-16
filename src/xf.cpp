@@ -1563,19 +1563,13 @@ void main()
 		poly[1] = v1;
 		poly[2] = v2;
 
-		// A vertex that lands exactly on the near plane has `w = 0`, and its window position is at
-		// infinity: the clipper therefore cuts a hair in front of it (a ten-thousandth of the
-		// triangle's own depth extent, so the cut is scale independent) and the divide stays
-		// finite. The hardware has the same singularity and answers it with the saturated 14-bit
-		// screen position of the setup unit (gfx-su.md 5.1).
-		float wEps = 1e-6f;
-		for (int i = 0; i < 3; i++)
-		{
-			float w = fabsf(poly[i].clip[3]);
-			if (w * 1e-4f > wEps)
-				wEps = w * 1e-4f;
-		}
-
+		// The near plane is inclusive, as it is on the hardware: a vertex exactly on it (z = -w)
+		// is inside the view volume and belongs to the picture. Only a vertex *at the eye* has
+		// w = 0 and a window position at infinity, and the divide of SoftVertexToWindow answers
+		// that case on its own (it falls back to 1/w = 1). The clipper used to cut a hair in
+		// front of the plane instead, which threw away every primitive that lies exactly on it -
+		// a title that draws a flat overlay at z = -1 lost all of it, and the demo lines of
+		// pix-fog, whose vertices sit on the plane, never rasterized.
 		for (int p = 0; p < 6 && count > 0; p++)
 		{
 			SoftVertex out[16];
@@ -1588,12 +1582,6 @@ void main()
 
 				float da = SoftClipDistance(SoftClipPlanes[p], a);
 				float db = SoftClipDistance(SoftClipPlanes[p], b);
-
-				if (p == 0)
-				{
-					da -= wEps;
-					db -= wEps;
-				}
 
 				if (da >= 0.0f && outCount < 16)
 					out[outCount++] = a;
