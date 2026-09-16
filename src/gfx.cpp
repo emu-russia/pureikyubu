@@ -1377,7 +1377,15 @@ namespace GFX
 				(float)(pe->pe.copy_clear_ar.alpha / 255.0f)
 			);
 
-			glClearDepth((double)(pe->pe.copy_clear_z.value / 16777215.0));
+			// The depth of this clear is the far plane, not the copy engine's clear value. The copy
+			// engine's clear is the one a display copy asks for, and it runs through the pending
+			// clears above with the Z the title programmed (GX_MAX_Z24 in every SDK title). This
+			// path only runs when no copy asked for a clear at all - the first frame of a title, for
+			// instance, whose PE_COPY_CLEAR_Z register still holds its reset value of 0. Clearing the
+			// depth to 0 leaves the buffer at the near plane, so every fragment of that frame fails
+			// the compare and the frame is lost: the light map of the indirect bump demos is
+			// rendered in exactly that frame, which is why it came out empty (issue #385).
+			glClearDepth(1.0);
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		}

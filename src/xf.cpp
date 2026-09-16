@@ -389,6 +389,16 @@ void main()
             -eye.z);
     }
 
+    // The GX clip space keeps z in the (-w, 0) range: the SDK's projection matrices scale z that
+    // way for this hardware (mtx44.c, the EPPC build), so the near plane is z = -w and the far
+    // plane is z = 0, while the viewport z registers map that range onto the depth range the title
+    // programmed. OpenGL's clip volume is (-w, w), so the range is doubled here (z' = 2z + w):
+    // without it only the lower half of the depth range is used, geometry that sits exactly on the
+    // near plane lands on the GL clip boundary and is dropped, and the programmed viewport z
+    // registers no longer describe the depth range the backend gives GL. The software pipeline
+    // applies the same mapping in SoftVertexToWindow, so the two pipelines keep the same depth.
+    clip.z = 2.0 * clip.z + clip.w;
+
     gl_Position = clip;
 }
 )glsl";
