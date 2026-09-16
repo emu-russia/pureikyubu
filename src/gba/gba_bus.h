@@ -96,6 +96,15 @@ namespace GBA
 		/// <summary>The cycle counter the DMA and the PPU use as their time base.</summary>
 		u64 CycleCounter() const { return totalCycles; }
 
+		/// <summary>
+		/// The halfword at `address`, decoded the way Read16 decodes it but without any of its
+		/// side effects: no waitstates are charged and the open-bus latch is left alone. This is
+		/// the read a debugger uses - a disassembler walks the memory continuously, and the
+		/// emulator's own reports use the same rule (see GbBus::Peek). Where the address decode
+		/// needs a register value (the GPIO port), the raw register is returned.
+		/// </summary>
+		u16 Peek16(u32 address) const;
+
 		// -- BIOS calls --------------------------------------------------------------------
 
 		/// <summary>

@@ -114,15 +114,18 @@ namespace Flipper
 	{
 		int64_t hwUpdateTbrValue = 0;
 
-		AudioInterface* ai = nullptr;
-		DiskInterface* di = nullptr;
-
 		size_t memsize;			//!< The size of the main memory (Splash) from the configuration. Used to call GetMemorySize.
 
 	public:
 		//! The serial / controller interface. Public like `gfx` and `vi`: the unit tests drive its
 		//! poll schedule and its registers directly.
 		SerialInterface* si = nullptr;
+
+		//! The audio interface and the disk interface. Public for the same reason as `si`: the
+		//! debug interface reports their registers (`airegs`, `diregs`) straight out of the state
+		//! they own, and there is no other way to reach it.
+		AudioInterface* ai = nullptr;
+		DiskInterface* di = nullptr;
 
 		Flipper(HWConfig* config);
 		~Flipper();

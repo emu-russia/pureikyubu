@@ -92,5 +92,8 @@ namespace Flipper
 	public:
 		DiskInterface(Flipper* flipper, HWConfig* config);
 		~DiskInterface();
+
+		//! The DI state, for the debug interface (`diregs` and the debugui2 "Disk" panel).
+		const DIState& State() const { return di; }
 	};
 }

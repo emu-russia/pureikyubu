@@ -388,6 +388,162 @@ namespace JdiSpecs
 }
 )json";
 
+	const char* GbaJdi = R"json(
+{
+	"info":
+	{
+		"description": "The debug interface of the portable machines (the integrated GBA / Game Boy emulator, `--gba` / `--gb`). It is published by the frontend of those machines only, so a GameCube session never sees these commands. Every answer is Markdown, which the new debugger (debugui2) renders in its `GBA` and `Game Boy` panels.",
+		"helpGroup": "GBA / Game Boy Debug Commands"
+	},
+
+	"can": {
+
+		"gba": {
+			"help": "Dump the GBA machine state",
+			"usage": [
+				"Syntax: gba\n",
+				"The answer is Markdown: the cartridge, the clock, the interrupts, the frame.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbaregs": {
+			"help": "Dump the ARM7TDMI register file",
+			"usage": [
+				"Syntax: gbaregs\n",
+				"The answer is Markdown: r0-r15, the CPSR with its flags and the CPU mode.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbacpu": {
+			"help": "Disassemble from the ARM7TDMI program counter",
+			"hints": "[count]",
+			"usage": [
+				"Syntax: gbacpu [count]\n",
+				"The answer is Markdown: one line per instruction (address, bytes, mnemonic),\n",
+				"ARM or Thumb as the CPU state asks for. `count` defaults to 16 and is capped at 40.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbamem": {
+			"help": "Dump a range of the GBA address space",
+			"hints": "<address> [lines]",
+			"usage": [
+				"Syntax: gbamem <address> [lines]\n",
+				"The answer is Markdown: a hexdump with a text column, `lines` lines of 16 bytes.\n",
+				"Example: gbamem 0x08000000 16\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbappu": {
+			"help": "Dump the GBA LCD controller state",
+			"usage": [
+				"Syntax: gbappu\n",
+				"The answer is Markdown: DISPCNT / DISPSTAT / VCOUNT, the background and window\n",
+				"registers, the frame counter and the decoded video mode.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbadma": {
+			"help": "Dump the GBA DMA channels",
+			"usage": [
+				"Syntax: gbadma\n",
+				"The answer is Markdown: the four channels with their address, count and control\n",
+				"registers and the decoded start timing.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbtimers": {
+			"help": "Dump the GBA timers and the interrupt controller",
+			"usage": [
+				"Syntax: gbtimers\n",
+				"The answer is Markdown: the four timers with their counters and control bits, and\n",
+				"the IE / IF / IME registers.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbsio": {
+			"help": "Dump the GBA link port state",
+			"usage": [
+				"Syntax: gbsio\n",
+				"The answer is Markdown: the SIOCNT / RCNT / JOY registers and the state of the\n",
+				"cable (whether a peer is attached, the last transfer).\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbcart": {
+			"help": "Dump the GBA cartridge state",
+			"usage": [
+				"Syntax: gbcart\n",
+				"The answer is Markdown: the header (title, game code, sizes), the save memory state\n",
+				"and the first bytes of the header itself.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gb": {
+			"help": "Dump the Game Boy (DMG / CGB) machine state",
+			"usage": [
+				"Syntax: gb\n",
+				"The answer is Markdown: the console kind, the cartridge and its mapper, the clock,\n",
+				"the interrupts and the CPU state.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbregs": {
+			"help": "Dump the LR35902 register file",
+			"usage": [
+				"Syntax: gbregs\n",
+				"The answer is Markdown: AF / BC / DE / HL / SP / PC, the flags and the CPU state.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbcpu": {
+			"help": "Disassemble from the LR35902 program counter",
+			"hints": "[count]",
+			"usage": [
+				"Syntax: gbcpu [count]\n",
+				"The answer is Markdown: one line per SM83 instruction (address, bytes, mnemonic).\n",
+				"`count` defaults to 16 and is capped at 40.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbmem": {
+			"help": "Dump a range of the Game Boy address space",
+			"hints": "<address> [lines]",
+			"usage": [
+				"Syntax: gbmem <address> [lines]\n",
+				"The answer is Markdown: a hexdump with a text column, `lines` lines of 16 bytes.\n",
+				"Example: gbmem 0x0000 16\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbppu": {
+			"help": "Dump the Game Boy LCD controller state",
+			"usage": [
+				"Syntax: gbppu\n",
+				"The answer is Markdown: LCDC / STAT / LY, the scroll registers, the palettes and\n",
+				"the decoded layer configuration.\n"
+			],
+			"output": "{ markdown: String }"
+		}
+
+	}
+
+}
+)json";
+
 	const char* GekkoCoreJdi = R"json(
 {
   "info": {
@@ -1047,6 +1203,107 @@ namespace JdiSpecs
 		"Syntax: memdump <address> <lines>\n",
 		"The answer is Markdown (the new debugger, debugui2, shows it as a panel item).\n",
 		"Example of use: memdump 0x00000000 16\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"airegs": {
+	  "help": "Dump the audio interface (AI) state",
+	  "usage": [
+		"Syntax: airegs\n",
+		"The answer is Markdown: the AI streaming registers with the control bits decoded,\n",
+		"the volume, the sample counter and the streaming FIFO.\n",
+		"The debugui2 \"Audio\" panel shows this report; it is also a command line answer.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"viregs": {
+	  "help": "Dump the video interface (VI) state",
+	  "usage": [
+		"Syntax: viregs\n",
+		"The answer is Markdown: the VI registers, the TV format and scan mode decoded,\n",
+		"the raster position and the XFB the interface scans out.\n",
+		"The debugui2 \"Video\" panel shows this report.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"piregs": {
+	  "help": "Dump the processor interface (PI) state",
+	  "usage": [
+		"Syntax: piregs\n",
+		"The answer is Markdown: the interrupt registers with the pending and enabled sources\n",
+		"by name, the interrupt counters of every source and the PI side of the CP FIFO.\n",
+		"The debugui2 \"Processor Interface\" panel shows this report.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"miregs": {
+	  "help": "Dump the memory interface (MI) state",
+	  "usage": [
+		"Syntax: miregs\n",
+		"The answer is Markdown: the memory arbitration registers (MARR), the memory\n",
+		"protection interrupts and the MI cycle counters.\n",
+		"The debugui2 \"Memory Interface\" panel shows this report.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"diregs": {
+	  "help": "Dump the disk interface (DI) state",
+	  "usage": [
+		"Syntax: diregs\n",
+		"The answer is Markdown: the DI registers with the status bits decoded, the cover\n",
+		"state, the command and immediate buffers and the transfer counters.\n",
+		"The debugui2 \"Disk\" panel shows this report. Use `DvdInfo` for the mounted image.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"siregs": {
+	  "help": "Dump the serial interface (SI) state",
+	  "usage": [
+		"Syntax: siregs\n",
+		"The answer is Markdown: the SI registers, the four channel buffers, the poll\n",
+		"schedule and the state of the connected controllers.\n",
+		"The debugui2 \"Serial\" panel shows this report.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"exiregs": {
+	  "help": "Dump the external interface (EXI) state",
+	  "usage": [
+		"Syntax: exiregs\n",
+		"The answer is Markdown: the registers of the three EXI channels, the selected\n",
+		"device, the RTC and the SRAM the console settings live in.\n",
+		"The debugui2 \"External\" panel shows this report.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"cpregs": {
+	  "help": "Dump the command processor (CP) state",
+	  "usage": [
+		"Syntax: cpregs\n",
+		"The answer is Markdown: the CP host registers, the FIFO ring occupancy, the status\n",
+		"bits decoded and the vertex formats (VCD / VAT) the parser is working with.\n",
+		"The debugui2 \"Command Processor\" panel shows this report.\n",
+		"Use `gxregs` for the graphics pipeline the CP feeds.\n"
+	  ],
+	  "output": "{ markdown: String }"
+	},
+
+	"dspstate": {
+	  "help": "Dump the DSP state",
+	  "usage": [
+		"Syntax: dspstate\n",
+		"The answer is Markdown: the DSP reset / halt / interrupt state and the register\n",
+		"file of the core (PC, DPP, the addressing registers, the accumulators).\n",
+		"The debugui2 \"DSP\" panel shows this report. Use `dregs` for the same registers as\n",
+		"a log dump, and `du` for the disassembly at the program counter.\n"
 	  ],
 	  "output": "{ markdown: String }"
 	}

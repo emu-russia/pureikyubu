@@ -170,5 +170,8 @@ namespace Flipper
 		void EXIAttach(int chan);
 		// disconnect device
 		void EXIDetach(int chan);
+
+		//! The EXI state, for the debug interface (`exiregs` and the debugui2 "External" panel).
+		const EXIState& State() const { return exi; }
 	};
 }

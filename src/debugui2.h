@@ -30,6 +30,16 @@ A third arrangement is tabs: the sub-panels are stacked in the same space and on
 shown at a time, while their titles make the tab strip. A panel can also carry the "has a command
 line" flag - in the mockup only the message history panel has one.
 
+The panels are the debug interface of the machine that is being debugged, one panel per subject.
+The set follows the machine: a GameCube session gets the Gekko panels (registers, disassembly,
+memory) and a panel for every Flipper subsystem (video, audio, disk, serial, external, processor
+and memory interface, the command processor, the DSP); a GBA session gets the ARM7TDMI panels and
+the portable devices (the LCD controller, DMA, the timers, the link port, the cartridge); a Game
+Boy session gets the LR35902 panels and the Game Boy LCD. Every one of those panels is filled from
+a JDI command that answers Markdown (`regs`, `viregs`, `gbaregs`, `gbappu`, ...), so the very same
+report is available from the command line - the panel is a live view of it, not a separate
+implementation.
+
 The header of a panel shows its title and, to the right edge, a short line of "info" text. The
 debugger is the one that fills it in (the main panel reports the frame rate, the disassembler the
 state of the processor), so the front end does not have to know what the numbers mean; a front end
@@ -68,11 +78,11 @@ code point outside them is skipped rather than drawn as a wrong glyph.
 ## Sessions
 
 The debugger works within a session: `Data/Sessions/<name>_<ordinal>`, where the name is taken
-from the loaded image (`pong.dol` gives `pong`) with the characters that do not belong in a file
-name replaced, and the ordinal makes the folder unique. The session is a JDI entity: its path is
-available to the handlers through the `SessionPath` command, and `SessionSave` stores a text
-artifact in it. Closing the debugger closes the session - the collected log is written into the
-session folder as `log.md`.
+from the loaded image (`pong.dol` gives `pong`, a GBA cartridge gives its title) with the
+characters that do not belong in a file name replaced, and the ordinal makes the folder unique. The
+session is a JDI entity: its path is available to the handlers through the `SessionPath` command,
+and `SessionSave` stores a text artifact in it. Closing the debugger closes the session - the
+collected log is written into the session folder as `log.md`.
 
 */
 
@@ -262,16 +272,39 @@ namespace Debug2
 	// The debugger
 	// ------------------------------------------------------------------------------------
 
+	// Which machine the panels describe. The set of panels is built once, when the debugger
+	// starts, from the machine that is running: the two families of machines share no hardware,
+	// so a GameCube session has no GBA panel to keep empty and the other way round.
+	enum class Machine
+	{
+		GameCube = 0,	// the Gekko and the Flipper subsystems
+		Gba,			// the GBA (ARM7TDMI, the LCD, the DMA, the timers, the link port)
+		Gb,				// the Game Boy / Game Boy Color
+	};
+
 	class Debugger : public Ui::Sink
 	{
 		// ---- only touched by the debugger thread ----
 
 		Thread* thread = nullptr;
+
+		// The panels the three machines have in common: the processor, its disassembly and its
+		// memory map. They are the same object whatever the machine is, only their content
+		// differs, so the command line answers of the user and the live refresh both have one
+		// place to write to.
 		Panel* log = nullptr;
 		Panel* regs = nullptr;
 		Panel* disasm = nullptr;
 		Panel* memdump = nullptr;
+
+		// The panels that only one machine has (the Flipper subsystems, the portable devices).
+		Panel* subsystems[12] = { nullptr, };
+		size_t subsystemCount = 0;
+
+		// The panel of the HW interface profile, which is part of a GameCube session only.
 		Panel* profile = nullptr;
+
+		Machine machine = Machine::GameCube;
 
 		std::string sessionPath;
 		std::string sessionName;
@@ -314,9 +347,22 @@ namespace Debug2
 		void UpdatePanelInfo();
 		void Publish();
 
+		// The three panel trees (one per machine) and the refresh of the live panels of each.
+		void BuildPanels(const char* machineTitle, size_t liveCount);
+		void BuildGameCubePanels();
+		void BuildGbaPanels();
+		void BuildGbPanels();
+		void RefreshGameCubePanels();
+		void RefreshGbaPanels();
+		void RefreshGbPanels();
+
 		void AppendItem(Panel* panel, const std::string& markdown, ItemAlign align);
 		void ReplaceItems(Panel* panel, const std::string& markdown);
 		void SetPanelInfo(Panel* panel, const std::string& value);
+
+		// Fill a panel from a JDI command that answers Markdown. Nothing happens when the command
+		// had nothing to say, so a panel keeps its last content.
+		void RefreshFromMarkdown(Panel* panel, const std::string& cmdline);
 
 		// Ask JDI and turn the answer into the source of an item. An empty result means the
 		// command had nothing to say (the handlers report their problems through Debug::Report).
@@ -338,6 +384,9 @@ namespace Debug2
 
 		// Render one frame. The host UI thread calls this from its frame loop.
 		void Frame();
+
+		// The machine the panels describe.
+		Machine GetMachine() const { return machine; }
 
 		// The session is a JDI entity.
 		const std::string& SessionPath() const { return sessionPath; }

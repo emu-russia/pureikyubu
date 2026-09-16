@@ -276,6 +276,64 @@ namespace GBA
 		}
 	}
 
+	// The debugger's view of the address space: the same decode as Read16, without the waitstates
+	// and without the open-bus latch. A debugger walks memory continuously (a disassembly, a
+	// memory panel), so the read it performs must not move the machine.
+	u16 GbaBus::Peek16(u32 address) const
+	{
+		address &= ~1u;
+
+		u32 region = address >> 24;
+
+		switch (region)
+		{
+			case 0x00:
+				return (address < BiosSize) ? bios.Read16(address) : (u16)openBus;
+
+			case 0x02:
+				return ewram.Read16(address - MemEwram);
+
+			case 0x03:
+				return iwram.Read16(address - MemIwram);
+
+			case 0x04:
+				return io.Read16(address & (IoSize - 1));
+
+			case 0x05:
+				return ppu.ReadPalette16(address & (PaletteSize - 1));
+
+			case 0x06:
+				return (u16)(ppu.ReadVram(address) | (ppu.ReadVram(address + 1) << 8));
+
+			case 0x07:
+				return (u16)(ppu.ReadOam(address & (OamSize - 1))
+					| (ppu.ReadOam((address + 1) & (OamSize - 1)) << 8));
+
+			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
+				if (IsGpioAddress(address))
+				{
+					// Reading the port can advance the RTC (RtcReadBit clocks the bit stream), which
+					// is a side effect a debugger must not have, so the GPIO window is read the way
+					// a cartridge without the port answers: the ROM bytes at the register addresses
+					// (GBATEK "GBA GPIO", write-only mode).
+					u32 reg = address & 0xFF;
+					u8 romByte = (reg == 0x04 || reg == 0xC4) ? cart.ReadRom8(0xC4)
+						: ((reg == 0x06 || reg == 0xC6) ? cart.ReadRom8(0xC6) : cart.ReadRom8(0xC8));
+					u8 second = (reg == 0x08 || reg == 0xC8) ? cart.ReadRom8(0xC9) : cart.ReadRom8(reg + 1);
+					return (u16)(romByte | (second << 8));
+				}
+
+				return cart.ReadRom16(address);
+
+			case 0x0E: case 0x0F:
+				return (u16)(cart.PeekSave(address - MemSram)
+					| (cart.PeekSave(address + 1 - MemSram) << 8));
+
+			default:
+				return (u16)openBus;
+		}
+	}
+
 	u32 GbaBus::Read32(u32 address)
 	{
 		address &= ~3u;

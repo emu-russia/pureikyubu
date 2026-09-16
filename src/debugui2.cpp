@@ -1,6 +1,7 @@
 // The new debugger (debugui2). The module description is in debugui2.h.
 
 #include "pch.h"
+#include "gba/gba_debug.h"
 
 #include <sstream>
 #include <chrono>
@@ -22,6 +23,44 @@ namespace Debug2
 	static const size_t MaxLogItems = 256;			// the message history is capped
 	static const size_t MaxCmdHistory = 64;
 	static const uint64_t RefreshInterval = 500;	// ms between the live panel updates
+
+	// The Flipper subsystem panels a GameCube session gets, in the order of the tab strip: the
+	// title, the command that fills it and the line the debugger shows until there is something
+	// to show. The portable machines have their own lists below. The tree builder and the live
+	// refresh both walk these lists, so a panel is added in one place.
+	struct LivePanel
+	{
+		const char* title;
+		const char* command;
+		const char* placeholder;
+	};
+
+	static const LivePanel FlipperPanels[] =
+	{
+		{ "Video",               "viregs",   "_Load an image to see the video interface._\n" },
+		{ "Audio",               "airegs",   "_Load an image to see the audio interface._\n" },
+		{ "Disk",                "diregs",   "_Load an image to see the disk interface._\n" },
+		{ "Serial",              "siregs",   "_Load an image to see the serial interface._\n" },
+		{ "External",            "exiregs",  "_Load an image to see the external interface._\n" },
+		{ "Processor Interface", "piregs",   "_Load an image to see the processor interface._\n" },
+		{ "Memory Interface",    "miregs",   "_Load an image to see the memory interface._\n" },
+		{ "Command Processor",   "cpregs",   "_Load an image to see the command processor._\n" },
+		{ "DSP",                 "dspstate", "_Load an image to see the DSP._\n" },
+	};
+
+	static const LivePanel GbaPanels[] =
+	{
+		{ "LCD",       "gbappu",   "_The machine is not running yet._\n" },
+		{ "DMA",       "gbadma",   "_The machine is not running yet._\n" },
+		{ "Timers",    "gbtimers", "_The machine is not running yet._\n" },
+		{ "Link",      "gbsio",    "_The machine is not running yet._\n" },
+		{ "Cartridge", "gbcart",   "_The machine is not running yet._\n" },
+	};
+
+	static const LivePanel GbPanels[] =
+	{
+		{ "LCD", "gbppu", "_The machine is not running yet._\n" },
+	};
 
 
 	// ========================================================================================
@@ -559,6 +598,25 @@ namespace Debug2
 
 			delete loaded;
 		}
+		else
+		{
+			// The portable machines are not a file the GameCube loader opened: they are the
+			// cartridge the frontend loaded, and its title is what names the session.
+			std::string title = GBA::DebugMachineRomTitle();
+
+			if (title.empty())
+			{
+				switch (GBA::CurrentDebugMachine())
+				{
+				case GBA::DebugMachine::Gba: title = "gba"; break;
+				case GBA::DebugMachine::Gb: title = "gb"; break;
+				default: break;
+				}
+			}
+
+			if (!title.empty())
+				name = SanitizeName(title);
+		}
 
 		MakeDirectory("Data");
 		MakeDirectory("Data/Sessions");
@@ -609,39 +667,20 @@ namespace Debug2
 		}
 
 
-		// The mockup layout: the main panel is split vertically into the message history on the
-		// left and the live panels on the right. The live panels share one space as tabs, which
-		// is what the tabs are for: only one of them needs to be on the screen at a time.
-		root.SetTitle(sessionPath);
-		root.SplitInto(Split::Vertical, 2);
+		// The panels describe the machine that is running. The portable emulator is a separate
+		// program path (`--gba` / `--gb`) in the same binary, and it publishes its own debug
+		// interface, so the machine is known before the first panel is built.
+		if (GBA::DebugMachineActive())
+			machine = (GBA::CurrentDebugMachine() == GBA::DebugMachine::Gb) ? Machine::Gb : Machine::Gba;
+		else
+			machine = Machine::GameCube;
 
-		log = &root.Sub(0);
-		log->SetTitle("Debug Messages");
-		log->SetCmdline(true);
-
-		Panel& right = root.Sub(1);
-		right.SetTitle("Gekko");
-		right.SplitInto(Split::Tabs, 4);
-
-		regs = &right.Sub(0);
-		regs->SetTitle("Registers");
-
-		disasm = &right.Sub(1);
-		disasm->SetTitle("Disassembly");
-
-		memdump = &right.Sub(2);
-		memdump->SetTitle("Memory");
-
-		profile = &right.Sub(3);
-		profile->SetTitle("Profiler");
-
-		// Whatever the panels will show, they are never empty: this is also the hint about why
-		// the live panels stay blank until something is running.
-		AppendItem(log, "**debugui2**: the new debugger is running. The command line is at the bottom of this panel.\n", ItemAlign::Left);
-		AppendItem(regs, "_Load an image to see the live registers._\n", ItemAlign::Left);
-		AppendItem(disasm, "_Load an image to see the live disassembly._\n", ItemAlign::Left);
-		AppendItem(memdump, "_Load an image to see the physical memory._\n", ItemAlign::Left);
-		AppendItem(profile, "_Load an image to see the HW interface profile._\n", ItemAlign::Left);
+		switch (machine)
+		{
+		case Machine::Gba: BuildGbaPanels(); break;
+		case Machine::Gb: BuildGbPanels(); break;
+		default: BuildGameCubePanels(); break;
+		}
 
 		// The window is the only part that needs a GL context, so it is optional: without it the
 		// debugger still works (the session and the commands are there for JDI).
@@ -713,6 +752,131 @@ namespace Debug2
 
 		sessionPath.clear();
 		sessionName.clear();
+	}
+
+
+	// ========================================================================================
+	// The panel trees
+	// ========================================================================================
+
+	// Every tree has the same shape: the message history with the command line on the left, and
+	// the live panels of the machine sharing the space on the right as tabs. Only one of them has
+	// to be on the screen at a time, which is what the tabs are for.
+	//
+	// The processor panels (registers, disassembly, memory) are the same three objects in every
+	// tree: the command that fills them is named by the machine (`regs` / `gbaregs`), so the
+	// refresh code below stays in one place.
+	void Debugger::BuildPanels(const char* machineTitle, size_t liveCount)
+	{
+		root.SetTitle(sessionPath);
+		root.SplitInto(Split::Vertical, 2);
+
+		Panel& messagePanel = root.Sub(0);
+		messagePanel.SetTitle("Debug Messages");
+		messagePanel.SetCmdline(true);
+
+		Panel& right = root.Sub(1);
+		right.SetTitle(machineTitle);
+		right.SplitInto(Split::Tabs, liveCount);
+	}
+
+	void Debugger::BuildGameCubePanels()
+	{
+		// Registers, disassembly, memory, the Flipper subsystems and the profiler.
+		BuildPanels("GameCube", 4 + _countof(FlipperPanels));
+
+		Panel& right = root.Sub(1);
+
+		log = &root.Sub(0);
+
+		regs = &right.Sub(0);
+		regs->SetTitle("Registers");
+
+		disasm = &right.Sub(1);
+		disasm->SetTitle("Disassembly");
+
+		memdump = &right.Sub(2);
+		memdump->SetTitle("Memory");
+
+		subsystemCount = _countof(FlipperPanels);
+		for (size_t i = 0; i < subsystemCount; i++)
+		{
+			subsystems[i] = &right.Sub(3 + i);
+			subsystems[i]->SetTitle(FlipperPanels[i].title);
+			AppendItem(subsystems[i], FlipperPanels[i].placeholder, ItemAlign::Left);
+		}
+
+		profile = &right.Sub(3 + subsystemCount);
+		profile->SetTitle("Profiler");
+
+		AppendItem(log, "**debugui2**: the new debugger is running. The command line is at the bottom of this panel.\n", ItemAlign::Left);
+		AppendItem(regs, "_Load an image to see the live registers._\n", ItemAlign::Left);
+		AppendItem(disasm, "_Load an image to see the live disassembly._\n", ItemAlign::Left);
+		AppendItem(memdump, "_Load an image to see the physical memory._\n", ItemAlign::Left);
+		AppendItem(profile, "_Load an image to see the HW interface profile._\n", ItemAlign::Left);
+	}
+
+	void Debugger::BuildGbaPanels()
+	{
+		// Registers, disassembly, memory and the portable devices.
+		BuildPanels("Game Boy Advance", 3 + _countof(GbaPanels));
+
+		Panel& right = root.Sub(1);
+
+		log = &root.Sub(0);
+
+		regs = &right.Sub(0);
+		regs->SetTitle("ARM7TDMI");
+
+		disasm = &right.Sub(1);
+		disasm->SetTitle("Disassembly");
+
+		memdump = &right.Sub(2);
+		memdump->SetTitle("Memory");
+
+		subsystemCount = _countof(GbaPanels);
+		for (size_t i = 0; i < subsystemCount; i++)
+		{
+			subsystems[i] = &right.Sub(3 + i);
+			subsystems[i]->SetTitle(GbaPanels[i].title);
+			AppendItem(subsystems[i], GbaPanels[i].placeholder, ItemAlign::Left);
+		}
+
+		AppendItem(log, "**debugui2**: the new debugger is running (GBA). The command line is at the bottom of this panel.\n", ItemAlign::Left);
+		AppendItem(regs, "_The ARM7TDMI registers appear when the machine runs._\n", ItemAlign::Left);
+		AppendItem(disasm, "_The disassembly appears when the machine runs._\n", ItemAlign::Left);
+		AppendItem(memdump, "_The memory appears when the machine runs._\n", ItemAlign::Left);
+	}
+
+	void Debugger::BuildGbPanels()
+	{
+		BuildPanels("Game Boy", 3 + _countof(GbPanels));
+
+		Panel& right = root.Sub(1);
+
+		log = &root.Sub(0);
+
+		regs = &right.Sub(0);
+		regs->SetTitle("LR35902");
+
+		disasm = &right.Sub(1);
+		disasm->SetTitle("Disassembly");
+
+		memdump = &right.Sub(2);
+		memdump->SetTitle("Memory");
+
+		subsystemCount = _countof(GbPanels);
+		for (size_t i = 0; i < subsystemCount; i++)
+		{
+			subsystems[i] = &right.Sub(3 + i);
+			subsystems[i]->SetTitle(GbPanels[i].title);
+			AppendItem(subsystems[i], GbPanels[i].placeholder, ItemAlign::Left);
+		}
+
+		AppendItem(log, "**debugui2**: the new debugger is running (Game Boy). The command line is at the bottom of this panel.\n", ItemAlign::Left);
+		AppendItem(regs, "_The LR35902 registers appear when the machine runs._\n", ItemAlign::Left);
+		AppendItem(disasm, "_The disassembly appears when the machine runs._\n", ItemAlign::Left);
+		AppendItem(memdump, "_The memory appears when the machine runs._\n", ItemAlign::Left);
 	}
 
 	void Debugger::ThreadEntry(void* param)
@@ -925,6 +1089,16 @@ namespace Debug2
 
 	void Debugger::UpdatePanelInfo()
 	{
+		// The portable machines are a program path of their own: they do not answer the GameCube
+		// performance counters (there is no Flipper behind them), so their header reports the
+		// machine instead of the frame rate.
+		if (machine != Machine::GameCube)
+		{
+			SetPanelInfo(&root, (machine == Machine::Gba) ? "GBA" : "Game Boy");
+			SetPanelInfo(disasm, (machine == Machine::Gba) ? "ARM7TDMI" : "LR35902");
+			return;
+		}
+
 		// The performance counters live in the emulated machine, which is not built until an
 		// image is loaded (EMUOpen): asking for them before that walks a null Flipper and takes
 		// the emulator down with it. There is nothing to report before that either.
@@ -974,22 +1148,41 @@ namespace Debug2
 		SetPanelInfo(disasm, running ? "Gekko running" : "Gekko stopped");
 	}
 
+	// A panel whose command answers Markdown is filled with the first `markdown` member of the
+	// answer. The command is asked through the same path the command line uses, so a panel and a
+	// typed command are the same report.
+	void Debugger::RefreshFromMarkdown(Panel* panel, const std::string& cmdline)
+	{
+		if (panel == nullptr)
+			return;
+
+		std::string markdown = JdiCommandToMarkdown(cmdline);
+		if (!markdown.empty())
+		{
+			ReplaceItems(panel, markdown);
+		}
+	}
+
 	void Debugger::RefreshLivePanels()
 	{
 		UpdatePanelInfo();
 
+		switch (machine)
+		{
+		case Machine::Gba: RefreshGbaPanels(); break;
+		case Machine::Gb: RefreshGbPanels(); break;
+		default: RefreshGameCubePanels(); break;
+		}
+	}
+
+	void Debugger::RefreshGameCubePanels()
+	{
 		// The live panels read the emulated machine, so there is nothing to show until it runs.
 		if (!JDI::Hub.ExecuteFastBool("IsLoaded"))
 			return;
 
 		// 2.1: the Gekko registers.
-		{
-			std::string markdown = JdiCommandToMarkdown("regs");
-			if (!markdown.empty())
-			{
-				ReplaceItems(regs, markdown);
-			}
-		}
+		RefreshFromMarkdown(regs, "regs");
 
 		// 2.2: the Gekko disassembly around the program counter.
 		{
@@ -1031,26 +1224,45 @@ namespace Debug2
 		}
 
 		// 2.3: the physical memory (Splash).
+		RefreshFromMarkdown(memdump, "memdump 0x00000000 16");
+
+		// 2.4: the Flipper subsystems. Each panel is the report of its own command.
+		for (size_t i = 0; i < subsystemCount && i < _countof(FlipperPanels); i++)
 		{
-			std::string markdown = JdiCommandToMarkdown("memdump 0x00000000 16");
-			if (!markdown.empty())
-			{
-				ReplaceItems(memdump, markdown);
-			}
+			RefreshFromMarkdown(subsystems[i], FlipperPanels[i].command);
 		}
 
-		// 2.4: the HW interface profile. The command renders the table into a picture next to the
+		// 2.5: the HW interface profile. The command renders the table into a picture next to the
 		// session, so the panel shows the same numbers an offline look at the session would; the
 		// table covers one emulated second, so there is nothing to gain from asking more often.
 		if (NowMs() - profileRefresh >= 1000)
 		{
 			profileRefresh = NowMs();
+			RefreshFromMarkdown(profile, "hwprofile image");
+		}
+	}
 
-			std::string markdown = JdiCommandToMarkdown("hwprofile image");
-			if (!markdown.empty())
-			{
-				ReplaceItems(profile, markdown);
-			}
+	void Debugger::RefreshGbaPanels()
+	{
+		RefreshFromMarkdown(regs, "gbaregs");
+		RefreshFromMarkdown(disasm, "gbacpu 20");
+		RefreshFromMarkdown(memdump, "gbamem 0x08000000 16");
+
+		for (size_t i = 0; i < subsystemCount && i < _countof(GbaPanels); i++)
+		{
+			RefreshFromMarkdown(subsystems[i], GbaPanels[i].command);
+		}
+	}
+
+	void Debugger::RefreshGbPanels()
+	{
+		RefreshFromMarkdown(regs, "gbregs");
+		RefreshFromMarkdown(disasm, "gbcpu 20");
+		RefreshFromMarkdown(memdump, "gbmem 0x0000 16");
+
+		for (size_t i = 0; i < subsystemCount && i < _countof(GbPanels); i++)
+		{
+			RefreshFromMarkdown(subsystems[i], GbPanels[i].command);
 		}
 	}
 

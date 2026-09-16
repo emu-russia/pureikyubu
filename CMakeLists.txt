@@ -79,6 +79,7 @@ set (PUREIKYUBU_CORE
 	src/gekkodisasm.cpp
 	src/gfx.cpp
 	src/gfxosd.cpp
+	src/hwdebug.cpp
 	src/hwosd.cpp
 	src/hwprof.cpp
 	src/jdi.cpp
@@ -140,6 +141,8 @@ else ()
 	src/gba/gba_bootrom.cpp
 	src/gba/gba_bus.cpp
 	src/gba/gba_cart.cpp
+	src/gba/gba_debug.cpp
+	src/gba/gba_disasm.cpp
 	src/gba/gba_dma.cpp
 	src/gba/gba_hlebios.cpp
 	src/gba/gba_irq.cpp
@@ -161,6 +164,7 @@ else ()
 	src/gba/gb_bus.cpp
 	src/gba/gb_cart.cpp
 	src/gba/gb_cpu.cpp
+	src/gba/gb_disasm.cpp
 	src/gba/gb_ppu.cpp
 
 	thirdparty/imgui/imgui.cpp

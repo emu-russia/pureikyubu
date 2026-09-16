@@ -685,5 +685,14 @@ namespace Flipper
 		//! point is *reported* from PumpFifo, and a gate that hides it here would leave the status
 		//! bit and the CP interrupt unraised.
 		bool HasFifoWork();
+
+		//! The decoded CP registers, for the debug interface (`cpregs` and the debugui2 "Command
+		//! Processor" panel). The live FIFO pointers are part of the same structure, which is
+		//! why the panel shows both the parser state (VCD / VAT) and the ring occupancy.
+		const CPHostRegs& HostRegs() const { return cpregs; }
+		const CPState& State() const { return cp; }
+
+		//! The live FIFO occupancy in 32-byte units, the same number CP_FIFO_COUNT reports.
+		void FifoOccupancy(uint32_t* count) const { FifoCount(count); }
 	};
 }

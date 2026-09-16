@@ -232,6 +232,7 @@
     <ClInclude Include="..\..\src\gekkodebug.h" />
     <ClInclude Include="..\..\src\gekkodec.h" />
     <ClInclude Include="..\..\src\gekkodisasm.h" />
+    <ClInclude Include="..\..\src\hwdebug.h" />
     <ClInclude Include="..\..\src\hwprof.h" />
     <ClInclude Include="..\..\src\hwosd.h" />
     <ClInclude Include="..\..\src\gfx.h" />
@@ -301,6 +302,7 @@
     <ClCompile Include="..\..\src\gekkodebug.cpp" />
     <ClCompile Include="..\..\src\gekkodec.cpp" />
     <ClCompile Include="..\..\src\gekkodisasm.cpp" />
+    <ClCompile Include="..\..\src\hwdebug.cpp" />
     <ClCompile Include="..\..\src\hwprof.cpp" />
     <ClCompile Include="..\..\src\hwosd.cpp" />
     <ClCompile Include="..\..\src\gfxosd.cpp" />

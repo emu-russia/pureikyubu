@@ -109,6 +109,7 @@
     <ClCompile Include="..\..\src\gba\gba_bootrom.cpp" />
     <ClCompile Include="..\..\src\gba\gba_bus.cpp" />
     <ClCompile Include="..\..\src\gba\gba_cart.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_debug.cpp" />
     <ClCompile Include="..\..\src\gba\gba_dma.cpp" />
     <ClCompile Include="..\..\src\gba\gba_disasm.cpp" />
     <ClCompile Include="..\..\src\gba\gba_hlebios.cpp" />
@@ -138,6 +139,7 @@
     <ClInclude Include="..\..\src\gba\gba_bootrom.h" />
     <ClInclude Include="..\..\src\gba\gba_bus.h" />
     <ClInclude Include="..\..\src\gba\gba_cart.h" />
+    <ClInclude Include="..\..\src\gba\gba_debug.h" />
     <ClInclude Include="..\..\src\gba\gba_dma.h" />
     <ClInclude Include="..\..\src\gba\gba_disasm.h" />
     <ClInclude Include="..\..\src\gba\gba_hlebios.h" />

@@ -56,5 +56,8 @@ namespace Flipper
 	public:
 		AudioInterface(Flipper *flipper, HWConfig* config);
 		~AudioInterface();
+
+		//! The AI state, for the debug interface (`airegs` and the debugui2 "Audio" panel).
+		const AIState& State() const { return ai; }
 	};
 }

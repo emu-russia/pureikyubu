@@ -20,4 +20,5 @@ namespace JdiSpecs
 	extern const char* HleJdi;			// High-level (HLE) commands (os.cpp)
 	extern const char* UiJdi;			// User interface commands (uijdi.cpp)
 	extern const char* McpJdi;			// MCP server commands (mcp.cpp)
+	extern const char* GbaJdi;			// GBA / Game Boy debug commands (src/gba/gba_debug.cpp)
 }
