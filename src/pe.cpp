@@ -225,7 +225,7 @@ namespace GFX
 	{
 	}
 
-	void PixelEngine::loadPEReg(size_t index, uint32_t value)
+	void PixelEngine::loadPEReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		switch (index)
 		{
@@ -454,7 +454,7 @@ namespace GFX
 			default:
 				// The BP register walk continues in the bump/indirect unit, then the texture unit and
 				// the TEV (see gfx.md 10.1)
-				gfx->bump->loadBUMPReg(index, value);
+				gfx->bump->loadBUMPReg(index, value, mask);
 				break;
 		}
 	}

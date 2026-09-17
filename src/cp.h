@@ -586,6 +586,18 @@ namespace Flipper
 		size_t xfLoads = 0;
 		size_t bpLoads = 0;
 
+		// The BP write mask (register 0xFE): a write to it limits which bits of the *next* BP
+		// register write are updated, and the mask then clears itself (GDTev.h SS_MASK: "This is the
+		// BP mask register that may be used to limit which bits of a BP register get written to. It
+		// only affects the very next BP command that follows it (the mask automatically resets)").
+		// The mask travels with that write down the bypass chain, so the block that owns the
+		// register applies it to its own value.
+		uint32_t bpWriteMask = 0;
+		bool bpWriteMaskPending = false;
+
+		//! One bypass register write, with the pending write mask (if any) attached to it.
+		void BpRegWrite(size_t index, uint32_t value);
+
 		void GXWriteFifo(uint8_t dataPtr[32]);
 		void loadCPReg(size_t index, uint32_t value);
 		std::string AttrToString(VertexAttr attr);

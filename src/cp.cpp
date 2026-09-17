@@ -767,6 +767,33 @@ namespace Flipper
 		Report(Channel::Norm, "   break:0x%08X\n", cpregs.bpptr);
 	}
 
+	// One bypass (BP) register write. The write mask register 0xFE limits which bits of the very
+	// next write update the target register and is consumed by it; the mask goes down the bypass
+	// chain with the write, so that the block that owns the register can keep the bits it leaves
+	// out of its own value (GDTev.h SS_MASK, MergeBpWriteMask).
+	void CommandProcessor::BpRegWrite(size_t index, uint32_t value)
+	{
+		// The mask register itself is not part of the register file
+		if (index == 0xFE)
+		{
+			bpWriteMask = value & 0xFFFFFF;
+			bpWriteMaskPending = true;
+			return;
+		}
+
+		uint32_t mask = 0xFFFFFF;
+
+		if (bpWriteMaskPending)
+		{
+			mask = bpWriteMask;
+			bpWriteMaskPending = false;
+		}
+
+		// The bypass load goes through the XF, which forwards it to the SU and on down the chain.
+		XFSync();
+		HW->gfx->xf->CPSuCommand(index, value, mask);
+	}
+
 	// index range = 00..FF
 	// reg size = 32 bit
 	void CommandProcessor::loadCPReg(size_t index, uint32_t value)
@@ -2422,9 +2449,7 @@ namespace Flipper
 					Report(Channel::GP, "Load reg: index: 0x%02X, data: 0x%08X\n", index, value);
 				}
 
-				// The bypass load goes through the XF, which forwards it to the SU.
-				XFSync();
-				HW->gfx->xf->CPSuCommand(index, value);
+				BpRegWrite(index, value);
 				break;
 			}
 

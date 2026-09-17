@@ -42,7 +42,7 @@ namespace GFX
 
 	// One word of the bump/indirect register range (0x06-0x1F), which is where the bypass walk
 	// arrives after the Pixel Engine (gfx.md 10.1).
-	void BumpMappingUnit::loadBUMPReg(size_t index, uint32_t value)
+	void BumpMappingUnit::loadBUMPReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		//
 		// The indirect matrices: 0x06-0x08 are the A/B/C rows of matrix 0, 0x09-0x0B of matrix 1 and
@@ -89,7 +89,7 @@ namespace GFX
 		}
 
 		// The walk continues in the texture unit
-		gfx->tx->loadTXReg(index, value);
+		gfx->tx->loadTXReg(index, value, mask);
 	}
 
 	// An indirect stage is active when its command names a texture map and a mode other than the

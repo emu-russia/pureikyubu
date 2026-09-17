@@ -98,8 +98,12 @@ namespace GFX
 	{
 		struct
 		{
-			unsigned mode : 2;
-			unsigned swap : 2;
+			// The two swap-table selects of the stage. The register definition calls the first field
+			// `mode` and the second `swap`, but the shipped GX/GD driver programs them as the raster
+			// and texel swap selects (GDTev.h: TEV_ALPHA_ENV_RSWAP_SHIFT 0, TEV_ALPHA_ENV_TSWAP_SHIFT
+			// 2, and GDSetTevSwapModeTable writes the tables into TEV_KSEL).
+			unsigned rswap : 2;
+			unsigned tswap : 2;
 			unsigned seld : 3;
 			unsigned selc : 3;
 			unsigned selb : 3;
@@ -302,6 +306,10 @@ namespace GFX
 	{
 		struct
 		{
+			// The low four bits are the TEV swap-mode table entry of the register's channel pair:
+			// register 2k carries red and green, 2k+1 blue and alpha of table k (GDTev.h
+			// TEV_KSEL_XRB_SHIFT/TEV_KSEL_XGA_SHIFT, GDSetTevSwapModeTable). The rest is the Rev B
+			// K-constant select of the stage pair.
 			unsigned xrb : 2;
 			unsigned xga : 2;
 			unsigned kcsel0 : 5;
@@ -372,7 +380,7 @@ namespace GFX
 		TextureEnvironmentUnit(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEnvironmentUnit();
 
-		void loadTEVReg(size_t index, uint32_t value);
+		void loadTEVReg(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! The TEV register state (read-only; used by the debugger and the unit tests).
 		const TEVState& State() const { return tev; }

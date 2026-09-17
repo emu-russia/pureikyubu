@@ -392,7 +392,7 @@ namespace GFX
 		TextureEngine(HWConfig* config, GFXCore* parent_gfx);
 		~TextureEngine();
 
-		void loadTXReg(size_t index, uint32_t value);
+		void loadTXReg(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! The TX register state (read-only; used by the debugger and the unit tests).
 		const TXState& State() const { return tx; }

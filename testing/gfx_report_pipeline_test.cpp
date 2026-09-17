@@ -337,18 +337,21 @@ namespace pureikyubutest
 		// The alpha compare modes and the alpha function
 		// =========================================================================================
 
-		// gfx-tev.md 3.2: the alpha compare modes 1..3 replace the alpha result by a full scale mask
-		// that is decided by the *sign* of the pre-clamp stage value. The mask is made visible by the
-		// source-alpha blend: a full mask is opaque, an empty one lets the background through.
+		// gfx-tev.md 3.2: a compare operation replaces the alpha result by a full scale mask that is
+		// decided by the *sign* of the pre-clamp stage value. The GX library marks the comparison by
+		// the bias field's fourth encoding and puts the comparison itself in the sub bit
+		// (GDTev.h GDSetTevAlphaCalcAndSwap), so the pictures are "greater" and "equal". The mask is
+		// made visible by the source-alpha blend: a full mask is opaque, an empty one lets the
+		// background through.
 		TEST_METHOD(Report_TevAlphaCompareModes)
 		{
 			GfxTestMachine& m = M();
 
 			Report::Section("Alpha compare modes (the alpha mask)",
-				"The alpha combine has three compare modes that turn the stage value into a full scale mask, decided\n"
-				"by the sign of the unclamped result. The pictures blend the grid over a background, so a set mask\n"
-				"bit is an opaque cell and a clear one lets the background through. Two of the programs compute\n"
-				"host - texel and two texel - host, i.e. the two halves of the operand grid.");
+				"A compare operation turns the stage value into a full scale mask, decided by the sign of the\n"
+				"unclamped result. The pictures blend the grid over a background, so a set mask bit is an opaque\n"
+				"cell and a clear one lets the background through. Two of the programs compute host - texel and\n"
+				"one host + texel, i.e. the two halves of the operand grid.");
 
 			struct Case
 			{
@@ -359,22 +362,14 @@ namespace pureikyubutest
 			};
 
 			const Case cases[] = {
-				{ "tev_acmp_ge0_hostminus.png", "mask = (host - texel >= 0)",
-					AlphaEnv(AZERO, ATEX, AKONST, ARAST, 0, 1, 0, 0, 0, 1),
-					"Mode 1 keeps the pixels whose stage value is not negative: the cells at or above the diagonal\n"
-					"of the operand grid." },
-				{ "tev_acmp_le0.png", "mask = (host - texel <= 0)",
-					AlphaEnv(AZERO, ATEX, AKONST, ARAST, 0, 1, 0, 0, 0, 3),
-					"Mode 3 is the complement of the first picture - the two differ only in the cells where the two\n"
-					"alphas are exactly equal, and those are the cells the next picture keeps." },
+				{ "tev_acmp_gt_hostminus.png", "mask = (host - texel >= 0)",
+					AlphaEnv(AZERO, ATEX, AKONST, ARAST, 3, 0, 0, 0, 0),
+					"The greater comparison keeps the pixels whose stage value is not negative: the cells at or\n"
+					"above the diagonal of the operand grid." },
 				{ "tev_acmp_eq0.png", "mask = (host - texel == 0)",
-					AlphaEnv(AZERO, ATEX, AKONST, ARAST, 0, 1, 0, 0, 0, 2),
-					"Mode 2 is the equality mask. The host alphas are multiples of 32 and the texel alphas are the\n"
-					"same values in a permuted order, so exactly one cell per row is equal." },
-				{ "tev_acmp_ge0_sum.png", "mask = (host + texel - 0.5 >= 0)",
-					AlphaEnv(AZERO, ATEX, AKONST, ARAST, 2, 0, 0, 0, 0, 1),
-					"A different operand program with the same mode: the sum of the two alphas against the half\n"
-					"constant, which is negative only for the darkest cells." },
+					AlphaEnv(AZERO, ATEX, AKONST, ARAST, 3, 1, 0, 0, 0),
+					"The equality mask. The host alphas are multiples of 32 and the texel alphas are the same\n"
+					"values in a permuted order, so exactly one cell per row is equal." },
 			};
 
 			for (const Case& c : cases)

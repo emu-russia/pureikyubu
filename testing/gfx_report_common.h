@@ -115,18 +115,27 @@ namespace GfxGallery
 
 	//! TEV_ALPHA_ENV_n: same controls, plus the alpha compare mode and the texel component swap.
 	inline uint32_t AlphaEnv(int sela, int selb, int selc, int seld, int bias = 0, int sub = 0,
-		int clamp = 1, int shift = 0, int dest = 0, int mode = 0, int swap = 0)
+		int clamp = 1, int shift = 0, int dest = 0, int rswap = 0, int tswap = 0)
 	{
-		return (uint32_t)mode | ((uint32_t)swap << 2) | ((uint32_t)seld << 4) | ((uint32_t)selc << 7) |
+		return (uint32_t)rswap | ((uint32_t)tswap << 2) | ((uint32_t)seld << 4) | ((uint32_t)selc << 7) |
 			((uint32_t)selb << 10) | ((uint32_t)sela << 13) | ((uint32_t)bias << 16) |
 			((uint32_t)sub << 18) | ((uint32_t)clamp << 19) | ((uint32_t)shift << 20) |
 			((uint32_t)dest << 22);
 	}
 
-	//! TEV_KSEL_n: the K constant selectors of the stages 2n (x) and 2n+1 (y).
-	inline uint32_t KSel(int kcsel0, int kasel0, int kcsel1, int kasel1)
+	//! TEV_KSEL_n: the K constant selectors of the stages 2n (x) and 2n+1 (y). The low four bits
+	//! are the swap-table entry of the register's channel pair, which the GX library programs once
+	//! at initialisation (RGBA/RRRA/GGGA/BBBA); a raw write that leaves them at zero would select
+	//! the RR table, so the helper takes the register index and fills them in.
+	inline uint32_t KSelSwap(int index)
 	{
-		return ((uint32_t)kcsel0 << 4) | ((uint32_t)kasel0 << 9) |
+		static const uint32_t reset[8] = { 0x4, 0xe, 0x0, 0xc, 0x5, 0xd, 0xa, 0xe };
+		return reset[index & 7];
+	}
+
+	inline uint32_t KSel(int kcsel0, int kasel0, int kcsel1, int kasel1, int index = 0)
+	{
+		return KSelSwap(index) | ((uint32_t)kcsel0 << 4) | ((uint32_t)kasel0 << 9) |
 			((uint32_t)kcsel1 << 14) | ((uint32_t)kasel1 << 19);
 	}
 

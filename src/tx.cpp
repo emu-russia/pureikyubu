@@ -1045,7 +1045,7 @@ namespace GFX
 		return false;
 	}
 
-	void TextureEngine::loadTXReg(size_t index, uint32_t value)
+	void TextureEngine::loadTXReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		int id = 0, kind = 0;
 
@@ -1162,7 +1162,7 @@ namespace GFX
 
 			default:
 				// The sequence of bypassing blocks for register load is follows: TEV -> Unknown reg load
-				gfx->tev->loadTEVReg(index, value);
+				gfx->tev->loadTEVReg(index, value, mask);
 				return;
 		}
 	}
