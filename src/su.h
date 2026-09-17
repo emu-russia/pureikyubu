@@ -249,7 +249,7 @@ namespace GFX
 		SetupUnit(HWConfig* config, GFXCore* parent_gfx);
 		~SetupUnit();
 
-		void loadSUReg(size_t index, uint32_t value);
+		void loadSUReg(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! The SU register state (read-only; used by the debugger and the unit tests).
 		const SUState& State() const { return su; }

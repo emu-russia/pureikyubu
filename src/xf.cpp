@@ -1669,10 +1669,11 @@ void main()
 		return true;
 	}
 
-	void TransformUnit::CPSuCommand(size_t index, uint32_t value)
+	void TransformUnit::CPSuCommand(size_t index, uint32_t value, uint32_t mask)
 	{
-		// The XF does not interpret the bypass words: they are forwarded to the SU verbatim.
-		gfx->su->loadSUReg(index, value);
+		// The XF does not interpret the bypass words: they are forwarded to the SU verbatim, together
+		// with the write mask of the BP mask register that may precede them (GDTev.h SS_MASK).
+		gfx->su->loadSUReg(index, value, mask);
 	}
 
 	//

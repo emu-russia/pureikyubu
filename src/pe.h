@@ -598,7 +598,7 @@ namespace GFX
 		uint32_t EfbPeek(uint32_t addr);
 		void EfbPoke(uint32_t addr, uint32_t value);
 
-		void loadPEReg(size_t index, uint32_t value);
+		void loadPEReg(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! Put the PE register state back into the reset state and restore the GL state it owns.
 		void Reset();

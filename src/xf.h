@@ -453,7 +453,7 @@ namespace GFX
 
 		//! xf_su_cmds: an SU (bypass) register load. The XF does not interpret these words, it
 		//! forwards them to the Setup Unit verbatim.
-		void CPSuCommand(size_t index, uint32_t value);
+		void CPSuCommand(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! The first vertex of a primitive of which `vtx_num` vertices follow.
 		void CPDrawBegin(RAS_Primitive prim, size_t vtx_num);

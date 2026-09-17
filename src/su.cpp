@@ -108,7 +108,7 @@ namespace GFX
 
 	// index range = 00..FF
 	// reg size = 24 bit (value is already masked)
-	void SetupUnit::loadSUReg(size_t index, uint32_t value)
+	void SetupUnit::loadSUReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		switch (index)
 		{
@@ -118,7 +118,9 @@ namespace GFX
 
 			case GEN_MODE_ID:
 			{
-				gfx->genmode.bits = value;
+				// The GX library changes the cull mode through a masked write, because GEN_MODE is
+				// shared: the bits the mask leaves out keep their value (GDTev.h SS_MASK).
+				gfx->genmode.bits = (value & mask) | (gfx->genmode.bits & ~mask);
 				GL_SetCullMode(gfx->genmode.reject_en);
 
 				// zfreeze freezes the Z buffer, which the Pixel Engine implements as a depth write mask
@@ -225,7 +227,7 @@ namespace GFX
 
 			default:
 				// The sequence of bypassing blocks for register load is as follows: SU -> RAS -> PE -> BUMP -> TX -> TEV -> Unknown reg load
-				gfx->ras->loadRASReg(index, value);
+				gfx->ras->loadRASReg(index, value, mask);
 				break;
 		}
 	}

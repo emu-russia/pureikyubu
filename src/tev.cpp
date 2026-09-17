@@ -50,6 +50,7 @@ uniform uvec4 tevColorEnv[16];      // 0xC0, 0xC2, ... 0xDE
 uniform uvec4 tevAlphaEnv[16];      // 0xC1, 0xC3, ... 0xDF
 uniform uvec4 tevTref[8];           // RAS1_TREF0..7 (texture bindings of two stages each)
 uniform uvec2 tevKsel[8];           // .x = kcsel0 | kasel0 << 5, .y = kcsel1 | kasel1 << 5
+uniform uvec2 tevSwap[4];           // swap tables: .x = r | g << 2, .y = b | a << 2 (1 has 2 bits)
 uniform int   tevStages;            // number of active combine stages (from GEN_MODE.ntev)
 
 uniform vec4  tevReg[4];            // colour registers (11-bit signed, in 1/255 units)
@@ -179,16 +180,18 @@ vec2 CoordScale(int coordIndex, int map)
                 manual.y > 0.0 ? (manual.y / size.y) : 1.0);
 }
 
+// The blend factor is an 8-bit fraction (u0.8, gfx-tev.md 3.2) whose most significant bit is
+// added back before the division, so that 255 means exactly 1.0 and 128 means 129/256.
 float TevBlend(float a, float b, float c)
 {
-    return a + (c / 255.0) * (b - a);
+    c += (c >= 128.0) ? 1.0 : 0.0;
+    return a + (c / 256.0) * (b - a);
 }
 
 float TevShift(float v, int shift)
 {
     if (shift == 1) return v * 2.0;
     if (shift == 2) return v * 4.0;
-    if (shift == 3) return v * 0.5;
     return v;
 }
 
@@ -203,6 +206,20 @@ float TevSat(float v, bool low)
 {
     v = low ? clamp(v, 0.0, 255.0) : clamp(v, -1024.0, 1023.0);
     return floor(v + 0.5);
+}
+
+// A stage value after its shift and clamp. The three left shifts add a rounding constant before
+// the truncation; the right shift adds none and therefore truncates, which is what gfx-tev.md 3.2
+// states ("the right shift ... truncates without rounding").
+float TevResult(float v, int shift, bool low)
+{
+    if (shift == 3)
+    {
+        float h = floor(v * 0.5);
+        return low ? clamp(h, 0.0, 255.0) : clamp(h, -1024.0, 1023.0);
+    }
+
+    return TevSat(TevShift(v, shift), low);
 }
 
 // Component of a K constant (gfx-tev.md 3.4). component: 0 = r, 1 = g, 2 = b, 3 = a.
@@ -229,6 +246,21 @@ float KonstComponent(uint sel, int component)
     uint channel = (sel - 16u) >> 2;
     uint reg = (sel - 16u) & 3u;
     return tevKReg[int(reg)][int(channel)];
+}
+
+// TEV colour swap (GDTev.h: TEV_ALPHA_ENV_RSWAP/TSWAP select one of the four tables of
+// TEV_KSEL_2k/2k+1). Every channel of the operand takes the channel the table names: 0 R, 1 G,
+// 2 B, 3 A.
+uvec4 TevSwapTable(uint table)
+{
+    uvec2 rg = tevSwap[table & 3u];
+    return uvec4(rg.x & 3u, (rg.x >> 2) & 3u, rg.y & 3u, (rg.y >> 2) & 3u);
+}
+
+vec4 TevSwapColor(vec4 c, uint table)
+{
+    uvec4 t = TevSwapTable(table);
+    return vec4(c[int(t.x)], c[int(t.y)], c[int(t.z)], c[int(t.w)]);
 }
 
 // Colour operand (vec3, 1/255 units). The D operand keeps the full 11-bit register width, all other
@@ -499,16 +531,15 @@ void main()
         vec4 tx = (te != 0) ? (SampleTexMap(ti, tc[tcindex] * CoordScale(tcindex, ti) * texScale[ti]) * 255.0) : vec4(255.0);
         g_lastTexel = tx;
 
-        // Texel component swap (alpha environment)
-        uint swap = Bits(ae, 2, 2);
-        if (swap == 1u) tx.rgb = vec3(tx.r);
-        else if (swap == 2u) tx.rgb = vec3(tx.g);
-        else if (swap == 3u) tx.rgb = vec3(tx.b);
-
         // Rasterized colour of this stage
         vec4 rs = vec4(0.0);
         if (cc == 0) rs = v_Color0 * 255.0;
         else if (cc == 1) rs = v_Color1 * 255.0;
+
+        // The texel and the rasterized colour each go through the swap table their select names
+        // (GDTev.h: TEV_ALPHA_ENV_TSWAP for the texel, TEV_ALPHA_ENV_RSWAP for the raster).
+        tx = TevSwapColor(tx, Bits(ae, 2, 2));
+        rs = TevSwapColor(rs, Bits(ae, 0, 2));
 
         uint kpair = odd ? tevKsel[pair].y : tevKsel[pair].x;
         uint kcsel = kpair & 31u;
@@ -527,9 +558,9 @@ void main()
         bool cclamp = Bits(ce, 19, 1) != 0u;
 
         vec3 cRes;
-        cRes.r = TevSat(TevShift(TevBias(csub ? (cD.r - TevBlend(cA.r, cB.r, cC.r)) : (cD.r + TevBlend(cA.r, cB.r, cC.r)), cbias), cshift), cclamp);
-        cRes.g = TevSat(TevShift(TevBias(csub ? (cD.g - TevBlend(cA.g, cB.g, cC.g)) : (cD.g + TevBlend(cA.g, cB.g, cC.g)), cbias), cshift), cclamp);
-        cRes.b = TevSat(TevShift(TevBias(csub ? (cD.b - TevBlend(cA.b, cB.b, cC.b)) : (cD.b + TevBlend(cA.b, cB.b, cC.b)), cbias), cshift), cclamp);
+        cRes.r = TevResult(TevBias(csub ? (cD.r - TevBlend(cA.r, cB.r, cC.r)) : (cD.r + TevBlend(cA.r, cB.r, cC.r)), cbias), cshift, cclamp);
+        cRes.g = TevResult(TevBias(csub ? (cD.g - TevBlend(cA.g, cB.g, cC.g)) : (cD.g + TevBlend(cA.g, cB.g, cC.g)), cbias), cshift, cclamp);
+        cRes.b = TevResult(TevBias(csub ? (cD.b - TevBlend(cA.b, cB.b, cC.b)) : (cD.b + TevBlend(cA.b, cB.b, cC.b)), cbias), cshift, cclamp);
 
         int cdest = int(Bits(ce, 22, 2));
         if (cdest == 0) r0.rgb = cRes;
@@ -549,15 +580,19 @@ void main()
         int ashift = int(Bits(ae, 20, 2));
         bool aclamp = Bits(ae, 19, 1) != 0u;
 
-        float rawA = TevShift(TevBias(asub ? (aD - TevBlend(aA, aB, aC)) : (aD + TevBlend(aA, aB, aC)), abias), ashift);
+        float rawA = TevBias(asub ? (aD - TevBlend(aA, aB, aC)) : (aD + TevBlend(aA, aB, aC)), abias);
 
-        uint amode = Bits(ae, 0, 2);
+        // A compare operation is marked by the bias field's fourth encoding (GDTev.h:
+        // GDSetTevAlphaCalcAndSwap writes GX_MAX_TEVBIAS for op > GX_TEV_SUB and puts the comparison
+        // into the sub and shift fields). The stage then produces a full-scale mask instead of the
+        // combined value (gfx-tev.md 3.2): greater-than for sub = 0, equal for sub = 1. The mask
+        // tests the value before the shift.
+        uint amode = (abias == 3) ? (asub ? 2u : 1u) : 0u;
         float resA;
 
         if (amode == 1u) resA = (rawA >= 0.0) ? 255.0 : 0.0;
         else if (amode == 2u) resA = (rawA == 0.0) ? 255.0 : 0.0;
-        else if (amode == 3u) resA = (rawA <= 0.0) ? 255.0 : 0.0;
-        else resA = TevSat(rawA, aclamp);
+        else resA = TevResult(rawA, ashift, aclamp);
 
         int adest = int(Bits(ae, 22, 2));
         if (adest == 0) r0.a = resA;
@@ -780,6 +815,7 @@ void main()
 		{
 			const char* names[] = {
 				"tevStages", "tevColorEnv[0]", "tevAlphaEnv[0]", "tevTref[0]", "tevKsel[0]",
+				"tevSwap[0]",
 				"tevReg[0]", "tevKReg[0]", "tevFogColor", "tevFogA", "tevFogC", "tevFogBMag",
 				"tevFogBShf", "tevFogProj", "tevFogFsel", "tevRangeAdjEnb", "tevRangeAdjCenter",
 				"tevRangeAdjCoef[0]", "tevAlphaRef0", "tevAlphaRef1", "tevAlphaOp0", "tevAlphaOp1",
@@ -844,6 +880,20 @@ void main()
 
 		glUniform4uiv(p.Uniform("tevTref[0]"), 8, (GLuint*)tref);
 		glUniform2uiv(p.Uniform("tevKsel[0]"), 8, (GLuint*)ksel);
+
+		// The four swap tables: register 2k carries red and green of table k, 2k+1 blue and alpha
+		// (GDTev.h, GDSetTevSwapModeTable).
+		uint32_t swap[4][2];
+
+		for (int i = 0; i < 4; i++)
+		{
+			const TEV_KSel& rg = tev.ksel[i * 2];
+			const TEV_KSel& ba = tev.ksel[i * 2 + 1];
+			swap[i][0] = (rg.xrb & 3) | ((rg.xga & 3) << 2);
+			swap[i][1] = (ba.xrb & 3) | ((ba.xga & 3) << 2);
+		}
+
+		glUniform2uiv(p.Uniform("tevSwap[0]"), 4, (GLuint*)swap);
 
 		int stages = (gfx->genmode.ntev & 0xF) + 1;
 		glUniform1i(p.Uniform("tevStages"), stages > 16 ? 16 : stages);
@@ -995,12 +1045,32 @@ void main()
 		{
 			tev.color_env[i].clamp = 1;
 			tev.alpha_env[i].clamp = 1;
-			tev.alpha_env[i].mode = 0;
+			tev.alpha_env[i].rswap = 0;
+			tev.alpha_env[i].tswap = 0;
 		}
 
 		tev.alpha_func.op0 = 7;			// always
 		tev.alpha_func.op1 = 7;			// always
 		tev.alpha_func.logic = 0;		// and
+
+		// The swap tables start out as the four tables the GX library's initialisation programs
+		// (RGBA, RRRA, GGGA, BBBA): register 2k carries red and green, 2k+1 blue and alpha of table
+		// k (GDTev.h, GDSetTevSwapModeTable). A stage whose two selectors are 0 therefore passes its
+		// operands through unchanged, and the legacy R/G/B "pick" of tables 1..3 falls out of the
+		// same tables.
+		static const unsigned swapReset[8][2] =
+		{
+			{ 0, 1 }, { 2, 3 },			// table 0: RGBA
+			{ 0, 0 }, { 0, 3 },			// table 1: RRRA
+			{ 1, 1 }, { 1, 3 },			// table 2: GGGA
+			{ 2, 2 }, { 2, 3 },			// table 3: BBBA
+		};
+
+		for (int i = 0; i < 8; i++)
+		{
+			tev.ksel[i].xrb = swapReset[i][0];
+			tev.ksel[i].xga = swapReset[i][1];
+		}
 	}
 
 	// A write to TEV_REGISTERL/H belongs to the Rev B 8-bit K form when payload bit 23 is set and
@@ -1032,7 +1102,7 @@ void main()
 		else colour->bits = value;
 	}
 
-	void TextureEnvironmentUnit::loadTEVReg(size_t index, uint32_t value)
+	void TextureEnvironmentUnit::loadTEVReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		switch (index)
 		{
@@ -1095,14 +1165,14 @@ void main()
 			case TEV_ALPHAFUNC_ID: tev.alpha_func.bits = value; break;
 			case TEV_Z_ENV_0_ID: tev.zenv0.bits = value; break;
 			case TEV_Z_ENV_1_ID: tev.zenv1.bits = value; break;
-			case TEV_KSEL_0_ID: tev.ksel[0].bits = value; break;
-			case TEV_KSEL_1_ID: tev.ksel[1].bits = value; break;
-			case TEV_KSEL_2_ID: tev.ksel[2].bits = value; break;
-			case TEV_KSEL_3_ID: tev.ksel[3].bits = value; break;
-			case TEV_KSEL_4_ID: tev.ksel[4].bits = value; break;
-			case TEV_KSEL_5_ID: tev.ksel[5].bits = value; break;
-			case TEV_KSEL_6_ID: tev.ksel[6].bits = value; break;
-			case TEV_KSEL_7_ID: tev.ksel[7].bits = value; break;
+			case TEV_KSEL_0_ID: tev.ksel[0].bits = MergeBpWriteMask(tev.ksel[0].bits, value, mask); break;
+			case TEV_KSEL_1_ID: tev.ksel[1].bits = MergeBpWriteMask(tev.ksel[1].bits, value, mask); break;
+			case TEV_KSEL_2_ID: tev.ksel[2].bits = MergeBpWriteMask(tev.ksel[2].bits, value, mask); break;
+			case TEV_KSEL_3_ID: tev.ksel[3].bits = MergeBpWriteMask(tev.ksel[3].bits, value, mask); break;
+			case TEV_KSEL_4_ID: tev.ksel[4].bits = MergeBpWriteMask(tev.ksel[4].bits, value, mask); break;
+			case TEV_KSEL_5_ID: tev.ksel[5].bits = MergeBpWriteMask(tev.ksel[5].bits, value, mask); break;
+			case TEV_KSEL_6_ID: tev.ksel[6].bits = MergeBpWriteMask(tev.ksel[6].bits, value, mask); break;
+			case TEV_KSEL_7_ID: tev.ksel[7].bits = MergeBpWriteMask(tev.ksel[7].bits, value, mask); break;
 
 			default:
 			{
@@ -1175,22 +1245,62 @@ void main()
 		return kreg[reg][(int)channel];
 	}
 
+	//! The channel selects of TEV swap table `table`: register 2k carries red and green, 2k+1 blue
+	//! and alpha (GDTev.h TEV_KSEL_XRB/XGA, GDSetTevSwapModeTable).
+	static void SwapTableChannels(const TEVState& tev, int table, int sel[4])
+	{
+		const TEV_KSel& rg = tev.ksel[(table & 3) * 2];
+		const TEV_KSel& ba = tev.ksel[(table & 3) * 2 + 1];
+
+		sel[0] = (int)(rg.xrb & 3);
+		sel[1] = (int)(rg.xga & 3);
+		sel[2] = (int)(ba.xrb & 3);
+		sel[3] = (int)(ba.xga & 3);
+	}
+
+	//! One operand through the swap table `sel` names.
+	static void SwapColors(const TEVState& tev, unsigned sel, const float in[4], float out[4])
+	{
+		int table[4];
+		SwapTableChannels(tev, (int)(sel & 3), table);
+
+		for (int i = 0; i < 4; i++)
+		{
+			out[i] = in[table[i]];
+		}
+	}
+
 	//! The stage combine of gfx-tev.md 3.2. `raw` receives the pre-clamp value, which the alpha
-	//! compare modes (`tev_mode_ge0`/`eq0`/`le0`) test.
+	//! compare modes test.
 	static float SoftCombine(float a, float b, float c, float d, int bias, int shift, bool sub,
 		bool clampLow, float* raw)
 	{
-		float lerp = a + (c / 255.0f) * (b - a);
+		// The factor is an 8-bit fraction over 256, its MSB added back (gfx-tev.md 3.2)
+		float c256 = c + ((c >= 128.0f) ? 1.0f : 0.0f);
+		float lerp = a + (c256 / 256.0f) * (b - a);
 		float r = sub ? (d - lerp) : (d + lerp);
 
 		if (bias == 1) r += 128.0f;
 		else if (bias == 2) r -= 128.0f;
 
+		// The compare modes test the value before the shift.
+		*raw = r;
+
+		if (shift == 3)
+		{
+			// The right shift truncates without rounding (gfx-tev.md 3.2)
+			r = floorf(r * 0.5f);
+
+			if (clampLow)
+				r = (r < 0.0f) ? 0.0f : ((r > 255.0f) ? 255.0f : r);
+			else
+				r = (r < -1024.0f) ? -1024.0f : ((r > 1023.0f) ? 1023.0f : r);
+
+			return r;
+		}
+
 		if (shift == 1) r *= 2.0f;
 		else if (shift == 2) r *= 4.0f;
-		else if (shift == 3) r *= 0.5f;
-
-		*raw = r;
 
 		// tev_clamp_low clamps to the 0..255 output range, tev_clamp_high keeps the wide signed
 		// result of the 11-bit register file (gfx-tev.md 3.2)
@@ -1298,13 +1408,14 @@ void main()
 		float araw = 0.0f;
 		float ares = SoftCombine(aa, ab, ac, ad, ae.bias, ae.shift, ae.sub != 0, ae.clamp != 0, &araw);
 
-		// The alpha `mode` turns the result into a full-scale comparison mask (gfx-tev.md 3.2)
-		switch (ae.mode & 3)
+		// A compare operation is marked by the bias field's fourth encoding (GDTev.h:
+		// GDSetTevAlphaCalcAndSwap writes GX_MAX_TEVBIAS for op > GX_TEV_SUB and puts the comparison
+		// into the sub and shift fields). The stage then produces a full-scale mask instead of the
+		// combined value (gfx-tev.md 3.2): greater-than for sub = 0, equal for sub = 1.
+		if (ae.bias == 3)
 		{
-			case 1: ares = (araw >= 0.0f) ? 255.0f : 0.0f; break;
-			case 2: ares = (araw == 0.0f) ? 255.0f : 0.0f; break;
-			case 3: ares = (araw <= 0.0f) ? 255.0f : 0.0f; break;
-			default: break;
+			ares = ae.sub ? ((araw == 0.0f) ? 255.0f : 0.0f)
+			              : ((araw >= 0.0f) ? 255.0f : 0.0f);
 		}
 
 		reg[ae.dest & 3][3] = ares;
@@ -1611,16 +1722,13 @@ void main()
 			for (int i = 0; i < 4; i++)
 				lastTexel[i] = texel[i];
 
-			// The texel component swap of the alpha environment (gfx-tev.md 3.2)
-			switch (tev.alpha_env[stage].swap & 3)
-			{
-				case 1: texel[1] = texel[2] = texel[0]; break;
-				case 2: texel[0] = texel[2] = texel[1]; break;
-				case 3: texel[0] = texel[1] = texel[2]; break;
-				default: break;
-			}
+			// The texel and the rasterized colour each go through the swap table their select names
+			// (GDTev.h: TEV_ALPHA_ENV_TSWAP for the texel, TEV_ALPHA_ENV_RSWAP for the raster).
+			float stexel[4], sraster[4];
+			SwapColors(tev, tev.alpha_env[stage].rswap, raster, sraster);
+			SwapColors(tev, tev.alpha_env[stage].tswap, texel, stexel);
 
-			SoftStage(stage, texel, raster, reg, kreg);
+			SoftStage(stage, stexel, sraster, reg, kreg);
 		}
 
 		// The finished quad leaves the chain from colour register 0 (gfx-tev.md 3.1)

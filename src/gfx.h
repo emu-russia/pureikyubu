@@ -160,6 +160,15 @@ namespace GFX
 	class GFXCore;
 }
 
+//! Apply a BP write mask (register 0xFE) to a bypass register write: the bits the mask leaves out
+//! keep the value the register already holds. The GX/GD library writes the mask before the write it
+//! wants to limit and lets it clear itself; it is used for the registers whose payload is shared
+//! between two features (GDTev.h SS_MASK, GDSetTevKonstantSel and friends).
+inline uint32_t MergeBpWriteMask(uint32_t oldValue, uint32_t value, uint32_t mask)
+{
+	return (value & mask) | (oldValue & ~mask);
+}
+
 #include "pe.h"
 #include "xf.h"
 #include "su.h"

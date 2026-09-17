@@ -130,7 +130,7 @@ namespace GFX
 		//! SetupUnit record type inside the class scope).
 		void SoftDrawTriangle(const SoftTriangle& tri);
 		
-		void loadRASReg(size_t index, uint32_t value);
+		void loadRASReg(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! Texture binding of a TEV stage (0..15), as programmed through RAS1_TREF0..7
 		const RAS1_TREF* GetTref(int stage) const { return &tref[(stage >> 1) & 7]; }

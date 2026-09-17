@@ -1001,6 +1001,50 @@ namespace pureikyubutest
 			Assert::AreEqual((size_t)1, (size_t)(after.cpLoads - before.cpLoads), L"the list's register load is executed");
 		}
 
+		// The BP write mask register (0xFE) limits which bits of the *next* BP register write reach
+		// the register, and is consumed by that write (GDTev.h SS_MASK: "It only affects the very
+		// next BP command that follows it (the mask automatically resets)"). The GX/GD library uses
+		// it for the registers that share their payload between two features: GDSetTevKonstantSel
+		// changes the K constant selects of TEV_KSEL without disturbing the swap tables, and
+		// GDSetTevSwapModeTable does the opposite.
+		TEST_METHOD(CpSpec_BpWriteMaskLimitsTheNextRegisterWrite)
+		{
+			// A TEV_KSEL value with both halves distinct: the swap entry of table 0's (r,g) and the
+			// K constant select of the two stages of the pair
+			const uint32_t start = 0x18064;
+
+			{
+				GfxTestMachine& m = M();
+				m.BpLoad(TEV_KSEL_0_ID, start);
+
+				DisplayList list;
+				list.BpReg(0xFE, 0x00000F);				// the swap-table bits only
+				list.BpReg(TEV_KSEL_0_ID, 0x000000);	// would clear everything else
+				list.Align();
+
+				RunFifo(m, SetupFifo(m, list.Bytes()));
+
+				Assert::AreEqual<uint32_t>(0x18060, m.gfx->tev->State().ksel[0].bits & 0xFFFFFF,
+					L"the masked write keeps the bits the mask leaves out");
+			}
+
+			{
+				GfxTestMachine& m = M();
+				m.BpLoad(TEV_KSEL_0_ID, start);
+
+				DisplayList list;
+				list.BpReg(0xFE, 0x00000F);
+				list.BpReg(TEV_KSEL_0_ID, 0x000000);	// consumed by the mask above
+				list.BpReg(TEV_KSEL_0_ID, 0x000000);	// no mask is pending any more
+				list.Align();
+
+				RunFifo(m, SetupFifo(m, list.Bytes()));
+
+				Assert::AreEqual<uint32_t>(0x000000, m.gfx->tev->State().ksel[0].bits & 0xFFFFFF,
+					L"the mask clears itself after one write");
+			}
+		}
+
 		// The VCD / VAT builders of the tests above: the field positions are the ones of cp.h
 		// (VCD_Lo, VAT_group0).
 		static uint32_t VcdLo(int pos, int nrm, int col0)

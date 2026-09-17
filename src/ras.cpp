@@ -463,7 +463,7 @@ namespace GFX
 
 	// One word of the BP register space that RAS1 owns (0x24-0x2F). Everything else is passed on to
 	// the Pixel Engine, which continues the walk down the bypass chain.
-	void Rasterizer::loadRASReg(size_t index, uint32_t value)
+	void Rasterizer::loadRASReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		switch (index)
 		{
@@ -487,7 +487,7 @@ namespace GFX
 				break;
 
 			default:
-				gfx->pe->loadPEReg(index, value);
+				gfx->pe->loadPEReg(index, value, mask);
 				break;
 		}
 	}

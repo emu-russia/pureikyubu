@@ -34,16 +34,24 @@ namespace pureikyubutest
 	{
 		float Combine(float a, float b, float c, float d, int bias, int shift, bool sub, bool clampLow)
 		{
-			float lerp = a + (c / 255.0f) * (b - a);
+			// The factor is an 8-bit fraction over 256, its MSB added back (gfx-tev.md 3.2)
+			c += (c >= 128.0f) ? 1.0f : 0.0f;
+			float lerp = a + (c / 256.0f) * (b - a);
 
 			float r = sub ? (d - lerp) : (d + lerp);
 
 			if (bias == 1) r += 128.0f;
 			else if (bias == 2) r -= 128.0f;
 
+			// The right shift truncates, the left shifts round at the output LSB (gfx-tev.md 3.2)
+			if (shift == 3)
+			{
+				r = floorf(r * 0.5f);
+				return clampLow ? max(0.0f, min(255.0f, r)) : max(-1024.0f, min(1023.0f, r));
+			}
+
 			if (shift == 1) r *= 2.0f;
 			else if (shift == 2) r *= 4.0f;
-			else if (shift == 3) r *= 0.5f;
 
 			r = clampLow ? max(0.0f, min(255.0f, r)) : max(-1024.0f, min(1023.0f, r));
 
@@ -218,12 +226,28 @@ namespace pureikyubutest
 				((uint32_t)kcsel1 << 14) | ((uint32_t)kasel1 << 19);
 		}
 
-		static uint32_t PackAlphaEnv(int sela, int selb, int selc, int seld, int bias, int sub, int clamp,
-			int shift, int dest, int mode = 0, int swap = 0)
+		//! The swap-table entry the TEV resets register `index` of TEV_KSEL to: register 2k carries
+		//! red and green, 2k+1 blue and alpha of table k, and the four tables start out as
+		//! RGBA/RRRA/GGGA/BBBA (the GXInit contents).
+		static uint32_t KselSwapReset(int index)
 		{
-			return (uint32_t)mode | ((uint32_t)swap << 2) | ((uint32_t)seld << 4) | ((uint32_t)selc << 7) |				((uint32_t)selb << 10) | ((uint32_t)sela << 13) | ((uint32_t)bias << 16) |
+			static const uint32_t reset[8] = { 0x4, 0xe, 0x0, 0xc, 0x5, 0xd, 0xa, 0xe };
+			return reset[index & 7];
+		}
+
+		static uint32_t PackAlphaEnv(int sela, int selb, int selc, int seld, int bias, int sub, int clamp,
+			int shift, int dest, int rswap = 0, int tswap = 0)
+		{
+			return (uint32_t)rswap | ((uint32_t)tswap << 2) | ((uint32_t)seld << 4) | ((uint32_t)selc << 7) |				((uint32_t)selb << 10) | ((uint32_t)sela << 13) | ((uint32_t)bias << 16) |
 				((uint32_t)sub << 18) | ((uint32_t)clamp << 19) | ((uint32_t)shift << 20) |
 				((uint32_t)dest << 22);
+		}
+
+		//! One TEV_KSEL swap-table payload: the red and green channel selects of a table entry pair
+		//! (register 2k carries red and green, register 2k+1 blue and alpha).
+		static uint32_t PackSwapTable(int r, int g)
+		{
+			return (uint32_t)(r & 3) | ((uint32_t)(g & 3) << 2);
 		}
 
 		static GFX::TEV_ColorEnv DecodeColorEnv(uint32_t bits)
@@ -425,7 +449,7 @@ namespace pureikyubutest
 			m.BpLoad(TEV_COLOR_ENV_1_ID, PackColorEnv(0, 2, 4, 0, 0, 0, 1, 0, 0));
 			m.BpLoad(TEV_ALPHA_ENV_1_ID, PackAlphaEnv(0, 0, 0, 0, 0, 0, 1, 0, 0));
 
-			const int factor = 0x60;		// 96/255 = 0.376...
+			const int factor = 0x60;		// 96/256 = 0.375
 
 			m.BeginFrame();
 			DrawFullScreenQuad(m, (uint8_t)factor, (uint8_t)factor, (uint8_t)factor, 0xff);
@@ -571,7 +595,7 @@ namespace pureikyubutest
 			m.BpLoad(TEV_REGISTERH_0_ID, k0h);
 
 			// Stage 0: colour = KONST, alpha = KONST; kcsel = 12 (whole K0), kasel = 12
-			m.BpLoad(TEV_KSEL_0_ID, PackKsel(12, 12, 0, 0));
+			m.BpLoad(TEV_KSEL_0_ID, PackKsel(12, 12, 0, 0) | KselSwapReset(0));
 			m.BpLoad(TEV_COLOR_ENV_0_ID, PackColorEnv(14, 15, 15, 15, 0, 0, 1, 0, 0));
 			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(6, 7, 7, 7, 0, 0, 1, 0, 0));
 
@@ -605,7 +629,7 @@ namespace pureikyubutest
 			m.BpLoad(TEV_REGISTERH_1_ID, 0x77 | (0x66u << 12) | 0x800000);
 
 			// kcsel = 21 -> K1 green (0x66), kasel = 28 -> K0 alpha (0x44)
-			m.BpLoad(TEV_KSEL_0_ID, PackKsel(21, 28, 0, 0));
+			m.BpLoad(TEV_KSEL_0_ID, PackKsel(21, 28, 0, 0) | KselSwapReset(0));
 			m.BpLoad(TEV_COLOR_ENV_0_ID, PackColorEnv(14, 15, 15, 15, 0, 0, 1, 0, 0));
 			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(6, 7, 7, 7, 0, 0, 1, 0, 0));
 
@@ -714,18 +738,20 @@ namespace pureikyubutest
 
 			struct Case
 			{
-				int mode;
+				bool equal;			// the comparison: false = "greater", true = "equal"
 				uint8_t rasterAlpha;
 				bool drawn;
 				const wchar_t* name;
 			};
 
-			// alpha = ca0 - rsa with ca0 = 0x80: a bright alpha makes the stage value negative.
+			// The stage adds the signed register alpha to the rasterized alpha (sub = 0) or subtracts
+			// it (sub = 1, which is also the "equal" comparison), so an 11-bit register of -100 is
+			// what makes the "greater" cases negative.
 			const Case cases[] = {
-				{ 1, 0x10, true,  L"ge0 with a positive stage value" },
-				{ 1, 0xf0, false, L"ge0 with a negative stage value" },
-				{ 3, 0xf0, true,  L"le0 with a negative stage value" },
-				{ 3, 0x10, false, L"le0 with a positive stage value" },
+				{ false, 0x80, true,  L"greater with a positive stage value" },
+				{ false, 0x10, false, L"greater with a negative stage value" },
+				{ true,  0x80, true,  L"equal with a zero stage value" },
+				{ true,  0x10, false, L"equal with a non-zero stage value" },
 			};
 
 			for (const Case& c : cases)
@@ -736,17 +762,20 @@ namespace pureikyubutest
 				SetupRasterColorSource(m);
 				SetupDefaultPixelState(m);
 
-				// reg 0 alpha = 0x80
-				m.BpLoad(TEV_REGISTERL_0_ID, 0xff | (0x80u << 12));
+				// reg 0 alpha = 0x80, or -100 in the compare cases that have to go negative
+				uint32_t regA = c.equal ? 0x80u : ((uint32_t)(-100) & 0x7ffu);
+				m.BpLoad(TEV_REGISTERL_0_ID, 0xff | (regA << 12));
 
 				// KONST selector 0 is the fixed 1.0 constant, which makes the lerp pass B through
-				m.BpLoad(TEV_KSEL_0_ID, PackKsel(0, 0, 0, 0));
+				m.BpLoad(TEV_KSEL_0_ID, PackKsel(0, 0, 0, 0) | KselSwapReset(0));
 
-				// Stage 0: colour = rasterized colour; alpha = ca0 - rsa, computed on the signed,
-				// pre-clamp value (the clamp bit of the alpha environment is clear)
+				// Stage 0: colour = rasterized colour; alpha = ca0 +- rsa, computed on the signed,
+				// pre-clamp value (the clamp bit of the alpha environment is clear). A compare
+				// operation is marked by the bias field's fourth encoding; the comparison itself sits
+				// in the sub bit (GDTev.h GDSetTevAlphaCalcAndSwap writes GX_MAX_TEVBIAS for it).
 				m.BpLoad(TEV_COLOR_ENV_0_ID, PackColorEnv(15, 15, 15, 10, 0, 0, 1, 0, 0));
 				m.BpLoad(TEV_ALPHA_ENV_0_ID,
-					PackAlphaEnv(5, 7, 7, 0, 0, 1, 0, 0, 0, c.mode));
+					PackAlphaEnv(5, 7, 7, 0, 3, c.equal ? 1 : 0, 0, 0, 0));
 
 				// The alpha function rejects a zero mask: "alpha > 0"
 				m.BpLoad(TEV_ALPHAFUNC_ID, 0 | (0 << 8) | (4u << 16) | (7u << 19) | (0u << 22));
@@ -760,6 +789,49 @@ namespace pureikyubutest
 				bool drawn = (rgb[0] != 0 || rgb[1] != 0 || rgb[2] != 0);
 				Assert::AreEqual(c.drawn, drawn, c.name);
 			}
+		}
+
+		// The swap tables of TEV_KSEL remap the channels of the texel and of the rasterized colour
+		// before the combine (GDTev.h GDSetTevSwapModeTable, selected per stage by GXSetTevSwapMode's
+		// raster and texel selects).
+		TEST_METHOD(Tev_SwapTablesRemapTheRasterizedColour)
+		{
+			RequireGL();
+			GfxTestMachine& m = M();
+
+			SetupPassThroughXF(m);
+			SetupRasterColorSource(m);
+			SetupDefaultPixelState(m);
+			SetupPassThroughTev(m);
+
+			// table 1 = GGGA: register 2k carries red and green, register 2k+1 blue and alpha
+			m.BpLoad(TEV_KSEL_2_ID, PackSwapTable(1, 1));
+			m.BpLoad(TEV_KSEL_3_ID, PackSwapTable(1, 3));
+
+			// The pass-through alpha environment with the rasterized colour swapped through table 1
+			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(5, 5, 5, 5, 0, 0, 1, 0, 0, 1, 0));
+
+			m.BeginFrame();
+			DrawFullScreenQuad(m, 0x40, 0x80, 0xc0, 0xff);
+
+			uint8_t rgb[3];
+			m.ReadColorPixel(320, 240, rgb);
+
+			Assert::AreEqual<int>(0x80, rgb[0], L"red takes the table's first entry (green)");
+			Assert::AreEqual<int>(0x80, rgb[1], L"green");
+			Assert::AreEqual<int>(0x80, rgb[2], L"blue takes the table's third entry (green)");
+
+			// Table 0 (the reset contents, RGBA) passes the colour through again
+			m.BpLoad(TEV_ALPHA_ENV_0_ID, PackAlphaEnv(5, 5, 5, 5, 0, 0, 1, 0, 0, 0, 0));
+
+			m.BeginFrame();
+			DrawFullScreenQuad(m, 0x40, 0x80, 0xc0, 0xff);
+
+			m.ReadColorPixel(320, 240, rgb);
+
+			Assert::AreEqual<int>(0x40, rgb[0], L"table 0 passes red through");
+			Assert::AreEqual<int>(0x80, rgb[1], L"green");
+			Assert::AreEqual<int>(0xc0, rgb[2], L"table 0 passes blue through");
 		}
 
 		// =========================================================================================

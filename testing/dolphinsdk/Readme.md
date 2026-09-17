@@ -107,11 +107,92 @@ For every demo:
    activity (frames, textures, DVD reads). Anything else is a finding, and the demo source plus the
    emulator source are then used to work out which side is wrong.
 
-## 6. Scripts
+### 5.1. Compare with the source and the specifications, never with the emulator
+
+Many demos draw their own state - a mode, a parameter, a colour - and therefore carry the expected
+values in the picture: a TEV test, for instance, prints the operand each of its arguments selects
+and the operation, bias and scale it applies, so a shot says what the stage should have computed.
+The comparison that finds bugs is the one against a model built from the demo source and the
+specifications; a model taken from the emulator's own behaviour can only agree with it.
+
+The recipe:
+
+* transcribe what the demo does with its state - a short script that replays the button handling of
+  the demo's `AnimTick` is enough, and then the state behind every shot is known from the C file
+  instead of being guessed from the picture;
+* derive the expected value from the documentation, and where the documentation is thin, from the
+  design description the documentation was written from;
+* sample the demo's own readout out of the screenshot (the panel geometry is fixed in the source)
+  and compare panel by panel, which also catches an operand the demo selects but the emulator maps
+  elsewhere;
+* let the same model generate the *steps* to press, so the sweep covers the whole reachable state
+  space rather than one hand-picked picture.
+
+The rule applies to the unit tests as well: a reference model such as the `TevRef` of
+`testing/gfx_tev_test.cpp` has to be written from the documentation, because a reference that
+mirrors the emulator keeps passing however wrong the emulator is. That is how the two arithmetic
+details of the TEV combine were found - the tests had been written from the emulator's own formula,
+so they could not disagree with it.
+
+### 5.2. The register-level ground truth
+
+A picture is the result of the whole pipeline, so when it disagrees with the model the next question
+is what the GX library actually programmed. The emulator answers that itself: `gxregs` dumps the
+state of every block as Json, and `--mcp` puts the whole debug interface behind a script
+(`mcp_keys.ps1` starts a demo with the server, presses pad keys and prints the command's answer).
+That is how the TEV swap tables and the K-constant selects of `TEV_KSEL` were read out, and it is
+the only way to tell a register a *title* programmed from a register the *emulator* invented.
+
+## 6. Driving the pad (interactive demos)
+
+Most demos are not one picture: the pad picks the mode, the pattern or the parameters, and a sweep
+of their idle state sees only the first of them. `pad_harness.ps1` runs one demo, presses a
+scripted key sequence on the emulated controller and shoots the window after every step, so each
+mode can be captured and checked against the source.
+
+The keys are injected with `SendInput` into the emulator's own SDL keyboard bindings (`SettingsSdl.json`,
+the `controllers` section) - the same path a human uses:
+
+| pad | key | binding |
+|---|---|---|
+| X / Y | `S` / `A` | `VKEY_FOR_X` / `VKEY_FOR_Y` |
+| A / B | `X` / `Z` | `VKEY_FOR_A` / `VKEY_FOR_B` |
+| R | `W` | `VKEY_FOR_TRIGGERR` |
+| START | Enter | `VKEY_FOR_START` |
+| D-PAD | Delete / PageDown / Home / End | `VKEY_FOR_LEFT` / `RIGHT` / `UP` / `DOWN` |
+
+Two traps, both found the hard way:
+
+* a posted `WM_KEYDOWN` does not reach the emulated pad at all, `SendInput` does - and it needs the
+  `Video Output` window in the foreground, which the harness arranges before every press;
+* an injected *stick* key (the arrow keys) does not arrive either, while the D-PAD keys do. A demo
+  whose cursor reads only the stick (`DEMOPadGetDirsNew`, as in `tev-swap`) can therefore be driven
+  through its buttons only - which is enough for its swap-table menu, because the cursor starts on
+  the entry that cycles the parameter.
+* a pad sweep has to be the only thing using the machine. The window must stay in the foreground
+  (anything that opens another window - a concurrent test run, for instance - takes the keys away),
+  and a real controller plugged into the machine drives the emulated pad too (`padsdl.cpp`), so a
+  hand on the pad changes the state the shot is supposed to show. Two runs were lost that way and
+  had to be thrown away.
+
+```
+powershell -ExecutionPolicy Bypass -File testing\dolphinsdk\pad_harness.ps1 `
+    -Demo C:\DolphinSDK\HW2\bin\demos\gxdemo\tev-one-op.elf -OutDir C:\Work\tev `
+    -Steps C:\Work\tev\steps.json
+```
+
+`-Steps` is a JSON array of `{name, keys, hold, wait}`: the harness holds each key, waits for the
+frame to catch up and captures `NNN_<name>.png`. Write the script from the demo's source: the
+buttons it reads (`DEMOPadGetButtonDown`, `DEMOPadGetDirsNew`) and what it does with them are the
+whole specification of what can be swept.
+
+## 7. Scripts
 
 | File | What it does |
 |---|---|
 | `sweep.ps1` | Runs a list of demos, captures the `Video Output` client area as a PNG, saves the `EMU_LOG` and the extracted `OSReport` text next to it, and writes a CSV summary |
+| `pad_harness.ps1` | Runs one demo, drives the pad with a scripted key sequence (`-Steps`) and captures a shot per step |
+| `mcp_keys.ps1` | Starts a demo with the MCP server, presses pad keys and runs one debug command (a `gxregs` register dump, for instance) |
 | `summarize.py` | Turns a sweep folder into a table/JSON: frames per demo, unknown CP loads, exceptions, whether the shot is a single flat colour |
 | `report.py` | Builds `report.html` from a sweep folder, `notes.json` and an output directory; with a fourth argument (a second sweep folder) it adds the **same demos rendered by the software GFX pipeline** side by side and marks every picture that differs from the shader backend's |
 | `notes.json` | The per-demo analysis of the interesting cases |

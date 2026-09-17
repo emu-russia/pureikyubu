@@ -148,7 +148,7 @@ namespace GFX
 		BumpMappingUnit(HWConfig* config, GFXCore* parent_gfx);
 		~BumpMappingUnit();
 
-		void loadBUMPReg(size_t index, uint32_t value);
+		void loadBUMPReg(size_t index, uint32_t value, uint32_t mask = 0xFFFFFF);
 
 		//! The bump/indirect register state (read-only; used by the debugger and the unit tests).
 		const BUMPState& State() const { return bump; }
