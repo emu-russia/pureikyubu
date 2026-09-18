@@ -22,18 +22,12 @@ namespace Debug
 		Report(Channel::Error, "%s", buf);
 		Msgs.AddReport(Channel::Error, true, buf);
 
-		bool any_debugger_present = false;
+		// The front end is the one that can show the reason to the user: a message box in the
+		// windowed ports, a line of text in the headless one. The new debugger (debugui2) reads
+		// the same text out of the message queue above and puts it into its message panel.
 
-		if (Debug::debugger != nullptr) {
-			Debug::debugger->InvalidateAll();
-			any_debugger_present = true;
-		}
-
-		if (!any_debugger_present) {
-
-			Jdi->ExecuteCommand(
-				std::string("UIReport \"The emulation is crashed. Details can be viewed in the debugger (Ctrl+D)\n\n" + std::string(buf) + "\"").c_str());
-		}
+		CallJdi(
+			std::string("UIReport \"The emulation is crashed. Details can be viewed in the debugger\n\n" + std::string(buf) + "\"").c_str());
 	}
 
 	void Report(Channel chan, const char* text, ...)
@@ -573,15 +567,6 @@ namespace Debug
 	static Json::Value* ShowHelp(std::vector<std::string>& args)
 	{
 		JDI::Hub.Help();
-		Report(Channel::Header, "## Debugger F-Keys\n");
-		Report(Channel::Norm, "- F1: Registers (left/right arrows to select registers)\n");
-		Report(Channel::Norm, "- F2: Memory dump\n");
-		Report(Channel::Norm, "- F3: Instruction disassembly\n");
-		Report(Channel::Norm, "- F5: Start emulation to breakpoint/pause emulation (break)\n");
-		Report(Channel::Norm, "- F9: Toogle instruction breakpoint\n");
-		Report(Channel::Norm, "- F10: Step over\n");
-		Report(Channel::Norm, "- F11: Step into\n");
-		Report(Channel::Norm, "- F12: Skip instruction\n");
 		return nullptr;
 	}
 

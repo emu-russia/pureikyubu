@@ -2,8 +2,8 @@
 
 # DebugUI2
 
-The new debugger (codenamed `debugui2`). It is meant to replace the legacy debug console
-(debugui.cpp / cui.cpp), which is kept around for reference until the new one is complete.
+The debugger of the emulator (codenamed `debugui2`). It has replaced the legacy debug console
+(debugui.cpp / cui.cpp), which is gone.
 
 Unlike the legacy console, this debugger is not a wall of little windows with buttons and knobs.
 The whole point is minimalism: the user types a command, the debugger answers with Markdown.

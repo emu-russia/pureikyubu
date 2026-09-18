@@ -203,9 +203,7 @@
     <ClInclude Include="..\..\src\bump.h" />
     <ClInclude Include="..\..\src\config.h" />
     <ClInclude Include="..\..\src\cp.h" />
-    <ClInclude Include="..\..\src\cui.h" />
     <ClInclude Include="..\..\src\debug.h" />
-    <ClInclude Include="..\..\src\debugui.h" />
     <ClInclude Include="..\..\src\debugui2.h" />
     <ClInclude Include="..\..\src\di.h" />
     <ClInclude Include="..\..\src\dsp.h" />
@@ -280,9 +278,7 @@
     <ClCompile Include="..\..\src\bump.cpp" />
     <ClCompile Include="..\..\src\config.cpp" />
     <ClCompile Include="..\..\src\cp.cpp" />
-    <ClCompile Include="..\..\src\cuinull.cpp" />
     <ClCompile Include="..\..\src\debug.cpp" />
-    <ClCompile Include="..\..\src\debugui.cpp" />
     <ClCompile Include="..\..\src\di.cpp" />
     <ClCompile Include="..\..\src\dsp.cpp" />
     <ClCompile Include="..\..\src\dspai.cpp" />

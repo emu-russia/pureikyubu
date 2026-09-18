@@ -54,7 +54,6 @@ set (PUREIKYUBU_CORE
 	src/config.cpp
 	src/cp.cpp
 	src/debug.cpp
-	src/debugui.cpp
 	src/di.cpp
 	src/dsp.cpp
 	src/dspcore.cpp
@@ -115,7 +114,6 @@ if (HEADLESS)
   set (PUREIKYUBU_FRONTEND
 	src/audionull.cpp
 	src/bench.cpp
-	src/cuinull.cpp
 	src/gfxnull.cpp
 	src/padnull.cpp
 	src/uinull.cpp
@@ -125,7 +123,6 @@ else ()
   set (PUREIKYUBU_FRONTEND
 	src/audiosdl.cpp
 	src/bench.cpp
-	src/cuisdl.cpp
 	src/debugui2.cpp
 	src/debugui2gl.cpp
 	src/padsdl.cpp

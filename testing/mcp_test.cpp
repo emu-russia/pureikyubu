@@ -556,7 +556,6 @@ namespace McpUnitTest
 	{
 		{ "MCP_SPEC_EMU_JDI_JSON", JdiSpecs::EmuJdi },
 		{ "MCP_SPEC_DEBUGGER_JDI_JSON", JdiSpecs::DebuggerJdi },
-		{ "MCP_SPEC_DEBUGUI_JDI_JSON", JdiSpecs::DebugUiJdi },
 		{ "MCP_SPEC_DEBUGUI2_JDI_JSON", JdiSpecs::DebugUi2Jdi },
 		{ "MCP_SPEC_GEKKO_JDI_JSON", JdiSpecs::GekkoCoreJdi },
 		{ "MCP_SPEC_DSP_JDI_JSON", JdiSpecs::DspJdi },

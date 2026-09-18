@@ -18,7 +18,6 @@ static SDL_Window* window;
 static SDL_Window* render_target;
 static SDL_Renderer* renderer;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-static bool debugger_enabled_check = false;
 static bool draw_error_box = false;
 static bool draw_message_box = false;
 static std::string error_text;
@@ -995,7 +994,7 @@ and the gamepad can be used at the same time.
 
 Clicking a binding button arms the capture, and the next input becomes the new binding (Esc cancels
 it, like in the Win32 dialog): a key of the main window for the keyboard column (the modifier keys
-and the F1-F12 keys are skipped, because the debugger uses them, see GetVKey in ui.cpp), or an SDL
+and the F1-F12 keys are skipped, see GetVKey in ui.cpp), or an SDL
 game controller button or a stick/trigger deflection for the gamepad column. The captured events
 are not passed to ImGui, so they cannot also move the selector cursor or navigate the UI.
 
@@ -1132,7 +1131,7 @@ static bool     pad_capture_active = false;
 static bool     pad_capture_done = false;
 static int      pad_captured_binding = 0;
 
-/* The keys that the Win32 dialog skips, because they cannot be bound (or the debugger needs them) */
+/* The keys that the Win32 dialog skips, because they cannot be bound */
 static bool pad_capture_ignored(SDL_Scancode scancode)
 {
 	switch (scancode)
@@ -2383,15 +2382,7 @@ static void ui_load_bootrom()
 	CreateRenderTarget();
 	UI::Jdi->LoadFile("Bootrom");
 	OnMainWindowOpened(L"Bootrom");
-	if (Debug::debugger == nullptr)
-	{
-		UI::Jdi->Run();
-	}
-	else
-	{
-		Debug::debugger->SetDisasmCursor(0xfff0'0100);
-		UI::Jdi->ExecuteCommand("echo \"Bootrom is started in Suspended state for debugging purposes. Press F5 to continue.\"");
-	}
+	UI::Jdi->Run();
 }
 
 /* Defined with the other file loaders, below; the menu needs it first. */
@@ -2454,32 +2445,18 @@ static void ui_main_menu()
 
 		if (ImGui::BeginMenu("Debug"))
 		{
-			if (ImGui::MenuItem("Debug Console", NULL, debugger_enabled_check)) {	// Open/close system-wide debugger
-				if (Debug::debugger == nullptr)
-				{   // open
-					debugger_enabled_check = true;
-					Debug::debugger = new Debug::Debugger();
-					UI::Jdi->SetConfigBool(USER_DOLDEBUG, true, USER_UI);
-					//SetStatusText(STATUS_ENUM::Progress, L"Debugger opened");
-				}
-				else
-				{   // close
-					debugger_enabled_check = false;
-					delete Debug::debugger;
-					Debug::debugger = nullptr;
-					UI::Jdi->SetConfigBool(USER_DOLDEBUG, false, USER_UI);
-					//SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
-				}
-			}
-			// The new debugger (debugui2, issue #371). It opens its own window; the legacy
-			// console above is kept around until the new one is complete.
-			if (ImGui::MenuItem("Test New Debugger", NULL, Debug2::IsDebuggerActive())) {
+			// The debugger (debugui2) opens a window of its own; the item is a switch, and the
+			// checkmark says whether that window is up.
+			if (ImGui::MenuItem("Open Debugger...", NULL, Debug2::IsDebuggerActive())) {
 				if (Debug2::IsDebuggerActive())
 					Debug2::StopDebugger();
 				else
 					Debug2::StartDebugger();
 			}
-			ImGui::MenuItem("Mount DolphinSDK as DVD...", NULL);
+			if (ImGui::MenuItem("Mount DolphinSDK as DVD...", NULL)) {
+				file_reaction = FileReaction::ChooseDirectory_MountSdk;
+				chooseDirectoryDialog.Open();
+			}
 			ImGui::EndMenu();
 		}
 
@@ -2543,10 +2520,6 @@ static void load_file(const std::wstring& filename)
 
 	CreateRenderTarget();
 	UI::Jdi->LoadFile(Util::WstringToString(filename));
-	if (Debug::debugger)
-	{
-		Debug::debugger->InvalidateAll();
-	}
 	OnMainWindowOpened(filename.c_str());
 	UI::Jdi->Run();
 }
@@ -2609,10 +2582,6 @@ static void ui_bench()
 	CreateRenderTarget();
 
 	UI::Jdi->LoadFile(Util::WstringToString(cmdline.benchFile));
-	if (Debug::debugger)
-	{
-		Debug::debugger->InvalidateAll();
-	}
 	OnMainWindowOpened(cmdline.benchFile.c_str());
 	UI::Jdi->Run();
 
@@ -2773,13 +2742,6 @@ static int ui_main()
 {
 	EMUCtor();
 
-	// debugger enabled ?
-	debugger_enabled_check = UI::Jdi->GetConfigBool(USER_DOLDEBUG, USER_UI);
-	if (debugger_enabled_check)
-	{
-		Debug::debugger = new Debug::Debugger();
-	}
-
 	// Create an interface for communicating with the emulator core
 	UI::Jdi = new UI::JdiClient;
 
@@ -2793,7 +2755,6 @@ static int ui_main()
 
 	// Add UI methods
 	JdiAddNode("UI_JDI_JSON", JdiSpecs::UiJdi, UIReflector);
-	JdiAddNode("DEBUG_UI_JDI_JSON", JdiSpecs::DebugUiJdi, Debug::DebugUIReflector);
 	JdiAddNode("DEBUG_UI2_JDI_JSON", JdiSpecs::DebugUi2Jdi, Debug2::Reflector);
 
 	// The local MCP server (issue #383): an MCP client that started the emulator drives its debug
@@ -2871,15 +2832,8 @@ static int ui_main()
 	{
 		CreateRenderTarget();
 		UI::Jdi->LoadFile(Util::WstringToString(cmdline.image));
-		if (Debug::debugger != nullptr)
-		{
-			Debug::debugger->InvalidateAll();
-		}
 		OnMainWindowOpened(cmdline.image.c_str());
-		if (Debug::debugger == nullptr)
-		{
-			UI::Jdi->Run();
-		}
+		UI::Jdi->Run();
 	}
   
 	// The emulator has more than one SDL window: the video output is a separate window, which can
@@ -3043,10 +2997,6 @@ static int ui_main()
 		ui_settings();
 		ui_memcard_settings();
 
-		if (Debug::debugger != nullptr) {
-			Debug::debugger->DrawInternal();
-		}
-
 		if (show_demo_window) {
 			ImGui::ShowDemoWindow(&show_demo_window);
 		}
@@ -3129,6 +3079,13 @@ static int ui_main()
 				AddSelectorPath(Util::StringToWstring(name));
 			}
 
+			// Dolphin SDK folder as a virtual disk (the same thing `MountSDK` does from the
+			// command line). The path is UTF-8 already, as JDI wants it.
+			if (file_reaction == FileReaction::ChooseDirectory_MountSdk && !name.empty())
+			{
+				UI::Jdi->DvdMountSDK(name);
+			}
+
 			// A directory that is being added to the settings dialog goes into the edited copy, not
 			// into the configuration: Apply is what writes it (see settings_dialog_apply).
 			if (file_reaction == FileReaction::ChooseDirectory_SettingsPath && !name.empty())
@@ -3207,12 +3164,7 @@ static int ui_main()
 	UI::Jdi->Unload();
 
 	JdiRemoveNode("UI_JDI_JSON");
-	JdiRemoveNode("DEBUG_UI_JDI_JSON");
 	JdiRemoveNode("DEBUG_UI2_JDI_JSON");
-
-	if (Debug::debugger) {
-		delete Debug::debugger;
-	}
 
 	EMUDtor();
 	UI::Jdi->ExecuteCommand("exit");
