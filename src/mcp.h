@@ -3,7 +3,7 @@
 # MCP server (issue #383)
 
 The emulator has one universal control surface - the Json Debug Interface - and every front end
-(the Win32 UI, the SDL one, the headless one) is a thin layer over it. This module adds another
+(the SDL UI and the headless one) is a thin layer over it. This module adds another
 consumer of the same interface: a local **MCP** (Model Context Protocol) server, so that an LLM
 agent can drive the emulator the way a debugger console does.
 

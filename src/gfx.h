@@ -178,6 +178,9 @@ inline uint32_t MergeBpWriteMask(uint32_t oldValue, uint32_t value, uint32_t mas
 #include "tx.h"
 
 // 1: Use SDL_Window as a render target; the appropriate SDL API calls are invoked to service it
+// Every windowed build is the SDL one (issue #421) and its project passes GFX_USE_SDL_WINDOW=1. The
+// Windows headless build that still draws (GFX_OFFSCREEN) is the one that keeps creating a hidden
+// Win32 window and a WGL context of its own, hence the default of 0 on Windows.
 #ifdef _LINUX
 #define GFX_USE_SDL_WINDOW 1
 #endif

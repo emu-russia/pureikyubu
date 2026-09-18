@@ -5,19 +5,19 @@ self-contained and make a very good regression suite for the emulator: each one 
 narrow hardware feature and its source says exactly what it is supposed to show.
 
 This folder holds the methodology and the scripts that run the demos through the emulator's SDL2
-port and collect enough evidence to judge the picture.
+front end and collect enough evidence to judge the picture.
 
-## 1. Build the SDL2 port
+## 1. Build the emulator
 
 The sweep uses the windowed SDL2 front end (`uisdl.cpp` / `videosdl.cpp` / `gfx.cpp` with the
 OpenGL backend), because the GX demos need a real GL context to draw and because the visual result
 is the thing being checked.
 
 ```
-MSBuild scripts\VS2026\pureikyubu.sln /p:Configuration="Release SDL" /p:Platform=x64
+MSBuild scripts\VS2026\pureikyubu.sln /p:Configuration=Release /p:Platform=x64
 ```
 
-The output is `scripts\VS2026\x64\Release SDL\pureikyubu.exe`. Put it next to the runtime data,
+The output is `scripts\VS2026\x64\Release\pureikyubu.exe`. Put it next to the runtime data,
 together with `SDL2.dll` and `pong.dol`:
 
 ```
@@ -59,7 +59,7 @@ console is a devkit; on a retail board `InitializeUART` returns an error and the
 The emulator's default console type is the retail one, so out of the box the text demos look like a
 black screen.
 
-Set the console type to the latest devkit in `Data\SettingsSdl.json` (the user settings file is read
+Set the console type to the latest devkit in `Data\Settings.json` (the user settings file is read
 from `Data\`, not from the working directory):
 
 ```json
@@ -150,7 +150,7 @@ of their idle state sees only the first of them. `pad_harness.ps1` runs one demo
 scripted key sequence on the emulated controller and shoots the window after every step, so each
 mode can be captured and checked against the source.
 
-The keys are injected with `SendInput` into the emulator's own SDL keyboard bindings (`SettingsSdl.json`,
+The keys are injected with `SendInput` into the emulator's own SDL keyboard bindings (`Settings.json`,
 the `controllers` section) - the same path a human uses:
 
 | pad | key | binding |
@@ -209,12 +209,12 @@ python testing\dolphinsdk\summarize.py C:\Work\sweep_gx
 rem ... and the same demos through the software GFX pipeline, then the two-panel report
 powershell -ExecutionPolicy Bypass -File testing\dolphinsdk\sweep.ps1 `
     -List demos_gx.txt -OutDir C:\Work\sweep_gx_soft `
-    -Exe C:\Work\pureikyubu\scripts\VS2026\x64\Release SDL\pureikyubu.exe
+    -Exe C:\Work\pureikyubu\scripts\VS2026\x64\Release\pureikyubu.exe
 python testing\dolphinsdk\report.py C:\Work\sweep_gx testing\dolphinsdk\notes.json `
     testing\dolphinsdk C:\Work\sweep_gx_soft
 ```
 
 The software-pipeline sweep needs `"GFX_PIPELINE": 1` in the `hardware` section of
-`Data\SettingsSdl.json` (or `gxpipeline soft` in the debugger); the shader sweep is the default.
+`Data\Settings.json` (or `gxpipeline soft` in the debugger); the shader sweep is the default.
 Both runs use the same emulator build, the same settle time and the same demo list, so a difference
 between the two columns is a difference between the two rendering paths.

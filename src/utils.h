@@ -12,7 +12,7 @@ This section contains common API that have almost atomic significance for all pr
 
 The project keeps its text in std::wstring (Unicode code units: UTF-16 on Windows, UTF-32
 elsewhere), while every interface that leaves the emulator speaks UTF-8: the Json documents, the
-JDI command line and its arguments, the reports, the ImGui/SDL and Win32 front ends.
+JDI command line and its arguments, the reports, the ImGui/SDL front end.
 
 `WstringToString` and `StringToWstring` are the two directions of that conversion, so a narrow
 `std::string` in this code base is UTF-8 and never an ANSI code page. A byte sequence that is not

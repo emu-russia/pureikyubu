@@ -61,7 +61,7 @@ public class Win {
 }
 "@
 
-# The keys of the demo, as the emulator's SDL bindings name them (SettingsSdl.json):
+# The keys of the demo, as the emulator's SDL bindings name them (Settings.json):
 #   pad X -> S, pad Y -> A, pad R -> W, pad A -> X, START -> Enter,
 #   stick -> the arrow keys, D-PAD -> Home/End/Delete/PageDown.
 $KEYMAP = @{

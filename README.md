@@ -28,7 +28,9 @@ titles still fail to render or hang — compatibility is a work in progress.
 Build using Visual Studio 2026. Open `scripts/VS2026/pureikyubu.sln` and click Build. The solution
 holds four projects: `pureikyubu` (the emulator), `SDL2`, `GBA` (the integrated Game Boy Advance and
 Game Boy emulator, built as a library the emulator links) and `gba_bench` (the standalone harness of
-the GBA core). Both the SDL and the Win32 front ends have Debug and Release configurations.
+the GBA core). The emulator has Debug and Release configurations for both platforms and is the SDL2
+front end on both of them (issue #421 removed the Win32 one, so there is no second port with a
+configuration of its own any more).
 
 ### Headless
 
@@ -60,11 +62,12 @@ drives its whole debug interface, see [wiki/mcp.md](wiki/mcp.md)).
 
 ### Generic Linux (Ubuntu)
 
-The Linux build does not yet have support for sound and input.
+The Linux build is the same SDL2 front end as the Windows one: the window, the game selector, the
+settings and controller dialogs, the sound and the input all come from SDL2 and ImGui.
 
 ```
 # Install required packages
-sudo apt install libglew-dev
+sudo apt install libglew-dev libsdl2-dev
 # Choose a suitable folder to store a clone of the repository, cd there and then
 git clone https://github.com/emu-russia/pureikyubu.git
 cd pureikyubu

@@ -3,5 +3,4 @@
 *.cmd
 *.txt
 *.patch
-SettingsWin.json
-SettingsSdl.json
+Settings.json

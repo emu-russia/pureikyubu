@@ -2,7 +2,7 @@
 
 # Headless UI (uinull)
 
-The front end of the headless build. It is the counterpart of the Win32 UI (ui.cpp) and the SDL one
+The front end of the headless build. It is the counterpart of the windowed SDL front end
 (uisdl.cpp): the same emulator, with no window, no ImGui and no user input at all.
 
 What it exists for:

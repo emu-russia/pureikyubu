@@ -30,27 +30,6 @@
     <Image Include="..\..\src\res\GCN_sm.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\src\res\padArrows.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\res\padButtons.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\res\padStart.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\res\padStick.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\res\padSubStick.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\res\padTriggerL.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\res\padTriggerR.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="..\..\src\res\pureikyubu.ico">
       <Filter>Resource Files</Filter>
     </Image>
@@ -71,9 +50,6 @@
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ai.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\bench.h">
@@ -167,9 +143,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gfx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gfxnull.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\jdi.h">
@@ -283,9 +256,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ai.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\audio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\bench.cpp">
@@ -405,9 +375,6 @@
     <ClCompile Include="..\..\src\memcard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\pad.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\padsdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -426,9 +393,6 @@
     <ClCompile Include="..\..\src\sym.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\ui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -436,9 +400,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\xf.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\video.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\flipperdebug.cpp">
@@ -450,22 +411,7 @@
     <ClCompile Include="..\..\src\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\audionull.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\osdebug.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\videonull.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\padnull.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\uinull.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\gfxnull.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\tx.cpp">

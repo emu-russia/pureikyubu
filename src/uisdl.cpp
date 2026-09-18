@@ -45,16 +45,14 @@ enum class FileReaction
 };
 static FileReaction file_reaction = FileReaction::None;
 
-/* The type filters of the file browser, per dialog (the Win32 port passes the same idea to
-   GetOpenFileName as a filter string). */
+/* The type filters of the file browser, per dialog. */
 static const std::vector<std::string> selector_file_filters = { ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" };
 static const std::vector<std::string> dvd_image_filters = { ".gcm", ".iso", ".rvz", ".*" };
 static const std::vector<std::string> memcard_file_filters = { ".mci", ".*" };
 static const std::vector<std::string> any_file_filters = { ".*" };
 
-/* Open the file browser for one reaction of this port. The title and the filter belong to the dialog
-   that asked for it, because one browser serves them all (the Win32 port has a separate
-   UI::FileOpenDialog call per case, so it picks its filter on the spot). */
+/* Open the file browser for one reaction of the UI. The title and the filter belong to the dialog
+   that asked for it, because one browser serves them all. */
 static void open_file_dialog(FileReaction reaction, const char* title, const std::vector<std::string>& filters)
 {
 	file_reaction = reaction;
@@ -291,7 +289,7 @@ void SetStatusText(STATUS_ENUM sbPart, const std::wstring& text, bool post)
 
 # Game selector
 
-The SDL port of the file selector (see ui.cpp): the list of executable files (DOL/ELF) and disk
+The file selector: the list of executable files (DOL/ELF) and disk
 images (GCM/ISO/RVZ) found in the configured paths, with the disk banners, titles, sizes and comments
 taken from the DVD banner file. The list of paths is stored in the PATH user variable and is
 extended with the directory of every loaded file.
@@ -468,7 +466,7 @@ static std::wstring CopyAnsiStringAsWcharString(const uint8_t* src, size_t maxLe
 	return res;
 }
 
-/* Convert the SJIS text of the Japanese banners to Unicode (see SjisToUnicode in ui.cpp) */
+/* Convert the SJIS text of the Japanese banners to Unicode */
 static std::wstring SjisToWstring(const std::wstring& sjis)
 {
 	std::wstring res;
@@ -499,7 +497,7 @@ static std::string ToUtf8(const std::wstring& wstr)
 	return utf8_conv.to_bytes(wstr);
 }
 
-/* Nice value of KB, MB or GB, for output (see UI::FileSmartSizeA in ui.cpp) */
+/* Nice value of KB, MB or GB, for output */
 static std::string SmartSize(size_t size)
 {
 	char tempBuf[0x100];
@@ -526,10 +524,9 @@ static std::string SmartSize(size_t size)
 
 /* Convert the DVD banner (RGB5A3 texture) into an RGBA texture.
    The banner image is stored as 4x4 tiles (the same layout as in the GX texture), so the pixels of
-   a tile are scattered over the whole image (see add_banner in ui.cpp).
-   The Win32 selector pre-blends the banner with the item background, because the listview cannot
-   draw translucent bitmaps. Here the alpha channel is kept, so that ImGui blends the banner with
-   the row background (including the selection highlight) by itself. */
+   a tile are scattered over the whole image.
+   The alpha channel is kept, so that ImGui blends the banner with the row background (including the
+   selection highlight) by itself. */
 static SDL_Texture* make_banner_texture(const uint8_t* image)
 {
 	const int tiles = (DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT) / 16;
@@ -851,7 +848,7 @@ static void update_selector()
 
 	usel.paths = dirs;
 
-	// file filter: every 8 bits masking an extension (see EditFileFilter in ui.cpp)
+	// file filter: every 8 bits masking an extension
 	uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
 
 	static const struct
@@ -987,14 +984,13 @@ static void ui_selector_menu()
 
 # Controller settings
 
-The SDL port of the Win32 controller settings dialog (see PADConfigDialogProc and PADConfigure
-in ui.cpp): plug the pad, assign a keyboard key and/or a gamepad button or axis to every GameCube
-controller control, or clear/restore the bindings. Every control has two bindings, so the keyboard
-and the gamepad can be used at the same time.
+The controller settings dialog: plug the pad, assign a keyboard key and/or a gamepad button or axis
+to every GameCube controller control, or clear/restore the bindings. Every control has two bindings,
+so the keyboard and the gamepad can be used at the same time.
 
 Clicking a binding button arms the capture, and the next input becomes the new binding (Esc cancels
-it, like in the Win32 dialog): a key of the main window for the keyboard column (the modifier keys
-and the F1-F12 keys are skipped, see GetVKey in ui.cpp), or an SDL
+it): a key of the main window for the keyboard column (the modifier keys
+and the F1-F12 keys are skipped, because they cannot be bound), or an SDL
 game controller button or a stick/trigger deflection for the gamepad column. The captured events
 are not passed to ImGui, so they cannot also move the selector cursor or navigate the UI.
 
@@ -1042,7 +1038,7 @@ static const int pad_substick_bindings[] =
 	VKEY_FOR_CXUP, VKEY_FOR_CXDOWN, VKEY_FOR_CXLEFT, VKEY_FOR_CXRIGHT,
 };
 
-/* The default keyboard bindings of the first pad (see PADDefaultConfig in ui.cpp), as SDL scancodes */
+/* The default keyboard bindings of the first pad, as SDL scancodes */
 static const int pad_default_vkeys[VKEY_FOR_MAX] =
 {
 	SDL_SCANCODE_HOME,      // Up
@@ -1131,7 +1127,7 @@ static bool     pad_capture_active = false;
 static bool     pad_capture_done = false;
 static int      pad_captured_binding = 0;
 
-/* The keys that the Win32 dialog skips, because they cannot be bound */
+/* The keys the dialog skips, because they cannot be bound */
 static bool pad_capture_ignored(SDL_Scancode scancode)
 {
 	switch (scancode)
@@ -1171,7 +1167,7 @@ static void pad_dialog_load(int padnum)
 	}
 }
 
-/* Write the dialog configuration back (see PADSaveConfig in ui.cpp) and make the backend reread it */
+/* Write the dialog configuration back and make the backend reread it */
 static void pad_dialog_save()
 {
 	char parm[256];
@@ -1212,7 +1208,7 @@ static void pad_dialog_close()
 	pad_dialog_open = false;
 }
 
-/* Unplug the pad and drop all the bindings (see PADClearConfig in ui.cpp) */
+/* Unplug the pad and drop all the bindings */
 static void pad_dialog_clear()
 {
 	pad_dialog_config.plugged = false;
@@ -1224,7 +1220,7 @@ static void pad_dialog_clear()
 	}
 }
 
-/* Restore the default bindings (see PADDefaultConfig in ui.cpp). The gamepad is per port, so every
+/* Restore the default bindings. The gamepad is per port, so every
    port gets the standard gamepad mapping. The keyboard defaults are the same for every port, so
    they are only applied to the first pad (otherwise all the pads would react to the same keys). */
 static void pad_dialog_default()
@@ -1460,13 +1456,12 @@ static void ui_pad_settings()
 
 # Settings
 
-The SDL port of the Win32 settings property sheet (OpenSettingsDialog and its two pages,
-UserMenuSettingsProc and HardwareSettingsProc in ui.cpp), shown here as one window with a tab bar.
+The settings of the emulator, shown as one window with a tab bar.
 
 "GUI/Selector" is the list of directories the selector scans (the PATH user variable) and the file
-filter (the FILTER user variable, one bit per extension - the contents of the IDD_FILE_FILTER
-dialog). "GCN Hardware" is the emulated console version and the three firmware images (the Bootrom
-and the DSP DROM/IROM), which is what the IDD_SETTINGS_HW page configures.
+filter (the FILTER user variable, one bit per extension).
+"GCN Hardware" is the emulated console version and the three firmware images (the Bootrom
+and the DSP DROM/IROM).
 
 The directories, the console version and the firmware are edited as a copy and written to the
 configuration by Apply (or OK); Cancel drops the copy. "Add..." picks a directory with the same
@@ -1482,7 +1477,7 @@ struct SettingsConsoleVersion
 	const char* info;
 };
 
-/* The console versions the Win32 page offers (the consoleVersion table in ui.cpp, see YAGCD) */
+/* The console versions the dialog offers (see YAGCD) */
 static const SettingsConsoleVersion settings_console_version[] =
 {
 	{ 0x00000001, "0x00000001: Retail 1" },
@@ -1513,7 +1508,7 @@ static const char* settings_console_other_label()
 	return label;
 }
 
-/* Fill the dialog from the configuration (the WM_INITDIALOG of both Win32 pages, LoadSettings) */
+/* Fill the dialog from the configuration */
 static void settings_dialog_load()
 {
 	load_path();
@@ -1537,7 +1532,7 @@ static void settings_dialog_load()
 	settings_dsp_irom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_IROM, USER_HW));
 }
 
-/* Write the dialog back (the PSN_APPLY handler of both Win32 pages, SaveSettings in ui.cpp) */
+/* Write the dialog back to the configuration */
 static void settings_dialog_apply()
 {
 	UI::Jdi->SetConfigInt(USER_CONSOLE,
@@ -1761,8 +1756,7 @@ static void ui_settings()
 
 # Memory cards
 
-The SDL port of the Win32 memcard settings dialog (MemcardSettingsProc, MemcardConfigure and
-MemcardChooseSizeProc in ui.cpp): one window per slot, opened by "Options -> Memcards -> Slot A/B".
+The memory card settings: one window per slot, opened by "Options -> Memcards -> Slot A/B".
 
 The settings of both slots live in the "memcards" section of the configuration (see memcard.cpp):
 whether the card is connected, whether every write goes to the disk at once (SyncSave) or the card is
@@ -1770,9 +1764,8 @@ flushed when it is disconnected, and the file that holds the card data. The file
 made by "Create New...", which asks for one of the six sizes the hardware has
 (MCCreateMemcardFile), and "Choose file..." points the slot at a card that already exists.
 
-The Win32 dialog only writes the configuration and leaves a card that is already mounted alone until
-the next boot; here OK also applies the change to an open memcard system (MCUseFile), so that the
-card is replaced (flushed first) or connected without a restart.
+OK applies the change to an open memcard system as well (MCUseFile), so that the card is replaced
+(flushed first) or connected without a restart.
 
 */
 
@@ -1805,7 +1798,7 @@ static void memcard_dialog_load(int slot)
 	memcard_dialog_connected = UI::Jdi->GetConfigBool(memcard_connected_key(slot), USER_MEMCARDS);
 	memcard_dialog_filename = Util::StringToWstring(UI::Jdi->GetConfigString(memcard_filename_key(slot), USER_MEMCARDS));
 
-	// A card whose file is missing cannot be connected (the Win32 dialog drops the flag the same way)
+	// A card whose file is missing cannot be connected
 	if (!Util::FileExists(memcard_dialog_filename))
 	{
 		memcard_dialog_connected = false;
@@ -1829,8 +1822,8 @@ static void memcard_dialog_save()
 	UI::Jdi->SetConfigString(memcard_filename_key(memcard_dialog_slot),
 		Util::WstringToString(memcard_dialog_filename), USER_MEMCARDS);
 
-	// The dialog owns the live state as well: the save policy is a global of memcard.cpp (the Win32
-	// dialog sets the same one) and the card of a memcard system that is already open is re-pointed
+	// The dialog owns the live state as well: the save policy is a global of memcard.cpp and the
+	// card of a memcard system that is already open is re-pointed
 	// at the new file at once. Without an open system the configuration above is what MCOpen reads
 	// at the next boot.
 	SyncSave = memcard_dialog_sync_save;
@@ -1842,8 +1835,7 @@ static void memcard_dialog_save()
 	}
 }
 
-/* "Size: 251 usable blocks (2048 Kb)", or "Not connected" when there is no card file
-   (the IDC_MEMCARD_SIZEDESC label of the Win32 dialog) */
+/* "Size: 251 usable blocks (2048 Kb)", or "Not connected" when there is no card file */
 static std::string memcard_size_text()
 {
 	if (!Util::FileExists(memcard_dialog_filename))
@@ -1890,7 +1882,7 @@ static void memcard_dialog_create_new()
 {
 	uint32_t size = Memcard_ValidSizes[memcard_dialog_size];
 
-	// The id is the size in megabits (see MEMCARD_ID_*): the same conversion the Win32 dialog does
+	// The id is the size in megabits (see MEMCARD_ID_*)
 	if (!MCCreateMemcardFile(memcard_dialog_new_filename.c_str(), (uint16_t)(size >> 17)))
 	{
 		// The reason is in the log (MCCreateMemcardFile reports it); the box is what the user sees.
@@ -2045,7 +2037,7 @@ Interesting to track :
 namespace UI
 {
 
-	// Global instance of the utility, which is controlled in the ui.cpp module
+	// Global instance of the utility, which is controlled by the front end
 	PerfMetrics* g_perfMetrics = nullptr;
 
 
@@ -2680,8 +2672,8 @@ static void ui_selector()
 			ImGui::EndTable();
 		}
 
-		// The table does not handle the keyboard, so the cursor is moved by the same
-		// keys as in the Win32 selector (see ScrollSelector in ui.cpp).
+		// The table does not handle the keyboard, so the cursor is moved by the usual
+		// cursor keys.
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_RootWindow))
 		{
 			if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
