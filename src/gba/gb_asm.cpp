@@ -16,7 +16,7 @@ namespace GBA
 		namespace
 		{
 			/// <summary>Two hex digits, for the listing.</summary>
-			std::string HexByte(u8 value)
+			std::string HexByte(uint8_t value)
 			{
 				char text[8];
 				snprintf(text, sizeof(text), "%02X", value);
@@ -24,7 +24,7 @@ namespace GBA
 			}
 
 			/// <summary>A 16-bit address, for the listing.</summary>
-			std::string HexWord(u16 value)
+			std::string HexWord(uint16_t value)
 			{
 				char text[8];
 				snprintf(text, sizeof(text), "%04X", value);
@@ -36,7 +36,7 @@ namespace GBA
 		// Location and data
 		// -----------------------------------------------------------------------------------
 
-		void Assembler::Org(u16 address)
+		void Assembler::Org(uint16_t address)
 		{
 			pc = address;
 			if (code.size() < address)
@@ -56,54 +56,54 @@ namespace GBA
 				code.resize((size_t)pc + bytes, 0x00);
 		}
 
-		void Assembler::Emit(u8 value)
+		void Assembler::Emit(uint8_t value)
 		{
 			Reserve(1);
 			code[pc] = value;
-			pc = (u16)(pc + 1);
+			pc = (uint16_t)(pc + 1);
 		}
 
 		void Assembler::Record(const std::string& text)
 		{
-			listing += HexWord((u16)(pc - 1));
+			listing += HexWord((uint16_t)(pc - 1));
 			listing += ": ";
 			listing += text;
 			listing += "\n";
 			instructionCount++;
 		}
 
-		void Assembler::EmitInstruction(u8 value, const std::string& text)
+		void Assembler::EmitInstruction(uint8_t value, const std::string& text)
 		{
 			Emit(value);
 			Record(text);
 		}
 
-		void Assembler::EmitInstruction2(u8 first, u8 second, const std::string& text)
+		void Assembler::EmitInstruction2(uint8_t first, uint8_t second, const std::string& text)
 		{
 			Emit(first);
 			Emit(second);
-			listing += HexWord((u16)(pc - 2));
+			listing += HexWord((uint16_t)(pc - 2));
 			listing += ": ";
 			listing += text;
 			listing += "\n";
 			instructionCount++;
 		}
 
-		void Assembler::Data8(u8 value)
+		void Assembler::Data8(uint8_t value)
 		{
 			Emit(value);
 		}
 
-		void Assembler::Data16(u16 value)
+		void Assembler::Data16(uint16_t value)
 		{
 			// The Game Boy is little-endian: the low byte comes first.
-			Emit((u8)(value & 0xFF));
-			Emit((u8)(value >> 8));
+			Emit((uint8_t)(value & 0xFF));
+			Emit((uint8_t)(value >> 8));
 		}
 
-		void Assembler::Data16(u16 value, const std::string& text)
+		void Assembler::Data16(uint16_t value, const std::string& text)
 		{
-			u16 at = pc;
+			uint16_t at = pc;
 			Data16(value);
 			listing += HexWord(at);
 			listing += ": ";
@@ -111,7 +111,7 @@ namespace GBA
 			listing += "\n";
 		}
 
-		void Assembler::DataBytes(const u8* data, size_t count)
+		void Assembler::DataBytes(const uint8_t* data, size_t count)
 		{
 			for (size_t i = 0; i < count; i++)
 				Emit(data[i]);
@@ -120,12 +120,12 @@ namespace GBA
 		void Assembler::Text(const std::string& ascii)
 		{
 			for (char c : ascii)
-				Emit((u8)c);
+				Emit((uint8_t)c);
 		}
 
-		void Assembler::Fill(u8 value, u16 count)
+		void Assembler::Fill(uint8_t value, uint16_t count)
 		{
-			for (u16 i = 0; i < count; i++)
+			for (uint16_t i = 0; i < count; i++)
 				Emit(value);
 		}
 
@@ -136,42 +136,42 @@ namespace GBA
 		void Assembler::Ld(R8 dest, R8 source)
 		{
 			// LD r8,r8: 01 ddd sss. The 0x76 "ld (hl),(hl)" slot is HALT instead.
-			u8 opcode = (u8)(0x40 + ((u8)dest << 3) + (u8)source);
+			uint8_t opcode = (uint8_t)(0x40 + ((uint8_t)dest << 3) + (uint8_t)source);
 			if (opcode == 0x76)
 				throw std::runtime_error("gb asm: LD (HL),(HL) is the HALT opcode");
 			EmitInstruction(opcode, "ld r" + std::to_string((int)dest) + ",r" + std::to_string((int)source));
 		}
 
-		void Assembler::Ld(R8 dest, u8 value)
+		void Assembler::Ld(R8 dest, uint8_t value)
 		{
 			// LD r8,n8: 00 ddd 110.
-			u8 opcode = (u8)(0x06 + ((u8)dest << 3));
+			uint8_t opcode = (uint8_t)(0x06 + ((uint8_t)dest << 3));
 			EmitInstruction(opcode, "ld r" + std::to_string((int)dest) + ",n8");
 			Emit(value);
 		}
 
-		void Assembler::LdA16(u16 address)
+		void Assembler::LdA16(uint16_t address)
 		{
 			EmitInstruction(0xFA, "ld a,(" + HexWord(address) + ")");
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
-		void Assembler::Ld16A(u16 address)
+		void Assembler::Ld16A(uint16_t address)
 		{
 			EmitInstruction(0xEA, "ld (" + HexWord(address) + "),a");
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
-		void Assembler::LdA8(u8 offset)
+		void Assembler::LdA8(uint8_t offset)
 		{
 			// LDH (n8),A: 0xE0, the high byte of the address is 0xFF.
 			EmitInstruction(0xE0, "ldh ($FF" + HexByte(offset) + "),a");
 			Emit(offset);
 		}
 
-		void Assembler::Ld8A(u8 offset)
+		void Assembler::Ld8A(uint8_t offset)
 		{
 			// LDH A,(n8): 0xF0.
 			EmitInstruction(0xF0, "ldh a,($FF" + HexByte(offset) + ")");
@@ -181,22 +181,22 @@ namespace GBA
 		void Assembler::LdAC() { EmitInstruction(0xE2, "ld (c),a"); }
 		void Assembler::LdCA() { EmitInstruction(0xF2, "ld a,(c)"); }
 
-		void Assembler::Ld16SP(u16 address)
+		void Assembler::Ld16SP(uint16_t address)
 		{
 			// LD (n16),SP: 0x08. One of the "undocumented" opcodes in the sense that the
 			// mnemonic table does not spell it out, but it is a documented instruction.
 			EmitInstruction(0x08, "ld (" + HexWord(address) + "),sp");
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
-		void Assembler::Ld16(R16 dest, u16 value)
+		void Assembler::Ld16(R16 dest, uint16_t value)
 		{
 			// LD r16,n16: 00 rr 0001.
-			u8 opcode = (u8)(0x01 + ((u8)dest << 4));
+			uint8_t opcode = (uint8_t)(0x01 + ((uint8_t)dest << 4));
 			EmitInstruction(opcode, "ld r16,n16");
-			Emit((u8)(value & 0xFF));
-			Emit((u8)(value >> 8));
+			Emit((uint8_t)(value & 0xFF));
+			Emit((uint8_t)(value >> 8));
 		}
 
 		void Assembler::Ld16(R16 dest, const std::string& label)
@@ -204,17 +204,17 @@ namespace GBA
 			// The same instruction with a label's address as the immediate, so a boot ROM can
 			// point a register at one of its own tables without hard coded addresses.
 			absoluteFixups.push_back(AbsoluteFixup{ code.size() + 1, label });
-			EmitInstruction((u8)(0x01 + ((u8)dest << 4)), "ld r16," + label);
+			EmitInstruction((uint8_t)(0x01 + ((uint8_t)dest << 4)), "ld r16," + label);
 			Emit(0);
 			Emit(0);
 		}
 
 		void Assembler::LdSPHL() { EmitInstruction(0xF9, "ld sp,hl"); }
 
-		void Assembler::LdHLSPe(s8 offset)
+		void Assembler::LdHLSPe(int8_t offset)
 		{
 			EmitInstruction(0xF8, "ld hl,sp+e8");
-			Emit((u8)offset);
+			Emit((uint8_t)offset);
 		}
 
 		void Assembler::LdAHLI() { EmitInstruction(0x22, "ld (hl+),a"); }
@@ -233,35 +233,35 @@ namespace GBA
 		// 16-bit arithmetic and the stack
 		// -----------------------------------------------------------------------------------
 
-		void Assembler::AddHL(R16 source) { EmitInstruction((u8)(0x09 + ((u8)source << 4)), "add hl,r16"); }
-		void Assembler::AddSPe(s8 offset) { EmitInstruction(0xE8, "add sp,e8"); Emit((u8)offset); }
-		void Assembler::Inc16(R16 reg) { EmitInstruction((u8)(0x03 + ((u8)reg << 4)), "inc r16"); }
-		void Assembler::Dec16(R16 reg) { EmitInstruction((u8)(0x0B + ((u8)reg << 4)), "dec r16"); }
-		void Assembler::Push(R16Stk pair) { EmitInstruction((u8)(0xC5 + ((u8)pair << 4)), "push r16stk"); }
-		void Assembler::Pop(R16Stk pair) { EmitInstruction((u8)(0xC1 + ((u8)pair << 4)), "pop r16stk"); }
+		void Assembler::AddHL(R16 source) { EmitInstruction((uint8_t)(0x09 + ((uint8_t)source << 4)), "add hl,r16"); }
+		void Assembler::AddSPe(int8_t offset) { EmitInstruction(0xE8, "add sp,e8"); Emit((uint8_t)offset); }
+		void Assembler::Inc16(R16 reg) { EmitInstruction((uint8_t)(0x03 + ((uint8_t)reg << 4)), "inc r16"); }
+		void Assembler::Dec16(R16 reg) { EmitInstruction((uint8_t)(0x0B + ((uint8_t)reg << 4)), "dec r16"); }
+		void Assembler::Push(R16Stk pair) { EmitInstruction((uint8_t)(0xC5 + ((uint8_t)pair << 4)), "push r16stk"); }
+		void Assembler::Pop(R16Stk pair) { EmitInstruction((uint8_t)(0xC1 + ((uint8_t)pair << 4)), "pop r16stk"); }
 
 		// -----------------------------------------------------------------------------------
 		// 8-bit arithmetic
 		// -----------------------------------------------------------------------------------
 
-		void Assembler::Add(R8 source) { EmitInstruction((u8)(0x80 + (u8)source), "add a,r8"); }
-		void Assembler::Add(u8 value) { EmitInstruction(0xC6, "add a,n8"); Emit(value); }
-		void Assembler::Adc(R8 source) { EmitInstruction((u8)(0x88 + (u8)source), "adc a,r8"); }
-		void Assembler::Adc(u8 value) { EmitInstruction(0xCE, "adc a,n8"); Emit(value); }
-		void Assembler::Sub(R8 source) { EmitInstruction((u8)(0x90 + (u8)source), "sub r8"); }
-		void Assembler::Sub(u8 value) { EmitInstruction(0xD6, "sub n8"); Emit(value); }
-		void Assembler::Sbc(R8 source) { EmitInstruction((u8)(0x98 + (u8)source), "sbc a,r8"); }
-		void Assembler::Sbc(u8 value) { EmitInstruction(0xDE, "sbc a,n8"); Emit(value); }
-		void Assembler::And(R8 source) { EmitInstruction((u8)(0xA0 + (u8)source), "and a,r8"); }
-		void Assembler::And(u8 value) { EmitInstruction(0xE6, "and n8"); Emit(value); }
-		void Assembler::Xor(R8 source) { EmitInstruction((u8)(0xA8 + (u8)source), "xor a,r8"); }
-		void Assembler::Xor(u8 value) { EmitInstruction(0xEE, "xor n8"); Emit(value); }
-		void Assembler::Or(R8 source) { EmitInstruction((u8)(0xB0 + (u8)source), "or a,r8"); }
-		void Assembler::Or(u8 value) { EmitInstruction(0xF6, "or n8"); Emit(value); }
-		void Assembler::Cp(R8 source) { EmitInstruction((u8)(0xB8 + (u8)source), "cp a,r8"); }
-		void Assembler::Cp(u8 value) { EmitInstruction(0xFE, "cp n8"); Emit(value); }
-		void Assembler::Inc(R8 reg) { EmitInstruction((u8)(0x04 + ((u8)reg << 3)), "inc r8"); }
-		void Assembler::Dec(R8 reg) { EmitInstruction((u8)(0x05 + ((u8)reg << 3)), "dec r8"); }
+		void Assembler::Add(R8 source) { EmitInstruction((uint8_t)(0x80 + (uint8_t)source), "add a,r8"); }
+		void Assembler::Add(uint8_t value) { EmitInstruction(0xC6, "add a,n8"); Emit(value); }
+		void Assembler::Adc(R8 source) { EmitInstruction((uint8_t)(0x88 + (uint8_t)source), "adc a,r8"); }
+		void Assembler::Adc(uint8_t value) { EmitInstruction(0xCE, "adc a,n8"); Emit(value); }
+		void Assembler::Sub(R8 source) { EmitInstruction((uint8_t)(0x90 + (uint8_t)source), "sub r8"); }
+		void Assembler::Sub(uint8_t value) { EmitInstruction(0xD6, "sub n8"); Emit(value); }
+		void Assembler::Sbc(R8 source) { EmitInstruction((uint8_t)(0x98 + (uint8_t)source), "sbc a,r8"); }
+		void Assembler::Sbc(uint8_t value) { EmitInstruction(0xDE, "sbc a,n8"); Emit(value); }
+		void Assembler::And(R8 source) { EmitInstruction((uint8_t)(0xA0 + (uint8_t)source), "and a,r8"); }
+		void Assembler::And(uint8_t value) { EmitInstruction(0xE6, "and n8"); Emit(value); }
+		void Assembler::Xor(R8 source) { EmitInstruction((uint8_t)(0xA8 + (uint8_t)source), "xor a,r8"); }
+		void Assembler::Xor(uint8_t value) { EmitInstruction(0xEE, "xor n8"); Emit(value); }
+		void Assembler::Or(R8 source) { EmitInstruction((uint8_t)(0xB0 + (uint8_t)source), "or a,r8"); }
+		void Assembler::Or(uint8_t value) { EmitInstruction(0xF6, "or n8"); Emit(value); }
+		void Assembler::Cp(R8 source) { EmitInstruction((uint8_t)(0xB8 + (uint8_t)source), "cp a,r8"); }
+		void Assembler::Cp(uint8_t value) { EmitInstruction(0xFE, "cp n8"); Emit(value); }
+		void Assembler::Inc(R8 reg) { EmitInstruction((uint8_t)(0x04 + ((uint8_t)reg << 3)), "inc r8"); }
+		void Assembler::Dec(R8 reg) { EmitInstruction((uint8_t)(0x05 + ((uint8_t)reg << 3)), "dec r8"); }
 
 		// -----------------------------------------------------------------------------------
 		// The accumulator-only operations
@@ -280,34 +280,34 @@ namespace GBA
 		// The CB prefix family
 		// -----------------------------------------------------------------------------------
 
-		void Assembler::Rlc(R8 reg) { EmitInstruction2(0xCB, (u8)(0x00 + (u8)reg), "rlc r8"); }
-		void Assembler::Rrc(R8 reg) { EmitInstruction2(0xCB, (u8)(0x08 + (u8)reg), "rrc r8"); }
-		void Assembler::Rl(R8 reg) { EmitInstruction2(0xCB, (u8)(0x10 + (u8)reg), "rl r8"); }
-		void Assembler::Rr(R8 reg) { EmitInstruction2(0xCB, (u8)(0x18 + (u8)reg), "rr r8"); }
-		void Assembler::Sla(R8 reg) { EmitInstruction2(0xCB, (u8)(0x20 + (u8)reg), "sla r8"); }
-		void Assembler::Sra(R8 reg) { EmitInstruction2(0xCB, (u8)(0x28 + (u8)reg), "sra r8"); }
-		void Assembler::Swap(R8 reg) { EmitInstruction2(0xCB, (u8)(0x30 + (u8)reg), "swap r8"); }
-		void Assembler::Srl(R8 reg) { EmitInstruction2(0xCB, (u8)(0x38 + (u8)reg), "srl r8"); }
+		void Assembler::Rlc(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x00 + (uint8_t)reg), "rlc r8"); }
+		void Assembler::Rrc(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x08 + (uint8_t)reg), "rrc r8"); }
+		void Assembler::Rl(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x10 + (uint8_t)reg), "rl r8"); }
+		void Assembler::Rr(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x18 + (uint8_t)reg), "rr r8"); }
+		void Assembler::Sla(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x20 + (uint8_t)reg), "sla r8"); }
+		void Assembler::Sra(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x28 + (uint8_t)reg), "sra r8"); }
+		void Assembler::Swap(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x30 + (uint8_t)reg), "swap r8"); }
+		void Assembler::Srl(R8 reg) { EmitInstruction2(0xCB, (uint8_t)(0x38 + (uint8_t)reg), "srl r8"); }
 
 		void Assembler::Bit(int bit, R8 reg)
 		{
 			if (bit < 0 || bit > 7)
 				throw std::runtime_error("gb asm: BIT bit index out of range");
-			EmitInstruction2(0xCB, (u8)(0x40 + (bit << 3) + (u8)reg), "bit " + std::to_string(bit) + ",r8");
+			EmitInstruction2(0xCB, (uint8_t)(0x40 + (bit << 3) + (uint8_t)reg), "bit " + std::to_string(bit) + ",r8");
 		}
 
 		void Assembler::Res(int bit, R8 reg)
 		{
 			if (bit < 0 || bit > 7)
 				throw std::runtime_error("gb asm: RES bit index out of range");
-			EmitInstruction2(0xCB, (u8)(0x80 + (bit << 3) + (u8)reg), "res " + std::to_string(bit) + ",r8");
+			EmitInstruction2(0xCB, (uint8_t)(0x80 + (bit << 3) + (uint8_t)reg), "res " + std::to_string(bit) + ",r8");
 		}
 
 		void Assembler::Set(int bit, R8 reg)
 		{
 			if (bit < 0 || bit > 7)
 				throw std::runtime_error("gb asm: SET bit index out of range");
-			EmitInstruction2(0xCB, (u8)(0xC0 + (bit << 3) + (u8)reg), "set " + std::to_string(bit) + ",r8");
+			EmitInstruction2(0xCB, (uint8_t)(0xC0 + (bit << 3) + (uint8_t)reg), "set " + std::to_string(bit) + ",r8");
 		}
 
 		// -----------------------------------------------------------------------------------
@@ -328,11 +328,11 @@ namespace GBA
 		void Assembler::Ei() { EmitInstruction(0xFB, "ei"); }
 		void Assembler::JpHL() { EmitInstruction(0xE9, "jp hl"); }
 
-		void Assembler::Jp(u16 address)
+		void Assembler::Jp(uint16_t address)
 		{
 			EmitInstruction(0xC3, "jp " + HexWord(address));
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
 		void Assembler::Jp(const std::string& label)
@@ -343,26 +343,26 @@ namespace GBA
 			Emit(0);
 		}
 
-		void Assembler::Jp(Cond condition, u16 address)
+		void Assembler::Jp(Cond condition, uint16_t address)
 		{
 			// JP cc,n16: 11 ccc 010.
-			EmitInstruction((u8)(0xC2 + ((u8)condition << 3)), "jp cc," + HexWord(address));
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			EmitInstruction((uint8_t)(0xC2 + ((uint8_t)condition << 3)), "jp cc," + HexWord(address));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
 		void Assembler::Jp(Cond condition, const std::string& label)
 		{
 			absoluteFixups.push_back(AbsoluteFixup{ code.size() + 1, label });
-			EmitInstruction((u8)(0xC2 + ((u8)condition << 3)), "jp cc," + label);
+			EmitInstruction((uint8_t)(0xC2 + ((uint8_t)condition << 3)), "jp cc," + label);
 			Emit(0);
 			Emit(0);
 		}
 
-		void Assembler::Jr(s8 offset)
+		void Assembler::Jr(int8_t offset)
 		{
 			EmitInstruction(0x18, "jr " + std::to_string((int)offset));
-			Emit((u8)offset);
+			Emit((uint8_t)offset);
 		}
 
 		void Assembler::Jr(const std::string& label)
@@ -372,24 +372,24 @@ namespace GBA
 			Emit(0);
 		}
 
-		void Assembler::Jr(Cond condition, s8 offset)
+		void Assembler::Jr(Cond condition, int8_t offset)
 		{
-			EmitInstruction((u8)(0x20 + ((u8)condition << 3)), "jr cc," + std::to_string((int)offset));
-			Emit((u8)offset);
+			EmitInstruction((uint8_t)(0x20 + ((uint8_t)condition << 3)), "jr cc," + std::to_string((int)offset));
+			Emit((uint8_t)offset);
 		}
 
 		void Assembler::Jr(Cond condition, const std::string& label)
 		{
 			relativeFixups.push_back(RelativeFixup{ code.size() + 1, label });
-			EmitInstruction((u8)(0x20 + ((u8)condition << 3)), "jr cc," + label);
+			EmitInstruction((uint8_t)(0x20 + ((uint8_t)condition << 3)), "jr cc," + label);
 			Emit(0);
 		}
 
-		void Assembler::Call(u16 address)
+		void Assembler::Call(uint16_t address)
 		{
 			EmitInstruction(0xCD, "call " + HexWord(address));
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
 		void Assembler::Call(const std::string& label)
@@ -400,49 +400,49 @@ namespace GBA
 			Emit(0);
 		}
 
-		void Assembler::Call(Cond condition, u16 address)
+		void Assembler::Call(Cond condition, uint16_t address)
 		{
 			// CALL cc,n16: 11 ccc 100.
-			EmitInstruction((u8)(0xC4 + ((u8)condition << 3)), "call cc," + HexWord(address));
-			Emit((u8)(address & 0xFF));
-			Emit((u8)(address >> 8));
+			EmitInstruction((uint8_t)(0xC4 + ((uint8_t)condition << 3)), "call cc," + HexWord(address));
+			Emit((uint8_t)(address & 0xFF));
+			Emit((uint8_t)(address >> 8));
 		}
 
 		void Assembler::Call(Cond condition, const std::string& label)
 		{
 			absoluteFixups.push_back(AbsoluteFixup{ code.size() + 1, label });
-			EmitInstruction((u8)(0xC4 + ((u8)condition << 3)), "call cc," + label);
+			EmitInstruction((uint8_t)(0xC4 + ((uint8_t)condition << 3)), "call cc," + label);
 			Emit(0);
 			Emit(0);
 		}
 
 		void Assembler::Ret() { EmitInstruction(0xC9, "ret"); }
-		void Assembler::Ret(Cond condition) { EmitInstruction((u8)(0xC0 + ((u8)condition << 3)), "ret cc"); }
+		void Assembler::Ret(Cond condition) { EmitInstruction((uint8_t)(0xC0 + ((uint8_t)condition << 3)), "ret cc"); }
 		void Assembler::Reti() { EmitInstruction(0xD9, "reti"); }
 
-		void Assembler::Rst(u8 vector)
+		void Assembler::Rst(uint8_t vector)
 		{
 			if ((vector & 0x07) != 0 || vector > 0x38)
 				throw std::runtime_error("gb asm: RST vector must be a multiple of 8 below 0x40");
-			EmitInstruction((u8)(0xC7 + vector), "rst " + HexWord(vector));
+			EmitInstruction((uint8_t)(0xC7 + vector), "rst " + HexWord(vector));
 		}
 
 		// -----------------------------------------------------------------------------------
 		// Output
 		// -----------------------------------------------------------------------------------
 
-		std::vector<u8> Assembler::TakeImage(u32 size, u8 pad)
+		std::vector<uint8_t> Assembler::TakeImage(uint32_t size, uint8_t pad)
 		{
 			for (const auto& fixup : absoluteFixups)
 			{
 				auto found = labels.find(fixup.label);
 				if (found == labels.end())
 					throw std::runtime_error("gb asm: undefined label: " + fixup.label);
-				u16 target = found->second;
+				uint16_t target = found->second;
 				if (fixup.position + 1 >= code.size())
 					throw std::runtime_error("gb asm: fixup outside the image");
-				code[fixup.position] = (u8)(target & 0xFF);
-				code[fixup.position + 1] = (u8)(target >> 8);
+				code[fixup.position] = (uint8_t)(target & 0xFF);
+				code[fixup.position + 1] = (uint8_t)(target >> 8);
 			}
 
 			for (const auto& fixup : relativeFixups)
@@ -454,10 +454,10 @@ namespace GBA
 				int delta = (int)found->second - (int)(fixup.position + 1);
 				if (delta < -128 || delta > 127)
 					throw std::runtime_error("gb asm: JR out of range: " + fixup.label);
-				code[fixup.position] = (u8)(s8)delta;
+				code[fixup.position] = (uint8_t)(int8_t)delta;
 			}
 
-			std::vector<u8> image = code;
+			std::vector<uint8_t> image = code;
 
 			if (size != 0)
 			{

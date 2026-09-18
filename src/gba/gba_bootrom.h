@@ -24,7 +24,7 @@ namespace GBA
 	namespace BootRom
 	{
 		/// <summary>The 16 KByte GBA boot ROM, assembled on first use.</summary>
-		const std::vector<u8>& GbaImage();
+		const std::vector<uint8_t>& GbaImage();
 
 		/// <summary>The assembly listing of the GBA boot ROM (the mnemonics the emitter recorded).</summary>
 		std::string GbaListing();
@@ -39,6 +39,6 @@ namespace GBA
 		/// The entry point of the SIO link driver inside the boot ROM (the address the emulator
 		/// reports when it runs without a cartridge).
 		/// </summary>
-		u32 GbaLinkDriverEntry();
+		uint32_t GbaLinkDriverEntry();
 	}
 }

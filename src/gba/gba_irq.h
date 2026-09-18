@@ -12,31 +12,31 @@ namespace GBA
 {
 	class Irq
 	{
-		u16 enable = 0;			// 0x04000200 IE
-		u16 request = 0;		// 0x04000202 IF
+		uint16_t enable = 0;		// 0x04000200 IE
+		uint16_t request = 0;		// 0x04000202 IF
 		bool masterEnable = false;	// 0x04000208 IME
 
 	public:
 		void Reset();
 
 		/// <summary>Raise one or more causes (the devices call this).</summary>
-		void Raise(u16 bits) { request |= bits; }
+		void Raise(uint16_t bits) { request |= bits; }
 
 		/// <summary>Drop one or more causes (used when a device is switched off).</summary>
-		void Clear(u16 bits) { request &= (u16)~bits; }
+		void Clear(uint16_t bits) { request &= (uint16_t)~bits; }
 
 		/// <summary>Acknowledge the causes named by `bits` (a write to IF).</summary>
-		void Acknowledge(u16 bits) { request &= (u16)~bits; }
+		void Acknowledge(uint16_t bits) { request &= (uint16_t)~bits; }
 
 		/// <summary>True when the CPU must take the IRQ exception.</summary>
 		bool Pending() const { return masterEnable && (request & enable) != 0; }
 
-		u16 ReadIE() const { return enable; }
-		u16 ReadIF() const { return request; }
+		uint16_t ReadIE() const { return enable; }
+		uint16_t ReadIF() const { return request; }
 		bool ReadIME() const { return masterEnable; }
 
-		void WriteIE(u16 value) { enable = value & 0x3FFF; }
-		void WriteIF(u16 value) { Acknowledge(value & 0x3FFF); }
+		void WriteIE(uint16_t value) { enable = value & 0x3FFF; }
+		void WriteIF(uint16_t value) { Acknowledge(value & 0x3FFF); }
 		void WriteIME(bool value) { masterEnable = value; }
 	};
 }

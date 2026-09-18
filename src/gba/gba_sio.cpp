@@ -52,32 +52,32 @@ namespace GBA
 	namespace
 	{
 		// SIOCNT, normal mode (GBATEK "SIO Normal Mode").
-		const u16 SioClockInternal = 0x0001;	// bit 0: SC = internal (this unit is the master)
-		const u16 SioClock2MHz = 0x0002;		// bit 1: internal shift clock 2MHz, not 256KHz
-		const u16 SioSiState = 0x0004;			// bit 2: SI (the opponent's SO), read only
-		const u16 SioSoInactive = 0x0008;		// bit 3: SO level while no transfer runs
-		const u16 SioStart = 0x0080;			// bit 7: start/busy
-		const u16 SioLength32 = 0x1000;			// bit 12: 32bit instead of 8bit
-		const u16 SioIrqEnable = 0x4000;		// bit 14: interrupt on transfer completion
-		const u16 SioBits8to11 = 0x0F00;		// bits 8-11 (R/W, "should be 0"; unused here)
+		const uint16_t SioClockInternal = 0x0001;	// bit 0: SC = internal (this unit is the master)
+		const uint16_t SioClock2MHz = 0x0002;		// bit 1: internal shift clock 2MHz, not 256KHz
+		const uint16_t SioSiState = 0x0004;		// bit 2: SI (the opponent's SO), read only
+		const uint16_t SioSoInactive = 0x0008;		// bit 3: SO level while no transfer runs
+		const uint16_t SioStart = 0x0080;		// bit 7: start/busy
+		const uint16_t SioLength32 = 0x1000;		// bit 12: 32bit instead of 8bit
+		const uint16_t SioIrqEnable = 0x4000;		// bit 14: interrupt on transfer completion
+		const uint16_t SioBits8to11 = 0x0F00;		// bits 8-11 (R/W, "should be 0"; unused here)
 
 		// SIOCNT, multiplayer mode (GBATEK "SIO Multi-Player Mode").
-		const u16 SioMultiBaud = 0x0003;		// bits 0-1: 9600/38400/57600/115200 bps
-		const u16 SioMultiSlave = 0x0004;		// bit 2: SI terminal, 0 = parent, 1 = child
-		const u16 SioMultiReady = 0x0008;		// bit 3: SD terminal, 1 = all GBAs ready
-		const u16 SioMultiIdMask = 0x0030;		// bits 4-5: multi-player ID
-		const u16 SioMultiError = 0x0040;		// bit 6: multi-player error
+		const uint16_t SioMultiBaud = 0x0003;		// bits 0-1: 9600/38400/57600/115200 bps
+		const uint16_t SioMultiSlave = 0x0004;		// bit 2: SI terminal, 0 = parent, 1 = child
+		const uint16_t SioMultiReady = 0x0008;		// bit 3: SD terminal, 1 = all GBAs ready
+		const uint16_t SioMultiIdMask = 0x0030;		// bits 4-5: multi-player ID
+		const uint16_t SioMultiError = 0x0040;		// bit 6: multi-player error
 
 		// RCNT (GBATEK "4000134h - RCNT").
-		const u16 RcntGeneralPurpose = 0x8000;	// bit 15: general purpose mode
-		const u16 RcntJoyBus = 0x4000;			// bit 14: with bit 15, JOY bus mode
+		const uint16_t RcntGeneralPurpose = 0x8000;	// bit 15: general purpose mode
+		const uint16_t RcntJoyBus = 0x4000;			// bit 14: with bit 15, JOY bus mode
 
 		// JOYCNT / JOYSTAT (GBATEK "SIO JOY BUS Mode").
-		const u16 JoyCntReset = 0x0001;		// bit 0: device reset command (read/acknowledge)
-		const u16 JoyCntRecv = 0x0002;			// bit 1: receive complete (read/acknowledge)
-		const u16 JoyCntSend = 0x0004;			// bit 2: send complete (read/acknowledge)
-		const u16 JoyStatReceive = 0x0002;		// bit 1: set when a reply was received
-		const u16 JoyStatSend = 0x0008;			// bit 3: "1 = remote side is/was sending"
+		const uint16_t JoyCntReset = 0x0001;		// bit 0: device reset command (read/acknowledge)
+		const uint16_t JoyCntRecv = 0x0002;		// bit 1: receive complete (read/acknowledge)
+		const uint16_t JoyCntSend = 0x0004;		// bit 2: send complete (read/acknowledge)
+		const uint16_t JoyStatReceive = 0x0002;		// bit 1: set when a reply was received
+		const uint16_t JoyStatSend = 0x0008;		// bit 3: "1 = remote side is/was sending"
 
 		// The shift clock (GBATEK "SIO Normal Mode", "Transfer Rates"): either 256KHz or 2MHz
 		// can be selected for SC. The exact 16.78MHz/256KHz = 65.5 cycles per bit is rounded to
@@ -96,26 +96,26 @@ namespace GBA
 		const int ModeGeneralPurpose = 3;
 
 		/// <summary>The empty-cable value: no data line is driven, so every bit reads as one.</summary>
-		const u16 SioEmptyCable = 0xFFFF;
+		const uint16_t SioEmptyCable = 0xFFFF;
 
 		/// <summary>Read one byte lane out of a 16bit register.</summary>
-		u8 ByteLane(u16 value, bool high, u8 openBus)
+		uint8_t ByteLane(uint16_t value, bool high, uint8_t openBus)
 		{
 			// The addressed byte comes from the register, the other eight data bits from the
 			// open bus (GBATEK "GBA Memory Map": the last value that was on the bus).
-			return (u8)((high ? (value >> 8) : (value & 0xFF)) | (openBus & 0xFF00));
+			return (uint8_t)((high ? (value >> 8) : (value & 0xFF)) | (openBus & 0xFF00));
 		}
 
 		/// <summary>Replace one byte lane of a 16bit register.</summary>
-		u16 SetByteLane(u16 value, bool high, u8 byte)
+		uint16_t SetByteLane(uint16_t value, bool high, uint8_t byte)
 		{
 			if (high)
-				return (u16)((value & 0x00FF) | ((u16)byte << 8));
+				return (uint16_t)((value & 0x00FF) | ((uint16_t)byte << 8));
 
-			return (u16)((value & 0xFF00) | byte);
+			return (uint16_t)((value & 0xFF00) | byte);
 		}
 
-		bool JoyBusMode(u16 rcnt)
+		bool JoyBusMode(uint16_t rcnt)
 		{
 			// RCNT bit 15 = general purpose, bits 15+14 = JOY bus (GBATEK "SIO JOY BUS Mode").
 			return (rcnt & RcntGeneralPurpose) != 0 && (rcnt & RcntJoyBus) != 0;
@@ -151,9 +151,9 @@ namespace GBA
 		/// back by whichever commit path runs last. It has to be 32 bits wide: a 16-bit stash loses
 		/// the high half of a 32bit transfer, which is exactly what `master.Read(0x122)` sees.
 		/// </summary>
-		u32& StashReceive(const Sio* unit)
+		uint32_t& StashReceive(const Sio* unit)
 		{
-			static std::map<const Sio*, u32> stash;
+			static std::map<const Sio*, uint32_t> stash;
 			return stash[unit];
 		}
 
@@ -165,9 +165,9 @@ namespace GBA
 		/// addresses), so a four-player link still works without touching the frozen header.
 		/// Giving SIOMULTI3 a member of its own in the header would remove the need for this.
 		/// </summary>
-		u16& MultiSlot3(const Sio* unit)
+		uint16_t& MultiSlot3(const Sio* unit)
 		{
-			static std::map<const Sio*, u16> slots;
+			static std::map<const Sio*, uint16_t> slots;
 			return slots[unit];
 		}
 	}
@@ -242,7 +242,7 @@ namespace GBA
 	// Register access
 	// -----------------------------------------------------------------------------------------
 
-	u16 Sio::Read16(GbaBus& bus, u32 offset, u16 openBus)
+	uint16_t Sio::Read16(GbaBus& bus, uint32_t offset, uint16_t openBus)
 	{
 		(void)bus;
 
@@ -286,7 +286,7 @@ namespace GBA
 		}
 	}
 
-	void Sio::Write16(GbaBus& bus, u32 offset, u16 value)
+	void Sio::Write16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
 		switch (offset)
 		{
@@ -307,7 +307,7 @@ namespace GBA
 			// SIOMULTI2 in multiplayer mode, where the whole 16bit slot belongs to the second
 			// child and the game may preload it.
 			if (mode == ModeNormal)
-				siodata8 = (u16)(value & 0x00FF);
+				siodata8 = (uint16_t)(value & 0x00FF);
 			else
 				siodata8 = value;
 			return;
@@ -333,7 +333,7 @@ namespace GBA
 				// Either general purpose or JOY bus, depending on RCNT bit 14. JOY bus mode does
 				// not use SIOCNT at all, so only the four port bits are stored.
 				mode = ModeGeneralPurpose;
-				siocnt = (u16)(value & 0x000F);
+				siocnt = (uint16_t)(value & 0x000F);
 				return;
 			}
 
@@ -345,13 +345,13 @@ namespace GBA
 				mode = ModeMulti;
 
 			{
-				u16 mask;
+				uint16_t mask;
 				switch (mode)
 				{
 				case ModeNormal:
 					// GBATEK "SIOCNT, usage in NORMAL Mode": bits 0-3 and 7-14 exist, bit 13
 					// must be 0, bits 4-6 and 15 read as 0.
-					mask = (u16)(SioClockInternal | SioClock2MHz | SioSoInactive | SioStart |
+					mask = (uint16_t)(SioClockInternal | SioClock2MHz | SioSoInactive | SioStart |
 						SioBits8to11 | SioLength32 | SioIrqEnable);
 					break;
 
@@ -362,13 +362,13 @@ namespace GBA
 					// and bit 14 is the IRQ enable. A child cannot start a transfer, but it does
 					// write the start bit to say that its data is ready (GBATEK "Recommended
 					// Transmission Procedure").
-					mask = (u16)(SioMultiBaud | SioStart | SioIrqEnable);
+					mask = (uint16_t)(SioMultiBaud | SioStart | SioIrqEnable);
 					break;
 
 				case ModeUart:
 					// GBATEK "SCCNT_L, usage in UART Mode": bits 0-3 (baud, CTS, parity) and
 					// 7-14 exist; bits 4-6 are the read only status flags.
-					mask = (u16)(0x000F | SioStart | SioBits8to11 | 0x3000 | SioIrqEnable);
+					mask = (uint16_t)(0x000F | SioStart | SioBits8to11 | 0x3000 | SioIrqEnable);
 					break;
 
 				default:
@@ -380,10 +380,10 @@ namespace GBA
 
 				// The read only status bits (4-6) keep the value the hardware put there.
 				bool wasBusy = (siocnt & SioStart) != 0;
-				u16 next = (u16)((value & mask) | (siocnt & 0x0070));
+				uint16_t next = (uint16_t)((value & mask) | (siocnt & 0x0070));
 
 				if (mode == ModeUart)
-					next = (u16)(next | 0x3000);	// bits 12-13 must be 1 in UART mode
+					next = (uint16_t)(next | 0x3000);	// bits 12-13 must be 1 in UART mode
 
 				if (mode == ModeMulti)
 				{
@@ -391,7 +391,7 @@ namespace GBA
 					// (bit 2), which decides whether this unit is the parent or a child. The
 					// register mask above only carries the writable bits, so the read-only ones
 					// are put back here.
-					next = (u16)((next & ~(SioMultiIdMask | SioMultiError)) |
+					next = (uint16_t)((next & ~(SioMultiIdMask | SioMultiError)) |
 						(siocnt & (SioMultiIdMask | SioMultiError | SioMultiReady)) |
 						(value & SioMultiSlave));
 				}
@@ -408,7 +408,7 @@ namespace GBA
 						if (mode == ModeUart)
 							LogUartOnce();
 
-						siocnt &= (u16)~SioStart;
+						siocnt &= (uint16_t)~SioStart;
 						return;
 					}
 
@@ -421,7 +421,7 @@ namespace GBA
 			// RCNT (GBATEK "4000134h - RCNT"): bits 15-14 select general purpose / JOY bus, the
 			// upper halfword of the mode selection that SIOCNT bits 13-12 complete. Bits 9-13 do
 			// not exist and read back as 0.
-			rcnt = (u16)(value & 0x43FF);
+			rcnt = (uint16_t)(value & 0x43FF);
 
 			if (JoyBusMode(rcnt))
 			{
@@ -433,8 +433,8 @@ namespace GBA
 		case 0x140:
 			// JOYCNT bits 0-2 work like the IF register: writing a one acknowledges the flag;
 			// bit 6 is the enable of the device-reset interrupt (GBATEK "4000140h - JOYCNT").
-			joycnt &= (u16)~(value & (JoyCntReset | JoyCntRecv | JoyCntSend));
-			joycnt = (u16)((joycnt & ~0x0040) | (value & 0x0040));
+			joycnt &= (uint16_t)~(value & (JoyCntReset | JoyCntRecv | JoyCntSend));
+			joycnt = (uint16_t)((joycnt & ~0x0040) | (value & 0x0040));
 			return;
 
 		case 0x150:
@@ -457,9 +457,9 @@ namespace GBA
 			// boot) learns that there is no device on the port. A JOY transfer that never completes
 			// leaves the BIOS waiting for the SIO interrupt for ever, which is what stopped the
 			// real BIOS from reaching its logo animation.
-			joycnt |= (u16)(JoyCntSend | JoyCntRecv);
+			joycnt |= (uint16_t)(JoyCntSend | JoyCntRecv);
 			joyRecv = 0;
-			joystat &= (u16)~JoyStatSend;
+			joystat &= (uint16_t)~JoyStatSend;
 			joystat |= JoyStatReceive;
 
 			// JOYCNT bit 6 enables the interrupt of the port (GBATEK "4000140h - JOYCNT").
@@ -470,7 +470,7 @@ namespace GBA
 		case 0x158:
 			// JOYSTAT bits 4-5 are the general purpose flags; the status bits belong to the
 			// hardware (GBATEK "4000158h - JOYSTAT").
-			joystat = (u16)((joystat & ~0x0030) | (value & 0x0030));
+			joystat = (uint16_t)((joystat & ~0x0030) | (value & 0x0030));
 			return;
 
 		default:
@@ -478,7 +478,7 @@ namespace GBA
 		}
 	}
 
-	u8 Sio::Read8(GbaBus& bus, u32 offset, u8 openBus)
+	uint8_t Sio::Read8(GbaBus& bus, uint32_t offset, uint8_t openBus)
 	{
 		(void)bus;
 
@@ -496,13 +496,13 @@ namespace GBA
 			return ByteLane(siodata32H, true, openBus);
 		}
 
-		u32 index = (offset - 0x120) >> 1;
-		u32 reg = 0x120 + index * 2;
+		uint32_t index = (offset - 0x120) >> 1;
+		uint32_t reg = 0x120 + index * 2;
 
 		return ByteLane(Read16(bus, reg, openBus), high, openBus);
 	}
 
-	void Sio::Write8(GbaBus& bus, u32 offset, u8 value)
+	void Sio::Write8(GbaBus& bus, uint32_t offset, uint8_t value)
 	{
 		// See Read8: accept the offset or the full address.
 		if (offset >= 0x04000000)
@@ -516,8 +516,8 @@ namespace GBA
 			return;
 		}
 
-		u32 index = (offset - 0x120) >> 1;
-		u32 reg = 0x120 + index * 2;
+		uint32_t index = (offset - 0x120) >> 1;
+		uint32_t reg = 0x120 + index * 2;
 
 		// Only the addressed byte changes; the other one keeps the value it had. Reading the
 		// register first and writing the merged halfword back matches the hardware, where the
@@ -630,16 +630,16 @@ namespace GBA
 						// The full 32bit value comes from the stash, not from lastReceived: the
 						// high half has no place in a 16-bit lastReceived, and the peer may have
 						// overwritten its own SIODATA32_H by now.
-						const u32 full = StashReceive(this);
+						const uint32_t full = StashReceive(this);
 
 						// SIODATA32_H first, then the low half: siomltSend is also the register
 						// the peer reads as its outgoing value while it is still shifting.
-						siodata32H = (u16)(full >> 16);
-						siomltSend = (u16)(full & 0xFFFF);
+						siodata32H = (uint16_t)(full >> 16);
+						siomltSend = (uint16_t)(full & 0xFFFF);
 					}
 					else
 					{
-						siodata8 = (u16)(lastReceived & 0x00FF);
+						siodata8 = (uint16_t)(lastReceived & 0x00FF);
 					}
 				}
 				else if (mode == ModeMulti)
@@ -648,12 +648,12 @@ namespace GBA
 					// in SIOMLT_SEND, which was slot 0 while it waited: it inherits the parent's
 					// data into slot 0 and takes its own slot 1. The parent has already filled in
 					// the remaining slots, so they are left alone.
-					u16 own = siomltSend;
+					uint16_t own = siomltSend;
 					siomltSend = (peer != nullptr) ? peer->siomltSend : SioEmptyCable;	// SIOMULTI0
 					siodata32H = own;													// SIOMULTI1
 
 					// The ID bits are set, the SI (parent/child) bit is read only and is kept.
-					siocnt = (u16)((siocnt & ~SioMultiIdMask) | (1u << 4));
+					siocnt = (uint16_t)((siocnt & ~SioMultiIdMask) | (1u << 4));
 				}
 			}
 
@@ -675,8 +675,8 @@ namespace GBA
 
 	void Sio::CompleteTransfer(GbaBus& bus)
 	{
-		u16 received = IncomingData();
-		u16 sent = OutgoingData();
+		uint16_t received = IncomingData();
+		uint16_t sent = OutgoingData();
 
 		lastSent = sent;
 		lastReceived = received;
@@ -731,8 +731,8 @@ namespace GBA
 			if (upstream != nullptr && (upstream->siocnt & SioMultiSlave))
 				upstream = nullptr;
 
-			u16 local = siomltSend;
-			u16 slot[4];
+			uint16_t local = siomltSend;
+			uint16_t slot[4];
 			for (int i = 0; i < 4; i++)
 				slot[i] = (i < count) ? stream[i]->siomltSend : SioEmptyCable;
 
@@ -742,7 +742,7 @@ namespace GBA
 				// only knows its own slot for sure. It stops being "active" right away (so the
 				// parent can number it while it walks the cable) and waits in completionPending
 				// for the parent's visit to deliver every slot.
-				siocnt &= (u16)~SioStart;
+				siocnt &= (uint16_t)~SioStart;
 
 				if (siocnt & SioIrqEnable)
 					bus.irq.Raise(INT_SIO);
@@ -806,7 +806,7 @@ namespace GBA
 			if (id > 3)
 				id = 3;
 
-			siocnt = (u16)((siocnt & ~SioMultiIdMask) | ((u16)id << 4));
+			siocnt = (uint16_t)((siocnt & ~SioMultiIdMask) | ((uint16_t)id << 4));
 
 			// Only a unit that is not itself a child may number the units below it: in a two-unit
 			// chain the child must not hand the parent's own slot back to it (the parent works its
@@ -830,8 +830,8 @@ namespace GBA
 						break;
 
 					Sio* writable = const_cast<Sio*>(downstream);
-					writable->siocnt = (u16)((writable->siocnt & ~SioMultiIdMask) |
-						((u16)nextId << 4));
+					writable->siocnt = (uint16_t)((writable->siocnt & ~SioMultiIdMask) |
+						((uint16_t)nextId << 4));
 
 					writable->siomltSend = slot[0];
 					writable->siodata32H = slot[1];
@@ -846,7 +846,7 @@ namespace GBA
 			// "The Start/Busy bits of all GBAs are automatically cleared. Interrupts are
 			// requested in all GBAs (as far as enabled)" (GBATEK "SIO Multi-Player Mode",
 			// transfer end).
-			siocnt &= (u16)~SioStart;
+			siocnt &= (uint16_t)~SioStart;
 
 			if (siocnt & SioIrqEnable)
 				bus.irq.Raise(INT_SIO);
@@ -869,10 +869,10 @@ namespace GBA
 		{
 			// A 32bit transfer whose peer is still shifting: the full value has to survive until
 			// this unit commits, because the peer overwrites its own SIODATA32_H meanwhile.
-			StashReceive(this) = (u32)received | ((u32)peer->siodata32H << 16);
+			StashReceive(this) = (uint32_t)received | ((uint32_t)peer->siodata32H << 16);
 		}
 
-		siocnt &= (u16)~SioStart;
+		siocnt &= (uint16_t)~SioStart;
 
 		if (siocnt & SioIrqEnable)
 			bus.irq.Raise(INT_SIO);
@@ -888,17 +888,17 @@ namespace GBA
 				// The full 32bit value: `received` only carries the low half, so the peer's
 				// outgoing high half is taken directly from its SIODATA32_H while it is still
 				// there (the peer has not committed yet in this path).
-				const u32 full = (peer != nullptr)
-					? ((u32)received | ((u32)peer->siodata32H << 16))
-					: (u32)0xFFFFFFFF;
+				const uint32_t full = (peer != nullptr)
+					? ((uint32_t)received | ((uint32_t)peer->siodata32H << 16))
+					: (uint32_t)0xFFFFFFFF;
 
 				StashReceive(this) = full;
-				siodata32H = (u16)(full >> 16);
-				siomltSend = (u16)(full & 0xFFFF);
+				siodata32H = (uint16_t)(full >> 16);
+				siomltSend = (uint16_t)(full & 0xFFFF);
 			}
 			else
 			{
-				siodata8 = (u16)(received & 0x00FF);
+				siodata8 = (uint16_t)(received & 0x00FF);
 			}
 		}
 		else if (peer != nullptr && !peer->active)
@@ -909,21 +909,21 @@ namespace GBA
 			// SIODATA32_H by now.
 			completionPending = false;
 
-			const u32 full = StashReceive(this);
+			const uint32_t full = StashReceive(this);
 
 			if (siocnt & SioLength32)
 			{
-				siodata32H = (u16)(full >> 16);
-				siomltSend = (u16)(full & 0xFFFF);
+				siodata32H = (uint16_t)(full >> 16);
+				siomltSend = (uint16_t)(full & 0xFFFF);
 			}
 			else
 			{
-				siodata8 = (u16)(received & 0x00FF);
+				siodata8 = (uint16_t)(received & 0x00FF);
 			}
 		}
 	}
 
-	u16 Sio::OutgoingData() const
+	uint16_t Sio::OutgoingData() const
 	{
 		switch (mode)
 		{
@@ -934,22 +934,22 @@ namespace GBA
 			if (siocnt & SioLength32)
 				return siomltSend;
 
-			return (u16)(siodata8 & 0x00FF);
+			return (uint16_t)(siodata8 & 0x00FF);
 
 		case ModeMulti:
 			// The multiplayer transfer sends SIOMLT_SEND (GBATEK "400012Ah - SIOMLT_SEND").
 			return siomltSend;
 
 		case ModeUart:
-			return (u16)(siodata8 & 0x00FF);
+			return (uint16_t)(siodata8 & 0x00FF);
 
 		default:
 			// General purpose: SI and SO are the two low data bits of SIOCNT.
-			return (u16)(siocnt & 0x0003);
+			return (uint16_t)(siocnt & 0x0003);
 		}
 	}
 
-	u16 Sio::IncomingData() const
+	uint16_t Sio::IncomingData() const
 	{
 		switch (mode)
 		{
@@ -958,12 +958,12 @@ namespace GBA
 			// Two units, each one's SO wired to the other's SI: what this unit receives is what
 			// the peer drives. "With no peer attached the port behaves like an empty cable (the
 			// received data is 0xFFFF)".
-			u16 value = SioEmptyCable;
+			uint16_t value = SioEmptyCable;
 			if (peer != nullptr && (siocnt & SioLength32))
 			{
 				// The peer's 32bit data spans two halfwords: the low one is its outgoing value
 				// (SIODATA32_L) and the high one its SIODATA32_H.
-				return (u16)((u32)peer->OutgoingData() | ((u32)peer->siodata32H << 16));
+				return (uint16_t)((uint32_t)peer->OutgoingData() | ((uint32_t)peer->siodata32H << 16));
 			}
 
 			if (peer != nullptr)
@@ -974,7 +974,7 @@ namespace GBA
 
 			// The 8bit transfer only carries the low byte; the upper half of the register keeps
 			// its open-bus value ("only lower 8bit are used", GBATEK "SIODATA8").
-			return (u16)(value & 0x00FF);
+			return (uint16_t)(value & 0x00FF);
 		}
 
 		case ModeMulti:
@@ -989,7 +989,7 @@ namespace GBA
 			return SioEmptyCable;
 
 		default:
-			return (u16)(SioEmptyCable & 0x0003);
+			return (uint16_t)(SioEmptyCable & 0x0003);
 		}
 	}
 }

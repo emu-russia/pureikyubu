@@ -12,7 +12,7 @@ namespace GBA
 {
 	// The bits of KEYINPUT. The frontend fills a mask of KEY_* bits with 1 = pressed; the
 	// register is the complement of that mask.
-	enum KeyBit : u16
+	enum KeyBit : uint16_t
 	{
 		KEY_A = 0x0001,
 		KEY_B = 0x0002,
@@ -28,22 +28,22 @@ namespace GBA
 
 	class Keypad
 	{
-		u16 pressed = 0;		// 1 = the key is held down
-		u16 control = 0;		// 0x04000132 KEYCNT
+		uint16_t pressed = 0;		// 1 = the key is held down
+		uint16_t control = 0;		// 0x04000132 KEYCNT
 
 	public:
 		void Reset();
 
 		/// <summary>Replace the pressed-key mask (the frontend calls this once per frame).</summary>
-		void SetPressed(u16 mask) { pressed = mask; }
+		void SetPressed(uint16_t mask) { pressed = mask; }
 
-		u16 Pressed() const { return pressed; }
+		uint16_t Pressed() const { return pressed; }
 
 		/// <summary>KEYINPUT: the complement of the pressed mask, bits 10-15 read as ones.</summary>
-		u16 ReadKeyInput() const { return (u16)(~pressed & 0x03FF) | 0xFC00; }
+		uint16_t ReadKeyInput() const { return (uint16_t)(~pressed & 0x03FF) | 0xFC00; }
 
-		u16 ReadKeyCnt() const { return control; }
-		void WriteKeyCnt(u16 value) { control = value; }
+		uint16_t ReadKeyCnt() const { return control; }
+		void WriteKeyCnt(uint16_t value) { control = value; }
 
 		/// <summary>True when the keypad condition of KEYCNT is met right now.</summary>
 		bool ConditionMet() const;

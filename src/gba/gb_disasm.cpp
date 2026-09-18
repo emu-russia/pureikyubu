@@ -28,14 +28,14 @@ namespace GBA
 			"00h", "08h", "10h", "18h", "20h", "28h", "30h", "38h",
 		};
 
-		std::string Hex8(u16 value)
+		std::string Hex8(uint16_t value)
 		{
 			char text[16];
 			snprintf(text, sizeof text, "0x%02X", value & 0xFF);
 			return text;
 		}
 
-		std::string Hex16(u16 value)
+		std::string Hex16(uint16_t value)
 		{
 			char text[16];
 			snprintf(text, sizeof text, "0x%04X", value);
@@ -44,10 +44,10 @@ namespace GBA
 
 		/// <summary>The relative offset of a jump, as the signed byte the instruction holds, with
 		/// the absolute target in the comment the listings print.</summary>
-		std::string RelativeTarget(u16 address, u8 offset)
+		std::string RelativeTarget(uint16_t address, uint8_t offset)
 		{
-			s16 relative = (s16)(s8)offset;
-			return Hex16((u16)(address + 3 + relative));
+			int16_t relative = (int16_t)(int8_t)offset;
+			return Hex16((uint16_t)(address + 3 + relative));
 		}
 
 		/// <summary>The 256 entries of the unprefixed opcode map. The placeholders the formatter
@@ -109,11 +109,11 @@ namespace GBA
 			/* 0xFC */ "illegal", "illegal", "cp %b", "rst %k",
 		};
 
-		std::string FormatGbInstruction(const DisasmMemory& memory, u16 address, u8 opcode,
+		std::string FormatGbInstruction(const DisasmMemory& memory, uint16_t address, uint8_t opcode,
 			const char* const* table, int* size)
 		{
 			const char* pattern = table[opcode];
-			u16 immediate = memory.Read8((u16)(address + 1));
+			uint16_t immediate = memory.Read8((uint16_t)(address + 1));
 
 			std::string text;
 			int length = 1;
@@ -151,16 +151,16 @@ namespace GBA
 					length = 2;
 					break;
 				case 'w':									// a sixteen-bit immediate
-					text += Hex16((u16)(immediate | (memory.Read8((u16)(address + 2)) << 8)));
+					text += Hex16((uint16_t)(immediate | (memory.Read8((uint16_t)(address + 2)) << 8)));
 					length = 3;
 					break;
 				case 't':									// a sixteen-bit address
-					text += Hex16((u16)(immediate | (memory.Read8((u16)(address + 2)) << 8)));
+					text += Hex16((uint16_t)(immediate | (memory.Read8((uint16_t)(address + 2)) << 8)));
 					length = 3;
 					break;
 				case 'e':									// a signed byte offset (ADD SP, LD HL,SP+)
-					if ((s8)immediate < 0)
-						text += "-" + Hex8((u16)(-(s8)immediate));
+					if ((int8_t)immediate < 0)
+						text += "-" + Hex8((uint16_t)(-(int8_t)immediate));
 					else
 						text += "+" + Hex8(immediate);
 					length = 2;
@@ -168,7 +168,7 @@ namespace GBA
 				case 'j':									// the target of a relative jump
 					// The SM83 adds the offset to the address *after* the instruction, which for a
 					// two byte JR is address + 2.
-					text += Hex16((u16)(address + 2 + (s16)(s8)immediate));
+					text += Hex16((uint16_t)(address + 2 + (int16_t)(int8_t)immediate));
 					length = 2;
 					break;
 				default:
@@ -183,7 +183,7 @@ namespace GBA
 			return text;
 		}
 
-		std::string DecodeCb(u8 opcode, int* size)
+		std::string DecodeCb(uint8_t opcode, int* size)
 		{
 			// The CB map: eight shifts/rotates, then BIT, RES and SET, each over the eight
 			// register operands (Pan Docs "CPU Opcode Table").
@@ -192,8 +192,8 @@ namespace GBA
 				"rlc", "rrc", "rl", "rr", "sla", "sra", "swap", "srl",
 			};
 
-			u32 group = opcode >> 6;
-			u32 operand = opcode & 7;
+			uint32_t group = opcode >> 6;
+			uint32_t operand = opcode & 7;
 			std::string text;
 
 			if (group == 0)
@@ -213,12 +213,12 @@ namespace GBA
 		}
 	}
 
-	std::string GbDisassemble(const DisasmMemory& memory, u16 address, int* size)
+	std::string GbDisassemble(const DisasmMemory& memory, uint16_t address, int* size)
 	{
-		u8 opcode = memory.Read8(address);
+		uint8_t opcode = memory.Read8(address);
 
 		if (opcode == 0xCB)
-			return DecodeCb(memory.Read8((u16)(address + 1)), size);
+			return DecodeCb(memory.Read8((uint16_t)(address + 1)), size);
 
 		int length = 1;
 		std::string text = FormatGbInstruction(memory, address, opcode, GbOpcodeTable, &length);
@@ -228,15 +228,15 @@ namespace GBA
 		return text;
 	}
 
-	std::string GbInstructionBytes(const DisasmMemory& memory, u16 address, int size)
+	std::string GbInstructionBytes(const DisasmMemory& memory, uint16_t address, int size)
 	{
 		char text[16];
 		if (size == 3)
 			snprintf(text, sizeof text, "%02X%02X%02X", memory.Read8(address),
-				memory.Read8((u16)(address + 1)), memory.Read8((u16)(address + 2)));
+				memory.Read8((uint16_t)(address + 1)), memory.Read8((uint16_t)(address + 2)));
 		else if (size == 2)
 			snprintf(text, sizeof text, "%02X%02X", memory.Read8(address),
-				memory.Read8((u16)(address + 1)));
+				memory.Read8((uint16_t)(address + 1)));
 		else
 			snprintf(text, sizeof text, "%02X", memory.Read8(address));
 		return text;

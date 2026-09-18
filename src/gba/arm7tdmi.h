@@ -29,7 +29,7 @@ namespace GBA
 	class GbaBus;
 
 	// CPSR bits
-	enum : u32
+	enum : uint32_t
 	{
 		FlagN = 1u << 31,
 		FlagZ = 1u << 30,
@@ -76,22 +76,22 @@ namespace GBA
 		// -- registers ---------------------------------------------------------------------
 
 		/// <summary>The current register file (mode-banked), index 0..15.</summary>
-		u32 Reg(int index) const;
+		uint32_t Reg(int index) const;
 
 		/// <summary>Write a register of the *current* mode.</summary>
-		void SetReg(int index, u32 value);
+		void SetReg(int index, uint32_t value);
 
 		/// <summary>The address of the instruction being executed (PC is r15 + 8 in ARM / + 4 in Thumb).</summary>
-		u32 CurrentPC() const { return currentPC; }
+		uint32_t CurrentPC() const { return currentPC; }
 
 		/// <summary>Force the PC (the low bit selects the Thumb state, as BX does).</summary>
-		void BranchTo(u32 address) { BranchInternal(address); }
+		void BranchTo(uint32_t address) { BranchInternal(address); }
 
-		u32 ReadCPSR() const { return cpsr; }
-		void WriteCPSR(u32 value) { cpsr = value & 0xF00000FFu | (cpsr & 0x0FFFFF00u & ~0xFF); cpsr = value; }
+		uint32_t ReadCPSR() const { return cpsr; }
+		void WriteCPSR(uint32_t value) { cpsr = value & 0xF00000FFu | (cpsr & 0x0FFFFF00u & ~0xFF); cpsr = value; }
 
 		/// <summary>The SPSR of the current mode (0 when the mode has none).</summary>
-		u32 ReadSPSR() const;
+		uint32_t ReadSPSR() const;
 
 		bool ThumbState() const { return (cpsr & FlagT) != 0; }
 
@@ -103,19 +103,19 @@ namespace GBA
 		// -- exceptions --------------------------------------------------------------------
 
 		/// <summary>Take the exception for `vector`, entering `mode` with the given CPSR mask.</summary>
-		void Exception(u32 vector, CpuMode mode, u32 cpsrMask);
+		void Exception(uint32_t vector, CpuMode mode, uint32_t cpsrMask);
 
 		/// <summary>True while the CPU is inside an exception handler that has no SPSR waiting.</summary>
 		bool InException() const { return Mode() != ModeUser && Mode() != ModeSystem; }
 
 		// -- statistics (used by the tests and the harness) --------------------------------
 
-		u64 RetiredInstructions() const { return retired; }
+		uint64_t RetiredInstructions() const { return retired; }
 		void ResetStatistics() { retired = 0; }
 
 		/// <summary>Number of instructions the decoder did not recognize as valid (they take the
 		/// undefined exception, so a non-zero count usually means a bug in the ROM or in us).</summary>
-		u64 UndefinedInstructions() const { return undefinedCount; }
+		uint64_t UndefinedInstructions() const { return undefinedCount; }
 
 	private:
 		GbaBus* bus = nullptr;
@@ -125,20 +125,20 @@ namespace GBA
 		// r0-r7 and r15 are shared, the rest are banked.
 		//
 		// bank[0] is the User/System set, which every mode uses for r8-r12 except FIQ.
-		u32 regs[16]{};				// the current window (a copy of the active bank)
-		u32 bankR13[7]{};			// r13 (SP) per mode
-		u32 bankR14[7]{};			// r14 (LR) per mode
-		u32 bankR8_12[2][5]{};		// r8-r12: [0] = normal, [1] = FIQ
-		u32 bankSPSR[6]{};			// SPSR per exception mode
-		u32 cpsr = 0;
-		u32 currentPC = 0;
+		uint32_t regs[16]{};			// the current window (a copy of the active bank)
+		uint32_t bankR13[7]{};			// r13 (SP) per mode
+		uint32_t bankR14[7]{};			// r14 (LR) per mode
+		uint32_t bankR8_12[2][5]{};		// r8-r12: [0] = normal, [1] = FIQ
+		uint32_t bankSPSR[6]{};			// SPSR per exception mode
+		uint32_t cpsr = 0;
+		uint32_t currentPC = 0;
 
 		bool halted = false;
-		u64 retired = 0;
-		u64 undefinedCount = 0;
+		uint64_t retired = 0;
+		uint64_t undefinedCount = 0;
 
 		int bankIndex(CpuMode mode) const;
-		CpuMode nextMode(u32 cpsrBits) const;
+		CpuMode nextMode(uint32_t cpsrBits) const;
 
 		// Bank the registers out of `regs` into the arrays of the current mode and back in for
 		// `mode` (the two halves of SwitchMode).
@@ -146,10 +146,10 @@ namespace GBA
 		void LoadBank(CpuMode mode);
 
 		// Pipeline helpers: the PC value an instruction sees.
-		u32 ReadRegFor(int index) const;
-		void BranchInternal(u32 address);
+		uint32_t ReadRegFor(int index) const;
+		void BranchInternal(uint32_t address);
 
-		void SetFlag(u32 flag, bool set) { if (set) cpsr |= flag; else cpsr &= ~flag; }
+		void SetFlag(uint32_t flag, bool set) { if (set) cpsr |= flag; else cpsr &= ~flag; }
 
 		// -- decoders ----------------------------------------------------------------------
 
@@ -157,49 +157,49 @@ namespace GBA
 		int StepThumb();
 
 		// Data processing (ARM and Thumb share the ALU core).
-		u32 ShiftOperand(u32 value, u32 type, u32 amount, bool& carry);
+		uint32_t ShiftOperand(uint32_t value, uint32_t type, uint32_t amount, bool& carry);
 		// The same, for a shift whose amount comes from a register: an amount of 0 there is a
 		// shift by nothing that leaves C alone, where the immediate encodings mean "32" (LSR and
 		// ASR) or RRX (ROR). See arm7tdmi.cpp and ARM Architecture Reference Manual A5.1.1.
-		u32 ShiftOperandByRegister(u32 value, u32 type, u32 amount, bool& carry);
-		bool ConditionPassed(u32 condition) const;
-		u32 AddWithCarry(u32 a, u32 b, u32 carryIn, bool& carry, bool& overflow);
-		void SetLogicFlags(u32 result, bool carry);
-		void SetArithFlags(u32 result, bool carry, bool overflow);
+		uint32_t ShiftOperandByRegister(uint32_t value, uint32_t type, uint32_t amount, bool& carry);
+		bool ConditionPassed(uint32_t condition) const;
+		uint32_t AddWithCarry(uint32_t a, uint32_t b, uint32_t carryIn, bool& carry, bool& overflow);
+		void SetLogicFlags(uint32_t result, bool carry);
+		void SetArithFlags(uint32_t result, bool carry, bool overflow);
 
-		u32 ArmDataProcessing(u32 opcode);
-		u32 ArmLoadStore(u32 opcode);
-		u32 ArmBlockTransfer(u32 opcode);
-		u32 ArmBranch(u32 opcode);
-		u32 ArmMultiply(u32 opcode);
-		u32 ArmHalfwordTransfer(u32 opcode);
-		u32 ArmSwi(u32 opcode);
-		u32 ArmCoprocessor(u32 opcode);
+		uint32_t ArmDataProcessing(uint32_t opcode);
+		uint32_t ArmLoadStore(uint32_t opcode);
+		uint32_t ArmBlockTransfer(uint32_t opcode);
+		uint32_t ArmBranch(uint32_t opcode);
+		uint32_t ArmMultiply(uint32_t opcode);
+		uint32_t ArmHalfwordTransfer(uint32_t opcode);
+		uint32_t ArmSwi(uint32_t opcode);
+		uint32_t ArmCoprocessor(uint32_t opcode);
 
-		u32 ThumbShiftImmediate(u16 opcode);
-		u32 ThumbAddSubtract(u16 opcode);
-		u32 ThumbMovCmpAddSub(u16 opcode);
-		u32 ThumbAluOperation(u16 opcode);
-		u32 ThumbHiRegister(u16 opcode);
-		u32 ThumbPcRelativeLoad(u16 opcode);
-		u32 ThumbLoadStoreReg(u16 opcode);
-		u32 ThumbLoadStoreSignExtend(u16 opcode);
-		u32 ThumbLoadStoreImmediate(u16 opcode);
-		u32 ThumbLoadStoreHalfword(u16 opcode);
-		u32 ThumbLoadStoreSpRelative(u16 opcode);
-		u32 ThumbLoadAddress(u16 opcode);
-		u32 ThumbAddOffsetToSp(u16 opcode);
-		u32 ThumbPushPop(u16 opcode);
-		u32 ThumbMultipleTransfer(u16 opcode);
-		u32 ThumbConditionalBranch(u16 opcode);
-		u32 ThumbSwi(u16 opcode);
-		u32 ThumbUnconditionalBranch(u16 opcode);
-		u32 ThumbLongBranchWithLink(u16 opcode);
+		uint32_t ThumbShiftImmediate(uint16_t opcode);
+		uint32_t ThumbAddSubtract(uint16_t opcode);
+		uint32_t ThumbMovCmpAddSub(uint16_t opcode);
+		uint32_t ThumbAluOperation(uint16_t opcode);
+		uint32_t ThumbHiRegister(uint16_t opcode);
+		uint32_t ThumbPcRelativeLoad(uint16_t opcode);
+		uint32_t ThumbLoadStoreReg(uint16_t opcode);
+		uint32_t ThumbLoadStoreSignExtend(uint16_t opcode);
+		uint32_t ThumbLoadStoreImmediate(uint16_t opcode);
+		uint32_t ThumbLoadStoreHalfword(uint16_t opcode);
+		uint32_t ThumbLoadStoreSpRelative(uint16_t opcode);
+		uint32_t ThumbLoadAddress(uint16_t opcode);
+		uint32_t ThumbAddOffsetToSp(uint16_t opcode);
+		uint32_t ThumbPushPop(uint16_t opcode);
+		uint32_t ThumbMultipleTransfer(uint16_t opcode);
+		uint32_t ThumbConditionalBranch(uint16_t opcode);
+		uint32_t ThumbSwi(uint16_t opcode);
+		uint32_t ThumbUnconditionalBranch(uint16_t opcode);
+		uint32_t ThumbLongBranchWithLink(uint16_t opcode);
 
 		// Shared memory helpers with the ARM rotation and alignment rules.
-		u32 LoadWord(u32 address, bool& aligned);
-		u32 LoadHalfword(u32 address);
-		u32 LoadByte(u32 address);
+		uint32_t LoadWord(uint32_t address, bool& aligned);
+		uint32_t LoadHalfword(uint32_t address);
+		uint32_t LoadByte(uint32_t address);
 
 		// The number of S cycles a register list transfer takes (ARM7TDMI timing model).
 		int BlockTransferCycles(int count, bool thumb);

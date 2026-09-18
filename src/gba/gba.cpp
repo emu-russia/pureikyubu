@@ -111,7 +111,7 @@ namespace GBA
 
 		if (settings.useCustomBootRom)
 		{
-			const std::vector<u8>* image = nullptr;
+			const std::vector<uint8_t>* image = nullptr;
 
 			if (TrySetup("building the boot ROM", [&] { image = &BootRom::GbaImage(); }))
 			{
@@ -147,7 +147,7 @@ namespace GBA
 			return false;
 		}
 
-		std::vector<u8> image(BiosSize, 0xFF);
+		std::vector<uint8_t> image(BiosSize, 0xFF);
 		size_t read = fread(image.data(), 1, BiosSize, f);
 		fclose(f);
 
@@ -213,7 +213,7 @@ namespace GBA
 		return true;
 	}
 
-	bool GbaSystem::LoadRomImage(const std::vector<u8>& image, std::string& error)
+	bool GbaSystem::LoadRomImage(const std::vector<uint8_t>& image, std::string& error)
 	{
 		if (!bus->cart.LoadRom(image, error))
 		{
@@ -324,8 +324,8 @@ namespace GBA
 
 		// A frame is 228 scanlines; the guard is only there so that a hung ROM cannot hang the
 		// frontend (the CPU is under the ROM's control, and the emulator never blocks on it).
-		u64 guard = 0;
-		const u64 maxCycles = (u64)CyclesPerFrame * 4;
+		uint64_t guard = 0;
+		const uint64_t maxCycles = (uint64_t)CyclesPerFrame * 4;
 
 		while (bus->ppu.FrameCounter() == frame && guard < maxCycles)
 		{
@@ -353,12 +353,12 @@ namespace GBA
 	// Input and output
 	// ---------------------------------------------------------------------------------------
 
-	void GbaSystem::SetPressedKeys(u16 mask)
+	void GbaSystem::SetPressedKeys(uint16_t mask)
 	{
 		bus->keypad.SetPressed(mask);
 	}
 
-	int GbaSystem::ReadAudio(s16* out, int maxFrames)
+	int GbaSystem::ReadAudio(int16_t* out, int maxFrames)
 	{
 		if (!settings.audioEnabled)
 		{
@@ -372,7 +372,7 @@ namespace GBA
 		{
 			for (int i = 0; i < frames * 2; i++)
 			{
-				out[i] = (s16)((out[i] * settings.volume) / 100);
+				out[i] = (int16_t)((out[i] * settings.volume) / 100);
 			}
 		}
 

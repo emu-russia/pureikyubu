@@ -39,7 +39,7 @@ namespace GBA
 	namespace GbBootRom
 	{
 		/// <summary>The 256 byte DMG boot ROM image.</summary>
-		const std::vector<u8>& DmgImage();
+		const std::vector<uint8_t>& DmgImage();
 
 		/// <summary>
 		/// The 256 byte CGB boot ROM image. It differs from the DMG one only in the register state
@@ -47,7 +47,7 @@ namespace GBA
 		/// does not implement the CGB's compatibility palette tables, so there is no second
 		/// animation to run.
 		/// </summary>
-		const std::vector<u8>& CgbImage();
+		const std::vector<uint8_t>& CgbImage();
 
 		/// <summary>How many frames the wordmark animation lasts (the slide plus the hold).</summary>
 		int AnimationFrames();
@@ -57,7 +57,7 @@ namespace GBA
 
 		/// <summary>The 8x8 letter of the wordmark, for the tests: the colour index of every
 		/// pixel, left to right and top to bottom.</summary>
-		u8 LetterPixel(int letter, int x, int y);
+		uint8_t LetterPixel(int letter, int x, int y);
 
 		/// <summary>The number of letters in the wordmark ("pureikyubu" has nine distinct ones
 		/// because the two U's share a tile).</summary>
@@ -76,10 +76,10 @@ namespace GBA
 		/// </summary>
 		struct Layout
 		{
-			u16 codeEnd = 0;		// the first free byte after the code
-			u16 tileData = 0;		// the eight letters, six bytes each (one bitplane a row)
-			u16 wordmark = 0;		// the map row that spells out "pureikyubu"
-			u16 imageEnd = 0;		// the last byte the ROM uses
+			uint16_t codeEnd = 0;		// the first free byte after the code
+			uint16_t tileData = 0;		// the eight letters, six bytes each (one bitplane a row)
+			uint16_t wordmark = 0;		// the map row that spells out "pureikyubu"
+			uint16_t imageEnd = 0;		// the last byte the ROM uses
 		};
 
 		/// <summary>The layout of the image.</summary>

@@ -26,7 +26,7 @@ namespace GBA
 	/// Cart::ReadGpio/WriteGpio implement. The bus therefore hands the whole window to the
 	/// cartridge and lets it decide.
 	/// </summary>
-	static bool IsGpioAddress(u32 address)
+	static bool IsGpioAddress(uint32_t address)
 	{
 		// The window is exactly the three registers (0xC4 data, 0xC6 direction, 0xC8 control), not
 		// the whole header: a cartridge whose entry code sits at 0x080000C0 (the harness's own
@@ -78,7 +78,7 @@ namespace GBA
 		UpdateWaitStates();
 	}
 
-	void GbaBus::SetBios(const u8* data, size_t size)
+	void GbaBus::SetBios(const uint8_t* data, size_t size)
 	{
 		bios.Fill(0xFF);
 
@@ -116,9 +116,9 @@ namespace GBA
 	// The region decode
 	// ---------------------------------------------------------------------------------------
 
-	u8 GbaBus::Read8(u32 address)
+	uint8_t GbaBus::Read8(uint32_t address)
 	{
-		u32 region = address >> 24;
+		uint32_t region = address >> 24;
 
 		switch (region)
 		{
@@ -127,24 +127,24 @@ namespace GBA
 				if (address < BiosSize)
 				{
 					openBus = (openBus & 0xFFFFFF00u) | bios.Read8(address);
-					return (u8)openBus;
+					return (uint8_t)openBus;
 				}
-				return (u8)(openBus >> ((address & 3) * 8));
+				return (uint8_t)(openBus >> ((address & 3) * 8));
 
 			case 0x02:
 				openBus = (openBus & 0xFFFFFF00u) | ewram.Read8(address - MemEwram);
-				return (u8)openBus;
+				return (uint8_t)openBus;
 
 			case 0x03:
 				openBus = (openBus & 0xFFFFFF00u) | iwram.Read8(address - MemIwram);
-				return (u8)openBus;
+				return (uint8_t)openBus;
 
 			case 0x04:
 				return ReadIo8(address & (IoSize - 1));
 
 			case 0x05:
 				openBus = (openBus & 0xFFFFFF00u) | ppu.ReadPalette(address & (PaletteSize - 1));
-				return (u8)openBus;
+				return (uint8_t)openBus;
 
 			case 0x06:
 				// VRAM is mirrored by the PPU itself (with a modulo - 96 KByte is not a power of
@@ -152,17 +152,17 @@ namespace GBA
 				// the second 32 KByte onto the first, which is exactly what a mode 3 bitmap must
 				// not do).
 				openBus = (openBus & 0xFFFFFF00u) | ppu.ReadVram(address);
-				return (u8)openBus;
+				return (uint8_t)openBus;
 
 			case 0x07:
 				openBus = (openBus & 0xFFFFFF00u) | ppu.ReadOam(address & (OamSize - 1));
-				return (u8)openBus;
+				return (uint8_t)openBus;
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
 			{
 				AddWaitCycles(cart.WaitStates(address, true, waitcnt));
 
-				u8 value = IsGpioAddress(address) ? cart.ReadGpio(address) : cart.ReadRom8(address);
+				uint8_t value = IsGpioAddress(address) ? cart.ReadGpio(address) : cart.ReadRom8(address);
 				openBus = (openBus & 0xFFFFFF00u) | value;
 				return value;
 			}
@@ -170,41 +170,41 @@ namespace GBA
 			case 0x0E: case 0x0F:
 				AddWaitCycles(sramWait);
 				openBus = (openBus & 0xFFFFFF00u) | cart.ReadSave(address - MemSram);
-				return (u8)openBus;
+				return (uint8_t)openBus;
 
 			default:
 				// Unmapped: the last value the bus drove, as the hardware leaves floating.
-				return (u8)(openBus >> ((address & 3) * 8));
+				return (uint8_t)(openBus >> ((address & 3) * 8));
 		}
 	}
 
-	u16 GbaBus::Read16(u32 address)
+	uint16_t GbaBus::Read16(uint32_t address)
 	{
 		address &= ~1u;
 
-		u32 region = address >> 24;
+		uint32_t region = address >> 24;
 
 		switch (region)
 		{
 			case 0x00:
 				if (address < BiosSize)
 				{
-					u16 value = bios.Read16(address);
+					uint16_t value = bios.Read16(address);
 					openBus = value;
 					return value;
 				}
-				return (u16)openBus;
+				return (uint16_t)openBus;
 
 			case 0x02:
 			{
-				u16 value = ewram.Read16(address - MemEwram);
+				uint16_t value = ewram.Read16(address - MemEwram);
 				openBus = value;
 				return value;
 			}
 
 			case 0x03:
 			{
-				u16 value = iwram.Read16(address - MemIwram);
+				uint16_t value = iwram.Read16(address - MemIwram);
 				openBus = value;
 				return value;
 			}
@@ -216,14 +216,14 @@ namespace GBA
 			{
 				// A whole palette entry, not two byte reads: a byte read of the palette has the
 				// hardware's OR rule (see Ppu::ReadPalette16).
-				u16 value = ppu.ReadPalette16(address & (PaletteSize - 1));
+				uint16_t value = ppu.ReadPalette16(address & (PaletteSize - 1));
 				openBus = value;
 				return value;
 			}
 
 			case 0x06:
 			{
-				u16 value = (u16)(ppu.ReadVram(address)
+				uint16_t value = (uint16_t)(ppu.ReadVram(address)
 					| (ppu.ReadVram(address + 1) << 8));
 				openBus = value;
 				return value;
@@ -231,7 +231,7 @@ namespace GBA
 
 			case 0x07:
 			{
-				u16 value = (u16)(ppu.ReadOam(address & (OamSize - 1))
+				uint16_t value = (uint16_t)(ppu.ReadOam(address & (OamSize - 1))
 					| (ppu.ReadOam((address + 1) & (OamSize - 1)) << 8));
 				openBus = value;
 				return value;
@@ -241,7 +241,7 @@ namespace GBA
 			{
 				AddWaitCycles(cart.WaitStates(address, true, waitcnt));
 
-				u16 value;
+				uint16_t value;
 
 				if (IsGpioAddress(address))
 				{
@@ -251,7 +251,7 @@ namespace GBA
 					// the entry area (0x080000C0 and up, which real cartridges use) work: with the
 					// port switched off, Cart::ReadGpio returns the ROM byte, so the halfword is
 					// exactly the ROM's.
-					value = (u16)(cart.ReadGpio(address) | (cart.ReadRom8(address + 1) << 8));
+					value = (uint16_t)(cart.ReadGpio(address) | (cart.ReadRom8(address + 1) << 8));
 				}
 				else
 				{
@@ -265,30 +265,30 @@ namespace GBA
 			case 0x0E: case 0x0F:
 			{
 				AddWaitCycles(sramWait);
-				u16 value = (u16)(cart.ReadSave(address - MemSram)
+				uint16_t value = (uint16_t)(cart.ReadSave(address - MemSram)
 					| (cart.ReadSave(address + 1 - MemSram) << 8));
 				openBus = value;
 				return value;
 			}
 
 			default:
-				return (u16)openBus;
+				return (uint16_t)openBus;
 		}
 	}
 
 	// The debugger's view of the address space: the same decode as Read16, without the waitstates
 	// and without the open-bus latch. A debugger walks memory continuously (a disassembly, a
 	// memory panel), so the read it performs must not move the machine.
-	u16 GbaBus::Peek16(u32 address) const
+	uint16_t GbaBus::Peek16(uint32_t address) const
 	{
 		address &= ~1u;
 
-		u32 region = address >> 24;
+		uint32_t region = address >> 24;
 
 		switch (region)
 		{
 			case 0x00:
-				return (address < BiosSize) ? bios.Read16(address) : (u16)openBus;
+				return (address < BiosSize) ? bios.Read16(address) : (uint16_t)openBus;
 
 			case 0x02:
 				return ewram.Read16(address - MemEwram);
@@ -303,10 +303,10 @@ namespace GBA
 				return ppu.ReadPalette16(address & (PaletteSize - 1));
 
 			case 0x06:
-				return (u16)(ppu.ReadVram(address) | (ppu.ReadVram(address + 1) << 8));
+				return (uint16_t)(ppu.ReadVram(address) | (ppu.ReadVram(address + 1) << 8));
 
 			case 0x07:
-				return (u16)(ppu.ReadOam(address & (OamSize - 1))
+				return (uint16_t)(ppu.ReadOam(address & (OamSize - 1))
 					| (ppu.ReadOam((address + 1) & (OamSize - 1)) << 8));
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
@@ -316,36 +316,36 @@ namespace GBA
 					// is a side effect a debugger must not have, so the GPIO window is read the way
 					// a cartridge without the port answers: the ROM bytes at the register addresses
 					// (GBATEK "GBA GPIO", write-only mode).
-					u32 reg = address & 0xFF;
-					u8 romByte = (reg == 0x04 || reg == 0xC4) ? cart.ReadRom8(0xC4)
+					uint32_t reg = address & 0xFF;
+					uint8_t romByte = (reg == 0x04 || reg == 0xC4) ? cart.ReadRom8(0xC4)
 						: ((reg == 0x06 || reg == 0xC6) ? cart.ReadRom8(0xC6) : cart.ReadRom8(0xC8));
-					u8 second = (reg == 0x08 || reg == 0xC8) ? cart.ReadRom8(0xC9) : cart.ReadRom8(reg + 1);
-					return (u16)(romByte | (second << 8));
+					uint8_t second = (reg == 0x08 || reg == 0xC8) ? cart.ReadRom8(0xC9) : cart.ReadRom8(reg + 1);
+					return (uint16_t)(romByte | (second << 8));
 				}
 
 				return cart.ReadRom16(address);
 
 			case 0x0E: case 0x0F:
-				return (u16)(cart.PeekSave(address - MemSram)
+				return (uint16_t)(cart.PeekSave(address - MemSram)
 					| (cart.PeekSave(address + 1 - MemSram) << 8));
 
 			default:
-				return (u16)openBus;
+				return (uint16_t)openBus;
 		}
 	}
 
-	u32 GbaBus::Read32(u32 address)
+	uint32_t GbaBus::Read32(uint32_t address)
 	{
 		address &= ~3u;
 
-		u32 region = address >> 24;
+		uint32_t region = address >> 24;
 
 		switch (region)
 		{
 			case 0x00:
 				if (address < BiosSize)
 				{
-					u32 value = bios.Read32(address);
+					uint32_t value = bios.Read32(address);
 					openBus = value;
 					return value;
 				}
@@ -353,37 +353,37 @@ namespace GBA
 
 			case 0x02:
 			{
-				u32 value = ewram.Read32(address - MemEwram);
+				uint32_t value = ewram.Read32(address - MemEwram);
 				openBus = value;
 				return value;
 			}
 
 			case 0x03:
 			{
-				u32 value = iwram.Read32(address - MemIwram);
+				uint32_t value = iwram.Read32(address - MemIwram);
 				openBus = value;
 				return value;
 			}
 
 			case 0x04:
-				return (u32)ReadIo16(address & (IoSize - 1))
-					| ((u32)ReadIo16((address + 2) & (IoSize - 1)) << 16);
+				return (uint32_t)ReadIo16(address & (IoSize - 1))
+					| ((uint32_t)ReadIo16((address + 2) & (IoSize - 1)) << 16);
 
 			case 0x05:
 			{
-				u32 value = (u32)Read16(address) | ((u32)Read16(address + 2) << 16);
+				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
 				return value;
 			}
 
 			case 0x06:
 			{
-				u32 value = (u32)Read16(address) | ((u32)Read16(address + 2) << 16);
+				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
 				return value;
 			}
 
 			case 0x07:
 			{
-				u32 value = (u32)Read16(address) | ((u32)Read16(address + 2) << 16);
+				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
 				return value;
 			}
 
@@ -391,15 +391,15 @@ namespace GBA
 			{
 				AddWaitCycles(cart.WaitStates(address, true, waitcnt) * 2);
 
-				u32 value;
+				uint32_t value;
 
 				if (IsGpioAddress(address))
 				{
 					// See Read16: only the register's own byte is the port, the rest is ROM.
-					value = (u32)cart.ReadGpio(address)
-						| ((u32)cart.ReadRom8(address + 1) << 8)
-						| ((u32)cart.ReadRom8(address + 2) << 16)
-						| ((u32)cart.ReadRom8(address + 3) << 24);
+					value = (uint32_t)cart.ReadGpio(address)
+						| ((uint32_t)cart.ReadRom8(address + 1) << 8)
+						| ((uint32_t)cart.ReadRom8(address + 2) << 16)
+						| ((uint32_t)cart.ReadRom8(address + 3) << 24);
 				}
 				else
 				{
@@ -413,10 +413,10 @@ namespace GBA
 			case 0x0E: case 0x0F:
 			{
 				AddWaitCycles(sramWait * 2);
-				u32 value = (u32)cart.ReadSave(address - MemSram)
-					| ((u32)cart.ReadSave(address + 1 - MemSram) << 8)
-					| ((u32)cart.ReadSave(address + 2 - MemSram) << 16)
-					| ((u32)cart.ReadSave(address + 3 - MemSram) << 24);
+				uint32_t value = (uint32_t)cart.ReadSave(address - MemSram)
+					| ((uint32_t)cart.ReadSave(address + 1 - MemSram) << 8)
+					| ((uint32_t)cart.ReadSave(address + 2 - MemSram) << 16)
+					| ((uint32_t)cart.ReadSave(address + 3 - MemSram) << 24);
 				openBus = value;
 				return value;
 			}
@@ -426,9 +426,9 @@ namespace GBA
 		}
 	}
 
-	void GbaBus::Write8(u32 address, u8 value)
+	void GbaBus::Write8(uint32_t address, uint8_t value)
 	{
-		u32 region = address >> 24;
+		uint32_t region = address >> 24;
 
 		switch (region)
 		{
@@ -463,7 +463,7 @@ namespace GBA
 				// inside the 0x10000-0x17FFF window (the object tile data) is ignored by the
 				// hardware, and everywhere else the byte is duplicated into both lanes of the
 				// halfword (checked by the `memory` test ROM of `jsmolka/gba-tests`).
-				u32 offset = address % VramSize;
+				uint32_t offset = address % VramSize;
 
 				if (offset < 0x10000)
 				{
@@ -501,11 +501,11 @@ namespace GBA
 		}
 	}
 
-	void GbaBus::Write16(u32 address, u16 value)
+	void GbaBus::Write16(uint32_t address, uint16_t value)
 	{
 		address &= ~1u;
 
-		u32 region = address >> 24;
+		uint32_t region = address >> 24;
 
 		switch (region)
 		{
@@ -530,8 +530,8 @@ namespace GBA
 
 			case 0x06:
 				// The mirroring is the PPU's business (see Read16/Read8 above).
-				ppu.WriteVram(address, (u8)value);
-				ppu.WriteVram(address + 1, (u8)(value >> 8));
+				ppu.WriteVram(address, (uint8_t)value);
+				ppu.WriteVram(address + 1, (uint8_t)(value >> 8));
 				break;
 
 			case 0x07:
@@ -543,8 +543,8 @@ namespace GBA
 
 				if (IsGpioAddress(address))
 				{
-					cart.WriteGpio(address, (u8)value);
-					cart.WriteGpio(address + 1, (u8)(value >> 8));
+					cart.WriteGpio(address, (uint8_t)value);
+					cart.WriteGpio(address + 1, (uint8_t)(value >> 8));
 				}
 				else
 				{
@@ -554,8 +554,8 @@ namespace GBA
 
 			case 0x0E: case 0x0F:
 				AddWaitCycles(sramWait);
-				cart.WriteSave(address - MemSram, (u8)value);
-				cart.WriteSave(address + 1 - MemSram, (u8)(value >> 8));
+				cart.WriteSave(address - MemSram, (uint8_t)value);
+				cart.WriteSave(address + 1 - MemSram, (uint8_t)(value >> 8));
 				break;
 
 			default:
@@ -563,22 +563,22 @@ namespace GBA
 		}
 	}
 
-	void GbaBus::Write32(u32 address, u32 value)
+	void GbaBus::Write32(uint32_t address, uint32_t value)
 	{
 		// A 32-bit write is two 16-bit writes, which is exactly what the 16-bit bus does; the
 		// order matters for the peripherals that auto-increment (the FIFOs), so the halves are
 		// written low first, as the hardware does.
-		Write16(address, (u16)value);
-		Write16(address + 2, (u16)(value >> 16));
+		Write16(address, (uint16_t)value);
+		Write16(address + 2, (uint16_t)(value >> 16));
 	}
 
 	// ---------------------------------------------------------------------------------------
 	// Code fetches
 	// ---------------------------------------------------------------------------------------
 
-	u16 GbaBus::Fetch16(u32 address)
+	uint16_t GbaBus::Fetch16(uint32_t address)
 	{
-		u16 value = Read16(address);
+		uint16_t value = Read16(address);
 
 		// A code fetch from the cartridge also runs the prefetch buffer. The buffer is modelled
 		// as "the second access is free when it is enabled" in Cart::WaitStates, so nothing else
@@ -587,11 +587,11 @@ namespace GBA
 		return value;
 	}
 
-	u32 GbaBus::Fetch32(u32 address)
+	uint32_t GbaBus::Fetch32(uint32_t address)
 	{
 		// An ARM instruction fetch is two 16-bit fetches on the cartridge bus.
-		u32 low = Read16(address);
-		u32 high = Read16(address + 2);
+		uint32_t low = Read16(address);
+		uint32_t high = Read16(address + 2);
 		openBus = low | (high << 16);
 		return low | (high << 16);
 	}
@@ -600,36 +600,36 @@ namespace GBA
 	// The I/O register file
 	// ---------------------------------------------------------------------------------------
 
-	u16 GbaBus::ReadIo16(u32 offset)
+	uint16_t GbaBus::ReadIo16(uint32_t offset)
 	{
 		offset &= 0x3FE;
 
-		u16 open16 = (u16)openBus;
+		uint16_t open16 = (uint16_t)openBus;
 
 		if (offset <= 0x05E)
 		{
-			u16 value = ppu.Read16(offset, open16);
+			uint16_t value = ppu.Read16(offset, open16);
 			openBus = value;
 			return value;
 		}
 
 		if (offset >= 0x060 && offset <= 0x0A6)
 		{
-			u16 value = (u16)(apu.Read8(offset, (u8)open16) | (apu.Read8(offset + 1, (u8)(open16 >> 8)) << 8));
+			uint16_t value = (uint16_t)(apu.Read8(offset, (uint8_t)open16) | (apu.Read8(offset + 1, (uint8_t)(open16 >> 8)) << 8));
 			openBus = value;
 			return value;
 		}
 
 		if (offset >= 0x0B0 && offset <= 0x0DE)
 		{
-			u16 value = dma.Read16(offset, open16);
+			uint16_t value = dma.Read16(offset, open16);
 			openBus = value;
 			return value;
 		}
 
 		if (offset >= 0x100 && offset <= 0x10E)
 		{
-			u16 value = timers.Read16(offset);
+			uint16_t value = timers.Read16(offset);
 			openBus = value;
 			return value;
 		}
@@ -637,21 +637,21 @@ namespace GBA
 		if (offset == 0x130)
 		{
 			// KEYINPUT: a byte access mirrors the low byte in both lanes (GBATEK 4000130h).
-			u16 value = keypad.ReadKeyInput();
+			uint16_t value = keypad.ReadKeyInput();
 			openBus = value;
 			return value;
 		}
 
 		if (offset == 0x132)
 		{
-			u16 value = keypad.ReadKeyCnt();
+			uint16_t value = keypad.ReadKeyCnt();
 			openBus = value;
 			return value;
 		}
 
 		if (offset >= 0x120 && offset <= 0x15A)
 		{
-			u16 value = sio.Read16(*this, offset, open16);
+			uint16_t value = sio.Read16(*this, offset, open16);
 			openBus = value;
 			return value;
 		}
@@ -668,25 +668,25 @@ namespace GBA
 		return open16;
 	}
 
-	u8 GbaBus::ReadIo8(u32 offset)
+	uint8_t GbaBus::ReadIo8(uint32_t offset)
 	{
 		offset &= (IoSize - 1);
 
 		// The byte lanes of a 16-bit register: the byte the CPU addressed, unless the hardware
 		// mirrors the low byte in both lanes.
-		u8 open8 = (u8)openBus;
+		uint8_t open8 = (uint8_t)openBus;
 
 		if (offset <= 0x05F)
 		{
-			u16 value = ppu.Read16(offset & ~1u, (u16)openBus);
+			uint16_t value = ppu.Read16(offset & ~1u, (uint16_t)openBus);
 
 			// GREENSWP (0x04000004) mirrors its low byte into both lanes.
 			if ((offset & ~1u) == 0x004)
 			{
-				return (u8)value;
+				return (uint8_t)value;
 			}
 
-			return (u8)(value >> ((offset & 1) * 8));
+			return (uint8_t)(value >> ((offset & 1) * 8));
 		}
 
 		if (offset >= 0x060 && offset <= 0x0A7)
@@ -696,25 +696,25 @@ namespace GBA
 
 		if (offset >= 0x0B0 && offset <= 0x0DF)
 		{
-			u16 value = dma.Read16(offset & ~1u, (u16)openBus);
-			return (u8)(value >> ((offset & 1) * 8));
+			uint16_t value = dma.Read16(offset & ~1u, (uint16_t)openBus);
+			return (uint8_t)(value >> ((offset & 1) * 8));
 		}
 
 		if (offset >= 0x100 && offset <= 0x10F)
 		{
-			u16 value = timers.Read16(offset & ~1u);
-			return (u8)(value >> ((offset & 1) * 8));
+			uint16_t value = timers.Read16(offset & ~1u);
+			return (uint8_t)(value >> ((offset & 1) * 8));
 		}
 
 		if (offset == 0x130 || offset == 0x131)
 		{
 			// A byte read of KEYINPUT returns the low byte in both lanes.
-			return (u8)keypad.ReadKeyInput();
+			return (uint8_t)keypad.ReadKeyInput();
 		}
 
 		if (offset == 0x132 || offset == 0x133)
 		{
-			return (u8)(keypad.ReadKeyCnt() >> ((offset & 1) * 8));
+			return (uint8_t)(keypad.ReadKeyCnt() >> ((offset & 1) * 8));
 		}
 
 		if (offset >= 0x120 && offset <= 0x15B)
@@ -724,19 +724,19 @@ namespace GBA
 
 		switch (offset)
 		{
-			case 0x200: case 0x201: return (u8)(irq.ReadIE() >> ((offset & 1) * 8));
-			case 0x202: case 0x203: return (u8)(irq.ReadIF() >> ((offset & 1) * 8));
-			case 0x204: case 0x205: return (u8)(waitcnt >> ((offset & 1) * 8));
+			case 0x200: case 0x201: return (uint8_t)(irq.ReadIE() >> ((offset & 1) * 8));
+			case 0x202: case 0x203: return (uint8_t)(irq.ReadIF() >> ((offset & 1) * 8));
+			case 0x204: case 0x205: return (uint8_t)(waitcnt >> ((offset & 1) * 8));
 			case 0x208: case 0x209: return irq.ReadIME() ? 1 : 0;
 			case 0x300: return postFlg;
-			case 0x301: return (u8)haltState;
+			case 0x301: return (uint8_t)haltState;
 			default: break;
 		}
 
 		return open8;
 	}
 
-	void GbaBus::WriteIo16(u32 offset, u16 value)
+	void GbaBus::WriteIo16(uint32_t offset, uint16_t value)
 	{
 		offset &= 0x3FE;
 
@@ -748,8 +748,8 @@ namespace GBA
 
 		if (offset >= 0x060 && offset <= 0x0A6)
 		{
-			apu.Write8(offset, (u8)value);
-			apu.Write8(offset + 1, (u8)(value >> 8));
+			apu.Write8(offset, (uint8_t)value);
+			apu.Write8(offset + 1, (uint8_t)(value >> 8));
 			return;
 		}
 
@@ -811,11 +811,11 @@ namespace GBA
 			case 0x300:
 				// POSTFLG: bit 0 is writable, bit 1 is the "the BIOS has run" flag the hardware
 				// sets and the games only read.
-				postFlg = (u8)(value & 1) | 0x02;
+				postFlg = (uint8_t)(value & 1) | 0x02;
 				break;
 
 			case 0x301:
-				WriteHaltCnt((u8)value);
+				WriteHaltCnt((uint8_t)value);
 				break;
 
 			default:
@@ -823,7 +823,7 @@ namespace GBA
 		}
 	}
 
-	void GbaBus::WriteIo8(u32 offset, u8 value)
+	void GbaBus::WriteIo8(uint32_t offset, uint8_t value)
 	{
 		offset &= (IoSize - 1);
 
@@ -831,9 +831,9 @@ namespace GBA
 		// byte lanes do.
 		auto writeLane = [&]()
 		{
-			u32 aligned = offset & ~1u;
-			u16 old = ReadIo16(aligned);
-			u16 merged = (offset & 1) ? (u16)((old & 0x00FF) | (value << 8)) : (u16)((old & 0xFF00) | value);
+			uint32_t aligned = offset & ~1u;
+			uint16_t old = ReadIo16(aligned);
+			uint16_t merged = (offset & 1) ? (uint16_t)((old & 0x00FF) | (value << 8)) : (uint16_t)((old & 0xFF00) | value);
 			WriteIo16(aligned, merged);
 		};
 
@@ -842,7 +842,7 @@ namespace GBA
 			if ((offset & ~1u) == 0x004)
 			{
 				// GREENSWP's low byte is mirrored in both lanes.
-				WriteIo16(0x004, (u16)(value | (value << 8)));
+				WriteIo16(0x004, (uint16_t)(value | (value << 8)));
 				return;
 			}
 
@@ -895,7 +895,7 @@ namespace GBA
 				break;
 
 			case 0x300:
-				postFlg = (u8)(value & 1) | 0x02;
+				postFlg = (uint8_t)(value & 1) | 0x02;
 				break;
 
 			case 0x301:
@@ -911,7 +911,7 @@ namespace GBA
 	// HALT
 	// ---------------------------------------------------------------------------------------
 
-	void GbaBus::WriteHaltCnt(u8 value)
+	void GbaBus::WriteHaltCnt(uint8_t value)
 	{
 		if (value & 0x80)
 		{
@@ -933,7 +933,7 @@ namespace GBA
 	// BIOS calls
 	// ---------------------------------------------------------------------------------------
 
-	bool GbaBus::Swi(u32 comment)
+	bool GbaBus::Swi(uint32_t comment)
 	{
 		if (!HleBiosEnabled)
 		{

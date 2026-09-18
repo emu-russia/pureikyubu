@@ -29,12 +29,12 @@ namespace GBA
 
 		/// <summary>The halfword at `address`. Both ARM and Thumb are made of halfwords, so one
 		/// accessor is enough; an unmapped address should read as the open bus, not throw.</summary>
-		virtual u16 Read16(u32 address) const = 0;
+		virtual uint16_t Read16(uint32_t address) const = 0;
 
 		/// <summary>The byte at `address`, which is what the Game Boy's instruction stream is made
 		/// of. The default reads it out of the halfword, so an implementation only has to provide
 		/// the halfword form.</summary>
-		virtual u8 Read8(u32 address) const { return (u8)(Read16(address) & 0xFF); }
+		virtual uint8_t Read8(uint32_t address) const { return (uint8_t)(Read16(address) & 0xFF); }
 	};
 
 	/// <summary>A flat image with a base address, e.g. a BIOS (base 0) or a cartridge (base
@@ -42,29 +42,29 @@ namespace GBA
 	class ImageMemory : public DisasmMemory
 	{
 	public:
-		ImageMemory(const u8* data, size_t size, u32 base);
-		u16 Read16(u32 address) const override;
+		ImageMemory(const uint8_t* data, size_t size, uint32_t base);
+		uint16_t Read16(uint32_t address) const override;
 
 	private:
-		const u8* data;
+		const uint8_t* data;
 		size_t size;
-		u32 base;
+		uint32_t base;
 	};
 
 	/// <summary>One ARM instruction: the mnemonic with its operands, in the ARM assembler syntax
 	/// the manual uses. `size` (when given) receives 4 for an ARM instruction.</summary>
-	std::string ArmDisassemble(const DisasmMemory& memory, u32 address, int* size = nullptr);
+	std::string ArmDisassemble(const DisasmMemory& memory, uint32_t address, int* size = nullptr);
 
 	/// <summary>One Thumb instruction; `size` receives 2 or 4.</summary>
-	std::string ThumbDisassemble(const DisasmMemory& memory, u32 address, int* size = nullptr);
+	std::string ThumbDisassemble(const DisasmMemory& memory, uint32_t address, int* size = nullptr);
 
 	/// <summary>Whichever of the two the CPU state asks for.</summary>
-	std::string Disassemble(const DisasmMemory& memory, u32 address, bool thumb, int* size = nullptr);
+	std::string Disassemble(const DisasmMemory& memory, uint32_t address, bool thumb, int* size = nullptr);
 
 	/// <summary>The raw bytes of one instruction, as hexadecimal ("E1A09002" or "2001"), which the
 	/// listings print in front of the mnemonic.</summary>
-	std::string InstructionBytes(const DisasmMemory& memory, u32 address, int size);
+	std::string InstructionBytes(const DisasmMemory& memory, uint32_t address, int size);
 
 	/// <summary>The textual form of the CPSR's condition flags for a trace line.</summary>
-	std::string ConditionFlags(u32 cpsr);
+	std::string ConditionFlags(uint32_t cpsr);
 }

@@ -20,7 +20,7 @@ namespace
 {
 	/// <summary>Assemble one instruction and return its bytes.</summary>
 	template <typename Emit>
-	std::vector<u8> Encode(Emit emit)
+	std::vector<uint8_t> Encode(Emit emit)
 	{
 		GbAsm::Assembler assembler;
 		emit(assembler);
@@ -35,7 +35,7 @@ namespace
 	}
 
 	/// <summary>The frame buffer's colour for the settled wordmark's ink.</summary>
-	const u32 LightShade = 0xFF9BBC0F;
+	const uint32_t LightShade = 0xFF9BBC0F;
 
 	/// <summary>
 	/// Count the pixels the boot ROM has drawn: everything that is neither the palette's lightest
@@ -44,7 +44,7 @@ namespace
 	/// </summary>
 	int InkPixels(const GbSystem& machine)
 	{
-		const u32* frame = machine.FrameBuffer();
+		const uint32_t* frame = machine.FrameBuffer();
 		int count = 0;
 		for (int i = 0; i < GbScreenWidth * GbScreenHeight; i++)
 			if (frame[i] != LightShade && frame[i] != 0xFFFFFFFF)
@@ -55,7 +55,7 @@ namespace
 	/// <summary>The screen X of the leftmost inked pixel, or -1 when the screen is blank.</summary>
 	int LeftmostInk(const GbSystem& machine)
 	{
-		const u32* frame = machine.FrameBuffer();
+		const uint32_t* frame = machine.FrameBuffer();
 		for (int x = 0; x < GbScreenWidth; x++)
 			for (int y = 0; y < GbScreenHeight; y++)
 				if (frame[y * GbScreenWidth + x] != LightShade && frame[y * GbScreenWidth + x] != 0xFFFFFFFF)
@@ -68,7 +68,7 @@ namespace
 	/// writes 0xA5 into 0xC000 and then spins. It is assembled with the same emitter the boot ROM
 	/// uses, so the test also drives the emitter.
 	/// </summary>
-	std::vector<u8> BuildTestCartridge()
+	std::vector<uint8_t> BuildTestCartridge()
 	{
 		GbAsm::Assembler a;
 
@@ -79,7 +79,7 @@ namespace
 		a.Label("spin");
 		a.Jr("spin");
 
-		std::vector<u8> image = a.TakeImage(0x8000, 0x00);
+		std::vector<uint8_t> image = a.TakeImage(0x8000, 0x00);
 
 		// The header the boot ROM (and GbCart) reads.
 		image[GbHeaderTitle + 0] = 'P';
@@ -99,62 +99,62 @@ namespace
 GBA_TEST(GbBootRom, emitter_encodes_the_load_family)
 {
 	// LD r16,n16 is 00 rr 0001 with the 16-bit operand little-endian (Pan Docs "Block 0").
-	std::vector<u8> bc = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::BC, 0x1234); });
+	std::vector<uint8_t> bc = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::BC, 0x1234); });
 	GBA_CHECK_EQ(bc.size(), 3u);
 	GBA_CHECK_EQ(bc[0], 0x01);
 	GBA_CHECK_EQ(bc[1], 0x34);
 	GBA_CHECK_EQ(bc[2], 0x12);
 
-	std::vector<u8> de = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::DE, 0xABCD); });
+	std::vector<uint8_t> de = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::DE, 0xABCD); });
 	GBA_CHECK_EQ(de[0], 0x11);
 	GBA_CHECK_EQ(de[2], 0xAB);
 
-	std::vector<u8> sp = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::SP, 0xFFFE); });
+	std::vector<uint8_t> sp = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::SP, 0xFFFE); });
 	GBA_CHECK_EQ(sp[0], 0x31);
 	GBA_CHECK_EQ(sp[1], 0xFE);
 	GBA_CHECK_EQ(sp[2], 0xFF);
 
-	std::vector<u8> hl = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::HL, 0x8000); });
+	std::vector<uint8_t> hl = Encode([](GbAsm::Assembler& a) { a.Ld16(GbAsm::R16::HL, 0x8000); });
 	GBA_CHECK_EQ(hl[0], 0x21);
 
 	// LD r8,r8 is 01 ddd sss: LD A,B is 0x78, LD (HL),A is 0x77.
-	std::vector<u8> ab = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::A, GbAsm::R8::B); });
+	std::vector<uint8_t> ab = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::A, GbAsm::R8::B); });
 	GBA_CHECK_EQ(ab.size(), 1u);
 	GBA_CHECK_EQ(ab[0], 0x78);
 
-	std::vector<u8> hlA = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::HL, GbAsm::R8::A); });
+	std::vector<uint8_t> hlA = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::HL, GbAsm::R8::A); });
 	GBA_CHECK_EQ(hlA[0], 0x77);
 
 	// LD r8,n8 is 00 ddd 110: LD B,0x12 is 0x06 0x12, and LD (HL),n8 is 0x36.
-	std::vector<u8> bn = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::B, 0x12); });
+	std::vector<uint8_t> bn = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::B, 0x12); });
 	GBA_CHECK_EQ(bn[0], 0x06);
 	GBA_CHECK_EQ(bn[1], 0x12);
 
-	std::vector<u8> hln = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::HL, 0x00); });
+	std::vector<uint8_t> hln = Encode([](GbAsm::Assembler& a) { a.Ld(GbAsm::R8::HL, 0x00); });
 	GBA_CHECK_EQ(hln[0], 0x36);
 	GBA_CHECK_EQ(hln[1], 0x00);
 
 	// LDH (n8),A is 0xE0 and LDH A,(n8) is 0xF0; the (C) forms are 0xE2 and 0xF2.
-	std::vector<u8> out = Encode([](GbAsm::Assembler& a) { a.LdA8(0x40); });
+	std::vector<uint8_t> out = Encode([](GbAsm::Assembler& a) { a.LdA8(0x40); });
 	GBA_CHECK_EQ(out[0], 0xE0);
 	GBA_CHECK_EQ(out[1], 0x40);
 
-	std::vector<u8> in = Encode([](GbAsm::Assembler& a) { a.Ld8A(0x44); });
+	std::vector<uint8_t> in = Encode([](GbAsm::Assembler& a) { a.Ld8A(0x44); });
 	GBA_CHECK_EQ(in[0], 0xF0);
 	GBA_CHECK_EQ(in[1], 0x44);
 
 	// LD A,(DE) and LD (DE),A are the accumulator-only memory forms (0x1A and 0x12).
-	std::vector<u8> lde = Encode([](GbAsm::Assembler& a) { a.LdADE(); });
+	std::vector<uint8_t> lde = Encode([](GbAsm::Assembler& a) { a.LdADE(); });
 	GBA_CHECK_EQ(lde[0], 0x1A);
-	std::vector<u8> sde = Encode([](GbAsm::Assembler& a) { a.LdDEA(); });
+	std::vector<uint8_t> sde = Encode([](GbAsm::Assembler& a) { a.LdDEA(); });
 	GBA_CHECK_EQ(sde[0], 0x12);
 
 	// LD (HL+),A and LD A,(HL+) are 0x22 and 0x2A; LD (n16),SP is the 0x08 form.
-	std::vector<u8> inc = Encode([](GbAsm::Assembler& a) { a.LdAHLI(); });
+	std::vector<uint8_t> inc = Encode([](GbAsm::Assembler& a) { a.LdAHLI(); });
 	GBA_CHECK_EQ(inc[0], 0x22);
-	std::vector<u8> dec = Encode([](GbAsm::Assembler& a) { a.LdAHLA(); });
+	std::vector<uint8_t> dec = Encode([](GbAsm::Assembler& a) { a.LdAHLA(); });
 	GBA_CHECK_EQ(dec[0], 0x2A);
-	std::vector<u8> store = Encode([](GbAsm::Assembler& a) { a.Ld16SP(0xC000); });
+	std::vector<uint8_t> store = Encode([](GbAsm::Assembler& a) { a.Ld16SP(0xC000); });
 	GBA_CHECK_EQ(store.size(), 3u);
 	GBA_CHECK_EQ(store[0], 0x08);
 	GBA_CHECK_EQ(store[1], 0x00);
@@ -164,41 +164,41 @@ GBA_TEST(GbBootRom, emitter_encodes_the_load_family)
 GBA_TEST(GbBootRom, emitter_encodes_the_arithmetic_and_branches)
 {
 	// The arithmetic family is a base byte plus the r8 code: ADD A,B is 0x80, CP (HL) is 0xBE.
-	std::vector<u8> add = Encode([](GbAsm::Assembler& a) { a.Add(GbAsm::R8::B); });
+	std::vector<uint8_t> add = Encode([](GbAsm::Assembler& a) { a.Add(GbAsm::R8::B); });
 	GBA_CHECK_EQ(add[0], 0x80);
-	std::vector<u8> addn = Encode([](GbAsm::Assembler& a) { a.Add(0x04); });
+	std::vector<uint8_t> addn = Encode([](GbAsm::Assembler& a) { a.Add(0x04); });
 	GBA_CHECK_EQ(addn[0], 0xC6);
 	GBA_CHECK_EQ(addn[1], 0x04);
-	std::vector<u8> cp = Encode([](GbAsm::Assembler& a) { a.Cp(GbAsm::R8::HL); });
+	std::vector<uint8_t> cp = Encode([](GbAsm::Assembler& a) { a.Cp(GbAsm::R8::HL); });
 	GBA_CHECK_EQ(cp[0], 0xBE);
-	std::vector<u8> sub = Encode([](GbAsm::Assembler& a) { a.Sub(GbAsm::R8::A); });
+	std::vector<uint8_t> sub = Encode([](GbAsm::Assembler& a) { a.Sub(GbAsm::R8::A); });
 	GBA_CHECK_EQ(sub[0], 0x97);
 
 	// INC r8 is 0x04 + r8*8, DEC r8 is 0x05 + r8*8; ADD SP,e8 is 0xE8.
-	std::vector<u8> inc = Encode([](GbAsm::Assembler& a) { a.Inc(GbAsm::R8::A); });
+	std::vector<uint8_t> inc = Encode([](GbAsm::Assembler& a) { a.Inc(GbAsm::R8::A); });
 	GBA_CHECK_EQ(inc[0], 0x3C);
-	std::vector<u8> dec = Encode([](GbAsm::Assembler& a) { a.Dec(GbAsm::R8::B); });
+	std::vector<uint8_t> dec = Encode([](GbAsm::Assembler& a) { a.Dec(GbAsm::R8::B); });
 	GBA_CHECK_EQ(dec[0], 0x05);
-	std::vector<u8> spe = Encode([](GbAsm::Assembler& a) { a.AddSPe(0xFF); });
+	std::vector<uint8_t> spe = Encode([](GbAsm::Assembler& a) { a.AddSPe(0xFF); });
 	GBA_CHECK_EQ(spe[0], 0xE8);
 	GBA_CHECK_EQ(spe[1], 0xFF);
 
 	// The stack forms: PUSH BC is 0xC5, POP AF is 0xF1.
-	std::vector<u8> push = Encode([](GbAsm::Assembler& a) { a.Push(GbAsm::R16Stk::BC); });
+	std::vector<uint8_t> push = Encode([](GbAsm::Assembler& a) { a.Push(GbAsm::R16Stk::BC); });
 	GBA_CHECK_EQ(push[0], 0xC5);
-	std::vector<u8> pop = Encode([](GbAsm::Assembler& a) { a.Pop(GbAsm::R16Stk::AF); });
+	std::vector<uint8_t> pop = Encode([](GbAsm::Assembler& a) { a.Pop(GbAsm::R16Stk::AF); });
 	GBA_CHECK_EQ(pop[0], 0xF1);
 
 	// JR is 0x18 with a signed offset measured from the byte after it; JR NZ is 0x20.
-	std::vector<u8> jr = Encode([](GbAsm::Assembler& a) { a.Label("here"); a.Jr(-2); });
+	std::vector<uint8_t> jr = Encode([](GbAsm::Assembler& a) { a.Label("here"); a.Jr(-2); });
 	GBA_CHECK_EQ(jr[0], 0x18);
 	GBA_CHECK_EQ(jr[1], 0xFE);
-	std::vector<u8> jrnz = Encode([](GbAsm::Assembler& a) { a.Label("top"); a.Jr(GbAsm::Cond::NZ, "top"); });
+	std::vector<uint8_t> jrnz = Encode([](GbAsm::Assembler& a) { a.Label("top"); a.Jr(GbAsm::Cond::NZ, "top"); });
 	GBA_CHECK_EQ(jrnz[0], 0x20);
 	GBA_CHECK_EQ(jrnz[1], 0xFE);			// -2: back to the JR itself
 
 	// A forward JR is resolved by the label pass.
-	std::vector<u8> forward = Encode([](GbAsm::Assembler& a)
+	std::vector<uint8_t> forward = Encode([](GbAsm::Assembler& a)
 	{
 		a.Jr("end");
 		a.Nop();
@@ -209,16 +209,16 @@ GBA_TEST(GbBootRom, emitter_encodes_the_arithmetic_and_branches)
 	GBA_CHECK_EQ(forward[1], 0x01);			// skip the NOP
 
 	// JP, CALL, RET, RETI and RST.
-	std::vector<u8> jp = Encode([](GbAsm::Assembler& a) { a.Jp(0x0100); });
+	std::vector<uint8_t> jp = Encode([](GbAsm::Assembler& a) { a.Jp(0x0100); });
 	GBA_CHECK_EQ(jp.size(), 3u);
 	GBA_CHECK_EQ(jp[0], 0xC3);
-	std::vector<u8> call = Encode([](GbAsm::Assembler& a) { a.Call(0x0200); });
+	std::vector<uint8_t> call = Encode([](GbAsm::Assembler& a) { a.Call(0x0200); });
 	GBA_CHECK_EQ(call[0], 0xCD);
-	std::vector<u8> ret = Encode([](GbAsm::Assembler& a) { a.Ret(); });
+	std::vector<uint8_t> ret = Encode([](GbAsm::Assembler& a) { a.Ret(); });
 	GBA_CHECK_EQ(ret[0], 0xC9);
-	std::vector<u8> reti = Encode([](GbAsm::Assembler& a) { a.Reti(); });
+	std::vector<uint8_t> reti = Encode([](GbAsm::Assembler& a) { a.Reti(); });
 	GBA_CHECK_EQ(reti[0], 0xD9);
-	std::vector<u8> rst = Encode([](GbAsm::Assembler& a) { a.Rst(0x38); });
+	std::vector<uint8_t> rst = Encode([](GbAsm::Assembler& a) { a.Rst(0x38); });
 	GBA_CHECK_EQ(rst[0], 0xFF);
 
 	// The miscellany: DAA, CPL, SCF, CCF, DI, EI, HALT, NOP and the two-byte STOP.
@@ -230,7 +230,7 @@ GBA_TEST(GbBootRom, emitter_encodes_the_arithmetic_and_branches)
 	GBA_CHECK_EQ(Encode([](GbAsm::Assembler& a) { a.Ei(); })[0], 0xFB);
 	GBA_CHECK_EQ(Encode([](GbAsm::Assembler& a) { a.Halt(); })[0], 0x76);
 	GBA_CHECK_EQ(Encode([](GbAsm::Assembler& a) { a.Nop(); })[0], 0x00);
-	std::vector<u8> stop = Encode([](GbAsm::Assembler& a) { a.Stop(); });
+	std::vector<uint8_t> stop = Encode([](GbAsm::Assembler& a) { a.Stop(); });
 	GBA_CHECK_EQ(stop.size(), 2u);
 	GBA_CHECK_EQ(stop[0], 0x10);
 	GBA_CHECK_EQ(stop[1], 0x00);
@@ -240,25 +240,25 @@ GBA_TEST(GbBootRom, emitter_encodes_the_cb_family_and_tracks_labels)
 {
 	// The CB family is the prefix plus a base plus the r8 code: RLC B is CB 0x00, BIT 7,A is
 	// CB 0x7F, SET 0,(HL) is CB 0xC6 (Pan Docs "CB prefix instructions").
-	std::vector<u8> rlc = Encode([](GbAsm::Assembler& a) { a.Rlc(GbAsm::R8::B); });
+	std::vector<uint8_t> rlc = Encode([](GbAsm::Assembler& a) { a.Rlc(GbAsm::R8::B); });
 	GBA_CHECK_EQ(rlc.size(), 2u);
 	GBA_CHECK_EQ(rlc[0], 0xCB);
 	GBA_CHECK_EQ(rlc[1], 0x00);
 
-	std::vector<u8> bit = Encode([](GbAsm::Assembler& a) { a.Bit(7, GbAsm::R8::A); });
+	std::vector<uint8_t> bit = Encode([](GbAsm::Assembler& a) { a.Bit(7, GbAsm::R8::A); });
 	GBA_CHECK_EQ(bit[1], 0x7F);
 
-	std::vector<u8> set = Encode([](GbAsm::Assembler& a) { a.Set(0, GbAsm::R8::HL); });
+	std::vector<uint8_t> set = Encode([](GbAsm::Assembler& a) { a.Set(0, GbAsm::R8::HL); });
 	GBA_CHECK_EQ(set[1], 0xC6);
 
-	std::vector<u8> res = Encode([](GbAsm::Assembler& a) { a.Res(3, GbAsm::R8::D); });
+	std::vector<uint8_t> res = Encode([](GbAsm::Assembler& a) { a.Res(3, GbAsm::R8::D); });
 	GBA_CHECK_EQ(res[1], 0x9A);				// 0x80 + 3*8 + 2
 
-	std::vector<u8> sra = Encode([](GbAsm::Assembler& a) { a.Sra(GbAsm::R8::A); });
+	std::vector<uint8_t> sra = Encode([](GbAsm::Assembler& a) { a.Sra(GbAsm::R8::A); });
 	GBA_CHECK_EQ(sra[1], 0x2F);
-	std::vector<u8> swap = Encode([](GbAsm::Assembler& a) { a.Swap(GbAsm::R8::A); });
+	std::vector<uint8_t> swap = Encode([](GbAsm::Assembler& a) { a.Swap(GbAsm::R8::A); });
 	GBA_CHECK_EQ(swap[1], 0x37);
-	std::vector<u8> srl = Encode([](GbAsm::Assembler& a) { a.Srl(GbAsm::R8::A); });
+	std::vector<uint8_t> srl = Encode([](GbAsm::Assembler& a) { a.Srl(GbAsm::R8::A); });
 	GBA_CHECK_EQ(srl[1], 0x3F);
 
 	// The listing records one line per instruction and its address, and a label's address is used
@@ -269,7 +269,7 @@ GBA_TEST(GbBootRom, emitter_encodes_the_cb_family_and_tracks_labels)
 	a.Nop();
 	a.Label("here");
 	a.Ld16(GbAsm::R16::HL, "start");
-	std::vector<u8> image = a.TakeImage();
+	std::vector<uint8_t> image = a.TakeImage();
 	GBA_CHECK_EQ(image.size(), 5u);
 	GBA_CHECK_EQ(image[2], 0x21);			// LD HL,
 	GBA_CHECK_EQ(image[3], 0x00);			// start = 0x0000 (low byte)
@@ -299,7 +299,7 @@ GBA_TEST(GbBootRom, emitter_encodes_the_cb_family_and_tracks_labels)
 
 GBA_TEST(GbBootRom, image_is_exactly_256_bytes)
 {
-	const std::vector<u8>& image = GbBootRom::DmgImage();
+	const std::vector<uint8_t>& image = GbBootRom::DmgImage();
 	GBA_CHECK_EQ(image.size(), 256u);
 
 	// The CGB image is the same size, and the listing describes the same code.
@@ -423,7 +423,7 @@ GBA_TEST(GbBootRom, wordmark_appears_and_moves)
 
 GBA_TEST(GbBootRom, reaches_a_cartridge_and_leaves_the_post_boot_state)
 {
-	std::vector<u8> cartridge = BuildTestCartridge();
+	std::vector<uint8_t> cartridge = BuildTestCartridge();
 
 	GbSystem machine;
 	machine.ApplySettings(GbSettings::Defaults());
@@ -460,7 +460,7 @@ GBA_TEST(GbBootRom, direct_start_skips_the_animation)
 {
 	// The "post-boot state" path: the frontend can start the cartridge at 0x0100 with the
 	// registers a boot ROM would leave, without running the animation.
-	std::vector<u8> cartridge = BuildTestCartridge();
+	std::vector<uint8_t> cartridge = BuildTestCartridge();
 
 	GbSystem machine;
 	GbSettings settings = GbSettings::Defaults();
@@ -491,13 +491,13 @@ GBA_TEST(GbBootRom, cgb_boot_rom_is_split_around_the_cartridge_header)
 	// ROM therefore sees the real header, not the unused middle of its own image.
 
 	// A cartridge with markers inside the header region.
-	std::vector<u8> cartridge = BuildTestCartridge();
+	std::vector<uint8_t> cartridge = BuildTestCartridge();
 	cartridge[0x0140] = 0xAB;			// a marker in the middle of the header region
 	cartridge[0x01FF] = 0xCD;			// the last byte of the region
 
 	// A fake 2304 byte CGB boot ROM: one value in the first half, another in the second, and a
 	// third in the file's own middle - the "hole" - that must never be read.
-	std::vector<u8> rom(0x900, 0x00);
+	std::vector<uint8_t> rom(0x900, 0x00);
 	for (int i = 0x000; i < 0x100; i++) rom[i] = 0x11;
 	for (int i = 0x100; i < 0x200; i++) rom[i] = 0x22;
 	for (int i = 0x200; i < 0x900; i++) rom[i] = 0x33;
@@ -511,7 +511,7 @@ GBA_TEST(GbBootRom, cgb_boot_rom_is_split_around_the_cartridge_header)
 	GBA_CHECK_MSG(machine.LoadRomImage(cartridge, error), "the test cartridge must load: " + error);
 	machine.Reset();
 
-	machine.Bus().SetBootRom(rom.data(), (u32)rom.size());
+	machine.Bus().SetBootRom(rom.data(), (uint32_t)rom.size());
 	machine.Bus().MapBootRom(true);
 
 	// The two halves are the ROM's own bytes...

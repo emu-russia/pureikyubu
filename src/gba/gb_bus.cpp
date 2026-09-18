@@ -87,15 +87,15 @@ namespace GBA
 		if (enabled)
 			key1 |= 0x80;
 		else
-			key1 &= (u8)~0x80;
+			key1 &= (uint8_t)~0x80;
 	}
 
-	void GbBus::SetBootRom(const u8* image, u32 size)
+	void GbBus::SetBootRom(const uint8_t* image, uint32_t size)
 	{
 		// The two sizes the hardware has: the DMG's 256 byte boot ROM and the CGB's 2304 byte one
 		// (Pan Docs "Power Up Sequence": the CGB's is split in two with the cartridge header in
 		// the middle, which is why the image is kept whole rather than truncated).
-		u32 count = (size < sizeof(bootRom)) ? size : (u32)sizeof(bootRom);
+		uint32_t count = (size < sizeof(bootRom)) ? size : (uint32_t)sizeof(bootRom);
 		if (image != nullptr && count != 0)
 		{
 			memcpy(bootRom, image, count);
@@ -122,7 +122,7 @@ namespace GBA
 	// The memory map
 	// ---------------------------------------------------------------------------------------
 
-	u8 GbBus::Peek(u16 address) const
+	uint8_t GbBus::Peek(uint16_t address) const
 	{
 		if (address < 0x8000)
 			return cart.ReadRom(address);
@@ -134,7 +134,7 @@ namespace GBA
 			return (address < 0xD000) ? wram[0][address - 0xC000]
 				: wram[cgb ? (svbk & 0x07) : 1][address - 0xD000];
 		if (address < 0xFE00)
-			return Peek((u16)(address - 0x2000));		// echo RAM
+			return Peek((uint16_t)(address - 0x2000));		// echo RAM
 		if (address < 0xFEA0)
 			return ppu.Oam()[address - 0xFE00];
 		if (address < 0xFF00)
@@ -146,7 +146,7 @@ namespace GBA
 		return interruptEnable;
 	}
 
-	u8 GbBus::PeekIo(u16 address) const
+	uint8_t GbBus::PeekIo(uint16_t address) const
 	{
 		// The same decoding as ReadIo, but without the side effects: a const view of the register
 		// file for the emulator's own report and for the tests.
@@ -162,10 +162,10 @@ namespace GBA
 		case 0xFF00: return JoypadValue();
 		case 0xFF01: return serialData;
 		case 0xFF02: return serialControl;
-		case 0xFF04: return (u8)(divider >> 8);
+		case 0xFF04: return (uint8_t)(divider >> 8);
 		case 0xFF05: return tima;
 		case 0xFF06: return tma;
-		case 0xFF07: return (u8)(0xF8 | (tac & 0x07));
+		case 0xFF07: return (uint8_t)(0xF8 | (tac & 0x07));
 		case 0xFF0F: return interruptFlag;
 		case 0xFF46: return dmaRegister;
 		case 0xFF4D: return cgb ? key1 : 0xFF;
@@ -182,34 +182,34 @@ namespace GBA
 		}
 	}
 
-	u8 GbBus::JoypadValue() const
+	uint8_t GbBus::JoypadValue() const
 	{
 		// The joypad register (Pan Docs "Joypad Input"): bits 4-5 select which half of the matrix
 		// is read, the low nibble is low for a pressed button. With neither half selected the low
 		// nibble reads as ones.
-		u8 value = (u8)(0xC0 | joypadSelect | 0x0F);
+		uint8_t value = (uint8_t)(0xC0 | joypadSelect | 0x0F);
 
 		if ((joypadSelect & 0x10) == 0)
 		{
 			// bit 4 low: the direction keys (P10)
-			if (pressedKeys & GbButtonRight) value &= (u8)~0x01;
-			if (pressedKeys & GbButtonLeft) value &= (u8)~0x02;
-			if (pressedKeys & GbButtonUp) value &= (u8)~0x04;
-			if (pressedKeys & GbButtonDown) value &= (u8)~0x08;
+			if (pressedKeys & GbButtonRight) value &= (uint8_t)~0x01;
+			if (pressedKeys & GbButtonLeft) value &= (uint8_t)~0x02;
+			if (pressedKeys & GbButtonUp) value &= (uint8_t)~0x04;
+			if (pressedKeys & GbButtonDown) value &= (uint8_t)~0x08;
 		}
 		if ((joypadSelect & 0x20) == 0)
 		{
 			// bit 5 low: the action buttons (P11)
-			if (pressedKeys & GbButtonA) value &= (u8)~0x01;
-			if (pressedKeys & GbButtonB) value &= (u8)~0x02;
-			if (pressedKeys & GbButtonSelect) value &= (u8)~0x04;
-			if (pressedKeys & GbButtonStart) value &= (u8)~0x08;
+			if (pressedKeys & GbButtonA) value &= (uint8_t)~0x01;
+			if (pressedKeys & GbButtonB) value &= (uint8_t)~0x02;
+			if (pressedKeys & GbButtonSelect) value &= (uint8_t)~0x04;
+			if (pressedKeys & GbButtonStart) value &= (uint8_t)~0x08;
 		}
 
 		return value;
 	}
 
-	u8 GbBus::ReadIo(u16 address)
+	uint8_t GbBus::ReadIo(uint16_t address)
 	{
 		if (address >= 0xFF10 && address <= 0xFF3F)
 			return apu.ReadRegister(address);
@@ -230,10 +230,10 @@ namespace GBA
 		case 0xFF00: return JoypadValue();
 		case 0xFF01: return serialData;
 		case 0xFF02: return serialControl;
-		case 0xFF04: return (u8)(divider >> 8);
+		case 0xFF04: return (uint8_t)(divider >> 8);
 		case 0xFF05: return tima;
 		case 0xFF06: return tma;
-		case 0xFF07: return (u8)(0xF8 | (tac & 0x07));
+		case 0xFF07: return (uint8_t)(0xF8 | (tac & 0x07));
 		case 0xFF0F: return interruptFlag;
 		case 0xFF46: return dmaRegister;
 		case 0xFF4D:
@@ -251,7 +251,7 @@ namespace GBA
 			// blocks left minus one; otherwise the register keeps its last value (0xFF once a
 			// transfer has finished, Pan Docs "CGB Registers").
 			if (hdmaActive && hdmaHblank && hdmaBlocks > 0)
-				return (u8)(0x80 | ((hdmaBlocks - 1) & 0x7F));
+				return (uint8_t)(0x80 | ((hdmaBlocks - 1) & 0x7F));
 			return hdma5;
 		case 0xFF6C: return cgb ? opri : 0xFF;
 		case 0xFF70: return cgb ? svbk : 0xFF;
@@ -259,7 +259,7 @@ namespace GBA
 		}
 	}
 
-	u8 GbBus::ReadByte(u16 address)
+	uint8_t GbBus::ReadByte(uint16_t address)
 	{
 		// The boot ROM overlay (Pan Docs "Power Up Sequence": the boot ROM is mapped at power-up
 		// and unmapped by a write to 0xFF50). The DMG's ROM is one 256 byte page at 0x0000; the
@@ -296,7 +296,7 @@ namespace GBA
 		if (address < 0xFE00)
 		{
 			// Echo RAM: a mirror of 0xC000..0xDDFF (Pan Docs "Memory Map").
-			return ReadByte((u16)(address - 0x2000));
+			return ReadByte((uint16_t)(address - 0x2000));
 		}
 
 		if (address < 0xFEA0)
@@ -320,7 +320,7 @@ namespace GBA
 		return interruptEnable;
 	}
 
-	void GbBus::WriteByte(u16 address, u8 value)
+	void GbBus::WriteByte(uint16_t address, uint8_t value)
 	{
 		if (address < 0x8000)
 		{
@@ -352,7 +352,7 @@ namespace GBA
 
 		if (address < 0xFE00)
 		{
-			WriteByte((u16)(address - 0x2000), value);
+			WriteByte((uint16_t)(address - 0x2000), value);
 			return;
 		}
 
@@ -381,7 +381,7 @@ namespace GBA
 		interruptEnable = value;
 	}
 
-	void GbBus::WriteIo(u16 address, u8 value)
+	void GbBus::WriteIo(uint16_t address, uint8_t value)
 	{
 		if (address >= 0xFF10 && address <= 0xFF3F)
 		{
@@ -409,7 +409,7 @@ namespace GBA
 		{
 		case 0xFF00:
 			// Only bits 4-5 are writable; the rest of the register belongs to the hardware.
-			joypadSelect = (u8)(value & 0x30);
+			joypadSelect = (uint8_t)(value & 0x30);
 			// A button that is already held can request the joypad interrupt when the program
 			// selects its half of the matrix (Pan Docs "Interrupt Sources").
 			if ((joypadSelect & 0x30) != 0x30)
@@ -452,11 +452,11 @@ namespace GBA
 			// TAC: only bits 0-2 are writable. Turning the timer on or changing the clock select
 			// can increment TIMA once - the falling edge the chosen divider bit sees during the
 			// write, which the edge detector produces for free.
-			tac = (u8)(0xF8 | (value & 0x07));
+			tac = (uint8_t)(0xF8 | (value & 0x07));
 			break;
 		case 0xFF0F:
 			// IF: the low five bits are the interrupt flags; the unused bits read as ones.
-			interruptFlag = (u8)(0xE0 | (value & 0x1F));
+			interruptFlag = (uint8_t)(0xE0 | (value & 0x1F));
 			break;
 
 		case 0xFF46:
@@ -468,14 +468,14 @@ namespace GBA
 			{
 				// KEY1: bit 0 requests a speed switch, which the next STOP performs (Pan Docs
 				// "CGB Registers").
-				key1 = (u8)((key1 & 0x80) | (value & 0x01) | 0x7E);
+				key1 = (uint8_t)((key1 & 0x80) | (value & 0x01) | 0x7E);
 			}
 			break;
 
 		case 0xFF4F:
 			if (cgb)
 			{
-				vbk = (u8)(0xFE | (value & 0x01));
+				vbk = (uint8_t)(0xFE | (value & 0x01));
 				ppu.WriteRegister(0xFF4F, value);
 			}
 			break;
@@ -494,7 +494,7 @@ namespace GBA
 
 		case 0xFF6C:
 			if (cgb)
-				opri = (u8)(value & 0x01);
+				opri = (uint8_t)(value & 0x01);
 			break;
 
 		case 0xFF70:
@@ -502,8 +502,8 @@ namespace GBA
 			{
 				// SVBK selects the WRAM bank at 0xD000; a written 0 selects bank 1 (Pan Docs
 				// "CGB Registers").
-				u8 bank = (u8)(value & 0x07);
-				svbk = (u8)(0xF8 | (bank == 0 ? 1 : bank));
+				uint8_t bank = (uint8_t)(value & 0x07);
+				svbk = (uint8_t)(0xF8 | (bank == 0 ? 1 : bank));
 			}
 			break;
 
@@ -552,13 +552,13 @@ namespace GBA
 		if (cycles <= 0)
 			return;
 
-		totalCycles += (u64)cycles;
+		totalCycles += (uint64_t)cycles;
 
 		TickTimer(cycles);
 
 		// The LCD and the sound controller run on the same clock as the timer; the PPU works out
 		// its own dots from the speed mode, the APU is clocked at the system rate.
-		u8 request = ppu.Tick(cycles, doubleSpeed);
+		uint8_t request = ppu.Tick(cycles, doubleSpeed);
 		if (request & 0x01)
 			RequestInterrupt(GbIntVBlank);
 		if (request & 0x02)
@@ -598,7 +598,7 @@ namespace GBA
 	// The timer
 	// ---------------------------------------------------------------------------------------
 
-	int GbBus::TimerDividerBit(u8 control)
+	int GbBus::TimerDividerBit(uint8_t control)
 	{
 		// The clock select picks which bit of the divider counter increments TIMA (Pan Docs
 		// "Timer and Divider Registers"): 00 = bit 9 (4096 Hz), 01 = bit 3 (262144 Hz),
@@ -624,7 +624,7 @@ namespace GBA
 		for (int i = 0; i < systemCycles; i++)
 		{
 			// DIV is the top byte of a counter clocked at 16384 Hz, i.e. every 256 system clocks.
-			divider = (u16)(divider + 1);
+			divider = (uint16_t)(divider + 1);
 
 			// TIMA counts the falling edges of the selected divider bit. Testing the bit before
 			// and after the increment is what makes the TAC write glitch (a write that turns the
@@ -690,16 +690,16 @@ namespace GBA
 			// The cable is two shift registers wired together: this machine shifts its byte out
 			// of bit 7 while the peer's byte comes in at bit 0. An unconnected cable reads all
 			// ones (the serial input floats high).
-			u8 incoming = 0xFF;
+			uint8_t incoming = 0xFF;
 			if (serialPeer != nullptr)
 			{
 				incoming = serialPeer->PeerByte();
 				if (serialPeer->PeerReceiving())
-					serialPeer->PeerClock((u8)((serialShiftOut >> 7) & 1));
+					serialPeer->PeerClock((uint8_t)((serialShiftOut >> 7) & 1));
 			}
 
-			serialShiftIn = (u8)((serialShiftIn << 1) | (incoming & 1));
-			serialShiftOut = (u8)(serialShiftOut << 1);
+			serialShiftIn = (uint8_t)((serialShiftIn << 1) | (incoming & 1));
+			serialShiftOut = (uint8_t)(serialShiftOut << 1);
 			serialBitsLeft--;
 		}
 
@@ -713,8 +713,8 @@ namespace GBA
 		if (!serialActive || serialInternalClock || serialBitsLeft <= 0)
 			return;
 
-		serialShiftIn = (u8)((serialShiftIn << 1) | ((serialShiftOut >> 7) & 1));
-		serialShiftOut = (u8)(serialShiftOut << 1);
+		serialShiftIn = (uint8_t)((serialShiftIn << 1) | ((serialShiftOut >> 7) & 1));
+		serialShiftOut = (uint8_t)(serialShiftOut << 1);
 		serialBitsLeft--;
 		if (serialBitsLeft == 0)
 			FinishSerial();
@@ -726,7 +726,7 @@ namespace GBA
 		// serial interrupt is requested (Pan Docs "Serial Data Transfer").
 		serialData = serialShiftIn;
 		lastReceived = serialShiftIn;
-		serialControl &= (u8)~0x80;
+		serialControl &= (uint8_t)~0x80;
 		serialActive = false;
 		serialTransfers++;
 		RequestInterrupt(GbIntSerial);
@@ -741,12 +741,12 @@ namespace GBA
 	// DMA
 	// ---------------------------------------------------------------------------------------
 
-	void GbBus::StartOamDma(u8 value)
+	void GbBus::StartOamDma(uint8_t value)
 	{
 		// OAM DMA (Pan Docs "OAM DMA"): the register's value is the source page, i.e. the
 		// transfer copies 160 bytes from (value << 8) into 0xFE00..0xFE9F.
 		dmaRegister = value;
-		oamDmaSource = (u16)(value << 8);
+		oamDmaSource = (uint16_t)(value << 8);
 		oamDmaCycles = 160;			// 160 M-cycles, one byte per clock
 
 		// The first byte is copied at once; the rest follow while the CPU is stalled.
@@ -762,8 +762,8 @@ namespace GBA
 		if (index < 0 || index >= 160)
 			return;
 
-		u16 source = (u16)(oamDmaSource + index);
-		u8 value;
+		uint16_t source = (uint16_t)(oamDmaSource + index);
+		uint8_t value;
 
 		// The source can be any region; reading through Peek keeps the VRAM bank selection and
 		// the cartridge in the picture. The unusable region reads as 0xFF.
@@ -775,7 +775,7 @@ namespace GBA
 		ppu.Oam()[index] = value;
 	}
 
-	void GbBus::StartHdma(u8 value)
+	void GbBus::StartHdma(uint8_t value)
 	{
 		// HDMA1-5 (Pan Docs "CGB Registers"): HDMA5's bit 7 selects the mode. Zero means a
 		// general purpose DMA that copies everything at once (and stalls the CPU); one means an
@@ -791,15 +791,15 @@ namespace GBA
 			// with bit 7 set and the remaining blocks (Pan Docs).
 			hdmaActive = false;
 			hdmaHblank = false;
-			hdma5 = (u8)(0x80 | ((hdmaBlocks - 1) & 0x7F));
+			hdma5 = (uint8_t)(0x80 | ((hdmaBlocks - 1) & 0x7F));
 			return;
 		}
 
 		// The source and destination come from the four address registers, with the low four
 		// bits dropped (Pan Docs: "the lower 4 bits are ignored"); the destination is always in
 		// VRAM, bank 0.
-		hdmaSource = (u16)(((hdma1 << 8) | hdma2) & 0xFFF0);
-		hdmaDest = (u16)(0x8000 | (((hdma3 << 8) | hdma4) & 0x1FF0));
+		hdmaSource = (uint16_t)(((hdma1 << 8) | hdma2) & 0xFFF0);
+		hdmaDest = (uint16_t)(0x8000 | (((hdma3 << 8) | hdma4) & 0x1FF0));
 		hdmaBlocks = blocks;
 
 		if ((value & 0x80) == 0)
@@ -816,7 +816,7 @@ namespace GBA
 		{
 			hdmaActive = true;
 			hdmaHblank = true;
-			hdma5 = (u8)(0x80 | ((hdmaBlocks - 1) & 0x7F));
+			hdma5 = (uint8_t)(0x80 | ((hdmaBlocks - 1) & 0x7F));
 		}
 	}
 
@@ -832,12 +832,12 @@ namespace GBA
 
 		for (int i = 0; i < 16; i++)
 		{
-			u16 source = (u16)(hdmaSource + i);
-			u16 dest = (u16)((hdmaDest + i) & 0x1FFF);
+			uint16_t source = (uint16_t)(hdmaSource + i);
+			uint16_t dest = (uint16_t)((hdmaDest + i) & 0x1FFF);
 
 			// The source may be the cartridge ROM, the cartridge RAM or the WRAM; the
 			// destination is always VRAM, bank 0.
-			u8 value;
+			uint8_t value;
 			if (source < 0x8000)
 				value = cart.ReadRom(source);
 			else if (source < 0xA000)
@@ -855,8 +855,8 @@ namespace GBA
 
 		// The addresses wrap within their regions (Pan Docs gives the masks: the source stays
 		// inside 0x0000..0x7FF0 and the destination inside 0x8000..0x9FF0).
-		hdmaSource = (u16)((hdmaSource + 16) & 0x7FF0);
-		hdmaDest = (u16)(0x8000 | ((hdmaDest + 16) & 0x1FF0));
+		hdmaSource = (uint16_t)((hdmaSource + 16) & 0x7FF0);
+		hdmaDest = (uint16_t)(0x8000 | ((hdmaDest + 16) & 0x1FF0));
 
 		hdmaBlocks--;
 		if (hdmaBlocks <= 0)
@@ -867,7 +867,7 @@ namespace GBA
 		}
 		else
 		{
-			hdma5 = (u8)(0x80 | ((hdmaBlocks - 1) & 0x7F));
+			hdma5 = (uint8_t)(0x80 | ((hdmaBlocks - 1) & 0x7F));
 		}
 	}
 }

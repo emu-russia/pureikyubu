@@ -20,7 +20,7 @@ namespace GBA
 	// choices for the frontend, not hardware values.
 	namespace
 	{
-		const u32 Shades[4][4] =
+		const uint32_t Shades[4][4] =
 		{
 			// Green (the original DMG LCD)
 			{ 0xFF9BBC0F, 0xFF8BAC0F, 0xFF306230, 0xFF0F380F },
@@ -33,7 +33,7 @@ namespace GBA
 		};
 
 		// The blank LCD is "white, whiter than colour #0" (Pan Docs "LCDC" bit 7).
-		const u32 BlankWhite = 0xFFFFFFFF;
+		const uint32_t BlankWhite = 0xFFFFFFFF;
 	}
 
 	const char* GbPpu::PaletteName(GbPalette palette)
@@ -113,17 +113,17 @@ namespace GBA
 	{
 		// The four shades as RGB555 (Pan Docs "Palettes": a CGB colour is 15 bits, five per
 		// channel, stored little-endian). White, light grey, dark grey and black.
-		const u16 shades[4] = { 0x7FFF, 0x5294, 0x294A, 0x0000 };
+		const uint16_t shades[4] = { 0x7FFF, 0x5294, 0x294A, 0x0000 };
 
 		for (int palette = 0; palette < 8; palette++)
 		{
 			for (int index = 0; index < 4; index++)
 			{
 				int at = palette * 8 + index * 2;
-				bgPalette[at] = (u8)(shades[index] & 0xFF);
-				bgPalette[at + 1] = (u8)(shades[index] >> 8);
-				objPalette[at] = (u8)(shades[index] & 0xFF);
-				objPalette[at + 1] = (u8)(shades[index] >> 8);
+				bgPalette[at] = (uint8_t)(shades[index] & 0xFF);
+				bgPalette[at + 1] = (uint8_t)(shades[index] >> 8);
+				objPalette[at] = (uint8_t)(shades[index] & 0xFF);
+				objPalette[at + 1] = (uint8_t)(shades[index] >> 8);
 			}
 		}
 	}
@@ -148,7 +148,7 @@ namespace GBA
 		}
 		else
 		{
-			lcdc &= (u8)~0x80;
+			lcdc &= (uint8_t)~0x80;
 			mode = 0;
 			modeEndDots = LineStart() + GbDotsPerLine;
 			statLine = false;
@@ -156,7 +156,7 @@ namespace GBA
 		RefreshStat();
 	}
 
-	u8 GbPpu::ReadRegister(u16 address) const
+	uint8_t GbPpu::ReadRegister(uint16_t address) const
 	{
 		switch (address)
 		{
@@ -165,8 +165,8 @@ namespace GBA
 			// Bits 1-0 (the mode) read 0 while the PPU is disabled (Pan Docs "STAT"), bit 7 is
 			// unused and reads back as one on hardware.
 			if (!lcdEnabled)
-				return (u8)((stat & 0xF8) | 0x80);
-			return (u8)(stat | 0x80);
+				return (uint8_t)((stat & 0xF8) | 0x80);
+			return (uint8_t)(stat | 0x80);
 		case 0xFF42: return scy;
 		case 0xFF43: return scx;
 		case 0xFF44: return lcdEnabled ? ly : 0x00;
@@ -192,7 +192,7 @@ namespace GBA
 		}
 	}
 
-	void GbPpu::WriteRegister(u16 address, u8 value)
+	void GbPpu::WriteRegister(uint16_t address, uint8_t value)
 	{
 		switch (address)
 		{
@@ -236,7 +236,7 @@ namespace GBA
 		case 0xFF41:
 			// Only bits 3-6 are writable; bits 0-2 belong to the PPU (Pan Docs "STAT"). The
 			// monochrome "spurious interrupt on a STAT write" quirk is not modelled.
-			stat = (u8)((stat & 0x07) | (value & 0x78));
+			stat = (uint8_t)((stat & 0x07) | (value & 0x78));
 			RefreshStat();
 			break;
 
@@ -257,12 +257,12 @@ namespace GBA
 
 		case 0xFF4F:
 			if (cgb)
-				vbk = (u8)(0xFE | (value & 0x01));
+				vbk = (uint8_t)(0xFE | (value & 0x01));
 			break;
 
 		case 0xFF68:
 			if (cgb)
-				bgpi = (u8)(value & 0xBF);
+				bgpi = (uint8_t)(value & 0xBF);
 			break;
 		case 0xFF69:
 			// The data register is inaccessible during mode 3: the write is ignored, but the
@@ -272,13 +272,13 @@ namespace GBA
 				if (!CramBlocked())
 					bgPalette[bgpi & 0x3F] = value;
 				if (bgpi & 0x80)
-					bgpi = (u8)(0x80 | ((bgpi + 1) & 0x3F));
+					bgpi = (uint8_t)(0x80 | ((bgpi + 1) & 0x3F));
 			}
 			break;
 
 		case 0xFF6A:
 			if (cgb)
-				obpi = (u8)(value & 0xBF);
+				obpi = (uint8_t)(value & 0xBF);
 			break;
 		case 0xFF6B:
 			if (cgb)
@@ -286,7 +286,7 @@ namespace GBA
 				if (!CramBlocked())
 					objPalette[obpi & 0x3F] = value;
 				if (obpi & 0x80)
-					obpi = (u8)(0x80 | ((obpi + 1) & 0x3F));
+					obpi = (uint8_t)(0x80 | ((obpi + 1) & 0x3F));
 			}
 			break;
 
@@ -321,34 +321,34 @@ namespace GBA
 	void GbPpu::RefreshStat()
 	{
 		// Bit 2 tracks LY = LYC, bits 1-0 the mode (both are read-only).
-		stat = (u8)(stat & 0x78);
+		stat = (uint8_t)(stat & 0x78);
 		if (ly == lyc)
 			stat |= 0x04;
 		if (lcdEnabled)
-			stat |= (u8)(mode & 0x03);
+			stat |= (uint8_t)(mode & 0x03);
 		statLine = StatLineLevel();
 	}
 
-	u8 GbPpu::UpdateStatLine()
+	uint8_t GbPpu::UpdateStatLine()
 	{
 		// Bit 2 is "constantly" updated (Pan Docs "STAT").
 		if (ly == lyc)
 			stat |= 0x04;
 		else
-			stat &= (u8)~0x04;
+			stat &= (uint8_t)~0x04;
 
 		bool level = StatLineLevel();
-		u8 request = 0;
+		uint8_t request = 0;
 		if (level && !statLine)
 			request = 0x02;			// a low to high transition of the STAT line
 		statLine = level;
 		return request;
 	}
 
-	u8 GbPpu::EnterMode(int newMode)
+	uint8_t GbPpu::EnterMode(int newMode)
 	{
 		mode = newMode;
-		stat = (u8)((stat & 0x7C) | (newMode & 0x03));
+		stat = (uint8_t)((stat & 0x7C) | (newMode & 0x03));
 		return UpdateStatLine();
 	}
 
@@ -426,12 +426,12 @@ namespace GBA
 		return length;
 	}
 
-	u8 GbPpu::Tick(int cycles, bool doubleSpeed)
+	uint8_t GbPpu::Tick(int cycles, bool doubleSpeed)
 	{
 		// A dot is four of the CPU's clocks in normal speed and two in double speed (Pan Docs
 		// "Rendering": the dot clock is 2^22 Hz and the CPU runs at twice that in double speed).
 		int dotsToRun = doubleSpeed ? (cycles / 2) : (cycles / 4);
-		u8 request = 0;
+		uint8_t request = 0;
 
 		while (true)
 		{
@@ -449,7 +449,7 @@ namespace GBA
 				if (mode == 2)
 				{
 					request |= EnterMode(3);
-					modeEndDots = LineStart() + 80 + (u64)Mode3Length();
+					modeEndDots = LineStart() + 80 + (uint64_t)Mode3Length();
 				}
 				else if (mode == 3)
 				{
@@ -507,9 +507,9 @@ namespace GBA
 			if (dotsToRun <= 0)
 				break;
 
-			u64 remaining = modeEndDots - dots;
-			if (remaining > (u64)dotsToRun)
-				remaining = (u64)dotsToRun;
+			uint64_t remaining = modeEndDots - dots;
+			if (remaining > (uint64_t)dotsToRun)
+				remaining = (uint64_t)dotsToRun;
 
 			dots += remaining;
 			dotsToRun -= (int)remaining;
@@ -522,7 +522,7 @@ namespace GBA
 	// Composing a scanline
 	// ---------------------------------------------------------------------------------------
 
-	u8 GbPpu::FetchBgPixel(int x, int y, int& palette, u8& attributes)
+	uint8_t GbPpu::FetchBgPixel(int x, int y, int& palette, uint8_t& attributes)
 	{
 		// Pan Docs "Scrolling" / "Tile Maps" / "pixel_fifo": the BG tile is chosen with the
 		// scrolled 16-bit coordinate, masked to the 256 x 256 pixel map (the map wraps by
@@ -578,19 +578,19 @@ namespace GBA
 		if (lcdc & 0x10)
 			tileAddress = tileIndex * 16;
 		else
-			tileAddress = 0x1000 + ((s8)tileIndex) * 16;
+			tileAddress = 0x1000 + ((int8_t)tileIndex) * 16;
 
 		tileAddress += pixelY * 2;
 		if (tileAddress < 0 || tileAddress + 1 >= 0x2000)
 			return 0;
 
-		u8 low = vram[tileBank][tileAddress];
-		u8 high = vram[tileBank][tileAddress + 1];
+		uint8_t low = vram[tileBank][tileAddress];
+		uint8_t high = vram[tileBank][tileAddress + 1];
 
 		// Bit 7 of each byte is the leftmost pixel; the high plane is the second bit of the
 		// colour index (Pan Docs "Tile Data").
 		int bit = mapX & 0x07;
-		return (u8)((((high >> (7 - bit)) & 1) << 1) | ((low >> (7 - bit)) & 1));
+		return (uint8_t)((((high >> (7 - bit)) & 1) << 1) | ((low >> (7 - bit)) & 1));
 	}
 
 	void GbPpu::RenderLine()
@@ -631,7 +631,7 @@ namespace GBA
 		for (int x = 0; x < GbScreenWidth; x++)
 		{
 			int bgPalette = 0;
-			u8 bgAttributes = 0;
+			uint8_t bgAttributes = 0;
 			int bgIndex = 0;
 
 			if (cgb || (lcdc & 0x01) || (windowActive && (lcdc & 0x20)))
@@ -677,8 +677,8 @@ namespace GBA
 					if (tileAddress + 1 >= 0x2000)
 						continue;
 
-					u8 low = vram[objectBank][tileAddress];
-					u8 high = vram[objectBank][tileAddress + 1];
+					uint8_t low = vram[objectBank][tileAddress];
+					uint8_t high = vram[objectBank][tileAddress + 1];
 					int bit = 7 - column;
 					int objectIndex = (((high >> bit) & 1) << 1) | ((low >> bit) & 1);
 
@@ -735,13 +735,13 @@ namespace GBA
 	// Colours
 	// ---------------------------------------------------------------------------------------
 
-	u32 GbPpu::CgbColor(int palette, int index, bool object) const
+	uint32_t GbPpu::CgbColor(int palette, int index, bool object) const
 	{
 		// Pan Docs "Palettes": 8 palettes of 4 colours, two little-endian bytes each, RGB555 in
 		// the low 15 bits (bit 15 is ignored by the rendering).
-		const u8* ram = object ? objPalette : bgPalette;
+		const uint8_t* ram = object ? objPalette : bgPalette;
 		int at = (palette & 0x07) * 8 + (index & 0x03) * 2;
-		u16 color = (u16)(ram[at] | (ram[at + 1] << 8));
+		uint16_t color = (uint16_t)(ram[at] | (ram[at + 1] << 8));
 		int r = color & 0x1F;
 		int g = (color >> 5) & 0x1F;
 		int b = (color >> 10) & 0x1F;
@@ -749,16 +749,16 @@ namespace GBA
 		return PackXrgb((r << 3) | (r >> 2), (g << 3) | (g >> 2), (b << 3) | (b >> 2));
 	}
 
-	u32 GbPpu::DmgShade(int index, int palette, bool object) const
+	uint32_t GbPpu::DmgShade(int index, int palette, bool object) const
 	{
 		// BGP/OBP0/OBP1: two bits per colour index (Pan Docs "Palettes"). The lower two bits of
 		// OBP0/OBP1 are ignored because colour index 0 is transparent for objects.
-		u8 registerValue = object ? (palette == 0 ? obp0 : obp1) : bgp;
+		uint8_t registerValue = object ? (palette == 0 ? obp0 : obp1) : bgp;
 		int shade = (registerValue >> (index * 2)) & 0x03;
 		return Shades[(int)shadePalette][shade];
 	}
 
-	u32 GbPpu::ShadePixel(int index, int palette, u8 attributes, bool object) const
+	uint32_t GbPpu::ShadePixel(int index, int palette, uint8_t attributes, bool object) const
 	{
 		// A CGB always draws through the colour palette memory; the attribute's bit 7 belongs to
 		// the priority logic and is not part of the palette index. A DMG (non-CGB) picture uses

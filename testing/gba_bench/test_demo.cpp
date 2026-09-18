@@ -42,12 +42,12 @@ namespace
 	}
 
 	/// <summary>The colour the demo paints at (x, y) on the pass whose counter is `counter`.</summary>
-	u16 DemoColor(int x, int y, u32 counter)
+	uint16_t DemoColor(int x, int y, uint32_t counter)
 	{
-		u32 r = ((u32)x + counter) & 0x1F;
-		u32 g = ((u32)y + counter) & 0x1F;
-		u32 b = (((u32)x ^ (u32)y) + counter) & 0x1F;
-		return (u16)(r | (g << 5) | (b << 10));
+		uint32_t r = ((uint32_t)x + counter) & 0x1F;
+		uint32_t g = ((uint32_t)y + counter) & 0x1F;
+		uint32_t b = (((uint32_t)x ^ (uint32_t)y) + counter) & 0x1F;
+		return (uint16_t)(r | (g << 5) | (b << 10));
 	}
 }
 
@@ -61,7 +61,7 @@ GBA_TEST(Demo, TheCartridgeLoadsAndRuns)
 	GBA_CHECK_HEX32(system.Bus().Read32(0x03000000), 0x00474241);
 	GBA_CHECK_HEX32(system.Bus().Read32(0x03000004), 0xCAFEF00D);
 
-	u32 counter = system.Bus().Read32(0x03000008);
+	uint32_t counter = system.Bus().Read32(0x03000008);
 	GBA_CHECK_MSG(counter >= 1, "the demo should have completed at least one frame");
 
 	GBA_CHECK(system.RomLoaded());
@@ -94,11 +94,11 @@ GBA_TEST(Demo, TheScreenHoldsTheProgramsPattern)
 	{
 		for (int x = 0; x < ScreenWidth; x++)
 		{
-			u16 color = (u16)(system.Bus().Read16(0x06000000 + (u32)(y * ScreenWidth + x) * 2) & 0x7FFF);
+			uint16_t color = (uint16_t)(system.Bus().Read16(0x06000000 + (uint32_t)(y * ScreenWidth + x) * 2) & 0x7FFF);
 
-			int fRed = (int)(((color & 0x1F) - (u32)x) & 0x1F);
-			int fGreen = (int)((((color >> 5) & 0x1F) - (u32)y) & 0x1F);
-			int fBlue = (int)((((color >> 10) & 0x1F) - ((u32)x ^ (u32)y)) & 0x1F);
+			int fRed = (int)(((color & 0x1F) - (uint32_t)x) & 0x1F);
+			int fGreen = (int)((((color >> 5) & 0x1F) - (uint32_t)y) & 0x1F);
+			int fBlue = (int)((((color >> 10) & 0x1F) - ((uint32_t)x ^ (uint32_t)y)) & 0x1F);
 
 			if (fRed == fGreen && fGreen == fBlue)
 			{
@@ -146,7 +146,7 @@ GBA_TEST(Demo, TheScreenHoldsTheProgramsPattern)
 	{
 		for (int x = 0; x < ScreenWidth; x += 4)
 		{
-			u16 color = (u16)(system.Bus().Read16(0x06000000 + (u32)(y * ScreenWidth + x) * 2) & 0x7FFF);
+			uint16_t color = (uint16_t)(system.Bus().Read16(0x06000000 + (uint32_t)(y * ScreenWidth + x) * 2) & 0x7FFF);
 			seen[color & 0x7FFF] = true;
 		}
 	}
@@ -173,15 +173,15 @@ GBA_TEST(Demo, TheBitmapIsDisplayedUnchanged)
 	// while the LCD scans, so a fraction of the rows of a captured frame is a pass older than what
 	// VRAM holds now; most of the picture must still be the memory, expanded with the 5-to-8-bit
 	// replication rule.
-	const u32* frame = system.FrameBuffer();
+	const uint32_t* frame = system.FrameBuffer();
 
 	int matching = 0;
 	int mismatching = 0;
 
 	for (int i = 0; i < ScreenWidth * ScreenHeight; i++)
 	{
-		u16 color = (u16)(system.Bus().Read16(0x06000000 + (u32)i * 2) & 0x7FFF);
-		u32 expected = Color15ToXrgb(color);
+		uint16_t color = (uint16_t)(system.Bus().Read16(0x06000000 + (uint32_t)i * 2) & 0x7FFF);
+		uint32_t expected = Color15ToXrgb(color);
 
 		if (frame[i] == expected)
 		{
@@ -205,7 +205,7 @@ GBA_TEST(Demo, TheAnimationAdvance)
 	GbaSystem system;
 	RunDemo(system, 30);
 
-	u32 first = 2166136261u;
+	uint32_t first = 2166136261u;
 	for (int i = 0; i < ScreenWidth * ScreenHeight; i++)
 	{
 		first = (first ^ system.FrameBuffer()[i]) * 16777619u;
@@ -213,7 +213,7 @@ GBA_TEST(Demo, TheAnimationAdvance)
 
 	system.RunFrames(5);
 
-	u32 second = 2166136261u;
+	uint32_t second = 2166136261u;
 	for (int i = 0; i < ScreenWidth * ScreenHeight; i++)
 	{
 		second = (second ^ system.FrameBuffer()[i]) * 16777619u;
@@ -228,7 +228,7 @@ GBA_TEST(Demo, TheButtonsReachTheMachine)
 	RunDemo(system, 2);
 
 	system.SetPressedKeys(KEY_A | KEY_LEFT);
-	GBA_CHECK_HEX16(system.Bus().Read16(0x04000130), (u16)(~(KEY_A | KEY_LEFT) & 0x03FF) | 0xFC00);
+	GBA_CHECK_HEX16(system.Bus().Read16(0x04000130), (uint16_t)(~(KEY_A | KEY_LEFT) & 0x03FF) | 0xFC00);
 
 	system.SetPressedKeys(0);
 	GBA_CHECK_HEX16(system.Bus().Read16(0x04000130), 0x03FF | 0xFC00);

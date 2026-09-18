@@ -32,11 +32,11 @@ namespace GBA
 	public:
 		void Reset();
 
-		u16 Read16(GbaBus& bus, u32 offset, u16 openBus);
-		u8 Read8(GbaBus& bus, u32 offset, u8 openBus);
+		uint16_t Read16(GbaBus& bus, uint32_t offset, uint16_t openBus);
+		uint8_t Read8(GbaBus& bus, uint32_t offset, uint8_t openBus);
 
-		void Write16(GbaBus& bus, u32 offset, u16 value);
-		void Write8(GbaBus& bus, u32 offset, u8 value);
+		void Write16(GbaBus& bus, uint32_t offset, uint16_t value);
+		void Write8(GbaBus& bus, uint32_t offset, uint8_t value);
 
 		/// <summary>Advance the cable delay counters and complete the transfers they finish.</summary>
 		void Tick(GbaBus& bus, int cycles);
@@ -54,25 +54,25 @@ namespace GBA
 		int ConnectedPlayers() const;
 
 		/// <summary>The value the port drove onto the cable in the last transfer.</summary>
-		u16 LastSent() const { return lastSent; }
+		uint16_t LastSent() const { return lastSent; }
 
 		/// <summary>The value that came back from the cable in the last transfer.</summary>
-		u16 LastReceived() const { return lastReceived; }
+		uint16_t LastReceived() const { return lastReceived; }
 
 	private:
 		Sio* peer = nullptr;
 
 		// -- registers ---------------------------------------------------------------------
 
-		u16 siomltSend = 0;		// 0x120 (also SIODATA32_L)
-		u16 siodata32H = 0;		// 0x122
-		u16 siodata8 = 0;		// 0x124
-		u16 siocnt = 0;			// 0x128
-		u16 rcnt = 0;			// 0x134
-		u16 joycnt = 0;			// 0x140
-		u16 joyRecv = 0;		// 0x150/0x152
-		u16 joyTrans = 0;		// 0x154/0x156
-		u16 joystat = 0;		// 0x158
+		uint16_t siomltSend = 0;	// 0x120 (also SIODATA32_L)
+		uint16_t siodata32H = 0;	// 0x122
+		uint16_t siodata8 = 0;		// 0x124
+		uint16_t siocnt = 0;		// 0x128
+		uint16_t rcnt = 0;		// 0x134
+		uint16_t joycnt = 0;		// 0x140
+		uint16_t joyRecv = 0;		// 0x150/0x152
+		uint16_t joyTrans = 0;		// 0x154/0x156
+		uint16_t joystat = 0;		// 0x158
 
 		// -- transfer state ----------------------------------------------------------------
 
@@ -80,8 +80,8 @@ namespace GBA
 		int remainingCycles = 0;	// the cable delay left before both ends complete
 		int mode = 0;				// SioMode: 0 = normal, 1 = multi, 2 = uart, 3 = gp
 		bool master = false;
-		u16 lastSent = 0;
-		u16 lastReceived = 0;
+		uint16_t lastSent = 0;
+		uint16_t lastReceived = 0;
 		int baudCycles = 0;
 
 		// A pending transfer is completed when the countdown reaches zero. Both ends are driven
@@ -95,9 +95,9 @@ namespace GBA
 		int BaudCycles() const;
 
 		/// <summary>The data this end drives onto the cable, in the current mode.</summary>
-		u16 OutgoingData() const;
+		uint16_t OutgoingData() const;
 
 		/// <summary>Combine the peer's data into the received value, in the current mode.</summary>
-		u16 IncomingData() const;
+		uint16_t IncomingData() const;
 	};
 }

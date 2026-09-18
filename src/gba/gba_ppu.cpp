@@ -43,20 +43,20 @@ namespace GBA
 		// Register offsets (relative to 0x04000000).
 		// -----------------------------------------------------------------------------------
 
-		const u32 REG_DISPCNT = 0x000;
-		const u32 REG_GREENSWP = 0x002;
-		const u32 REG_DISPSTAT = 0x004;
-		const u32 REG_VCOUNT = 0x006;
-		const u32 REG_WININ = 0x048;
-		const u32 REG_MOSAIC = 0x04C;
-		const u32 REG_BLDCNT = 0x050;
+		const uint32_t REG_DISPCNT = 0x000;
+		const uint32_t REG_GREENSWP = 0x002;
+		const uint32_t REG_DISPSTAT = 0x004;
+		const uint32_t REG_VCOUNT = 0x006;
+		const uint32_t REG_WININ = 0x048;
+		const uint32_t REG_MOSAIC = 0x04C;
+		const uint32_t REG_BLDCNT = 0x050;
 
 		// DISPSTAT: bits 0-2 are the read-only flags, bits 3-5 the IRQ enables and bits 8-15 the
 		// V-Count setting (GBATEK 4000004h).
-		const u16 STAT_VBLANK = 0x0001;
-		const u16 STAT_HBLANK = 0x0002;
-		const u16 STAT_VCOUNT = 0x0004;
-		const u16 STAT_ENABLES = 0x0038;
+		const uint16_t STAT_VBLANK = 0x0001;
+		const uint16_t STAT_HBLANK = 0x0002;
+		const uint16_t STAT_VCOUNT = 0x0004;
+		const uint16_t STAT_ENABLES = 0x0038;
 
 		// DISPCNT bits (GBATEK 4000000h).
 		const int DC_FRAME_SELECT = 4;			// BG modes 4/5: which of the two frames is shown
@@ -90,15 +90,15 @@ namespace GBA
 
 		// The layer tags: the backgrounds are 0..3 (their bit position in WININ/WINOUT/BLDCNT),
 		// the sprites are 4 (the same) and the backdrop is 5 (the BG palette colour 0).
-		const u8 LAYER_OBJ = 4;
-		const u8 LAYER_BACKDROP = 5;
-		const u8 LAYER_NONE = 0xFF;
+		const uint8_t LAYER_OBJ = 4;
+		const uint8_t LAYER_BACKDROP = 5;
+		const uint8_t LAYER_NONE = 0xFF;
 
 		// The window region tags stored in Ppu::windowMask.
-		const u8 MASK_OUTSIDE = 0;
-		const u8 MASK_WIN0 = 1;
-		const u8 MASK_WIN1 = 2;
-		const u8 MASK_OBJWIN = 3;
+		const uint8_t MASK_OUTSIDE = 0;
+		const uint8_t MASK_WIN0 = 1;
+		const uint8_t MASK_WIN1 = 2;
+		const uint8_t MASK_OBJWIN = 3;
 
 		const int TILE_SIZE_4BPP = 32;			// GBATEK: one 4bit tile is 20h bytes
 		const int TILE_SIZE_8BPP = 64;			// GBATEK: one 8bit tile is 40h bytes
@@ -106,9 +106,9 @@ namespace GBA
 		const int PALETTE_OBJ_OFFSET = 0x200;	// 05000200: the 256 OBJ colours
 
 		// The OBJ tile area inside the 96 KByte VRAM window (GBATEK "LCD VRAM Overview").
-		const u32 OBJ_TILE_BASE = 0x10000;
-		const u32 BITMAP_OBJ_TILES = 0x14000;	// the same area in the bitmap modes
-		const u32 BITMAP_FRAME1 = 0x0A000;
+		const uint32_t OBJ_TILE_BASE = 0x10000;
+		const uint32_t BITMAP_OBJ_TILES = 0x14000;	// the same area in the bitmap modes
+		const uint32_t BITMAP_FRAME1 = 0x0A000;
 
 		const int BITMAP_STRIDE_16 = 480;		// modes 3/5: two bytes per dot
 		const int BITMAP_STRIDE_8 = 240;		// mode 4: one byte per dot
@@ -118,7 +118,7 @@ namespace GBA
 		const int MODE5_HEIGHT = 128;
 
 		// The 15-bit "no pixel here" marker of the sprite and bitmap fetches.
-		const u16 NO_PIXEL = 0xFFFF;
+		const uint16_t NO_PIXEL = 0xFFFF;
 
 		// Up to 128 OBJs exist, so a line cannot be covered by more.
 		const int MAX_SPRITES = 128;
@@ -183,14 +183,14 @@ namespace GBA
 		// modulo 2^28 when the matrix advance makes it overflow.
 		// -----------------------------------------------------------------------------------
 
-		const u32 REFERENCE_MASK = 0x0FFFFFFF;
+		const uint32_t REFERENCE_MASK = 0x0FFFFFFF;
 
 		/// <summary>Round a source coordinate to the nearest texel, which is the texel the
 		/// hardware samples for a rotated/scaled layer.</summary>
-		inline s32 ReferenceRounded(s32 value)
+		inline int32_t ReferenceRounded(int32_t value)
 		{
-			const s32 integer = value >> 8;
-			const s32 fraction = value & 0xFF;
+			const int32_t integer = value >> 8;
+			const int32_t fraction = value & 0xFF;
 			return (fraction >= 0x80) ? (integer + 1) : integer;
 		}
 
@@ -204,30 +204,30 @@ namespace GBA
 		// Small read helpers. Everything goes through the public PPU accessors.
 		// -----------------------------------------------------------------------------------
 
-		inline u16 ReadVram16(const Ppu& ppu, u32 offset)
+		inline uint16_t ReadVram16(const Ppu& ppu, uint32_t offset)
 		{
-			return (u16)(ppu.ReadVram(offset) | (ppu.ReadVram(offset + 1) << 8));
+			return (uint16_t)(ppu.ReadVram(offset) | (ppu.ReadVram(offset + 1) << 8));
 		}
 
 		/// <summary>Read a whole palette entry. A halfword assembled from two byte reads would be
 		/// wrong (the byte accessor applies GBATEK's OR rule to the two halves of the entry), so
 		/// this uses the halfword accessor that GbaBus also uses for 0x05000000.</summary>
-		inline u16 ReadPaletteEntry(const Ppu& ppu, u32 offset)
+		inline uint16_t ReadPaletteEntry(const Ppu& ppu, uint32_t offset)
 		{
 			return ppu.ReadPalette16(offset);
 		}
 
-		inline u16 OamWord(const Ppu& ppu, u32 offset)
+		inline uint16_t OamWord(const Ppu& ppu, uint32_t offset)
 		{
-			return (u16)(ppu.ReadOam(offset) | (ppu.ReadOam(offset + 1) << 8));
+			return (uint16_t)(ppu.ReadOam(offset) | (ppu.ReadOam(offset + 1) << 8));
 		}
 
 		/// <summary>Read one of the 32 OBJ rotation/scaling parameters through OAM. GBATEK
 		/// "Location of Rotation/Scaling Parameters in OAM": group n stores PA, PB, PC, PD in the
 		/// unused 16-bit gaps of the OAM entries 4n, 4n+1, 4n+2 and 4n+3.</summary>
-		inline s16 AffineParam(const Ppu& ppu, int index, int component)
+		inline int16_t AffineParam(const Ppu& ppu, int index, int component)
 		{
-			return (s16)OamWord(ppu, (u32)(index * 0x20 + 0x06 + component * 8));
+			return (int16_t)OamWord(ppu, (uint32_t)(index * 0x20 + 0x06 + component * 8));
 		}
 
 		// -----------------------------------------------------------------------------------
@@ -237,14 +237,14 @@ namespace GBA
 		/// <summary>The WININ/WINOUT bits of the window region that contains `x` (GBATEK
 		/// "Window Priority": window 0 wins over window 1, which wins over the OBJ window, and
 		/// everything else is the outside region).</summary>
-		u16 WindowBits(u8 region, u16 winin, u16 winout)
+		uint16_t WindowBits(uint8_t region, uint16_t winin, uint16_t winout)
 		{
 			switch (region)
 			{
 			case MASK_WIN0: return winin;
-			case MASK_WIN1: return (u16)(winin >> WIN_SECOND);
-			case MASK_OBJWIN: return (u16)(winout >> WIN_SECOND);
-			default: return (u16)(winout & 0xFF);
+			case MASK_WIN1: return (uint16_t)(winin >> WIN_SECOND);
+			case MASK_OBJWIN: return (uint16_t)(winout >> WIN_SECOND);
+			default: return (uint16_t)(winout & 0xFF);
 			}
 		}
 
@@ -252,13 +252,13 @@ namespace GBA
 		// in bit 4, the effect in bit 5). With the window feature off (none of DISPCNT bits 13/14/15
 		// set) every layer is displayed everywhere and the window registers are ignored, which is
 		// what these bits then say (GBATEK 4000000h).
-		const u16 WINDOW_ALL = 0x3F;
+		const uint16_t WINDOW_ALL = 0x3F;
 
 		// -----------------------------------------------------------------------------------
 		// The window columns and rows.
 		// -----------------------------------------------------------------------------------
 
-		void WindowColumns(u16 reg, int& x1, int& x2)
+		void WindowColumns(uint16_t reg, int& x1, int& x2)
 		{
 			int left = (reg >> 8) & 0xFF;		// bits 8-15: X1, the leftmost coordinate
 			int right = reg & 0xFF;				// bits 0-7: X2, the rightmost coordinate + 1
@@ -276,7 +276,7 @@ namespace GBA
 			x2 = right;
 		}
 
-		void WindowRows(u16 reg, int& y1, int& y2)
+		void WindowRows(uint16_t reg, int& y1, int& y2)
 		{
 			int first = (reg >> 8) & 0xFF;
 			int last = reg & 0xFF;
@@ -294,7 +294,7 @@ namespace GBA
 		// The OBJ tile fetch. NO_PIXEL means "no visible dot of this sprite here".
 		// -----------------------------------------------------------------------------------
 
-		u16 SpritePixel(const Ppu& ppu, const Sprite& sprite, int sx, int sy)
+		uint16_t SpritePixel(const Ppu& ppu, const Sprite& sprite, int sx, int sy)
 		{
 			const int px = sx - sprite.left;	// 0..width-1
 			const int py = sy - sprite.top;		// 0..height-1
@@ -302,15 +302,15 @@ namespace GBA
 			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the upper-left
 			// of the OBJ, so a dot of the display area is measured from its middle, which is where
 			// the rotation center sits. The matrix is 8.8 fixed point.
-			const s32 offsetX = px - sprite.width / 2;
-			const s32 offsetY = py - sprite.height / 2;
-			const s32 srcX = sprite.pa * offsetX + sprite.pb * offsetY;
-			const s32 srcY = sprite.pc * offsetX + sprite.pd * offsetY;
+			const int32_t offsetX = px - sprite.width / 2;
+			const int32_t offsetY = py - sprite.height / 2;
+			const int32_t srcX = sprite.pa * offsetX + sprite.pb * offsetY;
+			const int32_t srcY = sprite.pc * offsetX + sprite.pd * offsetY;
 
 			// The source coordinate comes out relative to the rotation center, so half the base
 			// size (in 8.8 fixed point) puts it back into the base OBJ.
-			s32 texelX = ReferenceRounded(srcX + sprite.baseWidth * 128);
-			s32 texelY = ReferenceRounded(srcY + sprite.baseHeight * 128);
+			int32_t texelX = ReferenceRounded(srcX + sprite.baseWidth * 128);
+			int32_t texelY = ReferenceRounded(srcY + sprite.baseHeight * 128);
 
 			// A dot that falls outside of the base OBJ is not displayed: that is what clips a
 			// rotated OBJ to its non double-sized rectangle.
@@ -363,25 +363,25 @@ namespace GBA
 			// already steps by two and a 256-colour tile is the two slots tileNumber and
 			// tileNumber+1). The byte address is therefore always tileNumber * 32 - multiplying by
 			// 64 here would skip the second slot every 256-colour tile occupies.
-			const u32 objTileBase = IsBitmapMode(ppu.DispCnt() & 7) ? BITMAP_OBJ_TILES : OBJ_TILE_BASE;
-			const u32 inTile = (u32)(texelY & 7) * (sprite.colors256 ? 8 : 4) +
-				(u32)((texelX & 7) / (sprite.colors256 ? 1 : 2));
-			const u32 address = objTileBase + (u32)tileNumber * TILE_SIZE_4BPP + inTile;
-			const u8 packed = ppu.ReadVram(address);
+			const uint32_t objTileBase = IsBitmapMode(ppu.DispCnt() & 7) ? BITMAP_OBJ_TILES : OBJ_TILE_BASE;
+			const uint32_t inTile = (uint32_t)(texelY & 7) * (sprite.colors256 ? 8 : 4) +
+				(uint32_t)((texelX & 7) / (sprite.colors256 ? 1 : 2));
+			const uint32_t address = objTileBase + (uint32_t)tileNumber * TILE_SIZE_4BPP + inTile;
+			const uint8_t packed = ppu.ReadVram(address);
 
 			if (sprite.colors256)
 			{
 				if (packed == 0)
 					return NO_PIXEL;			// colour 0 is transparent
 
-				return ReadPaletteEntry(ppu, PALETTE_OBJ_OFFSET + (u32)packed * 2);
+				return ReadPaletteEntry(ppu, PALETTE_OBJ_OFFSET + (uint32_t)packed * 2);
 			}
 
-			const u8 pixelIndex = (texelX & 1) ? (u8)(packed >> 4) : (u8)(packed & 0xF);
+			const uint8_t pixelIndex = (texelX & 1) ? (uint8_t)(packed >> 4) : (uint8_t)(packed & 0xF);
 			if (pixelIndex == 0)
 				return NO_PIXEL;
 
-			return ReadPaletteEntry(ppu, PALETTE_OBJ_OFFSET + (u32)(sprite.paletteIndex * 16 + pixelIndex) * 2);
+			return ReadPaletteEntry(ppu, PALETTE_OBJ_OFFSET + (uint32_t)(sprite.paletteIndex * 16 + pixelIndex) * 2);
 		}
 
 		// -----------------------------------------------------------------------------------
@@ -390,10 +390,10 @@ namespace GBA
 
 		/// <summary>Read a dot of the bitmap background. NO_PIXEL means that the dot is outside
 		/// of the bitmap (always transparent) or uses the transparent palette colour 0.</summary>
-		u16 BitmapPixel(const Ppu& ppu, s32 x, s32 y)
+		uint16_t BitmapPixel(const Ppu& ppu, int32_t x, int32_t y)
 		{
 			const int mode = ppu.DispCnt() & 7;
-			const u32 page = ((ppu.DispCnt() >> DC_FRAME_SELECT) & 1) ? BITMAP_FRAME1 : 0;
+			const uint32_t page = ((ppu.DispCnt() >> DC_FRAME_SELECT) & 1) ? BITMAP_FRAME1 : 0;
 
 			if (mode == 3)
 			{
@@ -402,7 +402,7 @@ namespace GBA
 				if (x < 0 || x >= ScreenWidth || y < 0 || y >= MODE3_HEIGHT)
 					return NO_PIXEL;
 
-				return ReadVram16(ppu, page + (u32)y * BITMAP_STRIDE_16 + (u32)x * 2);
+				return ReadVram16(ppu, page + (uint32_t)y * BITMAP_STRIDE_16 + (uint32_t)x * 2);
 			}
 
 			if (mode == 4)
@@ -413,11 +413,11 @@ namespace GBA
 				if (x < 0 || x >= ScreenWidth || y < 0 || y >= MODE4_HEIGHT)
 					return NO_PIXEL;
 
-				const u8 pixelIndex = ppu.ReadVram(page + (u32)y * BITMAP_STRIDE_8 + (u32)x);
+				const uint8_t pixelIndex = ppu.ReadVram(page + (uint32_t)y * BITMAP_STRIDE_8 + (uint32_t)x);
 				if (pixelIndex == 0)
 					return NO_PIXEL;
 
-				return ReadPaletteEntry(ppu, (u32)pixelIndex * 2);
+				return ReadPaletteEntry(ppu, (uint32_t)pixelIndex * 2);
 			}
 
 			// Mode 5: the frame is 160x128 dots inside the 240x160 screen, two bytes per dot and
@@ -426,7 +426,7 @@ namespace GBA
 			if (x < 0 || x >= MODE5_WIDTH || y < 0 || y >= MODE5_HEIGHT)
 				return NO_PIXEL;
 
-			return ReadVram16(ppu, page + (u32)y * BITMAP_STRIDE_16 + (u32)x * 2);
+			return ReadVram16(ppu, page + (uint32_t)y * BITMAP_STRIDE_16 + (uint32_t)x * 2);
 		}
 	}
 
@@ -503,7 +503,7 @@ namespace GBA
 	// CPU side
 	// ---------------------------------------------------------------------------------------
 
-	u16 Ppu::Read16(u32 offset, u16 openBus) const
+	uint16_t Ppu::Read16(uint32_t offset, uint16_t openBus) const
 	{
 		if (offset >= 0x060)
 		{
@@ -515,7 +515,7 @@ namespace GBA
 		switch (offset & ~1u)
 		{
 		case REG_DISPCNT: return dispcnt;
-		case REG_GREENSWP: return (u16)(greenswap & 1);
+		case REG_GREENSWP: return (uint16_t)(greenswap & 1);
 
 		case REG_DISPSTAT: return ComputeDispStat();
 
@@ -537,30 +537,30 @@ namespace GBA
 		// byte, which is the part the debugger and the tests are interested in. The affine
 		// parameters keep their 16-bit value, and a reference point returns its write latch, the
 		// readable half of the two-register write protocol (GBATEK 4000028h).
-		case 0x010: return (u16)(bghofs[0] & 0xFF);
-		case 0x012: return (u16)(bgvofs[0] & 0xFF);
-		case 0x014: return (u16)(bghofs[1] & 0xFF);
-		case 0x016: return (u16)(bgvofs[1] & 0xFF);
-		case 0x018: return (u16)(bghofs[2] & 0xFF);
-		case 0x01A: return (u16)(bgvofs[2] & 0xFF);
-		case 0x01C: return (u16)(bghofs[3] & 0xFF);
-		case 0x01E: return (u16)(bgvofs[3] & 0xFF);
-		case 0x020: return (u16)bgpa[0];
-		case 0x022: return (u16)bgpb[0];
-		case 0x024: return (u16)bgpc[0];
-		case 0x026: return (u16)bgpd[0];
-		case 0x028: return (u16)(bgxLatch[0] & 0xFFFF);
-		case 0x02A: return (u16)(bgxLatch[0] >> 16);
-		case 0x02C: return (u16)(bgyLatch[0] & 0xFFFF);
-		case 0x02E: return (u16)(bgyLatch[0] >> 16);
-		case 0x030: return (u16)bgpa[1];
-		case 0x032: return (u16)bgpb[1];
-		case 0x034: return (u16)bgpc[1];
-		case 0x036: return (u16)bgpd[1];
-		case 0x038: return (u16)(bgxLatch[1] & 0xFFFF);
-		case 0x03A: return (u16)(bgxLatch[1] >> 16);
-		case 0x03C: return (u16)(bgyLatch[1] & 0xFFFF);
-		case 0x03E: return (u16)(bgyLatch[1] >> 16);
+		case 0x010: return (uint16_t)(bghofs[0] & 0xFF);
+		case 0x012: return (uint16_t)(bgvofs[0] & 0xFF);
+		case 0x014: return (uint16_t)(bghofs[1] & 0xFF);
+		case 0x016: return (uint16_t)(bgvofs[1] & 0xFF);
+		case 0x018: return (uint16_t)(bghofs[2] & 0xFF);
+		case 0x01A: return (uint16_t)(bgvofs[2] & 0xFF);
+		case 0x01C: return (uint16_t)(bghofs[3] & 0xFF);
+		case 0x01E: return (uint16_t)(bgvofs[3] & 0xFF);
+		case 0x020: return (uint16_t)bgpa[0];
+		case 0x022: return (uint16_t)bgpb[0];
+		case 0x024: return (uint16_t)bgpc[0];
+		case 0x026: return (uint16_t)bgpd[0];
+		case 0x028: return (uint16_t)(bgxLatch[0] & 0xFFFF);
+		case 0x02A: return (uint16_t)(bgxLatch[0] >> 16);
+		case 0x02C: return (uint16_t)(bgyLatch[0] & 0xFFFF);
+		case 0x02E: return (uint16_t)(bgyLatch[0] >> 16);
+		case 0x030: return (uint16_t)bgpa[1];
+		case 0x032: return (uint16_t)bgpb[1];
+		case 0x034: return (uint16_t)bgpc[1];
+		case 0x036: return (uint16_t)bgpd[1];
+		case 0x038: return (uint16_t)(bgxLatch[1] & 0xFFFF);
+		case 0x03A: return (uint16_t)(bgxLatch[1] >> 16);
+		case 0x03C: return (uint16_t)(bgyLatch[1] & 0xFFFF);
+		case 0x03E: return (uint16_t)(bgyLatch[1] >> 16);
 
 		// The window dimensions and the mosaic size are write-only (GBATEK 4000040h/400004Ch);
 		// these copies are kept for the debugger's benefit.
@@ -569,7 +569,7 @@ namespace GBA
 		case 0x044: return win0v;
 		case 0x046: return win1v;
 		case REG_MOSAIC: return mosaic;
-		case 0x054: return (u16)(bldy & 0x1F);
+		case 0x054: return (uint16_t)(bldy & 0x1F);
 
 		default: break;
 		}
@@ -578,7 +578,7 @@ namespace GBA
 		return openBus;
 	}
 
-	void Ppu::Write16(GbaBus& bus, u32 offset, u16 value, int cycles)
+	void Ppu::Write16(GbaBus& bus, uint32_t offset, uint16_t value, int cycles)
 	{
 		(void)cycles;
 
@@ -591,7 +591,7 @@ namespace GBA
 		switch (offset & ~1u)
 		{
 		case REG_DISPCNT: dispcnt = value; break;
-		case REG_GREENSWP: greenswap = (u16)(value & 1); break;
+		case REG_GREENSWP: greenswap = (uint16_t)(value & 1); break;
 
 		case REG_DISPSTAT:
 			// Bits 3-5 are the IRQ enables and bits 8-15 the V-Count setting, both R/W; bits 0-2
@@ -612,68 +612,68 @@ namespace GBA
 		case 0x00E: bgcnt[3] = value; break;
 
 		case 0x010:
-			bghofs[0] = (u16)(value & 0x1FF);
+			bghofs[0] = (uint16_t)(value & 0x1FF);
 			break;
-		case 0x012: bgvofs[0] = (u16)(value & 0x1FF); break;
-		case 0x014: bghofs[1] = (u16)(value & 0x1FF); break;
-		case 0x016: bgvofs[1] = (u16)(value & 0x1FF); break;
-		case 0x018: bghofs[2] = (u16)(value & 0x1FF); break;
-		case 0x01A: bgvofs[2] = (u16)(value & 0x1FF); break;
-		case 0x01C: bghofs[3] = (u16)(value & 0x1FF); break;
-		case 0x01E: bgvofs[3] = (u16)(value & 0x1FF); break;
+		case 0x012: bgvofs[0] = (uint16_t)(value & 0x1FF); break;
+		case 0x014: bghofs[1] = (uint16_t)(value & 0x1FF); break;
+		case 0x016: bgvofs[1] = (uint16_t)(value & 0x1FF); break;
+		case 0x018: bghofs[2] = (uint16_t)(value & 0x1FF); break;
+		case 0x01A: bgvofs[2] = (uint16_t)(value & 0x1FF); break;
+		case 0x01C: bghofs[3] = (uint16_t)(value & 0x1FF); break;
+		case 0x01E: bgvofs[3] = (uint16_t)(value & 0x1FF); break;
 
-		case 0x020: bgpa[0] = (s16)value; break;
-		case 0x022: bgpb[0] = (s16)value; break;
-		case 0x024: bgpc[0] = (s16)value; break;
-		case 0x026: bgpd[0] = (s16)value; break;
+		case 0x020: bgpa[0] = (int16_t)value; break;
+		case 0x022: bgpb[0] = (int16_t)value; break;
+		case 0x024: bgpc[0] = (int16_t)value; break;
+		case 0x026: bgpd[0] = (int16_t)value; break;
 
 		case 0x028:
 			// BG2X_L: the low 16 bits of the write latch, then the whole reference point goes to
 			// the internal register (GBATEK 4000028h: a write outside of VBlank takes effect for
 			// the current scanline immediately). The latch's high 4 bits are never written.
 			bgxLatch[0] = (bgxLatch[0] & 0x0FFF0000u) | value;
-			bgx[0] = (s32)(bgxLatch[0] & REFERENCE_MASK);
+			bgx[0] = (int32_t)(bgxLatch[0] & REFERENCE_MASK);
 			break;
 
 		case 0x02A:
 			// BG2X_H: only bits 0-11 exist; writing it must not disturb the low 16 bits.
-			bgxLatch[0] = ((u32)(value & 0x0FFF) << 16) | (bgxLatch[0] & 0xFFFF);
-			bgx[0] = (s32)(bgxLatch[0] & REFERENCE_MASK);
+			bgxLatch[0] = ((uint32_t)(value & 0x0FFF) << 16) | (bgxLatch[0] & 0xFFFF);
+			bgx[0] = (int32_t)(bgxLatch[0] & REFERENCE_MASK);
 			break;
 
 		case 0x02C:
 			bgyLatch[0] = (bgyLatch[0] & 0x0FFF0000u) | value;
-			bgy[0] = (s32)(bgyLatch[0] & REFERENCE_MASK);
+			bgy[0] = (int32_t)(bgyLatch[0] & REFERENCE_MASK);
 			break;
 
 		case 0x02E:
-			bgyLatch[0] = ((u32)(value & 0x0FFF) << 16) | (bgyLatch[0] & 0xFFFF);
-			bgy[0] = (s32)(bgyLatch[0] & REFERENCE_MASK);
+			bgyLatch[0] = ((uint32_t)(value & 0x0FFF) << 16) | (bgyLatch[0] & 0xFFFF);
+			bgy[0] = (int32_t)(bgyLatch[0] & REFERENCE_MASK);
 			break;
 
-		case 0x030: bgpa[1] = (s16)value; break;
-		case 0x032: bgpb[1] = (s16)value; break;
-		case 0x034: bgpc[1] = (s16)value; break;
-		case 0x036: bgpd[1] = (s16)value; break;
+		case 0x030: bgpa[1] = (int16_t)value; break;
+		case 0x032: bgpb[1] = (int16_t)value; break;
+		case 0x034: bgpc[1] = (int16_t)value; break;
+		case 0x036: bgpd[1] = (int16_t)value; break;
 
 		case 0x038:
 			bgxLatch[1] = (bgxLatch[1] & 0x0FFF0000u) | value;
-			bgx[1] = (s32)(bgxLatch[1] & REFERENCE_MASK);
+			bgx[1] = (int32_t)(bgxLatch[1] & REFERENCE_MASK);
 			break;
 
 		case 0x03A:
-			bgxLatch[1] = ((u32)(value & 0x0FFF) << 16) | (bgxLatch[1] & 0xFFFF);
-			bgx[1] = (s32)(bgxLatch[1] & REFERENCE_MASK);
+			bgxLatch[1] = ((uint32_t)(value & 0x0FFF) << 16) | (bgxLatch[1] & 0xFFFF);
+			bgx[1] = (int32_t)(bgxLatch[1] & REFERENCE_MASK);
 			break;
 
 		case 0x03C:
 			bgyLatch[1] = (bgyLatch[1] & 0x0FFF0000u) | value;
-			bgy[1] = (s32)(bgyLatch[1] & REFERENCE_MASK);
+			bgy[1] = (int32_t)(bgyLatch[1] & REFERENCE_MASK);
 			break;
 
 		case 0x03E:
-			bgyLatch[1] = ((u32)(value & 0x0FFF) << 16) | (bgyLatch[1] & 0xFFFF);
-			bgy[1] = (s32)(bgyLatch[1] & REFERENCE_MASK);
+			bgyLatch[1] = ((uint32_t)(value & 0x0FFF) << 16) | (bgyLatch[1] & 0xFFFF);
+			bgy[1] = (int32_t)(bgyLatch[1] & REFERENCE_MASK);
 			break;
 
 		case 0x040: win0h = value; break;
@@ -685,7 +685,7 @@ namespace GBA
 		case REG_MOSAIC: mosaic = value; break;
 		case REG_BLDCNT: bldcnt = value; break;
 		case 0x052: bldalpha = value; break;
-		case 0x054: bldy = (u16)(value & 0x1F); break;
+		case 0x054: bldy = (uint16_t)(value & 0x1F); break;
 
 		default:
 			Log(LogLevel::Warn, "PPU: write to unused display register 0x%03X", offset);
@@ -693,15 +693,15 @@ namespace GBA
 		}
 	}
 
-	u8 Ppu::ReadPalette(u32 offset) const
+	uint8_t Ppu::ReadPalette(uint32_t offset) const
 	{
 		// GBATEK "LCD Color Palettes": a colour is one 16-bit entry. A byte read is not a real
 		// access - the hardware returns the OR of the two bytes of the halfword.
-		const u32 index = offset & (PaletteSize - 1) & ~1u;
-		return (u8)(palette.Read8(index) | palette.Read8(index + 1));
+		const uint32_t index = offset & (PaletteSize - 1) & ~1u;
+		return (uint8_t)(palette.Read8(index) | palette.Read8(index + 1));
 	}
 
-	void Ppu::WritePalette(u32 offset, u8 value)
+	void Ppu::WritePalette(uint32_t offset, uint8_t value)
 	{
 		// A byte write drives only the byte lane the CPU drove, so the other half of the entry
 		// keeps its old value: palette RAM sits on a 16-bit bus and the hardware only latches the
@@ -709,7 +709,7 @@ namespace GBA
 		palette.Write8(offset & (PaletteSize - 1), value);
 	}
 
-	u32 Ppu::VramAddress(u32 offset) const
+	uint32_t Ppu::VramAddress(uint32_t offset) const
 	{
 		// GBATEK "GBA Memory Map" and "LCD VRAM Overview": the whole 96 KByte is real, linearly
 		// addressed memory in every display mode. The only difference between the mode families is
@@ -724,17 +724,17 @@ namespace GBA
 		return (offset % VramMirror) % VramSize;
 	}
 
-	u8 Ppu::ReadVram(u32 offset) const
+	uint8_t Ppu::ReadVram(uint32_t offset) const
 	{
-		const u32 address = VramAddress(offset);
+		const uint32_t address = VramAddress(offset);
 		if (address >= VramSize)
 			return 0;					// the unmapped hole in the bitmap modes
 		return vram.Read8(address);
 	}
 
-	void Ppu::WriteVram(u32 offset, u8 value)
+	void Ppu::WriteVram(uint32_t offset, uint8_t value)
 	{
-		const u32 address = VramAddress(offset);
+		const uint32_t address = VramAddress(offset);
 		if (address >= VramSize)
 			return;
 
@@ -743,18 +743,18 @@ namespace GBA
 		vram.Write8(address, value);
 	}
 
-	u8 Ppu::ReadOam(u32 offset) const
+	uint8_t Ppu::ReadOam(uint32_t offset) const
 	{
 		return oam.Read8(offset & (OamSize - 1));
 	}
 
-	void Ppu::WriteOam(u32 offset, u8 value)
+	void Ppu::WriteOam(uint32_t offset, uint8_t value)
 	{
 		// GBATEK "GBA Memory Map": OAM accepts 16-bit and 32-bit writes only, so a byte write to
 		// the high byte of a halfword is ignored. A byte write to the low byte stores that byte
 		// and leaves the high half as it was (the value driven on the upper lanes is open bus,
 		// modelled here as zero).
-		const u32 index = offset & (OamSize - 1);
+		const uint32_t index = offset & (OamSize - 1);
 		if ((index & 1) == 0)
 			oam.Write8(index, value);
 	}
@@ -834,7 +834,7 @@ namespace GBA
 		else if (vcount == ScanlinesTotal - 1)
 		{
 			// Line 227 is not part of the VBlank period any more.
-			dispstat &= (u16)~STAT_VBLANK;
+			dispstat &= (uint16_t)~STAT_VBLANK;
 		}
 
 		UpdateVCountMatch(&bus);
@@ -843,7 +843,7 @@ namespace GBA
 	void Ppu::UpdateVCountMatch(GbaBus* bus)	{
 		// The V-Counter flag is set while VCOUNT equals the setting in the high byte of DISPSTAT
 		// (bits 8-15); the interrupt is requested when bit 5 enables it (GBATEK 4000004h).
-		if (vcount == (u16)(dispstat >> 8))
+		if (vcount == (uint16_t)(dispstat >> 8))
 		{
 			dispstat |= STAT_VCOUNT;
 
@@ -852,7 +852,7 @@ namespace GBA
 		}
 		else
 		{
-			dispstat &= (u16)~STAT_VCOUNT;
+			dispstat &= (uint16_t)~STAT_VCOUNT;
 		}
 	}
 
@@ -860,12 +860,12 @@ namespace GBA
 	// The scanline
 	// ---------------------------------------------------------------------------------------
 
-	u16 Ppu::ComputeDispStat() const
+	uint16_t Ppu::ComputeDispStat() const
 	{
 		// The stored bits: the IRQ enables (3-5) and the V-Count setting (8-15); bits 6-7 are not
 		// used in GBA mode. Everything else the CPU reads is generated from the current position
 		// (GBATEK 4000004h).
-		u16 value = (u16)(dispstat & 0xFF38);
+		uint16_t value = (uint16_t)(dispstat & 0xFF38);
 
 		if (vcount >= ScreenHeight && vcount < ScanlinesTotal - 1)
 			value |= STAT_VBLANK;			// set in the lines 160..226
@@ -873,7 +873,7 @@ namespace GBA
 		if (lineCycles >= ScreenWidth * 4)
 			value |= STAT_HBLANK;			// the visible part of the line is over
 
-		if (vcount == (u16)(dispstat >> 8))
+		if (vcount == (uint16_t)(dispstat >> 8))
 			value |= STAT_VCOUNT;			// VCOUNT matches the setting
 
 		return value;
@@ -882,17 +882,17 @@ namespace GBA
 	void Ppu::RenderLine(GbaBus& bus, int y)
 	{
 		currentLine = y;
-		vcount = (u16)y;
+		vcount = (uint16_t)y;
 
 		if (y == 0)
 		{
 			// GBATEK 4000028h: the reference points are copied from the write latches to the
 			// internal registers during each VBlank, i.e. they define the origin of the topmost
 			// scanline.
-			bgx[0] = (s32)(bgxLatch[0] & REFERENCE_MASK);
-			bgy[0] = (s32)(bgyLatch[0] & REFERENCE_MASK);
-			bgx[1] = (s32)(bgxLatch[1] & REFERENCE_MASK);
-			bgy[1] = (s32)(bgyLatch[1] & REFERENCE_MASK);
+			bgx[0] = (int32_t)(bgxLatch[0] & REFERENCE_MASK);
+			bgy[0] = (int32_t)(bgyLatch[0] & REFERENCE_MASK);
+			bgx[1] = (int32_t)(bgxLatch[1] & REFERENCE_MASK);
+			bgy[1] = (int32_t)(bgyLatch[1] & REFERENCE_MASK);
 		}
 		else
 		{
@@ -902,8 +902,8 @@ namespace GBA
 			// of PB is 0x0100 and the increment is the raw register value.
 			for (int i = 0; i < 2; i++)
 			{
-				bgx[i] = (s32)((u32)(bgx[i] + (s32)bgpb[i]) & REFERENCE_MASK);
-				bgy[i] = (s32)((u32)(bgy[i] + (s32)bgpd[i]) & REFERENCE_MASK);
+				bgx[i] = (int32_t)((uint32_t)(bgx[i] + (int32_t)bgpb[i]) & REFERENCE_MASK);
+				bgy[i] = (int32_t)((uint32_t)(bgy[i] + (int32_t)bgpd[i]) & REFERENCE_MASK);
 			}
 		}
 
@@ -917,7 +917,7 @@ namespace GBA
 		state.bldcnt = bldcnt;
 		state.bldalpha = bldalpha;
 		state.bldy = bldy;
-		state.mode = (u8)(dispcnt & 7);
+		state.mode = (uint8_t)(dispcnt & 7);
 		state.forcedBlank = ForcedBlank();
 		// GBATEK 4000000h: the window feature only exists while at least one of DISPCNT bits
 		// 13/14/15 enables a window. With all three clear, WININ/WINOUT are ignored entirely and
@@ -940,7 +940,7 @@ namespace GBA
 
 		// 3. The backdrop: BG palette colour 0, opaque everywhere, at the bottom of the stack
 		// (GBATEK "LCD Color Palettes": "Color 0 of BG Palette 0 is used as backdrop color").
-		const u16 backdropColor = ReadPaletteEntry(*this, 0);
+		const uint16_t backdropColor = ReadPaletteEntry(*this, 0);
 		const bool objEnabled = !state.forcedBlank && (dispcnt & (1 << DC_OBJ_ENABLE)) != 0;
 
 		for (int x = 0; x < ScreenWidth; x++)
@@ -949,8 +949,8 @@ namespace GBA
 			// so that a sprite wins against a background of the same priority (GBATEK
 			// "Priority": "the OBJ becomes higher priority and is displayed on top of that BG
 			// layer").
-			const u16 objColor = pixels[x].color;
-			const u8 objPriority = pixels[x].priority;
+			const uint16_t objColor = pixels[x].color;
+			const uint8_t objPriority = pixels[x].priority;
 			const bool objSemi = pixels[x].semiTransparent;
 			const bool pushObj = (pixels[x].layer == LAYER_OBJ) && objEnabled &&
 				(((state.windowsActive
@@ -983,11 +983,11 @@ namespace GBA
 			ApplyDotEffect(state, x, below[x]);
 
 		// 6. The host's XRGB8888 frame.
-		u32* target = frame.data() + (size_t)y * ScreenWidth;
+		uint32_t* target = frame.data() + (size_t)y * ScreenWidth;
 
 		for (int x = 0; x < ScreenWidth; x++)
 		{
-			u16 color = line[x];
+			uint16_t color = line[x];
 
 			if (state.forcedBlank)
 			{
@@ -1030,7 +1030,7 @@ namespace GBA
 
 		for (int index = 0; index < 128; index++)
 		{
-			const u32 base = (u32)index * 8;
+			const uint32_t base = (uint32_t)index * 8;
 			const int attr0 = (int)OamWord(*this, base);
 			const int attr1 = (int)OamWord(*this, base + 2);
 			const int attr2 = (int)OamWord(*this, base + 4);
@@ -1092,10 +1092,10 @@ namespace GBA
 				// parameters are 8.8 fixed point (GBATEK "OBJ Rotation/Scaling PA,PB,PC,PD"), the
 				// same units the source coordinate is computed in - a 1.0 scale is 0x0100.
 				const int group = (attr1 >> 9) & 0x1F;
-				sprite.pa = (s32)AffineParam(*this, group, 0);
-				sprite.pb = (s32)AffineParam(*this, group, 1);
-				sprite.pc = (s32)AffineParam(*this, group, 2);
-				sprite.pd = (s32)AffineParam(*this, group, 3);
+				sprite.pa = (int32_t)AffineParam(*this, group, 0);
+				sprite.pb = (int32_t)AffineParam(*this, group, 1);
+				sprite.pc = (int32_t)AffineParam(*this, group, 2);
+				sprite.pd = (int32_t)AffineParam(*this, group, 3);
 			}
 			else
 			{
@@ -1142,7 +1142,7 @@ namespace GBA
 				if (sprite.mosaic)
 					sampleX = (x / mosaicH) * mosaicH;
 
-				const u16 color = SpritePixel(*this, sprite, sampleX, mosaicOriginY);
+				const uint16_t color = SpritePixel(*this, sprite, sampleX, mosaicOriginY);
 
 				if (color == NO_PIXEL)
 					continue;
@@ -1160,7 +1160,7 @@ namespace GBA
 
 				pixels[x].color = color;
 				pixels[x].layer = LAYER_OBJ;
-				pixels[x].priority = (u8)sprite.objPriority;
+				pixels[x].priority = (uint8_t)sprite.objPriority;
 				pixels[x].semiTransparent = sprite.semiTransparent;
 				break;
 			}
@@ -1198,7 +1198,7 @@ namespace GBA
 		{
 			// RenderSprites has already tagged the OBJ window dots; keep that tag when the window
 			// exists.
-			u8 mask = (objWinOn && windowMask[x] == MASK_OBJWIN) ? MASK_OBJWIN : MASK_OUTSIDE;
+			uint8_t mask = (objWinOn && windowMask[x] == MASK_OBJWIN) ? MASK_OBJWIN : MASK_OUTSIDE;
 
 			if (win0Line && x >= win0X1 && x < win0X2)
 				mask = MASK_WIN0;
@@ -1241,7 +1241,7 @@ namespace GBA
 	// and the register values gathered into the LineState.
 	// ---------------------------------------------------------------------------------------
 
-	void Ppu::PushDot(LayerPixel& winner, LayerBelow& below, int priority, u8 layer, u16 color,
+	void Ppu::PushDot(LayerPixel& winner, LayerBelow& below, int priority, uint8_t layer, uint16_t color,
 		bool semitransparent)
 	{
 		if (priority < (int)winner.priority)
@@ -1255,7 +1255,7 @@ namespace GBA
 
 			winner.color = color;
 			winner.layer = layer;
-			winner.priority = (u8)priority;
+			winner.priority = (uint8_t)priority;
 			winner.semiTransparent = semitransparent;
 		}
 		else if (priority < (int)below.priority)
@@ -1264,7 +1264,7 @@ namespace GBA
 			// so it becomes the new second target.
 			below.color = color;
 			below.layer = layer;
-			below.priority = (u8)priority;
+			below.priority = (uint8_t)priority;
 			below.semitransparent = semitransparent;
 		}
 	}
@@ -1297,7 +1297,7 @@ namespace GBA
 		// text layers, and in mode 1 only BG2 is affine (see the mode table above).
 		const bool affine = (state.mode >= 2 && index >= 2);
 
-		const u16 control = Read16(0x008 + index * 2, 0);
+		const uint16_t control = Read16(0x008 + index * 2, 0);
 		const int priority = (control >> BGCNT_PRIORITY) & 3;
 
 		// GBATEK 400004Ch: the mosaic size is the register field plus one (1..16 dots) and the
@@ -1311,13 +1311,13 @@ namespace GBA
 		{
 			// GBATEK "The Window Feature": a layer is displayed only when both DISPCNT and
 			// WININ/WINOUT enable it.
-			const u16 windowBits = state.windowsActive
+			const uint16_t windowBits = state.windowsActive
 				? WindowBits(state.windowMask[x], state.winin, state.winout) : WINDOW_ALL;
 			if ((windowBits & (1 << index)) == 0)
 				continue;
 
 			const int sourceX = (x / mosaicH) * mosaicH;
-			u16 color = 0;
+			uint16_t color = 0;
 			bool opaque;
 
 			if (IsBitmapMode(state.mode))
@@ -1337,14 +1337,14 @@ namespace GBA
 			}
 
 			if (opaque)
-				PushDot(pixels[x], below[x], priority, (u8)index, color, false);
+				PushDot(pixels[x], below[x], priority, (uint8_t)index, color, false);
 		}
 	}
 
-	bool Ppu::TextBgDot(int index, int sourceX, int sourceY, u16& color) const
+	bool Ppu::TextBgDot(int index, int sourceX, int sourceY, uint16_t& color) const
 	{
 		// The BG control registers are at 0x008, 0x00A, 0x00C and 0x00E.
-		const u16 control = Read16(0x008 + index * 2, 0);
+		const uint16_t control = Read16(0x008 + index * 2, 0);
 
 		// A text map is a whole number of 256x256 dot areas of 32x32 entries: size 0 is one area,
 		// size 1 is two side by side (512x256), size 2 is two stacked (256x512) and size 3 is a
@@ -1358,8 +1358,8 @@ namespace GBA
 
 		// Bits 2-3 are the character base block; bit 7 is the colour depth and must not leak into
 		// it (GBATEK 4000008h).
-		const u32 charBase = (u32)(((control >> BGCNT_CHAR_BASE) & 3) * 0x4000);
-		const u32 screenBase = (u32)(((control >> BGCNT_SCREEN_BASE) & 0x1F) * 0x800);
+		const uint32_t charBase = (uint32_t)(((control >> BGCNT_CHAR_BASE) & 3) * 0x4000);
+		const uint32_t screenBase = (uint32_t)(((control >> BGCNT_SCREEN_BASE) & 0x1F) * 0x800);
 
 		// The scroll offsets are applied and the map wraps through its own size (GBATEK 4000008h:
 		// "When the screen is scrolled it'll always wraparound").
@@ -1374,10 +1374,10 @@ namespace GBA
 		// linear row.
 		const int blockRow = sy / 256;
 		const int blockColumn = sx / 256;
-		const u32 blocksPerRow = (u32)(mapWidthDots / 256);
-		const u32 mapOffset = ((u32)blockRow * blocksPerRow + (u32)blockColumn) * 0x800 +
-			(u32)((sy % 256) / 8) * 32 * 2 + (u32)((sx % 256) / 8) * 2;
-		const u16 entry = ReadVram16(*this, screenBase + mapOffset);
+		const uint32_t blocksPerRow = (uint32_t)(mapWidthDots / 256);
+		const uint32_t mapOffset = ((uint32_t)blockRow * blocksPerRow + (uint32_t)blockColumn) * 0x800 +
+			(uint32_t)((sy % 256) / 8) * 32 * 2 + (uint32_t)((sx % 256) / 8) * 2;
+		const uint16_t entry = ReadVram16(*this, screenBase + mapOffset);
 
 		const int tileNumber = entry & 0x3FF;
 		const int paletteIndex = (entry >> 12) & 0xF;
@@ -1389,36 +1389,36 @@ namespace GBA
 		if ((control & (1 << BGCNT_256_COLORS)) != 0)
 		{
 			// 8bit depth: 64 bytes per tile, one byte per dot, 256 colours of palette 0.
-			const u8 pixelIndex = ReadVram(charBase + (u32)tileNumber * TILE_SIZE_8BPP +
-				(u32)tileY * 8 + (u32)tileX);
+			const uint8_t pixelIndex = ReadVram(charBase + (uint32_t)tileNumber * TILE_SIZE_8BPP +
+				(uint32_t)tileY * 8 + (uint32_t)tileX);
 
 			if (pixelIndex == 0)
 				return false;				// colour 0 is transparent
 
-			color = ReadPaletteEntry(*this, (u32)pixelIndex * 2);
+			color = ReadPaletteEntry(*this, (uint32_t)pixelIndex * 2);
 			return true;
 		}
 
 		// 4bit depth: 32 bytes per tile, the low nibble is the left dot.
-		const u8 packed = ReadVram(charBase + (u32)tileNumber * TILE_SIZE_4BPP +
-			(u32)tileY * 4 + (u32)(tileX / 2));
-		const u8 pixelIndex = (tileX & 1) ? (u8)(packed >> 4) : (u8)(packed & 0xF);
+		const uint8_t packed = ReadVram(charBase + (uint32_t)tileNumber * TILE_SIZE_4BPP +
+			(uint32_t)tileY * 4 + (uint32_t)(tileX / 2));
+		const uint8_t pixelIndex = (tileX & 1) ? (uint8_t)(packed >> 4) : (uint8_t)(packed & 0xF);
 
 		if (pixelIndex == 0)
 			return false;
 
-		color = ReadPaletteEntry(*this, (u32)(paletteIndex * 16 + pixelIndex) * 2);
+		color = ReadPaletteEntry(*this, (uint32_t)(paletteIndex * 16 + pixelIndex) * 2);
 		return true;
 	}
 
-	bool Ppu::AffineBgDot(const LineState& state, int index, int sourceX, int sourceY, u16& color) const
+	bool Ppu::AffineBgDot(const LineState& state, int index, int sourceX, int sourceY, uint16_t& color) const
 	{
 		// GBATEK "LCD I/O BG Rotation/Scaling": the reference point is the source coordinate of
 		// the upper-left dot of the display, PA/PC (dx/dy) are the increments along a scanline and
 		// PB/PD (dmx/dmy) the increments from one scanline to the next.
-		const u16 control = Read16(0x008 + index * 2, 0);
-		const u32 charBase = (u32)(((control >> BGCNT_CHAR_BASE) & 3) * 0x4000);
-		const u32 screenBase = (u32)(((control >> BGCNT_SCREEN_BASE) & 0x1F) * 0x800);
+		const uint16_t control = Read16(0x008 + index * 2, 0);
+		const uint32_t charBase = (uint32_t)(((control >> BGCNT_CHAR_BASE) & 3) * 0x4000);
+		const uint32_t screenBase = (uint32_t)(((control >> BGCNT_SCREEN_BASE) & 0x1F) * 0x800);
 		const int mapDots = 128 << ((control >> BGCNT_SIZE) & 3);
 		const int mapTiles = mapDots / 8;
 		const bool wrap = (control & (1 << BGCNT_AREA_OVERFLOW)) != 0;
@@ -1429,13 +1429,13 @@ namespace GBA
 		// scanline (GBATEK "Internal Reference Point Registers"). Reading the latch here would
 		// throw the per-line advance away and paint every line from the same origin.
 		const int slot = index - 2;
-		const u32 base = 0x020 + (u32)slot * 0x10;
-		const s32 pa = (s16)Read16(base + 0, 0);
-		const s32 pb = (s16)Read16(base + 2, 0);
-		const s32 pc = (s16)Read16(base + 4, 0);
-		const s32 pd = (s16)Read16(base + 6, 0);
-		const s32 referenceX = bgx[slot];
-		const s32 referenceY = bgy[slot];
+		const uint32_t base = 0x020 + (uint32_t)slot * 0x10;
+		const int32_t pa = (int16_t)Read16(base + 0, 0);
+		const int32_t pb = (int16_t)Read16(base + 2, 0);
+		const int32_t pc = (int16_t)Read16(base + 4, 0);
+		const int32_t pd = (int16_t)Read16(base + 6, 0);
+		const int32_t referenceX = bgx[slot];
+		const int32_t referenceY = bgy[slot];
 
 		// The reference point is the origin of the *current* scanline, so the dot is offset from
 		// it by the dot's position within the line. A mosaic block that starts above this line
@@ -1447,12 +1447,12 @@ namespace GBA
 		// the matrix parameters are 8.8 fixed point (GBATEK 4000020h: PA-PD have a "fractional
 		// portion" of 8 bits; 4000028h: the reference point is "shifted left by eight"), so the
 		// products already carry the reference point's units.
-		const s32 srcX = referenceX + pa * offsetX + pb * offsetY;
-		const s32 srcY = referenceY + pc * offsetX + pd * offsetY;
+		const int32_t srcX = referenceX + pa * offsetX + pb * offsetY;
+		const int32_t srcY = referenceY + pc * offsetX + pd * offsetY;
 
 		// The hardware samples the texel nearest to the computed point.
-		const s32 texelX = ReferenceRounded(srcX);
-		const s32 texelY = ReferenceRounded(srcY);
+		const int32_t texelX = ReferenceRounded(srcX);
+		const int32_t texelY = ReferenceRounded(srcY);
 
 		if (IsBitmapMode(state.mode))
 		{
@@ -1466,8 +1466,8 @@ namespace GBA
 			return color != NO_PIXEL;
 		}
 
-		s32 wrappedX = texelX;
-		s32 wrappedY = texelY;
+		int32_t wrappedX = texelX;
+		int32_t wrappedY = texelY;
 
 		if (wrap)
 		{
@@ -1482,14 +1482,14 @@ namespace GBA
 
 		// A rotation/scaling map is one byte per entry and always 256 colours (GBATEK
 		// "Rotation/Scaling BG Screen").
-		const u8 tileNumber = ReadVram(screenBase + (u32)((wrappedY / 8) * mapTiles + wrappedX / 8));
-		const u8 pixelIndex = ReadVram(charBase + (u32)tileNumber * TILE_SIZE_8BPP +
-			(u32)(wrappedY & 7) * 8 + (u32)(wrappedX & 7));
+		const uint8_t tileNumber = ReadVram(screenBase + (uint32_t)((wrappedY / 8) * mapTiles + wrappedX / 8));
+		const uint8_t pixelIndex = ReadVram(charBase + (uint32_t)tileNumber * TILE_SIZE_8BPP +
+			(uint32_t)(wrappedY & 7) * 8 + (uint32_t)(wrappedX & 7));
 
 		if (pixelIndex == 0)
 			return false;
 
-		color = ReadPaletteEntry(*this, (u32)pixelIndex * 2);
+		color = ReadPaletteEntry(*this, (uint32_t)pixelIndex * 2);
 		return true;
 	}
 
@@ -1497,7 +1497,7 @@ namespace GBA
 	{
 		// GBATEK "LCD I/O Color Special Effects".
 		const LayerPixel& top = pixels[x];
-		u16 color = top.color;
+		uint16_t color = top.color;
 
 		const int effect = (state.bldcnt >> BLD_EFFECT) & 3;
 
@@ -1518,17 +1518,17 @@ namespace GBA
 		// The 2nd target is the dot directly below the top-most one. The backdrop is opaque
 		// everywhere, so a dot that no layer covers has it as its next lower pixel.
 		const bool hasBelow = (below.layer != LAYER_NONE);
-		const u8 secondLayer = hasBelow ? below.layer : LAYER_BACKDROP;
-		const u16 secondColor = hasBelow ? below.color : top.color;
+		const uint8_t secondLayer = hasBelow ? below.layer : LAYER_BACKDROP;
+		const uint16_t secondColor = hasBelow ? below.color : top.color;
 
 		// The colour special effect is enabled per window region by bit 5 of WININ/WINOUT
 		// (GBATEK 4000048h/400004Ah).
-		const u16 windowBits = state.windowsActive
+		const uint16_t windowBits = state.windowsActive
 			? WindowBits(state.windowMask[x], state.winin, state.winout) : WINDOW_ALL;
 		const bool effectAllowed = (windowBits & (1 << WIN_EFFECT)) != 0;
 
 		bool hasSecond = false;
-		u16 second = 0;
+		uint16_t second = 0;
 
 		if (semi)
 		{
@@ -1564,7 +1564,7 @@ namespace GBA
 				r += ((31 - r) * evy) >> 4;
 				g += ((31 - g) * evy) >> 4;
 				b += ((31 - b) * evy) >> 4;
-				color = (u16)(r | (g << 5) | (b << 10));
+				color = (uint16_t)(r | (g << 5) | (b << 10));
 			}
 			else if (effect == 3)
 			{
@@ -1575,7 +1575,7 @@ namespace GBA
 				r -= (r * evy) >> 4;
 				g -= (g * evy) >> 4;
 				b -= (b * evy) >> 4;
-				color = (u16)(r | (g << 5) | (b << 10));
+				color = (uint16_t)(r | (g << 5) | (b << 10));
 			}
 		}
 

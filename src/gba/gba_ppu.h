@@ -34,44 +34,44 @@ namespace GBA
 		// -- CPU side ----------------------------------------------------------------------
 
 		/// <summary>Read a display register (offset relative to 0x04000000, 0x000..0x05F).</summary>
-		u16 Read16(u32 offset, u16 openBus) const;
+		uint16_t Read16(uint32_t offset, uint16_t openBus) const;
 
 		/// <summary>Write a display register. `cycles` is the current system cycle counter, which
 		/// the affine reference point registers latch when they are written twice.</summary>
-		void Write16(GbaBus& bus, u32 offset, u16 value, int cycles);
+		void Write16(GbaBus& bus, uint32_t offset, uint16_t value, int cycles);
 
 		/// <summary>Palette memory (0x05000000, 1 KByte). byte access reads back the OR of the two
 		/// halves of the halfword, as the hardware does.</summary>
-		u8 ReadPalette(u32 offset) const;
-		void WritePalette(u32 offset, u8 value);
+		uint8_t ReadPalette(uint32_t offset) const;
+		void WritePalette(uint32_t offset, uint8_t value);
 
 		/// <summary>
 		/// A whole palette entry. The bus uses these for 16-bit accesses: a halfword assembled from
 		/// two byte reads would be wrong, because a byte read has the OR rule above (reading the
 		/// entry 0x1234 as two bytes gives 0x3636).
 		/// </summary>
-		u16 ReadPalette16(u32 offset) const { return palette.Read16(offset & (PaletteSize - 1)); }
-		void WritePalette16(u32 offset, u16 value) { palette.Write16(offset & (PaletteSize - 1), value); }
+		uint16_t ReadPalette16(uint32_t offset) const { return palette.Read16(offset & (PaletteSize - 1)); }
+		void WritePalette16(uint32_t offset, uint16_t value) { palette.Write16(offset & (PaletteSize - 1), value); }
 
 		/// <summary>Video memory (0x06000000, 96 KByte).</summary>
-		u8 ReadVram(u32 offset) const;
-		void WriteVram(u32 offset, u8 value);
+		uint8_t ReadVram(uint32_t offset) const;
+		void WriteVram(uint32_t offset, uint8_t value);
 
 		/// <summary>Object attribute memory (0x07000000, 1 KByte).</summary>
-		u8 ReadOam(u32 offset) const;
+		uint8_t ReadOam(uint32_t offset) const;
 
 		/// <summary>An 8-bit store of OAM. The hardware only has 16-bit and 32-bit write access
 		/// to OAM (GBATEK "GBA Memory Map"), so this only drives the low byte of the halfword the
 		/// address names and leaves the high byte alone.</summary>
-		void WriteOam(u32 offset, u8 value);
+		void WriteOam(uint32_t offset, uint8_t value);
 
 		/// <summary>A whole halfword of OAM, i.e. what a 16-bit store drives. The bus uses this:
 		/// assembling the halfword out of two WriteOam calls would drop its high byte.</summary>
-		void WriteOam16(u32 offset, u16 value)
+		void WriteOam16(uint32_t offset, uint16_t value)
 		{
-			const u32 index = offset & (OamSize - 1);
-			oam.Write8(index, (u8)value);
-			oam.Write8((index + 1) & (OamSize - 1), (u8)(value >> 8));
+			const uint32_t index = offset & (OamSize - 1);
+			oam.Write8(index, (uint8_t)value);
+			oam.Write8((index + 1) & (OamSize - 1), (uint8_t)(value >> 8));
 		}
 
 		// -- timing ------------------------------------------------------------------------
@@ -86,23 +86,23 @@ namespace GBA
 		// -- observation -------------------------------------------------------------------
 
 		/// <summary>The frame as XRGB8888, ScreenWidth * ScreenHeight pixels, row 0 on top.</summary>
-		const u32* Frame() const { return frame.data(); }
+		const uint32_t* Frame() const { return frame.data(); }
 
 		/// <summary>The frame as the host expects it (BGRA byte order in memory, as SDL's
 		/// SDL_PIXELFORMAT_ARGB8888 wants it on a little-endian host).</summary>
-		const u32* FramePixels() const { return frame.data(); }
+		const uint32_t* FramePixels() const { return frame.data(); }
 
 		/// <summary>The raw 15-bit colour of a pixel of the most recently rendered line.</summary>
-		u16 LinePixel(int x) const { return (x >= 0 && x < ScreenWidth) ? line[x] : 0; }
+		uint16_t LinePixel(int x) const { return (x >= 0 && x < ScreenWidth) ? line[x] : 0; }
 
 		/// <summary>How many frames have been completed since the reset.</summary>
 		int FrameCounter() const { return frameCounter; }
 
-		u16 VCount() const { return vcount; }
+		uint16_t VCount() const { return vcount; }
 		/// <summary>The DISPSTAT value the CPU would read right now, i.e. the stored IRQ
 		/// enables and V-Count setting plus the flags of the current line position.</summary>
-		u16 DispStat() const { return ComputeDispStat(); }
-		u16 DispCnt() const { return dispcnt; }
+		uint16_t DispStat() const { return ComputeDispStat(); }
+		uint16_t DispCnt() const { return dispcnt; }
 
 		/// <summary>True while the LCD is inside the forced-blank window (DISPCNT bit 7).</summary>
 		bool ForcedBlank() const { return (dispcnt & 0x80) != 0; }
@@ -113,24 +113,24 @@ namespace GBA
 	private:
 		// -- registers ---------------------------------------------------------------------
 
-		u16 dispcnt = 0;			// 0x000
-		u16 greenswap = 0;			// 0x002
-		u16 bldcnt = 0;				// 0x004
-		u16 bldalpha = 0;			// 0x006
-		u16 bldy = 0;				// 0x008
-		u16 bgcnt[4]{};				// 0x00A .. 0x010 (offset 0x08 is BLDY, so the array is not
+		uint16_t dispcnt = 0;			// 0x000
+		uint16_t greenswap = 0;			// 0x002
+		uint16_t bldcnt = 0;			// 0x004
+		uint16_t bldalpha = 0;			// 0x006
+		uint16_t bldy = 0;			// 0x008
+		uint16_t bgcnt[4]{};			// 0x00A .. 0x010 (offset 0x08 is BLDY, so the array is not
 									// contiguous in memory; the accessors decode the offsets)
-		u16 bghofs[4]{};
-		u16 bgvofs[4]{};
-		s16 bgpa[2]{}, bgpb[2]{}, bgpc[2]{}, bgpd[2]{};
-		s32 bgx[2]{}, bgy[2]{};
-		u32 bgxLatch[2]{}, bgyLatch[2]{};
-		u16 win0h = 0, win1h = 0, win0v = 0, win1v = 0;
-		u16 winin = 0, winout = 0;
-		u16 mosaic = 0;
+		uint16_t bghofs[4]{};
+		uint16_t bgvofs[4]{};
+		int16_t bgpa[2]{}, bgpb[2]{}, bgpc[2]{}, bgpd[2]{};
+		int32_t bgx[2]{}, bgy[2]{};
+		uint32_t bgxLatch[2]{}, bgyLatch[2]{};
+		uint16_t win0h = 0, win1h = 0, win0v = 0, win1v = 0;
+		uint16_t winin = 0, winout = 0;
+		uint16_t mosaic = 0;
 
-		u16 dispstat = 0;			// 0x004 of DISPSTAT, the read-only bits are kept here
-		u16 vcount = 0;
+		uint16_t dispstat = 0;			// 0x004 of DISPSTAT, the read-only bits are kept here
+		uint16_t vcount = 0;
 
 		// -- memory ------------------------------------------------------------------------
 
@@ -145,17 +145,17 @@ namespace GBA
 
 		// -- rendering ---------------------------------------------------------------------
 
-		u16 line[ScreenWidth]{};		// the 15-bit colours of the current line
-		u8 windowMask[ScreenWidth]{};	// 0..5 = the window that won, 0xFF = outside all windows
-		std::vector<u32> frame;		// XRGB8888
+		uint16_t line[ScreenWidth]{};		// the 15-bit colours of the current line
+		uint8_t windowMask[ScreenWidth]{};	// 0..5 = the window that won, 0xFF = outside all windows
+		std::vector<uint32_t> frame;		// XRGB8888
 
 		// Per-pixel layer information, needed by the blending pass: which priority layer won and
 		// whether it is a "first target" (BG0-BG3, OBJ) or a "second target" (the backdrop).
 		struct LayerPixel
 		{
-			u16 color = 0;
-			u8 layer = 0xFF;		// 0..3 = BG0..BG3, 4 = OBJ, 5 = backdrop, 0xFF = transparent
-			u8 priority = 0xFF;
+			uint16_t color = 0;
+			uint8_t layer = 0xFF;		// 0..3 = BG0..BG3, 4 = OBJ, 5 = backdrop, 0xFF = transparent
+			uint8_t priority = 0xFF;
 			bool semiTransparent = false;	// an OBJ pixel with the semi-transparent bit
 		};
 		LayerPixel pixels[ScreenWidth]{};
@@ -171,7 +171,7 @@ namespace GBA
 		void RenderMosaic();			// (the mosaic is applied while sampling, see RenderTextBg)
 
 		// Address helpers.
-		u32 VramAddress(u32 offset) const;
+		uint32_t VramAddress(uint32_t offset) const;
 		bool TextBgIs256(int index) const;
 
 		// The scanline the renderer is currently working on (set by Tick).
@@ -184,7 +184,7 @@ namespace GBA
 
 		/// <summary>The DISPSTAT value to hand to the CPU: the stored IRQ enables and V-Count
 		/// setting plus the read-only flags of the current line (GBATEK 4000004h).</summary>
-		u16 ComputeDispStat() const;
+		uint16_t ComputeDispStat() const;
 
 		// -- the per-line priority stack ---------------------------------------------------
 		//
@@ -196,9 +196,9 @@ namespace GBA
 		/// <summary>The pixel directly below the winning layer of one dot.</summary>
 		struct LayerBelow
 		{
-			u16 color = 0;
-			u8 layer = 0xFF;		// 0..3 = BG0..BG3, 4 = OBJ, 5 = backdrop, 0xFF = none
-			u8 priority = 0xFF;
+			uint16_t color = 0;
+			uint8_t layer = 0xFF;		// 0..3 = BG0..BG3, 4 = OBJ, 5 = backdrop, 0xFF = none
+			uint8_t priority = 0xFF;
 			bool semitransparent = false;
 		};
 
@@ -207,21 +207,21 @@ namespace GBA
 		struct LineState
 		{
 			int line = 0;					// the scanline being rendered
-			u16 dispcnt = 0;
-			u16 mosaic = 0;
-			u16 winin = 0;
-			u16 winout = 0;
-			u16 bldcnt = 0;
-			u16 bldalpha = 0;
-			u16 bldy = 0;
-			u8 mode = 0;
+			uint16_t dispcnt = 0;
+			uint16_t mosaic = 0;
+			uint16_t winin = 0;
+			uint16_t winout = 0;
+			uint16_t bldcnt = 0;
+			uint16_t bldalpha = 0;
+			uint16_t bldy = 0;
+			uint8_t mode = 0;
 			bool forcedBlank = false;
 			bool windowsActive = false;		// at least one of DISPCNT.13/14/15 enables a window
-			const u8* windowMask = nullptr;	// the window region of every dot
+			const uint8_t* windowMask = nullptr;	// the window region of every dot
 		};
 
 		/// <summary>Insert an opaque dot at `priority` (the better, i.e. lower, number wins).</summary>
-		void PushDot(LayerPixel& winner, LayerBelow& below, int priority, u8 layer, u16 color,
+		void PushDot(LayerPixel& winner, LayerBelow& below, int priority, uint8_t layer, uint16_t color,
 			bool semitransparent);
 
 		/// <summary>Draw one background layer over the whole line.</summary>
@@ -231,10 +231,10 @@ namespace GBA
 		void ApplyDotEffect(const LineState& state, int x, const LayerBelow& below);
 
 		/// <summary>Fetch one dot of a text background (with the scroll offsets applied).</summary>
-		bool TextBgDot(int index, int sourceX, int sourceY, u16& color) const;
+		bool TextBgDot(int index, int sourceX, int sourceY, uint16_t& color) const;
 
 		/// <summary>Fetch one dot of a rotation/scaling background, or of the bitmap background
 		/// of the modes 3-5; `sourceX`/`sourceY` are screen coordinates.</summary>
-		bool AffineBgDot(const LineState& state, int index, int sourceX, int sourceY, u16& color) const;
+		bool AffineBgDot(const LineState& state, int index, int sourceX, int sourceY, uint16_t& color) const;
 	};
 }

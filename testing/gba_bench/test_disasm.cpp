@@ -20,24 +20,24 @@ namespace
 	/// ARM words are given in the order they appear in memory, i.e. little endian.</summary>
 	struct Image
 	{
-		std::vector<u8> bytes;
-		u32 base = 0;
+		std::vector<uint8_t> bytes;
+		uint32_t base = 0;
 
-		void Word(u32 value)
+		void Word(uint32_t value)
 		{
-			bytes.push_back((u8)(value & 0xFF));
-			bytes.push_back((u8)((value >> 8) & 0xFF));
-			bytes.push_back((u8)((value >> 16) & 0xFF));
-			bytes.push_back((u8)((value >> 24) & 0xFF));
+			bytes.push_back((uint8_t)(value & 0xFF));
+			bytes.push_back((uint8_t)((value >> 8) & 0xFF));
+			bytes.push_back((uint8_t)((value >> 16) & 0xFF));
+			bytes.push_back((uint8_t)((value >> 24) & 0xFF));
 		}
 
-		void Half(u16 value)
+		void Half(uint16_t value)
 		{
-			bytes.push_back((u8)(value & 0xFF));
-			bytes.push_back((u8)((value >> 8) & 0xFF));
+			bytes.push_back((uint8_t)(value & 0xFF));
+			bytes.push_back((uint8_t)((value >> 8) & 0xFF));
 		}
 
-		void Byte(u8 value)
+		void Byte(uint8_t value)
 		{
 			bytes.push_back(value);
 		}
@@ -45,19 +45,19 @@ namespace
 		ImageMemory Memory() const { return ImageMemory(bytes.data(), bytes.size(), base); }
 	};
 
-	std::string ArmAt(const Image& image, u32 address, int* size = nullptr)
+	std::string ArmAt(const Image& image, uint32_t address, int* size = nullptr)
 	{
 		ImageMemory memory = image.Memory();
 		return ArmDisassemble(memory, address, size);
 	}
 
-	std::string ThumbAt(const Image& image, u32 address, int* size = nullptr)
+	std::string ThumbAt(const Image& image, uint32_t address, int* size = nullptr)
 	{
 		ImageMemory memory = image.Memory();
 		return ThumbDisassemble(memory, address, size);
 	}
 
-	std::string GbAt(const Image& image, u16 address, int* size = nullptr)
+	std::string GbAt(const Image& image, uint16_t address, int* size = nullptr)
 	{
 		ImageMemory memory = image.Memory();
 		return GbDisassemble(memory, address, size);

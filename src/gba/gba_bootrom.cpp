@@ -60,116 +60,116 @@ namespace GBA
 			// -----------------------------------------------------------------------------------
 
 			// GBATEK "GBA Memory Map": an empty slot (or an erased ROM) reads as 0xFFFF.
-			const u32 RomBase = 0x08000000;
+			const uint32_t RomBase = 0x08000000;
 
 			// GBATEK "LCD I/O Registers" and "LCD VRAM Bitmap BG": mode 3 is a 240x160 16bpp
 			// bitmap at the start of VRAM, one halfword per pixel, 0bbbbbgggggrrrrr.
-			const u32 RegDispCnt = 0x04000000;
-			const u32 RegVCount = 0x04000006;
-			const u32 RegIrq = 0x04000200;				// IE, IF (0x202) and IME (0x208)
-			const u32 RegPostFlg = 0x04000300;
-			const u32 RegRcnt = 0x04000134;
-			const u32 RegSioCnt = 0x04000128;
-			const u32 RegSioMulti0 = 0x04000120;		// SIOMULTI0, the parent's slot
-			const u32 RegSioMulti1 = 0x04000122;		// SIOMULTI1, the first child's slot
-			const u32 RegSioMltSend = 0x0400012A;		// SIOMLT_SEND, the local outgoing word
+			const uint32_t RegDispCnt = 0x04000000;
+			const uint32_t RegVCount = 0x04000006;
+			const uint32_t RegIrq = 0x04000200;				// IE, IF (0x202) and IME (0x208)
+			const uint32_t RegPostFlg = 0x04000300;
+			const uint32_t RegRcnt = 0x04000134;
+			const uint32_t RegSioCnt = 0x04000128;
+			const uint32_t RegSioMulti0 = 0x04000120;		// SIOMULTI0, the parent's slot
+			const uint32_t RegSioMulti1 = 0x04000122;		// SIOMULTI1, the first child's slot
+			const uint32_t RegSioMltSend = 0x0400012A;		// SIOMLT_SEND, the local outgoing word
 
 			// GBATEK "GBA Sound Control Registers" and "GBA Sound Channel 1": the boot animation
 			// greets the player with a short tone, the way a handheld's logo does.
-			const u32 RegSound1CntL = 0x04000060;		// NR10: the sweep
-			const u32 RegSound1CntH = 0x04000062;		// NR11/NR12: duty, length, envelope
-			const u32 RegSound1CntX = 0x04000064;		// NR13/NR14: frequency and the trigger
-			const u32 RegSoundCntL = 0x04000080;		// the PSG volumes and the panning
-			const u32 RegSoundCntH = 0x04000082;		// the PSG/DMA mix
-			const u32 RegSoundCntX = 0x04000084;		// the master enable
-			const u32 RegSoundBias = 0x04000088;
+			const uint32_t RegSound1CntL = 0x04000060;		// NR10: the sweep
+			const uint32_t RegSound1CntH = 0x04000062;		// NR11/NR12: duty, length, envelope
+			const uint32_t RegSound1CntX = 0x04000064;		// NR13/NR14: frequency and the trigger
+			const uint32_t RegSoundCntL = 0x04000080;		// the PSG volumes and the panning
+			const uint32_t RegSoundCntH = 0x04000082;		// the PSG/DMA mix
+			const uint32_t RegSoundCntX = 0x04000084;		// the master enable
+			const uint32_t RegSoundBias = 0x04000088;
 
-			const u32 VramBase = 0x06000000;
+			const uint32_t VramBase = 0x06000000;
 
 			// The IWRAM the ROM uses. 0x03007C00-0x03007EFF is free: GBATEK "Default WRAM Usage"
 			// reserves 0x03007F00-0x03007FFF for the interrupt vector, the BIOS call stack and the
 			// stacks the BIOS sets up. The block below ends at 0x03007CF0, well clear of that.
-			const u32 VarBase = 0x03007C00;
+			const uint32_t VarBase = 0x03007C00;
 
-			enum : u32
+			enum : uint32_t
 			{
-				VFrame = 0x00,			// u32 the animation's frame counter
-				VAngleY = 0x04,			// u32 the yaw, in 1/256 of a turn
-				VAngleX = 0x08,			// u32 the pitch
-				VMorph = 0x0C,			// u32 0 = the wireframe cube, 256 = the flat mark
-				VWordX = 0x10,			// s32 the wordmark's pen x
-				VUndoCur = 0x14,		// u32 where the next undo entry goes
-				VUndoBase = 0x18,		// u32 the undo buffer this frame fills (the two buffers
+				VFrame = 0x00,			// uint32_t the animation's frame counter
+				VAngleY = 0x04,			// uint32_t the yaw, in 1/256 of a turn
+				VAngleX = 0x08,			// uint32_t the pitch
+				VMorph = 0x0C,			// uint32_t 0 = the wireframe cube, 256 = the flat mark
+				VWordX = 0x10,			// int32_t the wordmark's pen x
+				VUndoCur = 0x14,		// uint32_t where the next undo entry goes
+				VUndoBase = 0x18,		// uint32_t the undo buffer this frame fills (the two buffers
 									// alternate, so the pair alone says what to erase next)
-				VCy = 0x24, VSy = 0x28, VCx = 0x2C, VSx = 0x30,		// s32 sin/cos, Q12
-				VEdgeCount = 0x34,		// u32 12 while rotating, 9 for the flat mark
-				VLineColour = 0x38,		// u32 the 15-bit colour PlotPixel draws with
-				VTextCol = 0x3C,		// u32 the text drawer's column counter
-				VTextY = 0x40,			// s32 the text drawer's pen y
-				VSign = 0x44,			// u32 the sign of the perspective divide
-				VProjected = 0x48,		// 8 x {s32 x, s32 y}: the projected, morphed corners
-				VRotated = 0x88,		// 8 x {s32 x, s32 y, s32 z}: the rotated corners
-				VLinkDrawn = 0xE8,		// u32 the link status the screen currently shows
+				VCy = 0x24, VSy = 0x28, VCx = 0x2C, VSx = 0x30,		// int32_t sin/cos, Q12
+				VEdgeCount = 0x34,		// uint32_t 12 while rotating, 9 for the flat mark
+				VLineColour = 0x38,		// uint32_t the 15-bit colour PlotPixel draws with
+				VTextCol = 0x3C,		// uint32_t the text drawer's column counter
+				VTextY = 0x40,			// int32_t the text drawer's pen y
+				VSign = 0x44,			// uint32_t the sign of the perspective divide
+				VProjected = 0x48,		// 8 x {int32_t x, int32_t y}: the projected, morphed corners
+				VRotated = 0x88,		// 8 x {int32_t x, int32_t y, int32_t z}: the rotated corners
+				VLinkDrawn = 0xE8,		// uint32_t the link status the screen currently shows
 			};
 
 			// The data tables live in the second half of the image, at a fixed address, so that one
 			// register (r11) reaches all of them with a 12-bit offset.
-			const u32 DataBase = 0x00002400;
-			const u32 OffSineTable = 0x000;			// 256 x s32, Q12 (4096 = 1.0)
-			const u32 OffStars = 0x400;				// 48 x {u8 x, u8 y0, u8 speed, u8 phase}
-			const u32 OffStarColours = 0x4C0;		// 8 x u16
-			const u32 OffVertices = 0x4D0;			// 8 x {s16 x, s16 y, s16 z}, Q12
-			const u32 OffEdges = 0x500;				// 12 x {u8 a, u8 b}
-			const u32 OffFlatMark = 0x520;			// 8 x {s16 x, s16 y}: the mark's corners
-			const u32 OffGlyphs = 0x600;			// 10 x 7 x u32, bit 31 = the leftmost column
-			const u32 OffWord = 0x800;				// 10 x u32: the wordmark's glyph addresses
-			const u32 OffLinkWord = 0x840;			// 4 x u32: "LINK"
-			const u32 OffStatusColours = 0x850;		// 3 x u16: idle, handshake, connected
+			const uint32_t DataBase = 0x00002400;
+			const uint32_t OffSineTable = 0x000;			// 256 x int32_t, Q12 (4096 = 1.0)
+			const uint32_t OffStars = 0x400;				// 48 x {uint8_t x, uint8_t y0, uint8_t speed, uint8_t phase}
+			const uint32_t OffStarColours = 0x4C0;		// 8 x uint16_t
+			const uint32_t OffVertices = 0x4D0;		// 8 x {int16_t x, int16_t y, int16_t z}, Q12
+			const uint32_t OffEdges = 0x500;				// 12 x {uint8_t a, uint8_t b}
+			const uint32_t OffFlatMark = 0x520;			// 8 x {int16_t x, int16_t y}: the mark's corners
+			const uint32_t OffGlyphs = 0x600;			// 10 x 7 x uint32_t, bit 31 = the leftmost column
+			const uint32_t OffWord = 0x800;				// 10 x uint32_t: the wordmark's glyph addresses
+			const uint32_t OffLinkWord = 0x840;			// 4 x uint32_t: "LINK"
+			const uint32_t OffStatusColours = 0x850;		// 3 x uint16_t: idle, handshake, connected
 
 			// The two undo buffers in EWRAM: the 256 KByte of work RAM are free before the
-			// cartridge starts. Each holds 4096 entries of {u32 address, u32 old value} = 32 KiB.
+			// cartridge starts. Each holds 4096 entries of {uint32_t address, uint32_t old value} = 32 KiB.
 			// Both start on a 0x10000 boundary, so bit 15 of the write pointer is clear at the
 			// start of a buffer and set exactly when it is full - which is the test PlotPixel makes.
-			const u32 UndoBufferA = 0x02000000;
-			const u32 UndoBufferB = 0x02010000;
-			const u32 UndoFlip = 0x00010000;			// A <-> B
-			const u32 UndoCapacity = 0x8000;
+			const uint32_t UndoBufferA = 0x02000000;
+			const uint32_t UndoBufferB = 0x02010000;
+			const uint32_t UndoFlip = 0x00010000;			// A <-> B
+			const uint32_t UndoCapacity = 0x8000;
 
 			// The mailbox the harness reads: four halfwords at the top of IWRAM, 0x03007FF0
 			// (unused by the BIOS's own stacks, which live at 0x03007FA0/0x03007FE0):
 			//
-			//   0x03007FF0  u16 status    0 = idle (nothing on the cable), 1 = handshake (only our
+			//   0x03007FF0  uint16_t status    0 = idle (nothing on the cable), 1 = handshake (only our
 			//                             own word came back), 2 = connected (a peer's word arrived)
-			//   0x03007FF2  u16 sent      the word the driver is sending (or echoing) now
-			//   0x03007FF4  u16 received  the word the last transfer delivered
-			//   0x03007FF6  u16 count     how many transfers completed
+			//   0x03007FF2  uint16_t sent      the word the driver is sending (or echoing) now
+			//   0x03007FF4  uint16_t received  the word the last transfer delivered
+			//   0x03007FF6  uint16_t count     how many transfers completed
 			//
 			// The tests and the frontend observe the driver from outside through these four words
 			// (the port itself only shows data while a transfer is in flight).
-			const u32 LinkMailbox = 0x03007FF0;
-			const u16 LinkStatusIdle = 0;
-			const u16 LinkStatusHandshake = 1;
-			const u16 LinkStatusConnected = 2;
+			const uint32_t LinkMailbox = 0x03007FF0;
+			const uint16_t LinkStatusIdle = 0;
+			const uint16_t LinkStatusHandshake = 1;
+			const uint16_t LinkStatusConnected = 2;
 
 			// The handshake words: the parent sends 0x494B ("IK"), a child answers with the
 			// complement, so neither side can mistake its own echo for the peer's word.
-			const u16 LinkWordParent = 0x494B;
-			const u16 LinkWordChild = 0xB6B4;
+			const uint16_t LinkWordParent = 0x494B;
+			const uint16_t LinkWordChild = 0xB6B4;
 
 			// A 15-bit GBA colour from its 5-bit components (GBATEK "LCD Color Palettes").
-			constexpr u16 Colour15(int r, int g, int b)
+			constexpr uint16_t Colour15(int r, int g, int b)
 			{
-				return (u16)((r & 0x1F) | ((g & 0x1F) << 5) | ((b & 0x1F) << 10));
+				return (uint16_t)((r & 0x1F) | ((g & 0x1F) << 5) | ((b & 0x1F) << 10));
 			}
 
 			// The pureikyubu blues (src/res/pureikyubu_icon.svg: #63b0ff, #2e7fdd, #2168c8...).
-			const u16 CubeColour = Colour15(12, 22, 31);		// #63b0ff
-			const u16 TextColour = Colour15(29, 30, 31);		// #e8f4ff
-			const u16 LinkTextColour = Colour15(20, 28, 31);
-			const u16 StatusOffColour = Colour15(5, 7, 11);
-			const u16 StatusIdleColour = Colour15(8, 14, 22);
-			const u16 StatusHandshakeColour = Colour15(31, 20, 4);
-			const u16 StatusConnectedColour = Colour15(6, 30, 10);
+			const uint16_t CubeColour = Colour15(12, 22, 31);		// #63b0ff
+			const uint16_t TextColour = Colour15(29, 30, 31);		// #e8f4ff
+			const uint16_t LinkTextColour = Colour15(20, 28, 31);
+			const uint16_t StatusOffColour = Colour15(5, 7, 11);
+			const uint16_t StatusIdleColour = Colour15(8, 14, 22);
+			const uint16_t StatusHandshakeColour = Colour15(31, 20, 4);
+			const uint16_t StatusConnectedColour = Colour15(6, 30, 10);
 
 			// -----------------------------------------------------------------------------------
 			// The animation
@@ -213,9 +213,9 @@ namespace GBA
 			// Small helpers
 			// -----------------------------------------------------------------------------------
 
-			u32 PopCount(u32 value)
+			uint32_t PopCount(uint32_t value)
 			{
-				u32 count = 0;
+				uint32_t count = 0;
 				for (int i = 0; i < 16; i++)
 					if (value & (1u << i))
 						count++;
@@ -312,7 +312,7 @@ namespace GBA
 			public:
 				BootRomBuilder() = default;
 
-				std::vector<u8> Build(std::string& listing, u32& linkEntryAddress)
+				std::vector<uint8_t> Build(std::string& listing, uint32_t& linkEntryAddress)
 				{
 					EmitVectors();
 					EmitHandlers();
@@ -342,14 +342,14 @@ namespace GBA
 					// The image must be a whole GBA BIOS: TakeImage pads the unused tail with 0xFF
 					// (what an erased ROM reads as) and complains about a label that was never
 					// bound, so a bug in the ROM above fails the build instead of the emulation.
-					std::vector<u8> image = emitter.TakeImage(BiosSize);
+					std::vector<uint8_t> image = emitter.TakeImage(BiosSize);
 					listing = emitter.Listing();
 					return image;
 				}
 
 			private:
 				Assembler emitter;
-				u32 linkEntry = 0;
+				uint32_t linkEntry = 0;
 				int labelCounter = 0;
 
 				// -- emitter helpers -------------------------------------------------------------
@@ -365,7 +365,7 @@ namespace GBA
 				/// word, the word). The immediate solver is private to the Assembler and this
 				/// builder is not a member of it, so the two attempts are made by letting it throw.
 				/// </summary>
-				void LoadConst(int rd, u32 value)
+				void LoadConst(int rd, uint32_t value)
 				{
 					try
 					{
@@ -400,19 +400,19 @@ namespace GBA
 				/// The field mask 0b0001 writes the control byte (bits 7-0: mode, T, F, I) and
 				/// leaves the condition flags and the rest of the CPSR alone.
 				/// </summary>
-				void MsrCpsrControl(u32 controlByte)
+				void MsrCpsrControl(uint32_t controlByte)
 				{
 					emitter.Data32(0xE321F000u | (controlByte & 0xFF));
 				}
 
 				/// <summary>A full descending stack frame without STMDB (see the note at the top).</summary>
-				void SaveRegs(u32 regList)
+				void SaveRegs(uint32_t regList)
 				{
 					emitter.Sub(13, 13, PopCount(regList) * 4);
 					emitter.Stmia(13, regList, Cond::AL, false);
 				}
 
-				void RestoreRegs(u32 regList)
+				void RestoreRegs(uint32_t regList)
 				{
 					emitter.Ldmia(13, regList, Cond::AL, false);
 					emitter.Add(13, 13, PopCount(regList) * 4);
@@ -421,7 +421,7 @@ namespace GBA
 				void BxLr() { emitter.Bx(14); }
 
 				/// <summary>Set the colour PlotPixel draws with.</summary>
-				void SetLineColour(u16 colour)
+				void SetLineColour(uint16_t colour)
 				{
 					LoadConst(0, colour);
 					emitter.Str(0, 10, VLineColour);
@@ -480,7 +480,7 @@ namespace GBA
 				// allowed to clobber them, so they are saved here anyway: the BIOS's contract is
 				// that an IRQ leaves the interrupted code's registers untouched.
 				emitter.Label("IrqHandler");
-				const u32 irqSaved = 0x000F | (1u << 12) | (1u << 14);		// r0-r3, r12, lr
+				const uint32_t irqSaved = 0x000F | (1u << 12) | (1u << 14);		// r0-r3, r12, lr
 				SaveRegs(irqSaved);
 
 				// Acknowledge every cause the interrupt controller raised: writing a 1 back to a
@@ -751,7 +751,7 @@ namespace GBA
 			// horizontal, vertical and single pixel cases.
 			void BootRomBuilder::EmitLineDrawer()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
 
 				emitter.Label("DrawLine");
 				SaveRegs(saved);
@@ -848,7 +848,7 @@ namespace GBA
 
 			void BootRomBuilder::EmitErase()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
 
 				// Put back every pixel the previous frame painted. That frame's list is still the
 				// one the undo pair points at (its length is the difference between the two
@@ -974,7 +974,7 @@ namespace GBA
 
 			void BootRomBuilder::EmitProjection()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
 
 				emitter.Label("ProjectVertices");
 				SaveRegs(saved);
@@ -1106,7 +1106,7 @@ namespace GBA
 			// scanline straight into the next and needs no per-row address arithmetic.
 			void BootRomBuilder::EmitBackground()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 12) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 12) | (1u << 14);
 
 				emitter.Label("DrawBackground");
 				SaveRegs(saved);
@@ -1181,7 +1181,7 @@ namespace GBA
 			// with a mask and one conditional subtract), so no star state has to be kept anywhere.
 			void BootRomBuilder::EmitStars()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 12) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 12) | (1u << 14);
 
 				emitter.Label("DrawStars");
 				SaveRegs(saved);
@@ -1233,7 +1233,7 @@ namespace GBA
 			// coordinates), so the index only has to be shifted to address it.
 			void BootRomBuilder::EmitCube()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 12) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 12) | (1u << 14);
 
 				emitter.Label("DrawCube");
 				SaveRegs(saved);
@@ -1272,7 +1272,7 @@ namespace GBA
 			// PlotPixel clobbers r1-r3.
 			void BootRomBuilder::EmitText()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
 
 				// DrawWordmark and DrawText are both subroutines: DrawWordmark saves its own link
 				// register before calling DrawText (BL overwrites LR, so without this the return
@@ -1347,7 +1347,7 @@ namespace GBA
 			// undo list nor PlotPixel is involved: the status bar overwrites its own rectangle.
 			void BootRomBuilder::EmitFillRect()
 			{
-				const u32 saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
+				const uint32_t saved = (1u << 4) | (1u << 5) | (1u << 6) | (1u << 7) | (1u << 8) | (1u << 14);
 
 				emitter.Label("FillRect");
 				SaveRegs(saved);
@@ -1568,35 +1568,35 @@ namespace GBA
 				for (int i = 0; i < 256; i++)
 				{
 					double angle = 2.0 * 3.14159265358979323846 * i / 256.0;
-					emitter.Data32((u32)(s32)std::lround(4096.0 * std::sin(angle)));
+					emitter.Data32((uint32_t)(int32_t)std::lround(4096.0 * std::sin(angle)));
 				}
 
 				emitter.Org(DataBase + OffStars);
 				// The star field: 48 stars with a fixed x, an initial y, a fall speed and a
 				// twinkle phase. The sequence comes from a linear congruential generator so the
 				// picture is the same on every build and on every platform.
-				u32 seed = 0x1234567u;
-				auto next = [&seed]() -> u32
+				uint32_t seed = 0x1234567u;
+				auto next = [&seed]() -> uint32_t
 				{
 					seed = seed * 1664525u + 1013904223u;
 					return seed >> 16;
 				};
 				for (int i = 0; i < StarCount; i++)
 				{
-					emitter.Data8((u8)(next() % ScreenWidth));		// x
-					emitter.Data8((u8)(next() % ScreenHeight));		// y0
-					emitter.Data8((u8)(1 + next() % 2));			// speed, 1 or 2 pixels a frame
-					emitter.Data8((u8)(next() % 8));				// twinkle phase
+					emitter.Data8((uint8_t)(next() % ScreenWidth));		// x
+					emitter.Data8((uint8_t)(next() % ScreenHeight));	// y0
+					emitter.Data8((uint8_t)(1 + next() % 2));		// speed, 1 or 2 pixels a frame
+					emitter.Data8((uint8_t)(next() % 8));				// twinkle phase
 				}
 
 				emitter.Org(DataBase + OffStarColours);
 				// The star colours: dim to bright, in the blue-white range.
-				const u16 starColours[8] =
+				const uint16_t starColours[8] =
 				{
 					Colour15(4, 8, 14), Colour15(8, 12, 18), Colour15(12, 16, 22), Colour15(16, 20, 26),
 					Colour15(20, 24, 30), Colour15(26, 28, 31), Colour15(31, 31, 31), Colour15(14, 18, 26),
 				};
-				for (u16 colour : starColours)
+				for (uint16_t colour : starColours)
 					emitter.Data16(colour);
 
 				emitter.Org(DataBase + OffVertices);
@@ -1609,7 +1609,7 @@ namespace GBA
 				};
 				for (int i = 0; i < 8; i++)
 					for (int axis = 0; axis < 3; axis++)
-						emitter.Data16((u16)(s16)(cornerSigns[i][axis] * 4096));
+						emitter.Data16((uint16_t)(int16_t)(cornerSigns[i][axis] * 4096));
 
 				emitter.Org(DataBase + OffEdges);
 				// The twelve edges. The nine visible ones come first, so the flat mark (which
@@ -1622,8 +1622,8 @@ namespace GBA
 				};
 				for (int i = 0; i < 12; i++)
 				{
-					emitter.Data8((u8)edges[i][0]);
-					emitter.Data8((u8)edges[i][1]);
+					emitter.Data8((uint8_t)edges[i][0]);
+					emitter.Data8((uint8_t)edges[i][1]);
 				}
 
 				emitter.Org(DataBase + OffFlatMark);
@@ -1632,8 +1632,8 @@ namespace GBA
 				{
 					int x = 0, y = 0;
 					FlatMarkCorner(i, x, y);
-					emitter.Data16((u16)(s16)x);
-					emitter.Data16((u16)(s16)y);
+					emitter.Data16((uint16_t)(int16_t)x);
+					emitter.Data16((uint16_t)(int16_t)y);
 				}
 
 				emitter.Org(DataBase + OffGlyphs);
@@ -1643,7 +1643,7 @@ namespace GBA
 				{
 					for (int row = 0; row < 7; row++)
 					{
-						u32 bits = 0;
+						uint32_t bits = 0;
 						for (int col = 0; col < 5; col++)
 							if (Font[i].rows[row][col] == '1')
 								bits |= 0x80000000u >> col;
@@ -1653,11 +1653,11 @@ namespace GBA
 
 				emitter.Org(DataBase + OffWord);
 				// The glyph address tables: the wordmark and "LINK", both absolute addresses.
-				u32 glyphBase = DataBase + OffGlyphs;
+				uint32_t glyphBase = DataBase + OffGlyphs;
 				for (char c : std::string(WordmarkText))
-					emitter.Data32(glyphBase + (u32)GlyphFor(c) * 28);
+					emitter.Data32(glyphBase + (uint32_t)GlyphFor(c) * 28);
 				for (char c : std::string(LinkText))
-					emitter.Data32(glyphBase + (u32)GlyphFor(c) * 28);
+					emitter.Data32(glyphBase + (uint32_t)GlyphFor(c) * 28);
 
 				emitter.Org(DataBase + OffStatusColours);
 				// The status colours, indexed by the driver's state.
@@ -1672,9 +1672,9 @@ namespace GBA
 
 			struct BootRomData
 			{
-				std::vector<u8> image;
+				std::vector<uint8_t> image;
 				std::string listing;
-				u32 linkEntry = 0;
+				uint32_t linkEntry = 0;
 			};
 
 			const BootRomData& BootRom()
@@ -1694,7 +1694,7 @@ namespace GBA
 			}
 		}
 
-		const std::vector<u8>& GbaImage()
+		const std::vector<uint8_t>& GbaImage()
 		{
 			return BootRom().image;
 		}
@@ -1709,7 +1709,7 @@ namespace GBA
 			return AnimationFrames;
 		}
 
-		u32 GbaLinkDriverEntry()
+		uint32_t GbaLinkDriverEntry()
 		{
 			return BootRom().linkEntry;
 		}

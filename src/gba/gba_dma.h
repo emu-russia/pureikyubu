@@ -29,24 +29,24 @@ namespace GBA
 		/// <summary>One channel's registers, which are also what the debugger shows.</summary>
 		struct Channel
 		{
-			u32 source = 0;			// DMAxSAD
-			u32 dest = 0;			// DMAxDAD
-			u16 count = 0;			// DMAxCNT_L
-			u16 control = 0;		// DMAxCNT_H
+			uint32_t source = 0;		// DMAxSAD
+			uint32_t dest = 0;		// DMAxDAD
+			uint16_t count = 0;		// DMAxCNT_L
+			uint16_t control = 0;		// DMAxCNT_H
 			bool active = false;	// the channel is enabled and not finished
 			bool pending = false;	// it was triggered and waits for its slice
 			int latched = 0;		// words left in the current transfer
-			u32 sourceLatch = 0;
-			u32 destLatch = 0;
+			uint32_t sourceLatch = 0;
+			uint32_t destLatch = 0;
 		};
 
 		void Reset();
 
-		u16 Read16(u32 offset, u16 openBus) const;
+		uint16_t Read16(uint32_t offset, uint16_t openBus) const;
 
 		/// <summary>Write a DMA register (0x0B0..0x0DF). A write that enables a channel with the
 		/// immediate timing starts it right away, which is why the bus is passed in.</summary>
-		void Write16(GbaBus& bus, u32 offset, u16 value);
+		void Write16(GbaBus& bus, uint32_t offset, uint16_t value);
 
 		/// <summary>Run the channels that were triggered by the VBlank edge.</summary>
 		void OnVBlank(GbaBus& bus) { Trigger(bus, 1); }

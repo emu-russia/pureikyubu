@@ -32,14 +32,14 @@ namespace GBA
 		logSink(level, text, logUser);
 	}
 
-	void MemoryBank::Init(u32 bytes)
+	void MemoryBank::Init(uint32_t bytes)
 	{
 		Free();
 
 		size = bytes;
 		powerOfTwo = (bytes != 0) && ((bytes & (bytes - 1)) == 0);
 		mask = powerOfTwo ? (bytes - 1) : 0;
-		storage = new u8[bytes ? bytes : 1];
+		storage = new uint8_t[bytes ? bytes : 1];
 		memset(storage, 0, bytes ? bytes : 1);
 	}
 

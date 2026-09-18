@@ -40,33 +40,33 @@ namespace
 	// ---------------------------------------------------------------------------------------
 
 	/// <summary>The little-endian word at `offset` of an image.</summary>
-	u32 WordAt(const std::vector<u8>& image, size_t offset)
+	uint32_t WordAt(const std::vector<uint8_t>& image, size_t offset)
 	{
 		if (offset + 4 > image.size())
 			GBA_FAIL("the image is too short to hold the word");
-		return (u32)image[offset] | ((u32)image[offset + 1] << 8) |
-			((u32)image[offset + 2] << 16) | ((u32)image[offset + 3] << 24);
+		return (uint32_t)image[offset] | ((uint32_t)image[offset + 1] << 8) |
+			((uint32_t)image[offset + 2] << 16) | ((uint32_t)image[offset + 3] << 24);
 	}
 
 	/// <summary>Assemble one ARM instruction and return the word it produced.</summary>
-	template <typename Emit> u32 ArmWord(Emit emit)
+	template <typename Emit> uint32_t ArmWord(Emit emit)
 	{
 		Assembler assembler;
 		emit(assembler);
-		std::vector<u8> image = assembler.TakeImage();
+		std::vector<uint8_t> image = assembler.TakeImage();
 		return WordAt(image, 0);
 	}
 
 	/// <summary>Assemble one Thumb instruction and return the halfword it produced.</summary>
-	template <typename Emit> u16 ThumbWord(Emit emit)
+	template <typename Emit> uint16_t ThumbWord(Emit emit)
 	{
 		Assembler assembler;
 		assembler.UseThumb(true);
 		emit(assembler);
-		std::vector<u8> image = assembler.TakeImage();
+		std::vector<uint8_t> image = assembler.TakeImage();
 		if (image.size() < 2)
 			GBA_FAIL("no halfword was emitted");
-		return (u16)(image[0] | (image[1] << 8));
+		return (uint16_t)(image[0] | (image[1] << 8));
 	}
 
 	/// <summary>True when emitting `emit` throws std::runtime_error.</summary>
@@ -87,7 +87,7 @@ namespace
 	/// Load a 32-bit constant the way the boot ROM does: MOV when a rotation builds it, MVN when
 	/// one builds its complement, otherwise a literal pool right after the instruction.
 	/// </summary>
-	void LoadConstant(Assembler& assembler, int rd, u32 value)
+	void LoadConstant(Assembler& assembler, int rd, uint32_t value)
 	{
 		try
 		{
@@ -112,15 +112,15 @@ namespace
 	}
 
 	/// <summary>A count of the distinct colours in a frame (the animation checks use it).</summary>
-	int CountDistinctColours(const u32* pixels, int count)
+	int CountDistinctColours(const uint32_t* pixels, int count)
 	{
-		std::vector<u32> seen;
+		std::vector<uint32_t> seen;
 		seen.reserve(64);
 		for (int i = 0; i < count; i++)
 		{
-			u32 colour = pixels[i] & 0xFFFFFF;
+			uint32_t colour = pixels[i] & 0xFFFFFF;
 			bool found = false;
-			for (u32 existing : seen)
+			for (uint32_t existing : seen)
 				if (existing == colour)
 				{
 					found = true;
@@ -136,7 +136,7 @@ namespace
 		return (int)seen.size();
 	}
 
-	int CountNonBlack(const u32* pixels, int count)
+	int CountNonBlack(const uint32_t* pixels, int count)
 	{
 		int lit = 0;
 		for (int i = 0; i < count; i++)
@@ -150,7 +150,7 @@ namespace
 	/// program that writes `marker` to 0x03000000 for ever. Built with the emitter, which is what
 	/// the harness does too.
 	/// </summary>
-	std::vector<u8> MakeTestCartridge(u32 marker)
+	std::vector<uint8_t> MakeTestCartridge(uint32_t marker)
 	{
 		Assembler assembler;
 		assembler.Org(0x08000000);
@@ -309,7 +309,7 @@ GBA_TEST(BootRom, EmitterBranches)
 		a.B("fwd");							// lands 8 bytes on: (8 - 8) / 4 = 0
 		a.B("fwd");							// the second one sees (8 - 12) / 4 = -1
 		a.Label("fwd");
-		std::vector<u8> image = a.TakeImage();
+		std::vector<uint8_t> image = a.TakeImage();
 		GBA_CHECK_HEX32(WordAt(image, 0), 0xEA000000);
 		GBA_CHECK_HEX32(WordAt(image, 4), 0xEAFFFFFF);
 	}
@@ -363,8 +363,8 @@ GBA_TEST(BootRom, EmitterThumb)
 		a.UseThumb(true);
 		a.Label("t");
 		a.ThumbB("t");
-		std::vector<u8> image = a.TakeImage();
-		GBA_CHECK_HEX16((u16)(image[0] | (image[1] << 8)), 0xE7FE);
+		std::vector<uint8_t> image = a.TakeImage();
+		GBA_CHECK_HEX16((uint16_t)(image[0] | (image[1] << 8)), 0xE7FE);
 	}
 	{
 		Assembler a;
@@ -372,9 +372,9 @@ GBA_TEST(BootRom, EmitterThumb)
 		a.ThumbB("fwd");
 		a.ThumbB("fwd");
 		a.Label("fwd");
-		std::vector<u8> image = a.TakeImage();
-		GBA_CHECK_HEX16((u16)(image[0] | (image[1] << 8)), 0xE000);
-		GBA_CHECK_HEX16((u16)(image[2] | (image[3] << 8)), 0xE7FF);
+		std::vector<uint8_t> image = a.TakeImage();
+		GBA_CHECK_HEX16((uint16_t)(image[0] | (image[1] << 8)), 0xE000);
+		GBA_CHECK_HEX16((uint16_t)(image[2] | (image[3] << 8)), 0xE7FF);
 	}
 	{
 		Assembler a;
@@ -382,9 +382,9 @@ GBA_TEST(BootRom, EmitterThumb)
 		a.ThumbB("t", Cond::NE);
 		a.ThumbB("t", Cond::NE);
 		a.Label("t");
-		std::vector<u8> image = a.TakeImage();
-		GBA_CHECK_HEX16((u16)(image[0] | (image[1] << 8)), 0xD100);
-		GBA_CHECK_HEX16((u16)(image[2] | (image[3] << 8)), 0xD1FF);
+		std::vector<uint8_t> image = a.TakeImage();
+		GBA_CHECK_HEX16((uint16_t)(image[0] | (image[1] << 8)), 0xD100);
+		GBA_CHECK_HEX16((uint16_t)(image[2] | (image[3] << 8)), 0xD1FF);
 	}
 }
 
@@ -427,8 +427,8 @@ GBA_TEST(BootRom, EmitterImmediateAndFixups)
 	{
 		Assembler a;
 		a.Mov(0, 0);
-		u32 address = a.LiteralPool({ 0x11223344, 0x55667788 });
-		std::vector<u8> image = a.TakeImage();
+		uint32_t address = a.LiteralPool({ 0x11223344, 0x55667788 });
+		std::vector<uint8_t> image = a.TakeImage();
 		GBA_CHECK_EQ(address, 4u);
 		GBA_CHECK_HEX32(WordAt(image, 4), 0x11223344);
 		GBA_CHECK_HEX32(WordAt(image, 8), 0x55667788);
@@ -439,7 +439,7 @@ GBA_TEST(BootRom, EmitterImmediateAndFixups)
 	{
 		Assembler a;
 		a.Mov(0, 1);
-		std::vector<u8> padded = a.TakeImage(16);
+		std::vector<uint8_t> padded = a.TakeImage(16);
 		GBA_CHECK_EQ((int)padded.size(), 16);
 		GBA_CHECK_HEX32(WordAt(padded, 0), 0xE3A00001);
 		for (size_t i = 4; i < padded.size(); i++)
@@ -461,7 +461,7 @@ GBA_TEST(BootRom, EmitterImmediateAndFixups)
 		a.Label("start");
 		a.Mov(0, 1);
 		a.B("start");
-		std::vector<u8> image = a.TakeImage(0x10000);
+		std::vector<uint8_t> image = a.TakeImage(0x10000);
 		GBA_CHECK_EQ((int)image.size(), 0x10000);
 		GBA_CHECK_HEX32(WordAt(image, 0), 0xE3A00001);
 		GBA_CHECK_HEX32(WordAt(image, 4), 0xEAFFFFFD);		// (0x08000000 - 0x0800000C) / 4
@@ -479,7 +479,7 @@ GBA_TEST(BootRom, EmitterImmediateAndFixups)
 		Assembler a;
 		a.Org(0x20);
 		a.Mov(0, 0);
-		std::vector<u8> image = a.TakeImage();
+		std::vector<uint8_t> image = a.TakeImage();
 		GBA_CHECK_EQ((int)image.size(), 4);
 		GBA_CHECK_HEX32(WordAt(image, 0), 0xE3A00000);
 	}
@@ -487,7 +487,7 @@ GBA_TEST(BootRom, EmitterImmediateAndFixups)
 		Assembler a;
 		a.Org(0x20);
 		a.Mov(0, 0);
-		std::vector<u8> image = a.TakeImage(0x40);
+		std::vector<uint8_t> image = a.TakeImage(0x40);
 		GBA_CHECK_EQ((int)image.size(), 0x40);
 		GBA_CHECK_HEX32(WordAt(image, 0), 0xE3A00000);
 		GBA_CHECK_EQ((int)image[4], 0xFF);
@@ -520,26 +520,26 @@ GBA_TEST(BootRom, EmitterListing)
 
 GBA_TEST(BootRom, ImageAndVectors)
 {
-	const std::vector<u8>& image = BootRom::GbaImage();
+	const std::vector<uint8_t>& image = BootRom::GbaImage();
 	GBA_CHECK_EQ((int)image.size(), (int)BiosSize);
 
 	// The eight vectors (ARM Architecture Reference Manual A2.6) are branches, and the first one lands on the code.
 	for (int vector = 0; vector < 8; vector++)
 	{
-		u32 word = WordAt(image, (size_t)vector * 4);
+		uint32_t word = WordAt(image, (size_t)vector * 4);
 		GBA_CHECK_MSG((word & 0x0F000000) == 0x0A000000, "vector " + std::to_string(vector) +
 			" is not a branch");
 	}
 	// Reset, undefined, SWI, prefetch abort, data abort and FIQ all branch somewhere sensible;
 	// the reset vector must reach the code (not stay in the vector table).
 	{
-		s32 offset = (s32)(WordAt(image, 0) << 8) >> 6;
-		GBA_CHECK(offset >= 8 && offset < (s32)image.size());
+		int32_t offset = (int32_t)(WordAt(image, 0) << 8) >> 6;
+		GBA_CHECK(offset >= 8 && offset < (int32_t)image.size());
 	}
 	// The IRQ vector has to point at the handler, which ends in the exception return.
 	{
-		s32 offset = (s32)(WordAt(image, VectorIrq) << 8) >> 6;
-		u32 handler = (u32)(VectorIrq + 8 + offset);
+		int32_t offset = (int32_t)(WordAt(image, VectorIrq) << 8) >> 6;
+		uint32_t handler = (uint32_t)(VectorIrq + 8 + offset);
 		GBA_CHECK(handler < image.size());
 		bool foundReturn = false;
 		for (size_t i = handler; i + 4 <= handler + 0x60 && i + 4 <= image.size(); i += 4)
@@ -551,7 +551,7 @@ GBA_TEST(BootRom, ImageAndVectors)
 	GBA_CHECK(BootRom::GbaAnimationFrames() >= 180);
 	GBA_CHECK(BootRom::GbaAnimationFrames() <= 300);
 
-	u32 entry = BootRom::GbaLinkDriverEntry();
+	uint32_t entry = BootRom::GbaLinkDriverEntry();
 	GBA_CHECK(entry >= 0x20);
 	GBA_CHECK(entry < image.size());
 	GBA_CHECK_EQ((int)(entry % 4), 0);
@@ -581,7 +581,7 @@ GBA_TEST(BootRom, AnimationRunsAndEndsOnTheMark)
 
 	// Frame 0 counts as "early": the boot ROM has only just cleared the screen.
 	system.RunFrame();
-	std::vector<u32> early(system.FrameBuffer(), system.FrameBuffer() + ScreenWidth * ScreenHeight);
+	std::vector<uint32_t> early(system.FrameBuffer(), system.FrameBuffer() + ScreenWidth * ScreenHeight);
 
 	// The animation is a moving picture: some later frame has to differ from the early one.
 	bool changed = false;
@@ -605,7 +605,7 @@ GBA_TEST(BootRom, AnimationRunsAndEndsOnTheMark)
 	while (system.FrameCounter() < target && !system.LinkMode())
 		system.RunFrame();
 
-	const u32* final = system.FrameBuffer();
+	const uint32_t* final = system.FrameBuffer();
 	int lit = CountNonBlack(final, ScreenWidth * ScreenHeight);
 	int colours = CountDistinctColours(final, ScreenWidth * ScreenHeight);
 	GbaTest::Note("the last animation frame has " + std::to_string(lit) + " non-black pixels and " +
@@ -628,8 +628,8 @@ GBA_TEST(BootRom, CartridgeHandover)
 {
 	// A cartridge whose program writes a marker into the base of IWRAM: the boot ROM has to
 	// check the header, set the machine up the way the games expect it and jump to 0x08000000.
-	const u32 marker = 0x00474241;
-	std::vector<u8> cartridge = MakeTestCartridge(marker);
+	const uint32_t marker = 0x00474241;
+	std::vector<uint8_t> cartridge = MakeTestCartridge(marker);
 
 	GbaSystem system;
 	system.UseCustomBootRom(true);
@@ -646,22 +646,22 @@ GBA_TEST(BootRom, CartridgeHandover)
 	}
 
 	GBA_CHECK_MSG(handedOver, "the cartridge never ran its marker program");
-	GBA_CHECK_EQ((u32)system.Bus().iwram.Read32(0), marker);
+	GBA_CHECK_EQ((uint32_t)system.Bus().iwram.Read32(0), marker);
 
 	// The state the BIOS leaves behind: POSTFLG bit 0 says "the BIOS has run" (bit 1 is the
 	// read-only "boot completed" flag the bus adds), and the display is off.
 	GBA_CHECK_EQ((int)(system.Bus().PostFlg() & 1), 1);
 	GBA_CHECK_EQ((int)system.Lcd().DispCnt(), 0);
-	GBA_CHECK_EQ((u32)system.Cpu().Reg(13), 0x03007F00u);
-	GBA_CHECK_EQ((u32)(system.Cpu().ReadCPSR() & ModeMask), (u32)ModeSystem);
-	GBA_CHECK_EQ((u32)(system.Cpu().ReadCPSR() & FlagI), 0u);
+	GBA_CHECK_EQ((uint32_t)system.Cpu().Reg(13), 0x03007F00u);
+	GBA_CHECK_EQ((uint32_t)(system.Cpu().ReadCPSR() & ModeMask), (uint32_t)ModeSystem);
+	GBA_CHECK_EQ((uint32_t)(system.Cpu().ReadCPSR() & FlagI), 0u);
 }
 
 GBA_TEST(BootRom, BadHeaderFallsBackToTheLinkDriver)
 {
 	// The other half of the cartridge check: a cartridge whose header complement check fails (a
 	// corrupted or half-written Game Pak) must not be started; the ROM runs the link driver.
-	std::vector<u8> cartridge = MakeTestCartridge(0x00474241);
+	std::vector<uint8_t> cartridge = MakeTestCartridge(0x00474241);
 	cartridge[0xBD] ^= 0xFF;						// break the complement check
 
 	GbaSystem system;
@@ -689,10 +689,10 @@ GBA_TEST(BootRom, LinkDriverRunsWithoutACartridge)
 	for (int frame = 0; frame < AnimationFramesPlusSlack() + 60; frame++)
 		system.RunFrame();
 
-	u16 status = system.Bus().iwram.Read16(0x7FF0);
-	u16 sent = system.Bus().iwram.Read16(0x7FF2);
-	u16 received = system.Bus().iwram.Read16(0x7FF4);
-	u16 count = system.Bus().iwram.Read16(0x7FF6);
+	uint16_t status = system.Bus().iwram.Read16(0x7FF0);
+	uint16_t sent = system.Bus().iwram.Read16(0x7FF2);
+	uint16_t received = system.Bus().iwram.Read16(0x7FF4);
+	uint16_t count = system.Bus().iwram.Read16(0x7FF6);
 	GbaTest::Note("link mailbox: status " + GbaTest::Hex(status) + " send " + GbaTest::Hex(sent) +
 		" recv " + GbaTest::Hex(received) + " count " + GbaTest::Hex(count));
 
@@ -728,10 +728,10 @@ GBA_TEST(BootRom, LinkDriverSeesAPeer)
 		right.RunFrame();
 	}
 
-	u16 leftStatus = left.Bus().iwram.Read16(0x7FF0);
-	u16 rightStatus = right.Bus().iwram.Read16(0x7FF0);
-	u16 leftCount = left.Bus().iwram.Read16(0x7FF6);
-	u16 rightCount = right.Bus().iwram.Read16(0x7FF6);
+	uint16_t leftStatus = left.Bus().iwram.Read16(0x7FF0);
+	uint16_t rightStatus = right.Bus().iwram.Read16(0x7FF0);
+	uint16_t leftCount = left.Bus().iwram.Read16(0x7FF6);
+	uint16_t rightCount = right.Bus().iwram.Read16(0x7FF6);
 	GbaTest::Note("left: status " + GbaTest::Hex(leftStatus) + " count " + GbaTest::Hex(leftCount) +
 		", right: status " + GbaTest::Hex(rightStatus) + " count " + GbaTest::Hex(rightCount));
 

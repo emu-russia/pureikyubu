@@ -89,7 +89,7 @@ namespace GBA
 		std::string KeyFor(const std::string& action) const;
 
 		/// <summary>Apply a host key event. Returns the KEY_* bit it changed, or 0.</summary>
-		u16 KeyBitFor(const std::string& key) const;
+		uint16_t KeyBitFor(const std::string& key) const;
 
 		/// <summary>Set one binding (used by the UI).</summary>
 		void Bind(const std::string& action, const std::string& key);

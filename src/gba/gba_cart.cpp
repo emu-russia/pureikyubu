@@ -36,7 +36,7 @@ namespace GBA
 		const size_t MaxRomBytes = 32 * 1024 * 1024;
 
 		// The save memory window at 0x0E000000 is 64 KByte wide (GBATEK "GBA Memory Map").
-		const u32 SaveWindowSize = 64 * 1024;
+		const uint32_t SaveWindowSize = 64 * 1024;
 
 		// GBATEK "GBA Cart Backup IDs": Nintendo's linker inserts one of these strings at a
 		// word aligned address. Only the length of the signature itself is compared, the digits
@@ -63,19 +63,19 @@ namespace GBA
 		const int RomFirstWaits[4] = { 4, 3, 2, 8 };
 
 		// The S-3511A control register bits (GBATEK "GBA Cart Real-Time Clock (RTC)").
-		const u8 RtcControlIrq = 0x08;		// per minute IRQ (30s duty)
-		const u8 RtcControlHour24 = 0x40;	// 0 = 12 hour mode, 1 = 24 hour mode (usually 1)
-		const u8 RtcControlPower = 0x80;	// power failed, read only, cleared by the read
-		const u8 RtcControlWritable = 0x6A;	// bits 1,3,5,6 (bit7 is the read only power flag)
+		const uint8_t RtcControlIrq = 0x08;		// per minute IRQ (30s duty)
+		const uint8_t RtcControlHour24 = 0x40;		// 0 = 12 hour mode, 1 = 24 hour mode (usually 1)
+		const uint8_t RtcControlPower = 0x80;		// power failed, read only, cleared by the read
+		const uint8_t RtcControlWritable = 0x6A;	// bits 1,3,5,6 (bit7 is the read only power flag)
 
 		// -----------------------------------------------------------------------------------
 		// The host clock
 		// -----------------------------------------------------------------------------------
 
 		/// <summary>The machine's own clock in seconds (the RTC's substitute time source).</summary>
-		u32 HostSecond()
+		uint32_t HostSecond()
 		{
-			return (u32)std::time(nullptr);
+			return (uint32_t)std::time(nullptr);
 		}
 
 		/// <summary>Fill the RTC calendar fields from the host's local time.</summary>
@@ -108,25 +108,25 @@ namespace GBA
 		// Packed BCD, the encoding the RTC's registers use
 		// -----------------------------------------------------------------------------------
 
-		u8 ToBcd(int value)
+		uint8_t ToBcd(int value)
 		{
 			if (value < 0) value = 0;
-			return (u8)(((value / 10) << 4) | (value % 10));
+			return (uint8_t)(((value / 10) << 4) | (value % 10));
 		}
 
-		bool BcdOk(u8 value)
+		bool BcdOk(uint8_t value)
 		{
 			return (value & 0x0F) <= 9 && ((value >> 4) & 0x0F) <= 9;
 		}
 
-		int FromBcd(u8 value)
+		int FromBcd(uint8_t value)
 		{
 			return (value >> 4) * 10 + (value & 0x0F);
 		}
 
 		/// <summary>A BCD field, or `fallback` when the byte is not BCD (the chip replaces
 		/// malformed values, WSdev's S-3511A notes: year 00h, month 01h, day 01h, time 00h).</summary>
-		int BcdField(u8 value, int fallback, int maxValue)
+		int BcdField(uint8_t value, int fallback, int maxValue)
 		{
 			if (!BcdOk(value)) return fallback;
 			int v = FromBcd(value);
@@ -152,36 +152,36 @@ namespace GBA
 		}
 
 		/// <summary>Days from 2000-01-01 to the given date (the RTC's epoch).</summary>
-		u32 DayNumber(int year, int month, int day)
+		uint32_t DayNumber(int year, int month, int day)
 		{
-			u32 total = 0;
+			uint32_t total = 0;
 			for (int y = 0; y < year; y++)
 				total += LeapYear(y) ? 366 : 365;
 			for (int m = 1; m < month; m++)
-				total += (u32)MonthDays(year, m);
-			return total + (u32)(day - 1);
+				total += (uint32_t)MonthDays(year, m);
+			return total + (uint32_t)(day - 1);
 		}
 
 		/// <summary>Advance the calendar fields by a whole number of seconds.</summary>
-		void AddSeconds(RtcRegisters& rtc, u32 seconds)
+		void AddSeconds(RtcRegisters& rtc, uint32_t seconds)
 		{
 			if (seconds == 0) return;
 
-			u32 dayBefore = DayNumber(rtc.year, rtc.month, rtc.day);
-			u32 secondOfDay = (u32)(rtc.hour * 3600 + rtc.minute * 60 + rtc.second);
-			u64 stamp = (u64)dayBefore * 86400 + secondOfDay + seconds;
+			uint32_t dayBefore = DayNumber(rtc.year, rtc.month, rtc.day);
+			uint32_t secondOfDay = (uint32_t)(rtc.hour * 3600 + rtc.minute * 60 + rtc.second);
+			uint64_t stamp = (uint64_t)dayBefore * 86400 + secondOfDay + seconds;
 
-			u32 dayAfter = (u32)(stamp / 86400);
-			u32 rest = (u32)(stamp % 86400);
+			uint32_t dayAfter = (uint32_t)(stamp / 86400);
+			uint32_t rest = (uint32_t)(stamp % 86400);
 
 			// The weekday moves with the date (0 = Sunday).
 			rtc.weekday = (int)((rtc.weekday + (dayAfter - dayBefore)) % 7);
 
 			int year = 0;
-			u32 day = dayAfter;
+			uint32_t day = dayAfter;
 			while (true)
 			{
-				u32 length = LeapYear(year) ? 366 : 365;
+				uint32_t length = LeapYear(year) ? 366 : 365;
 				if (day < length) break;
 				day -= length;
 				year++;
@@ -189,7 +189,7 @@ namespace GBA
 			int month = 1;
 			while (true)
 			{
-				u32 length = (u32)MonthDays(year, month);
+				uint32_t length = (uint32_t)MonthDays(year, month);
 				if (day < length) break;
 				day -= length;
 				month++;
@@ -212,9 +212,9 @@ namespace GBA
 		//   write: 2 bits "10" + n address bits + 64 data bits + 1 bit "0"
 		// with n = 6 (512 Byte chip) or 14 (8 KByte chip), and the data read back is
 		//   4 ignored bits + 64 data bits.
-		u32 EepromRequestBits(int addressBits) { return 2 + (u32)addressBits + 1; }
-		u32 EepromWriteBits(int addressBits) { return 2 + (u32)addressBits + 64 + 1; }
-		const u32 EepromReadBits = 4 + 64;
+		uint32_t EepromRequestBits(int addressBits) { return 2 + (uint32_t)addressBits + 1; }
+		uint32_t EepromWriteBits(int addressBits) { return 2 + (uint32_t)addressBits + 64 + 1; }
+		const uint32_t EepromReadBits = 4 + 64;
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -256,7 +256,7 @@ namespace GBA
 		ReadHostClock(rtc);
 	}
 
-	bool Cart::LoadRom(std::vector<u8> image, std::string& error)
+	bool Cart::LoadRom(std::vector<uint8_t> image, std::string& error)
 	{
 		error.clear();
 
@@ -328,7 +328,7 @@ namespace GBA
 			error = "the ROM file \"" + path + "\" is empty";
 			return false;
 		}
-		if ((u64)length > MaxRomBytes)
+		if ((uint64_t)length > MaxRomBytes)
 		{
 			error = "the ROM file \"" + path + "\" is " + std::to_string((long long)length) +
 				" bytes, the largest Game Pak is " + std::to_string(MaxRomBytes) + " bytes";
@@ -336,7 +336,7 @@ namespace GBA
 		}
 
 		file.seekg(0, std::ios::beg);
-		std::vector<u8> image((size_t)length);
+		std::vector<uint8_t> image((size_t)length);
 		if (!file.read((char*)image.data(), length))
 		{
 			error = "cannot read the ROM file \"" + path + "\"";
@@ -362,7 +362,7 @@ namespace GBA
 	// The ROM window
 	// ---------------------------------------------------------------------------------------
 
-	u8 Cart::RomByte(u32 index) const
+	uint8_t Cart::RomByte(uint32_t index) const
 	{
 		// The address decoder mirrors the ROM through its size; the bytes of the partial last
 		// bank are not there (open bus, which the bus region models as 0FFh).
@@ -370,14 +370,14 @@ namespace GBA
 		return (index < rom.size()) ? rom[index] : 0xFF;
 	}
 
-	u8 Cart::ReadRom8(u32 offset) const
+	uint8_t Cart::ReadRom8(uint32_t offset) const
 	{
 		if (rom.empty())
 			return 0xFF;
 		return RomByte(offset);
 	}
 
-	u16 Cart::ReadRom16(u32 offset) const
+	uint16_t Cart::ReadRom16(uint32_t offset) const
 	{
 		if (rom.empty())
 			return 0xFFFF;
@@ -392,13 +392,13 @@ namespace GBA
 		// The cartridge bus is 16 bits wide: a read at an odd address returns the *aligned*
 		// halfword instead of rotating the byte lanes (the 32bit regions do rotate; the ROM
 		// does not, which is why ARM code should not use unaligned ROM accesses).
-		u32 index = (offset & romMask) & ~1u;
-		u16 low = RomByte(index);
-		u16 high = RomByte(index + 1);
-		return (u16)(low | (high << 8));
+		uint32_t index = (offset & romMask) & ~1u;
+		uint16_t low = RomByte(index);
+		uint16_t high = RomByte(index + 1);
+		return (uint16_t)(low | (high << 8));
 	}
 
-	u32 Cart::ReadRom32(u32 offset) const
+	uint32_t Cart::ReadRom32(uint32_t offset) const
 	{
 		if (rom.empty())
 			return 0xFFFFFFFF;
@@ -408,17 +408,17 @@ namespace GBA
 		{
 			// GBATEK "GBA System Control": a 32bit access is split into two 16bit accesses,
 			// so it clocks two bits out of the EEPROM (the low halfword first).
-			u32 low = self->EepromReadWord();
-			u32 high = self->EepromReadWord();
+			uint32_t low = self->EepromReadWord();
+			uint32_t high = self->EepromReadWord();
 			return low | (high << 16);
 		}
 
-		u16 low = ReadRom16(offset);
-		u16 high = ReadRom16(offset + 2);
-		return ((u32)high << 16) | low;
+		uint16_t low = ReadRom16(offset);
+		uint16_t high = ReadRom16(offset + 2);
+		return ((uint32_t)high << 16) | low;
 	}
 
-	void Cart::WriteRom8(GbaBus& bus, u32 offset, u8 value)
+	void Cart::WriteRom8(GbaBus& bus, uint32_t offset, uint8_t value)
 	{
 		// GBATEK "GBA Cart I/O Port (GPIO)": ROM bus writes are limited to 16bit/32bit access,
 		// STRB opcodes into the ROM area are ignored.
@@ -427,7 +427,7 @@ namespace GBA
 		(void)value;
 	}
 
-	void Cart::WriteRom16(GbaBus& bus, u32 offset, u16 value)
+	void Cart::WriteRom16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
 		// The ROM side needs no help from the bus: the EEPROM write is completed inside this
 		// call, so a game that polls the DMA3 enable bit right after starting the transfer
@@ -449,16 +449,16 @@ namespace GBA
 		Log(LogLevel::Debug, "ROM: write %04X to the ROM window ignored", value);
 	}
 
-	int Cart::WaitStates(u32 offset, bool sequential, int waitcnt) const
+	int Cart::WaitStates(uint32_t offset, bool sequential, int waitcnt) const
 	{
 		// GBATEK "4000204h - WAITCNT": the Game Pak ROM is mirrored into three regions with
 		// separate (first, second) access timings. The offset is relative to 0x08000000, so
 		// bits 25-26 select the region (0 = wait state 0, 1 = wait state 1, 2 = wait state 2).
 		int region = (int)((offset >> 25) & 3);
 
-		int firstIndex = (region == 1) ? (int)Bits((u16)waitcnt, 5, (u16)3)
-			: (region == 2) ? (int)Bits((u16)waitcnt, 8, (u16)3)
-			: (int)Bits((u16)waitcnt, 2, (u16)3);
+		int firstIndex = (region == 1) ? (int)Bits((uint16_t)waitcnt, 5, (uint16_t)3)
+			: (region == 2) ? (int)Bits((uint16_t)waitcnt, 8, (uint16_t)3)
+			: (int)Bits((uint16_t)waitcnt, 2, (uint16_t)3);
 
 		int second = (region == 1) ? (((waitcnt & 0x0080) != 0) ? 1 : 4)
 			: (region == 2) ? (((waitcnt & 0x0400) != 0) ? 1 : 8)
@@ -486,7 +486,7 @@ namespace GBA
 	// The header
 	// ---------------------------------------------------------------------------------------
 
-	std::string Cart::ReadHeaderText(u32 offset, size_t length) const
+	std::string Cart::ReadHeaderText(uint32_t offset, size_t length) const
 	{
 		if (rom.size() < (size_t)offset + length)
 			return std::string();
@@ -529,8 +529,8 @@ namespace GBA
 		if (rom.size() < 0xBE)
 			return false;
 
-		u32 sum = 0x19 + rom[0xBD];
-		for (u32 i = 0xA0; i <= 0xBC; i++)
+		uint32_t sum = 0x19 + rom[0xBD];
+		for (uint32_t i = 0xA0; i <= 0xBC; i++)
 			sum += rom[i];
 		return (sum & 0xFF) == 0;
 	}
@@ -603,7 +603,7 @@ namespace GBA
 		bool control = false;
 		for (size_t i = 0; i + 4 <= rom.size() && !(data && control); i += 4)
 		{
-			u32 word = (u32)rom[i] | ((u32)rom[i + 1] << 8) | ((u32)rom[i + 2] << 16) | ((u32)rom[i + 3] << 24);
+			uint32_t word = (uint32_t)rom[i] | ((uint32_t)rom[i + 1] << 8) | ((uint32_t)rom[i + 2] << 16) | ((uint32_t)rom[i + 3] << 24);
 			if (word == 0x080000C4) data = true;
 			else if (word == 0x080000C8) control = true;
 		}
@@ -636,14 +636,14 @@ namespace GBA
 		save.assign(SaveSize(), 0xFF);
 	}
 
-	u8 Cart::ReadSave(u32 offset)
+	uint8_t Cart::ReadSave(uint32_t offset)
 	{
 		switch (saveType)
 		{
 		case SaveType::Sram32K:
 			if (save.empty()) return 0xFF;
 			// The 64 KByte window mirrors the 32 KByte chip.
-			return save[offset & (u32)(save.size() - 1)];
+			return save[offset & (uint32_t)(save.size() - 1)];
 
 		case SaveType::Flash64K:
 		case SaveType::Flash128K:
@@ -657,21 +657,21 @@ namespace GBA
 	}
 
 	// The debugger's read of the save window: no state machine, so no side effect (see the header).
-	u8 Cart::PeekSave(u32 offset) const
+	uint8_t Cart::PeekSave(uint32_t offset) const
 	{
 		if (saveType == SaveType::Sram32K && !save.empty())
-			return save[offset & (u32)(save.size() - 1)];
+			return save[offset & (uint32_t)(save.size() - 1)];
 
 		return 0xFF;
 	}
 
-	void Cart::WriteSave(u32 offset, u8 value)
+	void Cart::WriteSave(uint32_t offset, uint8_t value)
 	{
 		switch (saveType)
 		{
 		case SaveType::Sram32K:
 			if (save.empty()) return;
-			save[offset & (u32)(save.size() - 1)] = value;
+			save[offset & (uint32_t)(save.size() - 1)] = value;
 			saveDirty = true;
 			return;
 
@@ -689,16 +689,16 @@ namespace GBA
 	// Flash (the SST command set, GBATEK "GBA Cart Backup Flash ROM")
 	// ---------------------------------------------------------------------------------------
 
-	u8 Cart::FlashRead(u32 offset) const
+	uint8_t Cart::FlashRead(uint32_t offset) const
 	{
 		if (save.empty())
 			return 0xFF;
 
 		// The window is 64 KByte wide and the bank select command picks the 64 KByte half of a
 		// 128 KByte device (GBATEK "Bank Switching").
-		u32 index = (offset & (SaveWindowSize - 1));
-		index += (u32)flashBank * 0x10000;
-		index &= (u32)(save.size() - 1);
+		uint32_t index = (offset & (SaveWindowSize - 1));
+		index += (uint32_t)flashBank * 0x10000;
+		index &= (uint32_t)(save.size() - 1);
 
 		if (flashIdMode == 1)
 		{
@@ -733,9 +733,9 @@ namespace GBA
 		return save[index];
 	}
 
-	void Cart::FlashWrite(u32 offset, u8 value)
+	void Cart::FlashWrite(uint32_t offset, uint8_t value)
 	{
-		u32 address = offset & 0xFFFF;
+		uint32_t address = offset & 0xFFFF;
 
 		// GBATEK "Terminate ID mode" / "Terminate Command after Timeout": F0h ends the ID (or
 		// CFI) mode and abandons a pending erase from any state. Some SST parts accept a lone
@@ -837,8 +837,8 @@ namespace GBA
 			else if (value == 0x30)
 			{
 				// Sector erase: 4 KByte at the given sector address, inside the selected bank.
-				u32 start = ((u32)flashBank * 0x10000 + (address & 0xF000)) & (u32)(save.size() - 1);
-				for (u32 i = 0; i < 0x1000 && start + i < save.size(); i++)
+				uint32_t start = ((uint32_t)flashBank * 0x10000 + (address & 0xF000)) & (uint32_t)(save.size() - 1);
+				for (uint32_t i = 0; i < 0x1000 && start + i < save.size(); i++)
 					save[start + i] = 0xFF;
 				saveDirty = true;
 				Log(LogLevel::Info, "flash: sector %04X erased", address & 0xF000);
@@ -857,8 +857,8 @@ namespace GBA
 			// the AND of the old and the new value until the sector is erased. That is the
 			// quirk GBATEK's "wait until [E00xxxxh]=dat" warning is about; modelling it keeps
 			// the verify-retry loops of the games honest.
-			u32 index = ((u32)flashBank * 0x10000 + address) & (u32)(save.size() - 1);
-			save[index] = (u8)(save[index] & value);
+			uint32_t index = ((uint32_t)flashBank * 0x10000 + address) & (uint32_t)(save.size() - 1);
+			save[index] = (uint8_t)(save[index] & value);
 			saveDirty = true;
 			flashState = 0;
 			flashCmdCount = 0;
@@ -900,17 +900,17 @@ namespace GBA
 		return eepromReadMode && eepromBits >= EepromRequestBits(eepromAddressBits);
 	}
 
-	void Cart::EepromWriteBit(u16 value)
+	void Cart::EepromWriteBit(uint16_t value)
 	{
 		if (saveType != SaveType::Eeprom512B && saveType != SaveType::Eeprom8K)
 			return;
 		if (save.empty())
 			return;
 
-		u32 addressBits = (u32)eepromAddressBits;
-		u32 requestBits = EepromRequestBits(eepromAddressBits);
-		u32 writeBits = EepromWriteBits(eepromAddressBits);
-		u32 bit = value & 1;
+		uint32_t addressBits = (uint32_t)eepromAddressBits;
+		uint32_t requestBits = EepromRequestBits(eepromAddressBits);
+		uint32_t writeBits = EepromWriteBits(eepromAddressBits);
+		uint32_t bit = value & 1;
 
 		if (eepromBits == 0)
 		{
@@ -955,7 +955,7 @@ namespace GBA
 
 		if (!eepromReadMode)
 		{
-			u32 dataBit = eepromBits - (2 + addressBits);	// 1..64 = data, 65 = the dummy bit
+			uint32_t dataBit = eepromBits - (2 + addressBits);	// 1..64 = data, 65 = the dummy bit
 			if (dataBit <= 64)
 				eepromBuffer = (eepromBuffer << 1) | bit;
 			if (eepromBits >= writeBits)
@@ -981,9 +981,9 @@ namespace GBA
 		// address decoder: the 512 Byte chip has 64 blocks (a 6 bit address field), the
 		// 8 KByte chip 1024 (a 14 bit field of which only the lower 10 bits are used, GBATEK
 		// "Data and Address Width"). Both follow from the array size.
-		u32 blocks = (u32)(save.size() / 8);
-		u32 block = eepromAddress & (blocks - 1);
-		u32 offset = block * 8;
+		uint32_t blocks = (uint32_t)(save.size() / 8);
+		uint32_t block = eepromAddress & (blocks - 1);
+		uint32_t offset = block * 8;
 		if (offset + 8 > save.size())
 		{
 			// Defensive: a misdetected width must not write outside the array.
@@ -998,8 +998,8 @@ namespace GBA
 		if (eepromReadMode)
 		{
 			// Latch the block: the reads at the EEPROM address shift these 64 bits out.
-			u64 data = 0;
-			for (u32 i = 0; i < 8; i++)
+			uint64_t data = 0;
+			for (uint32_t i = 0; i < 8; i++)
 				data = (data << 8) | save[offset + i];
 			eepromBuffer = data;
 			eepromBits = EepromRequestBits(eepromAddressBits);
@@ -1008,8 +1008,8 @@ namespace GBA
 		}
 
 		// A write request programs (and internally erases) the whole 64bit block at once.
-		for (u32 i = 0; i < 8; i++)
-			save[offset + i] = (u8)(eepromBuffer >> (56 - i * 8));
+		for (uint32_t i = 0; i < 8; i++)
+			save[offset + i] = (uint8_t)(eepromBuffer >> (56 - i * 8));
 
 		saveDirty = true;
 		eepromBits = 0;
@@ -1018,15 +1018,15 @@ namespace GBA
 		eepromOutput = 1;							// ready: the games poll bit0 after a write
 	}
 
-	u16 Cart::EepromReadWord()
+	uint16_t Cart::EepromReadWord()
 	{
-		u16 out = eepromOutput;
+		uint16_t out = eepromOutput;
 
-		u32 requestBits = EepromRequestBits(eepromAddressBits);
+		uint32_t requestBits = EepromRequestBits(eepromAddressBits);
 		if (EepromDriving())
 		{
 			eepromBits++;
-			u32 done = eepromBits - requestBits;	// how many of the 68 bits have been read
+			uint32_t done = eepromBits - requestBits;	// how many of the 68 bits have been read
 
 			if (done >= EepromReadBits)
 			{
@@ -1042,8 +1042,8 @@ namespace GBA
 			}
 			else
 			{
-				u32 index = done - 4;				// 0..63, MSB first
-				eepromOutput = (u16)((eepromBuffer >> (63 - index)) & 1);
+				uint32_t index = done - 4;				// 0..63, MSB first
+				eepromOutput = (uint16_t)((eepromBuffer >> (63 - index)) & 1);
 			}
 		}
 
@@ -1061,11 +1061,11 @@ namespace GBA
 		return rtcEnabled && (gpioControl & 1) != 0;
 	}
 
-	u8 Cart::ReadGpio(u32 offset)
+	uint8_t Cart::ReadGpio(uint32_t offset)
 	{
 		// The caller passes the offset inside the 0x080000C0 window: 04h/06h/08h, or the
 		// 0C4h/0C6h/0C8h addresses when the whole ROM offset is passed through.
-		u32 reg = offset & 0xFF;
+		uint32_t reg = offset & 0xFF;
 
 		if (!GpioEnabled())
 		{
@@ -1080,33 +1080,33 @@ namespace GBA
 
 		if (reg == 0x04 || reg == 0xC4)
 		{
-			u8 value = (u8)(gpioData & 0x0F);
+			uint8_t value = (uint8_t)(gpioData & 0x0F);
 			// The RTC drives the data line while the game has it configured as an input
 			// (direction bit1 clear); otherwise the port reads back what it wrote.
 			if ((gpioDirection & 0x02) == 0)
-				value = (u8)((value & ~0x02) | (RtcReadBit() << 1));
+				value = (uint8_t)((value & ~0x02) | (RtcReadBit() << 1));
 			return value;
 		}
 		if (reg == 0x06 || reg == 0xC6)
-			return (u8)(gpioDirection & 0x0F);
+			return (uint8_t)(gpioDirection & 0x0F);
 		if (reg == 0x08 || reg == 0xC8)
-			return (u8)(gpioControl & 1);
+			return (uint8_t)(gpioControl & 1);
 		return 0xFF;
 	}
 
-	void Cart::WriteGpio(u32 offset, u8 value)
+	void Cart::WriteGpio(uint32_t offset, uint8_t value)
 	{
 		// Without the port hardware these addresses are ordinary ROM bytes, and a write into
 		// the ROM window is ignored.
 		if (!rtcEnabled)
 			return;
 
-		u32 reg = offset & 0xFF;
+		uint32_t reg = offset & 0xFF;
 
 		if (reg == 0x08 || reg == 0xC8)
 		{
 			// GBATEK: the control register's bit0 switches between write-only and read/write.
-			gpioControl = (u8)(value & 1);
+			gpioControl = (uint8_t)(value & 1);
 			if (!gpioControl)
 			{
 				// Write-only again: the RTC sees the chip select drop.
@@ -1120,7 +1120,7 @@ namespace GBA
 		if (reg == 0x06 || reg == 0xC6)
 		{
 			// Only the lower nibble is the direction; the rest is not used.
-			gpioDirection = (u8)(value & 0x0F);
+			gpioDirection = (uint8_t)(value & 0x0F);
 			return;
 		}
 
@@ -1129,7 +1129,7 @@ namespace GBA
 			// The data register is written in both modes (write-only still drives the RTC);
 			// the RTC watches the SCK and chip select edges of every write.
 			gpioPrevious = gpioData;
-			gpioData = (u8)(value & 0x0F);
+			gpioData = (uint8_t)(value & 0x0F);
 			RtcClock();
 		}
 	}
@@ -1168,7 +1168,7 @@ namespace GBA
 		// machine clock (the time the frontend's system has). Once the game has written the
 		// clock the written value is kept and advanced by the host's elapsed seconds instead, so
 		// a game that sets the time sees its own value and then a running clock.
-		u32 now = HostSecond();
+		uint32_t now = HostSecond();
 		if (!rtcSetByGame)
 		{
 			ReadHostClock(rtc);
@@ -1176,7 +1176,7 @@ namespace GBA
 			return;
 		}
 
-		u32 elapsed = (now - rtcHostSecond) & 0xFFFF;
+		uint32_t elapsed = (now - rtcHostSecond) & 0xFFFF;
 		if (elapsed != 0)
 		{
 			AddSeconds(rtc, elapsed);
@@ -1184,7 +1184,7 @@ namespace GBA
 		}
 	}
 
-	int Cart::RtcParameterBytes(u8 command) const
+	int Cart::RtcParameterBytes(uint8_t command) const
 	{
 		switch ((command >> 1) & 7)
 		{
@@ -1216,37 +1216,37 @@ namespace GBA
 		rtcHostSecond = HostSecond();
 	}
 
-	u8 Cart::RtcHourByte() const
+	uint8_t Cart::RtcHourByte() const
 	{
 		// GBATEK "Datetime and Time Registers": the GBA's AM/PM flag sits in bit7 of the hour
 		// byte (bit6 on the DS). In 24 hour mode the flag is forced by the value (PM = hour >=
 		// 12), in 12 hour mode the hour runs 00h..11h with 12 o'clock stored as 00h.
-		u8 hour = (rtcControl & RtcControlHour24) ? ToBcd(rtc.hour) : ToBcd(rtc.hour % 12);
-		return (u8)(hour | (rtc.hour >= 12 ? 0x80 : 0x00));
+		uint8_t hour = (rtcControl & RtcControlHour24) ? ToBcd(rtc.hour) : ToBcd(rtc.hour % 12);
+		return (uint8_t)(hour | (rtc.hour >= 12 ? 0x80 : 0x00));
 	}
 
-	void Cart::RtcWriteHour(u8 value)
+	void Cart::RtcWriteHour(uint8_t value)
 	{
 		// In 24 hour mode the AM/PM bit is ignored (it is forced when read); in 12 hour mode it
 		// is the stored state that selects the half of the day.
 		if (rtcControl & RtcControlHour24)
 		{
-			rtc.hour = BcdField((u8)(value & 0x3F), 0, 23);
+			rtc.hour = BcdField((uint8_t)(value & 0x3F), 0, 23);
 			return;
 		}
-		int hour = BcdField((u8)(value & 0x3F), 0, 11);
+		int hour = BcdField((uint8_t)(value & 0x3F), 0, 11);
 		bool pm = (value & 0x80) != 0;
 		rtc.hour = (hour % 12) + (pm ? 12 : 0);
 	}
 
-	void Cart::RtcWriteParameter(u32 index, u8 value)
+	void Cart::RtcWriteParameter(uint32_t index, uint8_t value)
 	{
 		switch ((rtcCommand >> 1) & 7)
 		{
 		case 1:
 			// The control register. The power flag is read only and is only cleared by reading
 			// it, so it survives a write.
-			rtcControl = (u8)((rtcControl & RtcControlPower) | (value & RtcControlWritable));
+			rtcControl = (uint8_t)((rtcControl & RtcControlPower) | (value & RtcControlWritable));
 			return;
 
 		case 2:
@@ -1281,7 +1281,7 @@ namespace GBA
 
 	void Cart::RtcDecodeCommand()
 	{
-		u8 command = (u8)(rtcCommand & 0xFF);
+		uint8_t command = (uint8_t)(rtcCommand & 0xFF);
 
 		if ((command & 0xF0) != 0x60)
 		{
@@ -1319,14 +1319,14 @@ namespace GBA
 			// Reading the control register returns the power failure flag and clears it
 			// (GBATEK: "auto cleared on read").
 			rtcResponse[0] = rtcControl;
-			rtcControl &= (u8)~RtcControlPower;
+			rtcControl &= (uint8_t)~RtcControlPower;
 			break;
 
 		case 2:
 			rtcResponse[0] = ToBcd(rtc.year);
 			rtcResponse[1] = ToBcd(rtc.month);
 			rtcResponse[2] = ToBcd(rtc.day);
-			rtcResponse[3] = (u8)(rtc.weekday & 7);
+			rtcResponse[3] = (uint8_t)(rtc.weekday & 7);
 			rtcResponse[4] = RtcHourByte();
 			rtcResponse[5] = ToBcd(rtc.minute);
 			rtcResponse[6] = ToBcd(rtc.second);
@@ -1344,7 +1344,7 @@ namespace GBA
 		}
 	}
 
-	void Cart::RtcShiftIn(u32 bit)
+	void Cart::RtcShiftIn(uint32_t bit)
 	{
 		if (rtcState < 0)
 			return;								// the chip rejected this transfer
@@ -1362,13 +1362,13 @@ namespace GBA
 		if (rtcReadMode)
 			return;								// the chip drives the line during a read
 
-		int params = RtcParameterBytes((u8)(rtcCommand & 0xFF));
-		u32 index = ((u32)rtcState - 8) / 8;
-		u32 position = ((u32)rtcState - 8) % 8;
-		if (index >= (u32)params)
+		int params = RtcParameterBytes((uint8_t)(rtcCommand & 0xFF));
+		uint32_t index = ((uint32_t)rtcState - 8) / 8;
+		uint32_t position = ((uint32_t)rtcState - 8) % 8;
+		if (index >= (uint32_t)params)
 			return;								// the transfer is complete
 
-		rtcParameter = (u8)(rtcParameter | ((bit & 1) << position));
+		rtcParameter = (uint8_t)(rtcParameter | ((bit & 1) << position));
 		rtcState++;
 
 		if (position == 7)
@@ -1420,13 +1420,13 @@ namespace GBA
 		if (!clock && wasClock)
 		{
 			// Falling clock edge: during a read the chip puts the next bit on the data line.
-			int params = RtcParameterBytes((u8)(rtcCommand & 0xFF));
+			int params = RtcParameterBytes((uint8_t)(rtcCommand & 0xFF));
 			if (rtcReadMode && params > 0 && rtcState < 8 + params * 8)
 				rtcState++;
 		}
 	}
 
-	u8 Cart::RtcReadBit()
+	uint8_t Cart::RtcReadBit()
 	{
 		if (!RtcSelected())
 			return 1;							// not selected: the open drain line idles high
@@ -1435,18 +1435,18 @@ namespace GBA
 		if (!rtcReadMode)
 			return 1;							// a write transfer: the game drives the line
 
-		int params = RtcParameterBytes((u8)(rtcCommand & 0xFF));
+		int params = RtcParameterBytes((uint8_t)(rtcCommand & 0xFF));
 		if (params == 0)
 			return 1;
 
 		// The falling edge that precedes the first bit leaves rtcState at 8; each following
 		// edge moves the index on by one.
-		u32 index = (rtcState > 8) ? (u32)(rtcState - 9) : 0;
-		if (index >= (u32)params * 8)
-			index = (u32)params * 8 - 1;
+		uint32_t index = (rtcState > 8) ? (uint32_t)(rtcState - 9) : 0;
+		if (index >= (uint32_t)params * 8)
+			index = (uint32_t)params * 8 - 1;
 
-		u8 value = rtcResponse[index / 8];
-		return (u8)((value >> (index % 8)) & 1);	// LSB first, like the command byte
+		uint8_t value = rtcResponse[index / 8];
+		return (uint8_t)((value >> (index % 8)) & 1);	// LSB first, like the command byte
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -1491,7 +1491,7 @@ namespace GBA
 			return false;
 		}
 
-		if ((u64)length > size)
+		if ((uint64_t)length > size)
 		{
 			// A bigger file is a different cartridge's save (or a different save type): refuse
 			// it instead of loading a truncated image.

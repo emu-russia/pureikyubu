@@ -45,14 +45,14 @@ namespace GBA
 	namespace
 	{
 		// TMxCNT_H
-		const u16 TmPrescalerMask = 0x0003;		// bits 0-1: F/1, F/64, F/256, F/1024
-		const u16 TmCascade = 0x0004;			// bit 2: count the previous timer's overflows
-		const u16 TmIrqEnable = 0x0040;			// bit 6: interrupt on overflow
-		const u16 TmEnable = 0x0080;			// bit 7: run
+		const uint16_t TmPrescalerMask = 0x0003;		// bits 0-1: F/1, F/64, F/256, F/1024
+		const uint16_t TmCascade = 0x0004;			// bit 2: count the previous timer's overflows
+		const uint16_t TmIrqEnable = 0x0040;			// bit 6: interrupt on overflow
+		const uint16_t TmEnable = 0x0080;			// bit 7: run
 
 		// The prescaler divides the 16.78MHz clock by 1, 64, 256 or 1024 (GBATEK: F/1..F/1024),
 		// so bits 0-1 select a divisor of 1 << (0, 6, 8, 10).
-		int Prescaler(u16 control)
+		int Prescaler(uint16_t control)
 		{
 			switch (control & TmPrescalerMask)
 			{
@@ -68,7 +68,7 @@ namespace GBA
 		// header declares no private member for them; the state they need is passed in.
 		// -------------------------------------------------------------------------------------
 
-		void TimerOverflow(GbaBus& bus, u16* reload, u16* control, u16* counter, int index)
+		void TimerOverflow(GbaBus& bus, uint16_t* reload, uint16_t* control, uint16_t* counter, int index)
 		{
 			// GBATEK: "The reload value is copied into the counter [...] automatically upon
 			// timer overflows", and with TMxCNT_H bit 6 set the overflow also requests that
@@ -76,7 +76,7 @@ namespace GBA
 			counter[index] = reload[index];
 
 			if (control[index] & TmIrqEnable)
-				bus.irq.Raise((u16)(INT_TIMER0 << index));
+				bus.irq.Raise((uint16_t)(INT_TIMER0 << index));
 
 			// Cascade (TMxCNT_H bit 2 of the next timer, GBATEK "GBA Timers"): the next timer
 			// counts the overflows of this one instead of its own prescaler, so it advances
@@ -92,7 +92,7 @@ namespace GBA
 			}
 		}
 
-		void TimerCountUp(GbaBus& bus, u16* reload, u16* control, u16* counter, int index, int counts)
+		void TimerCountUp(GbaBus& bus, uint16_t* reload, uint16_t* control, uint16_t* counter, int index, int counts)
 		{
 			if (counts <= 0)
 				return;
@@ -109,22 +109,22 @@ namespace GBA
 			//   distance = counts + counter        (the value the counter would hold)
 			//   wraps    = (distance - 0x10000 + period) / period ... only once distance has
 			//              passed 0x10000
-			u64 distance = (u64)counts + counter[index];
+			uint64_t distance = (uint64_t)counts + counter[index];
 
 			if (distance < 0x10000)
 			{
-				counter[index] = (u16)distance;
+				counter[index] = (uint16_t)distance;
 				return;
 			}
 
-			u64 past = distance - 0x10000;			// counts beyond the first wrap
-			u64 wraps = 1 + past / (u64)period;
-			u64 rest = past % (u64)period;
+			uint64_t past = distance - 0x10000;			// counts beyond the first wrap
+			uint64_t wraps = 1 + past / (uint64_t)period;
+			uint64_t rest = past % (uint64_t)period;
 
-			for (u64 wrap = 0; wrap < wraps; wrap++)
+			for (uint64_t wrap = 0; wrap < wraps; wrap++)
 				TimerOverflow(bus, reload, control, counter, index);
 
-			counter[index] = (u16)(reload[index] + rest);
+			counter[index] = (uint16_t)(reload[index] + rest);
 		}
 	}
 
@@ -141,7 +141,7 @@ namespace GBA
 		}
 	}
 
-	int Timers::PrescaleShift(u16 control)
+	int Timers::PrescaleShift(uint16_t control)
 	{
 		switch (control & TmPrescalerMask)
 		{
@@ -152,12 +152,12 @@ namespace GBA
 		}
 	}
 
-	u16 Timers::Read16(u32 offset) const
+	uint16_t Timers::Read16(uint32_t offset) const
 	{
 		// The eight registers are laid out as four CNT_L/CNT_H pairs (0x100/0x102, 0x104/0x106,
 		// 0x108/0x10A, 0x10C/0x10E). Reading CNT_L returns the current counter, not the reload
 		// value (GBATEK "GBA Timers": "Reading returns the current <counter> value").
-		u32 index = (offset - 0x100) >> 2;
+		uint32_t index = (offset - 0x100) >> 2;
 		if (index > 3)
 			return 0;
 
@@ -167,11 +167,11 @@ namespace GBA
 		return counter[index];
 	}
 
-	void Timers::Write16(GbaBus& bus, u32 offset, u16 value)
+	void Timers::Write16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
 		(void)bus;
 
-		u32 index = (offset - 0x100) >> 2;
+		uint32_t index = (offset - 0x100) >> 2;
 		if (index > 3)
 			return;
 
@@ -189,8 +189,8 @@ namespace GBA
 		}
 
 		// TMxCNT_H. Only the documented bits exist; the rest of the halfword reads back as 0.
-		u16 old = control[index];
-		u16 next = (u16)(value & (TmPrescalerMask | TmCascade | TmIrqEnable | TmEnable));
+		uint16_t old = control[index];
+		uint16_t next = (uint16_t)(value & (TmPrescalerMask | TmCascade | TmIrqEnable | TmEnable));
 		control[index] = next;
 
 		bool wasRunning = (old & TmEnable) != 0;
@@ -203,7 +203,7 @@ namespace GBA
 			// happens (0x10000 - reload) * prescaler cycles after this write. Timer 0 cannot
 			// cascade (it has no previous timer), so the bit is forced off there.
 			if (index == 0)
-				control[index] &= (u16)~TmCascade;
+				control[index] &= (uint16_t)~TmCascade;
 
 			counter[index] = reload[index];
 			prescaleAccum[index] = 0;

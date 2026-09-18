@@ -22,10 +22,10 @@ namespace
 	/// <summary>A flat 64 KByte memory for the CPU to execute out of.</summary>
 	struct FlatBus : GbCpuBus
 	{
-		u8 memory[0x10000]{};
+		uint8_t memory[0x10000]{};
 
-		u8 ReadByte(u16 address) override { return memory[address]; }
-		void WriteByte(u16 address, u8 value) override { memory[address] = value; }
+		uint8_t ReadByte(uint16_t address) override { return memory[address]; }
+		void WriteByte(uint16_t address, uint8_t value) override { memory[address] = value; }
 		bool InterruptsPending() const override { return (memory[0xFFFF] & memory[0xFF0F] & 0x1F) != 0; }
 	};
 
@@ -44,7 +44,7 @@ namespace
 		}
 
 		/// <summary>Load a program at 0x0100.</summary>
-		void Load(const std::vector<u8>& code)
+		void Load(const std::vector<uint8_t>& code)
 		{
 			for (size_t i = 0; i < code.size(); i++)
 				bus.memory[0x0100 + i] = code[i];
@@ -62,7 +62,7 @@ namespace
 	};
 
 	/// <summary>The flag bits as the tests spell them (Z N H C).</summary>
-	std::string Flags(u8 f)
+	std::string Flags(uint8_t f)
 	{
 		std::string text;
 		text += (f & GbFlagZ) ? 'Z' : '-';
@@ -73,7 +73,7 @@ namespace
 	}
 
 	/// <summary>Check AF against the expected A and flags, with a readable failure.</summary>
-	void CheckAF(const GbCpu& cpu, u8 a, const char* flags)
+	void CheckAF(const GbCpu& cpu, uint8_t a, const char* flags)
 	{
 		std::string actual = Flags(cpu.f);
 		GBA_CHECK_MSG(cpu.a == a && actual == flags,
@@ -82,37 +82,37 @@ namespace
 	}
 
 	// The opcodes the tests use most, spelled out so the programs read like the tables.
-	const u8 OpNop = 0x00;
-	const u8 OpLdBCn = 0x01;
-	const u8 OpLdSPn = 0x31;
-	const u8 OpIncBC = 0x03;
-	const u8 OpDecBC = 0x0B;
-	const u8 OpAddHLBC = 0x09;
-	const u8 OpLdA16 = 0xFA;
-	const u8 OpLd16A = 0xEA;
-	const u8 OpLdAHLI = 0x22;
-	const u8 OpLdAHLA = 0x2A;
-	const u8 OpDaa = 0x27;
-	const u8 OpCpl = 0x2F;
-	const u8 OpScf = 0x37;
-	const u8 OpCcf = 0x3F;
-	const u8 OpHalt = 0x76;
-	const u8 OpStop = 0x10;
-	const u8 OpDi = 0xF3;
-	const u8 OpEi = 0xFB;
-	const u8 OpRet = 0xC9;
-	const u8 OpReti = 0xD9;
-	const u8 OpPushAF = 0xF5;
-	const u8 OpPopAF = 0xF1;
-	const u8 OpCb = 0xCB;
-	const u8 OpCall = 0xCD;
-	const u8 OpRst38 = 0xFF;
-	const u8 OpJrNz = 0x20;
-	const u8 OpJp = 0xC3;
-	const u8 OpLdhA = 0xF0;
-	const u8 OpLdhAn = 0xE0;
-	const u8 OpAddSPe = 0xE8;
-	const u8 OpLdHLSPe = 0xF8;
+	const uint8_t OpNop = 0x00;
+	const uint8_t OpLdBCn = 0x01;
+	const uint8_t OpLdSPn = 0x31;
+	const uint8_t OpIncBC = 0x03;
+	const uint8_t OpDecBC = 0x0B;
+	const uint8_t OpAddHLBC = 0x09;
+	const uint8_t OpLdA16 = 0xFA;
+	const uint8_t OpLd16A = 0xEA;
+	const uint8_t OpLdAHLI = 0x22;
+	const uint8_t OpLdAHLA = 0x2A;
+	const uint8_t OpDaa = 0x27;
+	const uint8_t OpCpl = 0x2F;
+	const uint8_t OpScf = 0x37;
+	const uint8_t OpCcf = 0x3F;
+	const uint8_t OpHalt = 0x76;
+	const uint8_t OpStop = 0x10;
+	const uint8_t OpDi = 0xF3;
+	const uint8_t OpEi = 0xFB;
+	const uint8_t OpRet = 0xC9;
+	const uint8_t OpReti = 0xD9;
+	const uint8_t OpPushAF = 0xF5;
+	const uint8_t OpPopAF = 0xF1;
+	const uint8_t OpCb = 0xCB;
+	const uint8_t OpCall = 0xCD;
+	const uint8_t OpRst38 = 0xFF;
+	const uint8_t OpJrNz = 0x20;
+	const uint8_t OpJp = 0xC3;
+	const uint8_t OpLdhA = 0xF0;
+	const uint8_t OpLdhAn = 0xE0;
+	const uint8_t OpAddSPe = 0xE8;
+	const uint8_t OpLdHLSPe = 0xF8;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -224,7 +224,7 @@ GBA_TEST(GbCpu, add_hl_r16_uses_bit_11_for_half_carry)
 	m.cpu.f = GbFlagZ;
 	m.Step();
 	GBA_CHECK_EQ(m.cpu.HL(), 0x1000);
-	GBA_CHECK_EQ(m.cpu.f, (u8)(GbFlagZ | GbFlagH));
+	GBA_CHECK_EQ(m.cpu.f, (uint8_t)(GbFlagZ | GbFlagH));
 }
 
 GBA_TEST(GbCpu, add_sp_e8_flags_come_from_the_low_byte)
@@ -238,7 +238,7 @@ GBA_TEST(GbCpu, add_sp_e8_flags_come_from_the_low_byte)
 	m.cpu.f = GbFlagZ | GbFlagN;
 	m.Step();
 	GBA_CHECK_EQ(m.cpu.sp, 0x0001);
-	GBA_CHECK_EQ(m.cpu.f, (u8)GbFlagC);
+	GBA_CHECK_EQ(m.cpu.f, (uint8_t)GbFlagC);
 
 	// A low nibble sum above 0x0F sets H: 0xFF0F + 0x01.
 	m.Load({ 0xE8, 0x01 });					// ADD SP,0x01
@@ -247,7 +247,7 @@ GBA_TEST(GbCpu, add_sp_e8_flags_come_from_the_low_byte)
 	m.cpu.f = GbFlagZ;
 	m.Step();
 	GBA_CHECK_EQ(m.cpu.sp, 0xFF10);
-	GBA_CHECK_EQ(m.cpu.f, (u8)GbFlagH);
+	GBA_CHECK_EQ(m.cpu.f, (uint8_t)GbFlagH);
 
 	// 0xFFF0 + 0x0F: neither flag.
 	m.Load({ 0xE8, 0x0F });					// ADD SP,0x0F
@@ -281,7 +281,7 @@ GBA_TEST(GbCpu, ld_hl_sp_plus_e8)
 	m.cpu.sp = 0x800F;
 	m.Step();
 	GBA_CHECK_EQ(m.cpu.HL(), 0x8010);
-	GBA_CHECK_EQ(m.cpu.f, (u8)GbFlagH);
+	GBA_CHECK_EQ(m.cpu.f, (uint8_t)GbFlagH);
 }
 
 GBA_TEST(GbCpu, daa_all_four_nh_combinations)
@@ -290,7 +290,7 @@ GBA_TEST(GbCpu, daa_all_four_nh_combinations)
 	// The four combinations of N and H, plus the carry cases, are the whole specification.
 	struct Case
 	{
-		u8 a, f, result, flags;
+		uint8_t a, f, result, flags;
 	};
 
 	// N = 0 (an addition): a digit above 9 or a half carry adds 6 to the low digit, and a carry
@@ -361,7 +361,7 @@ GBA_TEST(GbCpu, cpl_scf_ccf_and_rotates)
 	m.cpu.pc = 0x0100;
 	m.cpu.f = GbFlagZ | GbFlagN | GbFlagH;
 	m.Step();
-	GBA_CHECK_EQ(m.cpu.f, (u8)(GbFlagZ | GbFlagC));
+	GBA_CHECK_EQ(m.cpu.f, (uint8_t)(GbFlagZ | GbFlagC));
 
 	m.Load({ OpCcf });						// CCF with C set
 	m.cpu.pc = 0x0100;
@@ -601,7 +601,7 @@ GBA_TEST(GbCpu, cb_bit_res_set)
 	m.Step();
 	m.Step();
 	GBA_CHECK_EQ(m.cpu.a, 0xFE);
-	GBA_CHECK_EQ(m.cpu.f, (u8)(GbFlagZ | GbFlagN | GbFlagH | GbFlagC));
+	GBA_CHECK_EQ(m.cpu.f, (uint8_t)(GbFlagZ | GbFlagN | GbFlagH | GbFlagC));
 
 	m.Load({ 0x3E, 0x00, OpCb, 0xFF });		// LD A,0x00 ; SET 7,A
 	m.cpu.pc = 0x0100;

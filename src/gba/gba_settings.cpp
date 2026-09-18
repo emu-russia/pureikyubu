@@ -164,7 +164,7 @@ namespace
 	struct ActionBit
 	{
 		const char* action;
-		u16 bit;
+		uint16_t bit;
 	};
 
 	const ActionBit ActionBits[] =
@@ -382,7 +382,7 @@ namespace
 		void SkipSpace();
 		bool ReadString(std::string& value);
 		bool ReadEscape(std::string& value);
-		bool ReadHex4(u32& value);
+		bool ReadHex4(uint32_t& value);
 		bool ReadLiteral(const char* literal);
 		bool ReadName(std::string& name);
 		bool ScanNumber(NumberToken& token);
@@ -573,7 +573,7 @@ namespace
 		// \uXXXX is encoded as UTF-8, the way the rest of the settings files are written. A
 		// surrogate pair is combined; an unpaired surrogate is refused rather than turned into the
 		// invalid UTF-8 that encoding it alone (CESU-8) would produce.
-		u32 code = 0;
+		uint32_t code = 0;
 		if (!ReadHex4(code))
 			return false;
 		if (code >= 0xD800 && code <= 0xDBFF)
@@ -581,7 +581,7 @@ namespace
 			if (pos + 1 < text.size() && text[pos] == '\\' && text[pos + 1] == 'u')
 			{
 				pos += 2;
-				u32 low = 0;
+				uint32_t low = 0;
 				if (!ReadHex4(low))
 					return false;
 				if (low < 0xDC00 || low > 0xDFFF)
@@ -626,7 +626,7 @@ namespace
 		return true;
 	}
 
-	bool Reader::ReadHex4(u32& value)
+	bool Reader::ReadHex4(uint32_t& value)
 	{
 		if (pos + 4 > text.size())
 			return Fail("a \\u escape without four hexadecimal digits");
@@ -634,13 +634,13 @@ namespace
 		for (int i = 0; i < 4; i++)
 		{
 			char c = text[pos + i];
-			u32 digit;
+			uint32_t digit;
 			if (c >= '0' && c <= '9')
-				digit = (u32)(c - '0');
+				digit = (uint32_t)(c - '0');
 			else if (c >= 'a' && c <= 'f')
-				digit = (u32)(c - 'a' + 10);
+				digit = (uint32_t)(c - 'a' + 10);
 			else if (c >= 'A' && c <= 'F')
-				digit = (u32)(c - 'A' + 10);
+				digit = (uint32_t)(c - 'A' + 10);
 			else
 				return Fail("a \\u escape without four hexadecimal digits");
 			value = (value << 4) | digit;
@@ -1079,7 +1079,7 @@ namespace GBA
 		return std::string();
 	}
 
-	u16 GbaSettings::KeyBitFor(const std::string& key) const
+	uint16_t GbaSettings::KeyBitFor(const std::string& key) const
 	{
 		if (key.empty())
 			return 0;					// no key event has an empty name: "" means "unbound"

@@ -18,7 +18,7 @@ namespace GBA
 		// The 512 Hz frame sequencer (Pan Docs "Audio Details": the envelope is clocked every 8
 		// ticks, the length every 2 and the sweep every 4, which gives this eight step table).
 		// The value is a bit mask: 1 = clock the lengths, 2 = clock the sweep, 4 = the envelope.
-		const u8 FrameSequencer[8] =
+		const uint8_t FrameSequencer[8] =
 		{
 			1,		// step 0: length
 			1,		// step 1: length
@@ -32,7 +32,7 @@ namespace GBA
 
 		// The duty waveforms (Pan Docs "Audio Registers"): a 1 bit is a high output. The waveform
 		// is a bit mask whose bit 0 is the first step of the eight.
-		const u8 DutyWaveform[4] = { 0x01, 0x03, 0x0F, 0xFC };
+		const uint8_t DutyWaveform[4] = { 0x01, 0x03, 0x0F, 0xFC };
 
 		// The noise divisor table (Pan Docs "Audio Registers"): code 0 means 0.5, so the effective
 		// divisors are 0.5, 1, 2, 3, 4, 5, 6, 7.
@@ -124,7 +124,7 @@ namespace GBA
 
 	void GbApu::ClockFrameSequencer()
 	{
-		u8 clocks = FrameSequencer[frameStep];
+		uint8_t clocks = FrameSequencer[frameStep];
 		frameStep = (frameStep + 1) & 0x07;
 
 		if (clocks & 1)
@@ -163,7 +163,7 @@ namespace GBA
 
 		// The wave RAM holds 32 four-bit samples, the high nibble of a byte first (Pan Docs
 		// "Audio Registers").
-		u8 byte = waveRam[wave.position >> 1];
+		uint8_t byte = waveRam[wave.position >> 1];
 		wave.sampleBuffer = (wave.position & 1) ? (byte & 0x0F) : (byte >> 4);
 	}
 
@@ -179,10 +179,10 @@ namespace GBA
 
 		// The LFSR: bits 0 and 1 are XORed into bit 14, then the register shifts right; in the
 		// 7 bit mode the same bit is also written into bit 6 (Pan Docs "Audio Registers").
-		u16 xorBit = (u16)((noise.lfsr ^ (noise.lfsr >> 1)) & 1);
-		noise.lfsr = (u16)((noise.lfsr >> 1) | (xorBit << 14));
+		uint16_t xorBit = (uint16_t)((noise.lfsr ^ (noise.lfsr >> 1)) & 1);
+		noise.lfsr = (uint16_t)((noise.lfsr >> 1) | (xorBit << 14));
 		if (noise.widthMode)
-			noise.lfsr = (u16)((noise.lfsr & ~0x0040) | (xorBit << 6));
+			noise.lfsr = (uint16_t)((noise.lfsr & ~0x0040) | (xorBit << 6));
 	}
 
 	int GbApu::NoisePeriod() const
@@ -405,37 +405,37 @@ namespace GBA
 	// The registers
 	// ---------------------------------------------------------------------------------------
 
-	u8 GbApu::ReadRegister(u16 address) const
+	uint8_t GbApu::ReadRegister(uint16_t address) const
 	{
 		switch (address)
 		{
 		case 0xFF10: return 0x80;			// NR10: write-only, bit 7 reads one
 		case 0xFF11: return 0x3F;			// NR11: write-only (the length reload value)
-		case 0xFF12: return (u8)((pulse[0].initialVolume << 4) | (pulse[0].envelopeIncreasing ? 0x08 : 0)
+		case 0xFF12: return (uint8_t)((pulse[0].initialVolume << 4) | (pulse[0].envelopeIncreasing ? 0x08 : 0)
 			| (pulse[0].envelopePeriod & 0x07));
 		case 0xFF13: return 0xFF;			// NR13: write-only
 		case 0xFF14: return 0xBF;			// NR14: the length enable reads back, the rest does not
 		case 0xFF16: return 0x3F;
-		case 0xFF17: return (u8)((pulse[1].initialVolume << 4) | (pulse[1].envelopeIncreasing ? 0x08 : 0)
+		case 0xFF17: return (uint8_t)((pulse[1].initialVolume << 4) | (pulse[1].envelopeIncreasing ? 0x08 : 0)
 			| (pulse[1].envelopePeriod & 0x07));
 		case 0xFF18: return 0xFF;
 		case 0xFF19: return 0xBF;
-		case 0xFF1A: return (u8)(wave.dacEnabled ? 0x80 : 0x00);
+		case 0xFF1A: return (uint8_t)(wave.dacEnabled ? 0x80 : 0x00);
 		case 0xFF1B: return 0xFF;
-		case 0xFF1C: return (u8)(0x9F | (wave.volumeCode << 5));
+		case 0xFF1C: return (uint8_t)(0x9F | (wave.volumeCode << 5));
 		case 0xFF1D: return 0xFF;
 		case 0xFF1E: return 0xBF;
 		case 0xFF20: return 0xFF;
-		case 0xFF21: return (u8)((noise.initialVolume << 4) | (noise.envelopeIncreasing ? 0x08 : 0)
+		case 0xFF21: return (uint8_t)((noise.initialVolume << 4) | (noise.envelopeIncreasing ? 0x08 : 0)
 			| (noise.envelopePeriod & 0x07));
-		case 0xFF22: return (u8)((noise.shift << 4) | (noise.widthMode ? 0x08 : 0) | noise.divisorCode);
+		case 0xFF22: return (uint8_t)((noise.shift << 4) | (noise.widthMode ? 0x08 : 0) | noise.divisorCode);
 		case 0xFF23: return 0xBF;
 		case 0xFF24: return nr50;
 		case 0xFF25: return nr51;
 		case 0xFF26:
 			// Bit 7 is the master enable, bits 0-3 the read-only channel status, bits 4-6 read
 			// as ones (Pan Docs "Audio Registers").
-			return (u8)((powered ? 0x80 : 0x00) | 0x70 | ChannelStatus());
+			return (uint8_t)((powered ? 0x80 : 0x00) | 0x70 | ChannelStatus());
 		default:
 			if (address >= 0xFF30 && address <= 0xFF3F)
 				return waveRam[address - 0xFF30];
@@ -443,7 +443,7 @@ namespace GBA
 		}
 	}
 
-	void GbApu::WriteRegister(u16 address, u8 value)
+	void GbApu::WriteRegister(uint16_t address, uint8_t value)
 	{
 		if (address >= 0xFF30 && address <= 0xFF3F)
 		{
@@ -599,9 +599,9 @@ namespace GBA
 		// counter is not reset either, so neither is touched here.
 	}
 
-	u8 GbApu::ChannelStatus() const
+	uint8_t GbApu::ChannelStatus() const
 	{
-		u8 status = 0;
+		uint8_t status = 0;
 		if (pulse[0].active && pulse[0].dacEnabled)
 			status |= 0x01;
 		if (pulse[1].active && pulse[1].dacEnabled)
@@ -717,8 +717,8 @@ namespace GBA
 		if (rightSample > 32767) rightSample = 32767;
 		if (rightSample < -32768) rightSample = -32768;
 
-		pending.push_back((s16)leftSample);
-		pending.push_back((s16)rightSample);
+		pending.push_back((int16_t)leftSample);
+		pending.push_back((int16_t)rightSample);
 
 		// Drain automatically if the frontend stops calling ReadSamples, so a long run cannot
 		// grow the buffer without bound (about four seconds of audio at most).
@@ -727,7 +727,7 @@ namespace GBA
 			pending.erase(pending.begin(), pending.begin() + (pending.size() - limit));
 	}
 
-	int GbApu::ReadSamples(s16* out, int maxFrames)
+	int GbApu::ReadSamples(int16_t* out, int maxFrames)
 	{
 		if (out == nullptr || maxFrames <= 0)
 			return 0;

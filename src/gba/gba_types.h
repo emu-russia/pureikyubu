@@ -17,16 +17,6 @@
 
 namespace GBA
 {
-	using u8 = uint8_t;
-	using u16 = uint16_t;
-	using u32 = uint32_t;
-	using u64 = uint64_t;
-
-	using s8 = int8_t;
-	using s16 = int16_t;
-	using s32 = int32_t;
-	using s64 = int64_t;
-
 	// ---------------------------------------------------------------------------------------
 	// Screen
 	// ---------------------------------------------------------------------------------------
@@ -45,7 +35,7 @@ namespace GBA
 	// Interrupts (GBA): the IE/IF bits and the CPU exception vectors
 	// ---------------------------------------------------------------------------------------
 
-	enum InterruptBit : u16
+	enum InterruptBit : uint16_t
 	{
 		INT_VBLANK = 0x0001,
 		INT_HBLANK = 0x0002,
@@ -64,20 +54,20 @@ namespace GBA
 	};
 
 	// The CPU exception vectors, in the low 16 KByte of the BIOS.
-	const u32 VectorReset = 0x00000000;
-	const u32 VectorUndefined = 0x00000004;
-	const u32 VectorSwi = 0x00000008;
-	const u32 VectorPrefetchAbort = 0x0000000C;
-	const u32 VectorDataAbort = 0x00000010;
-	const u32 VectorIrq = 0x00000018;
-	const u32 VectorFiq = 0x0000001C;
+	const uint32_t VectorReset = 0x00000000;
+	const uint32_t VectorUndefined = 0x00000004;
+	const uint32_t VectorSwi = 0x00000008;
+	const uint32_t VectorPrefetchAbort = 0x0000000C;
+	const uint32_t VectorDataAbort = 0x00000010;
+	const uint32_t VectorIrq = 0x00000018;
+	const uint32_t VectorFiq = 0x0000001C;
 
 	// ---------------------------------------------------------------------------------------
 	// The CPSR (ARM7TDMI). The CPU header has the full set; the mode bits are repeated here
 	// because the bus has to know the CPU mode when it serves a banked register access.
 	// ---------------------------------------------------------------------------------------
 
-	enum CpuMode : u32
+	enum CpuMode : uint32_t
 	{
 		ModeUser = 0x10,
 		ModeFiq = 0x11,
@@ -93,30 +83,30 @@ namespace GBA
 	// Memory map (the GBA address decoder). Every region is mirrored through its size.
 	// ---------------------------------------------------------------------------------------
 
-	const u32 MemBios = 0x00000000;			// 16 KByte, readable only
-	const u32 MemEwram = 0x02000000;		// 256 KByte
-	const u32 MemIwram = 0x03000000;		// 32 KByte
-	const u32 MemIo = 0x04000000;			// 1 KByte, mirrored through 0x04000400
-	const u32 MemPalette = 0x05000000;		// 1 KByte
-	const u32 MemVram = 0x06000000;			// 96 KByte
-	const u32 MemOam = 0x07000000;			// 1 KByte
-	const u32 MemRom1 = 0x08000000;			// up to 32 MByte, waitstates per WAITCNT
-	const u32 MemRom2 = 0x0A000000;
-	const u32 MemRom3 = 0x0C000000;
-	const u32 MemSram = 0x0E000000;			// SRAM/Flash, 64 KByte window
+	const uint32_t MemBios = 0x00000000;		// 16 KByte, readable only
+	const uint32_t MemEwram = 0x02000000;		// 256 KByte
+	const uint32_t MemIwram = 0x03000000;		// 32 KByte
+	const uint32_t MemIo = 0x04000000;		// 1 KByte, mirrored through 0x04000400
+	const uint32_t MemPalette = 0x05000000;		// 1 KByte
+	const uint32_t MemVram = 0x06000000;		// 96 KByte
+	const uint32_t MemOam = 0x07000000;		// 1 KByte
+	const uint32_t MemRom1 = 0x08000000;		// up to 32 MByte, waitstates per WAITCNT
+	const uint32_t MemRom2 = 0x0A000000;
+	const uint32_t MemRom3 = 0x0C000000;
+	const uint32_t MemSram = 0x0E000000;			// SRAM/Flash, 64 KByte window
 
-	const u32 EwramSize = 256 * 1024;
-	const u32 IwramSize = 32 * 1024;
-	const u32 IoSize = 0x400;
-	const u32 PaletteSize = 0x400;
-	const u32 VramSize = 0x18000;
+	const uint32_t EwramSize = 256 * 1024;
+	const uint32_t IwramSize = 32 * 1024;
+	const uint32_t IoSize = 0x400;
+	const uint32_t PaletteSize = 0x400;
+	const uint32_t VramSize = 0x18000;
 
 	/// <summary>VRAM is mirrored every 128 KByte (GBATEK "GBA Memory Map"), so the address
 	/// decoder wraps through this window before it wraps through the 96 KByte bank itself.</summary>
-	const u32 VramMirror = 0x20000;
+	const uint32_t VramMirror = 0x20000;
 
-	const u32 OamSize = 0x400;
-	const u32 BiosSize = 0x4000;
+	const uint32_t OamSize = 0x400;
+	const uint32_t BiosSize = 0x4000;
 
 	// ---------------------------------------------------------------------------------------
 	// Small helpers
@@ -125,19 +115,19 @@ namespace GBA
 	template <typename T> inline T Bit(T value, int bit) { return (T)((value >> bit) & 1); }
 	template <typename T> inline T Bits(T value, int shift, T mask) { return (T)((value >> shift) & mask); }
 
-	inline u16 Swap16(u16 value) { return (u16)((value << 8) | (value >> 8)); }
+	inline uint16_t Swap16(uint16_t value) { return (uint16_t)((value << 8) | (value >> 8)); }
 
-	inline u32 Swap32(u32 value)
+	inline uint32_t Swap32(uint32_t value)
 	{
 		return (value << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | (value >> 24);
 	}
 
 	// A 15-bit GBA colour (0bbbbbgggggrrrrr) expanded to XRGB8888 for the host.
-	inline u32 Color15ToXrgb(u16 color)
+	inline uint32_t Color15ToXrgb(uint16_t color)
 	{
-		u32 r = (color & 0x1F) << 3;
-		u32 g = ((color >> 5) & 0x1F) << 3;
-		u32 b = ((color >> 10) & 0x1F) << 3;
+		uint32_t r = (color & 0x1F) << 3;
+		uint32_t g = ((color >> 5) & 0x1F) << 3;
+		uint32_t b = ((color >> 10) & 0x1F) << 3;
 		r |= r >> 5;
 		g |= g >> 5;
 		b |= b >> 5;
@@ -145,7 +135,7 @@ namespace GBA
 	}
 
 	// A 15-bit GBA colour with an alpha coefficient (0..16) applied, as the blending unit does.
-	inline u16 Blend15(u16 a, u16 b, int eva, int evb)
+	inline uint16_t Blend15(uint16_t a, uint16_t b, int eva, int evb)
 	{
 		int r = (((a & 0x1F) * eva) + ((b & 0x1F) * evb)) >> 4;
 		int g = ((((a >> 5) & 0x1F) * eva) + (((b >> 5) & 0x1F) * evb)) >> 4;
@@ -153,7 +143,7 @@ namespace GBA
 		if (r > 31) r = 31;
 		if (g > 31) g = 31;
 		if (bl > 31) bl = 31;
-		return (u16)(r | (g << 5) | (bl << 10));
+		return (uint16_t)(r | (g << 5) | (bl << 10));
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -184,37 +174,37 @@ namespace GBA
 
 	class MemoryBank
 	{
-		u8* storage = nullptr;
-		u32 size = 0;
-		u32 mask = 0;			// size-1 when the size is a power of two, otherwise 0
+		uint8_t* storage = nullptr;
+		uint32_t size = 0;
+		uint32_t mask = 0;			// size-1 when the size is a power of two, otherwise 0
 		bool powerOfTwo = true;
 
 	public:
 		MemoryBank() = default;
 
-		void Init(u32 bytes);
+		void Init(uint32_t bytes);
 		void Free();
 
-		u8* Data() { return storage; }
-		const u8* Data() const { return storage; }
-		u32 Size() const { return size; }
+		uint8_t* Data() { return storage; }
+		const uint8_t* Data() const { return storage; }
+		uint32_t Size() const { return size; }
 
 		/// <summary>
 		/// Fold an address into the bank. Every region of the GBA is mirrored through its size;
 		/// where the size is not a power of two (VRAM is 96 KByte) the hardware wraps with a
 		/// modulo instead, which is what this does.
 		/// </summary>
-		u32 Mirror(u32 offset) const { return powerOfTwo ? (offset & mask) : (offset % (size ? size : 1)); }
+		uint32_t Mirror(uint32_t offset) const { return powerOfTwo ? (offset & mask) : (offset % (size ? size : 1)); }
 
-		u8 Read8(u32 offset) const { return storage[Mirror(offset)]; }
-		u16 Read16(u32 offset) const { u16 v; memcpy(&v, storage + Mirror(offset), 2); return v; }
-		u32 Read32(u32 offset) const { u32 v; memcpy(&v, storage + Mirror(offset), 4); return v; }
+		uint8_t Read8(uint32_t offset) const { return storage[Mirror(offset)]; }
+		uint16_t Read16(uint32_t offset) const { uint16_t v; memcpy(&v, storage + Mirror(offset), 2); return v; }
+		uint32_t Read32(uint32_t offset) const { uint32_t v; memcpy(&v, storage + Mirror(offset), 4); return v; }
 
 		/// <summary>Write through the mirroring rule.</summary>
-		void Write8(u32 offset, u8 value) { storage[Mirror(offset)] = value; }
-		void Write16(u32 offset, u16 value) { memcpy(storage + Mirror(offset), &value, 2); }
-		void Write32(u32 offset, u32 value) { memcpy(storage + Mirror(offset), &value, 4); }
+		void Write8(uint32_t offset, uint8_t value) { storage[Mirror(offset)] = value; }
+		void Write16(uint32_t offset, uint16_t value) { memcpy(storage + Mirror(offset), &value, 2); }
+		void Write32(uint32_t offset, uint32_t value) { memcpy(storage + Mirror(offset), &value, 4); }
 
-		void Fill(u8 value) { if (storage) memset(storage, value, size); }
+		void Fill(uint8_t value) { if (storage) memset(storage, value, size); }
 	};
 }

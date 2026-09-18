@@ -18,30 +18,30 @@ using namespace GBA;
 namespace
 {
 	/// <summary>The four shades of the green DMG palette, as the PPU draws them.</summary>
-	const u32 Shade0 = 0xFF9BBC0F;
-	const u32 Shade1 = 0xFF8BAC0F;
-	const u32 Shade2 = 0xFF306230;
-	const u32 Shade3 = 0xFF0F380F;
+	const uint32_t Shade0 = 0xFF9BBC0F;
+	const uint32_t Shade1 = 0xFF8BAC0F;
+	const uint32_t Shade2 = 0xFF306230;
+	const uint32_t Shade3 = 0xFF0F380F;
 
 	/// <summary>Turn one tile row into the two VRAM bitplane bytes (Pan Docs "Tile Data": the
 	/// first byte is the low plane, bit 7 is the leftmost pixel).</summary>
-	void TileRow(u8* out, const char* pixels)
+	void TileRow(uint8_t* out, const char* pixels)
 	{
-		u8 low = 0, high = 0;
+		uint8_t low = 0, high = 0;
 		for (int i = 0; i < 8; i++)
 		{
 			int index = pixels[i] - '0';
 			if (index & 1)
-				low |= (u8)(0x80 >> i);
+				low |= (uint8_t)(0x80 >> i);
 			if (index & 2)
-				high |= (u8)(0x80 >> i);
+				high |= (uint8_t)(0x80 >> i);
 		}
 		out[0] = low;
 		out[1] = high;
 	}
 
 	/// <summary>Write a whole tile (eight rows of eight digits) into VRAM.</summary>
-	void WriteTile(u8* vram, int tileIndex, const char* const rows[8])
+	void WriteTile(uint8_t* vram, int tileIndex, const char* const rows[8])
 	{
 		for (int row = 0; row < 8; row++)
 			TileRow(vram + tileIndex * 16 + row * 2, rows[row]);
@@ -58,7 +58,7 @@ namespace
 	}
 
 	/// <summary>The pixel the frame buffer holds at (x, y).</summary>
-	u32 Pixel(const GbPpu& ppu, int x, int y)
+	uint32_t Pixel(const GbPpu& ppu, int x, int y)
 	{
 		return ppu.Frame()[y * GbScreenWidth + x];
 	}
@@ -353,7 +353,7 @@ GBA_TEST(GbPpu, sprites_draw_and_honour_the_coordinates)
 	ppu.WriteRegister(0xFF48, 0xE4);		// OBP0
 
 	// An object at OAM (Y = 16 + 8, X = 8 + 10) appears at screen (10, 8) (Pan Docs "OAM").
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	oam[0] = 24;			// Y: the screen Y is the OAM Y minus 16
 	oam[1] = 18;			// X: the screen X is the OAM X minus 8
 	oam[2] = 4;				// the tile
@@ -393,7 +393,7 @@ GBA_TEST(GbPpu, sprite_flips_and_the_8x16_size)
 	WriteTile(ppu.VramBank(0), 5, br);
 	ppu.WriteRegister(0xFF48, 0xE4);
 
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	oam[0] = 16;
 	oam[1] = 8;
 	oam[2] = 4;
@@ -439,11 +439,11 @@ GBA_TEST(GbPpu, only_ten_sprites_per_line_and_the_x_priority_rule)
 
 	// Eleven objects on the same line: the OAM scan keeps the first ten (Pan Docs "OAM"), so
 	// object 10 (at X 100) never appears.
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	for (int i = 0; i < 11; i++)
 	{
 		oam[i * 4 + 0] = 16;
-		oam[i * 4 + 1] = (u8)(8 + i * 8);
+		oam[i * 4 + 1] = (uint8_t)(8 + i * 8);
 		oam[i * 4 + 2] = 4;
 		oam[i * 4 + 3] = 0x00;
 	}
@@ -479,7 +479,7 @@ GBA_TEST(GbPpu, dmg_sprite_priority_is_by_x_coordinate)
 
 	// The later object in OAM has the *smaller* X, and on a monochrome console the smaller X wins
 	// (Pan Docs "OAM": "the smaller the X coordinate, the higher the priority").
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	oam[0] = 16; oam[1] = 8 + 30; oam[2] = 6; oam[3] = 0x00;		// at screen X 30, palette OBP0
 	oam[4] = 16; oam[5] = 8 + 28; oam[6] = 4; oam[7] = 0x00;		// at screen X 28, tile 4
 	ppu.WriteRegister(0xFF40, 0x93);
@@ -512,7 +512,7 @@ GBA_TEST(GbPpu, obj_behind_bg_and_colour_zero_transparency)
 	ppu.VramBank(0)[0x1800] = 1;
 	ppu.WriteRegister(0xFF48, 0xE4);
 
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	oam[0] = 16; oam[1] = 8; oam[2] = 4; oam[3] = 0x00;
 
 	// Attribute bit 7 set: the background's colour indices 1..3 are drawn over the object.
@@ -550,8 +550,8 @@ GBA_TEST(GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank)
 	// The two object palettes the test uses. A colour is two bytes (Pan Docs "Palettes"), and
 	// OCPS's bit 7 makes the address advance by itself: palette 0 = black/red/green/blue and
 	// palette 1 = black/yellow/cyan/magenta.
-	const u8 palette0[8] = { 0x00, 0x00, 0x1F, 0x00, 0xE0, 0x03, 0x00, 0x7C };
-	const u8 palette1[8] = { 0x00, 0x00, 0xFF, 0x03, 0xE0, 0x7F, 0x1F, 0x7C };
+	const uint8_t palette0[8] = { 0x00, 0x00, 0x1F, 0x00, 0xE0, 0x03, 0x00, 0x7C };
+	const uint8_t palette1[8] = { 0x00, 0x00, 0xFF, 0x03, 0xE0, 0x7F, 0x1F, 0x7C };
 	ppu.WriteRegister(0xFF6A, 0x80);		// OCPS: palette 0, colour 0, auto-increment
 	for (int i = 0; i < 8; i++)
 		ppu.WriteRegister(0xFF6B, palette0[i]);
@@ -577,7 +577,7 @@ GBA_TEST(GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank)
 	WriteTile(ppu.VramBank(1), 4, solid2);
 
 	// OAM entry 0: at screen (10, 8) (the coordinate bias is 16/8), tile 4, bank 1, palette 0.
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	oam[0] = 24;
 	oam[1] = 18;
 	oam[2] = 4;
@@ -588,7 +588,7 @@ GBA_TEST(GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank)
 
 	// The palette field of the attribute (bits 0-2) picks the other object palette: the same
 	// index 2 is now cyan.
-	oam[3] = (u8)(0x08 | 0x01);
+	oam[3] = (uint8_t)(0x08 | 0x01);
 	RunFrames(ppu, 2, true);
 	GBA_CHECK_HEX32(Pixel(ppu, 10, 8), 0xFF00FFFF);
 
@@ -618,7 +618,7 @@ GBA_TEST(GbBus, cgb_palette_registers_are_reachable_through_the_bus)
 	bus.WriteByte(0xFF43, 0x00);
 
 	// BG palette 0: black/red/green/blue (the boot state is a grey ramp).
-	const u8 colors[8] = { 0x00, 0x00, 0x1F, 0x00, 0xE0, 0x03, 0x00, 0x7C };
+	const uint8_t colors[8] = { 0x00, 0x00, 0x1F, 0x00, 0xE0, 0x03, 0x00, 0x7C };
 	bus.WriteByte(0xFF68, 0x80);			// BGPI: palette 0, colour 0, auto-increment
 	for (int i = 0; i < 8; i++)
 		bus.WriteByte(0xFF69, colors[i]);
@@ -774,7 +774,7 @@ GBA_TEST(GbPpu, cgb_priority_between_bg_and_objects)
 	ppu.WriteRegister(0xFF6B, 0x1F);
 	ppu.WriteRegister(0xFF6B, 0x00);		// 0x001F: red
 
-	u8* oam = ppu.Oam();
+	uint8_t* oam = ppu.Oam();
 	oam[0] = 16; oam[1] = 8; oam[2] = 4; oam[3] = 0x00;
 
 	RunFrames(ppu, 2, true);
@@ -847,7 +847,7 @@ GBA_TEST(GbPpu, stat_interrupt_rides_the_shared_line)
 
 	// The line is already high (mode 2 is running), so nothing more is requested until it drops
 	// and rises again.
-	u8 request = ppu.Tick(GbDotsPerLine * 4, false);
+	uint8_t request = ppu.Tick(GbDotsPerLine * 4, false);
 	(void)request;
 
 	// Enable both mode 0 and mode 1: the line never goes low between them, so mode 1 produces no
@@ -925,8 +925,8 @@ GBA_TEST(GbPpu, frame_output_is_xrgb8888_and_uses_the_palette)
 	RunFrames(ppu, 2);
 
 	// The grey palette's index 3 is pure black and index 0 pure white, both fully opaque.
-	u32 ink = Pixel(ppu, 0, 0);
-	u32 background = Pixel(ppu, 8, 0);
+	uint32_t ink = Pixel(ppu, 0, 0);
+	uint32_t background = Pixel(ppu, 8, 0);
 	GBA_CHECK_HEX32(ink, 0xFF000000);
 	GBA_CHECK_HEX32(background, 0xFFFFFFFF);
 

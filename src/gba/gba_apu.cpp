@@ -48,7 +48,7 @@ namespace GBA
 
 		// GBATEK "Wave Duty": the four duty patterns as 8 step bits, step 0 being the bit the
 		// picture starts with (the high part first: 12.5 % is "-_______" = one high step).
-		const u8 DutyPattern[4] = { 0x01, 0x03, 0x0F, 0x3F };
+		const uint8_t DutyPattern[4] = { 0x01, 0x03, 0x0F, 0x3F };
 
 		// The FIFO is 8 x 32 bit = 32 bytes deep and the DMA is asked for four words (16 bytes)
 		// as soon as fewer than 16 bytes are left (GBATEK "Sound Channel A and B").
@@ -66,7 +66,7 @@ namespace GBA
 
 		// The wave channel's timer driven sample clock remembers the last timer reading; that
 		// reading is invalid right after a reset or a trigger, which is what the marker says.
-		const u16 TimerNotPrimed = 0xFFFF;
+		const uint16_t TimerNotPrimed = 0xFFFF;
 
 		inline int Clamp16(int value)
 		{
@@ -88,9 +88,9 @@ namespace GBA
 		// The wave RAM is played as 4 bit digits, the HIGH nibble of a byte first (GBATEK
 		// "WAVE_RAM": "MSBs of 1st byte, followed by LSBs of 1st byte, followed by MSBs of 2nd
 		// byte, and so on").
-		inline int WaveDigit(const u8* ram, int position)
+		inline int WaveDigit(const uint8_t* ram, int position)
 		{
-			u8 byte = ram[(position & 0x1F) >> 1];
+			uint8_t byte = ram[(position & 0x1F) >> 1];
 			return (position & 1) ? (byte & 0x0F) : (byte >> 4);
 		}
 	}
@@ -192,54 +192,54 @@ namespace GBA
 	// Register file
 	// ---------------------------------------------------------------------------------------
 
-	u8 Apu::Read8(u32 offset, u8 openBus) const
+	uint8_t Apu::Read8(uint32_t offset, uint8_t openBus) const
 	{
 		switch (offset)
 		{
 		// -- channel 1: SOUND1CNT_L/H/X (NR10..NR14) ----------------------------------------
-		case 0x60: return (u8)(sound1cntL & 0x7F);			// NR10 is R/W
+		case 0x60: return (uint8_t)(sound1cntL & 0x7F);			// NR10 is R/W
 		case 0x61: return 0;								// bits 8-15 are unused
-		case 0x62: return (u8)(sound1cntH & 0xC0);			// NR11: only the duty bits are R/W
-		case 0x63: return (u8)(sound1cntH >> 8);			// NR12 is R/W
+		case 0x62: return (uint8_t)(sound1cntH & 0xC0);			// NR11: only the duty bits are R/W
+		case 0x63: return (uint8_t)(sound1cntH >> 8);			// NR12 is R/W
 		case 0x64: return openBus;							// NR13 is write only
-		case 0x65: return (u8)((sound1cntX >> 8) & 0x40);	// NR14: only the length flag is R/W
+		case 0x65: return (uint8_t)((sound1cntX >> 8) & 0x40);	// NR14: only the length flag is R/W
 
 		// -- channel 2: SOUND2CNT_L/H (NR21..NR24) -----------------------------------------
 		case 0x66: return openBus;
-		case 0x68: return (u8)(sound2cntL & 0xC0);			// NR21: only the duty bits are R/W
-		case 0x69: return (u8)(sound2cntL >> 8);			// NR22 is R/W
+		case 0x68: return (uint8_t)(sound2cntL & 0xC0);			// NR21: only the duty bits are R/W
+		case 0x69: return (uint8_t)(sound2cntL >> 8);			// NR22 is R/W
 		case 0x6A: return openBus;
 		case 0x6C: return openBus;							// NR23 is write only
-		case 0x6D: return (u8)((sound2cntH >> 8) & 0x40);	// NR24: only the length flag is R/W
+		case 0x6D: return (uint8_t)((sound2cntH >> 8) & 0x40);	// NR24: only the length flag is R/W
 
 		// -- channel 3: SOUND3CNT_L/H/X (NR30..NR34) ---------------------------------------
 		case 0x6E: return openBus;
-		case 0x70: return (u8)(sound3cntL & 0xE0);			// NR30 is R/W
+		case 0x70: return (uint8_t)(sound3cntL & 0xE0);			// NR30 is R/W
 		case 0x71: return 0;								// bits 8-15 are unused
 		case 0x72: return openBus;							// NR31 is write only
-		case 0x73: return (u8)((sound3cntH >> 8) & 0xE0);	// NR32 is R/W
+		case 0x73: return (uint8_t)((sound3cntH >> 8) & 0xE0);	// NR32 is R/W
 		case 0x74: return openBus;							// NR33 is write only
-		case 0x75: return (u8)((sound3cntX >> 8) & 0x40);	// NR34: only the length flag is R/W
+		case 0x75: return (uint8_t)((sound3cntX >> 8) & 0x40);	// NR34: only the length flag is R/W
 
 		// -- channel 4: SOUND4CNT_L/H (NR41..NR44) -----------------------------------------
 		case 0x76: return openBus;
 		case 0x78: return openBus;							// NR41 is write only
-		case 0x79: return (u8)(sound4cntL >> 8);			// NR42 is R/W
+		case 0x79: return (uint8_t)(sound4cntL >> 8);			// NR42 is R/W
 		case 0x7A: return openBus;
-		case 0x7C: return (u8)(sound4cntH & 0xFF);			// NR43 is R/W
-		case 0x7D: return (u8)((sound4cntH >> 8) & 0x40);	// NR44: only the length flag is R/W
+		case 0x7C: return (uint8_t)(sound4cntH & 0xFF);			// NR43 is R/W
+		case 0x7D: return (uint8_t)((sound4cntH >> 8) & 0x40);	// NR44: only the length flag is R/W
 
 		// -- the control registers ---------------------------------------------------------
 		case 0x7E: return openBus;
-		case 0x80: return (u8)(soundcntL & 0xFF);			// NR50
-		case 0x81: return (u8)(soundcntL >> 8);				// NR51
-		case 0x82: return (u8)(soundcntH & 0x0F);			// SOUNDCNT_H: bits 4-7 are unused
-		case 0x83: return (u8)((soundcntH >> 8) & 0x77);	// bits 11/15 are the write-only resets
+		case 0x80: return (uint8_t)(soundcntL & 0xFF);			// NR50
+		case 0x81: return (uint8_t)(soundcntL >> 8);			// NR51
+		case 0x82: return (uint8_t)(soundcntH & 0x0F);			// SOUNDCNT_H: bits 4-7 are unused
+		case 0x83: return (uint8_t)((soundcntH >> 8) & 0x77);	// bits 11/15 are the write-only resets
 		case 0x84:
 		{
 			// SOUNDCNT_X bits 0-3 report whether a channel is producing sound. A channel whose
 			// DAC is off (or that the length/sweep stopped) reads as 0 (GBATEK "SOUNDCNT_X").
-			u8 status = (soundcntX & 0x80) ? 0x80 : 0x00;
+			uint8_t status = (soundcntX & 0x80) ? 0x80 : 0x00;
 			if (square[0].enabled && square[0].dacEnabled)
 				status |= 0x01;
 			if (square[1].enabled && square[1].dacEnabled)
@@ -254,8 +254,8 @@ namespace GBA
 		case 0x86: return openBus;
 
 		// SOUNDBIAS works even while the PSG half is off (GBATEK "SOUNDCNT_X").
-		case 0x88: return (u8)(soundbias & 0xFE);			// bit 0 unused, bits 1-7 bias
-		case 0x89: return (u8)((soundbias >> 8) & 0xC3);	// bits 8-9 bias, 14-15 resolution
+		case 0x88: return (uint8_t)(soundbias & 0xFE);			// bit 0 unused, bits 1-7 bias
+		case 0x89: return (uint8_t)((soundbias >> 8) & 0xC3);	// bits 8-9 bias, 14-15 resolution
 		case 0x8A:
 		case 0x8B:
 		case 0x8C:
@@ -282,14 +282,14 @@ namespace GBA
 			int which = (offset >= 0xA4) ? 1 : 0;
 			if (fifoCount[which] > 0)
 				return fifo[which][fifoHead[which]];
-			return (u8)fifoLatchedSample[which];
+			return (uint8_t)fifoLatchedSample[which];
 		}
 
 		default: return openBus;
 		}
 	}
 
-	void Apu::Write8(u32 offset, u8 value)
+	void Apu::Write8(uint32_t offset, uint8_t value)
 	{
 		// While SOUNDCNT_X bit 7 is clear, both the PSG and the FIFO sound are disabled and the
 		// PSG registers at 0x060..0x081 are held at zero, i.e. writes to them are lost until the
@@ -323,7 +323,7 @@ namespace GBA
 			break;
 
 		case 0x63:		// NR12: envelope step time (0-2), direction (3), volume (4-7)
-			sound1cntH = (sound1cntH & 0x00FF) | ((u16)value << 8);
+			sound1cntH = (sound1cntH & 0x00FF) | ((uint16_t)value << 8);
 			square[0].envelopePeriod = ((value >> 0) & 7);
 			square[0].envelopeUp = Bit(value, 3) != 0;
 			square[0].envelopeVolume = ((value >> 4) & 0xF);
@@ -341,7 +341,7 @@ namespace GBA
 			break;
 
 		case 0x65:		// NR14: frequency bits 8-10, length flag (6), trigger (7)
-			sound1cntX = (sound1cntX & 0x00FF) | ((u16)(value & 0x47) << 8);
+			sound1cntX = (sound1cntX & 0x00FF) | ((uint16_t)(value & 0x47) << 8);
 			square[0].frequency = sound1cntX & 0x7FF;
 			if (value & 0x80)
 			{
@@ -364,7 +364,7 @@ namespace GBA
 			break;
 
 		case 0x69:		// NR22: envelope and volume
-			sound2cntL = (sound2cntL & 0x00FF) | ((u16)value << 8);
+			sound2cntL = (sound2cntL & 0x00FF) | ((uint16_t)value << 8);
 			square[1].envelopePeriod = ((value >> 0) & 7);
 			square[1].envelopeUp = Bit(value, 3) != 0;
 			square[1].envelopeVolume = ((value >> 4) & 0xF);
@@ -380,7 +380,7 @@ namespace GBA
 			break;
 
 		case 0x6D:		// NR24: frequency high, length flag, trigger
-			sound2cntH = (sound2cntH & 0x00FF) | ((u16)(value & 0x47) << 8);
+			sound2cntH = (sound2cntH & 0x00FF) | ((uint16_t)(value & 0x47) << 8);
 			square[1].frequency = sound2cntH & 0x7FF;
 			if (value & 0x80)
 				TriggerSquare(1);
@@ -412,7 +412,7 @@ namespace GBA
 			break;
 
 		case 0x73:		// NR32: volume (5-6), force volume (7)
-			sound3cntH = (sound3cntH & 0x00FF) | ((u16)(value & 0xE0) << 8);
+			sound3cntH = (sound3cntH & 0x00FF) | ((uint16_t)(value & 0xE0) << 8);
 			waveVolume = ((value >> 5) & 3);
 			waveForceVolume = Bit(value, 7) != 0;
 			break;
@@ -423,7 +423,7 @@ namespace GBA
 			break;
 
 		case 0x75:		// NR34: frequency high, length flag (6), trigger (7)
-			sound3cntX = (sound3cntX & 0x00FF) | ((u16)(value & 0x47) << 8);
+			sound3cntX = (sound3cntX & 0x00FF) | ((uint16_t)(value & 0x47) << 8);
 			waveFrequency = sound3cntX & 0x7FF;
 			if (value & 0x80)
 				TriggerWave();
@@ -438,7 +438,7 @@ namespace GBA
 			break;
 
 		case 0x79:		// NR42: envelope and volume
-			sound4cntL = (sound4cntL & 0x00FF) | ((u16)value << 8);
+			sound4cntL = (sound4cntL & 0x00FF) | ((uint16_t)value << 8);
 			noiseEnvelopePeriod = ((value >> 0) & 7);
 			noiseEnvelopeUp = Bit(value, 3) != 0;
 			noiseEnvelopeVolume = ((value >> 4) & 0xF);
@@ -459,7 +459,7 @@ namespace GBA
 			break;
 
 		case 0x7D:		// NR44: length flag (6), trigger (7)
-			sound4cntH = (sound4cntH & 0x00FF) | ((u16)(value & 0x40) << 8);
+			sound4cntH = (sound4cntH & 0x00FF) | ((uint16_t)(value & 0x40) << 8);
 			if (value & 0x80)
 				TriggerNoise();
 			else
@@ -472,7 +472,7 @@ namespace GBA
 			break;
 
 		case 0x81:		// NR51: channel 1-4 panning, bits 8-11 right and 12-15 left
-			soundcntL = (soundcntL & 0x00FF) | ((u16)value << 8);
+			soundcntL = (soundcntL & 0x00FF) | ((uint16_t)value << 8);
 			break;
 
 		case 0x82:		// SOUNDCNT_H: PSG volume (0-1) and the FIFO volumes (2, 3)
@@ -483,7 +483,7 @@ namespace GBA
 
 		case 0x83:		// SOUNDCNT_H: the FIFO enables, timers and resets
 		{
-			soundcntH = (soundcntH & 0x00FF) | ((u16)value << 8);
+			soundcntH = (soundcntH & 0x00FF) | ((uint16_t)value << 8);
 
 			for (int which = 0; which < 2; which++)
 			{
@@ -594,7 +594,7 @@ namespace GBA
 			break;
 
 		case 0x89:		// SOUNDBIAS high byte: bits 14-15 the amplitude resolution
-			soundbias = (soundbias & 0x00FF) | ((u16)(value & 0xC3) << 8);
+			soundbias = (soundbias & 0x00FF) | ((uint16_t)(value & 0xC3) << 8);
 			break;
 
 		default:
@@ -628,16 +628,16 @@ namespace GBA
 	// The DMA side of the FIFOs
 	// ---------------------------------------------------------------------------------------
 
-	void Apu::FifoDmaDone(int which, const u32* words, int count)
+	void Apu::FifoDmaDone(int which, const uint32_t* words, int count)
 	{
 		// The DMA moved `count` words (four of them for a normal refill) into the FIFO. GBATEK:
 		// "Data 0 being located in least significant byte which is replayed first", so the words
 		// are pushed little endian, byte 0 first.
 		for (int i = 0; i < count; i++)
 		{
-			u32 word = words[i];
+			uint32_t word = words[i];
 			for (int byte = 0; byte < 4; byte++)
-				Write8(0xA0 + which * 4 + byte, (u8)(word >> (byte * 8)));
+				Write8(0xA0 + which * 4 + byte, (uint8_t)(word >> (byte * 8)));
 		}
 
 		// A refill of four words satisfies the request; the DMA engine also calls
@@ -660,7 +660,7 @@ namespace GBA
 		// exact for every host rate, including the fractional ones (48000 Hz divides 16.78 MHz
 		// with a remainder, so a plain cycle counter would drift).
 		int start = cycleAccum;
-		u64 scaled = (u64)start + (u64)cycles * (u64)sampleRate;
+		uint64_t scaled = (uint64_t)start + (uint64_t)cycles * (uint64_t)sampleRate;
 		int frames = (int)(scaled / CyclesPerSecond);
 		cycleAccum = (int)(scaled % CyclesPerSecond);
 
@@ -672,11 +672,11 @@ namespace GBA
 		// usually ticks the APU in slices shorter than a sample (the bus uses 64 cycles), so the
 		// accumulator is normally a large part of a sample period and the correction is the whole
 		// elapsed part of it.
-		s64 prevFloor = -(((s64)start + sampleRate - 1) / sampleRate);
+		int64_t prevFloor = -(((int64_t)start + sampleRate - 1) / sampleRate);
 		for (int j = 1; j <= frames; j++)
 		{
-			s64 hi = ((s64)j * CyclesPerSecond - start) / sampleRate;
-			s64 lo = (j == 1) ? prevFloor : (((s64)(j - 1) * CyclesPerSecond - start) / sampleRate);
+			int64_t hi = ((int64_t)j * CyclesPerSecond - start) / sampleRate;
+			int64_t lo = (j == 1) ? prevFloor : (((int64_t)(j - 1) * CyclesPerSecond - start) / sampleRate);
 			sampleCounter = (int)(hi - lo);
 			OutputSample(bus);
 		}
@@ -711,7 +711,7 @@ namespace GBA
 		}
 	}
 
-	int Apu::ReadSamples(s16* out, int maxFrames)
+	int Apu::ReadSamples(int16_t* out, int maxFrames)
 	{
 		// The queue is the only source of mixed audio, so draining it partially hands the frames
 		// over in order and keeps the rest for the next call: nothing is duplicated or lost.
@@ -720,7 +720,7 @@ namespace GBA
 		if (count <= 0)
 			return 0;
 
-		memcpy(out, pending.data(), (size_t)count * 2 * sizeof(s16));
+		memcpy(out, pending.data(), (size_t)count * 2 * sizeof(int16_t));
 		pending.erase(pending.begin(), pending.begin() + (size_t)count * 2);
 		return count;
 	}
@@ -738,7 +738,7 @@ namespace GBA
 		int packed = MixLegacy(bus);
 		int psg[4];
 		for (int i = 0; i < 4; i++)
-			psg[i] = (int)(((u32)packed >> (i * 8)) & 0xFF) - 128;
+			psg[i] = (int)(((uint32_t)packed >> (i * 8)) & 0xFF) - 128;
 		MixFifo(bus);
 
 		// SOUNDCNT_H bits 0-1 scale the four PSGs: 0 = 25 %, 1 = 50 %, 2 = 100 %, 3 is
@@ -784,8 +784,8 @@ namespace GBA
 		right = masterRight ? ((right * (masterRight + 1)) >> 3) : 0;
 		left = masterLeft ? ((left * (masterLeft + 1)) >> 3) : 0;
 
-		s16 outLeft = (s16)Clamp16(left * MixScale);
-		s16 outRight = (s16)Clamp16(right * MixScale);
+		int16_t outLeft = (int16_t)Clamp16(left * MixScale);
+		int16_t outRight = (int16_t)Clamp16(right * MixScale);
 
 		// Cap the queue: a frontend that stops draining must not make the mixer grow without
 		// bound. The newest frame is dropped once the cap is reached.
@@ -810,8 +810,8 @@ namespace GBA
 		levels[2] = MixWave(bus);
 		levels[3] = MixNoise(bus);
 
-		u32 packed = (u32)(levels[0] + 128) | ((u32)(levels[1] + 128) << 8) |
-			((u32)(levels[2] + 128) << 16) | ((u32)(levels[3] + 128) << 24);
+		uint32_t packed = (uint32_t)(levels[0] + 128) | ((uint32_t)(levels[1] + 128) << 8) |
+			((uint32_t)(levels[2] + 128) << 16) | ((uint32_t)(levels[3] + 128) << 24);
 		return (int)packed;
 	}
 
@@ -835,14 +835,14 @@ namespace GBA
 			// around from FFFFh to its reload value, so the previous reading has to be
 			// remembered to see it; `fifoAccum` holds that reading (-1 = not taken yet).
 			int timer = fifoTimerSelect[which] ? 1 : 0;
-			u16 now = bus.timers.Counter(timer);
+			uint16_t now = bus.timers.Counter(timer);
 			if (fifoAccum[which] < 0)
 			{
 				fifoAccum[which] = now;
 			}
 			else
 			{
-				if (now < (u16)fifoAccum[which])
+				if (now < (uint16_t)fifoAccum[which])
 				{
 					// Timer overflow: "Move 8bit data from FIFO to sound circuit". An empty FIFO
 					// keeps the last sample it played (the latch) rather than going silent.
@@ -859,7 +859,7 @@ namespace GBA
 			// The sample is a signed 8 bit value (-128..+127, GBATEK "Sound Channel A and B")
 			// that spans the full output range, i.e. twice a PSG channel's quarter, and
 			// SOUNDCNT_H bit 2/3 selects 50 % or 100 % for it.
-			int sample = (int)(s8)fifoLatchedSample[which] << 1;
+			int sample = (int)(int8_t)fifoLatchedSample[which] << 1;
 			if (!fifoVolume[which])
 				sample >>= 1;
 			fifoOutput[which] = sample;
@@ -934,7 +934,7 @@ namespace GBA
 
 		if (bus.timers.Running(timerIndex))
 		{
-			u16 now = bus.timers.Counter(timerIndex);
+			uint16_t now = bus.timers.Counter(timerIndex);
 			if (lastTimerValue == TimerNotPrimed)
 			{
 				lastTimerValue = now;		// nothing to compare against yet
@@ -1016,8 +1016,8 @@ namespace GBA
 	void Apu::TriggerSquare(int index)
 	{
 		SquareChannel& ch = square[index];
-		u16 control = (index == 0) ? sound1cntX : sound2cntH;
-		u8 nrx1 = (u8)((index == 0) ? (sound1cntH & 0x3F) : (sound2cntL & 0x3F));
+		uint16_t control = (index == 0) ? sound1cntX : sound2cntH;
+		uint8_t nrx1 = (uint8_t)((index == 0) ? (sound1cntH & 0x3F) : (sound2cntL & 0x3F));
 
 		// A channel is only activated when its DAC is on; otherwise the trigger forces it off
 		// (Pan Docs "Audio Details": "A channel is activated by a write to NRx4's MSB, unless
