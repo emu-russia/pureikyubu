@@ -27,7 +27,6 @@ void UIReflector();
 // UI configuration variables
 
 // UI section variables
-#define USER_DOLDEBUG "DOLDEBUG"			// enable debugger
 #define USER_FILTER "FILTER"				// file filter
 #define USER_LASTDIR_ALL "LASTDIR_ALL"		// last used directory (all files)
 #define USER_LASTDIR_DVD "LASTDIR_DVD"		// last used directory (dvd)

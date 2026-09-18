@@ -9,7 +9,7 @@ This component deals with the usual debugging tasks that all developers want to 
 - Code profiling
 - Performance counters
 
-This component no longer has anything to do with the debug console. The debug console code has been moved to the category of user interfaces and moved to the debugui.cpp.
+This component no longer has anything to do with the debug console. The debug console code has been moved to the category of user interfaces (the legacy console is gone, the debugger is `debugui2.cpp`).
 
 ## Debug report notes
 

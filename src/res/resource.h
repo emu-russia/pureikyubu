@@ -190,7 +190,6 @@
 #define ID_CPUCOMPARE_CONNECT5          40058
 #define ID_CPUCOMPARE_DISCONNECT        40059
 #define ID_CPUCOMPARE_LIST_SERVERS      40060
-#define ID_DEBUG_CONSOLE                40061
 #define ID_LOAD_MAP                     40062
 #define ID_ADD_MAP                      40063
 #define ID_SAVE_MAP                     40064
@@ -198,7 +197,7 @@
 #define ID_ALLOW_PATCHES                40066
 #define ID_LOAD_PATCH                   40067
 #define ID_ADD_PATCH                    40068
-#define ID_DEBUG_TESTNEWDEBUGGER        40069
+#define ID_DEBUG_OPENDEBUGGER           40069
 #define ID_ABOUT_GFX                    40071
 #define ID_ABOUT_AUD                    40072
 #define ID_ABOUT_PAD                    40073

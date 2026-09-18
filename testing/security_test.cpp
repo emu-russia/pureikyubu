@@ -623,7 +623,6 @@ namespace SecurityUnitTest
 			{
 				JdiSpecs::EmuJdi,
 				JdiSpecs::DebuggerJdi,
-				JdiSpecs::DebugUiJdi,
 				JdiSpecs::DebugUi2Jdi,
 				JdiSpecs::GekkoCoreJdi,
 				JdiSpecs::DspJdi,

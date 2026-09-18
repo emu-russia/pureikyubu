@@ -778,7 +778,7 @@ int WINAPI WinMain(
 			if (Debug2::CloseRequested())
 			{
 				Debug2::StopDebugger();
-				CheckMenuItem(wnd.hMainMenu, ID_DEBUG_TESTNEWDEBUGGER, MF_BYCOMMAND | MF_UNCHECKED);
+				CheckMenuItem(wnd.hMainMenu, ID_DEBUG_OPENDEBUGGER, MF_BYCOMMAND | MF_UNCHECKED);
 			}
 
 			Sleep(Debug2::IsDebuggerActive() ? 10 : 1);
@@ -3086,10 +3086,6 @@ static void doubleclick()
 
 	UI::Jdi->Unload();
 	UI::Jdi->LoadFile(Util::WstringToString(path));
-	if (Debug::debugger)
-	{
-		Debug::debugger->InvalidateAll();
-	}
 	OnMainWindowOpened(path.c_str());
 	UI::Jdi->Run();
 }
@@ -4085,10 +4081,6 @@ void LoadRecentFile(int index)
 	std::wstring path = GetRecentEntry((RecentNum+1) - index);
 	UI::Jdi->Unload();
 	UI::Jdi->LoadFile(Util::WstringToString(path));
-	if (Debug::debugger)
-	{
-		Debug::debugger->InvalidateAll();
-	}
 	OnMainWindowOpened(path.c_str());
 	UI::Jdi->Run();
 }
@@ -4193,14 +4185,6 @@ static void OnMainWindowCreate(HWND hwnd)
 		CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
 	}
 
-	// debugger enabled ?
-	CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-	if (UI::Jdi->GetConfigBool(USER_DOLDEBUG, USER_UI))
-	{
-		Debug::debugger = new Debug::Debugger();
-		CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
-	}
-
 	// load accelerators
 	InitCommonControls();
 
@@ -4245,7 +4229,6 @@ static void OnMainWindowCreate(HWND hwnd)
 
 	// Add UI methods
 	JdiAddNode("UI_JDI_JSON", JdiSpecs::UiJdi, UIReflector);
-	JdiAddNode("DEBUG_UI_JDI_JSON", JdiSpecs::DebugUiJdi, Debug::DebugUIReflector);
 	JdiAddNode("DEBUG_UI2_JDI_JSON", JdiSpecs::DebugUi2Jdi, Debug2::Reflector);
 
 	// simulate close operation, like we just stopped emu
@@ -4261,16 +4244,10 @@ static void OnMainWindowDestroy()
 	UI::Jdi->Unload();
 
 	JdiRemoveNode("UI_JDI_JSON");
-	JdiRemoveNode("DEBUG_UI_JDI_JSON");
 	JdiRemoveNode("DEBUG_UI2_JDI_JSON");
 
 	// disable drop operation
 	DragAcceptFiles(wnd.hMainWindow, FALSE);
-
-	if (Debug::debugger)
-	{
-		delete Debug::debugger;
-	}
 
 	UI::Jdi->ExecuteCommand("exit");
 }
@@ -4512,10 +4489,6 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 					loadFile:
 					
 						UI::Jdi->LoadFile(Util::WstringToString(name));
-						if (Debug::debugger)
-						{
-							Debug::debugger->InvalidateAll();
-						}
 						OnMainWindowOpened(name.c_str());
 						UI::Jdi->Run();
 					}
@@ -4548,15 +4521,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				{
 					UI::Jdi->LoadFile("Bootrom");
 					OnMainWindowOpened(L"Bootrom");
-					if (Debug::debugger == nullptr)
-					{
-						UI::Jdi->Run();
-					}
-					else
-					{
-						Debug::debugger->SetDisasmCursor(0xfff0'0100);
-						UI::Jdi->ExecuteCommand("echo \"Bootrom is started in Suspended state for debugging purposes. Press F5 to continue.\"");
-					}
+					UI::Jdi->Run();
 					return 0;
 				}
 				/* Open/close DVD lid */
@@ -4737,39 +4702,19 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 					return 0;
 				}
-				// Open/close system-wide debugger
-				case ID_DEBUG_CONSOLE:
-				{
-					if (Debug::debugger == nullptr)
-					{   // open
-						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
-						Debug::debugger = new Debug::Debugger();
-						UI::Jdi->SetConfigBool(USER_DOLDEBUG, true, USER_UI);
-						SetStatusText(STATUS_ENUM::Progress, L"Debugger opened");
-					}
-					else
-					{   // close
-						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-						delete Debug::debugger;
-						Debug::debugger = nullptr;
-						UI::Jdi->SetConfigBool(USER_DOLDEBUG, false, USER_UI);
-						SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
-					}
-					return 0;
-				}
-				// Open/close the new debugger (debugui2, issue #371). The window it opens
+				// Open/close the debugger (debugui2, issue #371). The window it opens
 				// belongs to the debugger itself, the Win32 front end only pumps its events.
-				case ID_DEBUG_TESTNEWDEBUGGER:
+				case ID_DEBUG_OPENDEBUGGER:
 				{
 					if (Debug2::IsDebuggerActive())
 					{   // close
-						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_TESTNEWDEBUGGER, MF_BYCOMMAND | MF_UNCHECKED);
+						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_OPENDEBUGGER, MF_BYCOMMAND | MF_UNCHECKED);
 						Debug2::StopDebugger();
 					}
 					else
 					{   // open
 						Debug2::StartDebugger();
-						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_TESTNEWDEBUGGER, MF_BYCOMMAND |
+						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_OPENDEBUGGER, MF_BYCOMMAND |
 							(Debug2::IsDebuggerActive() ? MF_CHECKED : MF_UNCHECKED));
 					}
 					return 0;

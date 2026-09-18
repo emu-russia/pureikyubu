@@ -931,11 +931,6 @@ namespace Debug
 		// You also need to invalidate the Gekko instruction cache
 		Core->icache->Invalidate(pa);
 
-		// Refresh the debugger contents
-		if (debugger != nullptr) {
-			debugger->InvalidateAll();
-		}
-
 		return nullptr;
 	}
 
