@@ -54,17 +54,17 @@ namespace GBA
 	namespace
 	{
 		// DMAxCNT_H
-		const u16 DmaDestControl = 0x0060;		// bits 5-6
-		const u16 DmaSourceControl = 0x0180;	// bits 7-8
-		const u16 DmaRepeat = 0x0200;			// bit 9
-		const u16 DmaWord = 0x0400;				// bit 10 (DMA3 only)
-		const u16 DmaDrq = 0x0800;				// bit 11 (DMA3 only, Game Pak DRQ)
-		const u16 DmaTiming = 0x3000;			// bits 12-13
-		const u16 DmaIrq = 0x4000;				// bit 14
-		const u16 DmaEnable = 0x8000;			// bit 15
+		const uint16_t DmaDestControl = 0x0060;		// bits 5-6
+		const uint16_t DmaSourceControl = 0x0180;	// bits 7-8
+		const uint16_t DmaRepeat = 0x0200;			// bit 9
+		const uint16_t DmaWord = 0x0400;			// bit 10 (DMA3 only)
+		const uint16_t DmaDrq = 0x0800;				// bit 11 (DMA3 only, Game Pak DRQ)
+		const uint16_t DmaTiming = 0x3000;			// bits 12-13
+		const uint16_t DmaIrq = 0x4000;				// bit 14
+		const uint16_t DmaEnable = 0x8000;			// bit 15
 
 		// The four channel bases, in channel order (twelve bytes apart).
-		const u32 DmaBases[4] = { 0x0B0, 0x0BC, 0x0C8, 0x0D4 };
+		const uint32_t DmaBases[4] = { 0x0B0, 0x0BC, 0x0C8, 0x0D4 };
 
 		// The offset of each register inside a channel, in halfwords: SAD (two), DAD (two),
 		// CNT_L, CNT_H.
@@ -74,32 +74,32 @@ namespace GBA
 		const int RegControl = 3;
 
 		// The FIFO destinations of the two direct-sound channels (GBATEK "GBA Sound").
-		const u32 FifoA = 0x040000A0;
-		const u32 FifoB = 0x040000A4;
+		const uint32_t FifoA = 0x040000A0;
+		const uint32_t FifoB = 0x040000A4;
 
 		// Memory ranges, for the "which channels may touch what" rules of GBATEK "DMA Transfers".
-		const u32 RomStart = 0x08000000;		// Game Pak ROM / Flash / EEPROM bit stream
-		const u32 RomEnd = 0x0E000000;
-		const u32 SramStart = 0x0E000000;		// SRAM/Flash, 8bit wide: no DMA channel can use it
-		const u32 SramEnd = 0x10000000;
+		const uint32_t RomStart = 0x08000000;		// Game Pak ROM / Flash / EEPROM bit stream
+		const uint32_t RomEnd = 0x0E000000;
+		const uint32_t SramStart = 0x0E000000;		// SRAM/Flash, 8bit wide: no DMA channel can use it
+		const uint32_t SramEnd = 0x10000000;
 
-		bool IsCartridge(u32 address)
+		bool IsCartridge(uint32_t address)
 		{
 			return address >= RomStart && address < RomEnd;
 		}
 
-		bool IsSram(u32 address)
+		bool IsSram(uint32_t address)
 		{
 			return address >= SramStart && address < SramEnd;
 		}
 
 		/// <summary>BIOS ROM (0x00000000..0x00003FFF) is readable but never writable.</summary>
-		bool IsBios(u32 address)
+		bool IsBios(uint32_t address)
 		{
 			return address < BiosSize;
 		}
 
-		bool IsFifo(u32 address)
+		bool IsFifo(uint32_t address)
 		{
 			return address == FifoA || address == FifoB;
 		}
@@ -115,23 +115,23 @@ namespace GBA
 		/// in Channel::source/::dest, the high half in the channel's latch (see the note at the
 		/// top of the file).
 		/// </summary>
-		u32 UnionAddress(u16 low, u32 highHalf)
+		uint32_t UnionAddress(uint16_t low, uint32_t highHalf)
 		{
-			return (u32)low | (highHalf & 0xFFFF0000u);
+			return (uint32_t)low | (highHalf & 0xFFFF0000u);
 		}
 
 		/// <summary>
 		/// Decode a DMA register offset (relative to 0x04000000) into the channel and the
 		/// register number, or return false when the offset is not a DMA register at all.
 		/// </summary>
-		bool DecodeDmaRegister(u32 offset, int& index, int& reg)
+		bool DecodeDmaRegister(uint32_t offset, int& index, int& reg)
 		{
 			if ((offset & 1) != 0)
 				return false;
 
 			for (int channel = 0; channel < 4; channel++)
 			{
-				u32 within = offset - DmaBases[channel];
+				uint32_t within = offset - DmaBases[channel];
 				if (within > 10)
 					continue;
 
@@ -170,7 +170,7 @@ namespace GBA
 		/// read and 81 for a 64bit write. A transfer that small aimed at the Game Pak is the
 		/// EEPROM bit stream; anything larger (a real ROM copy) runs through the normal path.
 		/// </summary>
-		bool LooksLikeEeprom(int index, const Dma::Channel& channel, u32 count)
+		bool LooksLikeEeprom(int index, const Dma::Channel& channel, uint32_t count)
 		{
 			if (index != 3)
 				return false;
@@ -200,7 +200,7 @@ namespace GBA
 		}
 
 		/// <summary>Reload DAD for a repeat channel using the increment+reload destination.</summary>
-		void ApplyDestReload(Dma::Channel& channel, u32 fullDest)
+		void ApplyDestReload(Dma::Channel& channel, uint32_t fullDest)
 		{
 			if (((channel.control & DmaDestControl) >> 5) == 3)
 				channel.destLatch = fullDest;
@@ -224,8 +224,8 @@ namespace GBA
 			Dma::Channel& channel = const_cast<Dma::Channel&>(dma.Get(index));
 			channel.active = false;
 			channel.pending = false;
-			channel.control &= (u16)~DmaEnable;
-			channel.latched = (channel.count == 0) ? (u16)MaxUnits(index) : channel.count;
+			channel.control &= (uint16_t)~DmaEnable;
+			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
 		}
 	}
 
@@ -239,7 +239,7 @@ namespace GBA
 		scanlineRequest = false;
 	}
 
-	u16 Dma::Read16(u32 offset, u16 openBus) const
+	uint16_t Dma::Read16(uint32_t offset, uint16_t openBus) const
 	{
 		// The bus may hand the access over as the offset relative to 0x04000000 or as the full
 		// address; both decode the same way once the 0x04000000 base is gone.
@@ -254,20 +254,20 @@ namespace GBA
 		// Inside one channel the offset codes are 0/2 = SAD_L/H, 4/6 = DAD_L/H, 8 = CNT_L,
 		// 10 = CNT_H; the two halves of a 32bit register both read their low half here, the
 		// high half only through the idle-latch trick described at the top of the file.
-		u32 within = offset - DmaBases[index];
+		uint32_t within = offset - DmaBases[index];
 		const Channel& channel = channels[index];
 
 		switch (reg)
 		{
 		case RegSad:
 			if (within == 2)
-				return (u16)(channel.sourceLatch >> 16);
-			return (u16)channel.source;
+				return (uint16_t)(channel.sourceLatch >> 16);
+			return (uint16_t)channel.source;
 
 		case RegDad:
 			if (within == 6)
-				return (u16)(channel.destLatch >> 16);
-			return (u16)channel.dest;
+				return (uint16_t)(channel.destLatch >> 16);
+			return (uint16_t)channel.dest;
 
 		case RegCount:
 			return channel.count;
@@ -277,7 +277,7 @@ namespace GBA
 		}
 	}
 
-	void Dma::Write16(GbaBus& bus, u32 offset, u16 value)
+	void Dma::Write16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
 		// See Read16: accept the offset relative to 0x04000000 or the full address.
 		if (offset >= 0x04000000)
@@ -289,7 +289,7 @@ namespace GBA
 		{
 		}
 
-		u32 within = offset - DmaBases[index];
+		uint32_t within = offset - DmaBases[index];
 		bool highHalf = (within == 2) || (within == 6);
 		Channel& channel = channels[index];
 
@@ -297,22 +297,22 @@ namespace GBA
 		{
 		case RegSad:		// DMAxSAD: 32bit, written as two halfwords
 			if (highHalf)
-				channel.sourceLatch = (channel.sourceLatch & 0xFFFF) | ((u32)value << 16);
+				channel.sourceLatch = (channel.sourceLatch & 0xFFFF) | ((uint32_t)value << 16);
 			else
 				channel.sourceLatch = (channel.sourceLatch & 0xFFFF0000) | value;
-			channel.source = (u16)channel.sourceLatch;
+			channel.source = (uint16_t)channel.sourceLatch;
 			return;
 
 		case RegDad:		// DMAxDAD: 32bit, written as two halfwords
 			if (highHalf)
-				channel.destLatch = (channel.destLatch & 0xFFFF) | ((u32)value << 16);
+				channel.destLatch = (channel.destLatch & 0xFFFF) | ((uint32_t)value << 16);
 			else
 				channel.destLatch = (channel.destLatch & 0xFFFF0000) | value;
-			channel.dest = (u16)channel.destLatch;
+			channel.dest = (uint16_t)channel.destLatch;
 			return;
 
 		case RegCount:		// DMAxCNT_L: 14bit for DMA0-2, 16bit for DMA3
-			channel.count = (index == 3) ? value : (u16)(value & 0x3FFF);
+			channel.count = (index == 3) ? value : (uint16_t)(value & 0x3FFF);
 			return;
 
 		default:
@@ -322,7 +322,7 @@ namespace GBA
 		// DMAxCNT_H. The channel setup (latching SAD/DAD/CNT_L) happens on the 0 -> 1 edge of
 		// the enable bit, so the old value is examined before the new one is stored.
 		bool wasEnabled = (channel.control & DmaEnable) != 0;
-		channel.control = (u16)(value & ~0x001F);	// bits 0-4 do not exist
+		channel.control = (uint16_t)(value & ~0x001F);	// bits 0-4 do not exist
 		bool nowEnabled = (channel.control & DmaEnable) != 0;
 
 		if (!nowEnabled)
@@ -339,7 +339,7 @@ namespace GBA
 			// Enable changed 0 -> 1: reload SAD, DAD and CNT_L (GBATEK "Source and Destination
 			// Address and Word Count Registers"). Both halves of SAD and DAD are in the latches
 			// by now, so the transfer gets the full 32bit addresses.
-			channel.latched = (channel.count == 0) ? (u16)MaxUnits(index) : channel.count;
+			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
 			channel.active = true;
 			channel.pending = false;
 
@@ -351,7 +351,7 @@ namespace GBA
 			}
 		}
 
-		u16 timing = (u16)((channel.control & DmaTiming) >> 12);
+		uint16_t timing = (uint16_t)((channel.control & DmaTiming) >> 12);
 
 		if (timing != 0)
 		{
@@ -363,7 +363,7 @@ namespace GBA
 		// Immediately: the transfer runs as part of this write. Because the setup above only
 		// happens on the 0 -> 1 edge, a write that merely changes the address controls of an
 		// already enabled channel does not restart it.
-		if (LooksLikeEeprom(index, channel, (u32)UnitCount(channel, index)))
+		if (LooksLikeEeprom(index, channel, (uint32_t)UnitCount(channel, index)))
 		{
 			RunEepromTransfer(*this, bus, index);
 			return;
@@ -414,7 +414,7 @@ namespace GBA
 			if (((channel.control & DmaTiming) >> 12) != 3)
 				continue;
 
-			u32 target = (fifo == 0) ? FifoA : FifoB;
+			uint32_t target = (fifo == 0) ? FifoA : FifoB;
 			if ((channel.destLatch & ~3u) != target)
 				continue;
 
@@ -465,7 +465,7 @@ namespace GBA
 		{
 			channel.sourceLatch = UnionAddress(channel.source, channel.sourceLatch);
 			channel.destLatch = UnionAddress(channel.dest, channel.destLatch);
-			channel.latched = (channel.count == 0) ? (u16)MaxUnits(index) : channel.count;
+			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
 			channel.active = true;
 		}
 
@@ -478,7 +478,7 @@ namespace GBA
 			// was started with on the next start condition. "Upon Repeat: Reloads CNT_L, and
 			// optionally DAD" (GBATEK "Source and Destination Address and Word Count Registers").
 			channel.sourceLatch = UnionAddress(channel.source, channel.sourceLatch);
-			channel.latched = (channel.count == 0) ? (u16)MaxUnits(index) : channel.count;
+			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
 			ApplyDestReload(channel, UnionAddress(channel.dest, channel.destLatch));
 		}
 
@@ -510,7 +510,7 @@ namespace GBA
 			if (((channel.control & DmaTiming) >> 12) != timing)
 				continue;
 
-			if (timing == 1 && LooksLikeEeprom(i, channel, (u32)UnitCount(channel, i)))
+			if (timing == 1 && LooksLikeEeprom(i, channel, (uint32_t)UnitCount(channel, i)))
 			{
 				RunEepromTransfer(*this, bus, i);
 				continue;
@@ -546,14 +546,14 @@ namespace GBA
 		if (units <= 0)
 			return 0;
 
-		u32 sourceControl = (channel.control & DmaSourceControl) >> 7;
+		uint32_t sourceControl = (channel.control & DmaSourceControl) >> 7;
 
 		if (sourceControl == 3)
 		{
 			// "3 = Prohibited" (GBATEK DMAxCNT_H bits 7-8): nothing is transferred.
 			Log(LogLevel::Warn, "DMA%i: prohibited source address control, transfer ignored", index);
 			channel.active = false;
-			channel.control &= (u16)~DmaEnable;
+			channel.control &= (uint16_t)~DmaEnable;
 			return 0;
 		}
 
@@ -561,15 +561,15 @@ namespace GBA
 		// bits 5-6: 0 increments, 1 decrements, 2 is fixed, and 3 ("increment + reload") moves
 		// exactly like 0 while the transfer runs - the only difference is that DAD is put back to
 		// the address the transfer started from before the next repeat (see the end of Perform).
-		u32 destControl = (channel.control & DmaDestControl) >> 5;
+		uint32_t destControl = (channel.control & DmaDestControl) >> 5;
 		if (fifoMode)
 			destControl = 2;
 
-		u32 source = channel.sourceLatch;
-		u32 dest = channel.destLatch;
+		uint32_t source = channel.sourceLatch;
+		uint32_t dest = channel.destLatch;
 		int cycles = 0;
 
-		u32 fifoWords[4] = { 0, 0, 0, 0 };
+		uint32_t fifoWords[4] = { 0, 0, 0, 0 };
 		int fifoCount = 0;
 
 		for (int unit = 0; unit < units; unit++)
@@ -586,7 +586,7 @@ namespace GBA
 				// are collected here and handed to the APU through Apu::FifoDmaDone, the
 				// interface the sound engine reads (writing them through the bus as well would
 				// make the APU store the same 16 bytes twice).
-				u32 value = readable ? bus.Read32(source) : 0xFFFFFFFF;
+				uint32_t value = readable ? bus.Read32(source) : 0xFFFFFFFF;
 				if (fifoCount < 4)
 					fifoWords[fifoCount++] = value;
 			}
@@ -665,11 +665,11 @@ namespace GBA
 		// The word count has been transferred: raise the channel's interrupt when bit 14 asks
 		// for it (IF bits 8-11 are DMA0-3, see the InterruptBit enum).
 		if (channel.control & DmaIrq)
-			bus.irq.Raise((u16)(INT_DMA0 << index));
+			bus.irq.Raise((uint16_t)(INT_DMA0 << index));
 
 		if ((channel.control & DmaRepeat) == 0)
 		{
-			channel.control &= (u16)~DmaEnable;
+			channel.control &= (uint16_t)~DmaEnable;
 			channel.active = false;
 		}
 		else if (((channel.control & DmaDestControl) >> 5) == 3)

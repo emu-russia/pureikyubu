@@ -48,19 +48,19 @@ namespace GBA
 		void Tick(int cycles);
 
 		/// <summary>Read a sound register (the full 0xFF10..0xFF3F address).</summary>
-		u8 ReadRegister(u16 address) const;
+		uint8_t ReadRegister(uint16_t address) const;
 
 		/// <summary>Write a sound register (the full 0xFF10..0xFF3F address).</summary>
-		void WriteRegister(u16 address, u8 value);
+		void WriteRegister(uint16_t address, uint8_t value);
 
 		/// <summary>Drain up to `maxFrames` stereo sample frames (interleaved left, right).</summary>
-		int ReadSamples(s16* out, int maxFrames);
+		int ReadSamples(int16_t* out, int maxFrames);
 
 		/// <summary>The master enable (NR52 bit 7).</summary>
 		bool Enabled() const { return powered; }
 
 		/// <summary>The four channel status bits (NR52 bits 0-3), a channel being "on".</summary>
-		u8 ChannelStatus() const;
+		uint8_t ChannelStatus() const;
 
 		/// <summary>The digital output of a channel, 0..15 (the CGB's PCM12/PCM34 registers, and
 		/// the unit tests, read this).</summary>
@@ -126,7 +126,7 @@ namespace GBA
 			int envelopeTimer = 0;
 			bool envelopeIncreasing = false;
 			bool envelopeRunning = false;
-			u16 lfsr = 0x7FFF;
+			uint16_t lfsr = 0x7FFF;
 		};
 
 		Pulse pulse[2];
@@ -135,11 +135,11 @@ namespace GBA
 
 		// -- the global registers --------------------------------------------------------------
 
-		u8 nr50 = 0x77;			// VIN and the master volume (the post-boot value)
-		u8 nr51 = 0xF3;			// the channel routing (the post-boot value)
+		uint8_t nr50 = 0x77;			// VIN and the master volume (the post-boot value)
+		uint8_t nr51 = 0xF3;			// the channel routing (the post-boot value)
 		bool powered = true;
 
-		u8 waveRam[16]{};
+		uint8_t waveRam[16]{};
 
 		// -- timing ----------------------------------------------------------------------------
 
@@ -150,7 +150,7 @@ namespace GBA
 		int sampleRate = 48000;
 		int cyclesPerSample = GbCyclesPerSecond / 48000;
 
-		std::vector<s16> pending;		// interleaved stereo samples waiting for ReadSamples
+		std::vector<int16_t> pending;		// interleaved stereo samples waiting for ReadSamples
 
 		// The high pass filter of the two outputs (Pan Docs "Audio Details" gives the reference
 		// implementation; the capacitor is dragged towards the signal by 0.999958 at the DMG's

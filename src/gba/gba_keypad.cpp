@@ -30,7 +30,7 @@ namespace GBA
 		// GBATEK "GBA Keypad Input": KEYCNT bits 0-9 select the keys the interrupt watches.
 		// The selection is compared against the pressed mask (1 = held down), which is the
 		// complement of the KEYINPUT register the software reads.
-		u16 selected = (u16)(control & 0x03FF);
+		uint16_t selected = (uint16_t)(control & 0x03FF);
 
 		if (selected == 0)
 			return false;

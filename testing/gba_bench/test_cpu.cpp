@@ -30,14 +30,14 @@ namespace
 	// ---------------------------------------------------------------------------------------
 
 	/// <summary>Where the test programs live: the bottom of EWRAM.</summary>
-	const u32 CodeBase = MemEwram;
+	const uint32_t CodeBase = MemEwram;
 
 	/// <summary>Where the test data (and the stacks) live.</summary>
-	const u32 DataBase = MemEwram + 0x10000;
-	const u32 StackTop = DataBase + 0x1000;
+	const uint32_t DataBase = MemEwram + 0x10000;
+	const uint32_t StackTop = DataBase + 0x1000;
 
 	// The flag bits as they sit in a NZCV nibble, which is what the helpers below compare.
-	enum : u32 { NBit = 8, ZBit = 4, CBit = 2, VBit = 1 };
+	enum : uint32_t { NBit = 8, ZBit = 4, CBit = 2, VBit = 1 };
 
 	/// <summary>A bus, a CPU and the handful of helpers the tests need to poke at them.</summary>
 	struct Bench
@@ -56,20 +56,20 @@ namespace
 
 		// -- loading a program ------------------------------------------------------------
 
-		void Arm(u32 address, std::initializer_list<u32> words)
+		void Arm(uint32_t address, std::initializer_list<uint32_t> words)
 		{
-			u32 at = address;
-			for (u32 word : words)
+			uint32_t at = address;
+			for (uint32_t word : words)
 			{
 				bus.Write32(at, word);
 				at += 4;
 			}
 		}
 
-		void Thumb(u32 address, std::initializer_list<u16> halfwords)
+		void Thumb(uint32_t address, std::initializer_list<uint16_t> halfwords)
 		{
-			u32 at = address;
-			for (u16 halfword : halfwords)
+			uint32_t at = address;
+			for (uint16_t halfword : halfwords)
 			{
 				bus.Write16(at, halfword);
 				at += 2;
@@ -77,7 +77,7 @@ namespace
 		}
 
 		/// <summary>Install a 16 KByte BIOS image with `word` at `offset` (a vector).</summary>
-		void InstallBios(u32 offset, u32 word)
+		void InstallBios(uint32_t offset, uint32_t word)
 		{
 			if (bios.empty())
 				bios.assign(BiosSize, 0);
@@ -85,12 +85,12 @@ namespace
 			bus.SetBios(bios.data(), bios.size());
 		}
 
-		std::vector<u8> bios;
+		std::vector<uint8_t> bios;
 
 		// -- running ----------------------------------------------------------------------
 
-		void EnterArm(u32 address) { bus.cpu.BranchTo(address & ~1u); }
-		void EnterThumb(u32 address) { bus.cpu.BranchTo((address & ~1u) | 1u); }
+		void EnterArm(uint32_t address) { bus.cpu.BranchTo(address & ~1u); }
+		void EnterThumb(uint32_t address) { bus.cpu.BranchTo((address & ~1u) | 1u); }
 
 		int Step() { return bus.cpu.Step(); }
 
@@ -107,25 +107,25 @@ namespace
 
 		// -- registers and flags ----------------------------------------------------------
 
-		u32 R(int index) { return bus.cpu.Reg(index); }
-		void SetR(int index, u32 value) { bus.cpu.SetReg(index, value); }
+		uint32_t R(int index) { return bus.cpu.Reg(index); }
+		void SetR(int index, uint32_t value) { bus.cpu.SetReg(index, value); }
 
 		/// <summary>The four condition flags as a nibble: N=8, Z=4, C=2, V=1.</summary>
-		u32 Nzcv() { return (bus.cpu.ReadCPSR() >> 28) & 0xF; }
+		uint32_t Nzcv() { return (bus.cpu.ReadCPSR() >> 28) & 0xF; }
 
-		void SetNzcv(u32 nzcv)
+		void SetNzcv(uint32_t nzcv)
 		{
 			bus.cpu.WriteCPSR((bus.cpu.ReadCPSR() & 0x0FFFFFFFu) | (nzcv << 28));
 		}
 
 		// -- memory -----------------------------------------------------------------------
 
-		u32 Peek(u32 address) { return bus.Read32(address); }
-		u16 Peek16(u32 address) { return bus.Read16(address); }
-		u8 Peek8(u32 address) { return bus.Read8(address); }
-		void Poke(u32 address, u32 value) { bus.Write32(address, value); }
-		void Poke16(u32 address, u16 value) { bus.Write16(address, value); }
-		void Poke8(u32 address, u8 value) { bus.Write8(address, value); }
+		uint32_t Peek(uint32_t address) { return bus.Read32(address); }
+		uint16_t Peek16(uint32_t address) { return bus.Read16(address); }
+		uint8_t Peek8(uint32_t address) { return bus.Read8(address); }
+		void Poke(uint32_t address, uint32_t value) { bus.Write32(address, value); }
+		void Poke16(uint32_t address, uint16_t value) { bus.Write16(address, value); }
+		void Poke8(uint32_t address, uint8_t value) { bus.Write8(address, value); }
 	};
 
 	// ---------------------------------------------------------------------------------------
@@ -156,7 +156,7 @@ namespace
 		enum Shift { LSL = 0, LSR = 1, ASR = 2, ROR = 3 };
 
 		/// <summary>Rotate left, the inverse of the ARM immediate encoding's rotate right.</summary>
-		inline u32 RotateLeft(u32 value, u32 amount)
+		inline uint32_t RotateLeft(uint32_t value, uint32_t amount)
 		{
 			amount &= 31;
 			if (amount == 0)
@@ -168,14 +168,14 @@ namespace
 		/// Data processing with an immediate operand. The helper solves the rotate field and
 		/// fails the test if the value is one the encoding cannot hold.
 		/// </summary>
-		inline u32 DpImm(u32 cond, u32 op, bool setFlags, int rn, int rd, u32 value)
+		inline uint32_t DpImm(uint32_t cond, uint32_t op, bool setFlags, int rn, int rd, uint32_t value)
 		{
-			u32 rotate = 0;
-			u32 imm8 = 0;
+			uint32_t rotate = 0;
+			uint32_t imm8 = 0;
 			bool found = false;
-			for (u32 r = 0; r < 16 && !found; r++)
+			for (uint32_t r = 0; r < 16 && !found; r++)
 			{
-				u32 candidate = RotateLeft(value, r * 2);
+				uint32_t candidate = RotateLeft(value, r * 2);
 				if ((candidate & 0xFFFFFF00u) == 0)
 				{
 					rotate = r;
@@ -185,52 +185,52 @@ namespace
 			}
 			GBA_CHECK_MSG(found, std::string("the test asked for an ARM immediate the encoding cannot hold"));
 			return (cond << 28) | (1u << 25) | (op << 21) | (setFlags ? (1u << 20) : 0) |
-				((u32)rn << 16) | ((u32)rd << 12) | (rotate << 8) | imm8;
+				((uint32_t)rn << 16) | ((uint32_t)rd << 12) | (rotate << 8) | imm8;
 		}
 
 		/// <summary>Data processing with a register operand, optionally shifted.</summary>
-		inline u32 DpReg(u32 cond, u32 op, bool setFlags, int rn, int rd, int rm,
-			u32 shiftType = LSL, u32 shiftAmount = 0, int shiftRegister = -1)
+		inline uint32_t DpReg(uint32_t cond, uint32_t op, bool setFlags, int rn, int rd, int rm,
+			uint32_t shiftType = LSL, uint32_t shiftAmount = 0, int shiftRegister = -1)
 		{
-			u32 word = (cond << 28) | (op << 21) | (setFlags ? (1u << 20) : 0) |
-				((u32)rn << 16) | ((u32)rd << 12);
+			uint32_t word = (cond << 28) | (op << 21) | (setFlags ? (1u << 20) : 0) |
+				((uint32_t)rn << 16) | ((uint32_t)rd << 12);
 			word |= shiftType << 5;
 			if (shiftRegister >= 0)
-				word |= (1u << 4) | ((u32)shiftRegister << 8);
+				word |= (1u << 4) | ((uint32_t)shiftRegister << 8);
 			else
 				word |= shiftAmount << 7;
-			return word | (u32)rm;
+			return word | (uint32_t)rm;
 		}
 
 		// ARM Architecture Reference Manual A4.1.3, single data transfer with a 12-bit immediate offset.
-		inline u32 LdrStr(u32 cond, bool load, bool byte, int rd, int rn, u32 offset,
+		inline uint32_t LdrStr(uint32_t cond, bool load, bool byte, int rd, int rn, uint32_t offset,
 			bool pre = true, bool up = true, bool writeback = false)
 		{
 			return (cond << 28) | (1u << 26) | (pre ? (1u << 24) : 0) | (up ? (1u << 23) : 0) |
 				(byte ? (1u << 22) : 0) | (writeback ? (1u << 21) : 0) | (load ? (1u << 20) : 0) |
-				((u32)rn << 16) | ((u32)rd << 12) | (offset & 0xFFF);
+				((uint32_t)rn << 16) | ((uint32_t)rd << 12) | (offset & 0xFFF);
 		}
 
 		/// <summary>The same, with a shifted register offset.</summary>
-		inline u32 LdrStrReg(u32 cond, bool load, bool byte, int rd, int rn, int rm, u32 shiftType = LSL,
-			u32 shiftAmount = 0, bool pre = true, bool up = true, bool writeback = false)
+		inline uint32_t LdrStrReg(uint32_t cond, bool load, bool byte, int rd, int rn, int rm, uint32_t shiftType = LSL,
+			uint32_t shiftAmount = 0, bool pre = true, bool up = true, bool writeback = false)
 		{
 			return (cond << 28) | (1u << 26) | (1u << 25) | (pre ? (1u << 24) : 0) |
 				(up ? (1u << 23) : 0) | (byte ? (1u << 22) : 0) | (writeback ? (1u << 21) : 0) |
-				(load ? (1u << 20) : 0) | ((u32)rn << 16) | ((u32)rd << 12) |
-				(shiftAmount << 7) | (shiftType << 5) | (u32)rm;
+				(load ? (1u << 20) : 0) | ((uint32_t)rn << 16) | ((uint32_t)rd << 12) |
+				(shiftAmount << 7) | (shiftType << 5) | (uint32_t)rm;
 		}
 
 		/// <summary>
 		/// ARM Architecture Reference Manual A4.1.8, the extra load/store instructions. H and S are the bits of the 1SH1
 		/// field: (H=1, S=0) is LDRH/STRH, (H=0, S=1) LDRSB and (H=1, S=1) LDRSH.
 		/// </summary>
-		inline u32 HalfTransfer(u32 cond, bool load, bool half, bool sign, int rd, int rn, u32 offset,
+		inline uint32_t HalfTransfer(uint32_t cond, bool load, bool half, bool sign, int rd, int rn, uint32_t offset,
 			bool immediate = true, bool pre = true, bool up = true, bool writeback = false)
 		{
-			u32 word = (cond << 28) | (pre ? (1u << 24) : 0) | (up ? (1u << 23) : 0) |
+			uint32_t word = (cond << 28) | (pre ? (1u << 24) : 0) | (up ? (1u << 23) : 0) |
 				(immediate ? (1u << 22) : 0) | (writeback ? (1u << 21) : 0) |
-				(load ? (1u << 20) : 0) | ((u32)rn << 16) | ((u32)rd << 12) | 0x90;
+				(load ? (1u << 20) : 0) | ((uint32_t)rn << 16) | ((uint32_t)rd << 12) | 0x90;
 			if (half)
 				word |= 0x20;
 			if (sign)
@@ -243,64 +243,64 @@ namespace
 		}
 
 		// ARM Architecture Reference Manual A4.1.6, MUL/MLA.
-		inline u32 Multiply(u32 cond, bool accumulate, bool setFlags, int rd, int rm, int rs, int rn = 0)
+		inline uint32_t Multiply(uint32_t cond, bool accumulate, bool setFlags, int rd, int rm, int rs, int rn = 0)
 		{
 			return (cond << 28) | (accumulate ? (1u << 21) : 0) | (setFlags ? (1u << 20) : 0) |
-				((u32)rd << 16) | ((u32)rn << 12) | ((u32)rs << 8) | 0x90 | (u32)rm;
+				((uint32_t)rd << 16) | ((uint32_t)rn << 12) | ((uint32_t)rs << 8) | 0x90 | (uint32_t)rm;
 		}
 
 		// ARM Architecture Reference Manual A4.1.7, the long multiplies: RdHi in bits 19-16 and RdLo in bits 15-12.
-		inline u32 LongMultiply(u32 cond, bool sign, bool accumulate, bool setFlags,
+		inline uint32_t LongMultiply(uint32_t cond, bool sign, bool accumulate, bool setFlags,
 			int rdHi, int rdLo, int rm, int rs)
 		{
 			return (cond << 28) | (1u << 23) | (sign ? (1u << 22) : 0) |
 				(accumulate ? (1u << 21) : 0) | (setFlags ? (1u << 20) : 0) |
-				((u32)rdHi << 16) | ((u32)rdLo << 12) | ((u32)rs << 8) | 0x90 | (u32)rm;
+				((uint32_t)rdHi << 16) | ((uint32_t)rdLo << 12) | ((uint32_t)rs << 8) | 0x90 | (uint32_t)rm;
 		}
 
 		// ARM Architecture Reference Manual A4.1.9, SWP/SWPB.
-		inline u32 Swap(u32 cond, bool byte, int rd, int rn, int rm)
+		inline uint32_t Swap(uint32_t cond, bool byte, int rd, int rn, int rm)
 		{
-			return (cond << 28) | (1u << 24) | (byte ? (1u << 22) : 0) | ((u32)rn << 16) |
-				((u32)rd << 12) | 0x90 | (u32)rm;
+			return (cond << 28) | (1u << 24) | (byte ? (1u << 22) : 0) | ((uint32_t)rn << 16) |
+				((uint32_t)rd << 12) | 0x90 | (uint32_t)rm;
 		}
 
 		// ARM Architecture Reference Manual A4.1.20, load/store multiple.
-		inline u32 BlockTransfer(u32 cond, bool load, bool pre, bool up, bool userBank, bool writeback,
-			int rn, u32 list)
+		inline uint32_t BlockTransfer(uint32_t cond, bool load, bool pre, bool up, bool userBank, bool writeback,
+			int rn, uint32_t list)
 		{
 			return (cond << 28) | (1u << 27) | (pre ? (1u << 24) : 0) | (up ? (1u << 23) : 0) |
 				(userBank ? (1u << 22) : 0) | (writeback ? (1u << 21) : 0) |
-				(load ? (1u << 20) : 0) | ((u32)rn << 16) | (list & 0xFFFF);
+				(load ? (1u << 20) : 0) | ((uint32_t)rn << 16) | (list & 0xFFFF);
 		}
 
 		// ARM Architecture Reference Manual A4.1.4, B/BL.
-		inline u32 Branch(u32 cond, bool link, int byteOffset)
+		inline uint32_t Branch(uint32_t cond, bool link, int byteOffset)
 		{
 			return (cond << 28) | (1u << 27) | (1u << 25) | (link ? (1u << 24) : 0) |
-				(((u32)(byteOffset >> 2)) & 0xFFFFFF);
+				(((uint32_t)(byteOffset >> 2)) & 0xFFFFFF);
 		}
 
 		/// <summary>BX Rm (ARM Architecture Reference Manual A4.1.4).</summary>
-		inline u32 Bx(u32 cond, int rm) { return (cond << 28) | 0x012FFF10u | (u32)rm; }
+		inline uint32_t Bx(uint32_t cond, int rm) { return (cond << 28) | 0x012FFF10u | (uint32_t)rm; }
 
 		/// <summary>SWI with the BIOS function number in the comment field (bits 16-23).</summary>
-		inline u32 Swi(u32 cond, u32 comment) { return (cond << 28) | 0x0F000000u | ((comment & 0xFF) << 16); }
+		inline uint32_t Swi(uint32_t cond, uint32_t comment) { return (cond << 28) | 0x0F000000u | ((comment & 0xFF) << 16); }
 
 		/// <summary>MRS Rd, CPSR/SPSR (ARM Architecture Reference Manual A4.1.10).</summary>
-		inline u32 Mrs(u32 cond, bool spsr, int rd)
+		inline uint32_t Mrs(uint32_t cond, bool spsr, int rd)
 		{
-			return (cond << 28) | 0x010F0000u | (spsr ? (1u << 22) : 0) | ((u32)rd << 12);
+			return (cond << 28) | 0x010F0000u | (spsr ? (1u << 22) : 0) | ((uint32_t)rd << 12);
 		}
 
 		/// <summary>MSR CPSR/SPSR_&lt;fields&gt;, Rm (ARM Architecture Reference Manual A4.1.11).</summary>
-		inline u32 MsrReg(u32 cond, bool spsr, u32 fields, int rm)
+		inline uint32_t MsrReg(uint32_t cond, bool spsr, uint32_t fields, int rm)
 		{
-			return (cond << 28) | 0x0120F000u | (spsr ? (1u << 22) : 0) | ((fields & 0xF) << 16) | (u32)rm;
+			return (cond << 28) | 0x0120F000u | (spsr ? (1u << 22) : 0) | ((fields & 0xF) << 16) | (uint32_t)rm;
 		}
 
 		/// <summary>MSR CPSR/SPSR_&lt;fields&gt;, #imm8 rotated (ARM Architecture Reference Manual A4.1.11).</summary>
-		inline u32 MsrImm(u32 cond, bool spsr, u32 fields, u32 rotate, u32 imm8)
+		inline uint32_t MsrImm(uint32_t cond, bool spsr, uint32_t fields, uint32_t rotate, uint32_t imm8)
 		{
 			return (cond << 28) | 0x0320F000u | (spsr ? (1u << 22) : 0) | ((fields & 0xF) << 16) |
 				((rotate & 0xF) << 8) | (imm8 & 0xFF);
@@ -309,118 +309,118 @@ namespace
 		// -- Thumb (ARM Architecture Reference Manual 4.5, Table 4-1) ------------------------------------------------
 
 		/// <summary>Format 1: LSL/LSR/ASR Rd, Rs, #imm5.</summary>
-		inline u16 ThumbShift(u32 type, u32 amount, int rs, int rd)
+		inline uint16_t ThumbShift(uint32_t type, uint32_t amount, int rs, int rd)
 		{
-			return (u16)((type << 11) | ((amount & 0x1F) << 6) | ((u32)rs << 3) | (u32)rd);
+			return (uint16_t)((type << 11) | ((amount & 0x1F) << 6) | ((uint32_t)rs << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 2: ADD/SUB Rd, Rs, Rn or #imm3.</summary>
-		inline u16 ThumbAddSub(bool immediate, bool subtract, u32 field, int rs, int rd)
+		inline uint16_t ThumbAddSub(bool immediate, bool subtract, uint32_t field, int rs, int rd)
 		{
-			return (u16)(0x1800 | (immediate ? 0x0400 : 0) | (subtract ? 0x0200 : 0) |
-				((field & 7) << 6) | ((u32)rs << 3) | (u32)rd);
+			return (uint16_t)(0x1800 | (immediate ? 0x0400 : 0) | (subtract ? 0x0200 : 0) |
+				((field & 7) << 6) | ((uint32_t)rs << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 3: MOV/CMP/ADD/SUB Rd, #imm8 (op: 0 MOV, 1 CMP, 2 ADD, 3 SUB).</summary>
-		inline u16 ThumbMovCmpAddSub(u32 op, int rd, u32 immediate)
+		inline uint16_t ThumbMovCmpAddSub(uint32_t op, int rd, uint32_t immediate)
 		{
-			return (u16)(0x2000 | ((op & 3) << 11) | ((u32)rd << 8) | (immediate & 0xFF));
+			return (uint16_t)(0x2000 | ((op & 3) << 11) | ((uint32_t)rd << 8) | (immediate & 0xFF));
 		}
 
 		/// <summary>Format 4: the sixteen ALU operations, encoded as op Rd, Rs.</summary>
-		inline u16 ThumbAlu(u32 op, int rs, int rd)
+		inline uint16_t ThumbAlu(uint32_t op, int rs, int rd)
 		{
-			return (u16)(0x4000 | ((op & 0xF) << 6) | ((u32)rs << 3) | (u32)rd);
+			return (uint16_t)(0x4000 | ((op & 0xF) << 6) | ((uint32_t)rs << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 5: the hi register operations and BX (op: 0 ADD, 1 CMP, 2 MOV, 3 BX).</summary>
-		inline u16 ThumbHi(u32 op, int rs, int rd)
+		inline uint16_t ThumbHi(uint32_t op, int rs, int rd)
 		{
-			return (u16)(0x4400 | ((op & 3) << 8) | ((rs & 8) ? 0x40 : 0) | ((rd & 8) ? 0x80 : 0) |
-				((u32)(rs & 7) << 3) | (u32)(rd & 7));
+			return (uint16_t)(0x4400 | ((op & 3) << 8) | ((rs & 8) ? 0x40 : 0) | ((rd & 8) ? 0x80 : 0) |
+				((uint32_t)(rs & 7) << 3) | (uint32_t)(rd & 7));
 		}
 
 		/// <summary>Format 6: LDR Rd, [PC, #word8*4].</summary>
-		inline u16 ThumbPcLoad(int rd, u32 word8) { return (u16)(0x4800 | ((u32)rd << 8) | (word8 & 0xFF)); }
+		inline uint16_t ThumbPcLoad(int rd, uint32_t word8) { return (uint16_t)(0x4800 | ((uint32_t)rd << 8) | (word8 & 0xFF)); }
 
 		/// <summary>Format 7: STR/LDR/STRB/LDRB Rd, [Rb, Ro].</summary>
-		inline u16 ThumbLdrStrReg(bool load, bool byte, int ro, int rb, int rd)
+		inline uint16_t ThumbLdrStrReg(bool load, bool byte, int ro, int rb, int rd)
 		{
-			return (u16)(0x5000 | (load ? 0x0800 : 0) | (byte ? 0x0400 : 0) |
-				((u32)ro << 6) | ((u32)rb << 3) | (u32)rd);
+			return (uint16_t)(0x5000 | (load ? 0x0800 : 0) | (byte ? 0x0400 : 0) |
+				((uint32_t)ro << 6) | ((uint32_t)rb << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 8: STRH/LDRH/LDRSB/LDRSH Rd, [Rb, Ro].</summary>
-		inline u16 ThumbLdrStrSign(bool half, bool sign, int ro, int rb, int rd)
+		inline uint16_t ThumbLdrStrSign(bool half, bool sign, int ro, int rb, int rd)
 		{
-			return (u16)(0x5200 | (half ? 0x0800 : 0) | (sign ? 0x0400 : 0) |
-				((u32)ro << 6) | ((u32)rb << 3) | (u32)rd);
+			return (uint16_t)(0x5200 | (half ? 0x0800 : 0) | (sign ? 0x0400 : 0) |
+				((uint32_t)ro << 6) | ((uint32_t)rb << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 9: STR/LDR/STRB/LDRB Rd, [Rb, #imm5].</summary>
-		inline u16 ThumbLdrStrImm(bool byte, bool load, u32 offset5, int rb, int rd)
+		inline uint16_t ThumbLdrStrImm(bool byte, bool load, uint32_t offset5, int rb, int rd)
 		{
-			return (u16)(0x6000 | (byte ? 0x1000 : 0) | (load ? 0x0800 : 0) |
-				((offset5 & 0x1F) << 6) | ((u32)rb << 3) | (u32)rd);
+			return (uint16_t)(0x6000 | (byte ? 0x1000 : 0) | (load ? 0x0800 : 0) |
+				((offset5 & 0x1F) << 6) | ((uint32_t)rb << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 10: STRH/LDRH Rd, [Rb, #imm5*2].</summary>
-		inline u16 ThumbLdrStrHalf(bool load, u32 offset5, int rb, int rd)
+		inline uint16_t ThumbLdrStrHalf(bool load, uint32_t offset5, int rb, int rd)
 		{
-			return (u16)(0x8000 | (load ? 0x0800 : 0) | ((offset5 & 0x1F) << 6) |
-				((u32)rb << 3) | (u32)rd);
+			return (uint16_t)(0x8000 | (load ? 0x0800 : 0) | ((offset5 & 0x1F) << 6) |
+				((uint32_t)rb << 3) | (uint32_t)rd);
 		}
 
 		/// <summary>Format 11: STR/LDR Rd, [SP, #word8*4].</summary>
-		inline u16 ThumbSpRel(bool load, int rd, u32 word8)
+		inline uint16_t ThumbSpRel(bool load, int rd, uint32_t word8)
 		{
-			return (u16)(0x9000 | (load ? 0x0800 : 0) | ((u32)rd << 8) | (word8 & 0xFF));
+			return (uint16_t)(0x9000 | (load ? 0x0800 : 0) | ((uint32_t)rd << 8) | (word8 & 0xFF));
 		}
 
 		/// <summary>Format 12: ADD Rd, PC/SP, #word8*4.</summary>
-		inline u16 ThumbLoadAddress(bool fromStack, int rd, u32 word8)
+		inline uint16_t ThumbLoadAddress(bool fromStack, int rd, uint32_t word8)
 		{
-			return (u16)(0xA000 | (fromStack ? 0x0800 : 0) | ((u32)rd << 8) | (word8 & 0xFF));
+			return (uint16_t)(0xA000 | (fromStack ? 0x0800 : 0) | ((uint32_t)rd << 8) | (word8 & 0xFF));
 		}
 
 		/// <summary>Format 13: ADD/SUB SP, #word7*4.</summary>
-		inline u16 ThumbAddSp(bool subtract, u32 word7)
+		inline uint16_t ThumbAddSp(bool subtract, uint32_t word7)
 		{
-			return (u16)(0xB000 | (subtract ? 0x0080 : 0) | (word7 & 0x7F));
+			return (uint16_t)(0xB000 | (subtract ? 0x0080 : 0) | (word7 & 0x7F));
 		}
 
 		/// <summary>Format 14: PUSH/POP.</summary>
-		inline u16 ThumbPushPop(bool pop, bool extra, u32 list)
+		inline uint16_t ThumbPushPop(bool pop, bool extra, uint32_t list)
 		{
-			return (u16)(0xB400 | (pop ? 0x0800 : 0) | (extra ? 0x0100 : 0) | (list & 0xFF));
+			return (uint16_t)(0xB400 | (pop ? 0x0800 : 0) | (extra ? 0x0100 : 0) | (list & 0xFF));
 		}
 
 		/// <summary>Format 15: STMIA/LDMIA Rb!, {Rlist}.</summary>
-		inline u16 ThumbMultiple(bool load, int rb, u32 list)
+		inline uint16_t ThumbMultiple(bool load, int rb, uint32_t list)
 		{
-			return (u16)(0xC000 | (load ? 0x0800 : 0) | ((u32)rb << 8) | (list & 0xFF));
+			return (uint16_t)(0xC000 | (load ? 0x0800 : 0) | ((uint32_t)rb << 8) | (list & 0xFF));
 		}
 
 		/// <summary>Format 16: B&lt;cond&gt; label (a signed byte offset in halfwords).</summary>
-		inline u16 ThumbCondBranch(u32 cond, int halfwordOffset)
+		inline uint16_t ThumbCondBranch(uint32_t cond, int halfwordOffset)
 		{
-			return (u16)(0xD000 | ((cond & 0xF) << 8) | ((u32)halfwordOffset & 0xFF));
+			return (uint16_t)(0xD000 | ((cond & 0xF) << 8) | ((uint32_t)halfwordOffset & 0xFF));
 		}
 
 		/// <summary>Format 17: SWI with the comment in the low byte.</summary>
-		inline u16 ThumbSwiCall(u32 comment) { return (u16)(0xDF00 | (comment & 0xFF)); }
+		inline uint16_t ThumbSwiCall(uint32_t comment) { return (uint16_t)(0xDF00 | (comment & 0xFF)); }
 
 		/// <summary>Format 18: B label (an unsigned 11-bit halfword offset).</summary>
-		inline u16 ThumbBranch(int halfwordOffset)
+		inline uint16_t ThumbBranch(int halfwordOffset)
 		{
-			return (u16)(0xE000 | ((u32)halfwordOffset & 0x7FF));
+			return (uint16_t)(0xE000 | ((uint32_t)halfwordOffset & 0x7FF));
 		}
 
 		/// <summary>Format 19, first halfword: the high part of a BL offset (bits 22-12).</summary>
-		inline u16 ThumbBlFirst(u32 offset11) { return (u16)(0xF000 | (offset11 & 0x7FF)); }
+		inline uint16_t ThumbBlFirst(uint32_t offset11) { return (uint16_t)(0xF000 | (offset11 & 0x7FF)); }
 
 		/// <summary>Format 19, second halfword: the low part and the branch.</summary>
-		inline u16 ThumbBlSecond(u32 offset11) { return (u16)(0xF800 | (offset11 & 0x7FF)); }
+		inline uint16_t ThumbBlSecond(uint32_t offset11) { return (uint16_t)(0xF800 | (offset11 & 0x7FF)); }
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -474,13 +474,13 @@ namespace
 	{
 		// Every condition against every combination of the four flags. The expected table is
 		// ARM Architecture Reference Manual Table 3-2 written out (N=8, Z=4, C=2, V=1).
-		for (u32 cond = 0; cond <= 0xE; cond++)
+		for (uint32_t cond = 0; cond <= 0xE; cond++)
 		{
 			Bench b;
 			b.Arm(CodeBase, { Enc::DpImm(cond, Enc::MOV, false, 0, 0, 0x55) });
 			b.EnterArm(CodeBase);
 
-			for (u32 nzcv = 0; nzcv < 16; nzcv++)
+			for (uint32_t nzcv = 0; nzcv < 16; nzcv++)
 			{
 				b.SetR(0, 0);
 				b.SetNzcv(nzcv);
@@ -527,7 +527,7 @@ namespace
 		b.EnterArm(CodeBase);
 		b.SetR(0, 0x0000FFFF);
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		// AND r1, r0, #0x0F00 -> 0x00000F00
 		b.Arm(at, { Enc::DpImm(Enc::AL, Enc::AND, true, 0, 1, 0x0F00) });
 		b.Step();
@@ -577,7 +577,7 @@ namespace
 		// ADD/SUB/RSB and the C (borrow) and V (signed overflow) rules of ARM Architecture Reference Manual A3.4.1.
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// ADDS r0, r1, r2 with 0x7FFFFFFF + 1 -> 0x80000000, N and V set, no carry out.
 		b.Arm(at, { Enc::DpReg(Enc::AL, Enc::ADD, true, 1, 0, 2) });
@@ -652,7 +652,7 @@ namespace
 		// SBC = Rn - Rm - 1 + C and RSC = Rm - Rn - 1 + C (ARM Architecture Reference Manual A3.4.1).
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// ADC with C set: 0xFFFFFFFF + 0 + 1 -> 0 with carry out, Z and C set.
 		b.Arm(at, { Enc::DpReg(Enc::AL, Enc::ADC, true, 1, 0, 2) });
@@ -750,7 +750,7 @@ namespace
 		b.SetR(3, 0xDEADBEEF);
 
 		// TST r3, #0x0F -> non-zero result, so Z clear; N comes from the result.
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		b.Arm(at, { Enc::DpImm(Enc::AL, Enc::TST, true, 3, 0, 0x0F) });
 		b.EnterArm(at);
 		b.Step();
@@ -801,7 +801,7 @@ namespace
 		Bench b;
 		b.EnterArm(CodeBase);
 		b.SetR(1, 0x80000001);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// MOVS r0, r1, LSL #1 -> 0x00000002, carry is bit 31 of the operand.
 		b.Arm(at, { Enc::DpReg(Enc::AL, Enc::MOV, true, 0, 0, 1, Enc::LSL, 1) });
@@ -884,9 +884,9 @@ namespace
 		// bottom byte (ARM Architecture Reference Manual A3.4.1).
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
-		struct Case { u32 type; u32 amount; u32 expected; u32 carry; };
+		struct Case { uint32_t type; uint32_t amount; uint32_t expected; uint32_t carry; };
 		const Case cases[] =
 		{
 			{ Enc::LSL, 32, 0x00000000u, 1 },	// bit 0 goes into C
@@ -901,7 +901,7 @@ namespace
 
 		for (const Case& c : cases)
 		{
-			b.Arm(at, { Enc::DpReg(Enc::AL, Enc::MOV, true, 0, 0, 1, (u32)c.type, 0, 2) });
+			b.Arm(at, { Enc::DpReg(Enc::AL, Enc::MOV, true, 0, 0, 1, (uint32_t)c.type, 0, 2) });
 			b.SetR(1, 0x80000001);
 			b.SetR(2, c.amount);
 			b.SetNzcv(0);
@@ -925,7 +925,7 @@ namespace
 		Bench b;
 		b.EnterArm(CodeBase);
 
-		struct Case { u32 type; u32 amount; u32 carryIn; u32 expected; u32 carryOut; };
+		struct Case { uint32_t type; uint32_t amount; uint32_t carryIn; uint32_t expected; uint32_t carryOut; };
 		const Case cases[] =
 		{
 			// amount 0: nothing moves and C keeps whatever it had
@@ -947,7 +947,7 @@ namespace
 			{ Enc::ROR, 33, 0, 0xC0000000u, 1 },
 		};
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		for (const Case& c : cases)
 		{
 			b.Arm(at, { Enc::DpReg(Enc::AL, Enc::MOV, true, 0, 0, 1, c.type, 0, 2) });
@@ -969,7 +969,7 @@ namespace
 		Bench b;
 		b.EnterThumb(CodeBase);
 
-		struct Case { u32 op; u32 amount; u32 carryIn; u32 expected; u32 carryOut; };
+		struct Case { uint32_t op; uint32_t amount; uint32_t carryIn; uint32_t expected; uint32_t carryOut; };
 		const Case cases[] =
 		{
 			{ 0x2, 0, 1, 0x80000001u, 1 },		// LSL r0, r1
@@ -988,7 +988,7 @@ namespace
 			{ 0x7, 33, 0, 0xC0000000u, 1 },
 		};
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		for (const Case& c : cases)
 		{
 			b.Thumb(at, { Enc::ThumbAlu(c.op, 1, 0) });		// op r0, r1: r0 is the value, r1 the amount
@@ -1010,7 +1010,7 @@ namespace
 		// bit 2*rotate-1 - while a rotate field of 0 leaves C alone. gba-tests arm 217.
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// MOVS r0, #0xF000000F is 0xFF rotated right by 4: the bit that leaves is bit 3 of 0xFF.
 		b.Arm(at, { Enc::DpImm(Enc::AL, Enc::MOV, true, 0, 0, 0xF000000F) });
@@ -1069,7 +1069,7 @@ namespace
 	{
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// MULS r0, r1, r2 with 3 * 5 = 15: N and Z from the 32-bit result.
 		b.Arm(at, { Enc::Multiply(Enc::AL, false, true, 0, 1, 2) });
@@ -1106,7 +1106,7 @@ namespace
 	{
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// UMULL r0, r1, r2, r3: RdLo = r0, RdHi = r1; 0xFFFFFFFF * 2 = 0x1FFFFFFFE.
 		b.Arm(at, { Enc::LongMultiply(Enc::AL, false, false, true, 1, 0, 2, 3) });
@@ -1168,7 +1168,7 @@ namespace
 		b.Poke(DataBase + 4, 0x55667788);
 		b.Poke(DataBase + 8, 0x99AABBCC);
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		b.EnterArm(CodeBase);
 
 		// LDR r0, [r1] -> the first word.
@@ -1237,7 +1237,7 @@ namespace
 		b.Poke8(DataBase + 1, 0xCD);
 		b.Poke16(DataBase + 4, 0x8001);
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		b.EnterArm(CodeBase);
 
 		// LDRB r0, [r1].
@@ -1330,7 +1330,7 @@ namespace
 		Bench b;
 		b.Poke(DataBase, 0x11223344);
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		b.Arm(at, { Enc::LdrStr(Enc::AL, true, false, 0, 1, 1) });
 		b.SetR(1, DataBase);
@@ -1393,7 +1393,7 @@ namespace
 		b.Poke(DataBase + 4, 0x00000002);
 		b.Poke(DataBase + 8, 0x00000003);
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		b.EnterArm(CodeBase);
 
 		// LDMIA r0!, {r1, r2, r3}: the base moves past the three words.
@@ -1435,7 +1435,7 @@ namespace
 		b.EnterArm(CodeBase);
 
 		// STMIA r0!, {r0, r1}: r0 is the lowest, so the original base goes to memory.
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		b.Arm(at, { Enc::BlockTransfer(Enc::AL, false, false, true, false, true, 0, 0x03) });
 		b.SetR(0, DataBase);
 		b.SetR(1, 0x11111111);
@@ -1468,14 +1468,14 @@ namespace
 		// Fill the User bank through System mode.
 		b.Cpu().SwitchMode(ModeSystem);
 		for (int i = 0; i < 5; i++)
-			b.SetR(8 + i, 0x88888888u + (u32)i);
+			b.SetR(8 + i, 0x88888888u + (uint32_t)i);
 		b.SetR(13, 0x03008000);
 		b.SetR(14, 0xEEEEEEEE);
 
 		// Now run in IRQ mode, whose r8-r14 are a different set.
 		b.Cpu().SwitchMode(ModeIrq);
 		for (int i = 0; i < 5; i++)
-			b.SetR(8 + i, 0x11111111u + (u32)i);
+			b.SetR(8 + i, 0x11111111u + (uint32_t)i);
 
 		b.SetR(0, DataBase);
 		b.Arm(CodeBase, { Enc::BlockTransfer(Enc::AL, false, false, true, true, false, 0, 0x1F00) });
@@ -1484,12 +1484,12 @@ namespace
 
 		// STM with the caret stored the User bank, not the IRQ bank.
 		for (int i = 0; i < 5; i++)
-			GBA_CHECK_EQ(b.Peek(DataBase + 4 * i), 0x88888888u + (u32)i);
+			GBA_CHECK_EQ(b.Peek(DataBase + 4 * i), 0x88888888u + (uint32_t)i);
 
 		// LDM with the caret writes the User bank. Only FIQ has its own r8-r12, so the IRQ
 		// window is the User bank here and the loaded values are visible in both places.
 		for (int i = 0; i < 5; i++)
-			b.Poke(DataBase + 4 * i, 0xAAAA0000u + (u32)i);
+			b.Poke(DataBase + 4 * i, 0xAAAA0000u + (uint32_t)i);
 
 		b.Cpu().SwitchMode(ModeIrq);
 		b.SetR(0, DataBase);
@@ -1497,11 +1497,11 @@ namespace
 		b.EnterArm(CodeBase);
 		b.Step();
 		for (int i = 0; i < 5; i++)
-			GBA_CHECK_EQ(b.R(8 + i), 0xAAAA0000u + (u32)i);
+			GBA_CHECK_EQ(b.R(8 + i), 0xAAAA0000u + (uint32_t)i);
 
 		b.Cpu().SwitchMode(ModeSystem);
 		for (int i = 0; i < 5; i++)
-			GBA_CHECK_EQ(b.R(8 + i), 0xAAAA0000u + (u32)i);
+			GBA_CHECK_EQ(b.R(8 + i), 0xAAAA0000u + (uint32_t)i);
 
 		// The IRQ bank's r13/r14 stayed where they were: those *are* banked per mode.
 		GBA_CHECK_EQ(b.R(13), 0x03008000u);
@@ -1519,7 +1519,7 @@ namespace
 		// Enter IRQ mode through a real exception so that SPSR_irq holds a known CPSR.
 		b.EnterArm(CodeBase);
 		b.SetNzcv(NBit);
-		u32 interrupted = b.Cpu().ReadCPSR();
+		uint32_t interrupted = b.Cpu().ReadCPSR();
 		b.Cpu().Exception(VectorIrq, ModeIrq, FlagI);
 
 		// The handler runs the return instruction at the vector. LDMIA sp! reads upwards from
@@ -1543,7 +1543,7 @@ namespace
 		b.Poke(DataBase, 0x11223344);
 		b.Poke8(DataBase + 8, 0x5A);
 
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 		b.EnterArm(CodeBase);
 
 		b.Arm(at, { Enc::Swap(Enc::AL, false, 0, 2, 1) });		// SWP r0, r1, [r2]
@@ -1572,7 +1572,7 @@ namespace
 		b.ResetCpu();
 		b.EnterArm(CodeBase);
 		b.SetNzcv(NBit | ZBit);
-		u32 interrupted = b.Cpu().ReadCPSR();
+		uint32_t interrupted = b.Cpu().ReadCPSR();
 		b.Cpu().Exception(VectorIrq, ModeIrq, FlagI);
 
 		b.Arm(CodeBase, { Enc::Mrs(Enc::AL, true, 0) });		// MRS r0, SPSR
@@ -1589,7 +1589,7 @@ namespace
 		});
 		b.SetR(1, 0xF0000000);
 		b.EnterArm(CodeBase);
-		u32 live = b.Cpu().ReadCPSR();
+		uint32_t live = b.Cpu().ReadCPSR();
 		b.Step();
 		b.Step();
 		GBA_CHECK_EQ(b.R(2), 0xF0000000u);
@@ -1752,7 +1752,7 @@ namespace
 
 		// SPSR_fiq = System mode with Z set, so that the restore is visible in the flags too.
 		b.Arm(CodeBase, { Enc::MsrReg(Enc::AL, true, 0xF, 0) });
-		b.SetR(0, (u32)ModeSystem | FlagZ);
+		b.SetR(0, (uint32_t)ModeSystem | FlagZ);
 		b.EnterArm(CodeBase);
 		b.Step();
 		GBA_CHECK(b.Cpu().Mode() == ModeFiq);
@@ -1784,7 +1784,7 @@ namespace
 	{
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// B to CodeBase + 0x20: the offset is relative to the instruction plus 8, so the raw
 		// byte offset is 0x18.
@@ -1844,7 +1844,7 @@ namespace
 	{
 		Bench b;
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// MRS r0, CPSR returns the live CPSR.
 		b.Arm(at, { Enc::Mrs(Enc::AL, false, 0) });
@@ -1867,7 +1867,7 @@ namespace
 		at += 4;
 		b.Arm(at, { Enc::MsrReg(Enc::AL, false, 0x1, 1) });
 		b.SetR(13, 0x11111111);				// the Supervisor stack pointer
-		b.SetR(1, (u32)ModeIrq);
+		b.SetR(1, (uint32_t)ModeIrq);
 		b.EnterArm(at);
 		b.Step();
 		GBA_CHECK(b.Cpu().Mode() == ModeIrq);
@@ -1884,7 +1884,7 @@ namespace
 		b.Arm(CodeBase, { 0xE7F000F0 });	// LDR/STR register space with bit 4 set: undefined
 		b.EnterArm(CodeBase);
 
-		u32 before = b.Cpu().ReadCPSR();
+		uint32_t before = b.Cpu().ReadCPSR();
 		b.Step();
 
 		GBA_CHECK(b.Cpu().Mode() == ModeUndefined);
@@ -1904,9 +1904,9 @@ namespace
 	GBA_TEST(Cpu, CoprocessorUndefined)
 	{
 		// The GBA has no coprocessor: LDC/STC, CDP and MCR/MRC all take the undefined vector.
-		const u32 words[] = { 0xEC000000u /*LDC*/, 0xEE000000u /*CDP*/, 0xEE010010u /*MCR*/ };
+		const uint32_t words[] = { 0xEC000000u /*LDC*/, 0xEE000000u /*CDP*/, 0xEE010010u /*MCR*/ };
 
-		for (u32 word : words)
+		for (uint32_t word : words)
 		{
 			Bench b;
 			b.Arm(CodeBase, { word });
@@ -1935,8 +1935,8 @@ namespace
 		GBA_CHECK_EQ(arm.Cpu().Reg(14), CodeBase + 4);
 		GBA_CHECK_EQ(arm.Cpu().UndefinedInstructions(), 1ull);
 
-		const u16 thumbWords[] = { 0xBE00u, 0xDE00u };
-		for (u16 word : thumbWords)
+		const uint16_t thumbWords[] = { 0xBE00u, 0xDE00u };
+		for (uint16_t word : thumbWords)
 		{
 			Bench t;
 			t.Thumb(CodeBase, { word });
@@ -1967,7 +1967,7 @@ namespace
 		b.bus.irq.WriteIME(true);
 		b.Cpu().WriteCPSR(b.Cpu().ReadCPSR() & ~FlagI);		// let the IRQ in
 
-		u32 before = b.Cpu().ReadCPSR();
+		uint32_t before = b.Cpu().ReadCPSR();
 
 		// The interrupt is taken before the first instruction runs.
 		GBA_CHECK_EQ(b.Step(), 3);
@@ -2014,7 +2014,7 @@ namespace
 		b.SetR(8, 0x11111111);
 		b.SetR(13, 0x03008000);
 		b.Cpu().WriteCPSR(b.Cpu().ReadCPSR() & ~FlagF);
-		u32 before = b.Cpu().ReadCPSR();
+		uint32_t before = b.Cpu().ReadCPSR();
 
 		b.Cpu().Exception(VectorFiq, ModeFiq, FlagI | FlagF);
 
@@ -2040,7 +2040,7 @@ namespace
 		b.Arm(CodeBase, { Enc::Swi(Enc::AL, 0x06) });
 		b.EnterArm(CodeBase);
 
-		u32 before = b.Cpu().ReadCPSR();
+		uint32_t before = b.Cpu().ReadCPSR();
 		b.Step();
 
 		GBA_CHECK(b.Cpu().Mode() == ModeSupervisor);
@@ -2068,8 +2068,8 @@ namespace
 		b.SetR(0, 100);
 		b.SetR(1, 7);
 
-		u32 before = b.Cpu().ReadCPSR();
-		u32 lrBefore = b.R(14);
+		uint32_t before = b.Cpu().ReadCPSR();
+		uint32_t lrBefore = b.R(14);
 		b.Step();
 
 		GBA_CHECK_EQ(b.R(0), 14u);					// 100 / 7
@@ -2216,9 +2216,9 @@ namespace
 		// also the first operand; for the shifts its low byte is the amount).
 		Bench b;
 		b.EnterThumb(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
-		struct Case { u32 op; int rs; int rd; u32 r0; u32 r1; u32 r2; u32 initial; u32 expected; u32 nzcv; };
+		struct Case { uint32_t op; int rs; int rd; uint32_t r0; uint32_t r1; uint32_t r2; uint32_t initial; uint32_t expected; uint32_t nzcv; };
 		const Case cases[] =
 		{
 			// AND/EOR/ORR/BIC/MVN leave C alone (the LSL #0 shifter carry), so an initial C of 0
@@ -2286,7 +2286,7 @@ namespace
 	{
 		Bench b;
 		b.EnterThumb(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// ADD r8, r0 (no flags).
 		b.Thumb(at, { Enc::ThumbHi(0, 0, 8) });
@@ -2601,7 +2601,7 @@ namespace
 		b.Thumb(CodeBase, { Enc::ThumbSwiCall(0x06) });
 		b.EnterThumb(CodeBase);
 
-		u32 before = b.Cpu().ReadCPSR();
+		uint32_t before = b.Cpu().ReadCPSR();
 		b.Step();
 
 		GBA_CHECK(b.Cpu().Mode() == ModeSupervisor);
@@ -2623,8 +2623,8 @@ namespace
 		b.SetR(0, 100);
 		b.SetR(1, 7);
 
-		u32 before = b.Cpu().ReadCPSR();
-		u32 lrBefore = b.R(14);
+		uint32_t before = b.Cpu().ReadCPSR();
+		uint32_t lrBefore = b.R(14);
 		b.Step();
 
 		GBA_CHECK_EQ(b.R(0), 14u);
@@ -2645,7 +2645,7 @@ namespace
 		Bench b;
 		b.Poke(DataBase, 0x00000000);
 		b.EnterArm(CodeBase);
-		u32 at = CodeBase;
+		uint32_t at = CodeBase;
 
 		// MOV: 1S.
 		b.Arm(at, { Enc::DpImm(Enc::AL, Enc::MOV, false, 0, 0, 1) });

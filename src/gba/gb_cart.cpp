@@ -16,7 +16,7 @@ namespace GBA
 		// The ROM size codes of the header (Pan Docs "The Cartridge Header"). Codes 0x00..0x08
 		// are 32 KByte << code; 0x52/0x53/0x54 are the "only the first 1.1/1.2/1.5 MByte are
 		// used" variants, which are rounded up to their mask size.
-		u32 RomBytesForCode(u8 code)
+		uint32_t RomBytesForCode(uint8_t code)
 		{
 			if (code <= 0x08)
 				return 0x8000u << code;
@@ -32,7 +32,7 @@ namespace GBA
 
 		// The RAM size codes (Pan Docs): 0x00 none, 0x01 2 KByte, 0x02 8 KByte, 0x03 32 KByte,
 		// 0x04 128 KByte (a few MBC5 cartridges), 0x05 64 KByte.
-		u32 RamBytesForCode(u8 code)
+		uint32_t RamBytesForCode(uint8_t code)
 		{
 			switch (code)
 			{
@@ -46,7 +46,7 @@ namespace GBA
 		}
 	}
 
-	GbMapper GbMapperForType(u8 cartType)
+	GbMapper GbMapperForType(uint8_t cartType)
 	{
 		switch (cartType)
 		{
@@ -88,21 +88,21 @@ namespace GBA
 		}
 	}
 
-	u8 GbComputeHeaderChecksum(const std::vector<u8>& rom)
+	uint8_t GbComputeHeaderChecksum(const std::vector<uint8_t>& rom)
 	{
 		// Pan Docs "The Cartridge Header": x = 0, then for each byte at 0x0134..0x014C,
 		// x = x - byte - 1. The result is compared with the byte at 0x014D.
-		u8 x = 0;
-		for (u16 address = GbHeaderTitle; address <= GbHeaderVersion; address++)
+		uint8_t x = 0;
+		for (uint16_t address = GbHeaderTitle; address <= GbHeaderVersion; address++)
 		{
 			if (address >= rom.size())
 				return 0;
-			x = (u8)(x - rom[address] - 1);
+			x = (uint8_t)(x - rom[address] - 1);
 		}
 		return x;
 	}
 
-	GbCartHeader GbParseCartHeader(const std::vector<u8>& rom)
+	GbCartHeader GbParseCartHeader(const std::vector<uint8_t>& rom)
 	{
 		GbCartHeader header;
 
@@ -118,7 +118,7 @@ namespace GBA
 		// title - the Pan Docs note that the two uses overlap.)
 		for (int i = 0; i < 16; i++)
 		{
-			u8 value = rom[GbHeaderTitle + i];
+			uint8_t value = rom[GbHeaderTitle + i];
 			if (value == 0)
 				break;
 			if (value >= 0x20 && value < 0x7F)
@@ -134,7 +134,7 @@ namespace GBA
 		header.destination = rom[GbHeaderDestination];
 		header.version = rom[GbHeaderVersion];
 		header.headerChecksum = rom[GbHeaderChecksum];
-		header.globalChecksum = (u16)((rom[GbHeaderGlobalChecksum] << 8) | rom[GbHeaderGlobalChecksum + 1]);
+		header.globalChecksum = (uint16_t)((rom[GbHeaderGlobalChecksum] << 8) | rom[GbHeaderGlobalChecksum + 1]);
 
 		header.romBytes = RomBytesForCode(header.romSizeCode);
 		header.ramBytes = RamBytesForCode(header.ramSizeCode);
@@ -162,31 +162,31 @@ namespace GBA
 	// The real time clock
 	// ---------------------------------------------------------------------------------------
 
-	u8 GbRealTimeClock::Read(u8 index) const
+	uint8_t GbRealTimeClock::Read(uint8_t index) const
 	{
 		switch (index)
 		{
 		case 0x08: return seconds;
 		case 0x09: return minutes;
 		case 0x0A: return hours;
-		case 0x0B: return (u8)(days & 0xFF);
+		case 0x0B: return (uint8_t)(days & 0xFF);
 		case 0x0C:
 			// Bit 7 is the day counter carry, bit 6 the halt flag, bit 0 the ninth day bit.
-			return (u8)((dayCarry ? 0x80 : 0x00) | (halt ? 0x40 : 0x00) | ((days >> 8) & 0x01));
+			return (uint8_t)((dayCarry ? 0x80 : 0x00) | (halt ? 0x40 : 0x00) | ((days >> 8) & 0x01));
 		default: return 0xFF;
 		}
 	}
 
-	void GbRealTimeClock::Write(u8 index, u8 value)
+	void GbRealTimeClock::Write(uint8_t index, uint8_t value)
 	{
 		switch (index)
 		{
-		case 0x08: seconds = (u8)(value % 60); break;
-		case 0x09: minutes = (u8)(value % 60); break;
-		case 0x0A: hours = (u8)(value % 24); break;
-		case 0x0B: days = (u16)((days & 0x100) | value); break;
+		case 0x08: seconds = (uint8_t)(value % 60); break;
+		case 0x09: minutes = (uint8_t)(value % 60); break;
+		case 0x0A: hours = (uint8_t)(value % 24); break;
+		case 0x0B: days = (uint16_t)((days & 0x100) | value); break;
 		case 0x0C:
-			days = (u16)((days & 0xFF) | ((value & 0x01) << 8));
+			days = (uint16_t)((days & 0xFF) | ((value & 0x01) << 8));
 			dayCarry = (value & 0x80) != 0;
 			halt = (value & 0x40) != 0;
 			break;
@@ -194,35 +194,35 @@ namespace GBA
 		}
 	}
 
-	void GbRealTimeClock::Latch(u64 unixSeconds)
+	void GbRealTimeClock::Latch(uint64_t unixSeconds)
 	{
 		// The day counter is taken from the host clock (the Pan Docs note that the cartridge
 		// keeps its own oscillator; following the host keeps a game's clock moving between
 		// sessions without a battery backed RTC chip in the emulator).
-		u64 total = (unixSeconds + 9 * 3600) % 86400;	// the Game Boy RTC's epoch is midnight
-		seconds = (u8)(total % 60);
-		minutes = (u8)((total / 60) % 60);
-		hours = (u8)((total / 3600) % 24);
-		days = (u16)((unixSeconds / 86400) & 0x1FF);
+		uint64_t total = (unixSeconds + 9 * 3600) % 86400;	// the Game Boy RTC's epoch is midnight
+		seconds = (uint8_t)(total % 60);
+		minutes = (uint8_t)((total / 60) % 60);
+		hours = (uint8_t)((total / 3600) % 24);
+		days = (uint16_t)((unixSeconds / 86400) & 0x1FF);
 	}
 
-	void GbRealTimeClock::SaveBytes(u8* out) const
+	void GbRealTimeClock::SaveBytes(uint8_t* out) const
 	{
 		out[0] = seconds;
 		out[1] = minutes;
 		out[2] = hours;
-		out[3] = (u8)(days & 0xFF);
-		out[4] = (u8)(days >> 8);
-		out[5] = (u8)(dayCarry ? 1 : 0);
-		out[6] = (u8)(halt ? 1 : 0);
+		out[3] = (uint8_t)(days & 0xFF);
+		out[4] = (uint8_t)(days >> 8);
+		out[5] = (uint8_t)(dayCarry ? 1 : 0);
+		out[6] = (uint8_t)(halt ? 1 : 0);
 	}
 
-	void GbRealTimeClock::LoadBytes(const u8* in)
+	void GbRealTimeClock::LoadBytes(const uint8_t* in)
 	{
 		seconds = in[0];
 		minutes = in[1];
 		hours = in[2];
-		days = (u16)(in[3] | (in[4] << 8));
+		days = (uint16_t)(in[3] | (in[4] << 8));
 		dayCarry = in[5] != 0;
 		halt = in[6] != 0;
 	}
@@ -231,7 +231,7 @@ namespace GBA
 	// Loading
 	// ---------------------------------------------------------------------------------------
 
-	bool GbCart::LoadRomImage(const std::vector<u8>& image, std::string& error)
+	bool GbCart::LoadRomImage(const std::vector<uint8_t>& image, std::string& error)
 	{
 		if (image.size() < GbHeaderStart + 0x50)
 		{
@@ -283,7 +283,7 @@ namespace GBA
 		// from the header. A header that says "no RAM" still gets the 8 KByte window, because
 		// programs that write to 0xA000 with no RAM in the cartridge would otherwise hit the
 		// open bus.
-		u32 ramBytes = header.ramBytes;
+		uint32_t ramBytes = header.ramBytes;
 		if (header.mapper == GbMapper::Mbc2)
 			ramBytes = 512;
 		if (ramBytes == 0)
@@ -311,8 +311,8 @@ namespace GBA
 			return false;
 		}
 
-		std::vector<u8> image;
-		u8 buffer[8192];
+		std::vector<uint8_t> image;
+		uint8_t buffer[8192];
 		while (true)
 		{
 			size_t got = fread(buffer, 1, sizeof(buffer), file);
@@ -359,7 +359,7 @@ namespace GBA
 		UpdateBanks();
 	}
 
-	u8 GbCart::BootRegisterA(bool cgbConsole) const
+	uint8_t GbCart::BootRegisterA(bool cgbConsole) const
 	{
 		if (!loaded)
 			return 0x00;
@@ -410,13 +410,13 @@ namespace GBA
 		}
 	}
 
-	u8 GbCart::ReadRom(u16 address) const
+	uint8_t GbCart::ReadRom(uint16_t address) const
 	{
 		if (!loaded || rom.empty())
 			return OpenBus();
 
-		u32 bank = 0;
-		u32 offset = address;
+		uint32_t bank = 0;
+		uint32_t offset = address;
 
 		if (address < 0x4000)
 		{
@@ -428,7 +428,7 @@ namespace GBA
 		else if (address < 0x8000)
 		{
 			bank = romBank;
-			offset = (u32)(address - 0x4000);
+			offset = (uint32_t)(address - 0x4000);
 		}
 		else
 		{
@@ -436,16 +436,16 @@ namespace GBA
 		}
 
 		// A short image mirrors, as a real mask ROM's address pins do.
-		u32 at = ((bank * 0x4000) + offset) % (u32)rom.size();
+		uint32_t at = ((bank * 0x4000) + offset) % (uint32_t)rom.size();
 		return rom[at];
 	}
 
-	u8 GbCart::ReadRam(u16 address) const
+	uint8_t GbCart::ReadRam(uint16_t address) const
 	{
 		if (!loaded || ram.empty())
 			return OpenBus();
 
-		u32 offset = (u32)(address - 0xA000);
+		uint32_t offset = (uint32_t)(address - 0xA000);
 
 		// The RAM is only reachable while it is enabled (Pan Docs, all mappers: "the RAM is
 		// disabled by default and must be enabled by writing to 0x0000..0x1FFF"). Until then a
@@ -454,27 +454,27 @@ namespace GBA
 			return OpenBus();
 
 		if (header.mapper == GbMapper::Mbc3 && rtcSelect)
-			return rtc.Read((u8)(0x08 + ramBank));
+			return rtc.Read((uint8_t)(0x08 + ramBank));
 
 		// MBC1 in mode 1 uses the bank bits for the ROM at 0x0000 and keeps the RAM at bank 0
 		// (Pan Docs "MBC1": "in mode 1 the RAM bank is always 0").
-		u32 bank = ramBank;
+		uint32_t bank = ramBank;
 		if (header.mapper == GbMapper::Mbc1 && bankingMode)
 			bank = 0;
 
-		u32 at = (bank * 0x2000 + offset) % (u32)ram.size();
+		uint32_t at = (bank * 0x2000 + offset) % (uint32_t)ram.size();
 
 		if (header.mapper == GbMapper::Mbc2)
 		{
 			// MBC2 has 512 x 4 bit of RAM: the high nibble mirrors the low one (Pan Docs).
-			u8 value = (u8)(ram[at & 0x1FF] & 0x0F);
-			return (u8)(value | (value << 4));
+			uint8_t value = (uint8_t)(ram[at & 0x1FF] & 0x0F);
+			return (uint8_t)(value | (value << 4));
 		}
 
 		return ram[at];
 	}
 
-	void GbCart::WriteRom(u16 address, u8 value)
+	void GbCart::WriteRom(uint16_t address, uint8_t value)
 	{
 		if (!loaded)
 			return;
@@ -501,7 +501,7 @@ namespace GBA
 			{
 				// 0x4000..0x5FFF: the two high bits, which select a RAM bank in mode 1.
 				ramBank = value & 0x03;
-				romBank = (romBank & 0x1F) | ((u32)(value & 0x03) << 5);
+				romBank = (romBank & 0x1F) | ((uint32_t)(value & 0x03) << 5);
 			}
 			else
 			{
@@ -538,7 +538,7 @@ namespace GBA
 				if (value >= 0x08 && value <= 0x0C)
 				{
 					rtcSelect = true;
-					ramBank = (u32)(value - 0x08);
+					ramBank = (uint32_t)(value - 0x08);
 				}
 				else
 				{
@@ -573,7 +573,7 @@ namespace GBA
 			else if (address < 0x4000)
 			{
 				// 0x3000..0x3FFF: bit 8 of the ROM bank.
-				romBank = (romBank & 0x0FF) | ((u32)(value & 0x01) << 8);
+				romBank = (romBank & 0x0FF) | ((uint32_t)(value & 0x01) << 8);
 			}
 			else if (address < 0x6000)
 			{
@@ -589,30 +589,30 @@ namespace GBA
 		}
 	}
 
-	void GbCart::WriteRam(u16 address, u8 value)
+	void GbCart::WriteRam(uint16_t address, uint8_t value)
 	{
 		if (!loaded || ram.empty() || !ramEnabled)
 			return;
 
-		u32 offset = (u32)(address - 0xA000);
+		uint32_t offset = (uint32_t)(address - 0xA000);
 
 		if (header.mapper == GbMapper::Mbc3 && rtcSelect)
 		{
-			rtc.Write((u8)(0x08 + ramBank), value);
+			rtc.Write((uint8_t)(0x08 + ramBank), value);
 			return;
 		}
 
-		u32 bank = ramBank;
+		uint32_t bank = ramBank;
 		if (header.mapper == GbMapper::Mbc1 && bankingMode)
 			bank = 0;
 
-		u32 at = (bank * 0x2000 + offset) % (u32)ram.size();
+		uint32_t at = (bank * 0x2000 + offset) % (uint32_t)ram.size();
 
 		if (header.mapper == GbMapper::Mbc2)
 		{
 			// Only the low nibble is stored (Pan Docs "MBC2": "only the lower 4 bits ... are
 			// used, the upper 4 bits are undefined").
-			ram[at & 0x1FF] = (u8)(value & 0x0F);
+			ram[at & 0x1FF] = (uint8_t)(value & 0x0F);
 			return;
 		}
 
@@ -632,8 +632,8 @@ namespace GBA
 		if (file == nullptr)
 			return false;			// a cartridge that was never saved is not an error
 
-		std::vector<u8> data;
-		u8 buffer[8192];
+		std::vector<uint8_t> data;
+		uint8_t buffer[8192];
 		while (true)
 		{
 			size_t got = fread(buffer, 1, sizeof(buffer), file);
@@ -679,7 +679,7 @@ namespace GBA
 
 		if (header.rtc)
 		{
-			u8 bytes[8]{};
+			uint8_t bytes[8]{};
 			rtc.SaveBytes(bytes);
 			fwrite(bytes, 1, sizeof(bytes), file);
 		}

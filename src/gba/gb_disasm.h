@@ -16,8 +16,8 @@ namespace GBA
 {
 	/// <summary>One SM83 instruction, in the assembler syntax of the Pan Docs tables. `size`
 	/// (when given) receives 1, 2 or 3 bytes; a DB-prefixed instruction is one byte.</summary>
-	std::string GbDisassemble(const DisasmMemory& memory, u16 address, int* size = nullptr);
+	std::string GbDisassemble(const DisasmMemory& memory, uint16_t address, int* size = nullptr);
 
 	/// <summary>The raw bytes of one instruction, as hexadecimal ("3E 01" reads as "3E01").</summary>
-	std::string GbInstructionBytes(const DisasmMemory& memory, u16 address, int size);
+	std::string GbInstructionBytes(const DisasmMemory& memory, uint16_t address, int size);
 }

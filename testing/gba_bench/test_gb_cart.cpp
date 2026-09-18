@@ -25,9 +25,9 @@ namespace
 	/// Build a cartridge image: a 32 KByte (or larger) ROM whose every 16 KByte bank starts with
 	/// its own bank number, so a test can ask which bank the mapper put at 0x4000.
 	/// </summary>
-	std::vector<u8> BuildRom(u8 cartType, u8 romSizeCode, u8 ramSizeCode, int banks)
+	std::vector<uint8_t> BuildRom(uint8_t cartType, uint8_t romSizeCode, uint8_t ramSizeCode, int banks)
 	{
-		std::vector<u8> rom((size_t)banks * 0x4000, 0x00);
+		std::vector<uint8_t> rom((size_t)banks * 0x4000, 0x00);
 
 		// The entry point and the Nintendo logo area are not important here; the header fields
 		// are (Pan Docs "The Cartridge Header").
@@ -45,7 +45,7 @@ namespace
 
 		// A distinctive byte at the start of every bank.
 		for (int bank = 0; bank < banks && bank < 256; bank++)
-			rom[(size_t)bank * 0x4000] = (u8)bank;
+			rom[(size_t)bank * 0x4000] = (uint8_t)bank;
 
 		// The header checksum the boot ROM (and Describe) reads.
 		rom[GbHeaderChecksum] = GbComputeHeaderChecksum(rom);
@@ -59,7 +59,7 @@ namespace
 
 GBA_TEST(GbCart, header_is_parsed_field_by_field)
 {
-	std::vector<u8> rom = BuildRom(0x1B, 0x04, 0x03, 64);		// MBC5 + battery, 512 KByte, 32 KByte RAM
+	std::vector<uint8_t> rom = BuildRom(0x1B, 0x04, 0x03, 64);		// MBC5 + battery, 512 KByte, 32 KByte RAM
 	rom[GbHeaderCgbFlag] = 0x80;								// CGB enhanced
 	rom[GbHeaderSgbFlag] = 0x03;								// SGB functions
 	rom[GbHeaderChecksum] = GbComputeHeaderChecksum(rom);
@@ -87,17 +87,17 @@ GBA_TEST(GbCart, header_is_parsed_field_by_field)
 	GBA_CHECK(header.cgbFlag && header.cgbOnly);
 
 	// Too small to hold a header: not valid, and nothing is parsed.
-	std::vector<u8> tiny(0x100, 0x00);
+	std::vector<uint8_t> tiny(0x100, 0x00);
 	GBA_CHECK(!GbParseCartHeader(tiny).valid);
 }
 
 GBA_TEST(GbCart, header_checksum_matches_the_specification_algorithm)
 {
 	// x = 0; for each byte at 0x0134..0x014C: x = x - byte - 1 (Pan Docs "The Cartridge Header").
-	std::vector<u8> rom = BuildRom(0x00, 0x01, 0x00, 8);
-	u8 expected = 0;
-	for (u16 address = GbHeaderTitle; address <= GbHeaderVersion; address++)
-		expected = (u8)(expected - rom[address] - 1);
+	std::vector<uint8_t> rom = BuildRom(0x00, 0x01, 0x00, 8);
+	uint8_t expected = 0;
+	for (uint16_t address = GbHeaderTitle; address <= GbHeaderVersion; address++)
+		expected = (uint8_t)(expected - rom[address] - 1);
 	GBA_CHECK_EQ(GbComputeHeaderChecksum(rom), expected);
 }
 
@@ -116,12 +116,12 @@ GBA_TEST(GbCart, mapper_names_and_the_cgb_boot_register)
 	// DMG only one there (the documented deviation from the Pan Docs table).
 	GbCart cart;
 	std::string error;
-	std::vector<u8> dmg = BuildRom(0x00, 0x01, 0x00, 8);
+	std::vector<uint8_t> dmg = BuildRom(0x00, 0x01, 0x00, 8);
 	GBA_CHECK(cart.LoadRomImage(dmg, error));
 	GBA_CHECK_EQ(cart.BootRegisterA(false), 0x01);
 	GBA_CHECK_EQ(cart.BootRegisterA(true), 0x00);
 
-	std::vector<u8> cgb = BuildRom(0x00, 0x01, 0x00, 8);
+	std::vector<uint8_t> cgb = BuildRom(0x00, 0x01, 0x00, 8);
 	cgb[GbHeaderCgbFlag] = 0x80;
 	GBA_CHECK(cart.LoadRomImage(cgb, error));
 	GBA_CHECK_EQ(cart.BootRegisterA(true), 0x11);
@@ -133,18 +133,18 @@ GBA_TEST(GbCart, unsupported_mapper_is_reported)
 	std::string error;
 
 	// 0x0B..0x0D is the MMM01, which this emulator does not implement (Pan Docs "MBCs").
-	std::vector<u8> mmm01 = BuildRom(0x0B, 0x01, 0x00, 8);
+	std::vector<uint8_t> mmm01 = BuildRom(0x0B, 0x01, 0x00, 8);
 	GBA_CHECK_MSG(!cart.LoadRomImage(mmm01, error), "the MMM01 must be refused");
 	GBA_CHECK_MSG(error.find("unsupported") != std::string::npos, "the error was: " + error);
 	GBA_CHECK_MSG(error.find("MMM01") != std::string::npos, "the error names the mapper: " + error);
 
 	// An unassigned cartridge type is refused too, and says so.
-	std::vector<u8> unknown = BuildRom(0x77, 0x01, 0x00, 8);
+	std::vector<uint8_t> unknown = BuildRom(0x77, 0x01, 0x00, 8);
 	GBA_CHECK_MSG(!cart.LoadRomImage(unknown, error), "an unknown type must be refused");
 	GBA_CHECK_MSG(error.find("unknown") != std::string::npos, "the error was: " + error);
 
 	// A ROM-only cartridge is accepted.
-	std::vector<u8> plain = BuildRom(0x00, 0x01, 0x00, 8);
+	std::vector<uint8_t> plain = BuildRom(0x00, 0x01, 0x00, 8);
 	GBA_CHECK_MSG(cart.LoadRomImage(plain, error), "a ROM-only cartridge must load: " + error);
 }
 
@@ -158,14 +158,14 @@ GBA_TEST(GbCart, rom_only_and_the_mbc1_banking)
 	std::string error;
 
 	// ROM only: bank 0 at 0x0000 and the second 16 KByte bank at 0x4000.
-	std::vector<u8> plain = BuildRom(0x00, 0x01, 0x00, 8);
+	std::vector<uint8_t> plain = BuildRom(0x00, 0x01, 0x00, 8);
 	GBA_CHECK(cart.LoadRomImage(plain, error));
 	GBA_CHECK_EQ(cart.ReadRom(0x0000), 0x00);
 	GBA_CHECK_EQ(cart.ReadRom(0x4000), 0x01);
 	GBA_CHECK_EQ(cart.ReadRom(0x4001), 0x00);		// the rest of the bank is the image's zeroes
 
 	// MBC1: writing 0x0000..0x3FFF selects the low five bits of the bank at 0x4000.
-	std::vector<u8> mbc1 = BuildRom(0x01, 0x04, 0x03, 64);
+	std::vector<uint8_t> mbc1 = BuildRom(0x01, 0x04, 0x03, 64);
 	GBA_CHECK(cart.LoadRomImage(mbc1, error));
 	GBA_CHECK_EQ(cart.MappedRomBank(), 1u);			// the power-on value is bank 1
 	cart.WriteRom(0x2000, 0x05);
@@ -204,7 +204,7 @@ GBA_TEST(GbCart, mbc2_banking_and_its_four_bit_ram)
 {
 	GbCart cart;
 	std::string error;
-	std::vector<u8> rom = BuildRom(0x06, 0x01, 0x00, 8);		// MBC2 + battery
+	std::vector<uint8_t> rom = BuildRom(0x06, 0x01, 0x00, 8);		// MBC2 + battery
 	GBA_CHECK(cart.LoadRomImage(rom, error));
 
 	// Bit 8 of the address selects between the RAM enable and the ROM bank (Pan Docs "MBC2").
@@ -235,7 +235,7 @@ GBA_TEST(GbCart, mbc3_ram_banking)
 {
 	GbCart cart;
 	std::string error;
-	std::vector<u8> rom = BuildRom(0x13, 0x04, 0x03, 64);		// MBC3 + battery + RTC, 32 KByte RAM
+	std::vector<uint8_t> rom = BuildRom(0x13, 0x04, 0x03, 64);		// MBC3 + battery + RTC, 32 KByte RAM
 	GBA_CHECK(cart.LoadRomImage(rom, error));
 
 	cart.WriteRom(0x0000, 0x0A);					// enable the RAM
@@ -264,7 +264,7 @@ GBA_TEST(GbCart, mbc5_banking_is_nine_bits)
 {
 	GbCart cart;
 	std::string error;
-	std::vector<u8> rom = BuildRom(0x19, 0x05, 0x03, 128);		// MBC5, 1 MByte
+	std::vector<uint8_t> rom = BuildRom(0x19, 0x05, 0x03, 128);		// MBC5, 1 MByte
 	GBA_CHECK(cart.LoadRomImage(rom, error));
 
 	// 0x2000..0x2FFF is the low eight bits, 0x3000..0x3FFF bit 8 (Pan Docs "MBC5"). Unlike the
@@ -299,7 +299,7 @@ GBA_TEST(GbCart, mbc3_rtc_latch_and_registers)
 {
 	GbCart cart;
 	std::string error;
-	std::vector<u8> rom = BuildRom(0x10, 0x04, 0x03, 64);		// MBC3 + RTC + battery
+	std::vector<uint8_t> rom = BuildRom(0x10, 0x04, 0x03, 64);		// MBC3 + RTC + battery
 	GBA_CHECK(cart.LoadRomImage(rom, error));
 
 	// The RTC registers are only reachable while the RAM is enabled and an RTC register is
@@ -315,9 +315,9 @@ GBA_TEST(GbCart, mbc3_rtc_latch_and_registers)
 	cart.WriteRom(0x6000, 0x01);					// the latch step 2
 
 	// The latched values must match the host clock (the emulator's RTC follows it).
-	u64 seconds = 1000000 + 9 * 3600;
-	u8 expectedSeconds = (u8)(seconds % 60);
-	u8 expectedMinutes = (u8)((seconds / 60) % 60);
+	uint64_t seconds = 1000000 + 9 * 3600;
+	uint8_t expectedSeconds = (uint8_t)(seconds % 60);
+	uint8_t expectedMinutes = (uint8_t)((seconds / 60) % 60);
 	cart.WriteRom(0x4000, 0x08);
 	GBA_CHECK_EQ(cart.ReadRam(0xA000), expectedSeconds);
 	cart.WriteRom(0x4000, 0x09);
@@ -342,7 +342,7 @@ GBA_TEST(GbCart, save_file_round_trip)
 
 	GbCart cart;
 	std::string error;
-	std::vector<u8> rom = BuildRom(0x03, 0x01, 0x02, 8);		// MBC1 + battery + 8 KByte RAM
+	std::vector<uint8_t> rom = BuildRom(0x03, 0x01, 0x02, 8);		// MBC1 + battery + 8 KByte RAM
 	cart.SetSaveFilePath(SavePath);
 	GBA_CHECK(cart.LoadRomImage(rom, error));
 	GBA_CHECK(cart.HasBattery());
@@ -350,7 +350,7 @@ GBA_TEST(GbCart, save_file_round_trip)
 	// Fill the RAM through the mapper's window.
 	cart.WriteRom(0x0000, 0x0A);
 	for (int i = 0; i < 0x2000; i += 0x101)
-		cart.WriteRam((u16)(0xA000 + i), (u8)(i >> 8));
+		cart.WriteRam((uint16_t)(0xA000 + i), (uint8_t)(i >> 8));
 	GBA_CHECK(cart.SaveSaveFile(&error));
 
 	// A fresh cartridge reads it back byte for byte.
@@ -367,7 +367,7 @@ GBA_TEST(GbCart, save_file_round_trip)
 	// A cartridge with no battery has nothing to save.
 	GbCart plain;
 	plain.SetSaveFilePath(SavePath);
-	std::vector<u8> noBattery = BuildRom(0x01, 0x01, 0x02, 8);
+	std::vector<uint8_t> noBattery = BuildRom(0x01, 0x01, 0x02, 8);
 	GBA_CHECK(plain.LoadRomImage(noBattery, error));
 	GBA_CHECK_MSG(!plain.SaveSaveFile(&error), "a cartridge without a battery saves nothing");
 
@@ -378,7 +378,7 @@ GBA_TEST(GbCart, load_rom_file_beside_its_save)
 {
 	// Write a cartridge to disk and load it through LoadRomFile, which is where the ".sav next to
 	// the ROM" convention lives (the same one the GBA cartridge uses).
-	std::vector<u8> rom = BuildRom(0x03, 0x01, 0x02, 8);
+	std::vector<uint8_t> rom = BuildRom(0x03, 0x01, 0x02, 8);
 	{
 		std::ofstream file(RomPath, std::ios::binary);
 		file.write((const char*)rom.data(), (std::streamsize)rom.size());

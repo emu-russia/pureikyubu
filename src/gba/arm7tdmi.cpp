@@ -33,7 +33,7 @@ namespace GBA
 		// -----------------------------------------------------------------------------------
 
 		/// <summary>ARM Architecture Reference Manual A3.4.2: rotate right, with 0 meaning "no rotation" (not a shift by 32).</summary>
-		inline u32 RotateRight(u32 value, u32 amount)
+		inline uint32_t RotateRight(uint32_t value, uint32_t amount)
 		{
 			amount &= 31;
 			if (amount == 0)
@@ -42,14 +42,14 @@ namespace GBA
 		}
 
 		/// <summary>Sign extend the low `bits` bits of `value` (the branch and offset fields).</summary>
-		inline u32 SignExtend(u32 value, int bits)
+		inline uint32_t SignExtend(uint32_t value, int bits)
 		{
-			u32 sign = 1u << (bits - 1);
+			uint32_t sign = 1u << (bits - 1);
 			return (value ^ sign) - sign;
 		}
 
 		/// <summary>The number of registers a load/store multiple list names.</summary>
-		inline int CountRegisters(u32 list)
+		inline int CountRegisters(uint32_t list)
 		{
 			int count = 0;
 			while (list != 0)
@@ -61,7 +61,7 @@ namespace GBA
 		}
 
 		/// <summary>True when the CPSR's C bit is set (1 for the carry-in of ADC/SBC/RSC).</summary>
-		inline u32 CarryIn(u32 cpsr)
+		inline uint32_t CarryIn(uint32_t cpsr)
 		{
 			return (cpsr & FlagC) ? 1u : 0u;
 		}
@@ -70,7 +70,7 @@ namespace GBA
 		/// ARM7TDMI data sheet, "MUL/MLA": the multiplier is examined in 8-bit blocks, so a
 		/// multiplier that fits in eight bits costs one internal cycle and a full 32-bit one four.
 		/// </summary>
-		inline int MultiplyCycles(u32 multiplier)
+		inline int MultiplyCycles(uint32_t multiplier)
 		{
 			if ((multiplier & 0xFFFFFF00u) == 0 || (multiplier & 0xFFFFFF00u) == 0xFFFFFF00u)
 				return 1;
@@ -86,7 +86,7 @@ namespace GBA
 		/// MOVS PC, LR; SUBS PC, LR, #4; LDM with the caret and r15; LDR with the S bit - goes
 		/// back to the mode and the state the SPSR describes and branches to `address`.
 		/// </summary>
-		void ReturnFromException(Arm7tdmi& cpu, u32 address)
+		void ReturnFromException(Arm7tdmi& cpu, uint32_t address)
 		{
 			if (!cpu.InException())
 			{
@@ -97,7 +97,7 @@ namespace GBA
 				return;
 			}
 
-			u32 spsr = cpu.ReadSPSR();
+			uint32_t spsr = cpu.ReadSPSR();
 			CpuMode mode = (CpuMode)(spsr & ModeMask);
 
 			// Bank the handler's registers out and the restored mode's in, then take the whole
@@ -128,7 +128,7 @@ namespace GBA
 		memset(bankR8_12, 0, sizeof(bankR8_12));
 		memset(bankSPSR, 0, sizeof(bankSPSR));
 
-		cpsr = (u32)ModeSupervisor | FlagI | FlagF;
+		cpsr = (uint32_t)ModeSupervisor | FlagI | FlagF;
 		currentPC = VectorReset;
 		halted = false;
 		retired = 0;
@@ -185,7 +185,7 @@ namespace GBA
 		}
 	}
 
-	CpuMode Arm7tdmi::nextMode(u32 cpsrBits) const
+	CpuMode Arm7tdmi::nextMode(uint32_t cpsrBits) const
 	{
 		return (CpuMode)(cpsrBits & ModeMask);
 	}
@@ -219,11 +219,11 @@ namespace GBA
 		// new mode's bank becomes the window. The rest of the CPSR is left alone here; MSR and
 		// the exception entry write those bits themselves.
 		StoreBank();
-		cpsr = (cpsr & ~ModeMask) | ((u32)mode & ModeMask);
+		cpsr = (cpsr & ~ModeMask) | ((uint32_t)mode & ModeMask);
 		LoadBank(mode);
 	}
 
-	u32 Arm7tdmi::Reg(int index) const
+	uint32_t Arm7tdmi::Reg(int index) const
 	{
 		// ARM Architecture Reference Manual A3.4.1 and 4.5: an instruction that reads r15 sees the address of the
 		// instruction being executed plus 8 (ARM state, three-stage pipeline) or plus 4
@@ -233,7 +233,7 @@ namespace GBA
 		return regs[index & 15];
 	}
 
-	void Arm7tdmi::SetReg(int index, u32 value)
+	void Arm7tdmi::SetReg(int index, uint32_t value)
 	{
 		if (index == 15)
 		{
@@ -245,12 +245,12 @@ namespace GBA
 		regs[index & 15] = value;
 	}
 
-	u32 Arm7tdmi::ReadRegFor(int index) const
+	uint32_t Arm7tdmi::ReadRegFor(int index) const
 	{
 		return Reg(index);
 	}
 
-	void Arm7tdmi::BranchInternal(u32 address)
+	void Arm7tdmi::BranchInternal(uint32_t address)
 	{
 		// ARM Architecture Reference Manual A2.3.4 (interworking) and A4.1.4 (BX): bit 0 of the target is the new T bit
 		// and is cleared from the address.
@@ -258,7 +258,7 @@ namespace GBA
 		SetFlag(FlagT, (address & 1) != 0);
 	}
 
-	u32 Arm7tdmi::ReadSPSR() const
+	uint32_t Arm7tdmi::ReadSPSR() const
 	{
 		int index = bankIndex(Mode());
 		if (index == 0)
@@ -266,7 +266,7 @@ namespace GBA
 		return bankSPSR[index - 1];
 	}
 
-	void Arm7tdmi::Exception(u32 vector, CpuMode mode, u32 cpsrMask)
+	void Arm7tdmi::Exception(uint32_t vector, CpuMode mode, uint32_t cpsrMask)
 	{
 		// ARM Architecture Reference Manual A2.6 ("Exception entry") and the ARM7TDMI data sheet:
 		//
@@ -282,8 +282,8 @@ namespace GBA
 		//
 		// The synchronous exceptions report the instruction that caused them and the interrupts
 		// report the instruction that would have run: currentPC is exactly that on entry.
-		u32 oldCpsr = cpsr;
-		u32 returnAddress = currentPC + 4;
+		uint32_t oldCpsr = cpsr;
+		uint32_t returnAddress = currentPC + 4;
 		if (vector == VectorSwi || vector == VectorUndefined)
 			returnAddress = currentPC + (ThumbState() ? 2u : 4u);
 
@@ -294,7 +294,7 @@ namespace GBA
 			bankSPSR[index - 1] = oldCpsr;
 
 		regs[14] = returnAddress;
-		cpsr = (oldCpsr & ~(ModeMask | FlagT)) | ((u32)mode & ModeMask) | (cpsrMask & ~ModeMask);
+		cpsr = (oldCpsr & ~(ModeMask | FlagT)) | ((uint32_t)mode & ModeMask) | (cpsrMask & ~ModeMask);
 		currentPC = vector;
 	}
 
@@ -302,7 +302,7 @@ namespace GBA
 	// Flags and the ALU
 	// ---------------------------------------------------------------------------------------
 
-	bool Arm7tdmi::ConditionPassed(u32 condition) const
+	bool Arm7tdmi::ConditionPassed(uint32_t condition) const
 	{
 		// ARM Architecture Reference Manual A3.3.2, the condition field. The flags are read as they were before the
 		// instruction, which is what the local copies take care of.
@@ -331,7 +331,7 @@ namespace GBA
 		}
 	}
 
-	u32 Arm7tdmi::ShiftOperand(u32 value, u32 type, u32 amount, bool& carry)
+	uint32_t Arm7tdmi::ShiftOperand(uint32_t value, uint32_t type, uint32_t amount, bool& carry)
 	{
 		// ARM Architecture Reference Manual A3.4.2 / A5.2 ("Shift operations"). `carry` carries the C flag in and takes
 		// the shifter's carry out; an LSL #0 leaves C alone because it is a plain move. A shift
@@ -367,20 +367,20 @@ namespace GBA
 			if (amount == 0 || amount >= 32)
 			{
 				carry = ((value >> 31) & 1) != 0;
-				return (u32)((s32)value >> 31);
+				return (uint32_t)((int32_t)value >> 31);
 			}
 			carry = ((value >> (amount - 1)) & 1) != 0;
-			return (u32)((s32)value >> amount);
+			return (uint32_t)((int32_t)value >> amount);
 
 		default:					// ROR (an amount of 0 is RRX)
 			if (amount == 0)
 			{
-				u32 carryIn = carry ? 1u : 0u;
+				uint32_t carryIn = carry ? 1u : 0u;
 				carry = (value & 1) != 0;
 				return (value >> 1) | (carryIn << 31);
 			}
 			{
-				u32 rotate = amount & 31;
+				uint32_t rotate = amount & 31;
 				if (rotate == 0)
 				{
 					carry = ((value >> 31) & 1) != 0;
@@ -392,7 +392,7 @@ namespace GBA
 		}
 	}
 
-	u32 Arm7tdmi::ShiftOperandByRegister(u32 value, u32 type, u32 amount, bool& carry)
+	uint32_t Arm7tdmi::ShiftOperandByRegister(uint32_t value, uint32_t type, uint32_t amount, bool& carry)
 	{
 		// ARM Architecture Reference Manual A5.1.1 and A5.2 ("Shift operations"): a shift whose amount comes from a
 		// register shifts by exactly the value in that register (its bottom byte), so an amount
@@ -405,19 +405,19 @@ namespace GBA
 		return ShiftOperand(value, type, amount, carry);
 	}
 
-	u32 Arm7tdmi::AddWithCarry(u32 a, u32 b, u32 carryIn, bool& carry, bool& overflow)
+	uint32_t Arm7tdmi::AddWithCarry(uint32_t a, uint32_t b, uint32_t carryIn, bool& carry, bool& overflow)
 	{
 		// ARM Architecture Reference Manual A3.4.1: C is the carry out of bit 31 (an unsigned overflow) and V is the
 		// signed overflow of the same addition. A subtraction passes ~b and a carry of 1.
-		u64 sum = (u64)a + (u64)b + (u64)(carryIn & 1);
-		u32 result = (u32)sum;
+		uint64_t sum = (uint64_t)a + (uint64_t)b + (uint64_t)(carryIn & 1);
+		uint32_t result = (uint32_t)sum;
 
 		carry = (sum >> 32) != 0;
 		overflow = (((a ^ result) & (b ^ result)) >> 31) != 0;
 		return result;
 	}
 
-	void Arm7tdmi::SetLogicFlags(u32 result, bool carry)
+	void Arm7tdmi::SetLogicFlags(uint32_t result, bool carry)
 	{
 		// N and Z come from the result, C from the shifter, and a logic operation leaves V.
 		SetFlag(FlagN, (result & 0x80000000u) != 0);
@@ -425,7 +425,7 @@ namespace GBA
 		SetFlag(FlagC, carry);
 	}
 
-	void Arm7tdmi::SetArithFlags(u32 result, bool carry, bool overflow)
+	void Arm7tdmi::SetArithFlags(uint32_t result, bool carry, bool overflow)
 	{
 		SetFlag(FlagN, (result & 0x80000000u) != 0);
 		SetFlag(FlagZ, result == 0);
@@ -437,31 +437,31 @@ namespace GBA
 	// Memory helpers
 	// ---------------------------------------------------------------------------------------
 
-	u32 Arm7tdmi::LoadWord(u32 address, bool& aligned)
+	uint32_t Arm7tdmi::LoadWord(uint32_t address, bool& aligned)
 	{
 		// The ARM7TDMI data sheet, "Unaligned loads": an LDR from an address that is not word
 		// aligned loads the aligned word and rotates it right by eight times the low two bits.
 		// (The bus returns the word the address selects; the rotation is the core's.)
-		u32 word = bus->Read32(address & ~3u);
-		u32 offset = address & 3;
+		uint32_t word = bus->Read32(address & ~3u);
+		uint32_t offset = address & 3;
 		aligned = (offset == 0);
 		return aligned ? word : RotateRight(word, offset * 8);
 	}
 
-	u32 Arm7tdmi::LoadHalfword(u32 address)
+	uint32_t Arm7tdmi::LoadHalfword(uint32_t address)
 	{
 		// The ARM7TDMI data sheet, "Misaligned halfword accesses", which gba-tests arm 408 and
 		// thumb 211/219 pin down: an LDRH from an odd address returns the *aligned* halfword
 		// rotated right by eight bits, so it lands in bits 31-24 of the register. (A signed
 		// halfword load from an odd address is a different story: the core performs it as a
 		// signed byte load, which is why the LDRSH paths do not use this helper.)
-		u32 halfword = bus->Read16(address & ~1u);
+		uint32_t halfword = bus->Read16(address & ~1u);
 		if ((address & 1) == 0)
 			return halfword;
 		return (halfword >> 8) | (halfword << 24);
 	}
 
-	u32 Arm7tdmi::LoadByte(u32 address)
+	uint32_t Arm7tdmi::LoadByte(uint32_t address)
 	{
 		return bus->Read8(address);
 	}
@@ -482,10 +482,10 @@ namespace GBA
 
 	int Arm7tdmi::StepArm()
 	{
-		u32 address = currentPC;
-		u32 opcode = bus->Fetch32(address);
+		uint32_t address = currentPC;
+		uint32_t opcode = bus->Fetch32(address);
 
-		u32 condition = opcode >> 28;
+		uint32_t condition = opcode >> 28;
 		if (condition == 0xF)
 		{
 			// ARM Architecture Reference Manual A3.2: the condition field 0b1111 is reserved. ARMv4T has no unconditional
@@ -510,13 +510,13 @@ namespace GBA
 		bool msrImmediate = (opcode & 0x0FB0F000) == 0x0320F000;
 		if (msrRegister || msrImmediate)
 		{
-			u32 fieldMask = (opcode >> 16) & 0xF;
-			u32 value = msrImmediate
+			uint32_t fieldMask = (opcode >> 16) & 0xF;
+			uint32_t value = msrImmediate
 				? RotateRight(opcode & 0xFF, ((opcode >> 8) & 0xF) * 2)
 				: ReadRegFor((int)(opcode & 0xF));
 			bool toSpsr = (opcode & (1u << 22)) != 0;
 
-			u32 mask = 0;
+			uint32_t mask = 0;
 			if ((fieldMask & 8) != 0) mask |= 0xFF000000u;	// f: the condition flags
 			if ((fieldMask & 4) != 0) mask |= 0x00FF0000u;	// s
 			if ((fieldMask & 2) != 0) mask |= 0x0000FF00u;	// x
@@ -541,7 +541,7 @@ namespace GBA
 			}
 			else
 			{
-				u32 newCpsr = (cpsr & ~mask) | (value & mask);
+				uint32_t newCpsr = (cpsr & ~mask) | (value & mask);
 				if ((newCpsr & ModeMask) != (cpsr & ModeMask))
 					SwitchMode(nextMode(newCpsr));		// re-bank r13/r14/r8-r12 first
 				cpsr = newCpsr;
@@ -551,7 +551,7 @@ namespace GBA
 			return 1;				// 1S
 		}
 
-		u32 primary = (opcode >> 25) & 7;		// bits 27-25
+		uint32_t primary = (opcode >> 25) & 7;		// bits 27-25
 
 		if (primary == 0 || primary == 1)
 		{
@@ -559,7 +559,7 @@ namespace GBA
 			// load/store instructions and BX: the densest corner of the ARM encoding.
 			if (primary == 0)
 			{
-				u32 low = opcode & 0xF0;
+				uint32_t low = opcode & 0xF0;
 
 				if (low == 0x90)
 					return (int)ArmMultiply(opcode);
@@ -617,30 +617,30 @@ namespace GBA
 		}
 	}
 
-	u32 Arm7tdmi::ArmDataProcessing(u32 opcode)
+	uint32_t Arm7tdmi::ArmDataProcessing(uint32_t opcode)
 	{
 		// ARM Architecture Reference Manual A4.1.5 (data processing). The immediate bit selects the operand form; both
 		// forms share the opcode field in bits 24-21.
-		u32 aluOp = (opcode >> 21) & 0xF;
+		uint32_t aluOp = (opcode >> 21) & 0xF;
 		bool immediate = (opcode & (1u << 25)) != 0;
 		bool setFlags = (opcode & (1u << 20)) != 0;
 		bool registerShift = !immediate && (opcode & (1u << 4)) != 0;
 		int rn = (int)((opcode >> 16) & 0xF);
 		int rd = (int)((opcode >> 12) & 0xF);
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 
 		// ARM Architecture Reference Manual A3.4.1: r15 reads as the address of the instruction plus 8. On the ARM7TDMI a
 		// register-specified shift delays the instruction by one internal cycle, and r15 then
 		// reads as the address plus 12 instead (gba-tests arm 224/225, "PC as shifted register"
 		// and "PC as operand 1 with shifted register"). Both operands see the later value.
-		u32 pipelinePC = address + (registerShift ? 12u : 8u);
-		auto ReadOperand = [&](int index) -> u32
+		uint32_t pipelinePC = address + (registerShift ? 12u : 8u);
+		auto ReadOperand = [&](int index) -> uint32_t
 		{
 			return (index == 15) ? pipelinePC : regs[index];
 		};
 
 		bool carry = (cpsr & FlagC) != 0;
-		u32 operand2;
+		uint32_t operand2;
 		int cycles = 1;				// 1S for the fetch
 
 		if (immediate)
@@ -651,7 +651,7 @@ namespace GBA
 			// the eight-bit value (bit 2*rotate-1). A rotate field of 0 is no rotation at all and
 			// leaves C alone, unlike the register shifts where an amount of 0 does the same but
 			// for a different reason. gba-tests arm 217 ("update carry for rotated immediate").
-			u32 rotate = ((opcode >> 8) & 0xF) * 2;
+			uint32_t rotate = ((opcode >> 8) & 0xF) * 2;
 			operand2 = RotateRight(opcode & 0xFF, rotate);
 			if (rotate != 0)
 				carry = ((opcode >> (rotate - 1)) & 1) != 0;
@@ -659,9 +659,9 @@ namespace GBA
 		else
 		{
 			int rm = (int)(opcode & 0xF);
-			u32 type = (opcode >> 5) & 3;
-			u32 amount = (opcode >> 7) & 0x1F;
-			u32 value = ReadOperand(rm);
+			uint32_t type = (opcode >> 5) & 3;
+			uint32_t amount = (opcode >> 7) & 0x1F;
+			uint32_t value = ReadOperand(rm);
 
 			if (registerShift)
 			{
@@ -681,8 +681,8 @@ namespace GBA
 		bool isTest = (aluOp >= 8 && aluOp <= 11);		// TST, TEQ, CMP, CMN
 		bool arithmetic = (aluOp >= 2 && aluOp <= 7) || aluOp == 10 || aluOp == 11;
 
-		u32 a = ReadOperand(rn);
-		u32 result = 0;
+		uint32_t a = ReadOperand(rn);
+		uint32_t result = 0;
 		bool carryOut = carry;
 		bool overflow = false;
 
@@ -743,7 +743,7 @@ namespace GBA
 			// register, so the PC is not written and execution simply carries on in the restored
 			// mode (gba-tests arm 234, "bad CMP/CMN/TST/TEQ change the mode"). In User and
 			// System mode there is no SPSR to restore, which is what arm 235 checks.
-			u32 spsr = ReadSPSR();
+			uint32_t spsr = ReadSPSR();
 			SwitchMode((CpuMode)(spsr & ModeMask));
 			cpsr = spsr;
 		}
@@ -752,12 +752,12 @@ namespace GBA
 		return cycles;
 	}
 
-	u32 Arm7tdmi::ArmMultiply(u32 opcode)
+	uint32_t Arm7tdmi::ArmMultiply(uint32_t opcode)
 	{
 		// ARM Architecture Reference Manual A4.1.6 (MUL/MLA), A4.1.7 (the long multiplies) and A4.1.9 (SWP/SWPB). The
 		// space is selected by bits 27-23 and by the 1SH1 field in bits 7-4.
-		u32 address = currentPC;
-		u32 space = (opcode >> 23) & 0x1F;
+		uint32_t address = currentPC;
+		uint32_t space = (opcode >> 23) & 0x1F;
 		int rd = (int)((opcode >> 16) & 0xF);
 		int rn = (int)((opcode >> 12) & 0xF);
 		int rs = (int)((opcode >> 8) & 0xF);
@@ -774,9 +774,9 @@ namespace GBA
 				return 3;
 			}
 
-			u32 value = ReadRegFor(rm);
-			u32 multiplier = ReadRegFor(rs);
-			u32 result = value * multiplier;
+			uint32_t value = ReadRegFor(rm);
+			uint32_t multiplier = ReadRegFor(rs);
+			uint32_t result = value * multiplier;
 			if (accumulate)
 				result += ReadRegFor(rn);
 
@@ -801,20 +801,20 @@ namespace GBA
 			}
 
 			bool signedMultiply = (opcode & (1u << 22)) != 0;
-			u32 value = ReadRegFor(rm);
-			u32 multiplier = ReadRegFor(rs);
+			uint32_t value = ReadRegFor(rm);
+			uint32_t multiplier = ReadRegFor(rs);
 
-			u64 result = signedMultiply
-				? (u64)((s64)(s32)value * (s64)(s32)multiplier)
-				: (u64)((u64)value * (u64)multiplier);
+			uint64_t result = signedMultiply
+				? (uint64_t)((int64_t)(int32_t)value * (int64_t)(int32_t)multiplier)
+				: (uint64_t)((uint64_t)value * (uint64_t)multiplier);
 
 			if (accumulate)
-				result += ((u64)regs[rd] << 32) | (u64)regs[rn];
+				result += ((uint64_t)regs[rd] << 32) | (uint64_t)regs[rn];
 
 			// ARM Architecture Reference Manual A4.1.7: RdHi holds the high half and RdLo the low half, and N and Z come
 			// from the 64-bit result (bit 63 is N). C is unpredictable and V is unchanged.
-			regs[rd] = (u32)(result >> 32);
-			regs[rn] = (u32)result;
+			regs[rd] = (uint32_t)(result >> 32);
+			regs[rn] = (uint32_t)result;
 			SetFlag(FlagN, (result & 0x8000000000000000ull) != 0);
 			SetFlag(FlagZ, result == 0);
 
@@ -842,13 +842,13 @@ namespace GBA
 			}
 
 			bool byte = (opcode & (1u << 22)) != 0;
-			u32 swapAddress = ReadRegFor(swapRn);
-			u32 value = ReadRegFor(swapRm);
+			uint32_t swapAddress = ReadRegFor(swapRn);
+			uint32_t value = ReadRegFor(swapRm);
 
 			if (byte)
 			{
 				regs[swapRd] = bus->Read8(swapAddress);
-				bus->Write8(swapAddress, (u8)value);
+				bus->Write8(swapAddress, (uint8_t)value);
 			}
 			else
 			{
@@ -866,7 +866,7 @@ namespace GBA
 		return 3;
 	}
 
-	u32 Arm7tdmi::ArmLoadStore(u32 opcode)
+	uint32_t Arm7tdmi::ArmLoadStore(uint32_t opcode)
 	{
 		// ARM Architecture Reference Manual A4.1.3: single data transfer.
 		//   cond 01 I P U B W L Rn Rd offset
@@ -878,7 +878,7 @@ namespace GBA
 		bool load = (opcode & (1u << 20)) != 0;
 		int rn = (int)((opcode >> 16) & 0xF);
 		int rd = (int)((opcode >> 12) & 0xF);
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 
 		if (!preIndexed && writeback)
 		{
@@ -899,8 +899,8 @@ namespace GBA
 		// W asks for it. ARM Architecture Reference Manual A4.1.3.
 		bool updateBase = writeback || !preIndexed;
 
-		u32 base = ReadRegFor(rn);
-		u32 offset;
+		uint32_t base = ReadRegFor(rn);
+		uint32_t offset;
 		int cycles = load ? 3 : 2;	// LDR: 1S + 1N + 1I; STR: 2N
 
 		if (registerOffset)
@@ -915,12 +915,12 @@ namespace GBA
 			offset = opcode & 0xFFF;
 		}
 
-		u32 offsetAddress = add ? base + offset : base - offset;
-		u32 accessAddress = preIndexed ? offsetAddress : base;
+		uint32_t offsetAddress = add ? base + offset : base - offset;
+		uint32_t accessAddress = preIndexed ? offsetAddress : base;
 
 		if (load)
 		{
-			u32 value;
+			uint32_t value;
 			if (byte)
 			{
 				value = LoadByte(accessAddress);
@@ -955,7 +955,7 @@ namespace GBA
 			// ARM Architecture Reference Manual A3.4.1: a store puts the address of the instruction plus 12 on the bus when
 			// r15 is the source, because the data is read one pipeline stage later than an operand
 			// (gba-tests arm 510, "store PC + 4", does the same check for STM).
-			u32 value = (rd == 15)
+			uint32_t value = (rd == 15)
 				? (address + 12)
 				: (byte ? (ReadRegFor(rd) & 0xFFu) : ReadRegFor(rd));
 
@@ -963,7 +963,7 @@ namespace GBA
 				regs[rn] = offsetAddress;
 
 			if (byte)
-				bus->Write8(accessAddress, (u8)value);
+				bus->Write8(accessAddress, (uint8_t)value);
 			else
 				bus->Write32(accessAddress & ~3u, value);
 		}
@@ -973,7 +973,7 @@ namespace GBA
 		return cycles;
 	}
 
-	u32 Arm7tdmi::ArmHalfwordTransfer(u32 opcode)
+	uint32_t Arm7tdmi::ArmHalfwordTransfer(uint32_t opcode)
 	{
 		// ARM Architecture Reference Manual A4.1.8: the extra load/store instructions (halfword and signed byte).
 		//   cond 000 P U I W L Rn Rd offsetHigh 1 S H 1 offsetLow
@@ -986,7 +986,7 @@ namespace GBA
 		bool halfword = (opcode & (1u << 5)) != 0;
 		int rn = (int)((opcode >> 16) & 0xF);
 		int rd = (int)((opcode >> 12) & 0xF);
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 
 		if (!preIndexed && writeback)
 		{
@@ -1015,34 +1015,34 @@ namespace GBA
 			return 3;
 		}
 
-		u32 offset = immediate
+		uint32_t offset = immediate
 			? (((opcode >> 8) & 0xF) << 4) | (opcode & 0xF)
 			: ReadRegFor((int)(opcode & 0xF));
-		u32 base = ReadRegFor(rn);
-		u32 offsetAddress = add ? base + offset : base - offset;
-		u32 accessAddress = preIndexed ? offsetAddress : base;
+		uint32_t base = ReadRegFor(rn);
+		uint32_t offsetAddress = add ? base + offset : base - offset;
+		uint32_t accessAddress = preIndexed ? offsetAddress : base;
 		bool updateBase = writeback || !preIndexed;		// P = 0 always writes the base back
 
 		if (load)
 		{
-			u32 value;
+			uint32_t value;
 			if (!signedLoad)
 			{
 				value = LoadHalfword(accessAddress);						// LDRH (rotates if odd)
 			}
 			else if (!halfword)
 			{
-				value = (u32)(s32)(s8)bus->Read8(accessAddress);			// LDRSB
+				value = (uint32_t)(int32_t)(int8_t)bus->Read8(accessAddress);			// LDRSB
 			}
 			else if ((accessAddress & 1) != 0)
 			{
 				// ARM7TDMI: a signed halfword load from an odd address is done as a signed byte
 				// load (gba-tests arm 409, "misaligned load signed halfword").
-				value = (u32)(s32)(s8)bus->Read8(accessAddress);
+				value = (uint32_t)(int32_t)(int8_t)bus->Read8(accessAddress);
 			}
 			else
 			{
-				value = (u32)(s32)(s16)bus->Read16(accessAddress);			// LDRSH
+				value = (uint32_t)(int32_t)(int16_t)bus->Read16(accessAddress);			// LDRSH
 			}
 
 			if (updateBase && rn != 15)
@@ -1053,18 +1053,18 @@ namespace GBA
 		{
 			// ARM Architecture Reference Manual A3.4.1: a store of r15 puts the address of the instruction plus 12 on the
 			// bus; only an operand read uses plus 8.
-			u32 value = (rd == 15) ? (address + 12) : (ReadRegFor(rd) & 0xFFFFu);
+			uint32_t value = (rd == 15) ? (address + 12) : (ReadRegFor(rd) & 0xFFFFu);
 
 			if (updateBase && rn != 15)
 				regs[rn] = offsetAddress;
-			bus->Write16(accessAddress & ~1u, (u16)value);
+			bus->Write16(accessAddress & ~1u, (uint16_t)value);
 		}
 
 		currentPC = address + 4;
 		return load ? 3 : 2;
 	}
 
-	u32 Arm7tdmi::ArmBlockTransfer(u32 opcode)
+	uint32_t Arm7tdmi::ArmBlockTransfer(uint32_t opcode)
 	{
 		// ARM Architecture Reference Manual A4.1.20: load/store multiple.
 		//   cond 100 P U S W L Rn register_list
@@ -1074,8 +1074,8 @@ namespace GBA
 		bool writeback = (opcode & (1u << 21)) != 0;
 		bool load = (opcode & (1u << 20)) != 0;
 		int rn = (int)((opcode >> 16) & 0xF);
-		u32 list = opcode & 0xFFFF;
-		u32 address = currentPC;
+		uint32_t list = opcode & 0xFFFF;
+		uint32_t address = currentPC;
 
 		if (rn == 15)
 		{
@@ -1095,15 +1095,15 @@ namespace GBA
 		if (emptyList)
 			list = 0x8000;
 
-		u32 base = ReadRegFor(rn);
+		uint32_t base = ReadRegFor(rn);
 		int count = emptyList ? 16 : CountRegisters(list);
-		u32 writebackValue = add ? base + 4u * count : base - 4u * count;
+		uint32_t writebackValue = add ? base + 4u * count : base - 4u * count;
 
 		// The transfer walks the addresses in increasing order, and the four addressing modes put
 		// the first of them here (ARM Architecture Reference Manual A4.1.20):
 		//   IA: base, base+4, ...          IB: base+4, base+8, ...
 		//   DA: base-4(n-1), ..., base     DB: base-4n, ..., base-4
-		u32 transferAddress = add
+		uint32_t transferAddress = add
 			? (preIndexed ? base + 4 : base)
 			: (preIndexed ? base - 4u * count : base - 4u * (count - 1));
 
@@ -1113,7 +1113,7 @@ namespace GBA
 		// the transfer stays in the current bank (ARM Architecture Reference Manual A4.1.20).
 		bool useUserBank = userBank && !(load && (list & 0x8000) != 0);
 
-		auto ReadRegister = [&](int index) -> u32
+		auto ReadRegister = [&](int index) -> uint32_t
 		{
 			if (!useUserBank)
 				return regs[index];
@@ -1123,7 +1123,7 @@ namespace GBA
 			return regs[index];			// r0-r7 are shared by every mode
 		};
 
-		auto WriteRegister = [&](int index, u32 value)
+		auto WriteRegister = [&](int index, uint32_t value)
 		{
 			if (!useUserBank)
 			{
@@ -1168,7 +1168,7 @@ namespace GBA
 					regs[rn] = writebackValue;
 			}
 
-			u32 loadedPC = 0;
+			uint32_t loadedPC = 0;
 			bool loadedPCPresent = false;
 
 			for (int i = 0; i < 16; i++)
@@ -1179,7 +1179,7 @@ namespace GBA
 				// A block transfer ignores the low two bits of the address: unlike an LDR there
 				// is no rotation of the loaded word (ARM Architecture Reference Manual A4.1.20, and gba-tests arm 508
 				// transfers from a base that is deliberately misaligned).
-				u32 value = bus->Read32(transferAddress & ~3u);
+				uint32_t value = bus->Read32(transferAddress & ~3u);
 				transferAddress += 4;
 
 				if (i == 15)
@@ -1229,7 +1229,7 @@ namespace GBA
 				if ((list & (1u << i)) == 0)
 					continue;
 
-				u32 value;
+				uint32_t value;
 				if (i == 15)
 				{
 					// A store of r15 puts the *next* pipeline stage's PC on the bus: the pipeline
@@ -1262,9 +1262,9 @@ namespace GBA
 		return (load ? 3 : 2) + BlockTransferCycles(count, false);
 	}
 
-	u32 Arm7tdmi::ArmBranch(u32 opcode)
+	uint32_t Arm7tdmi::ArmBranch(uint32_t opcode)
 	{
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool link = (opcode & (1u << 24)) != 0;
 
 		if ((opcode & 0x0FFFFFF0) == 0x012FFF10)
@@ -1285,20 +1285,20 @@ namespace GBA
 
 		// B/BL: cond 101 L offset(24). The offset is sign-extended, shifted left by two and
 		// added to the pipeline PC (the address of the instruction plus 8).
-		u32 offset = SignExtend(opcode & 0xFFFFFF, 24) << 2;
+		uint32_t offset = SignExtend(opcode & 0xFFFFFF, 24) << 2;
 		if (link)
 			regs[14] = address + 4;		// the return address: the instruction after the BL
 		currentPC = (address + 8 + offset) & ~1u;
 		return 3;						// 2S + 1N
 	}
 
-	u32 Arm7tdmi::ArmSwi(u32 opcode)
+	uint32_t Arm7tdmi::ArmSwi(uint32_t opcode)
 	{
 		// GBATEK "SWI": the comment field is bits 16-23 of the instruction and selects the BIOS
 		// function. The return address is the instruction after the SWI.
-		u32 address = currentPC;
-		u32 comment = (opcode >> 16) & 0xFF;
-		u32 returnAddress = address + 4;
+		uint32_t address = currentPC;
+		uint32_t comment = (opcode >> 16) & 0xFF;
+		uint32_t returnAddress = address + 4;
 
 		bool wasThumb = ThumbState();
 
@@ -1335,7 +1335,7 @@ namespace GBA
 		return 3;						// 2S + 1N
 	}
 
-	u32 Arm7tdmi::ArmCoprocessor(u32 opcode)
+	uint32_t Arm7tdmi::ArmCoprocessor(uint32_t opcode)
 	{
 		// GBATEK "GBA CPU": the GBA has no coprocessor, so every coprocessor instruction -
 		// LDC/STC (cond 110), CDP and MCR/MRC (cond 1110) - is UNDEFINED and takes the
@@ -1352,8 +1352,8 @@ namespace GBA
 
 	int Arm7tdmi::StepThumb()
 	{
-		u32 address = currentPC;
-		u16 opcode = bus->Fetch16(address);
+		uint32_t address = currentPC;
+		uint16_t opcode = bus->Fetch16(address);
 
 		// ARM Architecture Reference Manual 4.5, Table 4-1: bits 15-12 (with a few special cases inside each group) pick
 		// one of the nineteen Thumb formats. Every decoder moves the PC on itself.
@@ -1427,17 +1427,17 @@ namespace GBA
 		return 3;
 	}
 
-	u32 Arm7tdmi::ThumbShiftImmediate(u16 opcode)
+	uint32_t Arm7tdmi::ThumbShiftImmediate(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.1: LSL/LSR/ASR Rd, Rs, #imm5. Always sets N, Z and C.
-		u32 address = currentPC;
-		u32 type = (opcode >> 11) & 3;
-		u32 amount = (opcode >> 6) & 0x1F;
+		uint32_t address = currentPC;
+		uint32_t type = (opcode >> 11) & 3;
+		uint32_t amount = (opcode >> 6) & 0x1F;
 		int rs = (opcode >> 3) & 7;
 		int rd = opcode & 7;
 
 		bool carry = (cpsr & FlagC) != 0;
-		u32 result = ShiftOperand(regs[rs], type, amount, carry);
+		uint32_t result = ShiftOperand(regs[rs], type, amount, carry);
 		SetLogicFlags(result, carry);
 		regs[rd] = result;
 
@@ -1445,20 +1445,20 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbAddSubtract(u16 opcode)
+	uint32_t Arm7tdmi::ThumbAddSubtract(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.2: ADD/SUB Rd, Rs, Rn or ADD/SUB Rd, Rs, #imm3. Sets all four flags.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool immediate = (opcode & 0x0400) != 0;
 		bool subtract = (opcode & 0x0200) != 0;
-		u32 field = (opcode >> 6) & 7;
+		uint32_t field = (opcode >> 6) & 7;
 		int rs = (opcode >> 3) & 7;
 		int rd = opcode & 7;
 
-		u32 operand = immediate ? field : regs[field];
+		uint32_t operand = immediate ? field : regs[field];
 		bool carry = false;
 		bool overflow = false;
-		u32 result = subtract
+		uint32_t result = subtract
 			? AddWithCarry(regs[rs], ~operand, 1, carry, overflow)
 			: AddWithCarry(regs[rs], operand, 0, carry, overflow);
 
@@ -1469,14 +1469,14 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbMovCmpAddSub(u16 opcode)
+	uint32_t Arm7tdmi::ThumbMovCmpAddSub(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.3: MOV/CMP/ADD/SUB Rd, #imm8. MOV sets only N and Z; the other three set
 		// all four flags.
-		u32 address = currentPC;
-		u32 operation = (opcode >> 11) & 3;
+		uint32_t address = currentPC;
+		uint32_t operation = (opcode >> 11) & 3;
 		int rd = (opcode >> 8) & 7;
-		u32 immediate = opcode & 0xFF;
+		uint32_t immediate = opcode & 0xFF;
 
 		bool carry = false;
 		bool overflow = false;
@@ -1489,20 +1489,20 @@ namespace GBA
 			break;
 		case 1:						// CMP
 		{
-			u32 result = AddWithCarry(regs[rd], ~immediate, 1, carry, overflow);
+			uint32_t result = AddWithCarry(regs[rd], ~immediate, 1, carry, overflow);
 			SetArithFlags(result, carry, overflow);
 			break;
 		}
 		case 2:						// ADD
 		{
-			u32 result = AddWithCarry(regs[rd], immediate, 0, carry, overflow);
+			uint32_t result = AddWithCarry(regs[rd], immediate, 0, carry, overflow);
 			SetArithFlags(result, carry, overflow);
 			regs[rd] = result;
 			break;
 		}
 		default:					// SUB
 		{
-			u32 result = AddWithCarry(regs[rd], ~immediate, 1, carry, overflow);
+			uint32_t result = AddWithCarry(regs[rd], ~immediate, 1, carry, overflow);
 			SetArithFlags(result, carry, overflow);
 			regs[rd] = result;
 			break;
@@ -1513,18 +1513,18 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbAluOperation(u16 opcode)
+	uint32_t Arm7tdmi::ThumbAluOperation(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.4: the sixteen ALU operations of format 4. For the four shifts the amount
 		// is the low byte of Rd, which is also the destination - that is the encoding, and it
 		// makes those shifts register-specified ones, so an amount of 0 leaves the value and C
 		// alone (ShiftOperandByRegister; gba-tests thumb 068).
-		u32 address = currentPC;
-		u32 operation = (opcode >> 6) & 0xF;
+		uint32_t address = currentPC;
+		uint32_t operation = (opcode >> 6) & 0xF;
 		int rs = (opcode >> 3) & 7;
 		int rd = opcode & 7;
-		u32 value = regs[rd];
-		u32 operand = regs[rs];
+		uint32_t value = regs[rd];
+		uint32_t operand = regs[rs];
 
 		bool carry = (cpsr & FlagC) != 0;
 		bool overflow = false;
@@ -1571,13 +1571,13 @@ namespace GBA
 			break;
 		case 0xA:														// CMP
 		{
-			u32 result = AddWithCarry(value, ~operand, 1, carry, overflow);
+			uint32_t result = AddWithCarry(value, ~operand, 1, carry, overflow);
 			SetArithFlags(result, carry, overflow);
 			break;
 		}
 		case 0xB:														// CMN
 		{
-			u32 result = AddWithCarry(value, operand, 0, carry, overflow);
+			uint32_t result = AddWithCarry(value, operand, 0, carry, overflow);
 			SetArithFlags(result, carry, overflow);
 			break;
 		}
@@ -1593,16 +1593,16 @@ namespace GBA
 		}
 
 		currentPC = address + 2;
-		return (u32)cycles;
+		return (uint32_t)cycles;
 	}
 
-	u32 Arm7tdmi::ThumbHiRegister(u16 opcode)
+	uint32_t Arm7tdmi::ThumbHiRegister(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.5: ADD/CMP/MOV/BX with the high registers. ADD and MOV do not set the
 		// flags, CMP sets all four, and BX is the interworking branch. A write of r15 here is a
 		// branch; ARMv4T does not switch state on it.
-		u32 address = currentPC;
-		u32 operation = (opcode >> 8) & 3;
+		uint32_t address = currentPC;
+		uint32_t operation = (opcode >> 8) & 3;
 		int rs = ((opcode >> 3) & 7) | ((opcode & 0x40) ? 8 : 0);
 		int rd = (opcode & 7) | ((opcode & 0x80) ? 8 : 0);
 
@@ -1613,7 +1613,7 @@ namespace GBA
 		{
 		case 0:						// ADD (no flags)
 		{
-			u32 result = ReadRegFor(rd) + ReadRegFor(rs);
+			uint32_t result = ReadRegFor(rd) + ReadRegFor(rs);
 			if (rd == 15)
 			{
 				currentPC = result & ~1u;
@@ -1624,13 +1624,13 @@ namespace GBA
 		}
 		case 1:						// CMP (all flags)
 		{
-			u32 result = AddWithCarry(ReadRegFor(rd), ~ReadRegFor(rs), 1, carry, overflow);
+			uint32_t result = AddWithCarry(ReadRegFor(rd), ~ReadRegFor(rs), 1, carry, overflow);
 			SetArithFlags(result, carry, overflow);
 			break;
 		}
 		case 2:						// MOV (no flags)
 		{
-			u32 result = ReadRegFor(rs);
+			uint32_t result = ReadRegFor(rs);
 			if (rd == 15)
 			{
 				currentPC = result & ~1u;
@@ -1648,12 +1648,12 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbPcRelativeLoad(u16 opcode)
+	uint32_t Arm7tdmi::ThumbPcRelativeLoad(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.6: LDR Rd, [PC, #imm8*4]. The address is word aligned.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		int rd = (opcode >> 8) & 7;
-		u32 offset = (opcode & 0xFF) * 4;
+		uint32_t offset = (opcode & 0xFF) * 4;
 
 		regs[rd] = bus->Read32((ReadRegFor(15) & ~3u) + offset);
 
@@ -1661,16 +1661,16 @@ namespace GBA
 		return 3;					// 1S + 1N + 1I
 	}
 
-	u32 Arm7tdmi::ThumbLoadStoreReg(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLoadStoreReg(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.7: STR/LDR/STRB/LDRB Rd, [Rb, Ro].
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool load = (opcode & 0x0800) != 0;
 		bool byte = (opcode & 0x0400) != 0;
 		int ro = (opcode >> 6) & 7;
 		int rb = (opcode >> 3) & 7;
 		int rd = opcode & 7;
-		u32 accessAddress = regs[rb] + regs[ro];
+		uint32_t accessAddress = regs[rb] + regs[ro];
 
 		if (load)
 		{
@@ -1686,7 +1686,7 @@ namespace GBA
 		}
 		else if (byte)
 		{
-			bus->Write8(accessAddress, (u8)regs[rd]);
+			bus->Write8(accessAddress, (uint8_t)regs[rd]);
 		}
 		else
 		{
@@ -1697,26 +1697,26 @@ namespace GBA
 		return load ? 3 : 2;
 	}
 
-	u32 Arm7tdmi::ThumbLoadStoreSignExtend(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLoadStoreSignExtend(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.8: STRH/LDRH/LDRSB/LDRSH Rd, [Rb, Ro]. Unlike the ARM encoding there is
 		// no separate L bit: H says halfword, S says sign-extend, and only the H = 0, S = 0
 		// combination is a store - all four combinations are defined in Thumb.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool halfwordOperand = (opcode & 0x0800) != 0;
 		bool signedOperand = (opcode & 0x0400) != 0;
 		int ro = (opcode >> 6) & 7;
 		int rb = (opcode >> 3) & 7;
 		int rd = opcode & 7;
-		u32 accessAddress = regs[rb] + regs[ro];
+		uint32_t accessAddress = regs[rb] + regs[ro];
 		bool load = halfwordOperand || signedOperand;
 
 		if (signedOperand)
 		{
 			if (halfwordOperand && (accessAddress & 1) == 0)
-				regs[rd] = (u32)(s32)(s16)bus->Read16(accessAddress);		// LDRSH
+				regs[rd] = (uint32_t)(int32_t)(int16_t)bus->Read16(accessAddress);		// LDRSH
 			else
-				regs[rd] = (u32)(s32)(s8)bus->Read8(accessAddress);			// LDRSB, and an odd LDRSH
+				regs[rd] = (uint32_t)(int32_t)(int8_t)bus->Read8(accessAddress);			// LDRSB, and an odd LDRSH
 		}
 		else if (halfwordOperand)
 		{
@@ -1724,23 +1724,23 @@ namespace GBA
 		}
 		else
 		{
-			bus->Write16(accessAddress & ~1u, (u16)regs[rd]);				// STRH
+			bus->Write16(accessAddress & ~1u, (uint16_t)regs[rd]);				// STRH
 		}
 
 		currentPC = address + 2;
 		return load ? 3 : 2;
 	}
 
-	u32 Arm7tdmi::ThumbLoadStoreImmediate(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLoadStoreImmediate(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.9: STR/LDR/STRB/LDRB Rd, [Rb, #imm5] (word or byte scaled).
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool byte = (opcode & 0x1000) != 0;
 		bool load = (opcode & 0x0800) != 0;
-		u32 offset = (opcode >> 6) & 0x1F;
+		uint32_t offset = (opcode >> 6) & 0x1F;
 		int rb = (opcode >> 3) & 7;
 		int rd = opcode & 7;
-		u32 accessAddress = regs[rb] + (byte ? offset : offset * 4);
+		uint32_t accessAddress = regs[rb] + (byte ? offset : offset * 4);
 
 		if (load)
 		{
@@ -1756,7 +1756,7 @@ namespace GBA
 		}
 		else if (byte)
 		{
-			bus->Write8(accessAddress, (u8)regs[rd]);
+			bus->Write8(accessAddress, (uint8_t)regs[rd]);
 		}
 		else
 		{
@@ -1767,32 +1767,32 @@ namespace GBA
 		return load ? 3 : 2;
 	}
 
-	u32 Arm7tdmi::ThumbLoadStoreHalfword(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLoadStoreHalfword(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.10: STRH/LDRH Rd, [Rb, #imm5*2].
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool load = (opcode & 0x0800) != 0;
-		u32 offset = ((opcode >> 6) & 0x1F) * 2;
+		uint32_t offset = ((opcode >> 6) & 0x1F) * 2;
 		int rb = (opcode >> 3) & 7;
 		int rd = opcode & 7;
-		u32 accessAddress = regs[rb] + offset;
+		uint32_t accessAddress = regs[rb] + offset;
 
 		if (load)
 			regs[rd] = LoadHalfword(accessAddress);
 		else
-			bus->Write16(accessAddress & ~1u, (u16)regs[rd]);
+			bus->Write16(accessAddress & ~1u, (uint16_t)regs[rd]);
 
 		currentPC = address + 2;
 		return load ? 3 : 2;
 	}
 
-	u32 Arm7tdmi::ThumbLoadStoreSpRelative(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLoadStoreSpRelative(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.11: STR/LDR Rd, [SP, #imm8*4].
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool load = (opcode & 0x0800) != 0;
 		int rd = (opcode >> 8) & 7;
-		u32 accessAddress = regs[13] + (opcode & 0xFF) * 4;
+		uint32_t accessAddress = regs[13] + (opcode & 0xFF) * 4;
 
 		if (load)
 		{
@@ -1808,13 +1808,13 @@ namespace GBA
 		return load ? 3 : 2;
 	}
 
-	u32 Arm7tdmi::ThumbLoadAddress(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLoadAddress(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.12: ADD Rd, PC/SP, #imm8*4. No flags.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool fromStack = (opcode & 0x0800) != 0;
 		int rd = (opcode >> 8) & 7;
-		u32 offset = (opcode & 0xFF) * 4;
+		uint32_t offset = (opcode & 0xFF) * 4;
 
 		regs[rd] = (fromStack ? regs[13] : (ReadRegFor(15) & ~3u)) + offset;
 
@@ -1822,11 +1822,11 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbAddOffsetToSp(u16 opcode)
+	uint32_t Arm7tdmi::ThumbAddOffsetToSp(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.13: ADD/SUB SP, #imm7*4. No flags.
-		u32 address = currentPC;
-		u32 offset = (opcode & 0x7F) * 4;
+		uint32_t address = currentPC;
+		uint32_t offset = (opcode & 0x7F) * 4;
 
 		if ((opcode & 0x0080) != 0)
 			regs[13] -= offset;
@@ -1837,24 +1837,24 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbPushPop(u16 opcode)
+	uint32_t Arm7tdmi::ThumbPushPop(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.14: PUSH {Rlist, LR} is STMDB SP!, {...} and POP {Rlist, PC} is
 		// LDMIA SP!, {...} - exactly the ARM form of the same transfer. Building that word and
 		// running the block transfer keeps the two decoders from drifting apart.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool pop = (opcode & 0x0800) != 0;
 		bool extra = (opcode & 0x0100) != 0;
-		u32 list = opcode & 0xFF;
+		uint32_t list = opcode & 0xFF;
 
 		if (extra)
 			list |= pop ? (1u << 15) : (1u << 14);
 
-		u32 armOpcode = pop
+		uint32_t armOpcode = pop
 			? (0xE8BD0000u | list)		// LDMIA sp!, {...}
 			: (0xE92D0000u | list);		// STMDB sp!, {...}
 
-		u32 cycles = ArmBlockTransfer(armOpcode);
+		uint32_t cycles = ArmBlockTransfer(armOpcode);
 
 		// The shared decoder moves the PC on by four bytes (an ARM instruction); a Thumb
 		// instruction is two bytes long. A POP that loaded r15 branched and has already moved it
@@ -1865,16 +1865,16 @@ namespace GBA
 		return cycles;
 	}
 
-	u32 Arm7tdmi::ThumbMultipleTransfer(u16 opcode)
+	uint32_t Arm7tdmi::ThumbMultipleTransfer(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.15: STMIA/LDMIA Rb!, {Rlist}: the ARM post-indexed block transfer.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool load = (opcode & 0x0800) != 0;
 		int rb = (opcode >> 8) & 7;
-		u32 list = opcode & 0xFF;
+		uint32_t list = opcode & 0xFF;
 
-		u32 armOpcode = (load ? 0xE8B00000u : 0xE8A00000u) | ((u32)rb << 16) | list;
-		u32 cycles = ArmBlockTransfer(armOpcode);
+		uint32_t armOpcode = (load ? 0xE8B00000u : 0xE8A00000u) | ((uint32_t)rb << 16) | list;
+		uint32_t cycles = ArmBlockTransfer(armOpcode);
 
 		// Same as PUSH/POP: two bytes, not the four the ARM decoder charges, unless the load
 		// brought r15 in (an empty list does that through the ARM7TDMI's oddity).
@@ -1884,13 +1884,13 @@ namespace GBA
 		return cycles;
 	}
 
-	u32 Arm7tdmi::ThumbConditionalBranch(u16 opcode)
+	uint32_t Arm7tdmi::ThumbConditionalBranch(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.16: B<cond> label, a signed 8-bit offset counted in halfwords from the
 		// pipeline PC. Condition 1110 is undefined; 1111 is the SWI, which the table sends
 		// somewhere else.
-		u32 address = currentPC;
-		u32 condition = (opcode >> 8) & 0xF;
+		uint32_t address = currentPC;
+		uint32_t condition = (opcode >> 8) & 0xF;
 
 		if (condition == 0xE)
 		{
@@ -1901,7 +1901,7 @@ namespace GBA
 
 		if (ConditionPassed(condition))
 		{
-			u32 offset = SignExtend(opcode & 0xFF, 8) << 1;
+			uint32_t offset = SignExtend(opcode & 0xFF, 8) << 1;
 			currentPC = (address + 4 + offset) & ~1u;
 			return 3;				// 2S + 1N
 		}
@@ -1910,15 +1910,15 @@ namespace GBA
 		return 1;
 	}
 
-	u32 Arm7tdmi::ThumbSwi(u16 opcode)
+	uint32_t Arm7tdmi::ThumbSwi(uint16_t opcode)
 	{
 		// GBATEK "SWI": a Thumb SWI's comment is its own 8-bit immediate (the ARM form puts the
 		// same number in bits 16-23, which is why Thumb assemblers accept "swi n<<16"). The HLE
 		// contract is the one ArmSwi documents: the host returns through the PC (left on the next
 		// halfword), and the caller's LR is left untouched.
-		u32 address = currentPC;
-		u32 comment = opcode & 0xFF;
-		u32 returnAddress = address + 2;
+		uint32_t address = currentPC;
+		uint32_t comment = opcode & 0xFF;
+		uint32_t returnAddress = address + 2;
 
 		if (bus->HleBiosEnabled)
 		{
@@ -1941,17 +1941,17 @@ namespace GBA
 		return 3;
 	}
 
-	u32 Arm7tdmi::ThumbUnconditionalBranch(u16 opcode)
+	uint32_t Arm7tdmi::ThumbUnconditionalBranch(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.18: B label, an 11-bit signed offset counted in halfwords.
-		u32 address = currentPC;
-		u32 offset = SignExtend(opcode & 0x7FF, 11) << 1;
+		uint32_t address = currentPC;
+		uint32_t offset = SignExtend(opcode & 0x7FF, 11) << 1;
 
 		currentPC = (address + 4 + offset) & ~1u;
 		return 3;					// 2S + 1N
 	}
 
-	u32 Arm7tdmi::ThumbLongBranchWithLink(u16 opcode)
+	uint32_t Arm7tdmi::ThumbLongBranchWithLink(uint16_t opcode)
 	{
 		// ARM Architecture Reference Manual 4.5.23: BL, two halfwords. The first puts the high part of the offset into LR
 		// and the second adds the low part and branches.
@@ -1962,9 +1962,9 @@ namespace GBA
 		// i.e. the address just past the two halfwords. That is the value every Thumb compiler
 		// and every GBA game expects from "bl" - it is what makes "bx lr" return to the
 		// instruction after the call - so that is the behaviour implemented here.
-		u32 address = currentPC;
+		uint32_t address = currentPC;
 		bool second = (opcode & 0x0800) != 0;
-		u32 offset = opcode & 0x7FF;
+		uint32_t offset = opcode & 0x7FF;
 
 		if (!second)
 		{
@@ -1974,7 +1974,7 @@ namespace GBA
 			return 1;
 		}
 
-		u32 target = regs[14] + (offset << 1);
+		uint32_t target = regs[14] + (offset << 1);
 		regs[14] = (address + 2) | 1u;		// = (address of the BL + 4) | 1
 		currentPC = target & ~1u;			// the branch stays in Thumb
 

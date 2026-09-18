@@ -43,59 +43,59 @@ namespace
 
 	// GBATEK "0BDh - Complement check": the byte that makes
 	// 19h + sum(0A0h..0BCh) + the stored byte wrap to zero.
-	u8 HeaderChecksum(const std::vector<u8>& image)
+	uint8_t HeaderChecksum(const std::vector<uint8_t>& image)
 	{
-		u32 sum = 0x19;
-		for (u32 i = 0xA0; i <= 0xBC; i++)
+		uint32_t sum = 0x19;
+		for (uint32_t i = 0xA0; i <= 0xBC; i++)
 			sum += image[i];
-		return (u8)(0 - sum);
+		return (uint8_t)(0 - sum);
 	}
 
 	// A synthetic cartridge image: the header GBATEK describes (title at 0A0h, game code at
 	// 0ACh, maker code at 0B0h, the fixed 96h at 0B2h) and a valid complement check. The rest
 	// of the image is filled with 0FFh, the erased state, so every byte the tests look at is
 	// set explicitly.
-	std::vector<u8> MakeRom(size_t size = 32 * 1024)
+	std::vector<uint8_t> MakeRom(size_t size = 32 * 1024)
 	{
-		std::vector<u8> image(size, 0xFF);
+		std::vector<uint8_t> image(size, 0xFF);
 
 		const char* title = "CART TEST   ";		// 12 characters, space padded
-		for (int i = 0; i < 12; i++) image[0xA0 + i] = (u8)title[i];
+		for (int i = 0; i < 12; i++) image[0xA0 + i] = (uint8_t)title[i];
 		const char* code = "ATSE";
-		for (int i = 0; i < 4; i++) image[0xAC + i] = (u8)code[i];
+		for (int i = 0; i < 4; i++) image[0xAC + i] = (uint8_t)code[i];
 		image[0xB0] = '0';
 		image[0xB1] = '1';
 		image[0xB2] = 0x96;						// the fixed header value
-		for (u32 i = 0xB5; i <= 0xBC; i++) image[i] = 0x00;
+		for (uint32_t i = 0xB5; i <= 0xBC; i++) image[i] = 0x00;
 		image[0xBD] = HeaderChecksum(image);
 		return image;
 	}
 
 	// A save type ID string at a word aligned address (GBATEK "GBA Cart Backup IDs").
-	void PutSignature(std::vector<u8>& image, size_t offset, const char* text)
+	void PutSignature(std::vector<uint8_t>& image, size_t offset, const char* text)
 	{
 		memcpy(image.data() + offset, text, strlen(text));
 	}
 
-	void PutWord(std::vector<u8>& image, size_t offset, u32 value)
+	void PutWord(std::vector<uint8_t>& image, size_t offset, uint32_t value)
 	{
-		image[offset + 0] = (u8)(value & 0xFF);
-		image[offset + 1] = (u8)((value >> 8) & 0xFF);
-		image[offset + 2] = (u8)((value >> 16) & 0xFF);
-		image[offset + 3] = (u8)((value >> 24) & 0xFF);
+		image[offset + 0] = (uint8_t)(value & 0xFF);
+		image[offset + 1] = (uint8_t)((value >> 8) & 0xFF);
+		image[offset + 2] = (uint8_t)((value >> 16) & 0xFF);
+		image[offset + 3] = (uint8_t)((value >> 24) & 0xFF);
 	}
 
 	// The GPIO addresses a cartridge that uses the port loads as literals: that is how the
 	// emulator detects the add-on (GBATEK "GBA Cart I/O Port (GPIO)" has no header flag).
-	std::vector<u8> WithGpioPort(const std::vector<u8>& rom)
+	std::vector<uint8_t> WithGpioPort(const std::vector<uint8_t>& rom)
 	{
-		std::vector<u8> image = rom;
+		std::vector<uint8_t> image = rom;
 		PutWord(image, 0x200, 0x080000C4);		// the data/direction registers
 		PutWord(image, 0x204, 0x080000C8);		// the control register
 		return image;
 	}
 
-	void WriteFile(const std::string& path, const std::vector<u8>& data)
+	void WriteFile(const std::string& path, const std::vector<uint8_t>& data)
 	{
 		std::ofstream file(path, std::ios::binary | std::ios::trunc);
 		file.write((const char*)data.data(), (std::streamsize)data.size());
@@ -112,7 +112,7 @@ namespace
 		cart.WriteSave(0x2AAA, 0x55);
 	}
 
-	void FlashCommand(Cart& cart, u8 command)
+	void FlashCommand(Cart& cart, uint8_t command)
 	{
 		FlashUnlock(cart);
 		cart.WriteSave(0x5555, command);
@@ -125,47 +125,47 @@ namespace
 	// bit becomes one halfword write into the ROM window.
 	// -------------------------------------------------------------------------------------
 
-	void EepromSendBits(Cart& cart, const std::vector<u8>& bits)
+	void EepromSendBits(Cart& cart, const std::vector<uint8_t>& bits)
 	{
 		for (size_t i = 0; i < bits.size(); i++)
-			cart.WriteRom16(ScratchBus(), 0, (u16)(bits[i] & 1));
+			cart.WriteRom16(ScratchBus(), 0, (uint16_t)(bits[i] & 1));
 	}
 
 	// The write request: "10", the address (MSB first), 64 data bits (MSB first), a "0".
-	std::vector<u8> EepromWriteStream(u32 block, int addressBits, const u8* data)
+	std::vector<uint8_t> EepromWriteStream(uint32_t block, int addressBits, const uint8_t* data)
 	{
-		std::vector<u8> bits;
+		std::vector<uint8_t> bits;
 		bits.push_back(1);						// the leading start bit of both requests
 		bits.push_back(0);						// 0 = write
 		for (int i = addressBits - 1; i >= 0; i--)
-			bits.push_back((u8)((block >> i) & 1));
+			bits.push_back((uint8_t)((block >> i) & 1));
 		for (int i = 0; i < 8; i++)
 			for (int b = 7; b >= 0; b--)
-				bits.push_back((u8)((data[i] >> b) & 1));
+				bits.push_back((uint8_t)((data[i] >> b) & 1));
 		bits.push_back(0);						// the trailing dummy bit
 		return bits;
 	}
 
 	// The read request: "11", the address (MSB first), a "0".
-	std::vector<u8> EepromReadRequest(u32 block, int addressBits)
+	std::vector<uint8_t> EepromReadRequest(uint32_t block, int addressBits)
 	{
-		std::vector<u8> bits;
+		std::vector<uint8_t> bits;
 		bits.push_back(1);
 		bits.push_back(1);						// 1 = read
 		for (int i = addressBits - 1; i >= 0; i--)
-			bits.push_back((u8)((block >> i) & 1));
+			bits.push_back((uint8_t)((block >> i) & 1));
 		bits.push_back(0);
 		return bits;
 	}
 
 	// Send a request and check that the busy flag covers exactly the whole stream: the write
 	// request ends with its last bit, the read request leaves the chip driving the bus.
-	void EepromSendRequest(Cart& cart, const std::vector<u8>& bits, bool completes)
+	void EepromSendRequest(Cart& cart, const std::vector<uint8_t>& bits, bool completes)
 	{
 		GBA_CHECK_MSG(!cart.EepromBusy(), "the EEPROM must be idle before a transfer");
 		for (size_t i = 0; i < bits.size(); i++)
 		{
-			cart.WriteRom16(ScratchBus(), 0, (u16)(bits[i] & 1));
+			cart.WriteRom16(ScratchBus(), 0, (uint16_t)(bits[i] & 1));
 			if (completes && i + 1 == bits.size())
 				GBA_CHECK_MSG(!cart.EepromBusy(), "the last write bit completes the transfer");
 			else
@@ -175,18 +175,18 @@ namespace
 
 	// Read the 64 data bits the chip shifts out after a read request: 4 ignored bits, then the
 	// 64 bits of the block, most significant bit first.
-	void EepromReadData(Cart& cart, u8* out)
+	void EepromReadData(Cart& cart, uint8_t* out)
 	{
 		for (int i = 0; i < 4; i++)
 		{
 			GBA_CHECK_HEX16(cart.ReadRom16(0), 0x0000);
 			GBA_CHECK(cart.EepromBusy());
 		}
-		u8 data[8] = {};
+		uint8_t data[8] = {};
 		for (int i = 0; i < 64; i++)
 		{
-			u8 bit = (u8)(cart.ReadRom16(0) & 1);
-			data[i / 8] = (u8)((data[i / 8] << 1) | bit);
+			uint8_t bit = (uint8_t)(cart.ReadRom16(0) & 1);
+			data[i / 8] = (uint8_t)((data[i / 8] << 1) | bit);
 		}
 		GBA_CHECK_MSG(!cart.EepromBusy(), "the 68 bit read stream ends the transfer");
 		memcpy(out, data, 8);
@@ -199,42 +199,42 @@ namespace
 	// (data), 080000C6h (direction) and 080000C8h (control), the offsets used here.
 	// -------------------------------------------------------------------------------------
 
-	const u32 GpioData = 0x04;
-	const u32 GpioDirection = 0x06;
-	const u32 GpioControl = 0x08;
+	const uint32_t GpioData = 0x04;
+	const uint32_t GpioDirection = 0x06;
+	const uint32_t GpioControl = 0x08;
 
-	const u8 GpioSck = 0x01;
-	const u8 GpioSio = 0x02;
-	const u8 GpioCs = 0x04;
+	const uint8_t GpioSck = 0x01;
+	const uint8_t GpioSio = 0x02;
+	const uint8_t GpioCs = 0x04;
 
-	void GpioWrite(Cart& cart, u8 value)
+	void GpioWrite(Cart& cart, uint8_t value)
 	{
 		cart.WriteGpio(GpioData, value);
 	}
 
 	// One command/parameter byte, LSB first, on the rising clock edge (GBATEK "DS Real-Time
 	// Clock (RTC)" bit transfer; the GBA's S-3511A uses the same protocol).
-	void RtcSendByte(Cart& cart, u8 value)
+	void RtcSendByte(Cart& cart, uint8_t value)
 	{
 		cart.WriteGpio(GpioDirection, 0x07);			// SCK, SIO and CS are outputs
 		for (int i = 0; i < 8; i++)
 		{
-			u8 data = (u8)(((value >> i) & 1) ? GpioSio : 0);
-			GpioWrite(cart, (u8)(GpioCs | data));				// SCK low: the bit is set up
-			GpioWrite(cart, (u8)(GpioCs | data | GpioSck));		// rising edge: the chip takes it
+			uint8_t data = (uint8_t)(((value >> i) & 1) ? GpioSio : 0);
+			GpioWrite(cart, (uint8_t)(GpioCs | data));				// SCK low: the bit is set up
+			GpioWrite(cart, (uint8_t)(GpioCs | data | GpioSck));		// rising edge: the chip takes it
 		}
 	}
 
-	u8 RtcReceiveByte(Cart& cart)
+	uint8_t RtcReceiveByte(Cart& cart)
 	{
 		cart.WriteGpio(GpioDirection, 0x05);			// SIO is an input while reading
-		u8 value = 0;
+		uint8_t value = 0;
 		for (int i = 0; i < 8; i++)
 		{
 			GpioWrite(cart, GpioCs);					// falling edge: the chip drives the bit
-			GpioWrite(cart, (u8)(GpioCs | GpioSck));	// rising edge: the game samples it
+			GpioWrite(cart, (uint8_t)(GpioCs | GpioSck));	// rising edge: the game samples it
 			if (cart.ReadGpio(GpioData) & GpioSio)
-				value = (u8)(value | (1 << i));
+				value = (uint8_t)(value | (1 << i));
 		}
 		return value;
 	}
@@ -259,7 +259,7 @@ namespace
 GBA_TEST(Cart, HeaderFields)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 
 	Cart cart;
 	GBA_CHECK_MSG(cart.LoadRom(image, error), error);
@@ -272,7 +272,7 @@ GBA_TEST(Cart, HeaderFields)
 
 	// A wrong complement check is reported but the ROM is still usable (a homebrew image with
 	// a sloppy header must not be rejected).
-	image[0xBD] = (u8)(image[0xBD] ^ 0xFF);
+	image[0xBD] = (uint8_t)(image[0xBD] ^ 0xFF);
 	Cart broken;
 	GBA_CHECK_MSG(broken.LoadRom(image, error), error);
 	GBA_CHECK(!broken.HeaderChecksumOk());
@@ -280,7 +280,7 @@ GBA_TEST(Cart, HeaderFields)
 
 	// An image too short for a header is loaded as well (multiboot/test images), it simply has
 	// no header fields.
-	std::vector<u8> tiny(64, 0x00);
+	std::vector<uint8_t> tiny(64, 0x00);
 	Cart shortCart;
 	GBA_CHECK_MSG(shortCart.LoadRom(tiny, error), error);
 	GBA_CHECK(!shortCart.HeaderChecksumOk());
@@ -288,13 +288,13 @@ GBA_TEST(Cart, HeaderFields)
 	GBA_CHECK(shortCart.GameCode().empty());
 
 	// Only an empty image and one bigger than the 32 MByte Game Pak are refused.
-	std::vector<u8> empty;
+	std::vector<uint8_t> empty;
 	Cart refused;
 	GBA_CHECK(!refused.LoadRom(empty, error));
 	GBA_CHECK_MSG(!error.empty(), "an empty image must come with a readable error");
 	GBA_CHECK(!refused.IsLoaded());
 
-	std::vector<u8> huge(32 * 1024 * 1024 + 1, 0x00);
+	std::vector<uint8_t> huge(32 * 1024 * 1024 + 1, 0x00);
 	GBA_CHECK(!refused.LoadRom(huge, error));
 	GBA_CHECK(!error.empty());
 }
@@ -302,9 +302,9 @@ GBA_TEST(Cart, HeaderFields)
 GBA_TEST(Cart, RomReadRules)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom(0x8000);
+	std::vector<uint8_t> image = MakeRom(0x8000);
 	for (int i = 0; i < 8; i++)
-		image[0x1000 + i] = (u8)(0x40 + i);			// 40h,41h,42h,... at 01000h
+		image[0x1000 + i] = (uint8_t)(0x40 + i);			// 40h,41h,42h,... at 01000h
 
 	Cart cart;
 	GBA_CHECK_MSG(cart.LoadRom(image, error), error);
@@ -331,7 +331,7 @@ GBA_TEST(Cart, RomReadRules)
 
 	// An image that is not a power of two (the public test ROMs are a few KByte) is masked
 	// through the next power of two; its partial last bank reads as open bus.
-	std::vector<u8> odd = MakeRom(0x2200);
+	std::vector<uint8_t> odd = MakeRom(0x2200);
 	odd[0x400] = 0x5A;
 	Cart oddCart;
 	GBA_CHECK_MSG(oddCart.LoadRom(odd, error), error);
@@ -372,7 +372,7 @@ GBA_TEST(Cart, NoCartridge)
 	GBA_CHECK(cart.SaveSaveFile("", &error));
 
 	// Eject removes the cartridge and leaves the machine on the boot ROM alone.
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	GBA_CHECK_MSG(cart.LoadRom(image, error), error);
 	GBA_CHECK(cart.IsLoaded());
 	cart.Eject();
@@ -403,7 +403,7 @@ GBA_TEST(Cart, LoadRomFile)
 	GBA_CHECK(!missing.IsLoaded());
 
 	// An empty file is refused as well.
-	WriteFile(path, std::vector<u8>());
+	WriteFile(path, std::vector<uint8_t>());
 	Cart empty;
 	GBA_CHECK(!empty.LoadRomFile(path, error));
 	GBA_CHECK_MSG(!error.empty(), "an empty ROM file must be reported");
@@ -439,7 +439,7 @@ GBA_TEST(Cart, SaveTypeDetection)
 
 	for (const Case& test : cases)
 	{
-		std::vector<u8> image = MakeRom();
+		std::vector<uint8_t> image = MakeRom();
 		PutSignature(image, offset, test.signature);
 
 		Cart cart;
@@ -456,7 +456,7 @@ GBA_TEST(Cart, SaveTypeDetection)
 
 	// The scan also covers the end of the image (GBATEK notes the ID strings sit "somewhere
 	// right after the ROM header", the libraries of bigger games end up in the last bank).
-	std::vector<u8> big = MakeRom(256 * 1024);
+	std::vector<uint8_t> big = MakeRom(256 * 1024);
 	PutSignature(big, 250 * 1024, "FLASH1M_V");
 	Cart bigCart;
 	GBA_CHECK_MSG(bigCart.LoadRom(big, error), error);
@@ -465,7 +465,7 @@ GBA_TEST(Cart, SaveTypeDetection)
 	// The EEPROM width heuristic (GBATEK: "there seems to be no autodetection mechanism, so
 	// that a hardcoded bus width must be used"): a 128 Mbit class image (16 MByte and up) uses
 	// the 8 KByte chip, smaller images the 512 Byte one.
-	std::vector<u8> large = MakeRom(16 * 1024 * 1024);
+	std::vector<uint8_t> large = MakeRom(16 * 1024 * 1024);
 	PutSignature(large, offset, "EEPROM_V");
 	Cart largeCart;
 	GBA_CHECK_MSG(largeCart.LoadRom(large, error), error);
@@ -486,7 +486,7 @@ GBA_TEST(Cart, SaveTypeDetection)
 GBA_TEST(Cart, SramReadWrite)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	PutSignature(image, 0x120, "SRAM_V");
 
 	Cart cart;
@@ -519,7 +519,7 @@ GBA_TEST(Cart, SramReadWrite)
 GBA_TEST(Cart, FlashCommands)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	PutSignature(image, 0x120, "FLASH512_V");
 
 	Cart cart;
@@ -596,7 +596,7 @@ GBA_TEST(Cart, FlashCommands)
 GBA_TEST(Cart, Flash128BankSelect)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	PutSignature(image, 0x120, "FLASH1M_V");
 
 	Cart cart;
@@ -645,28 +645,28 @@ GBA_TEST(Cart, Flash128BankSelect)
 GBA_TEST(Cart, Eeprom512WriteRead)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	PutSignature(image, 0x120, "EEPROM_V");
 
 	Cart cart;
 	GBA_CHECK_MSG(cart.LoadRom(image, error), error);
 	GBA_CHECK(cart.GetSaveType() == SaveType::Eeprom512B);
 
-	const u8 written[8] = { 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0 };
-	const u32 block = 0x2A;		// 64bit blocks 00h..3Fh for the 512 Byte chip
+	const uint8_t written[8] = { 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0 };
+	const uint32_t block = 0x2A;		// 64bit blocks 00h..3Fh for the 512 Byte chip
 
 	// A write request is "10" + 6 address bits + 64 data bits + the dummy bit = 73 bits.
-	std::vector<u8> write = EepromWriteStream(block, 6, written);
+	std::vector<uint8_t> write = EepromWriteStream(block, 6, written);
 	GBA_CHECK_EQ(write.size(), (size_t)73);
 	EepromSendRequest(cart, write, true);
 
 	// A read request is "11" + 6 address bits + the dummy bit = 9 bits, then the chip drives
 	// 4 ignored bits and the 64 data bits (68 accesses in total).
-	std::vector<u8> request = EepromReadRequest(block, 6);
+	std::vector<uint8_t> request = EepromReadRequest(block, 6);
 	GBA_CHECK_EQ(request.size(), (size_t)9);
 	EepromSendRequest(cart, request, false);
 
-	u8 readBack[8] = {};
+	uint8_t readBack[8] = {};
 	EepromReadData(cart, readBack);
 	for (int i = 0; i < 8; i++)
 		GBA_CHECK_HEX16(readBack[i], written[i]);
@@ -681,7 +681,7 @@ GBA_TEST(Cart, Eeprom512WriteRead)
 GBA_TEST(Cart, Eeprom8KAddressWidth)
 {
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	PutSignature(image, 0x120, "EEPROM_V");
 
 	Cart cart;
@@ -692,11 +692,11 @@ GBA_TEST(Cart, Eeprom8KAddressWidth)
 	GBA_CHECK(cart.GetSaveType() == SaveType::Eeprom8K);
 	GBA_CHECK_MSG(cart.SaveTypeName() == std::string("EEPROM 8K"), cart.SaveTypeName());
 
-	const u8 written[8] = { 0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF6, 0x07, 0x18 };
-	const u32 block = 0x123;
+	const uint8_t written[8] = { 0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF6, 0x07, 0x18 };
+	const uint32_t block = 0x123;
 
 	// A 14 bit address field makes the write request 2 + 14 + 64 + 1 = 81 bits long.
-	std::vector<u8> write = EepromWriteStream(block, 14, written);
+	std::vector<uint8_t> write = EepromWriteStream(block, 14, written);
 	GBA_CHECK_EQ(write.size(), (size_t)81);
 	EepromSendRequest(cart, write, true);
 
@@ -704,11 +704,11 @@ GBA_TEST(Cart, Eeprom8KAddressWidth)
 	// 0-3FFh, 14bit bus width (only the lower 10 address bits are used, upper 4 bits should be
 	// zero)"), so block 523h is block 123h again - the same block level wrap the 512 Byte chip
 	// does with its 6 bit field.
-	std::vector<u8> request = EepromReadRequest(block + 0x400, 14);
+	std::vector<uint8_t> request = EepromReadRequest(block + 0x400, 14);
 	GBA_CHECK_EQ(request.size(), (size_t)17);
 	EepromSendRequest(cart, request, false);
 
-	u8 readBack[8] = {};
+	uint8_t readBack[8] = {};
 	EepromReadData(cart, readBack);
 	for (int i = 0; i < 8; i++)
 		GBA_CHECK_HEX16(readBack[i], written[i]);
@@ -724,7 +724,7 @@ GBA_TEST(Cart, SaveFileRoundTrip)
 	std::remove(path.c_str());
 
 	std::string error;
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	PutSignature(image, 0x120, "FLASH512_V");
 
 	{
@@ -770,7 +770,7 @@ GBA_TEST(Cart, SaveFileRoundTrip)
 
 	// A shorter file is accepted: the rest of the memory stays erased.
 	{
-		WriteFile(path, std::vector<u8>(100, 0x11));
+		WriteFile(path, std::vector<uint8_t>(100, 0x11));
 		Cart cart;
 		GBA_CHECK_MSG(cart.LoadRom(image, error), error);
 		GBA_CHECK_MSG(cart.LoadSaveFile(path, &error), error);
@@ -781,7 +781,7 @@ GBA_TEST(Cart, SaveFileRoundTrip)
 
 	// A bigger file is refused with a message instead of loading a truncated image.
 	{
-		WriteFile(path, std::vector<u8>(64 * 1024 + 1, 0x22));
+		WriteFile(path, std::vector<uint8_t>(64 * 1024 + 1, 0x22));
 		Cart cart;
 		GBA_CHECK_MSG(cart.LoadRom(image, error), error);
 		std::string message;
@@ -800,14 +800,14 @@ GBA_TEST(Cart, SaveFileRoundTrip)
 
 	// An EEPROM save file is 512 bytes / 8 KByte, never the 64 KByte SRAM window.
 	{
-		std::vector<u8> eeprom = MakeRom();
+		std::vector<uint8_t> eeprom = MakeRom();
 		PutSignature(eeprom, 0x120, "EEPROM_V");
 
 		Cart cart;
 		GBA_CHECK_MSG(cart.LoadRom(eeprom, error), error);
 		cart.SetSaveType(SaveType::Eeprom8K);
 
-		const u8 written[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+		const uint8_t written[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 		EepromSendRequest(cart, EepromWriteStream(0x10, 14, written), true);
 		GBA_CHECK(cart.SaveDirty());
 		GBA_CHECK_MSG(cart.SaveSaveFile(path, &error), error);
@@ -829,7 +829,7 @@ GBA_TEST(Cart, GpioRomFallback)
 	std::string error;
 
 	// A cartridge without the port: the GPIO addresses are ordinary ROM bytes.
-	std::vector<u8> image = MakeRom();
+	std::vector<uint8_t> image = MakeRom();
 	image[0xC4] = 0x5A;
 	image[0xC6] = 0x3C;
 	image[0xC8] = 0x00;
@@ -866,7 +866,7 @@ GBA_TEST(Cart, GpioRomFallback)
 
 	// The detection is only a hint: the UI can switch the port on for a cartridge whose
 	// register literals it did not find.
-	std::vector<u8> plainRom = MakeRom();
+	std::vector<uint8_t> plainRom = MakeRom();
 	Cart forced;
 	GBA_CHECK_MSG(forced.LoadRom(plainRom, error), error);
 	GBA_CHECK(!forced.HasRtc());
@@ -928,7 +928,7 @@ GBA_TEST(Cart, RtcProtocol)
 	// reads back as 13h | 80h.
 	RtcSelect(cart);
 	RtcSendByte(cart, 0x65);
-	u8 date[7];
+	uint8_t date[7];
 	for (int i = 0; i < 7; i++)
 		date[i] = RtcReceiveByte(cart);
 	RtcDeselect(cart);
@@ -945,7 +945,7 @@ GBA_TEST(Cart, RtcProtocol)
 	// The time registers (function 17h) read the same hour/minute/second.
 	RtcSelect(cart);
 	RtcSendByte(cart, 0x67);
-	u8 time[3];
+	uint8_t time[3];
 	for (int i = 0; i < 3; i++)
 		time[i] = RtcReceiveByte(cart);
 	RtcDeselect(cart);

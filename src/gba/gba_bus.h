@@ -47,7 +47,7 @@ namespace GBA
 		void Reset();
 
 		/// <summary>Install a BIOS image (16 KByte; a shorter image is padded with 0xFF).</summary>
-		void SetBios(const u8* data, size_t size);
+		void SetBios(const uint8_t* data, size_t size);
 
 		/// <summary>True when the BIOS image is the built-in (custom) one.</summary>
 		bool UsingCustomBios() const { return customBios; }
@@ -60,23 +60,23 @@ namespace GBA
 
 		// -- CPU interface -----------------------------------------------------------------
 
-		u8 Read8(u32 address);
-		u16 Read16(u32 address);
-		u32 Read32(u32 address);
+		uint8_t Read8(uint32_t address);
+		uint16_t Read16(uint32_t address);
+		uint32_t Read32(uint32_t address);
 
-		void Write8(u32 address, u8 value);
-		void Write16(u32 address, u16 value);
-		void Write32(u32 address, u32 value);
+		void Write8(uint32_t address, uint8_t value);
+		void Write16(uint32_t address, uint16_t value);
+		void Write32(uint32_t address, uint32_t value);
 
 		/// <summary>An instruction fetch (16-bit). Same as Read16, but it counts the cartridge
 		/// prefetch/waitstate cycles of a code fetch.</summary>
-		u16 Fetch16(u32 address);
+		uint16_t Fetch16(uint32_t address);
 
 		/// <summary>An instruction fetch of a 32-bit ARM instruction.</summary>
-		u32 Fetch32(u32 address);
+		uint32_t Fetch32(uint32_t address);
 
 		/// <summary>The value the bus drove last (open bus).</summary>
-		u32 OpenBus() const { return openBus; }
+		uint32_t OpenBus() const { return openBus; }
 
 		// -- the clock ---------------------------------------------------------------------
 
@@ -87,14 +87,14 @@ namespace GBA
 		int TakeWaitCycles();
 
 		/// <summary>Total cycles the system has run since the reset.</summary>
-		u64 TotalCycles() const { return totalCycles; }
-		void SetTotalCycles(u64 cycles) { totalCycles = cycles; }
+		uint64_t TotalCycles() const { return totalCycles; }
+		void SetTotalCycles(uint64_t cycles) { totalCycles = cycles; }
 
 		/// <summary>Advance every device by the CPU's cycles plus the waitstates.</summary>
 		void Tick(int cpuCycles);
 
 		/// <summary>The cycle counter the DMA and the PPU use as their time base.</summary>
-		u64 CycleCounter() const { return totalCycles; }
+		uint64_t CycleCounter() const { return totalCycles; }
 
 		/// <summary>
 		/// The halfword at `address`, decoded the way Read16 decodes it but without any of its
@@ -103,7 +103,7 @@ namespace GBA
 		/// emulator's own reports use the same rule (see GbBus::Peek). Where the address decode
 		/// needs a register value (the GPIO port), the raw register is returned.
 		/// </summary>
-		u16 Peek16(u32 address) const;
+		uint16_t Peek16(uint32_t address) const;
 
 		// -- BIOS calls --------------------------------------------------------------------
 
@@ -113,7 +113,7 @@ namespace GBA
 		/// (normally: the return address in the PC). Returns false when the SWI has to take the
 		/// exception vector (a real BIOS image is installed and HLE is off).
 		/// </summary>
-		bool Swi(u32 comment);
+		bool Swi(uint32_t comment);
 
 		// -- devices -----------------------------------------------------------------------
 
@@ -139,33 +139,33 @@ namespace GBA
 
 		/// <summary>POSTFLG (0x04000300), which the BIOS sets to 1 after the boot; some games check
 		/// it to tell a reset from a cold start.</summary>
-		u8 PostFlg() const { return postFlg; }
+		uint8_t PostFlg() const { return postFlg; }
 
 		/// <summary>HALTCNT (0x04000301): 0x80 asks the CPU to halt.</summary>
-		void WriteHaltCnt(u8 value);
+		void WriteHaltCnt(uint8_t value);
 
 	private:
-		u32 openBus = 0;
+		uint32_t openBus = 0;
 		int waitCycles = 0;
-		u64 totalCycles = 0;
+		uint64_t totalCycles = 0;
 		bool customBios = false;
 
-		u8 postFlg = 0;
+		uint8_t postFlg = 0;
 		int haltState = 0;
 
 		// WAITCNT (0x04000204) and the derived SRAM/ROM waitstates.
-		u16 waitcnt = 0;
+		uint16_t waitcnt = 0;
 		int sramWait = 0;
 
 		// The registers the bus decodes itself (WAITCNT, IE/IF/IME, POSTFLG, HALTCNT).
-		u16 ReadIo16(u32 offset);
-		u8 ReadIo8(u32 offset);
-		void WriteIo16(u32 offset, u16 value);
-		void WriteIo8(u32 offset, u8 value);
+		uint16_t ReadIo16(uint32_t offset);
+		uint8_t ReadIo8(uint32_t offset);
+		void WriteIo16(uint32_t offset, uint16_t value);
+		void WriteIo8(uint32_t offset, uint8_t value);
 
 		// The devices that need the byte lanes of a 16-bit register.
-		u16 IoRead16(u32 offset);
-		void IoWrite16(u32 offset, u16 value);
+		uint16_t IoRead16(uint32_t offset);
+		void IoWrite16(uint32_t offset, uint16_t value);
 
 		void UpdateWaitStates();
 

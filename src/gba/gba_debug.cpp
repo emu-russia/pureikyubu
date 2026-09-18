@@ -265,7 +265,7 @@ namespace GBA
 	public:
 		explicit GbaLiveMemory(const GbaBus& bus) : bus(bus) {}
 
-		u16 Read16(u32 address) const override { return bus.Peek16(address); }
+		uint16_t Read16(uint32_t address) const override { return bus.Peek16(address); }
 	};
 
 
@@ -537,13 +537,13 @@ namespace GBA
 			char name0[0x10], name1[0x10];
 			sprintf(name0, "TM%iCNT_L", i);
 			sprintf(name1, "TM%iCNT_H", i);
-			MdRow2(md, name0, timers.Read16((u32)(0x100 + i * 4)), name1, timers.Read16((u32)(0x102 + i * 4)));
+			MdRow2(md, name0, timers.Read16((uint32_t)(0x100 + i * 4)), name1, timers.Read16((uint32_t)(0x102 + i * 4)));
 		}
 
 		MdSection(md, "Decoded");
 		for (int i = 0; i < 4; i++)
 		{
-			uint16_t control = timers.Read16((u32)(0x102 + i * 4));
+			uint16_t control = timers.Read16((uint32_t)(0x102 + i * 4));
 
 			MdBullet(md, "TM%i: counter **0x%04X**, %s, prescaler **%u**, cascade: **%s**, IRQ: **%s**",
 				i, timers.Counter(i), timers.Running(i) ? "running" : "stopped",
@@ -625,7 +625,7 @@ namespace GBA
 	// Game Boy - the machine
 	// ========================================================================================
 
-	static const u16 GbHighRam = 0xFF80;		// HRAM, which Peek answers for the whole region
+	static const uint16_t GbHighRam = 0xFF80;		// HRAM, which Peek answers for the whole region
 
 	std::string GbMachineReport()
 	{
@@ -707,16 +707,16 @@ namespace GBA
 
 		public:
 			explicit GbLiveMemory(const GbBus& bus) : bus(bus) {}
-			u16 Read16(u32 address) const override
+			uint16_t Read16(uint32_t address) const override
 			{
-				return (u16)(bus.Peek((u16)address) | (bus.Peek((u16)(address + 1)) << 8));
+				return (uint16_t)(bus.Peek((uint16_t)address) | (bus.Peek((uint16_t)(address + 1)) << 8));
 			}
-			u8 Read8(u32 address) const override { return bus.Peek((u16)address); }
+			uint8_t Read8(uint32_t address) const override { return bus.Peek((uint16_t)address); }
 		};
 
 		GbLiveMemory memory(bus);
 
-		u16 address = debugGb->Cpu().pc;
+		uint16_t address = debugGb->Cpu().pc;
 		std::string text;
 
 		for (size_t i = 0; i < count; i++)
@@ -733,7 +733,7 @@ namespace GBA
 			sprintf(line, "%04X  %-8s %s\n", address, bytes.c_str(), mnemonic.c_str());
 			text += line;
 
-			address = (u16)(address + size);
+			address = (uint16_t)(address + size);
 		}
 
 		char header[0x100];

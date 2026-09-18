@@ -23,29 +23,29 @@ namespace GBA
 		void Reset();
 
 		/// <summary>Read a timer register (offset is relative to 0x04000000, 0x100..0x10F).</summary>
-		u16 Read16(u32 offset) const;
+		uint16_t Read16(uint32_t offset) const;
 
 		/// <summary>Write a timer register. The caller passes the bus so a cascade reload and the
 		/// interrupt flags can be handled in one place.</summary>
-		void Write16(GbaBus& bus, u32 offset, u16 value);
+		void Write16(GbaBus& bus, uint32_t offset, uint16_t value);
 
 		/// <summary>Advance every running timer by `cycles` of the 16.78 MHz clock.</summary>
 		void Tick(GbaBus& bus, int cycles);
 
 		/// <summary>The current counter value (for tests and the debugger).</summary>
-		u16 Counter(int index) const { return counter[index]; }
+		uint16_t Counter(int index) const { return counter[index]; }
 
 		/// <summary>True when the timer is enabled (for tests and the debugger).</summary>
 		bool Running(int index) const { return (control[index] & 0x80) != 0; }
 
 		/// <summary>The prescaler of a TMxCNT_H value as the shift it applies to the clock (the
 		/// debugger prints the divider, which is `1 &lt;&lt; PrescaleShift`).</summary>
-		static int PrescaleShift(u16 control);
+		static int PrescaleShift(uint16_t control);
 
 	private:
-		u16 reload[4]{};		// TMxCNT_L
-		u16 control[4]{};		// TMxCNT_H
-		u16 counter[4]{};
+		uint16_t reload[4]{};		// TMxCNT_L
+		uint16_t control[4]{};		// TMxCNT_H
+		uint16_t counter[4]{};
 		int prescaleAccum[4]{};	// cycles accumulated towards the next prescaler tick
 	};
 }

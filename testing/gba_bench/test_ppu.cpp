@@ -22,56 +22,56 @@ namespace
 	// Register offsets (0x04000000 + offset), matching GBATEK's I/O map.
 	// ---------------------------------------------------------------------------------------
 
-	const u32 DISPCNT = 0x000;
-	const u32 GREENSWP = 0x002;
-	const u32 DISPSTAT = 0x004;
-	const u32 BG0CNT = 0x008;
-	const u32 BG1CNT = 0x00A;
-	const u32 BG2CNT = 0x00C;
-	const u32 BG3CNT = 0x00E;
-	const u32 BG0HOFS = 0x010;
-	const u32 BG0VOFS = 0x012;
-	const u32 BG2PA = 0x020;
-	const u32 BG2X_L = 0x028;
-	const u32 WIN0H = 0x040;
-	const u32 WIN0V = 0x044;
-	const u32 WININ = 0x048;
-	const u32 WINOUT = 0x04A;
-	const u32 BLDCNT = 0x050;
-	const u32 BLDALPHA = 0x052;
+	const uint32_t DISPCNT = 0x000;
+	const uint32_t GREENSWP = 0x002;
+	const uint32_t DISPSTAT = 0x004;
+	const uint32_t BG0CNT = 0x008;
+	const uint32_t BG1CNT = 0x00A;
+	const uint32_t BG2CNT = 0x00C;
+	const uint32_t BG3CNT = 0x00E;
+	const uint32_t BG0HOFS = 0x010;
+	const uint32_t BG0VOFS = 0x012;
+	const uint32_t BG2PA = 0x020;
+	const uint32_t BG2X_L = 0x028;
+	const uint32_t WIN0H = 0x040;
+	const uint32_t WIN0V = 0x044;
+	const uint32_t WININ = 0x048;
+	const uint32_t WINOUT = 0x04A;
+	const uint32_t BLDCNT = 0x050;
+	const uint32_t BLDALPHA = 0x052;
 
 	// DISPCNT bits.
-	const u16 DC_MODE0 = 0x0000;
-	const u16 DC_MODE1 = 0x0001;
-	const u16 DC_MODE3 = 0x0003;
-	const u16 DC_MODE4 = 0x0004;
-	const u16 DC_MODE5 = 0x0005;
-	const u16 DC_FRAME1 = 0x0010;
-	const u16 DC_OBJ_1D = 0x0040;
-	const u16 DC_FORCED_BLANK = 0x0080;
-	const u16 DC_BG0 = 0x0100;
-	const u16 DC_BG1 = 0x0200;
-	const u16 DC_BG2 = 0x0400;
-	const u16 DC_BG3 = 0x0800;
-	const u16 DC_OBJ = 0x1000;
-	const u16 DC_WIN0 = 0x2000;
-	const u16 DC_WIN1 = 0x4000;
-	const u16 DC_OBJ_WIN = 0x8000;
+	const uint16_t DC_MODE0 = 0x0000;
+	const uint16_t DC_MODE1 = 0x0001;
+	const uint16_t DC_MODE3 = 0x0003;
+	const uint16_t DC_MODE4 = 0x0004;
+	const uint16_t DC_MODE5 = 0x0005;
+	const uint16_t DC_FRAME1 = 0x0010;
+	const uint16_t DC_OBJ_1D = 0x0040;
+	const uint16_t DC_FORCED_BLANK = 0x0080;
+	const uint16_t DC_BG0 = 0x0100;
+	const uint16_t DC_BG1 = 0x0200;
+	const uint16_t DC_BG2 = 0x0400;
+	const uint16_t DC_BG3 = 0x0800;
+	const uint16_t DC_OBJ = 0x1000;
+	const uint16_t DC_WIN0 = 0x2000;
+	const uint16_t DC_WIN1 = 0x4000;
+	const uint16_t DC_OBJ_WIN = 0x8000;
 
 	// DISPSTAT bits.
-	const u16 STAT_VBLANK = 0x0001;
-	const u16 STAT_HBLANK = 0x0002;
-	const u16 STAT_VCOUNT = 0x0004;
-	const u16 STAT_VBLANK_IRQ = 0x0008;
-	const u16 STAT_HBLANK_IRQ = 0x0010;
-	const u16 STAT_VCOUNT_IRQ = 0x0020;
+	const uint16_t STAT_VBLANK = 0x0001;
+	const uint16_t STAT_HBLANK = 0x0002;
+	const uint16_t STAT_VCOUNT = 0x0004;
+	const uint16_t STAT_VBLANK_IRQ = 0x0008;
+	const uint16_t STAT_HBLANK_IRQ = 0x0010;
+	const uint16_t STAT_VCOUNT_IRQ = 0x0020;
 
 	// The VRAM windows the tests use.
-	const u32 OBJ_TILES = 0x10000;			// the OBJ tile area of the tile modes
-	const u32 OBJ_TILES_BITMAP = 0x14000;	// the OBJ tile area of the bitmap modes
+	const uint32_t OBJ_TILES = 0x10000;			// the OBJ tile area of the tile modes
+	const uint32_t OBJ_TILES_BITMAP = 0x14000;	// the OBJ tile area of the bitmap modes
 
 	// OAM (0x07000000, 1 KByte), reached through the bus because it has no 8-bit write access.
-	const u32 OamBase = 0x07000000;
+	const uint32_t OamBase = 0x07000000;
 
 	// ---------------------------------------------------------------------------------------
 	// The tests drive the PPU directly (Tick is exercised by the timing tests only). In the
@@ -93,20 +93,20 @@ namespace
 	/// priority (0-3), the character base address in bytes (0..0xC000, a multiple of 16 KByte) and
 	/// the screen base block (0-31, units of 2 KByte). The size and colour-depth bits are added by
 	/// the tests that need them.</summary>
-	u16 BG_CNT(int priority, u32 charBaseBytes, int screenBaseBlock)
+	uint16_t BG_CNT(int priority, uint32_t charBaseBytes, int screenBaseBlock)
 	{
-		return (u16)((priority & 3) | (((charBaseBytes / 0x4000) & 3) << 2) |
+		return (uint16_t)((priority & 3) | (((charBaseBytes / 0x4000) & 3) << 2) |
 			((screenBaseBlock & 0x1F) << 8));
 	}
 
 	/// <summary>Write a 16-bit register.</summary>
-	void WriteReg(GbaBus& bus, u32 offset, u16 value, int cycles = 0)
+	void WriteReg(GbaBus& bus, uint32_t offset, uint16_t value, int cycles = 0)
 	{
 		bus.ppu.Write16(bus, offset, value, cycles);
 	}
 
 	/// <summary>Write a 16-bit halfword of palette memory.</summary>
-	void WritePal16(GbaBus& bus, u32 offset, u16 value)
+	void WritePal16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
 		// A 16-bit palette access must not be assembled from two byte writes either: the byte
 		// accessor only drives one lane, so the two halves would both end up holding the same
@@ -115,29 +115,29 @@ namespace
 	}
 
 	/// <summary>Write a 16-bit halfword of VRAM.</summary>
-	void WriteVram16(GbaBus& bus, u32 offset, u16 value)
+	void WriteVram16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
-		bus.ppu.WriteVram(offset, (u8)(value & 0xFF));
-		bus.ppu.WriteVram(offset + 1, (u8)(value >> 8));
+		bus.ppu.WriteVram(offset, (uint8_t)(value & 0xFF));
+		bus.ppu.WriteVram(offset + 1, (uint8_t)(value >> 8));
 	}
 
 	/// <summary>Write a 16-bit halfword of OAM. OAM has no 8-bit write access (GBATEK "GBA Memory
 	/// Map"), so this goes through the bus's halfword path: assembling the value from two
 	/// Ppu::WriteOam calls would drive only the low byte and drop the high one.</summary>
-	void WriteOam16(GbaBus& bus, u32 offset, u16 value)
+	void WriteOam16(GbaBus& bus, uint32_t offset, uint16_t value)
 	{
 		bus.Write16(OamBase + offset, value);
 	}
 
 	/// <summary>Fill `count` bytes of VRAM starting at `offset`.</summary>
-	void FillVram(GbaBus& bus, u32 offset, u32 count, u8 value)
+	void FillVram(GbaBus& bus, uint32_t offset, uint32_t count, uint8_t value)
 	{
-		for (u32 i = 0; i < count; i++)
+		for (uint32_t i = 0; i < count; i++)
 			bus.ppu.WriteVram(offset + i, value);
 	}
 
 	/// <summary>True when every dot of the row [from, to) has `expected`.</summary>
-	bool RowMatches(const Ppu& ppu, int from, int to, u16 expected)
+	bool RowMatches(const Ppu& ppu, int from, int to, uint16_t expected)
 	{
 		for (int x = from; x < to; x++)
 		{
@@ -154,19 +154,19 @@ namespace
 	// ---------------------------------------------------------------------------------------
 
 	/// <summary>Read a 15-bit colour from BG palette RAM (each colour is one halfword).</summary>
-	u16 RefBgColor(const Ppu& ppu, int index)
+	uint16_t RefBgColor(const Ppu& ppu, int index)
 	{
-		return ppu.ReadPalette16((u32)index * 2);
+		return ppu.ReadPalette16((uint32_t)index * 2);
 	}
 
 	/// <summary>Read a 15-bit colour from OBJ palette RAM (at 0x05000200).</summary>
-	u16 RefObjColor(const Ppu& ppu, int index)
+	uint16_t RefObjColor(const Ppu& ppu, int index)
 	{
-		return ppu.ReadPalette16(0x200 + (u32)index * 2);
+		return ppu.ReadPalette16(0x200 + (uint32_t)index * 2);
 	}
 
 	/// <summary>Resolve one dot of a 4bpp or 8bpp tile, applying the per-tile flips.</summary>
-	u16 RefTileDot(const Ppu& ppu, u32 tileBase, int tileNumber, bool colors256, int paletteIndex,
+	uint16_t RefTileDot(const Ppu& ppu, uint32_t tileBase, int tileNumber, bool colors256, int paletteIndex,
 		int tileX, int tileY, bool flipX, bool flipY)
 	{
 		if (flipX) tileX = 7 - tileX;
@@ -174,12 +174,12 @@ namespace
 
 		if (colors256)
 		{
-			const u8 index = ppu.ReadVram(tileBase + (u32)tileNumber * 64 + (u32)tileY * 8 + (u32)tileX);
+			const uint8_t index = ppu.ReadVram(tileBase + (uint32_t)tileNumber * 64 + (uint32_t)tileY * 8 + (uint32_t)tileX);
 			return (index == 0) ? 0x8000 : RefBgColor(ppu, index);	// 0x8000 = transparent marker
 		}
 
-		const u8 packed = ppu.ReadVram(tileBase + (u32)tileNumber * 32 + (u32)tileY * 4 + (u32)tileX / 2);
-		const u8 index = (tileX & 1) ? (u8)(packed >> 4) : (u8)(packed & 0xF);
+		const uint8_t packed = ppu.ReadVram(tileBase + (uint32_t)tileNumber * 32 + (uint32_t)tileY * 4 + (uint32_t)tileX / 2);
+		const uint8_t index = (tileX & 1) ? (uint8_t)(packed >> 4) : (uint8_t)(packed & 0xF);
 		return (index == 0) ? 0x8000 : RefBgColor(ppu, paletteIndex * 16 + index);
 	}
 }
@@ -329,7 +329,7 @@ GBA_TEST(Ppu, BackdropColor)
 
 	// The frame buffer holds the same colour in XRGB8888 (the 5-bit fields expanded with the
 	// "replicate the high bits" rule of Color15ToXrgb).
-	const u32 expected = Color15ToXrgb(0x1234);
+	const uint32_t expected = Color15ToXrgb(0x1234);
 	GBA_CHECK_HEX32(bus.ppu.Frame()[0], expected);
 	GBA_CHECK_HEX32(bus.ppu.FramePixels()[0], expected);
 
@@ -347,8 +347,8 @@ GBA_TEST(Ppu, TextBg4bppScrollAndFlip)
 	// The tile data lives in character base block 1 (0x06004000) and the map in screen base
 	// block 0 (0x06000000); keeping them apart is what the addresses in BG0CNT are for
 	// (GBATEK 4000008h: character base in units of 16 KByte, screen base in units of 2 KByte).
-	const u32 charBase = 0x4000;
-	const u32 screenBase = 0x0000;
+	const uint32_t charBase = 0x4000;
+	const uint32_t screenBase = 0x0000;
 	WriteReg(bus, BG0CNT, BG_CNT(0, 0x4000, 0));
 
 	// BG palette entry 1 of palette 0 = red.
@@ -395,7 +395,7 @@ GBA_TEST(Ppu, TextBg4bppScrollAndFlip)
 	// A vertical flip (bit 11) moves the transparent dot between the rows: make only row 0
 	// transparent and check line 0 and line 7.
 	for (int y = 0; y < 8; y++)
-		FillVram(bus, charBase + (u32)y * 4, 4, (y == 0) ? 0x00 : 0x11);
+		FillVram(bus, charBase + (uint32_t)y * 4, 4, (y == 0) ? 0x00 : 0x11);
 
 	bus.ppu.RenderLine(bus, 0);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x0000);		// row 0 is transparent
@@ -414,14 +414,14 @@ GBA_TEST(Ppu, TextBg8bpp)
 
 	// BG0CNT bit 7 set: 256 colours/1 palette (GBATEK 4000008h); the tile data is in character
 	// base block 1 again, the map in screen base block 0.
-	const u32 charBase = 0x4000;
+	const uint32_t charBase = 0x4000;
 	WriteReg(bus, BG0CNT, BG_CNT(0, 0x4000, 0) | 0x0080);
 
 	// 8bpp tiles are 64 bytes, one byte per dot selecting a BG palette entry directly.
 	for (int y = 0; y < 8; y++)
 	{
 		for (int x = 0; x < 8; x++)
-			bus.ppu.WriteVram(charBase + (u32)y * 8 + (u32)x, (u8)(y * 8 + x + 1));
+			bus.ppu.WriteVram(charBase + (uint32_t)y * 8 + (uint32_t)x, (uint8_t)(y * 8 + x + 1));
 	}
 
 	// The dot at (3, 2) selects palette entry 2*8 + 3 + 1 = 20.
@@ -466,7 +466,7 @@ GBA_TEST(Ppu, TextBgTileMapWrap512)
 
 	// Size 1: two 256x256 dot areas side by side, i.e. a 512x256 map, with SC1 at map base + 2K
 	// (GBATEK 4000008h). Character base block 1 (0x06004000), screen base block 0.
-	const u32 charBase = 0x4000;
+	const uint32_t charBase = 0x4000;
 	WriteReg(bus, BG0CNT, BG_CNT(0, 0x4000, 0) | (1 << 14));
 	WritePal16(bus, 0x0002, 0x001F);					// palette 0 index 1 = red
 	WritePal16(bus, 0x0022, 0x03E0);					// palette 1 index 1 = green (16 * 2 + 2)
@@ -480,7 +480,7 @@ GBA_TEST(Ppu, TextBgTileMapWrap512)
 	// SC0 is a 32x32 entry map at the screen base; its entry for the tile column 30 is tile 0
 	// with palette 0. The whole of SC1 (2 KByte further on) is filled with tile 1 of palette 1,
 	// so every dot that falls into the second 256x256 area selects the second colour.
-	for (u32 i = 0; i < 0x800; i += 2)
+	for (uint32_t i = 0; i < 0x800; i += 2)
 		WriteVram16(bus, 0x0800 + i, 0x1001);
 	WriteVram16(bus, 0x0000 + 30 * 2, 0x0000);
 
@@ -520,7 +520,7 @@ GBA_TEST(Ppu, PriorityFightBetweenTwoBgs)
 
 	// Both layers cover the whole screen. BG1 has the better priority number (0) and must win.
 	// Character base block 1 for both, screen base block 0 for BG0 and block 1 (0x0800) for BG1.
-	const u32 charBase = 0x4000;
+	const uint32_t charBase = 0x4000;
 	WriteReg(bus, BG0CNT, BG_CNT(1, 0x4000, 0));			// BG0: priority 1
 	WriteReg(bus, BG1CNT, BG_CNT(0, 0x4000, 1));			// BG1: priority 0
 
@@ -531,7 +531,7 @@ GBA_TEST(Ppu, PriorityFightBetweenTwoBgs)
 	// filled completely so that the two layers cover the whole line and the priority order -
 	// not the map contents - decides every dot.
 	FillVram(bus, charBase + 0 * 32, 32, 0x11);
-	for (u32 i = 0; i < 0x800; i += 2)
+	for (uint32_t i = 0; i < 0x800; i += 2)
 	{
 		WriteVram16(bus, 0x0000 + i, 0x0000);			// BG0 map: tile 0, palette 0
 		WriteVram16(bus, 0x0800 + i, 0x1000);			// BG1 map: tile 0, palette 1
@@ -671,7 +671,7 @@ GBA_TEST(Ppu, Mode3DirectColor)
 	WriteReg(bus, DISPCNT, DC_MODE3 | DC_BG2);
 
 	// GBATEK "BG Mode 3": two bytes per dot, 480 bytes per line, 240x160 dots at 0x06000000.
-	const u32 offset = (u32)10 * 480 + (u32)50 * 2;
+	const uint32_t offset = (uint32_t)10 * 480 + (uint32_t)50 * 2;
 	WriteVram16(bus, offset, 0x7FFF);
 
 	bus.ppu.RenderLine(bus, 10);
@@ -770,9 +770,9 @@ GBA_TEST(Ppu, Sprite256Colors)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			const u32 address = OBJ_TILES + (u32)(row / 8) * 128 + (u32)(row & 7) * 8 +
-				(u32)(x / 8) * 64 + (u32)(x & 7);
-			bus.ppu.WriteVram(address, (u8)(x < 8 ? 7 : 9));
+			const uint32_t address = OBJ_TILES + (uint32_t)(row / 8) * 128 + (uint32_t)(row & 7) * 8 +
+				(uint32_t)(x / 8) * 64 + (uint32_t)(x & 7);
+			bus.ppu.WriteVram(address, (uint8_t)(x < 8 ? 7 : 9));
 		}
 	}
 
@@ -804,10 +804,10 @@ GBA_TEST(Ppu, SpriteHorizontalFlip)
 	// Data"), so byte 0 is 0x22 and byte 3 is 0x11.
 	for (int y = 0; y < 8; y++)
 	{
-		bus.ppu.WriteVram(OBJ_TILES + (u32)y * 4 + 0, 0x22);
-		bus.ppu.WriteVram(OBJ_TILES + (u32)y * 4 + 1, 0x22);
-		bus.ppu.WriteVram(OBJ_TILES + (u32)y * 4 + 2, 0x11);
-		bus.ppu.WriteVram(OBJ_TILES + (u32)y * 4 + 3, 0x11);
+		bus.ppu.WriteVram(OBJ_TILES + (uint32_t)y * 4 + 0, 0x22);
+		bus.ppu.WriteVram(OBJ_TILES + (uint32_t)y * 4 + 1, 0x22);
+		bus.ppu.WriteVram(OBJ_TILES + (uint32_t)y * 4 + 2, 0x11);
+		bus.ppu.WriteVram(OBJ_TILES + (uint32_t)y * 4 + 3, 0x11);
 	}
 
 	WritePal16(bus, 0x200 + 1 * 2, 0x001F);
@@ -830,9 +830,9 @@ GBA_TEST(Ppu, SpriteHorizontalFlip)
 
 	// The vertical flip (bit 13) mirrors it on the Y axis.
 	for (int y = 0; y < 4; y++)
-		FillVram(bus, OBJ_TILES + (u32)y * 4, 4, 0x11);
+		FillVram(bus, OBJ_TILES + (uint32_t)y * 4, 4, 0x11);
 	for (int y = 4; y < 8; y++)
-		FillVram(bus, OBJ_TILES + (u32)y * 4, 4, 0x22);
+		FillVram(bus, OBJ_TILES + (uint32_t)y * 4, 4, 0x22);
 
 	WriteOam16(bus, 0x02, 10);
 	bus.ppu.RenderLine(bus, 20);
@@ -859,8 +859,8 @@ GBA_TEST(Ppu, AffineSpriteIdentityMatrix)
 	{
 		for (int x = 0; x < 16; x++)
 		{
-			const u32 address = OBJ_TILES + (u32)(row / 8) * 128 + (u32)(row & 7) * 8 +
-				(u32)(x / 8) * 64 + (u32)(x & 7);
+			const uint32_t address = OBJ_TILES + (uint32_t)(row / 8) * 128 + (uint32_t)(row & 7) * 8 +
+				(uint32_t)(x / 8) * 64 + (uint32_t)(x & 7);
 			bus.ppu.WriteVram(address, 5);
 		}
 	}
@@ -969,7 +969,7 @@ GBA_TEST(Ppu, SemiTransparentSpriteAlphaBlendsWithTheBg)
 
 	// The sprite blends with the red background underneath it: r = (0*8 + 31*8)/16 = 15,
 	// b = (31*8 + 0*8)/16 = 15.
-	const u16 expected = Blend15(0x7C00, 0x001F, 8, 8);
+	const uint16_t expected = Blend15(0x7C00, 0x001F, 8, 8);
 	GBA_CHECK_HEX16(expected, 0x3C0F);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), expected);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(17), expected);
@@ -1367,7 +1367,7 @@ GBA_TEST(Ppu, VCountMatchInterrupt)
 	// The V-Count setting is the high byte of DISPSTAT and the IRQ enable is bit 5
 	// (GBATEK 4000004h).
 	const int matchLine = 42;
-	WriteReg(bus, DISPSTAT, (u16)((matchLine << 8) | STAT_VCOUNT_IRQ));
+	WriteReg(bus, DISPSTAT, (uint16_t)((matchLine << 8) | STAT_VCOUNT_IRQ));
 
 	// Run the system clock forward line by line and count how often the match interrupt appears.
 	int matches = 0;
@@ -1391,16 +1391,16 @@ GBA_TEST(Ppu, VCountMatchInterrupt)
 	int flagSetAtMatch = 0;
 	int flagSetAfterMatch = 0;
 
-	while (bus.ppu.VCount() != (u16)matchLine)
+	while (bus.ppu.VCount() != (uint16_t)matchLine)
 	{
 		bus.Tick(CyclesPerScanline);
 
-		if (bus.ppu.VCount() == (u16)matchLine)
+		if (bus.ppu.VCount() == (uint16_t)matchLine)
 			flagSetAtMatch = (bus.ppu.DispStat() & STAT_VCOUNT) != 0 ? 1 : 0;
 	}
 
 	bus.Tick(CyclesPerScanline);
-	if (bus.ppu.VCount() == (u16)(matchLine + 1))
+	if (bus.ppu.VCount() == (uint16_t)(matchLine + 1))
 		flagSetAfterMatch = (bus.ppu.DispStat() & STAT_VCOUNT) != 0 ? 1 : 0;
 
 	GBA_CHECK_EQ(flagSetAfterMatch, 0);
@@ -1413,14 +1413,14 @@ GBA_TEST(Ppu, VCountMatchInterrupt)
 
 	// Without the enable bit no interrupt is raised, but the flag still appears.
 	bus.irq.WriteIF(0x3FFF);
-	WriteReg(bus, DISPSTAT, (u16)(matchLine << 8));
+	WriteReg(bus, DISPSTAT, (uint16_t)(matchLine << 8));
 	bus.ppu.RenderLine(bus, matchLine);
 	GBA_CHECK((bus.ppu.DispStat() & STAT_VCOUNT) != 0);
 	GBA_CHECK_EQ(bus.irq.ReadIF() & INT_VCOUNT, 0);
 
 	// A write to DISPSTAT while VCOUNT already equals the new setting sets the flag and raises
 	// the interrupt at once.
-	WriteReg(bus, DISPSTAT, (u16)((matchLine << 8) | STAT_VCOUNT_IRQ));
+	WriteReg(bus, DISPSTAT, (uint16_t)((matchLine << 8) | STAT_VCOUNT_IRQ));
 	GBA_CHECK((bus.ppu.DispStat() & STAT_VCOUNT) != 0);
 	GBA_CHECK_EQ(bus.irq.ReadIF() & INT_VCOUNT, INT_VCOUNT);
 }

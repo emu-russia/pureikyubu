@@ -72,8 +72,8 @@ namespace GBA
 
 		// -- the CPU's view of the register file ---------------------------------------------
 
-		u8 ReadRegister(u16 address) const;
-		void WriteRegister(u16 address, u8 value);
+		uint8_t ReadRegister(uint16_t address) const;
+		void WriteRegister(uint16_t address, uint8_t value);
 
 		/// <summary>True when the PPU owns VRAM or OAM right now (Pan Docs "Accessing VRAM and
 		/// OAM"): VRAM is blocked in mode 3, OAM in modes 2 and 3, CRAM in mode 3.</summary>
@@ -83,12 +83,12 @@ namespace GBA
 
 		/// <summary>The two 8 KByte VRAM banks, the 160 bytes of OAM and the palette memory, for
 		/// the bus (which serves the CPU's accesses to them).</summary>
-		u8* VramBank(int bank) { return vram[bank & 1]; }
-		const u8* VramBank(int bank) const { return vram[bank & 1]; }
-		u8* Oam() { return oam; }
-		const u8* Oam() const { return oam; }
-		u8* PaletteRam(bool object) { return object ? objPalette : bgPalette; }
-		const u8* PaletteRam(bool object) const { return object ? objPalette : bgPalette; }
+		uint8_t* VramBank(int bank) { return vram[bank & 1]; }
+		const uint8_t* VramBank(int bank) const { return vram[bank & 1]; }
+		uint8_t* Oam() { return oam; }
+		const uint8_t* Oam() const { return oam; }
+		uint8_t* PaletteRam(bool object) { return object ? objPalette : bgPalette; }
+		const uint8_t* PaletteRam(bool object) const { return object ? objPalette : bgPalette; }
 
 		// -- running -------------------------------------------------------------------------
 
@@ -97,21 +97,21 @@ namespace GBA
 		/// speed, two in CGB double speed). Returns the interrupt bits the LCD requested: 0x01 for
 		/// VBlank, 0x02 for the STAT interrupt. The caller ORs them into IF.
 		/// </summary>
-		u8 Tick(int cycles, bool doubleSpeed);
+		uint8_t Tick(int cycles, bool doubleSpeed);
 
 		/// <summary>The composed frame, XRGB8888 (0xAARRGGBB), 160 x 144 pixels.</summary>
-		const u32* Frame() const { return frame.data(); }
+		const uint32_t* Frame() const { return frame.data(); }
 
 		/// <summary>How many frames the LCD has finished (the harness uses it to skip a boot).</summary>
 		int FrameCounter() const { return frameCounter; }
 
 		/// <summary>The dots the LCD has run since Reset (a test can check the timing with it).</summary>
-		u64 Dots() const { return dots; }
+		uint64_t Dots() const { return dots; }
 
 		int Mode() const { return lcdEnabled ? mode : 0; }
 		int Ly() const { return lcdEnabled ? (int)ly : 0; }
-		u8 Stat() const { return stat; }
-		u8 Lcdc() const { return lcdc; }
+		uint8_t Stat() const { return stat; }
+		uint8_t Lcdc() const { return lcdc; }
 		bool LcdEnabled() const { return lcdEnabled; }
 
 		/// <summary>Turn the LCD on or off without a full LCDC write (the machine uses it to put
@@ -151,30 +151,30 @@ namespace GBA
 	private:
 		// -- registers (Pan Docs "LCDC" / "STAT" / "Scrolling") -------------------------------
 
-		u8 lcdc = 0x91;			// the post-boot value (Pan Docs "Power Up Sequence")
-		u8 stat = 0x85;
-		u8 scy = 0x00, scx = 0x00;
-		u8 ly = 0x00, lyc = 0x00;
-		u8 wy = 0x00, wx = 0x00;		// the window's position (WX is the left edge plus 7)
-		u8 bgp = 0xFC;			// the post-boot value
-		u8 obp0 = 0xFF, obp1 = 0xFF;
+		uint8_t lcdc = 0x91;			// the post-boot value (Pan Docs "Power Up Sequence")
+		uint8_t stat = 0x85;
+		uint8_t scy = 0x00, scx = 0x00;
+		uint8_t ly = 0x00, lyc = 0x00;
+		uint8_t wy = 0x00, wx = 0x00;		// the window's position (WX is the left edge plus 7)
+		uint8_t bgp = 0xFC;			// the post-boot value
+		uint8_t obp0 = 0xFF, obp1 = 0xFF;
 
 		// The CGB registers (Pan Docs "Palettes" / "CGB Registers").
-		u8 vbk = 0xFE;			// only bit 0 is writable; the upper bits read as ones
-		u8 bgpi = 0x00, obpi = 0x00;
-		u8 bgPalette[64]{};
-		u8 objPalette[64]{};
+		uint8_t vbk = 0xFE;			// only bit 0 is writable; the upper bits read as ones
+		uint8_t bgpi = 0x00, obpi = 0x00;
+		uint8_t bgPalette[64]{};
+		uint8_t objPalette[64]{};
 
 		// -- memory --------------------------------------------------------------------------
 
-		u8 vram[2][0x2000]{};
-		u8 oam[0xA0]{};
+		uint8_t vram[2][0x2000]{};
+		uint8_t oam[0xA0]{};
 
 		// -- timing --------------------------------------------------------------------------
 
-		u64 dots = 0;			// dots since Reset
+		uint64_t dots = 0;			// dots since Reset
 		int mode = 2;
-		u64 modeEndDots = 80;	// the absolute dot count at which the current mode ends
+		uint64_t modeEndDots = 80;	// the absolute dot count at which the current mode ends
 		bool lcdEnabled = true;
 		int frameCounter = 0;
 		bool statLine = false;	// the STAT interrupt line's level (rising edge requests only)
@@ -187,15 +187,15 @@ namespace GBA
 
 		// -- the line being composed ---------------------------------------------------------
 
-		u32 line[GbScreenWidth]{};
-		std::vector<u32> frame;		// GbScreenWidth * GbScreenHeight
+		uint32_t line[GbScreenWidth]{};
+		std::vector<uint32_t> frame;		// GbScreenWidth * GbScreenHeight
 
 		struct LineSprite
 		{
 			int x = 0;				// the screen X of the leftmost pixel (OAM X - 8)
 			int index = 0;			// its OAM index, for the priority rules
 			int row = 0;			// the row inside the object's tile (before the Y flip)
-			u8 tile = 0, attributes = 0;
+			uint8_t tile = 0, attributes = 0;
 		};
 
 		LineSprite lineSprites[10];
@@ -212,7 +212,7 @@ namespace GBA
 		void BeginVisibleLine();
 
 		/// <summary>The dot count the current scanline started at (a multiple of 456).</summary>
-		u64 LineStart() const { return dots - (dots % GbDotsPerLine); }
+		uint64_t LineStart() const { return dots - (dots % GbDotsPerLine); }
 
 		/// <summary>Pick the objects that cover this line (Pan Docs "OAM", the mode 2 scan).</summary>
 		void ScanOam();
@@ -225,18 +225,18 @@ namespace GBA
 
 		/// <summary>One background/window pixel: its colour index, the palette to use and the
 		/// attribute byte (CGB).</summary>
-		u8 FetchBgPixel(int x, int y, int& palette, u8& attributes);
+		uint8_t FetchBgPixel(int x, int y, int& palette, uint8_t& attributes);
 
 		/// <summary>Turn a colour index and a palette selector into the host pixel.</summary>
-		u32 ShadePixel(int index, int palette, u8 attributes, bool object) const;
+		uint32_t ShadePixel(int index, int palette, uint8_t attributes, bool object) const;
 
 		/// <summary>One RGB555 CGB colour, expanded to XRGB8888.</summary>
-		u32 CgbColor(int palette, int index, bool object) const;
+		uint32_t CgbColor(int palette, int index, bool object) const;
 
 		/// <summary>The DMG shade a colour index maps to under BGP/OBP0/OBP1.</summary>
-		u32 DmgShade(int index, int palette, bool object) const;
+		uint32_t DmgShade(int index, int palette, bool object) const;
 
-		static u32 PackXrgb(int r, int g, int b) { return 0xFF000000u | ((u32)r << 16) | ((u32)g << 8) | (u32)b; }
+		static uint32_t PackXrgb(int r, int g, int b) { return 0xFF000000u | ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b; }
 
 		/// <summary>The level of the STAT interrupt line (Pan Docs "Interrupt Sources").</summary>
 		bool StatLineLevel() const;
@@ -245,10 +245,10 @@ namespace GBA
 		/// Move to a mode. The STAT interrupt is requested only on a rising edge of the shared
 		/// STAT line, which is what produces the documented "STAT blocking" behaviour.
 		/// </summary>
-		u8 EnterMode(int newMode);
+		uint8_t EnterMode(int newMode);
 
 		/// <summary>Re-evaluate the STAT interrupt line and return the request bit (0x02) when the
 		/// line rose.</summary>
-		u8 UpdateStatLine();
+		uint8_t UpdateStatLine();
 	};
 }

@@ -195,12 +195,12 @@ namespace
 			return true;
 		}
 
-		void Write(const s16* samples, int frames)
+		void Write(const int16_t* samples, int frames)
 		{
 			if (file == nullptr || frames <= 0)
 				return;
 
-			size_t bytes = (size_t)frames * 2 * sizeof(s16);
+			size_t bytes = (size_t)frames * 2 * sizeof(int16_t);
 			fwrite(samples, 1, bytes, file);
 			dataBytes += (uint32_t)bytes;
 		}
@@ -236,7 +236,7 @@ namespace
 		std::string disasmFile;		// --disasm-arm/--disasm-thumb/--disasm-gb
 		std::string disasmKind;		// "arm", "thumb" or "gb"
 		std::string gbBios;			// --gb-bios: the Game Boy's own boot ROM
-		u32 disasmOffset = 0;
+		uint32_t disasmOffset = 0;
 		int disasmCount = 0;
 		int trace = 0;				// --trace: how many instructions of the last frame to keep
 		int frames = 60;
@@ -249,7 +249,7 @@ namespace
 		bool quiet = false;
 		bool gb = false;			// run the Game Boy machine instead of the GBA
 		bool gbDmg = false;			// force the monochrome console
-		u16 keys = 0;
+		uint16_t keys = 0;
 	};
 
 	/// <summary>A disassembly memory that reads through a live machine's bus, so the listing shows
@@ -259,9 +259,9 @@ namespace
 	public:
 		explicit BusDisasmMemory(GbaBus& bus) : bus(bus) {}
 
-		u16 Read16(u32 address) const override
+		uint16_t Read16(uint32_t address) const override
 		{
-			return (u16)(bus.Read16(address) & 0xFFFF);
+			return (uint16_t)(bus.Read16(address) & 0xFFFF);
 		}
 
 	private:
@@ -274,11 +274,11 @@ namespace
 	public:
 		explicit GbBusDisasmMemory(GbBus& bus) : bus(bus) {}
 
-		u16 Read16(u32 address) const override
+		uint16_t Read16(uint32_t address) const override
 		{
-			u8 low = bus.ReadByte((u16)address);
-			u8 high = bus.ReadByte((u16)(address + 1));
-			return (u16)(low | (high << 8));
+			uint8_t low = bus.ReadByte((uint16_t)address);
+			uint8_t high = bus.ReadByte((uint16_t)(address + 1));
+			return (uint16_t)(low | (high << 8));
 		}
 
 	private:
@@ -291,8 +291,8 @@ namespace
 	{
 		// The file is read into a flat image; the offsets are given relative to its base, which is
 		// where the machine maps it (a BIOS at 0, a cartridge at 0x08000000).
-		std::vector<u8> image;
-		u32 base = 0;
+		std::vector<uint8_t> image;
+		uint32_t base = 0;
 
 		FILE* file = fopen(options.disasmFile.c_str(), "rb");
 		if (file == nullptr)
@@ -301,7 +301,7 @@ namespace
 			return 2;
 		}
 
-		u8 buffer[65536];
+		uint8_t buffer[65536];
 		size_t got;
 		while ((got = fread(buffer, 1, sizeof buffer, file)) > 0)
 			image.insert(image.end(), buffer, buffer + got);
@@ -315,7 +315,7 @@ namespace
 			options.disasmFile.c_str(), image.size(), options.disasmCount, options.disasmOffset,
 			gb ? "SM83" : (thumb ? "Thumb" : "ARM"));
 
-		u32 address = base + options.disasmOffset;
+		uint32_t address = base + options.disasmOffset;
 
 		for (int i = 0; i < options.disasmCount; i++)
 		{
@@ -325,8 +325,8 @@ namespace
 
 			if (gb)
 			{
-				text = GbDisassemble(memory, (u16)address, &size);
-				bytes = GbInstructionBytes(memory, (u16)address, size);
+				text = GbDisassemble(memory, (uint16_t)address, &size);
+				bytes = GbInstructionBytes(memory, (uint16_t)address, size);
 				printf("  %04X: %-8s %s\n", (unsigned)address, bytes.c_str(), text.c_str());
 			}
 			else
@@ -336,7 +336,7 @@ namespace
 				printf("  %08X: %-10s %s\n", (unsigned)address, bytes.c_str(), text.c_str());
 			}
 
-			address += (u32)size;
+			address += (uint32_t)size;
 		}
 
 		return 0;
@@ -346,7 +346,7 @@ namespace
 	/// registers held.</summary>
 	struct TraceEntry
 	{
-		u32 pc = 0;
+		uint32_t pc = 0;
 		bool thumb = false;
 		bool halted = false;
 		int size = 2;
@@ -363,8 +363,8 @@ namespace
 		trace.reserve((size_t)count);
 
 		int frame = system.Bus().ppu.FrameCounter();
-		u64 guard = 0;
-		const u64 maxCycles = (u64)CyclesPerFrame * 4;
+		uint64_t guard = 0;
+		const uint64_t maxCycles = (uint64_t)CyclesPerFrame * 4;
 
 		while (system.Bus().ppu.FrameCounter() == frame && guard < maxCycles)
 		{
@@ -388,7 +388,7 @@ namespace
 			if (taken < 1)
 				taken = 1;
 			system.Bus().Tick(taken);
-			guard += (u64)taken;
+			guard += (uint64_t)taken;
 		}
 
 		printf("harness: the last frame ran %zu traced instructions (showing the last %zu)\n",
@@ -479,7 +479,7 @@ namespace
 		// `--wav <file>`: record what the sound hardware produces while the frames run, so a boot
 		// animation or a game's music can be listened to afterwards.
 		WavWriter wav;
-		std::vector<s16> audio;
+		std::vector<int16_t> audio;
 
 		if (!options.wavPath.empty())
 		{
@@ -494,7 +494,7 @@ namespace
 		}
 
 		auto start = std::chrono::steady_clock::now();
-		u64 startCycles = system.Cycles();
+		uint64_t startCycles = system.Cycles();
 
 		for (int frame = 0; frame < options.frames; frame++)
 		{
@@ -533,7 +533,7 @@ namespace
 
 		auto end = std::chrono::steady_clock::now();
 		double seconds = std::chrono::duration<double>(end - start).count();
-		u64 cycles = system.Cycles() - startCycles;
+		uint64_t cycles = system.Cycles() - startCycles;
 
 		wav.Close();
 
@@ -586,7 +586,7 @@ namespace
 			MakeDirectory(options.pngDir);
 
 		auto start = std::chrono::steady_clock::now();
-		u64 startCycles = system.Cycles();
+		uint64_t startCycles = system.Cycles();
 
 		for (int frame = 0; frame < options.frames; frame++)
 		{
@@ -612,7 +612,7 @@ namespace
 
 		auto end = std::chrono::steady_clock::now();
 		double seconds = std::chrono::duration<double>(end - start).count();
-		u64 cycles = system.Cycles() - startCycles;
+		uint64_t cycles = system.Cycles() - startCycles;
 
 		if (options.bench && seconds > 0)
 		{
@@ -668,7 +668,7 @@ namespace
 
 	int DumpBootRom(const std::string& path)
 	{
-		const std::vector<u8>& image = BootRom::GbaImage();
+		const std::vector<uint8_t>& image = BootRom::GbaImage();
 
 		FILE* f = fopen(path.c_str(), "wb");
 		if (f == nullptr)
@@ -775,7 +775,7 @@ int main(int argc, char** argv)
 
 		HarnessOptions options;
 		options.disasmFile = args[1];
-		options.disasmOffset = (u32)strtoul(args[2].c_str(), nullptr, 0);
+		options.disasmOffset = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
 		options.disasmCount = atoi(args[3].c_str());
 		options.disasmKind = (args[0] == "--disasm-arm") ? "arm" :
 			((args[0] == "--disasm-thumb") ? "thumb" : "gb");
@@ -805,7 +805,7 @@ int main(int argc, char** argv)
 			if (arg == "--frames") options.frames = atoi(next("--frames").c_str());
 			else if (arg == "--png") options.pngDir = next("--png");
 			else if (arg == "--png-every") options.pngEvery = atoi(next("--png-every").c_str());
-			else if (arg == "--keys") options.keys = (u16)strtoul(next("--keys").c_str(), nullptr, 0);
+			else if (arg == "--keys") options.keys = (uint16_t)strtoul(next("--keys").c_str(), nullptr, 0);
 			else if (arg == "--bios") options.bios = next("--bios");
 			else if (arg == "--wav") options.wavPath = next("--wav");
 			else if (arg == "--demo") options.demo = true;

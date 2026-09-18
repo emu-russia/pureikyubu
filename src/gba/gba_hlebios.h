@@ -23,7 +23,7 @@ namespace GBA
 	class GbaBus;
 
 	// The SWI comment field values (the official function numbers).
-	enum SwiNumber : u32
+	enum SwiNumber : uint32_t
 	{
 		SwiSoftReset = 0x00,
 		SwiRegisterRamReset = 0x01,
@@ -78,7 +78,7 @@ namespace GBA
 		/// see the service functions as ordinary calls.
 		/// </summary>
 		/// <returns>true when the call was handled here.</returns>
-		bool Swi(GbaBus& bus, u32 comment);
+		bool Swi(GbaBus& bus, uint32_t comment);
 
 		/// <summary>
 		/// Poll the wait state IntrWait/VBlankIntrWait left behind. The bus calls this from its
@@ -88,9 +88,9 @@ namespace GBA
 		void Tick(GbaBus& bus);
 
 		/// <summary>How many times a SWI number has been handled (a test and harness aid).</summary>
-		u64 CallCount(u32 comment);
+		uint64_t CallCount(uint32_t comment);
 
 		/// <summary>True when a SWI number is implemented here.</summary>
-		bool Implemented(u32 comment);
+		bool Implemented(uint32_t comment);
 	}
 }

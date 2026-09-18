@@ -39,7 +39,7 @@ namespace GBA
 			const int LetterRows = 6;
 			const int LetterTilesBytes = LetterTileCount * LetterRows;		// 48
 
-			const u8 Letters[LetterTileCount][LetterRows] =
+			const uint8_t Letters[LetterTileCount][LetterRows] =
 			{
 				{ 0x7C, 0x42, 0x42, 0x7C, 0x40, 0x40 },		// P
 				{ 0x42, 0x42, 0x42, 0x42, 0x42, 0x7E },		// U
@@ -56,7 +56,7 @@ namespace GBA
 
 			/// <summary>The ten letters of "pureikyubu" as the tile indices they were copied to
 			/// (tile 0 is the blank one).</summary>
-			const u8 Wordmark[10] = { 1, 2, 3, 4, 5, 6, 7, 2, 8, 2 };
+			const uint8_t Wordmark[10] = { 1, 2, 3, 4, 5, 6, 7, 2, 8, 2 };
 
 			const int WordmarkLength = 10;
 
@@ -64,7 +64,7 @@ namespace GBA
 			// the 80 pixel band at screen rows 64..71. SCX slides it: the left edge's screen X is
 			// (24 - SCX) modulo 256, so SCX = 112 puts it at 168 (off the right edge) and SCX =
 			// 240 puts it at 40, the settled position.
-			const u16 MapRow = 0x9900;
+			const uint16_t MapRow = 0x9900;
 			const int MapColumn = 3;
 			const int SlideStartScx = 112;
 			const int SlideEndScx = 240;
@@ -76,7 +76,7 @@ namespace GBA
 			/// leaves them (Pan Docs "Power Up Sequence"): the four channels silenced, the mixer
 			/// at both master volumes of 7.
 			/// </summary>
-			const u8 SoundInit[][2] =
+			const uint8_t SoundInit[][2] =
 			{
 				{ 0x26, 0x80 },		// NR52: the APU on (it is on at power-up; this states it)
 				{ 0x10, 0x80 },		// NR10: no sweep (bit 7 reads one)
@@ -92,15 +92,15 @@ namespace GBA
 			/// <summary>Where the parts of the image ended up (the tests and the report use it).</summary>
 			struct Placements
 			{
-				u16 codeEnd = 0;
-				u16 tileData = 0;
-				u16 wordmark = 0;
-				u16 imageEnd = 0;
+				uint16_t codeEnd = 0;
+				uint16_t tileData = 0;
+				uint16_t wordmark = 0;
+				uint16_t imageEnd = 0;
 			};
 
 			struct Built
 			{
-				std::vector<u8> image;
+				std::vector<uint8_t> image;
 				std::string listing;
 				Placements layout;
 			};
@@ -212,7 +212,7 @@ namespace GBA
 				a.Call("WaitVBlank");
 				a.Pop(R16Stk::AF);
 				a.Add(SlideStep);
-				a.Cp((u8)(SlideEndScx + 1));
+				a.Cp((uint8_t)(SlideEndScx + 1));
 				a.Jr(Cond::C, "Slide");
 
 				// -- the hold ---------------------------------------------------------------
@@ -314,13 +314,13 @@ namespace GBA
 		// The images
 		// ---------------------------------------------------------------------------------------
 
-		const std::vector<u8>& DmgImage()
+		const std::vector<uint8_t>& DmgImage()
 		{
-			static const std::vector<u8> image = Build().image;
+			static const std::vector<uint8_t> image = Build().image;
 			return image;
 		}
 
-		const std::vector<u8>& CgbImage()
+		const std::vector<uint8_t>& CgbImage()
 		{
 			// The CGB image is the DMG one: the register state at 0x0100 is set by GbSystem,
 			// which knows the console kind and the cartridge, and the animation is the same.
@@ -356,13 +356,13 @@ namespace GBA
 
 		const char* TileLetters() { return TileLetterNames; }
 
-		u8 LetterPixel(int letter, int x, int y)
+		uint8_t LetterPixel(int letter, int x, int y)
 		{
 			if (letter < 0 || letter >= LetterTileCount || x < 0 || x > 7 || y < 0 || y > 7)
 				return 0;
 			if (y >= LetterRows)
 				return 0;			// the bottom two rows of every tile are blank
-			return (u8)((Letters[letter][y] >> (7 - x)) & 1);
+			return (uint8_t)((Letters[letter][y] >> (7 - x)) & 1);
 		}
 	}
 }

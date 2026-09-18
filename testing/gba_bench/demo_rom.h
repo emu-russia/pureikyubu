@@ -23,13 +23,13 @@ namespace GbaTest
 	/// an even amount, so a 32-bit constant is built from its byte-aligned pieces, each of which is
 	/// always encodable. A test that needs a constant is welcome not to care about this detail.
 	/// </summary>
-	inline void EmitMovImm32(GBA::ArmAsm::Assembler& a, int rd, GBA::u32 value)
+	inline void EmitMovImm32(GBA::ArmAsm::Assembler& a, int rd, uint32_t value)
 	{
 		bool first = true;
 
 		for (int shift = 0; shift < 32; shift += 8)
 		{
-			GBA::u32 piece = (value >> shift) & 0xFF;
+			uint32_t piece = (value >> shift) & 0xFF;
 
 			if (piece == 0)
 			{
@@ -54,16 +54,16 @@ namespace GbaTest
 	}
 
 	/// <summary>Fill in the cartridge header's complement check (0x080000BD).</summary>
-	inline void FixHeaderChecksum(std::vector<GBA::u8>& image)
+	inline void FixHeaderChecksum(std::vector<uint8_t>& image)
 	{
-		GBA::u32 sum = 0x19;
+		uint32_t sum = 0x19;
 
-		for (GBA::u32 i = 0xA0; i <= 0xBC; i++)
+		for (uint32_t i = 0xA0; i <= 0xBC; i++)
 		{
 			sum += image[i];
 		}
 
-		image[0xBD] = (GBA::u8)(-(int)sum);
+		image[0xBD] = (uint8_t)(-(int)sum);
 	}
 
 	/// <summary>
@@ -71,7 +71,7 @@ namespace GbaTest
 	/// colour = f(x, y, frame), with the frame counter in IWRAM at 0x03000008 and the markers
 	/// 0x00474241 and 0xCAFEF00D at 0x03000000 and 0x03000004.
 	/// </summary>
-	inline std::vector<GBA::u8> BuildDemoRom()
+	inline std::vector<uint8_t> BuildDemoRom()
 	{
 		using namespace GBA::ArmAsm;
 
@@ -79,7 +79,7 @@ namespace GbaTest
 		// The image is assembled with a zero origin: a cartridge is *loaded* at 0x08000000, and
 		// every branch in it is PC-relative, so the addresses the emitter resolves are the image
 		// offsets.
-		const GBA::u32 base = 0;
+		const uint32_t base = 0;
 
 		// The cartridge: the entry branch and the other exception vectors of a cartridge run at
 		// 0x08000000, so the vector table is emitted there.
@@ -185,7 +185,7 @@ namespace GbaTest
 		a.Str(6, 0, 8);				// the frame counter, for the harness
 		a.B("frame");
 
-		std::vector<GBA::u8> image = a.TakeImage(0x10000);
+		std::vector<uint8_t> image = a.TakeImage(0x10000);
 		FixHeaderChecksum(image);
 
 		return image;
@@ -195,7 +195,7 @@ namespace GbaTest
 	/// Build a minimal cartridge whose program writes `magic` to 0x03000000 and then spins. The
 	/// boot ROM tests use it to prove that the cartridge handover really reaches the cartridge.
 	/// </summary>
-	inline std::vector<GBA::u8> BuildMarkerRom(GBA::u32 magic)
+	inline std::vector<uint8_t> BuildMarkerRom(uint32_t magic)
 	{
 		using namespace GBA::ArmAsm;
 
@@ -203,7 +203,7 @@ namespace GbaTest
 		// The image is assembled with a zero origin: a cartridge is *loaded* at 0x08000000, and
 		// every branch in it is PC-relative, so the addresses the emitter resolves are the image
 		// offsets.
-		const GBA::u32 base = 0;
+		const uint32_t base = 0;
 
 		a.Org(base);
 		for (int i = 0; i < 7; i++)
@@ -226,7 +226,7 @@ namespace GbaTest
 		a.Label("spin");
 		a.B("spin");
 
-		std::vector<GBA::u8> image = a.TakeImage(0x1000);
+		std::vector<uint8_t> image = a.TakeImage(0x1000);
 		FixHeaderChecksum(image);
 
 		return image;

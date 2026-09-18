@@ -28,22 +28,22 @@ namespace GBA
 		int SampleRate() const { return sampleRate; }
 
 		/// <summary>Read a sound register (offset relative to 0x04000000, 0x060..0x0A7).</summary>
-		u8 Read8(u32 offset, u8 openBus) const;
+		uint8_t Read8(uint32_t offset, uint8_t openBus) const;
 
 		/// <summary>Write a sound register (8-bit; GBA sound registers are byte wide).</summary>
-		void Write8(u32 offset, u8 value);
+		void Write8(uint32_t offset, uint8_t value);
 
 		/// <summary>Advance the APU by `cycles` and produce the samples for them.</summary>
 		void Tick(GbaBus& bus, int cycles);
 
 		/// <summary>Drain up to `maxFrames` stereo sample frames (interleaved L/R, 16-bit).</summary>
-		int ReadSamples(s16* out, int maxFrames);
+		int ReadSamples(int16_t* out, int maxFrames);
 
 		/// <summary>True when FIFO `which` (0 = A, 1 = B) needs a DMA refill.</summary>
 		bool FifoRequest(int which) const { return fifoRequest[which]; }
 
 		/// <summary>Append the four words the DMA transferred into the FIFO.</summary>
-		void FifoDmaDone(int which, const u32* words, int count);
+		void FifoDmaDone(int which, const uint32_t* words, int count);
 
 		/// <summary>Clear the DMA request flag (the DMA engine calls this after servicing).</summary>
 		void ClearFifoRequest(int which) { fifoRequest[which] = false; }
@@ -54,19 +54,19 @@ namespace GBA
 	private:
 		// -- registers ---------------------------------------------------------------------
 
-		u16 sound1cntL = 0, sound1cntH = 0, sound1cntX = 0;
-		u16 sound2cntL = 0, sound2cntH = 0;
-		u16 sound3cntL = 0, sound3cntH = 0, sound3cntX = 0;
-		u16 sound4cntL = 0, sound4cntH = 0;
-		u16 soundcntL = 0, soundcntH = 0, soundcntX = 0;
-		u16 soundbias = 0x200;
-		u8 waveRam[16]{};
+		uint16_t sound1cntL = 0, sound1cntH = 0, sound1cntX = 0;
+		uint16_t sound2cntL = 0, sound2cntH = 0;
+		uint16_t sound3cntL = 0, sound3cntH = 0, sound3cntX = 0;
+		uint16_t sound4cntL = 0, sound4cntH = 0;
+		uint16_t soundcntL = 0, soundcntH = 0, soundcntX = 0;
+		uint16_t soundbias = 0x200;
+		uint8_t waveRam[16]{};
 
 		// -- state -------------------------------------------------------------------------
 
 		int sampleRate = 32768;
 		int cycleAccum = 0;			// cycles towards the next output sample
-		std::vector<s16> pending;	// mixed samples waiting for ReadSamples
+		std::vector<int16_t> pending;	// mixed samples waiting for ReadSamples
 
 		// The four legacy channels.
 		struct SquareChannel
@@ -109,7 +109,7 @@ namespace GBA
 		int wavePosition = 0;		// digit 0..31 (32 samples) or 0..63 (64 samples)
 		int waveLength = 0;			// 256 Hz steps left before the channel stops
 		bool waveLengthEnabled = false;
-		u16 lastTimerValue = 0;
+		uint16_t lastTimerValue = 0;
 
 		// Channel 4 (noise)
 		bool noiseEnabled = false;
@@ -123,13 +123,13 @@ namespace GBA
 		int noiseEnvelopePeriod = 0;
 		int noiseEnvelopeTimer = 0;
 		bool noiseEnvelopeUp = false;
-		u16 noiseLfsr = 0x7FFF;
+		uint16_t noiseLfsr = 0x7FFF;
 		bool noiseLengthEnabled = false;
 		int noiseLength = 0;
 		int noiseSampleRate = 0;
 
 		// FIFO channels
-		u8 fifo[2][32]{};
+		uint8_t fifo[2][32]{};
 		int fifoHead[2]{}, fifoTail[2]{}, fifoCount[2]{};
 		bool fifoRequest[2]{};
 		bool fifoEnabled[2]{};

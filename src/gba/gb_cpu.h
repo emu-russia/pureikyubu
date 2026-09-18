@@ -39,8 +39,8 @@ namespace GBA
 	public:
 		virtual ~GbCpuBus() = default;
 
-		virtual u8 ReadByte(u16 address) = 0;
-		virtual void WriteByte(u16 address, u8 value) = 0;
+		virtual uint8_t ReadByte(uint16_t address) = 0;
+		virtual void WriteByte(uint16_t address, uint8_t value) = 0;
 
 		/// <summary>True when an enabled interrupt is pending (IE &amp; IF != 0).</summary>
 		virtual bool InterruptsPending() const = 0;
@@ -53,7 +53,7 @@ namespace GBA
 	// this one) live in namespace GBA, and the ARM core already has FlagZ/FlagN/FlagC.
 	// ---------------------------------------------------------------------------------------
 
-	enum GbFlagBits : u8
+	enum GbFlagBits : uint8_t
 	{
 		GbFlagZ = 0x80,			// zero
 		GbFlagN = 0x40,			// subtraction (BCD)
@@ -67,10 +67,10 @@ namespace GBA
 	public:
 		// -- state -------------------------------------------------------------------------
 
-		u8 a = 0x00, f = 0x00;
-		u8 b = 0x00, c = 0x00, d = 0x00, e = 0x00, h = 0x00, l = 0x00;
-		u16 sp = 0xFFFE;
-		u16 pc = 0x0100;
+		uint8_t a = 0x00, f = 0x00;
+		uint8_t b = 0x00, c = 0x00, d = 0x00, e = 0x00, h = 0x00, l = 0x00;
+		uint16_t sp = 0xFFFE;
+		uint16_t pc = 0x0100;
 
 		/// <summary>The interrupt master enable (not readable by the program).</summary>
 		bool ime = false;
@@ -117,72 +117,72 @@ namespace GBA
 		bool Sleeping() const { return halted || stopped; }
 
 		/// <summary>Push a byte/word onto the stack, as PUSH and CALL do (SP decrements first).</summary>
-		void PushByte(u8 value);
-		void PushWord(u16 value);
-		u8 PopByte();
-		u16 PopWord();
+		void PushByte(uint8_t value);
+		void PushWord(uint16_t value);
+		uint8_t PopByte();
+		uint16_t PopWord();
 
 		/// <summary>The 16-bit register pairs, for the tests and the boot ROM hand-off.</summary>
-		u16 AF() const { return (u16)((a << 8) | f); }
-		u16 BC() const { return (u16)((b << 8) | c); }
-		u16 DE() const { return (u16)((d << 8) | e); }
-		u16 HL() const { return (u16)((h << 8) | l); }
-		void SetAF(u16 value) { a = (u8)(value >> 8); f = (u8)(value & GbFlagMask); }
-		void SetBC(u16 value) { b = (u8)(value >> 8); c = (u8)value; }
-		void SetDE(u16 value) { d = (u8)(value >> 8); e = (u8)value; }
-		void SetHL(u16 value) { h = (u8)(value >> 8); l = (u8)value; }
+		uint16_t AF() const { return (uint16_t)((a << 8) | f); }
+		uint16_t BC() const { return (uint16_t)((b << 8) | c); }
+		uint16_t DE() const { return (uint16_t)((d << 8) | e); }
+		uint16_t HL() const { return (uint16_t)((h << 8) | l); }
+		void SetAF(uint16_t value) { a = (uint8_t)(value >> 8); f = (uint8_t)(value & GbFlagMask); }
+		void SetBC(uint16_t value) { b = (uint8_t)(value >> 8); c = (uint8_t)value; }
+		void SetDE(uint16_t value) { d = (uint8_t)(value >> 8); e = (uint8_t)value; }
+		void SetHL(uint16_t value) { h = (uint8_t)(value >> 8); l = (uint8_t)value; }
 
 		/// <summary>The register state the boot ROM hands to the cartridge (Pan Docs): A holds the
 		/// console/cartridge kind, F the flags, B/C/D/E the header bytes, HL the header checksum.
 		/// `fValue` is 0xB0 on a DMG for a normal cartridge (Z=1, N=0, H and C set because the
 		/// header checksum is non-zero) and 0x80 on a CGB (Z=1 and nothing else).</summary>
-		void LoadPostBootRegisters(u8 aValue, u8 headerChecksum, u8 fValue = 0xB0);
+		void LoadPostBootRegisters(uint8_t aValue, uint8_t headerChecksum, uint8_t fValue = 0xB0);
 
 		/// <summary>A one line dump of the registers (used by the failure messages).</summary>
 		std::string Describe() const;
 
 		// -- flag helpers, for the tests -----------------------------------------------------
 
-		bool Flag(u8 flag) const { return (f & flag) != 0; }
-		void SetFlag(u8 flag, bool set) { f = (u8)(set ? (f | flag) : (f & ~flag)); f &= GbFlagMask; }
+		bool Flag(uint8_t flag) const { return (f & flag) != 0; }
+		void SetFlag(uint8_t flag, bool set) { f = (uint8_t)(set ? (f | flag) : (f & ~flag)); f &= GbFlagMask; }
 
 	private:
 		// -- fetching and the opcode dispatch ------------------------------------------------
 
-		u8 Fetch8();
-		u16 Fetch16();
+		uint8_t Fetch8();
+		uint16_t Fetch16();
 
-		u8 Read(u16 address) { return bus->ReadByte(address); }
-		void Write(u16 address, u8 value) { bus->WriteByte(address, value); }
+		uint8_t Read(uint16_t address) { return bus->ReadByte(address); }
+		void Write(uint16_t address, uint8_t value) { bus->WriteByte(address, value); }
 
 		/// <summary>The eight r8 operands, addressed by their encoding (6 is (HL)).</summary>
-		u8 ReadR8(int index);
-		void WriteR8(int index, u8 value);
+		uint8_t ReadR8(int index);
+		void WriteR8(int index, uint8_t value);
 
 		/// <summary>Serve the highest priority pending interrupt. Returns the M-cycles (5).</summary>
-		int ServiceInterrupt(u8 pending);
+		int ServiceInterrupt(uint8_t pending);
 
-		void Execute(u8 opcode, int& cycles);
+		void Execute(uint8_t opcode, int& cycles);
 		void ExecuteCb(int& cycles);
 
 		// -- the arithmetic, each following one row of the gbz80(7) tables -------------------
 
-		void AddA(u8 value, bool withCarry);
-		void SubA(u8 value, bool withCarry, bool store);
-		void AndA(u8 value);
-		void XorA(u8 value);
-		void OrA(u8 value);
+		void AddA(uint8_t value, bool withCarry);
+		void SubA(uint8_t value, bool withCarry, bool store);
+		void AndA(uint8_t value);
+		void XorA(uint8_t value);
+		void OrA(uint8_t value);
 		void IncR8(int index);
 		void DecR8(int index);
-		void AddHLR16(u16 value);
-		void AddSPe8(s8 offset);
-		void LdHLSPe8(s8 offset);
+		void AddHLR16(uint16_t value);
+		void AddSPe8(int8_t offset);
+		void LdHLSPe8(int8_t offset);
 		void Daa();
 
 		/// <summary>The CB-prefixed shift/rotate/swap family, one operation per case.</summary>
-		u8 ShiftOp(int operation, u8 value);
+		uint8_t ShiftOp(int operation, uint8_t value);
 
 		/// <summary>Set the Z flag from a result and clear N/H; the shape of every CB result.</summary>
-		void SetZFromResult(u8 result);
+		void SetZFromResult(uint8_t result);
 	};
 }

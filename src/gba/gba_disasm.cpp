@@ -8,21 +8,21 @@
 
 namespace GBA
 {
-	ImageMemory::ImageMemory(const u8* data, size_t size, u32 base)
+	ImageMemory::ImageMemory(const uint8_t* data, size_t size, uint32_t base)
 		: data(data), size(size), base(base)
 	{
 	}
 
-	u16 ImageMemory::Read16(u32 address) const
+	uint16_t ImageMemory::Read16(uint32_t address) const
 	{
 		if (address < base || address >= base + size)
 			return 0xFFFF;					// outside the image: the open bus, as the bus reports it
 
 		// Any address may be asked for: the Game Boy's instruction stream is made of single bytes
 		// at every alignment, and the ARM and Thumb words are little endian.
-		u8 low = data[address - base];
-		u8 high = (address + 1 < base + size) ? data[address + 1 - base] : 0xFF;
-		return (u16)(low | (high << 8));
+		uint8_t low = data[address - base];
+		uint8_t high = (address + 1 < base + size) ? data[address + 1 - base] : 0xFF;
+		return (uint16_t)(low | (high << 8));
 	}
 
 	namespace
@@ -44,35 +44,35 @@ namespace GBA
 
 		const char* const ShiftNames[4] = { "lsl", "lsr", "asr", "ror" };
 
-		std::string Hex(u32 value)
+		std::string Hex(uint32_t value)
 		{
 			char text[16];
 			snprintf(text, sizeof text, "0x%X", value);
 			return text;
 		}
 
-		std::string HexPadded(u32 value, int digits)
+		std::string HexPadded(uint32_t value, int digits)
 		{
 			char text[16];
 			snprintf(text, sizeof text, "0x%0*X", digits, value);
 			return text;
 		}
 
-		std::string Dec(u32 value)
+		std::string Dec(uint32_t value)
 		{
 			char text[16];
 			snprintf(text, sizeof text, "%u", value);
 			return text;
 		}
 
-		std::string Signed(s32 value)
+		std::string Signed(int32_t value)
 		{
 			char text[16];
 			snprintf(text, sizeof text, "%d", value);
 			return text;
 		}
 
-		u32 RotateRight(u32 value, u32 amount)
+		uint32_t RotateRight(uint32_t value, uint32_t amount)
 		{
 			amount &= 31;
 			if (amount == 0)
@@ -80,11 +80,11 @@ namespace GBA
 			return (value >> amount) | (value << (32 - amount));
 		}
 
-		std::string Condition(u32 instruction)
+		std::string Condition(uint32_t instruction)
 		{
 			// The "always" condition (1110) has no suffix; 1111 is the unconditional escape and is
 			// never printed as a suffix.
-			u32 condition = instruction >> 28;
+			uint32_t condition = instruction >> 28;
 			if (condition >= 14)
 				return "";
 			return ConditionNames[condition];
@@ -92,10 +92,10 @@ namespace GBA
 
 		/// <summary>The operand of a data processing instruction that is a register, with the
 		/// barrel shifter applied (A5.1.5): "r3", "r3, lsl #2", "r3, rrx", "r3, lsr r4".</summary>
-		std::string ShiftedOperand(u32 instruction)
+		std::string ShiftedOperand(uint32_t instruction)
 		{
-			u32 reg = instruction & 0xF;
-			u32 type = (instruction >> 5) & 3;
+			uint32_t reg = instruction & 0xF;
+			uint32_t type = (instruction >> 5) & 3;
 			std::string base = ArmRegisters[reg];
 
 			if ((instruction & 0x10) != 0)
@@ -104,7 +104,7 @@ namespace GBA
 				return base + ", " + ShiftNames[type] + " " + ArmRegisters[(instruction >> 8) & 0xF];
 			}
 
-			u32 amount = (instruction >> 7) & 0x1F;
+			uint32_t amount = (instruction >> 7) & 0x1F;
 			if (amount == 0)
 			{
 				if (type == 0)
@@ -121,10 +121,10 @@ namespace GBA
 
 		/// <summary>The 32-bit value of a data processing immediate, i.e. the eight bits rotated
 		/// right by an even amount (A5.1.4). The rotation is printed when it is not zero.</summary>
-		std::string ImmediateValue(u32 instruction)
+		std::string ImmediateValue(uint32_t instruction)
 		{
-			u32 rotation = ((instruction >> 8) & 0xF) * 2;
-			u32 value = RotateRight(instruction & 0xFF, rotation);
+			uint32_t rotation = ((instruction >> 8) & 0xF) * 2;
+			uint32_t value = RotateRight(instruction & 0xFF, rotation);
 			if (rotation == 0)
 				return "#" + Hex(value);
 			return "#" + Hex(value) + "\t; " + Dec(instruction & 0xFF) + " ror " + Dec(rotation);
@@ -132,7 +132,7 @@ namespace GBA
 
 		/// <summary>A register list as "{r0-r3, r5, lr}". An empty list is "{}"; a pair of adjacent
 		/// registers stays a pair ("{r0, r1}") because that is how an assembler writes it.</summary>
-		std::string RegisterList(u16 list, const char* const* names, int count)
+		std::string RegisterList(uint16_t list, const char* const* names, int count)
 		{
 			std::string text = "{";
 			int written = 0;
@@ -164,7 +164,7 @@ namespace GBA
 
 		/// <summary>The addressing mode of an LDM/STM (A5.2): P selects pre- or post-indexing and U
 		/// the direction, so P=1/U=1 is increment-before, P=1/U=0 decrement-before, and so on.</summary>
-		const char* BlockMode(u32 instruction)
+		const char* BlockMode(uint32_t instruction)
 		{
 			bool pre = (instruction & 0x01000000) != 0;
 			bool up = (instruction & 0x00800000) != 0;
@@ -176,9 +176,9 @@ namespace GBA
 
 		/// <summary>The addressing mode of a single data transfer: "[r1, #4]", "[r1, r2, lsl #2]!",
 		/// "[r1], #4", "[r1], r2".</summary>
-		std::string TransferAddress(u32 instruction)
+		std::string TransferAddress(uint32_t instruction)
 		{
-			u32 base = (instruction >> 16) & 0xF;
+			uint32_t base = (instruction >> 16) & 0xF;
 			bool pre = (instruction & 0x01000000) != 0;
 			bool up = (instruction & 0x00800000) != 0;
 			bool writeback = (instruction & 0x00200000) != 0;
@@ -187,7 +187,7 @@ namespace GBA
 			std::string offset;
 			if (immediate)
 			{
-				u32 value = instruction & 0xFFF;
+				uint32_t value = instruction & 0xFFF;
 				if (value == 0)
 					offset = "";
 				else
@@ -221,7 +221,7 @@ namespace GBA
 
 		/// <summary>The GBA BIOS calls the SWI numbers name (GBATEK "BIOS Functions"). Only the
 		/// documented entries with a stable number are named; anything else stays a bare number.</summary>
-		const char* SwiName(u32 number)
+		const char* SwiName(uint32_t number)
 		{
 			switch (number)
 			{
@@ -254,7 +254,7 @@ namespace GBA
 		// ARM
 		// -------------------------------------------------------------------------------------
 
-		std::string DecodeDataProcessing(u32 instruction, bool immediate)
+		std::string DecodeDataProcessing(uint32_t instruction, bool immediate)
 		{
 			static const char* const Operations[16] =
 			{
@@ -262,7 +262,7 @@ namespace GBA
 				"tst", "teq", "cmp", "cmn", "orr", "mov", "bic", "mvn",
 			};
 
-			u32 operation = (instruction >> 21) & 0xF;
+			uint32_t operation = (instruction >> 21) & 0xF;
 			bool setFlags = (instruction & 0x00100000) != 0;
 			std::string mnemonic = Operations[operation];
 
@@ -292,7 +292,7 @@ namespace GBA
 			return text;
 		}
 
-		std::string DecodeMultiply(u32 instruction)
+		std::string DecodeMultiply(uint32_t instruction)
 		{
 			// MUL/MLA: A3.4.4. The long forms are recognised by their own pattern before this.
 			bool accumulate = (instruction & 0x00200000) != 0;
@@ -307,7 +307,7 @@ namespace GBA
 			return text;
 		}
 
-		std::string DecodeLongMultiply(u32 instruction)
+		std::string DecodeLongMultiply(uint32_t instruction)
 		{
 			bool sign = (instruction & 0x00400000) != 0;
 			bool accumulate = (instruction & 0x00200000) != 0;
@@ -324,9 +324,9 @@ namespace GBA
 				ArmRegisters[(instruction >> 8) & 0xF];
 		}
 
-		std::string DecodeHalfwordTransfer(u32 instruction)
+		std::string DecodeHalfwordTransfer(uint32_t instruction)
 		{
-			u32 type = (instruction >> 5) & 3;			// 1 = H, 2 = SB, 3 = SH
+			uint32_t type = (instruction >> 5) & 3;			// 1 = H, 2 = SB, 3 = SH
 			bool load = (instruction & 0x00100000) != 0;
 			bool pre = (instruction & 0x01000000) != 0;
 			bool up = (instruction & 0x00800000) != 0;
@@ -346,8 +346,8 @@ namespace GBA
 			if (type == 1 && !load) mnemonic += "h";
 			mnemonic += Condition(instruction);
 
-			u32 base = (instruction >> 16) & 0xF;
-			u32 target = (instruction >> 12) & 0xF;
+			uint32_t base = (instruction >> 16) & 0xF;
+			uint32_t target = (instruction >> 12) & 0xF;
 
 			std::string offset;
 			if (registerOffset)
@@ -356,7 +356,7 @@ namespace GBA
 			}
 			else
 			{
-				u32 value = ((instruction >> 4) & 0xF0) | (instruction & 0xF);
+				uint32_t value = ((instruction >> 4) & 0xF0) | (instruction & 0xF);
 				if (value == 0)
 					offset = "";
 				else
@@ -380,10 +380,10 @@ namespace GBA
 			return mnemonic + " " + ArmRegisters[target] + ", " + address;
 		}
 
-		std::string DecodeArm(u32 instruction, u32 address)
+		std::string DecodeArm(uint32_t instruction, uint32_t address)
 		{
-			u32 condition = instruction >> 28;
-			u32 space = (instruction >> 25) & 7;
+			uint32_t condition = instruction >> 28;
+			uint32_t space = (instruction >> 25) & 7;
 
 			// The unconditional encodings (cond = 1111) are BLX (ARMv5) and the coprocessor/SWI
 			// space; on an ARM7TDMI only the SWI form exists and the rest is undefined.
@@ -398,7 +398,7 @@ namespace GBA
 			{
 			case 0:
 			{
-				u32 bits7to4 = (instruction >> 4) & 0xF;
+				uint32_t bits7to4 = (instruction >> 4) & 0xF;
 
 				if (bits7to4 == 9)
 				{
@@ -505,7 +505,7 @@ namespace GBA
 				std::string text = mnemonic + " " + ArmRegisters[(instruction >> 16) & 0xF];
 				if (writeback)
 					text += "!";
-				text += ", " + RegisterList((u16)instruction, ArmRegisters, 16);
+				text += ", " + RegisterList((uint16_t)instruction, ArmRegisters, 16);
 				if (userMode)
 					text += "^";
 				return text;
@@ -514,10 +514,10 @@ namespace GBA
 			case 5:
 			{
 				bool link = (instruction & 0x01000000) != 0;
-				s32 offset = (s32)(instruction & 0xFFFFFF);
+				int32_t offset = (int32_t)(instruction & 0xFFFFFF);
 				if ((offset & 0x800000) != 0)
-					offset |= (s32)0xFF000000;
-				u32 target = address + 8 + (u32)(offset << 2);
+					offset |= (int32_t)0xFF000000;
+				uint32_t target = address + 8 + (uint32_t)(offset << 2);
 
 				return std::string(link ? "bl" : "b") + Condition(instruction) + " " + Hex(target);
 			}
@@ -526,7 +526,7 @@ namespace GBA
 			{
 				// SWI: the GBA BIOS numbers its service functions in the top byte, so the call is
 				// named when the number is one of the documented ones.
-				u32 number = instruction & 0xFFFFFF;
+				uint32_t number = instruction & 0xFFFFFF;
 				std::string text = "swi" + Condition(instruction) + " " + HexPadded(number, 6);
 				const char* name = SwiName(number);
 				if (name != nullptr)
@@ -546,16 +546,16 @@ namespace GBA
 		// -------------------------------------------------------------------------------------
 
 		/// <summary>A sign-extended branch offset, as the manual writes it.</summary>
-		s32 SignExtend(u32 value, int bits)
+		int32_t SignExtend(uint32_t value, int bits)
 		{
 			if ((value & (1u << (bits - 1))) != 0)
-				return (s32)(value | ~((1u << bits) - 1));
-			return (s32)value;
+				return (int32_t)(value | ~((1u << bits) - 1));
+			return (int32_t)value;
 		}
 
 		/// <summary>Thumb: the branch target of a conditional or unconditional branch, which is the
 		/// instruction address plus four plus the doubled offset (A4.3).</summary>
-		std::string DecodeThumb(u32 instruction, u32 address, const DisasmMemory& memory)
+		std::string DecodeThumb(uint32_t instruction, uint32_t address, const DisasmMemory& memory)
 		{
 			// The order of the tests is the order of the format table in A4.2, and each format is
 			// recognised by the bit pattern the manual gives for it.
@@ -565,12 +565,12 @@ namespace GBA
 			if ((instruction & 0xE000) == 0x0000 && (instruction & 0x1800) != 0x1800)
 			{
 				static const char* const Names[3] = { "lsl", "lsr", "asr" };
-				u32 operation = (instruction >> 11) & 3;
+				uint32_t operation = (instruction >> 11) & 3;
 				if (operation == 3)
 					return "undef";					// bits 12-11 = 11 without I is not an encoding
-				u32 amount = (instruction >> 6) & 0x1F;
-				u32 source = (instruction >> 3) & 7;
-				u32 target = instruction & 7;
+				uint32_t amount = (instruction >> 6) & 0x1F;
+				uint32_t source = (instruction >> 3) & 7;
+				uint32_t target = instruction & 7;
 				if (amount == 0 && operation != 0)
 					amount = 32;					// LSR/ASR #0 mean #32, LSL #0 is the register
 				return std::string(Names[operation]) + " " + ThumbRegisters[target] + ", " +
@@ -582,9 +582,9 @@ namespace GBA
 			{
 				bool immediate = (instruction & 0x0400) != 0;
 				bool subtract = (instruction & 0x0200) != 0;
-				u32 operand = (instruction >> 6) & 7;
-				u32 source = (instruction >> 3) & 7;
-				u32 target = instruction & 7;
+				uint32_t operand = (instruction >> 6) & 7;
+				uint32_t source = (instruction >> 3) & 7;
+				uint32_t target = instruction & 7;
 
 				std::string text = subtract ? "sub" : "add";
 				text += " " + std::string(ThumbRegisters[target]);
@@ -598,7 +598,7 @@ namespace GBA
 			if ((instruction & 0xE000) == 0x2000)
 			{
 				static const char* const Names[4] = { "mov", "cmp", "add", "sub" };
-				u32 operation = (instruction >> 11) & 3;
+				uint32_t operation = (instruction >> 11) & 3;
 				return std::string(Names[operation]) + " " + ThumbRegisters[(instruction >> 8) & 7] +
 					", #" + Hex(instruction & 0xFF);
 			}
@@ -612,7 +612,7 @@ namespace GBA
 					"tst", "neg", "cmp", "cmn", "orr", "mul", "bic", "mvn",
 				};
 
-				u32 operation = (instruction >> 6) & 0xF;
+				uint32_t operation = (instruction >> 6) & 0xF;
 				return std::string(Names[operation]) + " " + ThumbRegisters[instruction & 7] + ", " +
 					ThumbRegisters[(instruction >> 3) & 7];
 			}
@@ -621,9 +621,9 @@ namespace GBA
 			if ((instruction & 0xFC00) == 0x4400)
 			{
 				static const char* const Names[3] = { "add", "cmp", "mov" };
-				u32 operation = (instruction >> 8) & 3;
-				u32 target = (instruction & 7) | ((instruction >> 4) & 8);
-				u32 source = (instruction >> 3) & 0xF;
+				uint32_t operation = (instruction >> 8) & 3;
+				uint32_t target = (instruction & 7) | ((instruction >> 4) & 8);
+				uint32_t source = (instruction >> 3) & 0xF;
 				if (operation == 3)
 					return "bx " + std::string(ArmRegisters[source]);
 				return std::string(Names[operation]) + " " + ArmRegisters[target] + ", " +
@@ -633,8 +633,8 @@ namespace GBA
 			// Format 6: PC-relative load.
 			if ((instruction & 0xF800) == 0x4800)
 			{
-				u32 offset = (instruction & 0xFF) * 4;
-				u32 target = (instruction >> 8) & 7;
+				uint32_t offset = (instruction & 0xFF) * 4;
+				uint32_t target = (instruction >> 8) & 7;
 				return "ldr " + std::string(ThumbRegisters[target]) + ", [pc, #" + Dec(offset) +
 					"]\t; = " + Hex(((address + 4) & ~3u) + offset);
 			}
@@ -647,10 +647,10 @@ namespace GBA
 					"str", "strh", "strb", "ldrsb", "ldr", "ldrh", "ldrb", "ldrsh",
 				};
 
-				u32 operation = (instruction >> 9) & 7;
-				u32 offset = (instruction >> 6) & 7;
-				u32 base = (instruction >> 3) & 7;
-				u32 target = instruction & 7;
+				uint32_t operation = (instruction >> 9) & 7;
+				uint32_t offset = (instruction >> 6) & 7;
+				uint32_t base = (instruction >> 3) & 7;
+				uint32_t target = instruction & 7;
 				return std::string(Names[operation]) + " " + ThumbRegisters[target] + ", [" +
 					ThumbRegisters[base] + ", " + ThumbRegisters[offset] + "]";
 			}
@@ -660,9 +660,9 @@ namespace GBA
 			{
 				bool byte = (instruction & 0x1000) != 0;
 				bool load = (instruction & 0x0800) != 0;
-				u32 offset = (instruction >> 6) & 0x1F;
-				u32 base = (instruction >> 3) & 7;
-				u32 target = instruction & 7;
+				uint32_t offset = (instruction >> 6) & 0x1F;
+				uint32_t base = (instruction >> 3) & 7;
+				uint32_t target = instruction & 7;
 				std::string mnemonic = load ? "ldr" : "str";
 				if (byte)
 					mnemonic += "b";
@@ -674,9 +674,9 @@ namespace GBA
 			if ((instruction & 0xF000) == 0x8000)
 			{
 				bool load = (instruction & 0x0800) != 0;
-				u32 offset = (instruction >> 6) & 0x1F;
-				u32 base = (instruction >> 3) & 7;
-				u32 target = instruction & 7;
+				uint32_t offset = (instruction >> 6) & 0x1F;
+				uint32_t base = (instruction >> 3) & 7;
+				uint32_t target = instruction & 7;
 				return std::string(load ? "ldrh" : "strh") + " " + ThumbRegisters[target] + ", [" +
 					ThumbRegisters[base] + ", #" + Dec(offset * 2) + "]";
 			}
@@ -685,7 +685,7 @@ namespace GBA
 			if ((instruction & 0xF000) == 0x9000)
 			{
 				bool load = (instruction & 0x0800) != 0;
-				u32 offset = (instruction & 0xFF) * 4;
+				uint32_t offset = (instruction & 0xFF) * 4;
 				return std::string(load ? "ldr" : "str") + " " + ThumbRegisters[(instruction >> 8) & 7] +
 					", [sp, #" + Dec(offset) + "]";
 			}
@@ -694,8 +694,8 @@ namespace GBA
 			if ((instruction & 0xF000) == 0xA000)
 			{
 				bool stack = (instruction & 0x0800) != 0;
-				u32 offset = (instruction & 0xFF) * 4;
-				u32 base = stack ? 0 : ((address + 4) & ~3u);
+				uint32_t offset = (instruction & 0xFF) * 4;
+				uint32_t base = stack ? 0 : ((address + 4) & ~3u);
 				return "add " + std::string(ThumbRegisters[(instruction >> 8) & 7]) + ", " +
 					(stack ? "sp" : "pc") + ", #" + Dec(offset) + "\t; = " + Hex(base + offset);
 			}
@@ -704,7 +704,7 @@ namespace GBA
 			if ((instruction & 0xFF00) == 0xB000)
 			{
 				bool subtract = (instruction & 0x0080) != 0;
-				u32 offset = (instruction & 0x7F) * 4;
+				uint32_t offset = (instruction & 0x7F) * 4;
 				return std::string(subtract ? "sub" : "add") + " sp, #" + Dec(offset);
 			}
 
@@ -713,7 +713,7 @@ namespace GBA
 			if ((instruction & 0xF600) == 0xB400)
 			{
 				bool pop = (instruction & 0x0800) != 0;
-				u16 list = (u16)(instruction & 0xFF);
+				uint16_t list = (uint16_t)(instruction & 0xFF);
 				if ((instruction & 0x0100) != 0)
 					list |= pop ? 0x8000 : 0x4000;		// bit 15 is pc, bit 14 is lr
 				return std::string(pop ? "pop" : "push") + " " +
@@ -726,33 +726,33 @@ namespace GBA
 				bool load = (instruction & 0x0800) != 0;
 				return std::string(load ? "ldmia" : "stmia") + " " +
 					ThumbRegisters[(instruction >> 8) & 7] + "!, " +
-					RegisterList((u16)(instruction & 0xFF), ThumbRegisters, 8);
+					RegisterList((uint16_t)(instruction & 0xFF), ThumbRegisters, 8);
 			}
 
 			// Format 15 and 16: the conditional branch and the software interrupt.
 			if ((instruction & 0xF000) == 0xD000)
 			{
-				u32 condition = (instruction >> 8) & 0xF;
+				uint32_t condition = (instruction >> 8) & 0xF;
 				if (condition == 0xF)
 					return "swi " + Dec(instruction & 0xFF);
 				return "b" + std::string(ConditionNames[condition]) + " " +
-					Hex(address + 4 + (u32)(SignExtend(instruction & 0xFF, 8) * 2));
+					Hex(address + 4 + (uint32_t)(SignExtend(instruction & 0xFF, 8) * 2));
 			}
 
 			// Format 17: the unconditional branch.
 			if ((instruction & 0xF800) == 0xE000)
 			{
-				return "b " + Hex(address + 4 + (u32)(SignExtend(instruction & 0x7FF, 11) * 2));
+				return "b " + Hex(address + 4 + (uint32_t)(SignExtend(instruction & 0x7FF, 11) * 2));
 			}
 
 			// Format 18: the long branch with link, in two halfwords.
 			if ((instruction & 0xF800) == 0xF000)
 			{
-				s32 high = SignExtend(instruction & 0x7FF, 11);
-				u32 low = memory.Read16(address + 2);
+				int32_t high = SignExtend(instruction & 0x7FF, 11);
+				uint32_t low = memory.Read16(address + 2);
 				if ((low & 0xF800) != 0xF800)
 					return "bl\t; the second halfword is missing";
-				u32 target = address + 4 + (u32)(high * 4096) + ((low & 0x7FF) * 2);
+				uint32_t target = address + 4 + (uint32_t)(high * 4096) + ((low & 0x7FF) * 2);
 				return "bl " + Hex(target);
 			}
 
@@ -760,30 +760,30 @@ namespace GBA
 		}
 	}
 
-	std::string ArmDisassemble(const DisasmMemory& memory, u32 address, int* size)
+	std::string ArmDisassemble(const DisasmMemory& memory, uint32_t address, int* size)
 	{
 		if (size != nullptr)
 			*size = 4;
 
-		u32 instruction = memory.Read16(address) | ((u32)memory.Read16(address + 2) << 16);
+		uint32_t instruction = memory.Read16(address) | ((uint32_t)memory.Read16(address + 2) << 16);
 		return DecodeArm(instruction, address);
 	}
 
-	std::string ThumbDisassemble(const DisasmMemory& memory, u32 address, int* size)
+	std::string ThumbDisassemble(const DisasmMemory& memory, uint32_t address, int* size)
 	{
-		u32 instruction = memory.Read16(address);
+		uint32_t instruction = memory.Read16(address);
 		bool longBranch = (instruction & 0xF800) == 0xF000;
 		if (size != nullptr)
 			*size = longBranch ? 4 : 2;
 		return DecodeThumb(instruction, address, memory);
 	}
 
-	std::string Disassemble(const DisasmMemory& memory, u32 address, bool thumb, int* size)
+	std::string Disassemble(const DisasmMemory& memory, uint32_t address, bool thumb, int* size)
 	{
 		return thumb ? ThumbDisassemble(memory, address, size) : ArmDisassemble(memory, address, size);
 	}
 
-	std::string InstructionBytes(const DisasmMemory& memory, u32 address, int size)
+	std::string InstructionBytes(const DisasmMemory& memory, uint32_t address, int size)
 	{
 		char text[32];
 		if (size == 4)
@@ -793,7 +793,7 @@ namespace GBA
 		return text;
 	}
 
-	std::string ConditionFlags(u32 cpsr)
+	std::string ConditionFlags(uint32_t cpsr)
 	{
 		std::string text;
 		text += (cpsr & 0x80000000u) ? 'N' : 'n';

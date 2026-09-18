@@ -35,13 +35,13 @@ namespace
 
 		Fixture() { bus.Reset(); }
 
-		u16 Read(u32 offset) { return bus.Read16(0x04000000 + offset); }
-		u16 ReadMem16(u32 address) { return bus.Read16(address); }
-		void Write(u32 offset, u16 value) { bus.Write16(0x04000000 + offset, value); }
-		void WriteMem16(u32 address, u16 value) { bus.Write16(address, value); }
+		uint16_t Read(uint32_t offset) { return bus.Read16(0x04000000 + offset); }
+		uint16_t ReadMem16(uint32_t address) { return bus.Read16(address); }
+		void Write(uint32_t offset, uint16_t value) { bus.Write16(0x04000000 + offset, value); }
+		void WriteMem16(uint32_t address, uint16_t value) { bus.Write16(address, value); }
 
-		u8 Read8(u32 offset) { return bus.Read8(0x04000000 + offset); }
-		void Write8(u32 offset, u8 value) { bus.Write8(0x04000000 + offset, value); }
+		uint8_t Read8(uint32_t offset) { return bus.Read8(0x04000000 + offset); }
+		void Write8(uint32_t offset, uint8_t value) { bus.Write8(0x04000000 + offset, value); }
 	};
 
 	/// <summary>
@@ -78,9 +78,9 @@ namespace
 	}
 
 	/// <summary>TIOCNT_H for a timer: prescaler, optional cascade, IRQ, enable.</summary>
-	u16 TimerControl(int prescaler, bool cascade, bool irq)
+	uint16_t TimerControl(int prescaler, bool cascade, bool irq)
 	{
-		return (u16)((prescaler & 3) | (cascade ? 0x0004 : 0) | (irq ? 0x0040 : 0) | 0x0080);
+		return (uint16_t)((prescaler & 3) | (cascade ? 0x0004 : 0) | (irq ? 0x0040 : 0) | 0x0080);
 	}
 }
 
@@ -94,7 +94,7 @@ GBA_TEST(Timers, OverflowAfterReloadTimesPrescaler)
 
 	// GBATEK "GBA Timers": the reload value is (0x10000 - reload) * prescaler cycles away from
 	// the overflow, and the prescaler is F/1 for TMxCNT_H bits 0-1 = 0.
-	const u16 reload = 0x8000;
+	const uint16_t reload = 0x8000;
 	const int expected = (0x10000 - reload) * 1;		// 0x8000 = 32768 cycles
 
 	f.Write(0x100, reload);			// TM0CNT_L
@@ -156,7 +156,7 @@ GBA_TEST(Timers, CascadeCountsThePreviousOverflow)
 	// GBATEK "GBA Timers": with TMxCNT_H bit 2 set the timer ignores its own prescaler and counts
 	// each overflow of the previous timer. Timer 0 overflows every (0x10000 - reload) cycles; the
 	// cascaded timer 1 then overflows after the same number of timer 0 overflows.
-	const u16 reload = 0xFF00;					// 256 cycles per timer 0 period
+	const uint16_t reload = 0xFF00;					// 256 cycles per timer 0 period
 	const int period = 0x10000 - reload;
 
 	f.Write(0x100, reload);						// TM0CNT_L
@@ -214,7 +214,7 @@ GBA_TEST(Timers, StopFreezesAndRestartReloads)
 	GBA_CHECK_HEX16(f.Read(0x100), 0x0015);
 
 	// Clearing the start bit freezes the counter where it stands.
-	f.Write(0x102, TimerControl(0, false, false) & (u16)~0x0080);
+	f.Write(0x102, TimerControl(0, false, false) & (uint16_t)~0x0080);
 	GBA_CHECK(!f.bus.timers.Running(0));
 	GBA_CHECK_HEX16(f.Read(0x100), 0x0015);
 
@@ -248,8 +248,8 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 
 		// The enable bit clears itself when the transfer completes (GBATEK "Transfer End").
 		GBA_CHECK(!f.bus.dma.Active(0));
-		GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000100), 0x1111);
-		GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000102), 0x2222);
+		GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0x1111);
+		GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0x2222);
 	}
 
 	{
@@ -264,8 +264,8 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 		f.Write(0x0C4, 2);
 		f.Write(0x0C6, 0x8020);			// dest decrement (bit 5), immediate, enable
 
-		GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000104), 0xAAAA);
-		GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000102), 0xBBBB);
+		GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000104), 0xAAAA);
+		GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0xBBBB);
 	}
 
 	{
@@ -281,7 +281,7 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 		f.WriteMem16(0x02000100, 0x0000);	// the destination starts clear
 		f.Write(0x0D2, 0x8040);			// dest fixed (bits 5-6 = 2), immediate, enable
 
-		GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000100), 0x5678);	// the second unit wins
+		GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0x5678);	// the second unit wins
 	}
 }
 
@@ -356,27 +356,27 @@ GBA_TEST(Dma, RepeatTransferRestartedByVBlank)
 	f.Write(0x0D8, 0x0100);
 	f.Write(0x0DA, 0x0200);
 	f.Write(0x0DC, 2);
-	f.Write(0x0DE, (u16)(0x0200 | 0x1000 | 0x0060 | 0x8000));
+	f.Write(0x0DE, (uint16_t)(0x0200 | 0x1000 | 0x0060 | 0x8000));
 
 	// Nothing runs until the VBlank edge arrives.
-	GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000100), 0x0000);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0x0000);
 	GBA_CHECK(f.bus.dma.Active(3));
 
 	f.bus.dma.OnVBlank(f.bus);
-	GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000100), 0xCAFE);
-	GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000102), 0xBABE);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0xCAFE);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0xBABE);
 
 	// The repeat bit keeps the channel enabled and DAD reloaded, so the next VBlank writes the
 	// same two words to the same place again (GBATEK "DMA Repeat bit").
 	GBA_CHECK(f.bus.dma.Active(3));
-	GBA_CHECK_HEX16(f.Read(0x0DE), (u16)(0x0200 | 0x1000 | 0x0060 | 0x8000));
+	GBA_CHECK_HEX16(f.Read(0x0DE), (uint16_t)(0x0200 | 0x1000 | 0x0060 | 0x8000));
 
 	f.WriteMem16(0x02000100, 0x0000);
 	f.bus.dma.OnVBlank(f.bus);
-	GBA_CHECK_HEX16((u16)f.ReadMem16(0x02000100), 0xCAFE);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0xCAFE);
 
 	// Clearing the enable bit stops the repetition.
-	f.Write(0x0DE, (u16)(0x0200 | 0x1000 | 0x0060));
+	f.Write(0x0DE, (uint16_t)(0x0200 | 0x1000 | 0x0060));
 	GBA_CHECK(!f.bus.dma.Active(3));
 }
 
@@ -387,7 +387,7 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 	// The four words a sound DMA moves (GBATEK "Sound DMA (FIFO Timing Mode)": "4 units of
 	// 32bits (16 bytes) are transferred, both Word Count register and DMA Transfer Type bit are
 	// ignored").
-	const u16 payload[8] = { 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888 };
+	const uint16_t payload[8] = { 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888 };
 	for (int i = 0; i < 8; i++)
 		f.WriteMem16(0x02000000 + i * 2, payload[i]);
 
@@ -398,7 +398,7 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 	f.Write(0x0C0, 0x00A0);
 	f.Write(0x0C2, 0x0400);
 	f.Write(0x0C4, 4);
-	f.Write(0x0C6, (u16)(0x3000 | 0x0200 | 0x8000));
+	f.Write(0x0C6, (uint16_t)(0x3000 | 0x0200 | 0x8000));
 
 	// The APU asks for a refill...
 	f.bus.dma.OnFifoRequest(f.bus, 0);
@@ -408,7 +408,7 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 	// peeks at the byte that will be played next instead of popping it, and the FIFO is drained
 	// the way the hardware does it: one byte per overflow of timer 0/1 (GBATEK "Sound Channel
 	// A/B": "Move 8bit data from FIFO to sound circuit").
-	const u8 expected[16] = {
+	const uint8_t expected[16] = {
 		0x11, 0x11, 0x22, 0x22, 0x33, 0x33, 0x44, 0x44,
 		0x55, 0x55, 0x66, 0x66, 0x77, 0x77, 0x88, 0x88,
 	};
@@ -451,7 +451,7 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 
 	// Re-arming the repeating channel lets the pending request fill the FIFO again; the repeat bit
 	// keeps the channel armed after the transfer.
-	f.Write(0x0C6, (u16)(0x3000 | 0x0200 | 0x8000));
+	f.Write(0x0C6, (uint16_t)(0x3000 | 0x0200 | 0x8000));
 	GBA_CHECK(f.bus.dma.Active(1));
 
 	// A peek that no longer returns the latched 0x88 is the proof: the FIFO holds data once more,
@@ -477,14 +477,14 @@ GBA_TEST(Dma, VideoMemoryTransferLandsWhereItShould)
 	// one the second half (a transfer that runs off the end of the payload would move zeros and
 	// hide a broken destination path).
 	for (int i = 0; i < 512; i++)
-		f.WriteMem16(0x02000000 + i * 2, (u16)(0x1000 + i));
+		f.WriteMem16(0x02000000 + i * 2, (uint16_t)(0x1000 + i));
 
 	f.Write(0x0D4, 0x0000);				// DMA3 SAD
 	f.Write(0x0D6, 0x0200);
 	f.Write(0x0D8, 0x1C40);				// DMA3 DAD
 	f.Write(0x0DA, 0x0600);
 	f.Write(0x0DC, 256);				// 256 halfwords
-	f.Write(0x0DE, (u16)(0x8000));		// immediate, 16-bit units, enable
+	f.Write(0x0DE, (uint16_t)(0x8000));		// immediate, 16-bit units, enable
 
 	// The first and the last word of the block are in VRAM now, and the rest of the area is not.
 	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C40), 0x00);
@@ -502,7 +502,7 @@ GBA_TEST(Dma, VideoMemoryTransferLandsWhereItShould)
 	f.Write(0x0D8, 0x0000);
 	f.Write(0x0DA, 0x0601);
 	f.Write(0x0DC, 64);
-	f.Write(0x0DE, (u16)(0x8400));		// immediate, 32-bit units, enable
+	f.Write(0x0DE, (uint16_t)(0x8400));		// immediate, 32-bit units, enable
 
 	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000), 0x00);
 	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10001), 0x11);
@@ -520,7 +520,7 @@ GBA_TEST(Dma, EepromTransferCompletesInsideTheEnableWrite)
 	// write: the games set up the bit stream in RAM and poll the DMA enable bit in the very next
 	// instruction, so the transfer has to be over when the CNT_H write returns.
 	for (int i = 0; i < 9; i++)
-		f.WriteMem16(0x02000000 + i * 2, (u16)(0x0080u >> (i & 7)));
+		f.WriteMem16(0x02000000 + i * 2, (uint16_t)(0x0080u >> (i & 7)));
 
 	// DMA3 at 0x02000000 -> 0x0D000000 (the EEPROM window), 9 units, 16bit, immediate.
 	f.Write(0x0D4, 0x0000);
@@ -531,7 +531,7 @@ GBA_TEST(Dma, EepromTransferCompletesInsideTheEnableWrite)
 	f.Write(0x0DE, 0x8000);
 
 	GBA_CHECK(!f.bus.dma.Active(3));
-	GBA_CHECK_HEX16((u16)(f.Read(0x0DE) & 0x8000), 0x0000);
+	GBA_CHECK_HEX16((uint16_t)(f.Read(0x0DE) & 0x8000), 0x0000);
 }
 
 GBA_TEST(Dma, Dma0CannotWriteTheCartridge)
@@ -575,9 +575,9 @@ GBA_TEST(Sio, ByteLaneAccess)
 
 	// A byte read returns the addressed lane in the low byte; the upper eight data bits are open
 	// bus, and the bus has just driven 0x1234 on the same halfword.
-	u8 low = f.bus.Read8(0x04000120);
+	uint8_t low = f.bus.Read8(0x04000120);
 	GBA_CHECK_HEX16(low, 0x0034);
-	u8 high = f.bus.Read8(0x04000121);
+	uint8_t high = f.bus.Read8(0x04000121);
 	GBA_CHECK_HEX16(high, 0x0012);
 
 	// SIODATA32_H is a separate halfword: 0x123 addresses its high byte.
@@ -618,10 +618,10 @@ GBA_TEST(Sio, NormalMode32BitTransferExchangesData)
 	// Both ends completed: the start bit is cleared and INT_SIO was raised.
 	GBA_CHECK(!master.bus.sio.Busy());
 	GBA_CHECK(!slave.bus.sio.Busy());
-	GBA_CHECK_HEX16((u16)(master.Read(0x128) & 0x0080), 0);
-	GBA_CHECK_HEX16((u16)(slave.Read(0x128) & 0x0080), 0);
-	GBA_CHECK_HEX16((u16)(master.bus.irq.ReadIF() & INT_SIO), INT_SIO);
-	GBA_CHECK_HEX16((u16)(slave.bus.irq.ReadIF() & INT_SIO), INT_SIO);
+	GBA_CHECK_HEX16((uint16_t)(master.Read(0x128) & 0x0080), 0);
+	GBA_CHECK_HEX16((uint16_t)(slave.Read(0x128) & 0x0080), 0);
+	GBA_CHECK_HEX16((uint16_t)(master.bus.irq.ReadIF() & INT_SIO), INT_SIO);
+	GBA_CHECK_HEX16((uint16_t)(slave.bus.irq.ReadIF() & INT_SIO), INT_SIO);
 
 	// The master received the slave's 32bit value and the slave the master's. The low half comes
 	// back through the send register (SIODATA32_L), so it is LastSent/LastReceived that carries
@@ -650,7 +650,7 @@ GBA_TEST(Sio, NormalMode8BitTransferUsesTheByteRegister)
 
 	GBA_CHECK_HEX16(master.bus.sio.LastReceived(), 0x00C3);
 	GBA_CHECK_HEX16(slave.bus.sio.LastReceived(), 0x005A);
-	GBA_CHECK_HEX16((u16)(master.Read(0x128) & 0x0080), 0);
+	GBA_CHECK_HEX16((uint16_t)(master.Read(0x128) & 0x0080), 0);
 }
 
 GBA_TEST(Sio, NormalModeWithoutPeerReadsTheEmptyCable)
@@ -666,8 +666,8 @@ GBA_TEST(Sio, NormalModeWithoutPeerReadsTheEmptyCable)
 	RunCable(solo, solo);
 
 	GBA_CHECK_HEX16(solo.bus.sio.LastReceived(), 0xFFFF);
-	GBA_CHECK_HEX16((u16)(solo.Read(0x128) & 0x0080), 0);
-	GBA_CHECK_HEX16((u16)(solo.bus.irq.ReadIF() & INT_SIO), INT_SIO);
+	GBA_CHECK_HEX16((uint16_t)(solo.Read(0x128) & 0x0080), 0);
+	GBA_CHECK_HEX16((uint16_t)(solo.bus.irq.ReadIF() & INT_SIO), INT_SIO);
 }
 
 GBA_TEST(Sio, MultiplayerTwoPlayers)
@@ -690,7 +690,7 @@ GBA_TEST(Sio, MultiplayerTwoPlayers)
 
 	// The child sets its start bit (its data is ready), then the parent starts the transfer.
 	child.Write(0x128, 0x6084);
-	GBA_CHECK_HEX16((u16)(child.Read(0x128) & 0x0080), 0x0080);
+	GBA_CHECK_HEX16((uint16_t)(child.Read(0x128) & 0x0080), 0x0080);
 	parent.Write(0x128, 0x6080);
 
 	// GBATEK "Transmission Time": two units take 36 shift clocks; at 9600 bps one bit is
@@ -709,15 +709,15 @@ GBA_TEST(Sio, MultiplayerTwoPlayers)
 	GBA_CHECK_HEX16(child.Read(0x122), 0x2222);
 
 	// The start bits are cleared and INT_SIO was requested on both sides.
-	GBA_CHECK_HEX16((u16)(parent.Read(0x128) & 0x0080), 0);
-	GBA_CHECK_HEX16((u16)(child.Read(0x128) & 0x0080), 0);
-	GBA_CHECK_HEX16((u16)(parent.bus.irq.ReadIF() & INT_SIO), INT_SIO);
-	GBA_CHECK_HEX16((u16)(child.bus.irq.ReadIF() & INT_SIO), INT_SIO);
+	GBA_CHECK_HEX16((uint16_t)(parent.Read(0x128) & 0x0080), 0);
+	GBA_CHECK_HEX16((uint16_t)(child.Read(0x128) & 0x0080), 0);
+	GBA_CHECK_HEX16((uint16_t)(parent.bus.irq.ReadIF() & INT_SIO), INT_SIO);
+	GBA_CHECK_HEX16((uint16_t)(child.bus.irq.ReadIF() & INT_SIO), INT_SIO);
 
 	// The ID bits (SIOCNT bits 4-5) name the unit's slot: the parent is 0, the first child is 1
 	// (GBATEK "SIOCNT, MULTI-PLAYER Mode": "4-5 Multi-Player ID (0=Parent, 1-3=1st-3rd child)").
-	GBA_CHECK_HEX16((u16)(parent.Read(0x128) & 0x0030) >> 4, 0);
-	GBA_CHECK_HEX16((u16)(child.Read(0x128) & 0x0030) >> 4, 1);
+	GBA_CHECK_HEX16((uint16_t)(parent.Read(0x128) & 0x0030) >> 4, 0);
+	GBA_CHECK_HEX16((uint16_t)(child.Read(0x128) & 0x0030) >> 4, 1);
 }
 
 GBA_TEST(Sio, MultiplayerEmptySlotsReadFFFF)
@@ -739,7 +739,7 @@ GBA_TEST(Sio, MultiplayerEmptySlotsReadFFFF)
 		GBA_CHECK_HEX16(solo.Read(0x122), 0xFFFF);
 		GBA_CHECK_HEX16(solo.Read(0x124), 0xFFFF);
 		GBA_CHECK_HEX16(solo.Read(0x126), 0xFFFF);
-		GBA_CHECK_HEX16((u16)(solo.Read(0x128) & 0x0080), 0);
+		GBA_CHECK_HEX16((uint16_t)(solo.Read(0x128) & 0x0080), 0);
 	}
 
 	// One peer in multiplayer mode: slot 1 is filled in, slots 2 and 3 stay 0xFFFF.
@@ -796,7 +796,7 @@ GBA_TEST(Keypad, OrConditionAndInterrupt)
 	f.bus.keypad.Reset();
 
 	// KEYCNT: select A and B, logical OR, interrupt enabled (GBATEK "GBA Keypad Input").
-	f.Write(0x132, (u16)(0x4000 | KEY_A | KEY_B));
+	f.Write(0x132, (uint16_t)(0x4000 | KEY_A | KEY_B));
 
 	f.bus.keypad.SetPressed(0);
 	GBA_CHECK(!f.bus.keypad.ConditionMet());
@@ -814,8 +814,8 @@ GBA_TEST(Keypad, OrConditionAndInterrupt)
 	GBA_CHECK(!f.bus.keypad.ConditionMet());
 
 	// KEYINPUT is the complement of the pressed mask, upper bits one.
-	GBA_CHECK_HEX16(f.bus.keypad.ReadKeyInput(), (u16)(~KEY_START & 0x03FF) | 0xFC00);
-	GBA_CHECK_HEX16(f.Read(0x130), (u16)(~KEY_START & 0x03FF) | 0xFC00);
+	GBA_CHECK_HEX16(f.bus.keypad.ReadKeyInput(), (uint16_t)(~KEY_START & 0x03FF) | 0xFC00);
+	GBA_CHECK_HEX16(f.Read(0x130), (uint16_t)(~KEY_START & 0x03FF) | 0xFC00);
 }
 
 GBA_TEST(Keypad, AndConditionNeedsEverySelectedKey)
@@ -825,8 +825,8 @@ GBA_TEST(Keypad, AndConditionNeedsEverySelectedKey)
 	f.bus.keypad.Reset();
 
 	// Logical AND: bit 15 set means "all selected keys" (GBATEK "GBA Keypad Input").
-	f.Write(0x132, (u16)(0x8000 | 0x4000 | KEY_A | KEY_B));
-	GBA_CHECK_HEX16(f.Read(0x132), (u16)(0x8000 | 0x4000 | KEY_A | KEY_B));
+	f.Write(0x132, (uint16_t)(0x8000 | 0x4000 | KEY_A | KEY_B));
+	GBA_CHECK_HEX16(f.Read(0x132), (uint16_t)(0x8000 | 0x4000 | KEY_A | KEY_B));
 
 	f.bus.keypad.SetPressed(KEY_A);
 	GBA_CHECK(!f.bus.keypad.ConditionMet());

@@ -39,13 +39,13 @@ namespace GBA
 			return machine->bus->SerialExternalClock();
 		}
 
-		u8 PeerByte() override
+		uint8_t PeerByte() override
 		{
 			// The byte in the peer's shift register: what it is sending.
 			return machine->bus->SerialData();
 		}
 
-		void PeerClock(u8 bit) override
+		void PeerClock(uint8_t bit) override
 		{
 			// The master's clock shifts a bit through this port too, because the two shift
 			// registers share the cable.
@@ -94,8 +94,8 @@ namespace GBA
 			return;
 		}
 
-		std::vector<u8> image;
-		u8 buffer[512];
+		std::vector<uint8_t> image;
+		uint8_t buffer[512];
 		while (image.size() < 0x1000)
 		{
 			size_t got = fread(buffer, 1, sizeof(buffer), file);
@@ -155,7 +155,7 @@ namespace GBA
 	// The cartridge
 	// ---------------------------------------------------------------------------------------
 
-	bool GbSystem::LoadRomImage(const std::vector<u8>& image, std::string& error)
+	bool GbSystem::LoadRomImage(const std::vector<uint8_t>& image, std::string& error)
 	{
 		if (!bus->cart.LoadRomImage(image, error))
 			return false;
@@ -194,7 +194,7 @@ namespace GBA
 		bus->cpu.Reset();
 		bus->ppu.Reset();
 		bus->apu.Reset();
-		bus->cart.SetUnixTime((u64)time(nullptr));
+		bus->cart.SetUnixTime((uint64_t)time(nullptr));
 
 		// On a CGB the picture comes from the colour palette memory, so the monochrome BGP
 		// register the boot ROM writes has no effect there: the machine installs a grey ramp
@@ -217,7 +217,7 @@ namespace GBA
 
 		if (settings.useBootRom && !settings.skipBootRom)
 		{
-			bus->SetBootRom(bootImage.data(), (u32)bootImage.size());
+			bus->SetBootRom(bootImage.data(), (uint32_t)bootImage.size());
 			bus->MapBootRom(true);
 			bus->ppu.SetLcdEnabled(false);
 			inBootRom = true;
@@ -252,14 +252,14 @@ namespace GBA
 		bus->SetIe(0x00);
 
 		// The sound registers the boot ROM leaves (Pan Docs "Power Up Sequence").
-		const u8 sound[][2] =
+		const uint8_t sound[][2] =
 		{
 			{ 0x10, 0x80 }, { 0x11, 0xBF }, { 0x12, 0xF3 }, { 0x14, 0xBF },
 			{ 0x16, 0x3F }, { 0x19, 0xBF }, { 0x1A, 0x7F }, { 0x1C, 0x9F },
 			{ 0x1E, 0xBF }, { 0x23, 0xBF }, { 0x24, 0x77 }, { 0x25, 0xF3 },
 		};
 		for (const auto& entry : sound)
-			bus->apu.WriteRegister((u16)(0xFF00 | entry[0]), entry[1]);
+			bus->apu.WriteRegister((uint16_t)(0xFF00 | entry[0]), entry[1]);
 
 		PrepareBootState();
 	}
@@ -285,7 +285,7 @@ namespace GBA
 
 		// The DMG leaves F = 0xB0 (Z = 1, N = 0, H and C set because the header checksum is
 		// non-zero); a CGB leaves Z set and the rest of the flags clear.
-		u8 f = settings.cgb ? 0x80 : 0xB0;
+		uint8_t f = settings.cgb ? 0x80 : 0xB0;
 
 		bus->cpu.LoadPostBootRegisters(bootRegisterA, headerChecksum, f);
 	}
@@ -322,8 +322,8 @@ namespace GBA
 		// (a boot ROM that has not turned it on yet, or a program that switched it off), or a
 		// program that never lets the CPU run (a boot ROM that never returns, say).
 		int startFrame = bus->ppu.FrameCounter();
-		u64 startCycles = bus->TotalCycles();
-		u64 budget = (u64)GbDotsPerFrame * (bus->DoubleSpeed() ? 2 : 4);
+		uint64_t startCycles = bus->TotalCycles();
+		uint64_t budget = (uint64_t)GbDotsPerFrame * (bus->DoubleSpeed() ? 2 : 4);
 
 		while (bus->ppu.FrameCounter() == startFrame && bus->TotalCycles() - startCycles < budget)
 		{
@@ -350,9 +350,9 @@ namespace GBA
 	// Input and output
 	// ---------------------------------------------------------------------------------------
 
-	void GbSystem::SetPressedKeys(u8 mask)
+	void GbSystem::SetPressedKeys(uint8_t mask)
 	{
-		u8 previous = bus->PressedKeys();
+		uint8_t previous = bus->PressedKeys();
 		bus->SetPressedKeys(mask);
 
 		// A button going low requests the joypad interrupt (Pan Docs "Interrupt Sources").
@@ -365,7 +365,7 @@ namespace GBA
 			bus->WakeFromStop();
 	}
 
-	int GbSystem::ReadAudio(s16* out, int maxFrames)
+	int GbSystem::ReadAudio(int16_t* out, int maxFrames)
 	{
 		return bus->apu.ReadSamples(out, maxFrames);
 	}

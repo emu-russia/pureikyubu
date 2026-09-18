@@ -76,7 +76,7 @@ namespace GBA
 		// -- the cartridge -------------------------------------------------------------------
 
 		bool LoadRomFile(const std::string& path, std::string& error);
-		bool LoadRomImage(const std::vector<u8>& image, std::string& error);
+		bool LoadRomImage(const std::vector<uint8_t>& image, std::string& error);
 
 		/// <summary>Start with no cartridge in the slot (the boot ROM then shows its marker).</summary>
 		void EjectRom() { bus->cart.Eject(); }
@@ -106,18 +106,18 @@ namespace GBA
 		// -- input ---------------------------------------------------------------------------
 
 		/// <summary>Set the pressed buttons (the GbButton bits of gb_bus.h).</summary>
-		void SetPressedKeys(u8 mask);
-		u8 PressedKeys() const { return bus->PressedKeys(); }
+		void SetPressedKeys(uint8_t mask);
+		uint8_t PressedKeys() const { return bus->PressedKeys(); }
 
 		// -- output --------------------------------------------------------------------------
 
 		/// <summary>The current frame, XRGB8888 (0xAARRGGBB), 160 x 144 pixels.</summary>
-		const u32* FrameBuffer() const { return bus->ppu.Frame(); }
+		const uint32_t* FrameBuffer() const { return bus->ppu.Frame(); }
 
 		int FrameCounter() const { return bus->ppu.FrameCounter(); }
 
 		/// <summary>Drain the mixed audio (interleaved stereo, 16-bit).</summary>
-		int ReadAudio(s16* out, int maxFrames);
+		int ReadAudio(int16_t* out, int maxFrames);
 
 		void SetSampleRate(int hz);
 		int SampleRate() const { return bus->apu.SampleRate(); }
@@ -133,8 +133,8 @@ namespace GBA
 		bool LinkAttached() const { return linkAttached; }
 
 		/// <summary>The bytes the last completed transfer sent and received.</summary>
-		u8 LastSent() const { return bus->LastSent(); }
-		u8 LastReceived() const { return bus->LastReceived(); }
+		uint8_t LastSent() const { return bus->LastSent(); }
+		uint8_t LastReceived() const { return bus->LastReceived(); }
 		int SerialTransfers() const { return bus->SerialTransfers(); }
 
 		// -- introspection -------------------------------------------------------------------
@@ -150,7 +150,7 @@ namespace GBA
 		/// <summary>The boot ROM image the machine runs, whole: the built-in one (256 bytes for
 		/// both machines' own animation) or the file `bootRomPath` named, which is the DMG's 256
 		/// bytes or the CGB's 2304.</summary>
-		const std::vector<u8>& BootRomImage() const { return bootImage; }
+		const std::vector<uint8_t>& BootRomImage() const { return bootImage; }
 
 		/// <summary>True when the boot ROM in use came from a file rather than being built in.</summary>
 		bool BootRomFromFile() const { return bootImageFromFile; }
@@ -162,11 +162,11 @@ namespace GBA
 		std::string Describe() const;
 
 		/// <summary>The header checksum the boot ROM hands over (0x014D) and the value A gets.</summary>
-		u8 HeaderChecksum() const { return headerChecksum; }
-		u8 BootRegisterA() const { return bootRegisterA; }
+		uint8_t HeaderChecksum() const { return headerChecksum; }
+		uint8_t BootRegisterA() const { return bootRegisterA; }
 
 		/// <summary>How many system clocks the machine has run.</summary>
-		u64 Cycles() const { return bus->TotalCycles(); }
+		uint64_t Cycles() const { return bus->TotalCycles(); }
 
 	private:
 		/// <summary>The other end of the serial cable, as this machine sees it.</summary>
@@ -174,10 +174,10 @@ namespace GBA
 
 		std::unique_ptr<GbBus> bus;
 		GbSettings settings;
-		std::vector<u8> bootImage;
+		std::vector<uint8_t> bootImage;
 		bool bootImageFromFile = false;
-		u8 headerChecksum = 0x00;
-		u8 bootRegisterA = 0x01;
+		uint8_t headerChecksum = 0x00;
+		uint8_t bootRegisterA = 0x01;
 		bool linkAttached = false;
 		bool inBootRom = false;
 		std::unique_ptr<LinkPeer> peerToOther;

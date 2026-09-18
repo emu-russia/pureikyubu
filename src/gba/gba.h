@@ -35,7 +35,7 @@ namespace GBA
 		// -- the cartridge -----------------------------------------------------------------
 
 		bool LoadRomFile(const std::string& path, std::string& error);
-		bool LoadRomImage(const std::vector<u8>& image, std::string& error);
+		bool LoadRomImage(const std::vector<uint8_t>& image, std::string& error);
 
 		/// <summary>Start with no cartridge in the slot (the boot ROM then runs its link driver).</summary>
 		void EjectRom();
@@ -63,18 +63,18 @@ namespace GBA
 		// -- input -------------------------------------------------------------------------
 
 		/// <summary>Set the pressed keys (the KEY_* bits of gba_keypad.h).</summary>
-		void SetPressedKeys(u16 mask);
-		u16 PressedKeys() const { return bus->keypad.Pressed(); }
+		void SetPressedKeys(uint16_t mask);
+		uint16_t PressedKeys() const { return bus->keypad.Pressed(); }
 
 		// -- output ------------------------------------------------------------------------
 
 		/// <summary>The current frame, XRGB8888 (0xAARRGGBB), ScreenWidth * ScreenHeight pixels.</summary>
-		const u32* FrameBuffer() const { return bus->ppu.Frame(); }
+		const uint32_t* FrameBuffer() const { return bus->ppu.Frame(); }
 
 		int FrameCounter() const { return bus->ppu.FrameCounter(); }
 
 		/// <summary>Drain the mixed audio (interleaved stereo, 16-bit).</summary>
-		int ReadAudio(s16* out, int maxFrames);
+		int ReadAudio(int16_t* out, int maxFrames);
 
 		void SetSampleRate(int hz) { bus->apu.SetSampleRate(hz); }
 		int SampleRate() const { return bus->apu.SampleRate(); }
@@ -106,12 +106,12 @@ namespace GBA
 		std::string Describe() const;
 
 		/// <summary>How many cycles the machine has run (the harness measures the speed with it).</summary>
-		u64 Cycles() const { return bus->TotalCycles(); }
+		uint64_t Cycles() const { return bus->TotalCycles(); }
 
 	private:
 		std::unique_ptr<GbaBus> bus;
 		GbaSettings settings;
-		std::vector<u8> biosImage;		// the installed BIOS (custom or a real one)
+		std::vector<uint8_t> biosImage;		// the installed BIOS (custom or a real one)
 		bool linkMode = false;
 
 		/// <summary>True when `biosImage` is a real BIOS the CPU should execute from address 0

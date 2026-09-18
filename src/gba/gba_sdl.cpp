@@ -243,7 +243,7 @@ namespace GBA
 			return true;
 		}
 
-		void Present(const u32* pixels)
+		void Present(const uint32_t* pixels)
 		{
 			SDL_UpdateTexture(texture, nullptr, pixels, width * 4);
 			SDL_RenderClear(renderer);
@@ -251,11 +251,11 @@ namespace GBA
 			SDL_RenderPresent(renderer);
 		}
 
-		void QueueAudio(const s16* samples, int frames)
+		void QueueAudio(const int16_t* samples, int frames)
 		{
 			if (audio != 0 && frames > 0)
 			{
-				SDL_QueueAudio(audio, samples, (Uint32)(frames * 2 * sizeof(s16)));
+				SDL_QueueAudio(audio, samples, (Uint32)(frames * 2 * sizeof(int16_t)));
 			}
 		}
 
@@ -268,7 +268,7 @@ namespace GBA
 			}
 
 			// About two frames of audio: enough to survive a hiccup, little enough to stay in sync.
-			u32 target = (u32)((u64)sampleRate * 2 * 2 / 60 * 2);
+			uint32_t target = (uint32_t)((uint64_t)sampleRate * 2 * 2 / 60 * 2);
 			return SDL_GetQueuedAudioSize(audio) < target;
 		}
 
@@ -300,10 +300,10 @@ namespace GBA
 
 		void UpdateFps()
 		{
-			static u32 timer = 0;
+			static uint32_t timer = 0;
 			static int frames = 0;
 
-			u32 now = SDL_GetTicks();
+			uint32_t now = SDL_GetTicks();
 
 			if (timer == 0)
 			{
@@ -320,7 +320,7 @@ namespace GBA
 			}
 		}
 
-		void SaveScreenshot(const u32* pixels)
+		void SaveScreenshot(const uint32_t* pixels)
 		{
 			SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, width, height, 32,
 				SDL_PIXELFORMAT_ARGB8888);
@@ -332,7 +332,7 @@ namespace GBA
 
 			for (int y = 0; y < height; y++)
 			{
-				memcpy((u8*)surface->pixels + y * surface->pitch, pixels + (size_t)y * width,
+				memcpy((uint8_t*)surface->pixels + y * surface->pitch, pixels + (size_t)y * width,
 					(size_t)width * 4);
 			}
 
@@ -345,7 +345,7 @@ namespace GBA
 		}
 
 		/// <summary>Wait for the next frame boundary when the renderer is not paced by vsync.</summary>
-		void PaceFrame(u64 frameIndex, u32 startTicks, double frameMilliseconds, u32& paceStart, u64& paceFrames)
+		void PaceFrame(uint64_t frameIndex, uint32_t startTicks, double frameMilliseconds, uint32_t& paceStart, uint64_t& paceFrames)
 		{
 			if (vsync)
 			{
@@ -353,8 +353,8 @@ namespace GBA
 			}
 
 			paceFrames++;
-			u32 next = paceStart + (u32)(frameMilliseconds * paceFrames);
-			u32 now = SDL_GetTicks();
+			uint32_t next = paceStart + (uint32_t)(frameMilliseconds * paceFrames);
+			uint32_t now = SDL_GetTicks();
 
 			if (now < next)
 			{
@@ -380,7 +380,7 @@ namespace GBA
 	class GbaInput
 	{
 		const GbaSettings& settings;
-		u16 pressed = 0;
+		uint16_t pressed = 0;
 		SDL_GameController* controller = nullptr;
 
 	public:
@@ -400,7 +400,7 @@ namespace GBA
 			}
 		}
 
-		u16 Pressed() const { return pressed; }
+		uint16_t Pressed() const { return pressed; }
 
 		bool Handle(const SDL_Event& event, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow)
 		{
@@ -421,11 +421,11 @@ namespace GBA
 
 					// A host key that is bound to a GBA key toggles that key's bit. The binding
 					// names are the ones SDL itself uses ("X", "Return", "Up", "Space"...).
-					u16 bit = settings.KeyBitFor(SDL_GetKeyName(event.key.keysym.sym));
+					uint16_t bit = settings.KeyBitFor(SDL_GetKeyName(event.key.keysym.sym));
 
 					if (bit != 0)
 					{
-						if (down) pressed |= bit; else pressed &= (u16)~bit;
+						if (down) pressed |= bit; else pressed &= (uint16_t)~bit;
 					}
 					break;
 				}
@@ -434,11 +434,11 @@ namespace GBA
 				case SDL_CONTROLLERBUTTONUP:
 				{
 					bool down = (event.type == SDL_CONTROLLERBUTTONDOWN);
-					u16 bit = ControllerBit((SDL_GameControllerButton)event.cbutton.button);
+					uint16_t bit = ControllerBit((SDL_GameControllerButton)event.cbutton.button);
 
 					if (bit != 0)
 					{
-						if (down) pressed |= bit; else pressed &= (u16)~bit;
+						if (down) pressed |= bit; else pressed &= (uint16_t)~bit;
 					}
 					break;
 				}
@@ -452,7 +452,7 @@ namespace GBA
 
 	private:
 		/// <summary>The fixed game controller layout: A/B, Start/Back, the d-pad and the shoulders.</summary>
-		static u16 ControllerBit(SDL_GameControllerButton button)
+		static uint16_t ControllerBit(SDL_GameControllerButton button)
 		{
 			switch (button)
 			{
@@ -480,7 +480,7 @@ namespace GBA
 	/// </summary>
 	class GbInput
 	{
-		u8 pressed = 0;
+		uint8_t pressed = 0;
 		SDL_GameController* controller = nullptr;
 
 	public:
@@ -500,7 +500,7 @@ namespace GBA
 			}
 		}
 
-		u8 Pressed() const { return pressed; }
+		uint8_t Pressed() const { return pressed; }
 
 		bool Handle(const SDL_Event& event, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow)
 		{
@@ -519,11 +519,11 @@ namespace GBA
 						return false;
 					}
 
-					u8 bit = KeyBit(event.key.keysym.sym);
+					uint8_t bit = KeyBit(event.key.keysym.sym);
 
 					if (bit != 0)
 					{
-						if (down) pressed |= bit; else pressed &= (u8)~bit;
+						if (down) pressed |= bit; else pressed &= (uint8_t)~bit;
 					}
 					break;
 				}
@@ -532,11 +532,11 @@ namespace GBA
 				case SDL_CONTROLLERBUTTONUP:
 				{
 					bool down = (event.type == SDL_CONTROLLERBUTTONDOWN);
-					u8 bit = ControllerBit((SDL_GameControllerButton)event.cbutton.button);
+					uint8_t bit = ControllerBit((SDL_GameControllerButton)event.cbutton.button);
 
 					if (bit != 0)
 					{
-						if (down) pressed |= bit; else pressed &= (u8)~bit;
+						if (down) pressed |= bit; else pressed &= (uint8_t)~bit;
 					}
 					break;
 				}
@@ -549,7 +549,7 @@ namespace GBA
 		}
 
 	private:
-		static u8 KeyBit(SDL_Keycode key)
+		static uint8_t KeyBit(SDL_Keycode key)
 		{
 			switch (key)
 			{
@@ -565,7 +565,7 @@ namespace GBA
 			}
 		}
 
-		static u8 ControllerBit(SDL_GameControllerButton button)
+		static uint8_t ControllerBit(SDL_GameControllerButton button)
 		{
 			switch (button)
 			{
@@ -634,13 +634,13 @@ namespace GBA
 
 		GbaInput input(settings);
 
-		std::vector<s16> samples;
+		std::vector<int16_t> samples;
 		bool fastForward = false;
 		bool fullscreen = settings.fullscreen;
 		bool running = true;
-		u32 paceStart = SDL_GetTicks();
-		u64 paceFrames = 0;
-		u64 frames = 0;
+		uint32_t paceStart = SDL_GetTicks();
+		uint64_t paceFrames = 0;
+		uint64_t frames = 0;
 
 		while (running)
 		{
@@ -802,13 +802,13 @@ namespace GBA
 
 		GbInput input;
 
-		std::vector<s16> samples;
+		std::vector<int16_t> samples;
 		bool fastForward = false;
 		bool fullscreen = settings.fullscreen;
 		bool running = true;
-		u32 paceStart = SDL_GetTicks();
-		u64 paceFrames = 0;
-		u64 frames = 0;
+		uint32_t paceStart = SDL_GetTicks();
+		uint64_t paceFrames = 0;
+		uint64_t frames = 0;
 
 		while (running)
 		{
