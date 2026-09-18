@@ -1,7 +1,7 @@
 // Emulator main deck control
 #pragma once
 
-#define EMU_VERSION L"1.9"
+#define EMU_VERSION L"1.9.1"
 
 void    EMUGetHwConfig(HWConfig* config);
 
