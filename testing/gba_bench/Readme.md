@@ -31,7 +31,9 @@ check.sh --run game.gba --frames 200 --trace 60              # what the last fra
 ```
 
 The core is compiled straight from `src/gba` (the SDL frontend `gba_sdl.cpp` is the only file left
-out: the core itself has no SDL dependency). `get_test_roms.sh` fetches three public, MIT-licensed
+out: the core itself has no SDL dependency), together with the emulator's shared Json engine
+(`src/json.cpp`, which the settings reader uses; it is self contained and needs nothing from the
+GameCube side). `get_test_roms.sh` fetches three public, MIT-licensed
 GBA test ROMs (`jsmolka/gba-tests`) and the two Game Boy Acid2 pictures (`dmg-acid2`, `cgb-acid2`)
 that the harness can be pointed at; they are not part of the repository. A **real BIOS image** can be
 dropped into `bios/` (also git-ignored) to run the tests that compare the emulator against the

@@ -4,9 +4,11 @@ An emulator of the Game Boy Advance - and, in the same module, of the Game Boy (
 GBA carries inside itself for its compatibility mode. It is written from the public hardware
 specifications and meant to be used both as a standalone emulator and as the "portable side" of
 the console (a GBA Link peer, a Game Boy Player replacement). The module is deliberately
-independent of the GameCube side of pureikyubu: it includes nothing outside `src/gba/` and the C++
-standard library, so the whole core can be built and tested without SDL, OpenGL, ImGui or the
-Flipper devices (`testing/gba_bench/build.sh` does exactly that).
+independent of the GameCube side of pureikyubu: it includes nothing outside `src/gba/`, the C++
+standard library and the emulator's shared Json engine (`src/json.h`/`src/json.cpp`, which the
+settings reader uses and which is itself self-contained), so the whole core can be built and
+tested without SDL, OpenGL, ImGui or the Flipper devices (`testing/gba_bench/build.sh` does
+exactly that).
 
 ## The specifications this code is written from
 

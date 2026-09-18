@@ -51,7 +51,9 @@ debugger the SDL frontend of the portable machines sees. They exist because that
 include the debugger's own headers: those belong to the GameCube side and need the emulator's
 precompiled header, which this module does not pull in (see `src/gba/Readme.md`). The front end
 sets the machine it is running with `SetDebugMachine`, starts a session, and drives the window from
-its own event loop - `F2` starts and stops it, as it does in the GameCube front end.
+its own event loop - `F2` starts and stops it, as it does in the GameCube front end. Whether the
+window is there when the machine starts is the `emulation.debugger` member of GBASettings: the
+frontend passes it to `DebugStart` (the JDI node and the MCP transport come up either way).
 
 `--mcp` is started from here too: the local MCP server is normally started by the GameCube UI, and
 a portable session is a front end of its own, so without that an MCP client that launched
@@ -109,8 +111,12 @@ namespace GBA
 	// The session belongs to the machine that is running: `DebugStart` names it and builds its
 	// panels from the machine the frontend set with SetDebugMachine, and `DebugStop` closes it
 	// (the collected log goes into the session folder). Both are safe to call in any state.
+	//
+	// `showWindow` is false when the frontend wants the debug interface up (the JDI node and the
+	// MCP transport) without the debugger window: the `emulation.debugger` member of GBASettings
+	// decides that at startup, while `F2` calls DebugStart() and opens the window.
 
-	void DebugStart();
+	void DebugStart(bool showWindow = true);
 	void DebugStop();
 	bool DebugActive();
 

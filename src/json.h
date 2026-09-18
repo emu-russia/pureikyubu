@@ -9,6 +9,11 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <list>
+#include <string>
+
 class Json
 {
 	// Foolproof
@@ -18,6 +23,13 @@ class Json
 
 public:
 	class Value;
+
+	// The text of a Json document is UTF-8, the emulator keeps its text wide. These are the two
+	// directions of the conversion. They live in this translation unit (and not in the emulator's
+	// utils.cpp) so that Json depends on the C++ standard library only - the portable machines
+	// (src/gba) compile json.cpp as it is.
+	static std::string WideToUtf8(const wchar_t* str);
+	static std::wstring Utf8ToWide(const char* str);
 
 private:
 
@@ -63,6 +75,8 @@ private:
 		size_t offset;
 		size_t maxSize;
 		int depth = 0;					// Nesting depth of the value currently being deserialized
+		const uint8_t* base = nullptr;	// Start of the document, to turn an offset into a line number
+		int* errorLine = nullptr;		// Where Throw() records the line of the message it throws
 	};
 
 	static bool IsWhiteSpace(uint8_t value);
@@ -113,6 +127,10 @@ private:
 	static bool GetInt(DeserializeContext* ctx, Token& token);
 
 	static void GetToken(Token& token, DeserializeContext* ctx);
+
+	// Throw `message` and record the line of the current position in *ctx->errorLine, so that a
+	// caller that reports the problem to a user can say where the document went wrong.
+	[[noreturn]] static void Throw(DeserializeContext* ctx, const char* message);
 
 #pragma endregion "De-Serialization Related"
 
@@ -249,6 +267,14 @@ public:
 	void GetSerializedTextSize(void* text, size_t maxTextSize, size_t& actualTextSize);
 	void Deserialize(void* text, size_t textSize);
 
+	// The line (1 based) of the message the last Deserialize() threw. Zero when it threw nothing.
+	// Deserialize keeps throwing the message alone (the emulator's other readers report it as it
+	// is), so a caller that wants to say where the document went wrong asks for the line here.
+	int GetErrorLine() const
+	{
+		return errorLine;
+	}
+
 	// Clone
 
 	void Clone(Json* other);
@@ -256,5 +282,8 @@ public:
 	// Merge
 
 	void Merge(Json* other);
+
+private:
+	int errorLine = 0;
 
 };

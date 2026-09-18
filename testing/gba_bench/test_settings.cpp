@@ -111,6 +111,7 @@ namespace
 
 		GBA_CHECK_MSG(actual.rtcEnabled == expected.rtcEnabled, what + ": rtcEnabled");
 		GBA_CHECK_MSG(actual.bootWithNoCartridge == expected.bootWithNoCartridge, what + ": bootWithNoCartridge");
+		GBA_CHECK_MSG(actual.debugger == expected.debugger, what + ": debugger");
 		GBA_CHECK_MSG(actual.saveDirectory == expected.saveDirectory, what + ": saveDirectory");
 		GBA_CHECK_MSG(actual.logLevel == expected.logLevel, what + ": logLevel");
 
@@ -158,6 +159,7 @@ GBA_TEST(Settings, Defaults)
 
 	GBA_CHECK(settings.rtcEnabled);
 	GBA_CHECK(!settings.bootWithNoCartridge);
+	GBA_CHECK(!settings.debugger);			// the debugger window does not open by itself
 	GBA_CHECK(settings.saveDirectory.empty());
 	GBA_CHECK_EQ(settings.logLevel, 1);
 
@@ -233,6 +235,7 @@ GBA_TEST(Settings, SaveAndLoad)
 	settings.linkPlayers = 4;
 	settings.rtcEnabled = false;
 	settings.bootWithNoCartridge = true;
+	settings.debugger = true;
 	settings.saveDirectory = "/home/me/gba saves";
 	settings.logLevel = 3;
 	settings.Bind("A", "Return");

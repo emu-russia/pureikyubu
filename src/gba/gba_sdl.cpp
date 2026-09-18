@@ -628,9 +628,10 @@ namespace GBA
 
 		// The debug interface of the portable machine and the new debugger. The node is
 		// registered here (and not for the whole program), because only this path runs a machine
-		// the portable commands can answer for.
+		// the portable commands can answer for. The debugger window itself is opened only when
+		// the `emulation.debugger` setting asks for it; F2 opens and closes it either way.
 		SetDebugMachine(&system);
-		DebugStart();
+		DebugStart(settings.debugger);
 
 		GbaInput input(settings);
 
@@ -796,9 +797,9 @@ namespace GBA
 		system.SetSampleRate(host.sampleRate);
 
 		// The debug interface of the Game Boy and the new debugger (the same arrangement as the
-		// GBA frontend above).
+		// GBA frontend above: the window opens only when `emulation.debugger` asks for it).
 		SetDebugMachine(&system);
-		DebugStart();
+		DebugStart(settings.debugger);
 
 		GbInput input;
 
