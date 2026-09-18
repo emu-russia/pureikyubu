@@ -1,8 +1,9 @@
 /*
 
-DSPcore -> x86-64 basic block recompiler. See dspjit.h for the design notes.
+DSPcore -> 32-bit x86 basic block recompiler. See dspjit.h for the design notes;
+dspjit_x64.cpp is the x86-64 sibling of this file.
 
-A compiled block is a plain function
+A compiled block is a plain cdecl function
 
 	uint32_t block(DspCore* core, DspInterpreter* interp)
 
@@ -13,14 +14,20 @@ returns the new pc. The decoded instruction is baked into the call (the trampoli
 template instantiation over the handler method), so the recursion-heavy decoder and the
 dispatch switch only run once per block, at compile time.
 
+The threaded-code shape of this recompiler makes the 32-bit port short: a word is an
+argument push sequence and an absolute call, and the only thing the register allocation
+has to keep across it is the pc, the word counter and the two core pointers. The four
+registers cdecl preserves hold exactly those; the scratch registers are EAX, ECX and EDX,
+which is enough for the interrupt checks between the words.
+
 */
 
 #include "pch.h"
 #include "dspjit.h"
 
-#if DSP_JIT_SUPPORTED
+#if DSP_JIT_X86
 
-#include "jit_x64.h"
+#include "jit_x86.h"
 
 #if defined(_WINDOWS)
 #include <windows.h>
@@ -36,25 +43,32 @@ namespace
 	// ---------------------------------------------------------------------------
 	// Host register roles and stack frame.
 	//
-	// Registers the C++ ABI treats as callee-saved (RBX, RBP, R12-R15) survive a helper
-	// call, so the block's live state lives there. The frame reserves the 32 byte Win64
-	// shadow space that a callee may use and keeps rsp 16-byte aligned at every call: entry
-	// rsp is 8 mod 16, the eight pushes keep that, so the frame size has to be 8 mod 16.
+	// EBX, ESI, EDI and EBP are the registers cdecl keeps across a call, so the four
+	// live values of a block live there. EAX, ECX and EDX are the scratch registers the
+	// interrupt checks between the words use.
+	//
+	// Entry esp is 4 mod 16 (the return address the caller pushed) and the four saved
+	// registers keep it there, so the frame size has to be 0 mod 16 for esp to land on
+	// 16 bytes at a three-argument helper call. A two-argument call pushes one padding
+	// argument to reach the same alignment.
 
-	static const uint8_t RegCore = X64::R15;		// DspCore*, kept for the whole block
-	static const uint8_t RegInterp = X64::R14;		// DspInterpreter*, kept for the whole block
-	static const uint8_t RegPc = X64::R13;			// 32 bit pc, kept for the whole block
-	static const uint8_t RegCount = X64::RBX;		// words retired in this block
+	static const uint8_t RegCore = X86::EBX;		// DspCore*, kept for the whole block
+	static const uint8_t RegInterp = X86::ESI;		// DspInterpreter*, kept for the whole block
+	static const uint8_t RegPc = X86::EDI;			// 32 bit pc, kept for the whole block
+	static const uint8_t RegCount = X86::EBP;		// words retired in this block
 
-	static const uint8_t T0 = X64::R8;				// scratch (never live across a call)
-	static const uint8_t T1 = X64::R9;
-	static const uint8_t T2 = X64::R10;
-	static const uint8_t T3 = X64::RAX;
+	static const uint8_t T0 = X86::EAX;				// scratch (never live across a call)
+	static const uint8_t T1 = X86::ECX;
+	static const uint8_t T2 = X86::EDX;
 
-	static const int32_t ShadowSpace = 32;
-	static const int32_t FrameSize = 40;
-	static_assert(FrameSize >= ShadowSpace, "the frame must cover the Win64 shadow space");
-	static_assert(FrameSize % 16 == 8, "rsp must be 16 byte aligned at the helper calls");
+	static const int32_t FrameSize = 16;
+	static_assert(FrameSize % 16 == 0, "esp must be 16 byte aligned at the helper calls");
+
+	// The cdecl argument slots. The return address and the four saved registers sit
+	// between the frame and the arguments, so [esp + FrameSize] is the last saved
+	// register, [esp + FrameSize + 16] the return address and the arguments follow it.
+	static const int32_t Arg0Slot = FrameSize + 20;
+	static const int32_t Arg1Slot = FrameSize + 24;
 
 	using BlockFn = uint32_t (*)(DspCore*, DspInterpreter*);
 }
@@ -516,25 +530,33 @@ void* Jit::CompileBlock(uint32_t pc)
 	DecoderInfo* arenaInfos = (DecoderInfo*)(code + infosStart);
 	memcpy(arenaInfos, infos, sizeof(DecoderInfo) * count);
 
-	X64::Emitter e(code + codeUsed, CodeArenaSize - codeUsed);
+	X86::Emitter e(code + codeUsed, CodeArenaSize - codeUsed);
 	size_t codeStart = codeUsed;
+
+	// A cdecl call site: the arguments go on the stack right to left, the call goes
+	// through EAX and the caller drops them again. `pad` is the extra word a
+	// two-argument call needs to keep esp 16 byte aligned (see the frame note above).
+	auto pushArg = [&](uint32_t value)
+	{
+		e.push_imm32(value);
+	};
+	auto callPad = [&]()
+	{
+		e.sub_esp_imm8(4);
+	};
 
 	//
 	// Prologue
 	//
 
-	e.push_r64(X64::RBX);
-	e.push_r64(X64::RBP);
-	e.push_r64(X64::RSI);
-	e.push_r64(X64::RDI);
-	e.push_r64(X64::R12);
-	e.push_r64(X64::R13);
-	e.push_r64(X64::R14);
-	e.push_r64(X64::R15);
-	e.sub_rsp_imm8(FrameSize);
+	e.push_r32(X86::EBX);
+	e.push_r32(X86::ESI);
+	e.push_r32(X86::EDI);
+	e.push_r32(X86::EBP);
+	e.sub_esp_imm8(FrameSize);
 
-	e.mov_r64_r64(RegCore, Arg0);
-	e.mov_r64_r64(RegInterp, Arg1);
+	e.mov_r32_m(RegCore, X86::ESP, Arg0Slot);
+	e.mov_r32_m(RegInterp, X86::ESP, Arg1Slot);
 	e.mov_r32_m(RegPc, RegCore, corePcOffset);
 	e.xor_r32_r32_same(RegCount);
 
@@ -561,39 +583,46 @@ void* Jit::CompileBlock(uint32_t pc)
 
 		if (traceWords)
 		{
-			e.mov_r64_r64(Arg0, RegInterp);
-			e.mov_r64_r64(Arg1, RegPc);
-			e.call_abs((uint64_t)(void*)&Jit::TraceWord);
+			callPad();
+			e.push_r32(RegPc);
+			e.push_r32(RegInterp);
+			e.call_abs((uint32_t)(uintptr_t)&Jit::TraceWord);
+			e.add_esp_imm8(12);
 		}
 
 		if (!di.parallel)
 		{
 			// regular trampoline(interp, info, pc) -> new pc (also retires the counter and
 			// applies the repeat/loop rules)
-			e.mov_r64_r64(Arg0, RegInterp);
-			e.mov_r64_imm(Arg1, (uint64_t)(void*)&arenaInfos[i]);
-			e.mov_r64_r64(Arg2, RegPc);
-			e.call_abs((uint64_t)(void*)RegularThunkFor(di.instr));
+			e.push_r32(RegPc);
+			pushArg((uint32_t)(uintptr_t)&arenaInfos[i]);
+			e.push_r32(RegInterp);
+			e.call_abs((uint32_t)(uintptr_t)RegularThunkFor(di.instr));
+			e.add_esp_imm8(12);
 		}
 		else
 		{
-			e.mov_r64_r64(Arg0, RegInterp);
-			e.mov_r64_imm(Arg1, (uint64_t)(void*)&arenaInfos[i]);
-			e.call_abs((uint64_t)(void*)ParallelUpperThunkFor(di.parallelInstr));
+			callPad();
+			pushArg((uint32_t)(uintptr_t)&arenaInfos[i]);
+			e.push_r32(RegInterp);
+			e.call_abs((uint32_t)(uintptr_t)ParallelUpperThunkFor(di.parallelInstr));
+			e.add_esp_imm8(12);
 
 			// lower trampoline(interp, pc) -> new pc (retires the cycle and commits)
-			e.mov_r64_r64(Arg0, RegInterp);
-			e.mov_r64_r64(Arg1, RegPc);
-			e.call_abs((uint64_t)(void*)ParallelLowerThunkFor(di.parallelMemInstr));
+			callPad();
+			e.push_r32(RegPc);
+			e.push_r32(RegInterp);
+			e.call_abs((uint32_t)(uintptr_t)ParallelLowerThunkFor(di.parallelMemInstr));
+			e.add_esp_imm8(12);
 		}
 
-		e.inc_r64(RegCount);
+		e.inc_r32(RegCount);
 
 		lastFlow = di.flowControl;
 
 		if (!di.flowControl)
 		{
-			e.mov_r32_r32(RegPc, X64::RAX);
+			e.mov_r32_r32(RegPc, X86::EAX);
 
 			// A block is a straight-line run, but the instruction advance is not always to the
 			// next word: `rep` keeps the pc on the same instruction until its count is drained,
@@ -602,8 +631,8 @@ void* Jit::CompileBlock(uint32_t pc)
 			// leave - the next RunJitBlock dispatches at whatever the pc really is.
 			if (i + 1 < count)
 			{
-				e.alu_r32_imm(X64::AluCmp, RegPc, instrPc[i + 1]);
-				bailJumps.push_back(e.jcc_rel32(X64::CcNE));
+				e.alu_r32_imm(X86::AluCmp, RegPc, instrPc[i + 1]);
+				bailJumps.push_back(e.jcc_rel32(X86::CcNE));
 			}
 
 			// The instruction stream can change under a running block: the DSP-DMA that uploads
@@ -611,19 +640,19 @@ void* Jit::CompileBlock(uint32_t pc)
 			// words after it were compiled from the old contents. Leave as soon as the code
 			// generation moved, so the words that follow are compiled from what is really there.
 			e.cmp_m32_imm(RegCore, jitGenerationOffset, expectedGeneration);
-			bailJumps.push_back(e.jcc_rel32(X64::CcNE));
+			bailJumps.push_back(e.jcc_rel32(X86::CcNE));
 
 			// Interrupts are checked before every instruction on the interpreter; here the block
 			// leaves as soon as one is pending, so Update() runs CheckInterrupts before the next
 			// word, exactly as it would have.
 			e.cmp_m8_imm(RegCore, pendingOffset, 0);
-			bailJumps.push_back(e.jcc_rel32(X64::CcNE));
+			bailJumps.push_back(e.jcc_rel32(X86::CcNE));
 
 			if (cpuIntOffset >= 0)
 			{
-				e.mov_r64_m(T0, RegCore, dspOffset);
+				e.mov_r32_m(T0, RegCore, dspOffset);
 				e.cmp_m8_imm(T0, cpuIntOffset, 0);
-				bailJumps.push_back(e.jcc_rel32(X64::CcNE));
+				bailJumps.push_back(e.jcc_rel32(X86::CcNE));
 			}
 		}
 	}
@@ -634,6 +663,16 @@ void* Jit::CompileBlock(uint32_t pc)
 	// writes the pc the block kept in a register.
 	//
 
+	auto emitEpilogue = [&]()
+	{
+		e.add_esp_imm8(FrameSize);
+		e.pop_r32(X86::EBP);
+		e.pop_r32(X86::EDI);
+		e.pop_r32(X86::ESI);
+		e.pop_r32(X86::EBX);
+		e.ret();
+	};
+
 	size_t flowJump = (size_t)-1;
 	if (lastFlow)
 	{
@@ -642,17 +681,8 @@ void* Jit::CompileBlock(uint32_t pc)
 
 	size_t normalBody = e.pos;
 	e.mov_m32_r(RegCore, corePcOffset, RegPc);
-	e.mov_r64_r64(X64::RAX, RegCount);
-	e.add_rsp_imm8(FrameSize);
-	e.pop_r64(X64::R15);
-	e.pop_r64(X64::R14);
-	e.pop_r64(X64::R13);
-	e.pop_r64(X64::R12);
-	e.pop_r64(X64::RDI);
-	e.pop_r64(X64::RSI);
-	e.pop_r64(X64::RBP);
-	e.pop_r64(X64::RBX);
-	e.ret();
+	e.mov_r32_r32(X86::EAX, RegCount);
+	emitEpilogue();
 
 	size_t flowBody = e.pos;
 	if (lastFlow)
@@ -661,17 +691,8 @@ void* Jit::CompileBlock(uint32_t pc)
 		// end of the rel32 field to the current position.
 		e.patch32(flowJump, e.rel(flowJump));
 	}
-	e.mov_r64_r64(X64::RAX, RegCount);
-	e.add_rsp_imm8(FrameSize);
-	e.pop_r64(X64::R15);
-	e.pop_r64(X64::R14);
-	e.pop_r64(X64::R13);
-	e.pop_r64(X64::R12);
-	e.pop_r64(X64::RDI);
-	e.pop_r64(X64::RSI);
-	e.pop_r64(X64::RBP);
-	e.pop_r64(X64::RBX);
-	e.ret();
+	e.mov_r32_r32(X86::EAX, RegCount);
+	emitEpilogue();
 
 	for (size_t at : bailJumps)
 	{
@@ -789,29 +810,6 @@ uint32_t Jit::Run()
 
 	BlockFn fn = (BlockFn)(void*)(code + block->codeOffset);
 	return fn(core, interp);
-}
-
-}		// namespace DSP
-
-#else	// !DSP_JIT_SUPPORTED
-
-namespace DSP
-{
-
-Jit::Jit(DspCore* parent)
-{
-	core = parent;
-	interp = parent->interp;
-}
-
-Jit::~Jit() {}
-void Jit::SetMaxBlockInstrs(uint32_t count) {}
-void Jit::InvalidateAll() {}
-
-uint32_t Jit::Run()
-{
-	interp->ExecuteInstr();
-	return 1;
 }
 
 }		// namespace DSP

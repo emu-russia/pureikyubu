@@ -1,12 +1,17 @@
 // Standalone benchmark stub for the pureikyubu DSP core.
 //
 // Replaces src/pch.h so that dsp.cpp / dspcore.cpp / dspdec.cpp / dspdma.cpp /
-// dsparam.cpp / dspjit.cpp can be built without SDL, GL, ImGui, the Gekko core or
+// dsparam.cpp / dspjit_x64.cpp / dspjit_x86.cpp can be built without SDL, GL, ImGui, the Gekko core or
 // the rest of Flipper. It is the DSP counterpart of testing/gekko_bench/pch.h: the
 // same idea, but the DSP core's dependency on the outside world is only the console
 // main memory, the PI register window and the Flipper tick source.
 
 #pragma once
+
+// The range verifiers the copied DSP sources use (dsparam.cpp checks its DMA windows
+// with them). The header is header-only and self-contained, so the stub can take the
+// real one instead of a copy that goes stale.
+#include "../../src/verify.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -101,6 +106,19 @@ namespace Debug
 	void Halt(const char* text, ...);
 	void Report(Channel chan, const char* text, ...);
 	void CoreProfilerHalt();
+
+	// The DSP sources count their DMA traffic in the hardware profiler (issue #394). The
+	// benchmark does not profile, so the counters are a no-op here - but the enum has to
+	// name every counter a copied source mentions, or the harness does not build.
+	namespace HwProfile
+	{
+		enum class Counter
+		{
+			SplashRead, SplashWrite, DmaDsp, DmaAram, DmaAi, AudioMixer,
+		};
+
+		inline void Count(Counter counter, size_t value) {}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -174,6 +192,8 @@ namespace Flipper
 	{
 	public:
 		void* MIGetMemoryPointerForDSP(uint32_t phys_addr);
+		void* MIGetMemoryPointerForDSP(uint32_t phys_addr, size_t size);
+		size_t MIGetMemorySize();
 	};
 
 	class ProcessorInterface

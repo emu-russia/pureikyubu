@@ -1,6 +1,8 @@
 /*
 
-Gekko -> x86-64 basic block recompiler. See gekkojit.h for the design notes.
+Gekko -> x86-64 basic block recompiler. See gekkojit.h for the design notes;
+gekkojit_x86.cpp is the 32-bit sibling of this file and gekkojit_ps_x64.cpp the
+Paired-Single half.
 
 The emitter below only implements the exact operand forms that the translator
 needs, which keeps it small enough to be reviewable.
@@ -17,10 +19,10 @@ readable place.
 #include "pch.h"
 #include "gekkojit.h"
 
-#if GEKKO_JIT_SUPPORTED
+#if GEKKO_JIT_X64
 
 #include "jit_x64.h"
-#include "gekkojit_layout.h"
+#include "gekkojit_layout_x64.h"
 #include "gekkojit_ps.h"
 
 #if defined(_WINDOWS)
@@ -1429,10 +1431,12 @@ void Jit::RunInner()
 
 }
 
-#else // !GEKKO_JIT_SUPPORTED
+#elif !defined(GEKKO_JIT_X86)
 
-// 32-bit x86 and non-x86 hosts keep the interpreter: the recompiler is a no-op that
-// reports itself as unsupported, so GekkoCore::GekkoThreadProc uses the interpreter.
+// Everything that does not build a recompiler - a non-x86 host, or any host with
+// GEKKO_JIT_DISABLED - keeps the interpreter: this stub is a no-op that reports itself
+// as unsupported, so GekkoCore::GekkoThreadProc uses the interpreter. It is the module
+// that owns the fallback whenever the 32-bit one is not in the build.
 
 namespace Gekko
 {
@@ -1472,4 +1476,4 @@ namespace Gekko
 	void Jit::BranchCheck(GekkoCore* core) {}
 }
 
-#endif // GEKKO_JIT_SUPPORTED
+#endif // GEKKO_JIT_X64

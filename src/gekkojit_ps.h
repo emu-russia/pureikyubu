@@ -4,10 +4,11 @@ Paired-Single -> SSE/SSE2 recompiler for the Gekko core.
 
 Paired-Single instructions are what the SDK's matrix and vector code is built
 from (psq_l / ps_mul / ps_madd / ps_sum0 / ps_merge / psq_st), and a game that
-runs a lot of them spends most of its time here. They are translated in this
-separate module so that the optimisation can be enabled and disabled on its own:
-build with -DGEKKO_JIT_PS=0 and every PS instruction goes back to the
-interpreter fallback, with the integer translator in gekkojit.cpp unchanged.
+runs a lot of them spends most of its time here. They are translated in their own
+module - gekkojit_ps_x64.cpp on an x86-64 host, gekkojit_ps_x86.cpp on a 32-bit
+one - so that the optimisation can be enabled and disabled on its own: build with
+-DGEKKO_JIT_PS=0 and every PS instruction goes back to the interpreter fallback,
+with the integer translator unchanged.
 
 ## How a PS register maps onto an XMM register
 
@@ -74,6 +75,7 @@ the emulated machine anyway.
 #pragma once
 
 #include "pch.h"
+#include "gekkojit.h"
 
 // Paired-Single translations, on by default. -DGEKKO_JIT_PS=0 builds them out
 // and leaves every PS instruction to the interpreter.
@@ -82,6 +84,11 @@ the emulated machine anyway.
 #endif
 
 namespace X64
+{
+	class Emitter;
+}
+
+namespace X86
 {
 	class Emitter;
 }
@@ -110,7 +117,9 @@ namespace Gekko
 		};
 
 		// Emit the translation of one Paired-Single instruction into the block being
-		// compiled.
+		// compiled. Exactly one of the two overloads is defined by the build: the
+		// x86-64 translator calls the first, the 32-bit one the second.
 		PsResult Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di);
+		PsResult Translate(X86::Emitter& e, GekkoCore* core, const DecoderInfo& di);
 	}
 }

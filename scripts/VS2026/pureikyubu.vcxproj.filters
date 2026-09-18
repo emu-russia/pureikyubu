@@ -118,7 +118,13 @@
     <ClInclude Include="..\..\src\jit_x64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gekkojit_layout.h">
+    <ClInclude Include="..\..\src\jit_x86.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gekkojit_layout_x64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gekkojit_layout_x86.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gekkodebug.h">
@@ -285,7 +291,10 @@
     <ClCompile Include="..\..\src\dspcore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dspjit.cpp">
+    <ClCompile Include="..\..\src\dspjit_x64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspjit_x86.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdebug.cpp">
@@ -318,10 +327,16 @@
     <ClCompile Include="..\..\src\gekkoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gekkojit.cpp">
+    <ClCompile Include="..\..\src\gekkojit_x64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gekkojit_ps.cpp">
+    <ClCompile Include="..\..\src\gekkojit_ps_x64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gekkojit_x86.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gekkojit_ps_x86.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gekkodebug.cpp">

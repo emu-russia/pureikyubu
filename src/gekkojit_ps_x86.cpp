@@ -1,6 +1,13 @@
 /*
 
-Paired-Single -> SSE/SSE2 recompiler. See gekkojit_ps.h for the design notes.
+Paired-Single -> SSE/SSE2 recompiler (32-bit x86). See gekkojit_ps.h for the design
+notes; gekkojit_ps_x64.cpp is the x86-64 sibling of this file.
+
+The SSE2 encodings are the same bytes in 32-bit mode (no REX is needed for XMM0-XMM7),
+so the translations below are the x86-64 ones. Two things differ: a 64 bit constant
+cannot be materialised in a general purpose register (it is staged in a frame slot and
+loaded with movq, see BroadcastConst), and the quantised load and store call their
+helper with the cdecl push sequence instead of register arguments.
 
 The operand order is the one trap in this file. The decoder stores the fields in
 the encoding order frD, frA, frC, frB (paramBits[0..3]), which is *not* the order
@@ -14,11 +21,11 @@ with p1/p2/p3 named after the paramBits index rather than after a role.
 #include "gekkojit.h"
 #include "gekkojit_ps.h"
 
-#if GEKKO_JIT_SUPPORTED && GEKKO_JIT_PS
+#if GEKKO_JIT_X86 && GEKKO_JIT_PS
 
 #include "gqr.h"
-#include "jit_x64.h"
-#include "gekkojit_layout.h"
+#include "jit_x86.h"
+#include "gekkojit_layout_x86.h"
 
 namespace Gekko
 {
@@ -28,12 +35,12 @@ namespace JitPs
 
 // The XMM registers a translation works in. Only XMM0-XMM5 are used anywhere in
 // the generated code: XMM6-XMM15 are callee-saved on Win64.
-static const uint8_t V0 = X64::XMM0;		// first operand, and the result
-static const uint8_t V1 = X64::XMM1;		// second operand
-static const uint8_t V2 = X64::XMM2;		// third operand
-static const uint8_t V3 = X64::XMM3;		// scratch
-static const uint8_t V4 = X64::XMM4;		// scratch
-static const uint8_t V5 = X64::XMM5;		// scratch
+static const uint8_t V0 = X86::XMM0;		// first operand, and the result
+static const uint8_t V1 = X86::XMM1;		// second operand
+static const uint8_t V2 = X86::XMM2;		// third operand
+static const uint8_t V3 = X86::XMM3;		// scratch
+static const uint8_t V4 = X86::XMM4;		// scratch
+static const uint8_t V5 = X86::XMM5;		// scratch
 
 // PS0 lives in fpr[n], PS1 in ps1[n]; each entry is one 8 byte FPREG.
 static int32_t Ps0Disp(uint32_t n) { return FprOff + (int32_t)n * 8; }
@@ -77,7 +84,7 @@ static bool IsRecordForm(Instruction instr)
 
 // COMPUTE_CR1() from gekkoc.h, which every recording form runs after its result
 // is written: cr = (cr & 0xf0ffffff) | ((fpscr & 0xf0000000) >> 4).
-static void EmitComputeCr1(X64::Emitter& e)
+static void EmitComputeCr1(X86::Emitter& e)
 {
 	e.mov_r32_m(T0, RegRegs, FpscrOff);
 	e.shr_r32_imm(T0, 4);
@@ -90,35 +97,44 @@ static void EmitComputeCr1(X64::Emitter& e)
 
 // Pull a guest PS register into one XMM register: lane 0 = PS0, lane 1 = PS1.
 // The movsd load clears the upper half, so the pair ends up exactly in place.
-static void Gather(X64::Emitter& e, uint8_t x, uint32_t n)
+static void Gather(X86::Emitter& e, uint8_t x, uint32_t n)
 {
 	e.movsd_xmm_m(x, RegRegs, Ps0Disp(n));
 	e.movhpd_xmm_m(x, RegRegs, Ps1Disp(n));
 }
 
 // The reverse: write both halves of the pair back to the guest register file.
-static void Scatter(X64::Emitter& e, uint32_t n, uint8_t x)
+static void Scatter(X86::Emitter& e, uint32_t n, uint8_t x)
 {
 	e.movsd_m_xmm(RegRegs, Ps0Disp(n), x);
 	e.movhpd_m_xmm(RegRegs, Ps1Disp(n), x);
 }
 
 // Broadcast a 64 bit constant to both lanes. movq clears bits 127:64, so the
-// unpcklpd that follows duplicates the low half into the high one. RAX is a
-// translation scratch that no instruction keeps live across itself.
-static void BroadcastConst(X64::Emitter& e, uint8_t x, uint64_t bits)
+// unpcklpd that follows duplicates the low half into the high one.
+//
+// 32-bit mode has no mov r64, imm64, so the constant is staged through the two
+// halves of ConstSlot and loaded from memory. EAX is a translation scratch that no
+// instruction keeps live across itself.
+static void BroadcastConst(X86::Emitter& e, uint8_t x, uint64_t bits)
 {
-	e.mov_r64_imm(X64::RAX, bits);
-	e.movq_xmm_r64(x, X64::RAX);
+	e.mov_r32_imm(X86::EAX, (uint32_t)bits);
+	e.mov_m32_r(X86::ESP, ConstSlot, X86::EAX);
+	e.mov_r32_imm(X86::EAX, (uint32_t)(bits >> 32));
+	e.mov_m32_r(X86::ESP, ConstSlot + 4, X86::EAX);
+	e.movq_xmm_m64(x, X86::ESP, ConstSlot);
 	e.unpcklpd_rr(x, x);
 }
 
 // Negate both lanes by flipping the sign bits. The interpreter uses unary minus,
 // which does the same thing including for zeroes and NaNs.
-static void Negate(X64::Emitter& e, uint8_t x)
+static void Negate(X86::Emitter& e, uint8_t x)
 {
-	e.mov_r64_imm(X64::RAX, 0x8000'0000'0000'0000ull);
-	e.movq_xmm_r64(V3, X64::RAX);
+	e.mov_r32_imm(X86::EAX, 0);
+	e.mov_m32_r(X86::ESP, ConstSlot, X86::EAX);
+	e.mov_r32_imm(X86::EAX, 0x8000'0000);
+	e.mov_m32_r(X86::ESP, ConstSlot + 4, X86::EAX);
+	e.movq_xmm_m64(V3, X86::ESP, ConstSlot);
 	e.unpcklpd_rr(V3, V3);
 	e.xorpd_rr(x, V3);
 }
@@ -242,33 +258,33 @@ namespace JitPs
 // Effective address of a quantised form, into RAX. The non-indexed forms take a
 // signed 12 bit displacement, which the interpreter extracts from the low bits
 // of the immediate, so the same extraction is done here at compile time.
-static void EmitPsqAddress(X64::Emitter& e, bool indexed, uint32_t ra, uint32_t rb, int32_t disp)
+static void EmitPsqAddress(X86::Emitter& e, bool indexed, uint32_t ra, uint32_t rb, int32_t disp)
 {
 	auto gprOff = [](uint32_t n) { return GprOff + (int32_t)n * 4; };
 
 	if (indexed)
 	{
-		e.mov_r32_m(X64::RAX, RegRegs, gprOff(rb));
+		e.mov_r32_m(X86::EAX, RegRegs, gprOff(rb));
 		if (ra != 0)
 		{
-			e.alu_r32_m(X64::AluAdd, X64::RAX, RegRegs, gprOff(ra));
+			e.alu_r32_m(X86::AluAdd, X86::EAX, RegRegs, gprOff(ra));
 		}
 	}
 	else
 	{
 		if (ra != 0)
 		{
-			e.mov_r32_m(X64::RAX, RegRegs, gprOff(ra));
+			e.mov_r32_m(X86::EAX, RegRegs, gprOff(ra));
 		}
 		else
 		{
-			e.xor_r32_r32_same(X64::RAX);
+			e.xor_r32_r32_same(X86::EAX);
 		}
-		e.add_r32_imm(X64::RAX, (uint32_t)disp);
+		e.add_r32_imm(X86::EAX, (uint32_t)disp);
 	}
 }
 
-PsResult Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
+PsResult Translate(X86::Emitter& e, GekkoCore* core, const DecoderInfo& di)
 {
 	// Every PS instruction raises the FP-unavailable exception when MSR[FP] is
 	// clear. MSR is constant within a block (see gekkojit_ps.h), so it is decided
@@ -602,10 +618,11 @@ PsResult Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
 		uint32_t packed = ((uint32_t)di.paramBits[0] << JitPs::PsqD) | (gqr << JitPs::PsqGqr) |
 			(w << JitPs::PsqW) | (base << JitPs::PsqRa) | ((update ? 1u : 0u) << JitPs::PsqUpdate);
 
-		e.mov_r64_r64(Arg0, RegCore);
-		e.mov_r32_r32(Arg1, X64::RAX);
-		e.mov_r32_imm(Arg2, packed);
-		e.call_abs((uint64_t)(void*)(store ? Jit::PsqStoreEntry() : Jit::PsqLoadEntry()));
+		e.push_imm32(packed);						// arg2
+		e.push_r32(X86::EAX);						// arg1: the effective address
+		e.push_r32(RegCore);						// arg0
+		e.call_abs((uint32_t)(store ? Jit::PsqStoreEntry() : Jit::PsqLoadEntry()));
+		e.add_esp_imm8(12);
 
 		return PsResult::DoneMayExcept;
 	}
@@ -627,15 +644,16 @@ PsResult Translate(X64::Emitter& e, GekkoCore* core, const DecoderInfo& di)
 
 }
 
-#else
+#elif defined(GEKKO_JIT_X86)
 
-// Built without GEKKO_JIT_PS (or on a host without a recompiler): every PS
-// instruction stays on the interpreter fallback.
+// The 32-bit host is built without GEKKO_JIT_PS: every PS instruction stays on the
+// interpreter fallback, with the integer translator unchanged. (A host that has no
+// recompiler at all is covered by the stub in gekkojit_ps_x64.cpp.)
 namespace Gekko
 {
 	namespace JitPs
 	{
-		PsResult Translate(X64::Emitter&, GekkoCore*, const DecoderInfo&) { return PsResult::NotHandled; }
+		PsResult Translate(X86::Emitter&, GekkoCore*, const DecoderInfo&) { return PsResult::NotHandled; }
 	}
 }
 

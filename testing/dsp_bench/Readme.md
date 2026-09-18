@@ -1,7 +1,8 @@
 # DSPcore interpreter / recompiler benchmark
 
 A standalone harness that links the real DSP core (`dsp.cpp`, `dspcore.cpp`,
-`dspdec.cpp`, `dspdma.cpp`, `dsparam.cpp` and `dspjit.cpp`) with a stub `pch.h` and a
+`dspdec.cpp`, `dspdma.cpp`, `dsparam.cpp` and the recompiler module of the host -
+`dspjit_x64.cpp` on x86-64, `dspjit_x86.cpp` on 32-bit x86) with a stub `pch.h` and a
 flat console main memory, so that the cost of the two execution engines can be measured
 and compared without SDL, OpenGL or the rest of Flipper.
 
@@ -71,9 +72,15 @@ instructions, so the two fingerprints have to match.
 
 ## ABI regression build
 
-`src/jit_x64.h` is shared with the Gekko recompiler. Build with
-`OPT="-DDSP_JIT_TEST_WIN64_SHADOW"` to have the emitter poison the Win64 shadow space
-before every helper call, which reproduces the Windows-only hazard on a Linux host.
+`src/jit_x64.h` is shared with the Gekko recompiler (the 32-bit module uses
+`src/jit_x86.h` instead; the shadow space is an x86-64/Win64 concept and the 32-bit
+emitter has no equivalent, so `DSP_JIT_TEST_WIN64_SHADOW` does nothing there). Build
+with `OPT="-DDSP_JIT_TEST_WIN64_SHADOW"` to have the emitter poison the Win64 shadow
+space before every helper call, which reproduces the Windows-only hazard on a Linux
+host.
+
+Like the Gekko harness, `build.sh` always compiles both recompiler modules and the
+preprocessor picks the host one, so `OPT="-O2 -m32"` builds a 32-bit benchmark.
 
 `OPT="-DDSP_JIT_DISABLED"` builds the interpreter-only configuration.
 

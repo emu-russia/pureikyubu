@@ -11,15 +11,18 @@ mkdir -p $BASE/src
 # The reference is the same harness built from git HEAD, so the file set and the flags have to
 # match build.sh exactly (the core sources and the headers they include are versioned together).
 
-for f in gekko.cpp gekkoc.cpp gekkodec.cpp gekkodisasm.cpp gekkojit.cpp gekkojit_ps.cpp \
-         gekkojit_x64.h gekkojit_ps.h gqr.h gekko.h gekkoc.h gekkodec.h gekkodisasm.h gekkojit.h; do
+for f in gekko.cpp gekkoc.cpp gekkodec.cpp gekkodisasm.cpp \
+         gekkojit_x64.cpp gekkojit_ps_x64.cpp gekkojit_x86.cpp gekkojit_ps_x86.cpp \
+         jit_x64.h jit_x86.h gekkojit_layout_x64.h gekkojit_layout_x86.h \
+         gekkojit_ps.h gqr.h gekko.h gekkoc.h gekkodec.h gekkodisasm.h gekkojit.h; do
     (cd $REPO && git show HEAD:src/$f) > $BASE/src/$f
 done
 
 g++ -std=c++17 -D_LINUX -DBENCH_WITH_JIT -O2 -fno-strict-aliasing -w \
     -I$HERE -I$BASE/src \
     $BASE/src/gekko.cpp $BASE/src/gekkoc.cpp $BASE/src/gekkodec.cpp $BASE/src/gekkodisasm.cpp \
-    $BASE/src/gekkojit.cpp $BASE/src/gekkojit_ps.cpp \
+    $BASE/src/gekkojit_x64.cpp $BASE/src/gekkojit_ps_x64.cpp \
+    $BASE/src/gekkojit_x86.cpp $BASE/src/gekkojit_ps_x86.cpp \
     $HERE/stubs.cpp $HERE/bench.cpp $HERE/prof.cpp \
     -o $BASE/bench -lpthread
 

@@ -37,7 +37,7 @@ process.
 | `dsp_irom_test.cpp` | The `build/Data/dsp_irom.bin` boot ROM: disassembly, decode coverage and execution of its boot path |
 | `dsp_golden_alu_test.cpp` | Differential test of the data path against the golden vectors in `dsp_golden_alu_vectors.h` |
 | `dsp_golden_alu_vectors.h` | Generated: results and flags of ~180 instruction words from the hardware core (see below) |
-| `dsp_jit_test.cpp` | Differential tests of the DSP recompiler (`src/dspjit.cpp`) against the interpreter |
+| `dsp_jit_test.cpp` | Differential tests of the DSP recompiler (`src/dspjit_x64.cpp` / `src/dspjit_x86.cpp`) against the interpreter |
 | `DspIrom.md` | The IROM disassembly and analysis report |
 
 ## Building and running
@@ -164,8 +164,8 @@ product-source flag rows and the immediate shifts in line.
 
 ## The DSPcore recompiler tests
 
-`src/dspjit.cpp` compiles straight-line runs of DSP instruction words into x86-64 machine
-code. It does not reimplement the instruction semantics: each decoded word becomes a
+`src/dspjit_x64.cpp` and `src/dspjit_x86.cpp` compile straight-line runs of DSP instruction
+words into x86-64 or 32-bit x86 machine code (the build picks one; see `src/dspjit.h`). It does not reimplement the instruction semantics: each decoded word becomes a
 direct call to the same handler the interpreter's `Dispatch` would call, and the
 non-opcode parts of `Dispatch` are shared through `DspInterpreter::JitCommit`. The tests
 are therefore differential against the interpreter:

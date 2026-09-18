@@ -23,15 +23,17 @@ mkdir -p $BLD/src
 # against the directory of the including file first, and the copy has no pch.h, so the
 # stub in this directory wins over src/pch.h (which needs SDL / GL / ImGui).
 cp $REPO/src/dsp.cpp $REPO/src/dspcore.cpp $REPO/src/dspdec.cpp $REPO/src/dspdma.cpp \
-   $REPO/src/dsparam.cpp $REPO/src/dspjit.cpp \
+   $REPO/src/dsparam.cpp $REPO/src/dspjit_x64.cpp $REPO/src/dspjit_x86.cpp \
    $REPO/src/dsp.h $REPO/src/dspcore.h $REPO/src/dspdec.h $REPO/src/dspdma.h \
-   $REPO/src/dsparam.h $REPO/src/dspai.h $REPO/src/dspjit.h $REPO/src/jit_x64.h \
+   $REPO/src/dsparam.h $REPO/src/dspai.h $REPO/src/dspjit.h \
+   $REPO/src/jit_x64.h $REPO/src/jit_x86.h \
    $BLD/src/
 
 g++ -std=c++17 -D_LINUX $OPT -fno-strict-aliasing -w \
     -I$BLD/src -I$HERE -I$REPO/src -I$REPO/testing \
     $BLD/src/dsp.cpp $BLD/src/dspcore.cpp $BLD/src/dspdec.cpp \
-    $BLD/src/dspdma.cpp $BLD/src/dsparam.cpp $BLD/src/dspjit.cpp \
+    $BLD/src/dspdma.cpp $BLD/src/dsparam.cpp \
+    $BLD/src/dspjit_x64.cpp $BLD/src/dspjit_x86.cpp \
     $HERE/stubs.cpp $HERE/bench.cpp \
     -o $BLD/bench -lpthread
 

@@ -64,11 +64,13 @@ three ways to turn it on:
 instruction through the interpreter, so the two engines can be compared in one binary.
 `-DDSP_JIT_DISABLED` removes the recompiler from the build entirely.
 
-## x86-64 only
+## Two host modules: x86-64 and 32-bit x86
 
-The recompiler needs x86-64 (the register roles and the calling convention are hard-coded
-in `jit_x64.h`). On any other target `IsSupported()` returns false and the emulator runs
-the interpreter exactly as before.
+The recompiler needs an x86 host. The x86-64 translator is `dspjit_x64.cpp` (over the
+encoder in `jit_x64.h`), the 32-bit one is `dspjit_x86.cpp` (over `jit_x86.h`); both
+implement the same `Jit` and the same "one word, one direct call" model, and the build
+compiles exactly one of them. On any other target `IsSupported()` returns false and the
+emulator runs the interpreter exactly as before.
 
 */
 
@@ -77,9 +79,16 @@ the interpreter exactly as before.
 #include "pch.h"
 #include "dspdec.h"
 
-// The recompiler is only built for 64-bit x86 hosts. DSP_JIT_DISABLED forces the
-// interpreter-only build (used to check that path on a supported host).
+// The recompiler is built for 64-bit and 32-bit x86 hosts, each from its own module.
+// DSP_JIT_DISABLED forces the interpreter-only build (used to check that path on a
+// supported host).
 #if (defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__)) && !defined(DSP_JIT_DISABLED)
+#define DSP_JIT_X64 1
+#elif (defined(_M_IX86) || defined(__i386__)) && !defined(DSP_JIT_DISABLED)
+#define DSP_JIT_X86 1
+#endif
+
+#if defined(DSP_JIT_X64) || defined(DSP_JIT_X86)
 #define DSP_JIT_SUPPORTED 1
 #endif
 

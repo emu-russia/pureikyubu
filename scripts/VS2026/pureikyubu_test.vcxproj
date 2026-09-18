@@ -71,7 +71,10 @@
     <ClCompile Include="..\..\src\dspcore.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\dspjit.cpp">
+    <ClCompile Include="..\..\src\dspjit_x64.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspjit_x86.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdec.cpp">
