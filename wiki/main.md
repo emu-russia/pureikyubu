@@ -68,7 +68,7 @@ themselves), so a non-ASCII comment or string literal is read the same way by ev
 narrow literals of a source file come out as UTF-8 bytes.
 
 Narrow (`char`) strings are UTF-8 everywhere: the JDI command line and its arguments, the Json
-documents, the reports, the console and both front ends. The emulator's own text stays
+documents, the reports, the console and the front end. The emulator's own text stays
 `std::wstring`; `Util::WstringToString` and `Util::StringToWstring` are the two directions of the
 conversion, and they also assemble and split the surrogate pairs of the code points outside the BMP.
 A file name that leaves the ANSI code page therefore travels through the interface as UTF-8 and is

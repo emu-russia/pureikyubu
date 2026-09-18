@@ -1,12 +1,11 @@
 {
 	"info":
 	{
-		"description": "Default configuration for the SDL build. Loaded before SettingsSdl.json"
+		"description": "Default configuration of the emulator. Loaded before Settings.json"
 	},
 
 	"ui":
 	{
-		"DOLDEBUG": false,
 		"FILTER": 4294967295,
 		"HW_OSD": false,
 		"LASTFILE": "",

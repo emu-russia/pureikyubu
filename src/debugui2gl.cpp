@@ -1861,8 +1861,9 @@ namespace Debug2
 		if (g_GlUi == nullptr || !g_GlUi->IsOpen())
 			return;
 
-		// A host without an event loop of its own (the Win32 front end) leaves the pumping to the
-		// debugger: the events that are not ours are put back for the host to deal with.
+		// A host that lets the debugger take its own events out of the queue first (the GBA front
+		// end of gba_sdl.cpp) leaves the pumping to the debugger: the events that are not ours are
+		// put back for the host to deal with.
 		std::vector<SDL_Event> foreign;
 		SDL_Event event;
 

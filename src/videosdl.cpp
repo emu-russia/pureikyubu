@@ -1,4 +1,5 @@
-// XFB output using SDL2. Used in Linux build, but can be used in Windows if you replace ui with uisdl
+// XFB output using SDL2. This is the only video backend there is (issue #421 removed the Win32 one,
+// video.cpp); it presents the VI picture in the SDL window unless the GL backend owns its surface.
 #include "pch.h"
 
 static SDL_Window* render_target;

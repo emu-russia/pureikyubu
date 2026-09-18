@@ -15,11 +15,10 @@
 #include <fstream>
 
 #ifdef _WINDOWS
-#include <conio.h>
+// The Windows builds still use the Win32 API directly, even though there is no Win32 front end any
+// more (issue #421): the threads, the directory scan and the file mapping of utils.cpp and os.cpp,
+// the graphics API entry points of gfx.cpp and the executable pages of the JIT allocate through it.
 #include <windows.h>
-#include <shlobj.h>
-#include <commctrl.h>
-#include "res/resource.h"
 #endif
 
 #ifdef _LINUX
@@ -82,11 +81,10 @@
 
 #include "flipper.h"
 
-#if defined(GFX_USE_SDL_WINDOW) || defined(_LINUX)
+// The audio mixer is the SDL one in every build (issue #421). The headless build compiles
+// audionull.cpp against this same declaration: the class has to look the same, and the null mixer
+// never touches the SDL device members.
 #include "audiosdl.h"
-#else
-#include "audio.h"
-#endif
 #include "video.h"
 
 #include "dspdec.h"

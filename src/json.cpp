@@ -75,8 +75,11 @@ namespace
 
 			ptr += length;
 
-			// The shortest form and the surrogate block are not code points.
-			uint32_t shortest = (length == 2) ? 0x80 : (length == 3) ? 0x800 : 0x10000;
+			// The shortest form and the surrogate block are not code points. A one-byte sequence
+			// is already at its shortest form - the value it carries is the code point - so the
+			// table must not send it to the replacement character: that turned every ASCII string
+			// added with AddUtf8String into a run of U+FFFD.
+			uint32_t shortest = (length == 1) ? 0x0 : (length == 2) ? 0x80 : (length == 3) ? 0x800 : 0x10000;
 			if (cp < shortest || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
 			{
 				cp = Utf8Replacement;

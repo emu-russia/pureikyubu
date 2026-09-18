@@ -1,6 +1,6 @@
 #pragma once
 
-// TODO: Drag the AID+AIS mixer from audio.cpp here and make audio.cpp play a simple buffer. This way it will be more similar to real HW.
+// TODO: Drag the AID+AIS mixer from the audio backend (audiosdl.cpp) here and make the backend play a simple buffer. This way it will be more similar to real HW.
 
 
 // AI Streaming registers

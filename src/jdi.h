@@ -4,7 +4,7 @@
 // The interface speaks UTF-8: a command line, the name of a command, its arguments and the strings
 // it answers with are all UTF-8 (issue #372). This is what lets a command carry a file name outside
 // the ANSI code page, and it is also the one encoding every front end of the emulator already uses
-// (the Json documents, ImGui/SDL, and the Win32 front end, which converts to UTF-8 on its side).
+// (the Json documents and ImGui/SDL).
 // A handler that needs the emulator's wide text converts its arguments with Util::StringToWstring.
 
 #pragma once

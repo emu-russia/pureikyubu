@@ -2,20 +2,13 @@
 
 #pragma once
 
-// The Windows and SDL builds keep their settings apart, so that both can be run from the
-// same directory without overwriting each other's configuration.
+// The settings of the emulator. There is one build now (the SDL one, issue #421), so there is one
+// pair of files: DefaultSettings.json is the shipped set of values (it must exist) and
+// Settings.json is the file the user changes. The current settings are the defaults overridden by
+// that file, see config.cpp.
 
-// The SDL build is the one that renders into an SDL window: either the Linux port (_LINUX,
-// see CMakeLists.txt) or the "SDL" Visual Studio configurations (GFX_USE_SDL_WINDOW, see gfx.h,
-// which is included before this header).
-
-#if defined(_LINUX) || GFX_USE_SDL_WINDOW
-constexpr auto EMU_DEFAULT_SETTINGS = L"./Data/DefaultSettingsSdl.json";	// Must exist
-constexpr auto EMU_SETTINGS = L"./Data/SettingsSdl.json";
-#else
-constexpr auto EMU_DEFAULT_SETTINGS = L"./Data/DefaultSettingsWin.json";	// Must exist
-constexpr auto EMU_SETTINGS = L"./Data/SettingsWin.json";
-#endif
+constexpr auto EMU_DEFAULT_SETTINGS = L"./Data/DefaultSettings.json";	// Must exist
+constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 
 // Sections
 #define USER_UI "ui"
@@ -35,7 +28,7 @@ constexpr auto EMU_SETTINGS = L"./Data/SettingsWin.json";
 #define USER_CONSOLE	"CONSOLE"       // console version (see YAGCD)
 #define USER_OS_REPORT	"OS_REPORT"     // 1: allow debugger output (by EXI)
 #define USER_VI_COUNT	"VI_COUNT"      // lines count per single frame (0:auto)
-#define USER_VI_XFB		"VI_XFB"        // enable video frame buffer (GDI)
+#define USER_VI_XFB		"VI_XFB"        // enable video frame buffer (the XFB picture in the window)
 #define USER_BOOTROM	"BOOTROM"		// Bootrom
 #define USER_DSP_DROM	"DSP_DROM"      // DSP DROM
 #define USER_DSP_IROM	"DSP_IROM"		// DSP IROM

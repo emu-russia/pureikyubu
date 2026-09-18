@@ -2,18 +2,17 @@
 
 GameCube controllers emulation backend (SDL2).
 
-This is the SDL counterpart of the Win32 backend (pad.cpp). A pad can be driven by the keyboard
-(polled with SDL_GetKeyboardState) and by an SDL game controller, both at the same time.
+This is the only pad backend there is (issue #421 removed the Win32 one, pad.cpp). A pad can be
+driven by the keyboard (polled with SDL_GetKeyboardState) and by an SDL game controller, both at the
+same time.
 
-The key bindings are stored in the configuration (SettingsSdl.json, "controllers" section) as SDL
+The key bindings are stored in the configuration (Settings.json, "controllers" section) as SDL
 scancodes, and the game controller bindings as SDL game controller button or axis identifiers (see
 PAD_GCKEY_* in pad.h). The settings dialog is a part of the SDL UI and captures the SDL key and
 controller events (see the "Controller settings" section in uisdl.cpp).
 
-Unlike the Win32 backend, the key bindings are SDL scancodes (SDL_Scancode), not virtual-key codes.
-The SDL and the Win32 builds keep their settings in separate files (SettingsSdl.json /
-SettingsWin.json, see config.h), so the same VKEY_FOR_* variable names may hold the two different
-encodings without clashing. The game controller bindings live in the GCKEY_FOR_* variables.
+The bindings are SDL scancodes (SDL_Scancode), not virtual-key codes, and the game controller
+bindings live next to them in the GCKEY_FOR_* variables of the same "controllers" section.
 
 The Nth SDL game controller that is currently connected drives the Nth pad, so a single gamepad
 always works with Port 1, two gamepads with Port 1 and Port 2, and so on.

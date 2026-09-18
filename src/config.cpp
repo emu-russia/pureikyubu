@@ -8,9 +8,12 @@ Previously stored in the registry, in separate keys.
 
 ## As it is now.
 
-Settings are stored in Json. The default settings are stored in DefaultSettingsWin.json / DefaultSettingsSdl.json
-(depending on the build) and overrided by the current settings from SettingsWin.json / SettingsSdl.json.
-New settings are saved only in the current settings file.
+Settings are stored in Json. The default settings are stored in DefaultSettings.json and overrided by
+the current settings from Settings.json. New settings are saved only in the current settings file.
+
+The Windows and the SDL builds used to keep separate pairs of files (DefaultSettingsWin.json and
+DefaultSettingsSdl.json), so that the two ports could run from the same directory; the Win32 build
+is gone (issue #421), so there is one pair of files now.
 
 */
 

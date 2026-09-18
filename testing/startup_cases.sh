@@ -6,12 +6,12 @@
 set -u
 cd "$(dirname "$0")/../build"
 
-cp Data/DefaultSettingsSdl.json /tmp/pureikyubu_def.bak
-cp Data/SettingsSdl.json /tmp/pureikyubu_usr.bak
+cp Data/DefaultSettings.json /tmp/pureikyubu_def.bak
+cp Data/Settings.json /tmp/pureikyubu_usr.bak
 
 restore() {
-  cp /tmp/pureikyubu_def.bak Data/DefaultSettingsSdl.json
-  cp /tmp/pureikyubu_usr.bak Data/SettingsSdl.json
+  cp /tmp/pureikyubu_def.bak Data/DefaultSettings.json
+  cp /tmp/pureikyubu_usr.bak Data/Settings.json
 }
 trap restore EXIT
 
@@ -39,19 +39,19 @@ run() {
 }
 
 # A corrupt user settings file is reported and ignored, so the emulator still starts (exit 0).
-printf '{' > Data/SettingsSdl.json
+printf '{' > Data/Settings.json
 run "1. user settings truncated after the opening brace:" 0
 
-printf '{"ui" "X":1}' > Data/SettingsSdl.json
+printf '{"ui" "X":1}' > Data/Settings.json
 run "2. user settings with a missing colon:" 0
 
-printf '{"ui":{"PATH":"%s"}}' "$(head -c 6000 /dev/zero | tr '\0' 'A')" > Data/SettingsSdl.json
+printf '{"ui":{"PATH":"%s"}}' "$(head -c 6000 /dev/zero | tr '\0' 'A')" > Data/Settings.json
 run "3. user settings with an over-long string:" 0
 
 # The shipped defaults are not optional: without them the emulator cannot start.
-printf '{"ui":' > Data/DefaultSettingsSdl.json
+printf '{"ui":' > Data/DefaultSettings.json
 run "4. corrupt default settings (fatal):" 1
-cp /tmp/pureikyubu_def.bak Data/DefaultSettingsSdl.json
+cp /tmp/pureikyubu_def.bak Data/DefaultSettings.json
 
 head -c 4096 /dev/urandom > /tmp/pureikyubu_bad.dol
 run "5. a random file renamed to .dol:" 1 /tmp/pureikyubu_bad.dol
@@ -59,7 +59,7 @@ run "5. a random file renamed to .dol:" 1 /tmp/pureikyubu_bad.dol
 head -c 64 /dev/urandom > /tmp/pureikyubu_bad.rvz
 run "6. a random file renamed to .rvz:" 1 /tmp/pureikyubu_bad.rvz
 
-cp /tmp/pureikyubu_usr.bak Data/SettingsSdl.json
+cp /tmp/pureikyubu_usr.bak Data/Settings.json
 run "7. restored settings (the emulator must start):" 0
 
 if [ "$failures" -eq 0 ]; then

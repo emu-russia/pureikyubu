@@ -423,8 +423,9 @@ namespace Debug2
 	// case the host must not pass it to its own UI.
 	bool UiSdlEvent(const SDL_Event& event);
 
-	// A host that has no event loop of its own (the Win32 front end) calls this once a frame: the
-	// debugger pumps SDL itself and re-queues the events that are not its own.
+	// A host that lets the debugger take its own events out of the queue first (the GBA front end
+	// of gba_sdl.cpp) calls this once a frame: the debugger pumps SDL itself and re-queues the
+	// events that are not its own.
 	void UiPumpSdlEvents();
 
 }

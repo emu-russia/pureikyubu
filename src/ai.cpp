@@ -171,7 +171,7 @@ namespace Flipper
 	// ---------------------------------------------------------------------------
 
 	// AI DMA and DVD Audio are played uncompetitively from different streams.
-	// All work on Sample Rate Conversion and sound mixing for convenience is done in Mixer (audio.cpp).
+	// All work on Sample Rate Conversion and sound mixing for convenience is done in Mixer (audiosdl.cpp).
 
 	// The streaming (auxiliary) channel passes through the volume stage before it is added to the DSP
 	// output: an 8-bit multiplier built by the SRC from AIVR scales the sample by volume/256, where

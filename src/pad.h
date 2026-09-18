@@ -2,7 +2,7 @@
 #pragma once
 
 // The index of a GameCube controller control. Every pad has two bindings per control: a keyboard
-// key (vkeys) and a game controller button or axis (gckeys, the SDL build only).
+// key (vkeys) and a game controller button or axis (gckeys).
 enum
 {
 	VKEY_FOR_UP = 0,
@@ -37,7 +37,7 @@ struct PADCONF
 {
 	bool    plugged;
 	int     vkeys[VKEY_FOR_MAX];    // keyboard binding (-1 or 0 - undefined)
-	int     gckeys[VKEY_FOR_MAX];   // game controller binding (SDL build only), see PAD_GCKEY_*
+	int     gckeys[VKEY_FOR_MAX];   // game controller binding, see PAD_GCKEY_*
 };
 
 // The game controller binding of a control is stored as a single integer, so that it fits the
@@ -99,8 +99,8 @@ void PADClose();
 // the controller settings dialog, so that the new bindings are applied without restarting the emulation.
 void PADLoadConfig(int padToConfigure);
 
-// SDL build only. Keep the SDL game controllers of the ports open and refresh their cached state.
-// Must be called from the thread that pumps the SDL events (the UI thread), see padsdl.cpp.
+// Keep the SDL game controllers of the ports open and refresh their cached state. Must be called
+// from the thread that pumps the SDL events (the UI thread), see padsdl.cpp.
 void PADUpdateControllers();
 
 // read controller buttons state. returns 1, if ok, and 0, if PAD not connected

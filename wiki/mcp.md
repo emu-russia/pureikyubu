@@ -1,7 +1,7 @@
 # MCP server (issue #383)
 
-The emulator has one control surface: the Json Debug Interface (JDI). Every front end (the Win32 UI,
-the SDL one, the headless one) is a thin layer over it - a command line in, a Json answer out - and
+The emulator has one control surface: the Json Debug Interface (JDI). Every front end (the SDL UI
+and the headless one) is a thin layer over it - a command line in, a Json answer out - and
 this module adds another consumer of the same interface: a local **MCP** server, so that an LLM
 agent can drive the emulator the way a human drives the debugger console.
 
