@@ -35,14 +35,42 @@ enum class FileReaction
 	OpenFile_LoadFile,
 	ChooseDirectory_MountSdk,
 	ChooseDirectory_SelectorPath,
+	ChooseDirectory_SettingsPath,
 	OpenFile_Bootrom,
 	OpenFile_DROM,
 	OpenFile_IROM,
 	OpenFile_MemcardA,
 	OpenFile_MemcardB,
+	SaveFile_MemcardNew,
 	ChooseFile_DVDImage,
 };
 static FileReaction file_reaction = FileReaction::None;
+
+/* The type filters of the file browser, per dialog (the Win32 port passes the same idea to
+   GetOpenFileName as a filter string). */
+static const std::vector<std::string> selector_file_filters = { ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" };
+static const std::vector<std::string> dvd_image_filters = { ".gcm", ".iso", ".rvz", ".*" };
+static const std::vector<std::string> memcard_file_filters = { ".mci", ".*" };
+static const std::vector<std::string> any_file_filters = { ".*" };
+
+/* Open the file browser for one reaction of this port. The title and the filter belong to the dialog
+   that asked for it, because one browser serves them all (the Win32 port has a separate
+   UI::FileOpenDialog call per case, so it picks its filter on the spot). */
+static void open_file_dialog(FileReaction reaction, const char* title, const std::vector<std::string>& filters)
+{
+	file_reaction = reaction;
+	fileOpenDialog.SetTitle(title);
+	fileOpenDialog.SetTypeFilters(filters);
+	fileOpenDialog.Open();
+}
+
+static void open_save_dialog(FileReaction reaction, const char* title, const std::vector<std::string>& filters)
+{
+	file_reaction = reaction;
+	fileSaveDialog.SetTitle(title);
+	fileSaveDialog.SetTypeFilters(filters);
+	fileSaveDialog.Open();
+}
 
 static uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
 {
@@ -1431,6 +1459,578 @@ static void ui_pad_settings()
 
 /*
 
+# Settings
+
+The SDL port of the Win32 settings property sheet (OpenSettingsDialog and its two pages,
+UserMenuSettingsProc and HardwareSettingsProc in ui.cpp), shown here as one window with a tab bar.
+
+"GUI/Selector" is the list of directories the selector scans (the PATH user variable) and the file
+filter (the FILTER user variable, one bit per extension - the contents of the IDD_FILE_FILTER
+dialog). "GCN Hardware" is the emulated console version and the three firmware images (the Bootrom
+and the DSP DROM/IROM), which is what the IDD_SETTINGS_HW page configures.
+
+The directories, the console version and the firmware are edited as a copy and written to the
+configuration by Apply (or OK); Cancel drops the copy. "Add..." picks a directory with the same
+browser the "Selector -> Add Directory..." menu item uses and puts it into the copy
+(FileReaction::ChooseDirectory_SettingsPath). The file filter is a view option, so it takes effect
+at once - the "Selector -> File Filter" menu writes the same variable.
+
+*/
+
+struct SettingsConsoleVersion
+{
+	uint32_t	ver;
+	const char* info;
+};
+
+/* The console versions the Win32 page offers (the consoleVersion table in ui.cpp, see YAGCD) */
+static const SettingsConsoleVersion settings_console_version[] =
+{
+	{ 0x00000001, "0x00000001: Retail 1" },
+	{ 0x00000002, "0x00000002: HW2 production board" },
+	{ 0x00000003, "0x00000003: The latest production board" },
+	{ 0x10000004, "0x10000004: 1st Devkit HW" },
+	{ 0x10000005, "0x10000005: 2nd Devkit HW" },
+	{ 0x10000006, "0x10000006: The latest Devkit HW" },
+};
+
+static const int settings_console_known = (int)(sizeof(settings_console_version) / sizeof(settings_console_version[0]));
+
+static bool settings_open = false;
+static std::vector<std::wstring> settings_paths;	// the edited copy of the PATH list
+static int settings_path_selected = -1;				// the selected entry of the list, -1: none
+static int settings_console = -1;					// the index of the configured version in the table, -1: other
+static uint32_t settings_console_other = 1;			// the version the "User defined" entry stands for
+static std::wstring settings_bootrom;				// the edited copies of the firmware paths
+static std::wstring settings_dsp_drom;
+static std::wstring settings_dsp_irom;
+
+/* The "User defined" entry of the console version combo: a value that is not in the table (a hand
+   edited configuration) is still shown, and picking that entry keeps it. */
+static const char* settings_console_other_label()
+{
+	static char label[0x40];
+	sprintf(label, "0x%08X: User defined", settings_console_other);
+	return label;
+}
+
+/* Fill the dialog from the configuration (the WM_INITDIALOG of both Win32 pages, LoadSettings) */
+static void settings_dialog_load()
+{
+	load_path();
+	settings_paths = usel.paths;
+	settings_path_selected = -1;
+
+	settings_console_other = (uint32_t)UI::Jdi->GetConfigInt(USER_CONSOLE, USER_HW);
+	settings_console = -1;
+
+	for (int i = 0; i < settings_console_known; i++)
+	{
+		if (settings_console_version[i].ver == settings_console_other)
+		{
+			settings_console = i;
+			break;
+		}
+	}
+
+	settings_bootrom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_BOOTROM, USER_HW));
+	settings_dsp_drom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_DROM, USER_HW));
+	settings_dsp_irom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_IROM, USER_HW));
+}
+
+/* Write the dialog back (the PSN_APPLY handler of both Win32 pages, SaveSettings in ui.cpp) */
+static void settings_dialog_apply()
+{
+	UI::Jdi->SetConfigInt(USER_CONSOLE,
+		(int)(settings_console >= 0 ? settings_console_version[settings_console].ver : settings_console_other), USER_HW);
+
+	UI::Jdi->SetConfigString(USER_BOOTROM, Util::WstringToString(settings_bootrom), USER_HW);
+	UI::Jdi->SetConfigString(USER_DSP_DROM, Util::WstringToString(settings_dsp_drom), USER_HW);
+	UI::Jdi->SetConfigString(USER_DSP_IROM, Util::WstringToString(settings_dsp_irom), USER_HW);
+
+	// The directories are inserted one by one, the way SaveSettings does it: PATH is a ';' separated
+	// list and AddSelectorPath is what keeps it unique and canonical.
+	usel.paths.clear();
+	UI::Jdi->SetConfigString(USER_PATH, "", USER_UI);
+
+	for (const auto& path : settings_paths)
+	{
+		AddSelectorPath(path);
+	}
+
+	usel.needUpdate = true;
+}
+
+static void settings_dialog_open()
+{
+	settings_dialog_load();
+	settings_open = true;
+}
+
+/* One file filter checkbox of the "GUI/Selector" page. The four extensions are the four bits of the
+   FILTER variable and the four items of the "Selector -> File Filter" menu. */
+static void settings_filter_item(const char* label, uint32_t mask)
+{
+	uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
+	bool enabled = (filter & mask) != 0;
+
+	if (ImGui::Checkbox(label, &enabled))
+	{
+		filter = enabled ? (filter | mask) : (filter & ~mask);
+		UI::Jdi->SetConfigInt(USER_FILTER, (int)filter, USER_UI);
+		usel.needUpdate = true;
+	}
+}
+
+/* The "GUI/Selector" page: the directories and the file filter (IDD_SETTINGS_GUI) */
+static void settings_page_gui()
+{
+	ImGui::TextUnformatted("Directories the selector scans for executables and disk images:");
+	ImGui::TextDisabled("A newly loaded file adds its own directory to this list");
+
+	ImGui::BeginChild("settings_paths", ImVec2(0, 140), true);
+
+	for (int i = 0; i < (int)settings_paths.size(); i++)
+	{
+		ImGui::PushID(i);
+
+		if (ImGui::Selectable(Util::WstringToString(settings_paths[i]).c_str(), settings_path_selected == i))
+		{
+			settings_path_selected = i;
+		}
+
+		ImGui::PopID();
+	}
+
+	ImGui::EndChild();
+
+	if (ImGui::Button("Add...", ImVec2(90, 0)))
+	{
+		file_reaction = FileReaction::ChooseDirectory_SettingsPath;
+		chooseDirectoryDialog.Open();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Remove", ImVec2(90, 0)) &&
+		settings_path_selected >= 0 && settings_path_selected < (int)settings_paths.size())
+	{
+		settings_paths.erase(settings_paths.begin() + settings_path_selected);
+		settings_path_selected = -1;
+	}
+
+	ImGui::Separator();
+
+	// The filter is written at once, exactly like the same four items of the "Selector" menu: it is
+	// the way the selector view is set up, not a setting of the emulated machine.
+	ImGui::TextUnformatted("File filter:");
+
+	settings_filter_item("*.dol", 0xff000000);
+	settings_filter_item("*.elf", 0x00ff0000);
+	settings_filter_item("*.gcm, *.rvz", 0x0000ff00);
+	settings_filter_item("*.iso", 0x000000ff);
+}
+
+/* One firmware file of the "GCN Hardware" page: a read only path and the button that picks it */
+static void settings_firmware_row(const char* label, std::wstring& path, FileReaction reaction, const char* title)
+{
+	std::string text = Util::WstringToString(path);
+	char buf[0x400];
+	snprintf(buf, sizeof(buf), "%s", text.c_str());
+
+	ImGui::PushID(label);
+
+	ImGui::TextUnformatted(label);
+	ImGui::SetNextItemWidth(-110);
+	ImGui::InputText("##path", buf, sizeof(buf), ImGuiInputTextFlags_ReadOnly);
+	ImGui::SameLine();
+
+	if (ImGui::Button("Choose...", ImVec2(100, 0)))
+	{
+		open_file_dialog(reaction, title, any_file_filters);
+	}
+
+	ImGui::PopID();
+}
+
+/* The "GCN Hardware" page: the console version and the firmware (IDD_SETTINGS_HW) */
+static void settings_page_hw()
+{
+	ImGui::TextUnformatted("Console version:");
+
+	const char* preview = (settings_console >= 0)
+		? settings_console_version[settings_console].info
+		: settings_console_other_label();
+
+	ImGui::SetNextItemWidth(-1);
+
+	if (ImGui::BeginCombo("##console_version", preview))
+	{
+		for (int i = 0; i < settings_console_known; i++)
+		{
+			if (ImGui::Selectable(settings_console_version[i].info, settings_console == i))
+			{
+				settings_console = i;
+			}
+		}
+
+		if (settings_console < 0)
+		{
+			// The entry is only shown when the configuration holds a version the table does not
+			// have; picking it keeps that value.
+			ImGui::Selectable(settings_console_other_label(), true);
+		}
+
+		ImGui::EndCombo();
+	}
+
+	ImGui::TextDisabled("Use the latest production board for most cases. Use the latest Devkit HW for\ndebug purposes (to see OS reports in the debugger).");
+
+	ImGui::Separator();
+
+	settings_firmware_row("Bootrom file:", settings_bootrom, FileReaction::OpenFile_Bootrom, "Choose Bootrom");
+	ImGui::Separator();
+	settings_firmware_row("DSP DROM file:", settings_dsp_drom, FileReaction::OpenFile_DROM, "Choose DSP DROM");
+	ImGui::Separator();
+	settings_firmware_row("DSP IROM file:", settings_dsp_irom, FileReaction::OpenFile_IROM, "Choose DSP IROM");
+}
+
+static void ui_settings()
+{
+	if (!settings_open)
+	{
+		return;
+	}
+
+	ImGui::SetNextWindowSize(ImVec2(560, 440), ImGuiCond_FirstUseEver);
+
+	bool open = true;
+
+	if (ImGui::Begin("Configure " APPNAME_A, &open))
+	{
+		if (ImGui::BeginTabBar("settings_tabs"))
+		{
+			if (ImGui::BeginTabItem("GUI/Selector"))
+			{
+				settings_page_gui();
+				ImGui::EndTabItem();
+			}
+
+			if (ImGui::BeginTabItem("GCN Hardware"))
+			{
+				settings_page_hw();
+				ImGui::EndTabItem();
+			}
+
+			ImGui::EndTabBar();
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(80, 0)))
+		{
+			settings_dialog_apply();
+			settings_open = false;
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Apply", ImVec2(80, 0)))
+		{
+			settings_dialog_apply();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(80, 0)))
+		{
+			settings_open = false;
+		}
+	}
+
+	ImGui::End();
+
+	if (!open)
+	{
+		settings_open = false;
+	}
+}
+
+
+
+/*
+
+# Memory cards
+
+The SDL port of the Win32 memcard settings dialog (MemcardSettingsProc, MemcardConfigure and
+MemcardChooseSizeProc in ui.cpp): one window per slot, opened by "Options -> Memcards -> Slot A/B".
+
+The settings of both slots live in the "memcards" section of the configuration (see memcard.cpp):
+whether the card is connected, whether every write goes to the disk at once (SyncSave) or the card is
+flushed when it is disconnected, and the file that holds the card data. The file of a new card is
+made by "Create New...", which asks for one of the six sizes the hardware has
+(MCCreateMemcardFile), and "Choose file..." points the slot at a card that already exists.
+
+The Win32 dialog only writes the configuration and leaves a card that is already mounted alone until
+the next boot; here OK also applies the change to an open memcard system (MCUseFile), so that the
+card is replaced (flushed first) or connected without a restart.
+
+*/
+
+static bool         memcard_dialog_open = false;
+static int          memcard_dialog_slot = MEMCARD_SLOTA;	// the slot being configured
+static bool         memcard_dialog_connected = false;		// the edited copy of the slot settings
+static bool         memcard_dialog_sync_save = false;
+static std::wstring memcard_dialog_filename;				// the full path of the card file
+
+/* "Create New..." is two steps: the browser picks the path, then the size popup asks for the size */
+static std::wstring memcard_dialog_new_filename;			// the path the browser returned
+static bool         memcard_dialog_size_popup = false;
+static int          memcard_dialog_size = 0;				// the selected entry of Memcard_ValidSizes
+
+static const char* memcard_connected_key(int slot)
+{
+	return slot == MEMCARD_SLOTA ? MemcardA_Connected_Key : MemcardB_Connected_Key;
+}
+
+static const char* memcard_filename_key(int slot)
+{
+	return slot == MEMCARD_SLOTA ? MemcardA_Filename_Key : MemcardB_Filename_Key;
+}
+
+/* Fill the dialog from the configuration (the WM_INITDIALOG of MemcardSettingsProc) */
+static void memcard_dialog_load(int slot)
+{
+	memcard_dialog_slot = slot;
+	memcard_dialog_sync_save = UI::Jdi->GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
+	memcard_dialog_connected = UI::Jdi->GetConfigBool(memcard_connected_key(slot), USER_MEMCARDS);
+	memcard_dialog_filename = Util::StringToWstring(UI::Jdi->GetConfigString(memcard_filename_key(slot), USER_MEMCARDS));
+
+	// A card whose file is missing cannot be connected (the Win32 dialog drops the flag the same way)
+	if (!Util::FileExists(memcard_dialog_filename))
+	{
+		memcard_dialog_connected = false;
+	}
+
+	memcard_dialog_size_popup = false;
+	memcard_dialog_size = 0;
+}
+
+static void memcard_dialog_open_for(int slot)
+{
+	memcard_dialog_load(slot);
+	memcard_dialog_open = true;
+}
+
+/* Write the dialog back (the IDOK of MemcardSettingsProc) */
+static void memcard_dialog_save()
+{
+	UI::Jdi->SetConfigBool(Memcard_SyncSave_Key, memcard_dialog_sync_save, USER_MEMCARDS);
+	UI::Jdi->SetConfigBool(memcard_connected_key(memcard_dialog_slot), memcard_dialog_connected, USER_MEMCARDS);
+	UI::Jdi->SetConfigString(memcard_filename_key(memcard_dialog_slot),
+		Util::WstringToString(memcard_dialog_filename), USER_MEMCARDS);
+
+	// The dialog owns the live state as well: the save policy is a global of memcard.cpp (the Win32
+	// dialog sets the same one) and the card of a memcard system that is already open is re-pointed
+	// at the new file at once. Without an open system the configuration above is what MCOpen reads
+	// at the next boot.
+	SyncSave = memcard_dialog_sync_save;
+	Memcard_Connected[memcard_dialog_slot] = memcard_dialog_connected;
+
+	if (MCOpened)
+	{
+		MCUseFile(memcard_dialog_slot, memcard_dialog_filename.c_str(), memcard_dialog_connected);
+	}
+}
+
+/* "Size: 251 usable blocks (2048 Kb)", or "Not connected" when there is no card file
+   (the IDC_MEMCARD_SIZEDESC label of the Win32 dialog) */
+static std::string memcard_size_text()
+{
+	if (!Util::FileExists(memcard_dialog_filename))
+	{
+		return "Not connected";
+	}
+
+	size_t size = Util::FileSize(memcard_dialog_filename);
+
+	// The five blocks of the card directory are not usable by a game
+	int blocks = (int)(size / Memcard_BlockSize) - 5;
+	if (blocks < 0)
+	{
+		blocks = 0;
+	}
+
+	char buf[0x80];
+	sprintf(buf, "Size: %i usable blocks (%i Kb)", blocks, (int)(size / 1024));
+	return buf;
+}
+
+/* The six card sizes, as the "Choose Memcard Size" dialog lists them (MemcardChooseSizeProc). The
+   order is the order of Memcard_ValidSizes, so the entry index is the index of the size. */
+static const std::vector<std::string>& memcard_size_labels()
+{
+	static std::vector<std::string> labels;
+
+	if (labels.empty())
+	{
+		for (int i = 0; i < Num_Memcard_ValidSizes; i++)
+		{
+			char buf[0x40];
+			sprintf(buf, "%i blocks (%i Kb)",
+				(int)(Memcard_ValidSizes[i] / Memcard_BlockSize), (int)(Memcard_ValidSizes[i] / 1024));
+			labels.push_back(buf);
+		}
+	}
+
+	return labels;
+}
+
+/* Create the card file of the chosen size and point the slot at it (MCCreateMemcardFile) */
+static void memcard_dialog_create_new()
+{
+	uint32_t size = Memcard_ValidSizes[memcard_dialog_size];
+
+	// The id is the size in megabits (see MEMCARD_ID_*): the same conversion the Win32 dialog does
+	if (!MCCreateMemcardFile(memcard_dialog_new_filename.c_str(), (uint16_t)(size >> 17)))
+	{
+		// The reason is in the log (MCCreateMemcardFile reports it); the box is what the user sees.
+		error_text = "Cannot create the memcard file:\n" + Util::WstringToString(memcard_dialog_new_filename);
+		draw_error_box = true;
+		return;
+	}
+
+	memcard_dialog_filename = memcard_dialog_new_filename;
+	memcard_dialog_connected = true;    // a card that was just created is meant to be used
+}
+
+/* The size of a new card, asked after the file browser returned the path */
+static void memcard_size_popup()
+{
+	if (memcard_dialog_size_popup)
+	{
+		ImGui::OpenPopup("Choose Memcard Size");
+	}
+
+	if (!ImGui::BeginPopupModal("Choose Memcard Size", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		return;
+	}
+
+	std::vector<const char*> items;
+	for (const auto& label : memcard_size_labels())
+	{
+		items.push_back(label.c_str());
+	}
+
+	ImGui::SetNextItemWidth(200);
+	ImGui::Combo("##memcard_size", &memcard_dialog_size, items.data(), (int)items.size());
+
+	if (ImGui::Button("OK", ImVec2(80, 0)))
+	{
+		memcard_dialog_create_new();
+		memcard_dialog_size_popup = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Cancel", ImVec2(80, 0)))
+	{
+		memcard_dialog_size_popup = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::EndPopup();
+}
+
+static void ui_memcard_settings()
+{
+	if (!memcard_dialog_open)
+	{
+		return;
+	}
+
+	char title[0x40];
+	sprintf(title, "Memcard %c Settings", memcard_dialog_slot == MEMCARD_SLOTA ? 'A' : 'B');
+
+	bool open = true;
+
+	if (ImGui::Begin(title, &open, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Checkbox("Memcard is connected", &memcard_dialog_connected);
+
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Save to disk:");
+
+		if (ImGui::RadioButton("when disconnecting the memcard", !memcard_dialog_sync_save))
+		{
+			memcard_dialog_sync_save = false;
+		}
+
+		if (ImGui::RadioButton("when writing to the memcard", memcard_dialog_sync_save))
+		{
+			memcard_dialog_sync_save = true;
+		}
+
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("File:");
+
+		std::string filename = Util::WstringToString(memcard_dialog_filename);
+		char buf[0x400];
+		snprintf(buf, sizeof(buf), "%s", filename.c_str());
+
+		ImGui::SetNextItemWidth(420);
+		ImGui::InputText("##memcard_file", buf, sizeof(buf), ImGuiInputTextFlags_ReadOnly);
+
+		if (ImGui::Button("Choose file...", ImVec2(120, 0)))
+		{
+			open_file_dialog(
+				memcard_dialog_slot == MEMCARD_SLOTA ? FileReaction::OpenFile_MemcardA : FileReaction::OpenFile_MemcardB,
+				"Choose Memcard File", memcard_file_filters);
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Create New...", ImVec2(120, 0)))
+		{
+			open_save_dialog(FileReaction::SaveFile_MemcardNew, "Create Memcard File", memcard_file_filters);
+		}
+
+		ImGui::TextUnformatted(memcard_size_text().c_str());
+
+		ImGui::Separator();
+
+		if (ImGui::Button("OK", ImVec2(80, 0)))
+		{
+			memcard_dialog_save();
+			memcard_dialog_open = false;
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(80, 0)))
+		{
+			memcard_dialog_open = false;
+		}
+
+		memcard_size_popup();
+	}
+
+	ImGui::End();
+
+	if (!open)
+	{
+		memcard_dialog_open = false;
+	}
+}
+
+
+
+/*
+
 # Performance Counters
 
 Interesting to track :
@@ -1805,8 +2405,7 @@ static void ui_main_menu()
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("Open", NULL)) {
-				file_reaction = FileReaction::OpenFile_LoadFile;
-				fileOpenDialog.Open();
+				open_file_dialog(FileReaction::OpenFile_LoadFile, "Open File", selector_file_filters);
 			}
 			if (ImGui::MenuItem("Reopen", "F3")) {
 				reopen_last_file();
@@ -1837,8 +2436,7 @@ static void ui_main_menu()
 				}
 				if (ImGui::MenuItem("Change DVD...", NULL)) {
 					if (ui_insert_dvd_menu_item_enabled) {
-						file_reaction = FileReaction::ChooseFile_DVDImage;
-						fileOpenDialog.Open();
+						open_file_dialog(FileReaction::ChooseFile_DVDImage, "Change DVD", dvd_image_filters);
 					}
 				}
 				ImGui::EndMenu();
@@ -1887,8 +2485,9 @@ static void ui_main_menu()
 
 		if (ImGui::BeginMenu("Options"))
 		{
-			ImGui::MenuItem("Settings...", NULL);
-			ImGui::MenuItem("View", NULL);
+			if (ImGui::MenuItem("Settings...", NULL)) {
+				settings_dialog_open();
+			}
 			ui_selector_menu();
 			ImGui::Separator();
 			if (ImGui::BeginMenu("Controllers"))
@@ -1907,8 +2506,16 @@ static void ui_main_menu()
 			}
 			if (ImGui::BeginMenu("Memcards"))
 			{
-				ImGui::MenuItem("Slot A", NULL);
-				ImGui::MenuItem("Slot B", NULL);
+				if (ImGui::MenuItem("Slot A", NULL, memcard_dialog_open && memcard_dialog_slot == MEMCARD_SLOTA))
+				{
+					memcard_dialog_open_for(MEMCARD_SLOTA);
+				}
+
+				if (ImGui::MenuItem("Slot B", NULL, memcard_dialog_open && memcard_dialog_slot == MEMCARD_SLOTB))
+				{
+					memcard_dialog_open_for(MEMCARD_SLOTB);
+				}
+
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
@@ -2198,12 +2805,8 @@ static int ui_main()
 
 	// Start the user interface
 
-	fileOpenDialog.SetTitle("Open File");
-	fileOpenDialog.SetTypeFilters({ ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" });
-	
-	fileSaveDialog.SetTitle("Save File");
-	fileSaveDialog.SetTypeFilters({ ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" });
-
+	// The file browser titles and type filters are set by open_file_dialog / open_save_dialog, so
+	// that every dialog gets the ones that belong to it; only the directory browser is fixed.
 	chooseDirectoryDialog.SetTitle("Choose Directory");
 
 	// Selector state (see the "Game selector" section)
@@ -2437,6 +3040,8 @@ static int ui_main()
 		ui_main_window();
 
 		ui_pad_settings();
+		ui_settings();
+		ui_memcard_settings();
 
 		if (Debug::debugger != nullptr) {
 			Debug::debugger->DrawInternal();
@@ -2472,6 +3077,25 @@ static int ui_main()
 						UI::Jdi->DvdCloseCover();
 					}
 					break;
+
+				// The firmware images of the settings dialog
+				case FileReaction::OpenFile_Bootrom:
+					settings_bootrom = Util::StringToWstring(name);
+					break;
+
+				case FileReaction::OpenFile_DROM:
+					settings_dsp_drom = Util::StringToWstring(name);
+					break;
+
+				case FileReaction::OpenFile_IROM:
+					settings_dsp_irom = Util::StringToWstring(name);
+					break;
+
+				// The file of a memory card that already exists (the slot decides which one)
+				case FileReaction::OpenFile_MemcardA:
+				case FileReaction::OpenFile_MemcardB:
+					memcard_dialog_filename = Util::StringToWstring(name);
+					break;
 			}
 
 			file_reaction = FileReaction::None;
@@ -2480,7 +3104,18 @@ static int ui_main()
 		fileSaveDialog.Display();
 		if (fileSaveDialog.HasSelected())
 		{
+			auto name = fileSaveDialog.GetSelected().string();
 			fileSaveDialog.ClearSelected();
+
+			// The file of a new memory card: the path is known, the size is still to be asked
+			if (file_reaction == FileReaction::SaveFile_MemcardNew && !name.empty())
+			{
+				memcard_dialog_new_filename = Util::StringToWstring(name);
+				memcard_dialog_size = 0;
+				memcard_dialog_size_popup = true;
+			}
+
+			file_reaction = FileReaction::None;
 		}
 
 		chooseDirectoryDialog.Display();
@@ -2492,6 +3127,30 @@ static int ui_main()
 			if (file_reaction == FileReaction::ChooseDirectory_SelectorPath && !name.empty())
 			{
 				AddSelectorPath(Util::StringToWstring(name));
+			}
+
+			// A directory that is being added to the settings dialog goes into the edited copy, not
+			// into the configuration: Apply is what writes it (see settings_dialog_apply).
+			if (file_reaction == FileReaction::ChooseDirectory_SettingsPath && !name.empty())
+			{
+				auto path = Util::StringToWstring(name);
+				fix_path(path);
+
+				bool present = false;
+				for (const auto& existing : settings_paths)
+				{
+					if (canonical_path(existing) == canonical_path(path))
+					{
+						present = true;
+						break;
+					}
+				}
+
+				if (!present)
+				{
+					settings_paths.push_back(path);
+					settings_path_selected = (int)settings_paths.size() - 1;
+				}
 			}
 
 			file_reaction = FileReaction::None;
