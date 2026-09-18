@@ -53,7 +53,10 @@
     <ClCompile Include="..\..\src\dspcore.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\dspjit.cpp">
+    <ClCompile Include="..\..\src\dspjit_x64.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dspjit_x86.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dspdec.cpp">

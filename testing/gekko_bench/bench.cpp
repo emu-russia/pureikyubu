@@ -217,7 +217,7 @@ static bool FuzzUnsafe(Gekko::Instruction i)
     using Gekko::Instruction;
 
     // BENCH_FUZZ_PS lets the Paired-Single arithmetic through: the point of that
-    // mode is to compare the SSE translations in gekkojit_ps.cpp against the
+    // mode is to compare the SSE translations in gekkojit_ps_x64.cpp / _x86.cpp against the
     // interpreter, and the FPRs are seeded for it (see init()). The quantised
     // loads and stores and the comparison forms stay out - they are not translated
     // yet, so they would only exercise the fallback.

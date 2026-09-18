@@ -114,7 +114,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WINVER=0x0601;GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -133,7 +133,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WINVER=0x0601;GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -153,7 +153,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WINVER=0x0601;GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -176,7 +176,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0601;WINVER=0x0601;GFX_NULL;GFX_OFFSCREEN;_CRT_NON_CONFORMING_SWPRINTFS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -225,7 +225,9 @@
     <ClInclude Include="..\..\src\gekkojit.h" />
     <ClInclude Include="..\..\src\gekkojit_ps.h" />
     <ClInclude Include="..\..\src\jit_x64.h" />
-    <ClInclude Include="..\..\src\gekkojit_layout.h" />
+    <ClInclude Include="..\..\src\jit_x86.h" />
+    <ClInclude Include="..\..\src\gekkojit_layout_x64.h" />
+    <ClInclude Include="..\..\src\gekkojit_layout_x86.h" />
     <ClInclude Include="..\..\src\gekkodebug.h" />
     <ClInclude Include="..\..\src\gekkodec.h" />
     <ClInclude Include="..\..\src\gekkodisasm.h" />
@@ -268,7 +270,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\thirdparty\glew-2.2.0\src\glew.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\ai.cpp" />
@@ -283,7 +287,8 @@
     <ClCompile Include="..\..\src\dspai.cpp" />
     <ClCompile Include="..\..\src\dsparam.cpp" />
     <ClCompile Include="..\..\src\dspcore.cpp" />
-    <ClCompile Include="..\..\src\dspjit.cpp" />
+    <ClCompile Include="..\..\src\dspjit_x64.cpp" />
+    <ClCompile Include="..\..\src\dspjit_x86.cpp" />
     <ClCompile Include="..\..\src\dspdebug.cpp" />
     <ClCompile Include="..\..\src\dspdec.cpp" />
     <ClCompile Include="..\..\src\dspdisasm.cpp" />
@@ -296,8 +301,10 @@
     <ClCompile Include="..\..\src\flipperdebug.cpp" />
     <ClCompile Include="..\..\src\gekko.cpp" />
     <ClCompile Include="..\..\src\gekkoc.cpp" />
-    <ClCompile Include="..\..\src\gekkojit.cpp" />
-    <ClCompile Include="..\..\src\gekkojit_ps.cpp" />
+    <ClCompile Include="..\..\src\gekkojit_x64.cpp" />
+    <ClCompile Include="..\..\src\gekkojit_ps_x64.cpp" />
+    <ClCompile Include="..\..\src\gekkojit_x86.cpp" />
+    <ClCompile Include="..\..\src\gekkojit_ps_x86.cpp" />
     <ClCompile Include="..\..\src\gekkodebug.cpp" />
     <ClCompile Include="..\..\src\gekkodec.cpp" />
     <ClCompile Include="..\..\src\gekkodisasm.cpp" />

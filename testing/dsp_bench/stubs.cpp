@@ -126,6 +126,25 @@ namespace Flipper
 		return mainMemory + phys_addr;
 	}
 
+	// The whole-window form: nullptr unless every byte of the window is inside main
+	// memory (dspdma.cpp asks for it so that a guest DMA register cannot walk past the
+	// allocation).
+	void* MemoryInterface::MIGetMemoryPointerForDSP(uint32_t phys_addr, size_t size)
+	{
+		if (mainMemory == nullptr)
+		{
+			mainMemory = new uint8_t[MainMemorySize];
+			memset(mainMemory, 0, MainMemorySize);
+		}
+		if (size > MainMemorySize || phys_addr > MainMemorySize - size) return nullptr;
+		return mainMemory + phys_addr;
+	}
+
+	size_t MemoryInterface::MIGetMemorySize()
+	{
+		return MainMemorySize;
+	}
+
 	void ProcessorInterface::PIAssertInt(uint32_t mask) {}
 	void ProcessorInterface::PIClearInt(uint32_t mask) {}
 	void ProcessorInterface::PISetTrap(uint32_t, void (*)(uint32_t, uint32_t*, void*), void (*)(uint32_t, uint32_t, void*), void*) {}

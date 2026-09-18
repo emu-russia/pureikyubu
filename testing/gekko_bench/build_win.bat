@@ -18,10 +18,14 @@ copy /y "%REPO%\src\gekko.cpp"        "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkoc.cpp"       "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkodec.cpp"     "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkodisasm.cpp"  "%BLD%\src\" >nul
-copy /y "%REPO%\src\gekkojit.cpp"     "%BLD%\src\" >nul
-copy /y "%REPO%\src\gekkojit_ps.cpp"  "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_x64.cpp"  "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_ps_x64.cpp" "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_x86.cpp"  "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_ps_x86.cpp" "%BLD%\src\" >nul
 copy /y "%REPO%\src\jit_x64.h"          "%BLD%\src\" >nul
-copy /y "%REPO%\src\gekkojit_layout.h"  "%BLD%\src\" >nul
+copy /y "%REPO%\src\jit_x86.h"          "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_layout_x64.h" "%BLD%\src\" >nul
+copy /y "%REPO%\src\gekkojit_layout_x86.h" "%BLD%\src\" >nul
 copy /y "%REPO%\src\gekkojit_ps.h"    "%BLD%\src\" >nul
 copy /y "%REPO%\src\gqr.h"            "%BLD%\src\" >nul
 
@@ -30,7 +34,8 @@ rem /utf-8: the sources are UTF-8 and contain non-ASCII text in their comments (
 cl /nologo /O2 /Oi /GL /EHsc /std:c++17 /MT /W3 /wd4996 /utf-8 /DBENCH_WITH_JIT /D_WINDOWS ^
    /I. /I"%BLD%\src" /I"%REPO%\src" ^
    "%BLD%\src\gekko.cpp" "%BLD%\src\gekkoc.cpp" "%BLD%\src\gekkodec.cpp" ^
-   "%BLD%\src\gekkojit.cpp" "%BLD%\src\gekkojit_ps.cpp" "%BLD%\src\gekkodisasm.cpp" ^
+   "%BLD%\src\gekkojit_x64.cpp" "%BLD%\src\gekkojit_ps_x64.cpp" ^
+   "%BLD%\src\gekkojit_x86.cpp" "%BLD%\src\gekkojit_ps_x86.cpp" "%BLD%\src\gekkodisasm.cpp" ^
    stubs.cpp bench.cpp bench_win_prof.cpp ^
    /Fe:"%BLD%\bench.exe" /Fo:"%BLD%\\" /link /LTCG
 popd

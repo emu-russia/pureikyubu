@@ -77,11 +77,15 @@ identically.
 command `jit 0` / `jit 1` toggles it at runtime and reports the current state.
 Turning it off drops the compiled blocks and runs the plain interpreter.
 
-## x86-64 only
+## Two host modules: x86-64 and 32-bit x86
 
-The recompiler needs x86-64 (the register file and the calling convention are
-hard-coded). On any other target `IsSupported()` returns false and the emulator
-runs the interpreter exactly as before.
+The recompiler needs an x86 host (the register file and the calling convention are
+hard-coded). The x86-64 translator is `gekkojit_x64.cpp` with its Paired-Single half in
+`gekkojit_ps_x64.cpp` (over the encoder in `jit_x64.h`, the register layout in
+`gekkojit_layout_x64.h`); the 32-bit one is `gekkojit_x86.cpp` and `gekkojit_ps_x86.cpp`
+(over `jit_x86.h` and `gekkojit_layout_x86.h`). The two cover the same instructions and
+the build compiles exactly one pair. On any other target `IsSupported()` returns false
+and the emulator runs the interpreter exactly as before.
 
 ## What a generated block owes the C++ ABI
 
@@ -114,9 +118,17 @@ user's machine.
 
 #pragma once
 
-// The recompiler is only built for 64-bit x86 hosts. GEKKO_JIT_DISABLED forces the
-// interpreter-only build (used to check that path on a supported host).
+// The recompiler is built for 64-bit and 32-bit x86 hosts, each from its own module
+// (gekkojit_x64.cpp / gekkojit_ps_x64.cpp and gekkojit_x86.cpp / gekkojit_ps_x86.cpp).
+// GEKKO_JIT_DISABLED forces the interpreter-only build (used to check that path on a
+// supported host).
 #if (defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__)) && !defined(GEKKO_JIT_DISABLED)
+#define GEKKO_JIT_X64 1
+#elif (defined(_M_IX86) || defined(__i386__)) && !defined(GEKKO_JIT_DISABLED)
+#define GEKKO_JIT_X86 1
+#endif
+
+#if defined(GEKKO_JIT_X64) || defined(GEKKO_JIT_X86)
 #define GEKKO_JIT_SUPPORTED 1
 #endif
 
@@ -215,8 +227,8 @@ namespace Gekko
 		// Addresses of the two Paired-Single quantised helpers, for the generated
 		// code in gekkojit_ps.cpp. The helpers stay private so that nothing else
 		// calls them.
-		static uint64_t PsqLoadEntry() { return (uint64_t)(void*)&PsqLoad; }
-		static uint64_t PsqStoreEntry() { return (uint64_t)(void*)&PsqStore; }
+		static uintptr_t PsqLoadEntry() { return (uintptr_t)(void*)&PsqLoad; }
+		static uintptr_t PsqStoreEntry() { return (uintptr_t)(void*)&PsqStore; }
 
 		Jit(GekkoCore* core);
 		~Jit();

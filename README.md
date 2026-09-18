@@ -32,6 +32,13 @@ the GBA core). The emulator has Debug and Release configurations for both platfo
 front end on both of them (issue #421 removed the Win32 one, so there is no second port with a
 configuration of its own any more).
 
+"Both platforms" means x64 and x86 (the IDE calls the latter Win32): the same sources build a 32-bit
+emulator, and the recompilers follow the host - `gekkojit_x64.cpp` + `gekkojit_ps_x64.cpp` and
+`dspjit_x64.cpp` on x64, `gekkojit_x86.cpp` + `gekkojit_ps_x86.cpp` and `dspjit_x86.cpp` on x86 (see
+`src/gekkojit.h` and `src/dspjit.h`). The projects target Windows 7 (`_WIN32_WINNT=0x0601`), which
+is the oldest Windows SDL2 2.28 and the emulator itself run on - no API newer than Windows 7 is
+used anywhere in the emulator sources.
+
 ### Headless
 
 `scripts/VS2026/pureikyubu_headless.vcxproj` is the emulator without a window: no SDL/ImGui front

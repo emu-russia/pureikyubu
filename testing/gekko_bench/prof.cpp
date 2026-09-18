@@ -18,7 +18,16 @@ static volatile size_t g_sampleCount = 0;
 static void ProfHandler(int sig, siginfo_t* info, void* ctx)
 {
 	ucontext_t* uc = (ucontext_t*)ctx;
+	// The instruction pointer register of the interrupted host context. The harness
+	// builds for both x86-64 and 32-bit x86 (see build.sh), and the two name it
+	// differently in the Linux ucontext.
+#if defined(__x86_64__)
 	void* ip = (void*)uc->uc_mcontext.gregs[REG_RIP];
+#elif defined(__i386__)
+	void* ip = (void*)uc->uc_mcontext.gregs[REG_EIP];
+#else
+	void* ip = nullptr;
+#endif
 
 	if (g_sampleCount < MAX_SAMPLES)
 	{

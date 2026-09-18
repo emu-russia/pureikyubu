@@ -1,9 +1,10 @@
 # Gekko interpreter / recompiler benchmark
 
 A standalone harness that links the real Gekko core (`gekko.cpp`, `gekkoc.cpp`,
-`gekkodec.cpp`, `gekkojit.cpp`) with a stub `pch.h` and a flat 24 MB main
-memory, so that the speed of the core can be measured without SDL, OpenGL or the
-rest of Flipper.
+`gekkodec.cpp` and the recompiler module of the host - `gekkojit_x64.cpp` +
+`gekkojit_ps_x64.cpp` on x86-64, `gekkojit_x86.cpp` + `gekkojit_ps_x86.cpp` on
+32-bit x86) with a stub `pch.h` and a flat 24 MB main memory, so that the speed of
+the core can be measured without SDL, OpenGL or the rest of Flipper.
 
 It is a development tool, not part of any build.
 
@@ -65,8 +66,12 @@ BENCH_JIT=1 BENCH_IPL=/tmp/pkbench/ipl BENCH_IPL_STEPS=600000 BENCH_GAME_STEPS=1
 ```
 
 `BENCH` overrides the scratch directory (`/tmp/pkbench` by default), `OPT`
-overrides the compiler flags. `OPT` is how the host-ABI regression build is
-selected:
+overrides the compiler flags. It is also how a 32-bit harness is built: the script
+always compiles both recompiler modules and the preprocessor picks the host one, so
+`OPT="-O2 -m32"` (with the 32-bit multilib development files installed) builds the
+32-bit one.
+
+`OPT` is how the host-ABI regression build is selected:
 
 ```bash
 OPT="-O2 -DGEKKO_JIT_TEST_WIN64_SHADOW" bash build.sh
@@ -304,13 +309,15 @@ Note what this does *not* cover: the 16-byte alignment of `rsp` at the helper
 calls. Deliberately misaligning the frame (48 instead of 40 bytes) still passes
 every test here, because the helpers happen to be compiled without aligned SSE
 stack spills, so nothing faults. Alignment is therefore guaranteed by the
-`static_assert` on the frame size in `gekkojit.cpp` plus the ABI-guaranteed entry
-`rsp`, not by this test.
+`static_assert` on the frame size in `gekkojit_layout_x64.h` plus the
+ABI-guaranteed entry `rsp`, not by this test. The 32-bit module has the same
+`static_assert` for `esp` (`gekkojit_layout_x86.h`).
 
 ## Paired-Single
 
-The PS translations live in `src/gekkojit_ps.cpp` and are switched independently
-of the rest of the recompiler:
+The PS translations live in `src/gekkojit_ps_x64.cpp` (32-bit:
+`src/gekkojit_ps_x86.cpp`) and are switched independently of the rest of the
+recompiler:
 
 ```bash
 OPT="-O2 -DGEKKO_JIT_PS=0" bash build.sh   # every PS instruction back on the fallback

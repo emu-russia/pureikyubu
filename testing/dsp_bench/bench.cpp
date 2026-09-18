@@ -9,7 +9,8 @@ Usage:
 	DSP_VERBOSE=1 prints the core's Debug::Report output.
 
 The harness links the real DSP core (dsp.cpp, dspcore.cpp, dspdec.cpp, dspdma.cpp,
-dsparam.cpp and dspjit.cpp) against a stub pch.h and a flat console main memory, so the
+dsparam.cpp and dspjit_x64.cpp / dspjit_x86.cpp) against a stub pch.h and a flat console
+main memory, so the
 two execution engines can be measured and compared without SDL, GL or the rest of
 Flipper.
 

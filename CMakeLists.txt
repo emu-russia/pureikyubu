@@ -57,7 +57,8 @@ set (PUREIKYUBU_CORE
 	src/di.cpp
 	src/dsp.cpp
 	src/dspcore.cpp
-	src/dspjit.cpp
+	src/dspjit_x64.cpp
+	src/dspjit_x86.cpp
 	src/dspdebug.cpp
 	src/dspdec.cpp
 	src/dspdisasm.cpp
@@ -71,8 +72,10 @@ set (PUREIKYUBU_CORE
 	src/flipperdebug.cpp
 	src/gekko.cpp
 	src/gekkoc.cpp
-	src/gekkojit.cpp
-	src/gekkojit_ps.cpp
+		src/gekkojit_x64.cpp
+		src/gekkojit_ps_x64.cpp
+		src/gekkojit_x86.cpp
+		src/gekkojit_ps_x86.cpp
 	src/gekkodebug.cpp
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
