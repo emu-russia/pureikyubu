@@ -1,8 +1,13 @@
 // The GBA emulator's settings: the reader and the writer of build/Data/GBASettings.json.
 //
-// The GBA core must build and be tested without the GameCube side of the emulator, so this file
-// does not use src/json.cpp (nor SDL, nor the pch). It carries its own reader and writer for the
-// one document shape the settings file has. Both are deliberately strict and small:
+// The document is read with the emulator's shared Json engine (src/json.cpp), the same one the
+// GameCube side uses for its settings and for JDI. Json is self contained (the C++ standard
+// library and verify.h only), so the portable GBA core still builds and is tested without the
+// GameCube side of the emulator; gba_settings links the engine instead of carrying a parser of its
+// own. The engine enforces the JSON grammar and the limits a document from the outside world has
+// to respect (see wiki/security.md): a strict grammar, a 4096 code unit string, a bounded number
+// token, a nesting depth and a per-container element count. Everything it refuses is a syntax
+// error and rejects the whole document, which Parse() reports as "<line>: <what was expected>".
 //
 // The document
 // ------------
@@ -37,39 +42,27 @@
 //	}
 //
 // The layout is the project's settings layout: a tab per nesting level, one member per line, a
-// blank line between the sections and a trailing newline. ToJson() and DefaultJson() both go
-// through the same writer, so the shipped file can never drift from the code (a unit test in
-// testing/gba_bench/test_settings.cpp compares them byte for byte).
+// blank line between the sections and a trailing newline. The writer below is therefore the GBA
+// module's own (the shared engine serializes with the GameCube layout, two spaces and CRLF);
+// ToJson() and DefaultJson() both go through it, so the shipped file can never drift from the code
+// (a unit test in testing/gba_bench/test_settings.cpp compares them byte for byte).
 //
-// What the reader enforces
+// What the loader enforces
 // ------------------------
-// The reader is a hand-written recursive descent parser, because it is fed a file the user (or
-// anything that can write into the user's directory) can edit. It enforces the rules the security
-// review requires of every input path (see wiki/security.md):
+// The engine validates the grammar, so this file only has to watch the shape and the values:
 //
-//   * the JSON grammar is strict: `{` and `}` for every object, `,` between members and no
-//     trailing comma, `:` after every member name, `"` around every string, the JSON number
-//     grammar (no leading zeros, no bare `.`, no `NaN`), and nothing after the document. A
-//     document that breaks any of them is rejected with "<line>: <what was expected>";
-//   * four hard limits keep a malformed document from exhausting anything: the document
-//     (2 MByte), one string token (4096 bytes), one number token (24 characters) and the nesting
-//     depth (32 levels, so the recursion in this file cannot exhaust the stack). Every limit is
-//     checked *before* the data is copied or converted, so a 1 MByte string is refused rather
-//     than allocated;
-//   * a rejected document is never half applied: Parse() leaves the caller's settings at the
-//     defaults, and Load() reports the reason. A missing file is not an error at all (the
-//     defaults are used and the first Save writes the file).
-//
-// Not every problem is fatal, though, and the split is deliberate:
-//
-//   * a *syntax* problem (including a limit above) rejects the whole document;
-//   * an unknown section, or an unknown member of a known section, is reported through
-//     Log(Warn, ...) and skipped: a file written by a newer frontend must not stop this build;
-//   * a member whose value has the wrong type, or whose number is not a whole number, is
-//     reported and that one member keeps its default - a hand edited file does not lose the
-//     whole configuration over one mistyped value;
+//   * a syntax problem (including a limit) rejects the whole document; the caller is left with the
+//     defaults and the message names the line;
+//   * an unknown section, or an unknown member of a known section, is reported through Log(Warn,
+//     ...) and skipped: a file written by a newer frontend must not stop this build;
+//   * a member whose value has the wrong type, or whose number is not a whole number, is reported
+//     and that one member keeps its default - a hand edited file does not lose the whole
+//     configuration over one mistyped value;
 //   * a number outside the range of its member is clamped (a scale of 0 becomes 1, a volume of
-//     250 becomes 100), never rejected and never wrapped.
+//     250 becomes 100), never rejected and never wrapped;
+//   * a rejected document is never half applied: Parse() leaves the caller's settings at the
+//     defaults, and Load() reports the reason. A missing file is not an error at all (the defaults
+//     are used and the first Save writes the file).
 //
 // The host key names
 // ------------------
@@ -83,11 +76,12 @@
 
 #include "gba_settings.h"
 #include "gba_keypad.h"
+#include "json.h"
 
 #include <cerrno>
-#include <cstring>
+#include <cstdint>
 #include <fstream>
-#include <limits>
+#include <string>
 
 using namespace GBA;			// the whole file is GBA's own settings plumbing
 
@@ -99,21 +93,9 @@ namespace
 
 	// The whole document. The shipped file is about 1 KByte; Load also refuses to read more than
 	// this into memory, so a file that is not a settings file at all (a ROM renamed to .json) is
-	// stopped while it is read.
+	// stopped while it is read. The token limits (string, number, nesting, element count) belong
+	// to the Json engine, which enforces them while it scans.
 	const size_t MaxDocumentBytes = 2 * 1024 * 1024;
-
-	// One string token, checked while the token is scanned and before anything is allocated.
-	// Paths and key names are short (the Json engine on the GameCube side uses 0x1000 here).
-	const size_t MaxStringBytes = 4096;
-
-	// One number token. JSON gives numbers no length limit, this reader does: a 500 digit number
-	// is a syntax error instead of being copied into a buffer or silently wrapped around.
-	const size_t MaxNumberChars = 24;
-
-	// Nested objects and arrays. The shipped document is three levels deep (document, section,
-	// info) and a value never nests at all. The reader recurses once per level, so this limit is
-	// what keeps a document like {"a":{"a":{"a":... from exhausting the stack.
-	const int MaxDepth = 32;
 
 	// The ranges of the numeric members. A number outside its range is clamped to the nearest end;
 	// a number that is not a whole number at all is reported and the default is kept.
@@ -345,711 +327,239 @@ namespace
 	// The reader
 	// ---------------------------------------------------------------------------------------
 
-	/// <summary>One scanned number token: where it is and whether it is a whole number.</summary>
-	struct NumberToken
+	/// <summary>A member that must be a string; a mistyped member is reported and keeps its
+	/// default. Json keeps the text wide and converts it to the project's UTF-8 on the way out.</summary>
+	void AssignText(std::string& target, Json::Value* value, const char* where)
 	{
-		size_t begin = 0;
-		size_t end = 0;
-		bool whole = true;				// no fraction and no exponent
-	};
-
-	/// <summary>A strict JSON reader for one GbaSettings document. Everything the reader refuses
-	/// is a syntax error or a limit; a mistyped value is reported by the member readers and the
-	/// member keeps its default.</summary>
-	class Reader
-	{
-	public:
-		explicit Reader(const std::string& text) : text(text) {}
-
-		/// <summary>Read the whole document. False = it was rejected; Error() says why.</summary>
-		bool ReadDocument(GbaSettings& out);
-
-		/// <summary>The failure message, "<line>: ...", empty while the document is valid.</summary>
-		const std::string& Error() const { return error; }
-
-	private:
-		const std::string& text;
-		size_t pos = 0;
-		int depth = 0;
-		std::string error;
-
-		// -- the scanner -------------------------------------------------------------------
-
-		bool AtEnd() const { return pos >= text.size(); }
-		char Cur() const { return text[pos]; }
-		int LineAt(size_t offset) const;
-		bool Fail(const std::string& message);
-		void SkipSpace();
-		bool ReadString(std::string& value);
-		bool ReadEscape(std::string& value);
-		bool ReadHex4(uint32_t& value);
-		bool ReadLiteral(const char* literal);
-		bool ReadName(std::string& name);
-		bool ScanNumber(NumberToken& token);
-		bool SkipValue();
-		bool SkipArray();
-
-		// -- values ------------------------------------------------------------------------
-
-		bool ValueIsString();
-		bool ValueIsNumber();
-		bool ReadTextMember(std::string& target, const char* where);
-		bool ReadBoolMember(bool& target, const char* where);
-		bool ReadIntMember(int& target, const char* where, int minimum, int maximum);
-		bool UnknownMember(const char* section, const std::string& name);
-
-		/// <summary>Read the members of one object, handing each name to `onMember`, which has to
-		/// consume exactly one value. Returns false on a syntax error. One object is walked at a
-		/// time (a nested value is either skipped wholesale or read by the same handler), which is
-		/// what the caller in ReadSection assumes.</summary>
-		template <typename F>
-		bool ForEachMember(F onMember)
-		{
-			SkipSpace();
-			if (AtEnd())
-				return Fail("unexpected end of the document, expected '{'");
-			if (Cur() != '{')
-				return Fail("expected '{'");
-			if (++depth > MaxDepth)
-				return Fail("more than 32 nested objects or arrays");
-			pos++;
-
-			bool first = true;
-			while (true)
-			{
-				SkipSpace();
-				if (AtEnd())
-					return Fail("unexpected end of the document, expected '}'");
-				if (Cur() == '}')
-				{
-					pos++;
-					depth--;
-					return true;
-				}
-				if (!first)
-				{
-					// Members are separated by ','. A '}' right after a ',' is a trailing comma:
-					// nearly always a half deleted member, which is why it is refused instead of
-					// ignored (the emulator's other settings files have no trailing comma either).
-					if (Cur() != ',')
-						return Fail("expected ',' between members");
-					pos++;
-					SkipSpace();
-					if (AtEnd())
-						return Fail("unexpected end of the document after ','");
-					if (Cur() == '}')
-						return Fail("unexpected '}' after ',' (a trailing comma)");
-				}
-
-				std::string name;
-				if (!ReadName(name))
-					return false;
-				SkipSpace();
-				if (AtEnd())
-					return Fail("unexpected end of the document, expected ':'");
-				if (Cur() != ':')
-					return Fail("expected ':' after the member name \"" + name + "\"");
-				pos++;
-
-				if (!onMember(name))
-					return false;
-				first = false;
-			}
-		}
-
-		// -- the sections ------------------------------------------------------------------
-
-		bool ReadSection(GbaSettings& out, const std::string& name);
-		bool ReadBoot(GbaSettings& out);
-		bool ReadVideo(GbaSettings& out);
-		bool ReadAudio(GbaSettings& out);
-		bool ReadInput(GbaSettings& out);
-		bool ReadLink(GbaSettings& out);
-		bool ReadEmulation(GbaSettings& out);
-	};
-
-	/// <summary>The line of `offset` (1 based), for the "<line>: ..." messages.</summary>
-	int Reader::LineAt(size_t offset) const
-	{
-		if (offset > text.size())
-			offset = text.size();
-		int line = 1;
-		for (size_t i = 0; i < offset; i++)
-			if (text[i] == '\n')
-				line++;
-		return line;
-	}
-
-	/// <summary>Record the first failure (the first one is the specific one) and return false.</summary>
-	bool Reader::Fail(const std::string& message)
-	{
-		if (error.empty())
-		{
-			error = std::to_string(LineAt(pos));
-			error += ": ";
-			error += message;
-		}
-		return false;
-	}
-
-	void Reader::SkipSpace()
-	{
-		// A UTF-8 BOM is not a JSON token, but Notepad and some editors write one, so it is
-		// skipped at the very start of the document (and only there: a BOM in the middle stays a
-		// syntax error). '\r' is whitespace, which is what makes a CRLF file read exactly like an
-		// LF one.
-		if (pos == 0 && text.size() >= 3 &&
-			(unsigned char)text[0] == 0xEF && (unsigned char)text[1] == 0xBB && (unsigned char)text[2] == 0xBF)
-			pos = 3;
-		while (!AtEnd())
-		{
-			char c = text[pos];
-			if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
-				pos++;
-			else
-				break;
-		}
-	}
-
-	bool Reader::ReadString(std::string& value)
-	{
-		if (AtEnd() || Cur() != '"')
-			return Fail("expected a string");
-		pos++;
-		value.clear();
-		size_t run = pos;				// where the current unescaped run starts
-
-		while (true)
-		{
-			if (AtEnd())
-				return Fail("unterminated string");
-			char c = text[pos];
-			if (c == '"')
-			{
-				value.append(text, run, pos - run);
-				pos++;
-				return true;
-			}
-			if (c == '\\')
-			{
-				value.append(text, run, pos - run);
-				pos++;
-				if (!ReadEscape(value))
-					return false;
-				run = pos;
-				continue;
-			}
-			if ((unsigned char)c < 0x20)
-				return Fail("a control character in a string (escape it as \\u00XX)");
-			// The length is checked while the token is scanned, so a 1 MByte string is refused
-			// here, before a single byte of it is copied into `value`. The byte being scanned is
-			// counted, which is what makes the limit exactly 4096 bytes.
-			if (value.size() + (pos - run) >= MaxStringBytes)
-				return Fail("the string is longer than 4096 bytes");
-			pos++;
-		}
-	}
-
-	bool Reader::ReadEscape(std::string& value)
-	{
-		if (AtEnd())
-			return Fail("unterminated escape in a string");
-		char c = text[pos++];
-		switch (c)
-		{
-		case '"': value += '"'; return true;
-		case '\\': value += '\\'; return true;
-		case '/': value += '/'; return true;
-		case 'b': value += '\b'; return true;
-		case 'f': value += '\f'; return true;
-		case 'n': value += '\n'; return true;
-		case 'r': value += '\r'; return true;
-		case 't': value += '\t'; return true;
-		case 'u': break;
-		default:
-			return Fail(std::string("unknown escape \"\\") + c + "\" in a string");
-		}
-
-		// \uXXXX is encoded as UTF-8, the way the rest of the settings files are written. A
-		// surrogate pair is combined; an unpaired surrogate is refused rather than turned into the
-		// invalid UTF-8 that encoding it alone (CESU-8) would produce.
-		uint32_t code = 0;
-		if (!ReadHex4(code))
-			return false;
-		if (code >= 0xD800 && code <= 0xDBFF)
-		{
-			if (pos + 1 < text.size() && text[pos] == '\\' && text[pos + 1] == 'u')
-			{
-				pos += 2;
-				uint32_t low = 0;
-				if (!ReadHex4(low))
-					return false;
-				if (low < 0xDC00 || low > 0xDFFF)
-					return Fail("a high surrogate that is not followed by a low surrogate");
-				code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
-			}
-			else
-			{
-				return Fail("an unpaired UTF-16 high surrogate");
-			}
-		}
-		else if (code >= 0xDC00 && code <= 0xDFFF)
-		{
-			return Fail("an unpaired UTF-16 low surrogate");
-		}
-
-		if (code < 0x80)
-		{
-			value += (char)code;
-		}
-		else if (code < 0x800)
-		{
-			value += (char)(0xC0 | (code >> 6));
-			value += (char)(0x80 | (code & 0x3F));
-		}
-		else if (code < 0x10000)
-		{
-			value += (char)(0xE0 | (code >> 12));
-			value += (char)(0x80 | ((code >> 6) & 0x3F));
-			value += (char)(0x80 | (code & 0x3F));
-		}
-		else
-		{
-			value += (char)(0xF0 | (code >> 18));
-			value += (char)(0x80 | ((code >> 12) & 0x3F));
-			value += (char)(0x80 | ((code >> 6) & 0x3F));
-			value += (char)(0x80 | (code & 0x3F));
-		}
-
-		if (value.size() > MaxStringBytes)
-			return Fail("the string is longer than 4096 bytes");
-		return true;
-	}
-
-	bool Reader::ReadHex4(uint32_t& value)
-	{
-		if (pos + 4 > text.size())
-			return Fail("a \\u escape without four hexadecimal digits");
-		value = 0;
-		for (int i = 0; i < 4; i++)
-		{
-			char c = text[pos + i];
-			uint32_t digit;
-			if (c >= '0' && c <= '9')
-				digit = (uint32_t)(c - '0');
-			else if (c >= 'a' && c <= 'f')
-				digit = (uint32_t)(c - 'a' + 10);
-			else if (c >= 'A' && c <= 'F')
-				digit = (uint32_t)(c - 'A' + 10);
-			else
-				return Fail("a \\u escape without four hexadecimal digits");
-			value = (value << 4) | digit;
-		}
-		pos += 4;
-		return true;
-	}
-
-	bool Reader::ReadLiteral(const char* literal)
-	{
-		size_t length = strlen(literal);
-		if (text.compare(pos, length, literal) == 0)
-		{
-			pos += length;
-			return true;
-		}
-		return Fail(std::string("unexpected text where \"") + literal + "\" was expected");
-	}
-
-	bool Reader::ReadName(std::string& name)
-	{
-		if (AtEnd() || Cur() != '"')
-			return Fail("expected a member name (a string)");
-		return ReadString(name);
-	}
-
-	/// <summary>Scan one number: the JSON grammar exactly (an optional '-', no leading zero, an
-	/// optional fraction and an optional exponent), and at most MaxNumberChars characters.</summary>
-	bool Reader::ScanNumber(NumberToken& token)
-	{
-		token.begin = pos;
-		token.whole = true;
-
-		if (!AtEnd() && Cur() == '-')
-			pos++;
-		if (AtEnd())
-			return Fail("unexpected end of the document in a number");
-		if (Cur() == '0')
-		{
-			pos++;
-			// A leading zero is only the number zero: "007" is not JSON, and the emulator's other
-			// settings files already write canonical numbers.
-			if (!AtEnd() && Cur() >= '0' && Cur() <= '9')
-				return Fail("a leading zero in a number");
-		}
-		else if (Cur() >= '1' && Cur() <= '9')
-		{
-			while (!AtEnd() && Cur() >= '0' && Cur() <= '9')
-				pos++;
-		}
-		else
-		{
-			return Fail("expected a digit");
-		}
-
-		if (!AtEnd() && Cur() == '.')
-		{
-			token.whole = false;
-			pos++;
-			if (AtEnd() || Cur() < '0' || Cur() > '9')
-				return Fail("expected a digit after '.'");
-			while (!AtEnd() && Cur() >= '0' && Cur() <= '9')
-				pos++;
-		}
-		if (!AtEnd() && (Cur() == 'e' || Cur() == 'E'))
-		{
-			token.whole = false;
-			pos++;
-			if (!AtEnd() && (Cur() == '+' || Cur() == '-'))
-				pos++;
-			if (AtEnd() || Cur() < '0' || Cur() > '9')
-				return Fail("expected a digit in the exponent");
-			while (!AtEnd() && Cur() >= '0' && Cur() <= '9')
-				pos++;
-		}
-
-		token.end = pos;
-		// The token is scanned with a few pointer steps per digit and no allocation at all, and the
-		// length is checked here, before it is converted: a 500 digit number never reaches the
-		// converter.
-		if (token.end - token.begin > MaxNumberChars)
-			return Fail("the number is longer than 24 characters");
-		return true;
-	}
-
-	bool Reader::SkipValue()
-	{
-		SkipSpace();
-		if (AtEnd())
-			return Fail("unexpected end of the document, expected a value");
-		switch (Cur())
-		{
-		case '{':
-			return ForEachMember([this](const std::string&) { return SkipValue(); });
-		case '[':
-			return SkipArray();
-		case '"':
-		{
-			std::string ignored;
-			return ReadString(ignored);
-		}
-		case 't': return ReadLiteral("true");
-		case 'f': return ReadLiteral("false");
-		case 'n': return ReadLiteral("null");
-		default:
-			if (Cur() == '-' || (Cur() >= '0' && Cur() <= '9'))
-			{
-				NumberToken token;
-				return ScanNumber(token);
-			}
-			return Fail(std::string("unexpected character '") + Cur() + "' (expected a value)");
-		}
-	}
-
-	bool Reader::SkipArray()
-	{
-		// No member of this file is an array. One is still parsed, so that a newer frontend can add
-		// a member this build skips without the whole file being refused; an unterminated array is
-		// a syntax error like any other.
-		SkipSpace();
-		if (AtEnd() || Cur() != '[')
-			return Fail("expected '['");
-		if (++depth > MaxDepth)
-			return Fail("more than 32 nested objects or arrays");
-		pos++;
-
-		bool first = true;
-		while (true)
-		{
-			SkipSpace();
-			if (AtEnd())
-				return Fail("unterminated array (expected ']' or a value)");
-			if (Cur() == ']')
-			{
-				pos++;
-				depth--;
-				return true;
-			}
-			if (!first)
-			{
-				if (Cur() != ',')
-					return Fail("expected ',' between the values of an array");
-				pos++;
-				SkipSpace();
-				if (AtEnd())
-					return Fail("unexpected end of the document after ','");
-				if (Cur() == ']')
-					return Fail("unexpected ']' after ',' (a trailing comma)");
-			}
-			if (!SkipValue())
-				return false;
-			first = false;
-		}
-	}
-
-	bool Reader::ValueIsString()
-	{
-		SkipSpace();
-		return !AtEnd() && Cur() == '"';
-	}
-
-	bool Reader::ValueIsNumber()
-	{
-		SkipSpace();
-		return !AtEnd() && (Cur() == '-' || (Cur() >= '0' && Cur() <= '9'));
-	}
-
-	bool Reader::ReadTextMember(std::string& target, const char* where)
-	{
-		if (!ValueIsString())
+		if (value->type != Json::ValueType::String)
 		{
 			Log(LogLevel::Warn, "gba settings: %s must be a string, the default is kept", where);
-			return SkipValue();
+			return;
 		}
-		return ReadString(target);
+		target = Json::WideToUtf8(value->value.AsString);
 	}
 
-	bool Reader::ReadBoolMember(bool& target, const char* where)
+	/// <summary>A member that must be true or false.</summary>
+	void AssignBool(bool& target, Json::Value* value, const char* where)
 	{
-		SkipSpace();
-		if (!AtEnd() && Cur() == 't')
+		if (value->type != Json::ValueType::Bool)
 		{
-			// A literal that is nearly right ("tru") is not a mistyped value but a broken
-			// document, so it is read strictly and reported as a syntax error.
-			if (!ReadLiteral("true"))
-				return false;
-			target = true;
-			return true;
+			Log(LogLevel::Warn, "gba settings: %s must be true or false, the default %s is kept",
+				where, target ? "true" : "false");
+			return;
 		}
-		if (!AtEnd() && Cur() == 'f')
-		{
-			if (!ReadLiteral("false"))
-				return false;
-			target = false;
-			return true;
-		}
-		Log(LogLevel::Warn, "gba settings: %s must be true or false, the default %s is kept",
-			where, target ? "true" : "false");
-		return SkipValue();
+		target = value->value.AsBool;
 	}
 
-	bool Reader::ReadIntMember(int& target, const char* where, int minimum, int maximum)
+	/// <summary>A member that must be a whole number inside [minimum, maximum]. A number outside
+	/// the range is clamped to the nearest end; a number that is not a whole number at all keeps
+	/// the default.</summary>
+	void AssignInt(int& target, Json::Value* value, const char* where, int minimum, int maximum)
 	{
-		if (!ValueIsNumber())
-		{
-			Log(LogLevel::Warn, "gba settings: %s must be a number, the default %i is kept", where, target);
-			return SkipValue();
-		}
-
-		NumberToken token;
-		if (!ScanNumber(token))
-			return false;
-		if (!token.whole)
+		if (value->type == Json::ValueType::Float)
 		{
 			Log(LogLevel::Warn, "gba settings: %s is not a whole number, the default %i is kept", where, target);
-			return true;
+			return;
+		}
+		if (value->type != Json::ValueType::Int)
+		{
+			Log(LogLevel::Warn, "gba settings: %s must be a number, the default %i is kept", where, target);
+			return;
 		}
 
-		// The token is at most 24 characters, so the accumulator saturates after at most 20 digits:
-		// every digit is checked, and a value that does not fit 64 bits lands on the end of the
-		// range instead of wrapping around it.
-		size_t i = token.begin;
-		bool negative = false;
-		if (text[i] == '-')
+		// Json keeps an integer in the two's complement form it already uses elsewhere, so the
+		// saturated end of the range (a number that did not fit) clamps like any out of range one.
+		int64_t number = (int64_t)value->value.AsInt;
+		if (number < minimum || number > maximum)
 		{
-			negative = true;
-			i++;
-		}
-		const unsigned long long limit = negative ? 9223372036854775808ULL : 9223372036854775807ULL;
-		unsigned long long value = 0;
-		bool saturated = false;
-		for (; i < token.end; i++)
-		{
-			unsigned digit = (unsigned)(text[i] - '0');
-			if (value > (limit - digit) / 10)
-			{
-				saturated = true;
-				break;
-			}
-			value = value * 10 + digit;
-		}
-
-		long long signed_value;
-		if (saturated)
-			signed_value = negative ? std::numeric_limits<long long>::min() : std::numeric_limits<long long>::max();
-		else if (negative)
-			signed_value = (value == 9223372036854775808ULL) ? std::numeric_limits<long long>::min() : -(long long)value;
-		else
-			signed_value = (long long)value;
-
-		if (signed_value < minimum || signed_value > maximum)
-		{
-			int clamped = (int)(signed_value < minimum ? minimum : maximum);
+			int clamped = (int)(number < minimum ? minimum : maximum);
 			Log(LogLevel::Warn, "gba settings: %s is %lld, outside %i..%i, clamped to %i",
-				where, signed_value, minimum, maximum, clamped);
+				where, (long long)number, minimum, maximum, clamped);
 			target = clamped;
-			return true;
+			return;
 		}
-		target = (int)signed_value;
-		return true;
+		target = (int)number;
 	}
 
-	bool Reader::UnknownMember(const char* section, const std::string& name)
+	/// <summary>Report a member of a known section that this build does not know.</summary>
+	void UnknownMember(const char* section, const std::string& name)
 	{
-		// A member this build does not know comes from a newer frontend (or is a typo). It is
-		// reported and skipped: refusing the file would make an older core unable to read a
-		// configuration a newer one wrote.
 		Log(LogLevel::Warn, "gba settings: unknown member \"%s\" in section \"%s\" was skipped",
 			name.c_str(), section);
-		return SkipValue();
 	}
 
-	bool Reader::ReadDocument(GbaSettings& out)
+	void ReadBoot(Json::Value* section, GbaSettings& out)
 	{
-		if (text.size() > MaxDocumentBytes)
-			return Fail("the document is larger than 2097152 bytes");
-		SkipSpace();
-		if (!ForEachMember([this, &out](const std::string& name) { return ReadSection(out, name); }))
-			return false;
-		SkipSpace();
-		if (!AtEnd())
-			return Fail("unexpected text after the document");
-		return true;
-	}
-
-	bool Reader::ReadSection(GbaSettings& out, const std::string& name)
-	{
-		if (name == "info")
-			return SkipValue();			// documentation only: written by Save, ignored here
-		if (name == "boot")
-			return ReadBoot(out);
-		if (name == "video")
-			return ReadVideo(out);
-		if (name == "audio")
-			return ReadAudio(out);
-		if (name == "input")
-			return ReadInput(out);
-		if (name == "link")
-			return ReadLink(out);
-		if (name == "emulation")
-			return ReadEmulation(out);
-
-		Log(LogLevel::Warn, "gba settings: unknown section \"%s\" was skipped", name.c_str());
-		return SkipValue();
-	}
-
-	bool Reader::ReadBoot(GbaSettings& out)
-	{
-		return ForEachMember([this, &out](const std::string& name)
+		for (Json::Value* member : section->children)
 		{
+			if (member->name == nullptr)
+				continue;
+			std::string name = member->name;
 			if (name == "biosPath")
-				return ReadTextMember(out.biosPath, "boot.biosPath");
-			if (name == "useCustomBootRom")
-				return ReadBoolMember(out.useCustomBootRom, "boot.useCustomBootRom");
-			if (name == "skipBootAnimation")
-				return ReadBoolMember(out.skipBootAnimation, "boot.skipBootAnimation");
-			if (name == "hleBios")
-				return ReadBoolMember(out.hleBios, "boot.hleBios");
-			return UnknownMember("boot", name);
-		});
+				AssignText(out.biosPath, member, "boot.biosPath");
+			else if (name == "useCustomBootRom")
+				AssignBool(out.useCustomBootRom, member, "boot.useCustomBootRom");
+			else if (name == "skipBootAnimation")
+				AssignBool(out.skipBootAnimation, member, "boot.skipBootAnimation");
+			else if (name == "hleBios")
+				AssignBool(out.hleBios, member, "boot.hleBios");
+			else
+				UnknownMember("boot", name);
+		}
 	}
 
-	bool Reader::ReadVideo(GbaSettings& out)
+	void ReadVideo(Json::Value* section, GbaSettings& out)
 	{
-		return ForEachMember([this, &out](const std::string& name)
+		for (Json::Value* member : section->children)
 		{
+			if (member->name == nullptr)
+				continue;
+			std::string name = member->name;
 			if (name == "videoScale")
-				return ReadIntMember(out.videoScale, "video.videoScale", MinScale, MaxScale);
-			if (name == "fullscreen")
-				return ReadBoolMember(out.fullscreen, "video.fullscreen");
-			if (name == "vsync")
-				return ReadBoolMember(out.vsync, "video.vsync");
-			if (name == "integerScale")
-				return ReadBoolMember(out.integerScale, "video.integerScale");
-			if (name == "showFps")
-				return ReadBoolMember(out.showFps, "video.showFps");
-			if (name == "frameSkip")
-				return ReadBoolMember(out.frameSkip, "video.frameSkip");
-			return UnknownMember("video", name);
-		});
+				AssignInt(out.videoScale, member, "video.videoScale", MinScale, MaxScale);
+			else if (name == "fullscreen")
+				AssignBool(out.fullscreen, member, "video.fullscreen");
+			else if (name == "vsync")
+				AssignBool(out.vsync, member, "video.vsync");
+			else if (name == "integerScale")
+				AssignBool(out.integerScale, member, "video.integerScale");
+			else if (name == "showFps")
+				AssignBool(out.showFps, member, "video.showFps");
+			else if (name == "frameSkip")
+				AssignBool(out.frameSkip, member, "video.frameSkip");
+			else
+				UnknownMember("video", name);
+		}
 	}
 
-	bool Reader::ReadAudio(GbaSettings& out)
+	void ReadAudio(Json::Value* section, GbaSettings& out)
 	{
-		return ForEachMember([this, &out](const std::string& name)
+		for (Json::Value* member : section->children)
 		{
+			if (member->name == nullptr)
+				continue;
+			std::string name = member->name;
 			if (name == "audioEnabled")
-				return ReadBoolMember(out.audioEnabled, "audio.audioEnabled");
-			if (name == "sampleRate")
-				return ReadIntMember(out.sampleRate, "audio.sampleRate", MinSampleRate, MaxSampleRate);
-			if (name == "volume")
-				return ReadIntMember(out.volume, "audio.volume", MinVolume, MaxVolume);
-			return UnknownMember("audio", name);
-		});
+				AssignBool(out.audioEnabled, member, "audio.audioEnabled");
+			else if (name == "sampleRate")
+				AssignInt(out.sampleRate, member, "audio.sampleRate", MinSampleRate, MaxSampleRate);
+			else if (name == "volume")
+				AssignInt(out.volume, member, "audio.volume", MinVolume, MaxVolume);
+			else
+				UnknownMember("audio", name);
+		}
 	}
 
-	bool Reader::ReadInput(GbaSettings& out)
+	void ReadInput(Json::Value* section, GbaSettings& out)
 	{
-		return ForEachMember([this, &out](const std::string& name)
+		for (Json::Value* member : section->children)
 		{
+			if (member->name == nullptr)
+				continue;
+
 			// The member *is* the action ("A", "START", "SPEED", ...), the value is the host key
 			// name. Bind replaces a known action in place and appends an action this build does
 			// not know, so a binding a newer frontend wrote survives a load/save round trip.
-			if (!ValueIsString())
+			if (member->type != Json::ValueType::String)
 			{
 				Log(LogLevel::Warn,
 					"gba settings: the binding of \"%s\" must be a key name (a string), the default is kept",
-					name.c_str());
-				return SkipValue();
+					member->name);
+				continue;
 			}
-			std::string key;
-			if (!ReadString(key))
-				return false;
-			out.Bind(name, key);
-			return true;
-		});
+
+			out.Bind(member->name, Json::WideToUtf8(member->value.AsString));
+		}
 	}
 
-	bool Reader::ReadLink(GbaSettings& out)
+	void ReadLink(Json::Value* section, GbaSettings& out)
 	{
-		return ForEachMember([this, &out](const std::string& name)
+		for (Json::Value* member : section->children)
 		{
+			if (member->name == nullptr)
+				continue;
+			std::string name = member->name;
 			if (name == "linkEnabled")
-				return ReadBoolMember(out.linkEnabled, "link.linkEnabled");
-			if (name == "linkServer")
-				return ReadBoolMember(out.linkServer, "link.linkServer");
-			if (name == "linkAddress")
-				return ReadTextMember(out.linkAddress, "link.linkAddress");
-			if (name == "linkPlayers")
-				return ReadIntMember(out.linkPlayers, "link.linkPlayers", MinLinkPlayers, MaxLinkPlayers);
-			return UnknownMember("link", name);
-		});
+				AssignBool(out.linkEnabled, member, "link.linkEnabled");
+			else if (name == "linkServer")
+				AssignBool(out.linkServer, member, "link.linkServer");
+			else if (name == "linkAddress")
+				AssignText(out.linkAddress, member, "link.linkAddress");
+			else if (name == "linkPlayers")
+				AssignInt(out.linkPlayers, member, "link.linkPlayers", MinLinkPlayers, MaxLinkPlayers);
+			else
+				UnknownMember("link", name);
+		}
 	}
 
-	bool Reader::ReadEmulation(GbaSettings& out)
+	void ReadEmulation(Json::Value* section, GbaSettings& out)
 	{
-		return ForEachMember([this, &out](const std::string& name)
+		for (Json::Value* member : section->children)
 		{
+			if (member->name == nullptr)
+				continue;
+			std::string name = member->name;
 			if (name == "rtcEnabled")
-				return ReadBoolMember(out.rtcEnabled, "emulation.rtcEnabled");
-			if (name == "bootWithNoCartridge")
-				return ReadBoolMember(out.bootWithNoCartridge, "emulation.bootWithNoCartridge");
-			if (name == "saveDirectory")
-				return ReadTextMember(out.saveDirectory, "emulation.saveDirectory");
-			if (name == "logLevel")
-				return ReadIntMember(out.logLevel, "emulation.logLevel", MinLogLevel, MaxLogLevel);
-			return UnknownMember("emulation", name);
-		});
+				AssignBool(out.rtcEnabled, member, "emulation.rtcEnabled");
+			else if (name == "bootWithNoCartridge")
+				AssignBool(out.bootWithNoCartridge, member, "emulation.bootWithNoCartridge");
+			else if (name == "debugger")
+				AssignBool(out.debugger, member, "emulation.debugger");
+			else if (name == "saveDirectory")
+				AssignText(out.saveDirectory, member, "emulation.saveDirectory");
+			else if (name == "logLevel")
+				AssignInt(out.logLevel, member, "emulation.logLevel", MinLogLevel, MaxLogLevel);
+			else
+				UnknownMember("emulation", name);
+		}
 	}
+
+	/// <summary>Apply one section of the document: a known section is applied, an unknown one is
+	/// reported and skipped.</summary>
+	void ReadSection(Json::Value* section, GbaSettings& out)
+	{
+		if (section->name == nullptr)
+			return;
+
+		std::string name = section->name;
+
+		if (name == "info")
+			return;						// documentation only: written by Save, ignored here
+
+		if (section->type != Json::ValueType::Object)
+		{
+			// The syntax is valid, but the section is not an object: a mistyped section, not a
+			// broken document. Every member of it keeps its default.
+			Log(LogLevel::Warn, "gba settings: section \"%s\" must be an object, it was skipped", name.c_str());
+			return;
+		}
+
+		if (name == "boot")
+			ReadBoot(section, out);
+		else if (name == "video")
+			ReadVideo(section, out);
+		else if (name == "audio")
+			ReadAudio(section, out);
+		else if (name == "input")
+			ReadInput(section, out);
+		else if (name == "link")
+			ReadLink(section, out);
+		else if (name == "emulation")
+			ReadEmulation(section, out);
+		else
+			Log(LogLevel::Warn, "gba settings: unknown section \"%s\" was skipped", name.c_str());
+	}
+
+	/// <summary>Apply a document the Json engine has already accepted. The root is an object
+	/// (Parse checks that) and every section is applied in the order the document lists it.</summary>
+	void ReadDocument(Json::Value* root, GbaSettings& out)
+	{
+		for (Json::Value* section : root->children)
+		{
+			ReadSection(section, out);
+		}
+	}
+
 }
 
 namespace GBA
@@ -1166,6 +676,7 @@ namespace GBA
 		text += Section("emulation",
 			Member("rtcEnabled", Boolean(rtcEnabled), false) +
 			Member("bootWithNoCartridge", Boolean(bootWithNoCartridge), false) +
+			Member("debugger", Boolean(debugger), false) +
 			Member("saveDirectory", Escape(saveDirectory), false) +
 			Member("logLevel", Number(logLevel), true), true);
 
@@ -1185,16 +696,52 @@ namespace GBA
 		if (error != nullptr)
 			error->clear();
 
-		Reader reader(text);
-		GbaSettings parsed = Defaults();
-		if (!reader.ReadDocument(parsed))
+		// The document comes from the user's directory, so the size is checked before the parser
+		// sees it: a file that is not a settings file at all is refused here.
+		if (text.size() > MaxDocumentBytes)
 		{
-			// A rejected document is never half applied: the caller gets the defaults.
 			out = Defaults();
-			Report(error, reader.Error());
+			Report(error, "1: the document is larger than 2097152 bytes");
 			return false;
 		}
 
+		Json json;
+
+		try
+		{
+			json.Deserialize((void*)text.data(), text.size());
+		}
+		catch (const char* message)
+		{
+			// A rejected document is never half applied: the caller gets the defaults.
+			out = Defaults();
+			int line = json.GetErrorLine();
+			if (line <= 0)
+				line = 1;
+			Report(error, std::to_string(line) + ": " + message);
+			return false;
+		}
+		catch (...)
+		{
+			// Anything the engine throws that is not one of its messages (an allocation failure,
+			// a broken invariant): the document is refused, the caller keeps the defaults.
+			out = Defaults();
+			Report(error, "1: the document is not a valid Json document");
+			return false;
+		}
+
+		// The document is a set of sections, so its root has to be an object. The engine accepts
+		// any value at the top level (the emulator's other documents do too), so the shape is
+		// checked here.
+		if (json.root.children.empty() || json.root.children.back()->type != Json::ValueType::Object)
+		{
+			out = Defaults();
+			Report(error, "1: the document must be an object");
+			return false;
+		}
+
+		GbaSettings parsed = Defaults();
+		ReadDocument(json.root.children.back(), parsed);
 		out = parsed;
 		return true;
 	}

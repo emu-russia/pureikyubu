@@ -1,9 +1,11 @@
 // The GBA emulator's settings, stored in build/Data/GBASettings.json.
 //
-// The file is the same shape as the rest of the emulator's settings (a flat object per section),
-// but this module keeps its own tiny reader/writer: the GBA core must compile and be tested
-// without the GameCube side of the emulator (and therefore without its Json/JDI machinery), and
-// the settings file is part of what the harness verifies.
+// The file is the same shape as the rest of the emulator's settings (a flat object per section).
+// The document is read with the emulator's shared Json engine (src/json.cpp), which is self
+// contained (the C++ standard library and verify.h only), so the GBA core still compiles and is
+// tested without the GameCube side of the emulator - it links the engine rather than carrying a
+// parser of its own. The writer below is the module's own, because the GBA settings file keeps the
+// project's tab/blank-line layout.
 //
 // The shipped defaults live in build/Data/GBASettings.json. A missing file is not an error: the
 // defaults from Defaults() are used and the file is written back on the first change.
@@ -63,6 +65,7 @@ namespace GBA
 
 		bool rtcEnabled = true;
 		bool bootWithNoCartridge = false;
+		bool debugger = false;			// open the debugger window when the machine starts
 		std::string saveDirectory;		// empty = the directory of the ROM
 		int logLevel = 1;				// 0 = errors, 1 = warnings, 2 = info, 3 = debug
 

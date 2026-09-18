@@ -935,7 +935,7 @@ namespace GBA
 		JDI::Hub.AddNode(L"GBA_JDI_JSON", JdiSpecs::GbaJdi, DebugReflector);
 	}
 
-	void DebugStart()
+	void DebugStart(bool showWindow)
 	{
 		if (!DebugMachineActive())
 			return;
@@ -949,7 +949,10 @@ namespace GBA
 		if (cmdline.mcp)
 			Mcp::StartTransport();
 
-		Debug2::StartDebugger();
+		// The debugger window is optional: the frontend opens it when the `emulation.debugger`
+		// member of GBASettings asks for it, while F2 opens and closes it either way.
+		if (showWindow)
+			Debug2::StartDebugger();
 	}
 
 	void DebugStop()

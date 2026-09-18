@@ -72,13 +72,18 @@ a Game Boy Player talks to a GameCube controller, is decoded but not driven.
 | `audio` | `audioEnabled`, `sampleRate`, `volume` |
 | `input` | the eleven bindings (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`, `R`, `L`, `SPEED`) |
 | `link` | `linkEnabled`, `linkServer`, `linkAddress`, `linkPlayers` |
-| `emulation` | `rtcEnabled`, `bootWithNoCartridge`, `saveDirectory`, `logLevel` |
+| `emulation` | `rtcEnabled`, `bootWithNoCartridge`, `debugger`, `saveDirectory`, `logLevel` |
 
-The file is read by a small self-contained JSON reader inside the GBA module (the core must build
-without the GameCube side of the emulator, and therefore without its `Json`/JDI machinery). A
-malformed file is rejected with a readable message and the built-in defaults are used; the
-shipped file, `GbaSettings::DefaultJson()` and a round trip of the defaults are byte-identical,
-and the test suite asserts that.
+The file is read with the emulator's shared Json engine (`src/json.cpp`), the same one the GameCube
+side uses. The engine is self-contained (the C++ standard library and `verify.h` only), so the GBA
+core still builds without the GameCube side of the emulator and links the engine instead of
+carrying a parser of its own. A malformed file is rejected with a message that names the line and
+the built-in defaults are used; the shipped file, `GbaSettings::DefaultJson()` and a round trip of
+the defaults are byte-identical, and the test suite asserts that.
+
+`emulation.debugger` (false by default) opens the debugger window together with the machine. The
+portable debug interface - the JDI node and the MCP transport - comes up either way, and `F2` opens
+and closes the window at any time.
 
 ## Tests
 

@@ -72,7 +72,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\..\src\gba;..\..\testing\gba_bench;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src\gba;..\..\src;..\..\testing\gba_bench;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <!-- The sources are UTF-8 (issue #372): see pureikyubu.vcxproj. -->
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -128,6 +128,9 @@
     <ClCompile Include="..\..\src\gba\gb_cpu.cpp" />
     <ClCompile Include="..\..\src\gba\gb_disasm.cpp" />
     <ClCompile Include="..\..\src\gba\gb_ppu.cpp" />
+    <!-- The settings reader is the emulator's shared Json engine (issue #423). It is self
+         contained, so the harness compiles it next to the GBA sources. -->
+    <ClCompile Include="..\..\src\json.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\testing\gba_bench\test_apu.cpp" />
@@ -172,6 +175,8 @@
     <ClInclude Include="..\..\src\gba\gb_cpu.h" />
     <ClInclude Include="..\..\src\gba\gb_disasm.h" />
     <ClInclude Include="..\..\src\gba\gb_ppu.h" />
+    <ClInclude Include="..\..\src\json.h" />
+    <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\testing\gba_bench\demo_rom.h" />
     <ClInclude Include="..\..\testing\gba_bench\gba_test.h" />
     <ClInclude Include="..\..\testing\gba_bench\png.h" />

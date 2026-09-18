@@ -20,9 +20,12 @@ mkdir -p $BLD
 # both are left out here - exactly as the gba_bench.vcxproj project does on Windows.
 CORE_SOURCES=$(ls $REPO/src/gba/*.cpp | grep -vE '/(gba_sdl|gba_debug)\.cpp$')
 
+# The settings reader is the emulator's shared Json engine (issue #423). It is self contained, so
+# the harness compiles it next to the GBA sources instead of linking the GameCube side.
 g++ -std=c++17 $OPT -w -fno-strict-aliasing \
-    -I$REPO/src/gba -I$HERE \
+    -I$REPO/src/gba -I$REPO/src -I$HERE \
     $CORE_SOURCES \
+    $REPO/src/json.cpp \
     $HERE/test_*.cpp \
     -o $BLD/gba_test
 

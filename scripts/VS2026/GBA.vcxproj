@@ -3,10 +3,11 @@
   GBA: the integrated Game Boy Advance and Game Boy emulator (issue #388).
 
   The module is self contained. src/gba talks to the rest of the emulator through its own headers
-  only - no pch.h, no OpenGL, no ImGui - so it builds as a library of its own and the emulator
-  application links it exactly like it links SDL2. Keeping it separate also keeps the module's
-  precompiled-header-free compiler settings from leaking into the application: everything here is
-  compiled with PrecompiledHeader=NotUsing.
+  and the shared, also self-contained Json engine (src/json.h, which the settings reader uses) -
+  no pch.h, no OpenGL, no ImGui - so it builds as a library of its own and the emulator
+  application links it exactly like it links SDL2 and provides the Json engine's implementation.
+  Keeping it separate also keeps the module's precompiled-header-free compiler settings from
+  leaking into the application: everything here is compiled with PrecompiledHeader=NotUsing.
 
   gba_sdl.cpp is the SDL2 front end of the module, so this project includes the SDL2 headers; those
   sources stay in the library because the app links SDL2 anyway.
@@ -75,7 +76,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\..\src\gba;..\..\thirdparty\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src\gba;..\..\src;..\..\thirdparty\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <!-- The sources are UTF-8 (issue #372): see pureikyubu.vcxproj. -->
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>

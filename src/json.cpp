@@ -1,7 +1,173 @@
-#include "pch.h"
+// The Json engine depends on the C++ standard library alone (plus the dependency-free verify.h):
+// the portable machines (src/gba) compile it next to their own sources, without the emulator's
+// precompiled header, SDL, OpenGL or ImGui.
 
-#include <cerrno>
+#include "json.h"
+#include "verify.h"
+
 #include <cfloat>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cwchar>
+
+namespace
+{
+	// The two directions of the UTF-8 <-> wide conversion. The project's narrow string is UTF-8
+	// (see the note in utils.h); these are the same rules, kept here so that this file does not
+	// have to link the emulator's platform layer.
+
+	const uint32_t Utf8Replacement = 0xFFFD;
+
+	std::wstring DecodeUtf8(const char* str)
+	{
+		std::wstring wstr;
+
+		if (str == nullptr)
+		{
+			return wstr;
+		}
+
+		const uint8_t* ptr = (const uint8_t*)str;
+
+		while (*ptr != 0)
+		{
+			uint32_t cp = *ptr;
+			int length = 0;
+
+			if (cp < 0x80)
+			{
+				length = 1;
+			}
+			else if ((cp & 0xE0) == 0xC0)
+			{
+				cp &= 0x1F; length = 2;
+			}
+			else if ((cp & 0xF0) == 0xE0)
+			{
+				cp &= 0x0F; length = 3;
+			}
+			else if ((cp & 0xF8) == 0xF0)
+			{
+				cp &= 0x07; length = 4;
+			}
+
+			// A byte that cannot start a sequence stands for itself, so nothing is lost on the
+			// way and a name from an unknown source still reaches the file system in one piece.
+			if (length == 0)
+			{
+				wstr.push_back((wchar_t)*ptr++);
+				continue;
+			}
+
+			int got = 1;
+			for (; got < length && (ptr[got] & 0xC0) == 0x80; got++)
+			{
+				cp = (cp << 6) | (ptr[got] & 0x3F);
+			}
+
+			if (got != length)
+			{
+				// A sequence that is cut short is not text; the lead byte stands for itself.
+				wstr.push_back((wchar_t)*ptr++);
+				continue;
+			}
+
+			ptr += length;
+
+			// The shortest form and the surrogate block are not code points.
+			uint32_t shortest = (length == 2) ? 0x80 : (length == 3) ? 0x800 : 0x10000;
+			if (cp < shortest || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+			{
+				cp = Utf8Replacement;
+			}
+
+#if defined(_WINDOWS)
+			// wchar_t is one UTF-16 code unit wide here, so a code point outside the BMP takes two.
+			if (cp > 0xFFFF)
+			{
+				cp -= 0x10000;
+				wstr.push_back((wchar_t)(0xD800 + (cp >> 10)));
+				wstr.push_back((wchar_t)(0xDC00 + (cp & 0x3FF)));
+				continue;
+			}
+#endif
+
+			wstr.push_back((wchar_t)cp);
+		}
+
+		return wstr;
+	}
+
+	void EncodeUtf8(std::string& str, uint32_t cp)
+	{
+		if (cp < 0x80)
+		{
+			str.push_back((char)cp);
+		}
+		else if (cp < 0x800)
+		{
+			str.push_back((char)(0xC0 | (cp >> 6)));
+			str.push_back((char)(0x80 | (cp & 0x3F)));
+		}
+		else if (cp < 0x10000)
+		{
+			str.push_back((char)(0xE0 | (cp >> 12)));
+			str.push_back((char)(0x80 | ((cp >> 6) & 0x3F)));
+			str.push_back((char)(0x80 | (cp & 0x3F)));
+		}
+		else
+		{
+			str.push_back((char)(0xF0 | (cp >> 18)));
+			str.push_back((char)(0x80 | ((cp >> 12) & 0x3F)));
+			str.push_back((char)(0x80 | ((cp >> 6) & 0x3F)));
+			str.push_back((char)(0x80 | (cp & 0x3F)));
+		}
+	}
+}
+
+std::string Json::WideToUtf8(const wchar_t* str)
+{
+	std::string result;
+
+	if (str == nullptr)
+	{
+		return result;
+	}
+
+	for (size_t i = 0; str[i] != 0; i++)
+	{
+		uint32_t cp = (uint32_t)str[i];
+
+#if defined(_WINDOWS)
+
+		// A code point outside the BMP is a pair of 16-bit code units here, and the two have to be
+		// put together again before they can become four UTF-8 bytes.
+		if (cp >= 0xD800 && cp <= 0xDBFF && str[i + 1] >= 0xDC00 && str[i + 1] <= 0xDFFF)
+		{
+			cp = 0x10000 + ((cp - 0xD800) << 10) + ((uint32_t)str[i + 1] - 0xDC00);
+			i++;
+		}
+
+#endif
+
+		// A code unit that is half of a pair on its own is not text; it becomes the replacement
+		// character rather than bytes no decoder would accept.
+		if (cp >= 0xD800 && cp <= 0xDFFF)
+		{
+			cp = Utf8Replacement;
+		}
+
+		EncodeUtf8(result, cp);
+	}
+
+	return result;
+}
+
+std::wstring Json::Utf8ToWide(const char* str)
+{
+	return DecodeUtf8(str);
+}
 
 void Json::DestroyValue(Value* value)
 {
@@ -41,7 +207,7 @@ wchar_t* Json::CloneUtf8Str(const char* str)
 {
 	// The narrow string of the project is UTF-8, so the shared codec does the whole job (including
 	// the code points that wchar_t cannot hold on Windows: they become a surrogate pair there).
-	std::wstring wide = Util::StringToWstring(str);
+	std::wstring wide = Utf8ToWide(str);
 
 	wchar_t* clone = new wchar_t[wide.size() + 1];
 	wcscpy(clone, wide.c_str());
@@ -197,6 +363,31 @@ bool Json::IsControl(uint8_t value)
 	return false;
 }
 
+void Json::Throw(DeserializeContext* ctx, const char* message)
+{
+	// The line of the current position: one plus the newlines the document has up to it. The
+	// message is thrown as it is (the emulator's other readers catch it as a `const char*`), and
+	// the line is recorded in the context so a caller that wants to say *where* the document went
+	// wrong can ask for it after the catch.
+	if (ctx->errorLine != nullptr)
+	{
+		int line = 1;
+		if (ctx->base != nullptr)
+		{
+			for (size_t i = 0; i < ctx->offset && i < ctx->maxSize; i++)
+			{
+				if (ctx->base[i] == '\n')
+				{
+					line++;
+				}
+			}
+		}
+		*ctx->errorLine = line;
+	}
+
+	throw message;
+}
+
 bool Json::GetLiteral(Json::DeserializeContext* ctx, Token& token)
 {
 	// :p
@@ -242,7 +433,7 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	// Every continuation byte is read only after the offset has been checked for real: a truncated
 	// UTF-8 sequence used to walk past the end of the buffer (the asserts are gone in Release).
 	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
-		throw "Invalid utf8 codepoint";
+		Throw(ctx, "Invalid utf8 codepoint");
 
 	unsigned char u0 = ctx->ptr[0]; if (u0 >= 0 && u0 <= 127)
 	{
@@ -254,7 +445,7 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	ctx->ptr++;
 
 	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
-		throw "Invalid utf8 codepoint";
+		Throw(ctx, "Invalid utf8 codepoint");
 
 	unsigned char u1 = ctx->ptr[0]; if (u0 >= 192 && u0 <= 223)
 	{
@@ -265,10 +456,10 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	ctx->offset++;
 	ctx->ptr++;
 
-	if (u0 == 0xed && (u1 & 0xa0) == 0xa0) throw "code points, 0xd800 to 0xdfff";
+	if (u0 == 0xed && (u1 & 0xa0) == 0xa0) Throw(ctx, "code points, 0xd800 to 0xdfff");
 
 	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
-		throw "Invalid utf8 codepoint";
+		Throw(ctx, "Invalid utf8 codepoint");
 
 	unsigned char u2 = ctx->ptr[0]; if (u0 >= 224 && u0 <= 239)
 	{
@@ -280,7 +471,7 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	ctx->ptr++;
 
 	if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
-		throw "Invalid utf8 codepoint";
+		Throw(ctx, "Invalid utf8 codepoint");
 
 	unsigned char u3 = ctx->ptr[0]; if (u0 >= 240 && u0 <= 247)
 	{
@@ -291,12 +482,14 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 	ctx->offset++;
 	ctx->ptr++;
 
-	throw "Invalid codepoint range";
+	Throw(ctx, "Invalid codepoint range");
 }
 
 bool Json::GetString(DeserializeContext* ctx, Token& token)
 {
-	wchar_t str[MaxStringSize] = { 0, };
+	// One slot past the limit is reserved for the terminator written on the closing quote, so a
+	// string of exactly MaxStringSize code units fits.
+	wchar_t str[MaxStringSize + 1] = { 0, };
 	size_t strSize = 0;
 
 	if (ctx->ptr[0] != '\"')
@@ -307,13 +500,6 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 
 	while (ctx->offset < ctx->maxSize)
 	{
-		// One slot is reserved for the terminator written on the closing quote, so a string of
-		// MaxStringSize - 1 characters no longer fits. In Release the assert() was not a bound.
-		if (!Verify::Range(strSize, 1, MaxStringSize - 1))
-		{
-			throw "Json string too long";
-		}
-
 		int cp = FetchCodepoint(ctx);
 
 		// End of string?
@@ -334,7 +520,7 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 			// end of the buffer (FetchCodepoint checks too, this keeps the requirement local).
 			if (!Verify::Range(ctx->offset, 1, ctx->maxSize))
 			{
-				throw "Invalid utf8 codepoint";
+				Throw(ctx, "Invalid utf8 codepoint");
 			}
 
 			cp = FetchCodepoint(ctx);
@@ -348,9 +534,91 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 				case 'n': cp = '\n'; break;
 				case 'r': cp = '\r'; break;
 				case 't': cp = '\t'; break;
-				case 'u': throw "uXXXX not supported";
-				default: throw "Invalid escape sequence";
+				case 'u':
+				{
+					// \uXXXX, and a UTF-16 surrogate pair (\uD800\uDC00) for the code points
+					// outside the BMP. The pair is put together here, because the two halves on
+					// their own are not text (and EmitCodePoint refuses them on the way out).
+					uint32_t code = 0;
+					for (int i = 0; i < 4; i++)
+					{
+						if (ctx->offset >= ctx->maxSize)
+						{
+							Throw(ctx, "a \\u escape without four hexadecimal digits");
+						}
+
+						uint8_t digit = ctx->ptr[0];
+						uint32_t value;
+						if (digit >= '0' && digit <= '9')
+							value = digit - '0';
+						else if (digit >= 'a' && digit <= 'f')
+							value = digit - 'a' + 10;
+						else if (digit >= 'A' && digit <= 'F')
+							value = digit - 'A' + 10;
+						else
+							Throw(ctx, "a \\u escape without four hexadecimal digits");
+
+						code = (code << 4) | value;
+						ctx->offset++;
+						ctx->ptr++;
+					}
+
+					if (code >= 0xD800 && code <= 0xDBFF)
+					{
+						if (ctx->offset + 1 < ctx->maxSize && ctx->ptr[0] == '\\' && ctx->ptr[1] == 'u')
+						{
+							ctx->offset += 2;
+							ctx->ptr += 2;
+							uint32_t low = 0;
+							for (int i = 0; i < 4; i++)
+							{
+								if (ctx->offset >= ctx->maxSize)
+									Throw(ctx, "a \\u escape without four hexadecimal digits");
+
+								uint8_t digit = ctx->ptr[0];
+								uint32_t value;
+								if (digit >= '0' && digit <= '9')
+									value = digit - '0';
+								else if (digit >= 'a' && digit <= 'f')
+									value = digit - 'a' + 10;
+								else if (digit >= 'A' && digit <= 'F')
+									value = digit - 'A' + 10;
+								else
+									Throw(ctx, "a \\u escape without four hexadecimal digits");
+
+								low = (low << 4) | value;
+								ctx->offset++;
+								ctx->ptr++;
+							}
+
+							if (low < 0xDC00 || low > 0xDFFF)
+								Throw(ctx, "a high surrogate that is not followed by a low surrogate");
+
+							cp = (int)(0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00));
+						}
+						else
+						{
+							Throw(ctx, "an unpaired UTF-16 high surrogate");
+						}
+					}
+					else if (code >= 0xDC00 && code <= 0xDFFF)
+					{
+						Throw(ctx, "an unpaired UTF-16 low surrogate");
+					}
+					else
+					{
+						cp = (int)code;
+					}
+				}
+				break;
+				default: Throw(ctx, "Invalid escape sequence");
 			}
+		}
+		else if (cp < 0x20)
+		{
+			// A raw control character (the newline of a string broken across two lines, a tab) is
+			// not JSON: it has to be escaped.
+			Throw(ctx, "a control character in a string (escape it)");
 		}
 
 #if defined(_WINDOWS)
@@ -359,9 +627,9 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 		// two of them; the extra slot is checked for rather than assumed.
 		if (cp > 0xFFFF)
 		{
-			if (!Verify::Range(strSize, 2, MaxStringSize - 1))
+			if (strSize + 2 > MaxStringSize)
 			{
-				throw "Json string too long";
+				Throw(ctx, "Json string too long");
 			}
 
 			cp -= 0x10000;
@@ -371,6 +639,11 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 		}
 
 #endif
+
+		if (strSize >= MaxStringSize)
+		{
+			Throw(ctx, "Json string too long");
+		}
 
 		str[strSize++] = (wchar_t)cp;
 	}
@@ -412,7 +685,7 @@ bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 		// The token has to leave room for the terminator appended below.
 		if (numberLen > (int)sizeof(number) - 2)
 		{
-			throw "Json number too long";
+			Throw(ctx, "Json number too long");
 		}
 
 		if (IsWhiteSpace(ctx->ptr[offset]) || IsControl(ctx->ptr[offset]))
@@ -432,14 +705,56 @@ bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 	{
 		number[numberLen] = 0;
 
+		// The token has to be a JSON number exactly: an optional '-', an integer part without a
+		// leading zero, an optional fraction (with at least one digit after '.') and an optional
+		// exponent. Anything else (a bare '.', a trailing 'e', two signs) is a syntax error, not
+		// half a number.
+		const char* p = number;
+		if (*p == '-')
+			p++;
+		if (*p == '0')
+		{
+			p++;
+		}
+		else if (*p >= '1' && *p <= '9')
+		{
+			while (*p >= '0' && *p <= '9')
+				p++;
+		}
+		else
+		{
+			Throw(ctx, "a fraction without a digit before '.'");
+		}
+		if (*p == '.')
+		{
+			p++;
+			if (*p < '0' || *p > '9')
+				Throw(ctx, "a fraction without a digit after '.'");
+			while (*p >= '0' && *p <= '9')
+				p++;
+		}
+		if (*p == 'e' || *p == 'E')
+		{
+			p++;
+			if (*p == '+' || *p == '-')
+				p++;
+			if (*p < '0' || *p > '9')
+				Throw(ctx, "an exponent without a digit");
+			while (*p >= '0' && *p <= '9')
+				p++;
+		}
+		if (*p != 0)
+		{
+			Throw(ctx, "a malformed number");
+		}
+
 		char* end = nullptr;
 		double parsed = strtod(number, &end);
 
-		// A malformed token must not be silently turned into half a number, and a value that does
-		// not fit the stored float must not turn into infinity.
+		// A value that does not fit the stored float must not turn into infinity.
 		if (end == number || *end != 0 || parsed > FLT_MAX || parsed < -FLT_MAX)
 		{
-			throw "Float out of range";
+			Throw(ctx, "Float out of range");
 		}
 
 		token.type = TokenType::Float;
@@ -454,7 +769,6 @@ bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 
 bool Json::GetInt(DeserializeContext* ctx, Token& token)
 {
-	static char allowedChars[] = "+-0123456789";
 	char number[0x100] = { 0, };
 	int numberLen = 0;
 
@@ -474,41 +788,98 @@ bool Json::GetInt(DeserializeContext* ctx, Token& token)
 		// The token has to leave room for the terminator appended below.
 		if (numberLen > (int)sizeof(number) - 2)
 		{
-			throw "Json number too long";
+			Throw(ctx, "Json number too long");
 		}
 
-		if (IsWhiteSpace(ctx->ptr[offset]) || IsControl(ctx->ptr[offset]))
+		uint8_t c = ctx->ptr[offset];
+
+		if (IsWhiteSpace(c) || IsControl(c))
 		{
 			break;
 		}
 
-		if (!IsAllowed(ctx->ptr[offset], allowedChars))
+		// The JSON integer grammar: an optional '-', then '0' or a digit 1-9 followed by digits.
+		// A leading '+' and a leading zero ("05") are not JSON, and this reader refuses them
+		// instead of quietly turning them into a number. '.' and 'e' mean the token is a float,
+		// which GetFloat reads; any other byte means it is not a number at all.
+		if (c == '+')
+		{
+			Throw(ctx, "a '+' sign is not part of the JSON number grammar");
+		}
+		if (c == '-')
+		{
+			if (offset != 0)
+			{
+				Throw(ctx, "a '-' sign is only allowed at the start of a number");
+			}
+			number[numberLen++] = '-';
+			offset++;
+			continue;
+		}
+		if (c == '.' || c == 'e' || c == 'E')
 		{
 			return false;
 		}
+		if (c < '0' || c > '9')
+		{
+			return false;
+		}
+		if (c == '0')
+		{
+			size_t digits = (number[0] == '-') ? 1 : 0;
+			if (offset == digits && offset + 1 < remaining &&
+				ctx->ptr[offset + 1] >= '0' && ctx->ptr[offset + 1] <= '9')
+			{
+				Throw(ctx, "a leading zero in a number");
+			}
+		}
 
-		number[numberLen++] = ctx->ptr[offset++];
+		number[numberLen++] = (char)c;
+		offset++;
 	}
 
 	if (numberLen != 0)
 	{
 		number[numberLen] = 0;
 
-		errno = 0;
-
-		char* end = nullptr;
-		unsigned long long parsed = strtoull(number, &end, 10);
-
-		// strtoull folds a negative value onto ULLONG_MAX and saturates an out-of-range one, so
-		// both are rejected here; the whole token also has to be consumed, otherwise "12+3" would
-		// quietly become 12.
-		if (number[0] == '-' || end == number || *end != 0 || errno == ERANGE)
+		size_t i = 0;
+		bool negative = false;
+		if (number[0] == '-')
 		{
-			throw "Integer out of range";
+			negative = true;
+			i = 1;
+		}
+		if (i >= (size_t)numberLen)
+		{
+			Throw(ctx, "a '-' sign without a digit");
+		}
+
+		// The accumulator saturates: a value that does not fit a signed 64-bit integer lands on
+		// the end of its range instead of wrapping around. The value is kept in the two's
+		// complement form the rest of the emulator already uses for a negative Int member.
+		const uint64_t limit = negative ? 0x8000000000000000ULL : 0x7FFFFFFFFFFFFFFFULL;
+		uint64_t value = 0;
+		for (; i < (size_t)numberLen; i++)
+		{
+			uint64_t digit = (uint64_t)(number[i] - '0');
+			if (value > (limit - digit) / 10)
+			{
+				value = limit;
+				break;
+			}
+			value = value * 10 + digit;
 		}
 
 		token.type = TokenType::Int;
-		token.value.AsInt = parsed;
+		if (negative && value != 0x8000000000000000ULL)
+		{
+			token.value.AsInt = (uint64_t)(-(int64_t)value);
+		}
+		else
+		{
+			token.value.AsInt = value;
+		}
+
 		ctx->offset += numberLen;
 		ctx->ptr += numberLen;
 		return true;
@@ -585,7 +956,7 @@ void Json::GetToken(Token& token, DeserializeContext* ctx)
 	if (GetFloat(ctx, token))
 		return;
 
-	throw "Unknown Token!";
+	Throw(ctx, "Unknown Token!");
 }
 
 #pragma endregion "De-Serialization Related"
@@ -607,7 +978,7 @@ char* Json::Value::CloneWcharName(const wchar_t* otherName)
 		return nullptr;
 
 	// The name of a member is kept as UTF-8, like every narrow string of the project.
-	std::string name = Util::WstringToString(otherName);
+	std::string name = WideToUtf8(otherName);
 
 	char* clone = new char[name.size() + 1];
 	memcpy(clone, name.c_str(), name.size() + 1);
@@ -620,6 +991,7 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 
 	type = ValueType::Object;
 
+	bool haveToken = false;
 	int counter = 0;
 
 	while (true)
@@ -630,10 +1002,14 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 		// exhausts memory before anything else notices (assert() did nothing in Release).
 		if (++counter > MaxElements)
 		{
-			throw "Too many Json elements";
+			Throw(ctx, "Too many Json elements");
 		}
 
-		Json::GetToken(token, ctx);
+		if (!haveToken)
+		{
+			Json::GetToken(token, ctx);
+		}
+		haveToken = false;
 
 		switch (token.type)
 		{
@@ -646,7 +1022,7 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 				// "abort()" dialog instead of rejecting the file.
 				if (colon.type != TokenType::Colon)
 				{
-					throw "Json Object Syntax Error";
+					Throw(ctx, "Json Object Syntax Error");
 				}
 
 				child = new Value(this);
@@ -661,6 +1037,14 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 				Json::GetToken(comma, ctx);
 				if (comma.type == TokenType::Comma)
 				{
+					// A '}' right after a ',' is a trailing comma: nearly always a half deleted
+					// member, which is why it is refused instead of ignored.
+					Json::GetToken(token, ctx);
+					if (token.type == TokenType::ObjectEnd)
+					{
+						Throw(ctx, "unexpected '}' after ',' (a trailing comma)");
+					}
+					haveToken = true;
 					break;
 				}
 				else if (comma.type == TokenType::ObjectEnd)
@@ -669,7 +1053,7 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 				}
 				else
 				{
-					throw "Json Object Syntax Error";
+					Throw(ctx, "Json Object Syntax Error");
 				}
 
 				break;
@@ -681,7 +1065,7 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 			default:
 				// GetToken does not advance on end of stream, so without this the loop spun at
 				// 100% CPU forever on a truncated document such as "{".
-				throw "Json Object Syntax Error";
+				Throw(ctx, "Json Object Syntax Error");
 		}
 	}
 }
@@ -692,6 +1076,7 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 
 	type = ValueType::Array;
 
+	bool afterComma = false;
 	int counter = 0;
 
 	while (true)
@@ -700,7 +1085,7 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 		// exhausts memory before anything else notices (assert() did nothing in Release).
 		if (++counter > MaxElements)
 		{
-			throw "Too many Json elements";
+			Throw(ctx, "Too many Json elements");
 		}
 
 		// Check empty arrays
@@ -717,11 +1102,15 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 
 		if (ctx->offset >= ctx->maxSize)
 		{
-			throw "Json Array Syntax Error";
+			Throw(ctx, "Json Array Syntax Error");
 		}
 
 		if (ctx->ptr[0] == ']')
 		{
+			if (afterComma)
+			{
+				Throw(ctx, "unexpected ']' after ',' (a trailing comma)");
+			}
 			Json::GetToken(token, ctx);		// Eat end array token
 			break;
 		}
@@ -734,16 +1123,18 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 
 		Json::GetToken(token, ctx);
 
-		switch (token.type)
+		if (token.type == TokenType::Comma)
 		{
-			case TokenType::Comma:
-				break;
-
-			case TokenType::ArrayEnd:
-				return;
-
-			default:
-				throw "Json Array Syntax Error";
+			afterComma = true;
+			continue;
+		}
+		else if (token.type == TokenType::ArrayEnd)
+		{
+			return;
+		}
+		else
+		{
+			Throw(ctx, "Json Array Syntax Error");
 		}
 	}
 }
@@ -762,16 +1153,13 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 	switch (type)
 	{
 		case ValueType::Object:
-			Indent(ctx, depth, sizeOnly);
+			// The opening brace stays on the line of the member it belongs to (the caller has
+			// already written the "name" : prefix), and the separator comma is written before the
+			// line break, so it never lands on a line of its own.
 			Json::EmitText(ctx, "{\r\n", sizeOnly);
 
 			for (auto it = children.begin(); it != children.end(); ++it)
 			{
-				if (it != children.begin())
-				{
-					Json::EmitText(ctx, ",\r\n", sizeOnly);
-				}
-
 				Value* child = *it;
 
 				Indent(ctx, depth + 1, sizeOnly);
@@ -787,13 +1175,20 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 				Json::EmitText(ctx, " : ", sizeOnly);
 
 				child->Serialize(ctx, depth + 1, sizeOnly);
+
+				auto next = it;
+				++next;
+				if (next != children.end())
+				{
+					Json::EmitChar(ctx, ',', sizeOnly);
+				}
+				Json::EmitText(ctx, "\r\n", sizeOnly);
 			}
 
 			Indent(ctx, depth, sizeOnly);
-			Json::EmitText(ctx, "}\r\n", sizeOnly);
+			Json::EmitChar(ctx, '}', sizeOnly);
 			break;
 		case ValueType::Array:
-			Indent(ctx, depth, sizeOnly);
 			Json::EmitText(ctx, "[ ", sizeOnly);
 
 			for (auto it = children.begin(); it != children.end(); ++it)
@@ -807,8 +1202,7 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 				child->Serialize(ctx, depth + 1, sizeOnly);
 			}
 
-			Indent(ctx, depth, sizeOnly);
-			Json::EmitChar(ctx, ']', sizeOnly);
+			Json::EmitText(ctx, " ]", sizeOnly);
 			break;
 		case ValueType::Null:
 			Json::EmitText(ctx, "null", sizeOnly);
@@ -817,7 +1211,9 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 			Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
 			break;
 		case ValueType::Int:
-			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%I64u", value.AsInt);
+			// %llu, not the MSVC %I64u: glibc reads "%I64u" as the 'I' flag plus a field width of
+			// 64 and pads every number to 64 columns.
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%llu", (unsigned long long)value.AsInt);
 			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::Float:
@@ -842,7 +1238,7 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 	// the context. Without this a document of 20000 '[' ran the stack out before anything noticed.
 	if (++ctx->depth > MaxDepth)
 	{
-		throw "Json max depth exceeded";
+		Throw(ctx, "Json max nested depth exceeded");
 	}
 
 	this->name = CloneWcharName(keyName);
@@ -891,7 +1287,7 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 			break;
 
 		default:
-			throw "Json Syntax Error";
+			Throw(ctx, "Json Syntax Error");
 			break;
 	}
 
@@ -1179,6 +1575,7 @@ void Json::Serialize(void* text, size_t maxTextSize, size_t& actualTextSize)
 	for (auto it = root.children.begin(); it != root.children.end(); ++it)
 	{
 		(*it)->Serialize(&ctx, 0, false);
+		Json::EmitText(&ctx, "\r\n", false);
 	}
 }
 
@@ -1195,6 +1592,7 @@ void Json::GetSerializedTextSize(void* text, size_t maxTextSize, size_t& actualT
 	for (auto it = root.children.begin(); it != root.children.end(); ++it)
 	{
 		(*it)->Serialize(&ctx, 0, true);
+		Json::EmitText(&ctx, "\r\n", true);
 	}
 }
 
@@ -1202,16 +1600,43 @@ void Json::Deserialize(void* text, size_t textSize)
 {
 	DeserializeContext ctx = { 0 };
 
+	errorLine = 0;
+
 	if (text == nullptr || textSize == 0)
 	{
+		errorLine = 1;
 		throw "Json input is empty";
 	}
 
 	ctx.ptr = (uint8_t*)text;
 	ctx.offset = 0;
 	ctx.maxSize = textSize;
+	ctx.base = (uint8_t*)text;
+	ctx.errorLine = &errorLine;
+
+	// A UTF-8 BOM is not a JSON token, but Notepad and some editors write one, so it is skipped at
+	// the very start of the document (and only there: a BOM anywhere else stays a syntax error).
+	if (textSize >= 3 &&
+		ctx.ptr[0] == 0xEF && ctx.ptr[1] == 0xBB && ctx.ptr[2] == 0xBF)
+	{
+		ctx.ptr += 3;
+		ctx.offset += 3;
+	}
 
 	root.AddObject(nullptr)->Deserialize(&ctx, nullptr);
+
+	// Nothing but whitespace may follow the document: a second value (or a stray byte) is a
+	// malformed file, not something to be silently ignored.
+	while (ctx.offset < ctx.maxSize && IsWhiteSpace(ctx.ptr[0]))
+	{
+		ctx.ptr++;
+		ctx.offset++;
+	}
+
+	if (ctx.offset < ctx.maxSize)
+	{
+		Throw(&ctx, "unexpected text after the document");
+	}
 }
 
 // Clone
