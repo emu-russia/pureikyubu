@@ -43,6 +43,21 @@ namespace
 		return out;
 	}
 
+	/// <summary>The same idea, but a sawtooth instead of a ramp: the left sample rises by 64 every
+	/// frame and drops back every 512, so a long run stays inside 16 bits while every frame is
+	/// still identifiable and its neighbours are a known 64 apart.</summary>
+	std::vector<int16_t> Saw(int first, int count)
+	{
+		std::vector<int16_t> out;
+		for (int i = 0; i < count; i++)
+		{
+			int value = ((first + i) % 512) - 256;
+			out.push_back((int16_t)(value * 64));
+			out.push_back((int16_t)(-value * 64));
+		}
+		return out;
+	}
+
 	/// <summary>Play `frames` frames and hand back what the device would have got. The stream is
 	/// pre-filled with a value Play has to overwrite, so a buffer that is not written stands out
 	/// as that value instead of as silence.</summary>
@@ -222,63 +237,88 @@ GBA_TEST(Audio, SmallCorrectionDropsOnlyTheExcess)
 	GBA_CHECK_EQ(played[played.size() - 2], (int16_t)(10000 + extra - 1));
 }
 
-GBA_TEST(Audio, WantsFrameFollowsTheCushion)
+GBA_TEST(Audio, ClockCorrectionSteersToTheCushion)
 {
-	// The frontend runs a frame of the machine while the buffer is behind its cushion, which is
-	// what makes the device the clock of the machine: the machine produces a frame only when the
-	// device has played one.
+	// The machine's clock (the frame loop) and the device's never agree exactly, so the mixer plays
+	// the buffer at a slightly different rate: the correction is the integral of the level's error,
+	// which drives the level back to the cushion whichever way the two clocks disagree.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
+
+	// Prime fills the cushion exactly: nothing to correct yet.
 	buffer.Prime();
+	GBA_CHECK_EQ(buffer.RatePermille(), 1000);
+	GBA_CHECK_EQ(buffer.UpdateClock(), 1000000);
 
-	GBA_CHECK_EQ(buffer.Queued(), buffer.TargetFrames());
-	GBA_CHECK(!buffer.WantsFrame());				// exactly at the cushion: nothing is owed yet
-	GBA_CHECK(!buffer.Starving());
+	// More audio than the cushion: the mixer has to play it back faster to drain it.
+	buffer.Push(Ramp(1, 2000).data(), 2000);
+	int raised = buffer.UpdateClock();
+	GBA_CHECK_MSG(raised > 1000000, "the correction did not rise: " + std::to_string(raised));
 
-	// The device plays a callback period: now the machine owes it a frame.
-	Play(buffer, CallbackFrames);
-	GBA_CHECK_EQ(buffer.Queued(), buffer.TargetFrames() - CallbackFrames);
-	GBA_CHECK(buffer.WantsFrame());
-	GBA_CHECK(!buffer.Starving());
+	// ... and less than the cushion: slower, to let it fill up again.
+	AudioBuffer empty;
+	MakeBuffer(empty);
+	int lowered = empty.UpdateClock();
+	GBA_CHECK_MSG(lowered < 1000000, "the correction did not fall: " + std::to_string(lowered));
 
-	// Half a cushion short is where the frontend starts refilling with extra frames.
-	Play(buffer, buffer.TargetFrames() / 2);
-	GBA_CHECK(buffer.WantsFrame());
-	GBA_CHECK(buffer.Starving());
+	// The correction stays inside one percent: a larger disagreement is a broken device rather
+	// than two clocks, and the buffer's own drop rule is what handles that.
+	AudioBuffer high;
+	MakeBuffer(high);
+	for (int i = 0; i < 1000; i++)
+		high.UpdateClock();
+	GBA_CHECK(high.RatePermille() <= 1010);
+	GBA_CHECK(high.RatePermille() >= 990);
+
+	AudioBuffer low;
+	MakeBuffer(low);
+	for (int i = 0; i < 1000; i++)
+		low.UpdateClock();
+	GBA_CHECK(low.RatePermille() <= 1010);
+	GBA_CHECK(low.RatePermille() >= 990);
 }
 
-GBA_TEST(Audio, ABurstIsHeldBackUntilTheDeviceCatchesUp)
+GBA_TEST(Audio, PlaysAtTheCorrectionRate)
 {
-	// A burst (a stalled frontend that pushes everything the core accumulated) puts the buffer
-	// above its cushion: the machine is not given another frame until the device has played the
-	// excess back, so a burst cannot keep turning into drops.
+	// A correction below one plays the buffer slightly slower: with a one percent correction a
+	// thousand frames last 1010 output frames, and what falls between two frames is interpolated.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
-	buffer.Prime();
 
-	int room = buffer.LimitFrames() - buffer.Queued();
-	std::vector<int16_t> burst = Ramp(1, room);
-	buffer.Push(burst.data(), room);
-	GBA_CHECK_EQ(buffer.Queued(), buffer.LimitFrames());
+	std::vector<int16_t> pushed = Ramp(0, 1000);
+	buffer.Push(pushed.data(), 1000);
 
-	// The burst is more than a cushion above the mark the machine waits for, and a callback period
-	// takes about half a cushion back: several periods pass before a frame may run again.
-	int plays = 0;
+	while (buffer.Step() > 990000)
+		buffer.UpdateClock();
 
-	while (plays < 8 && !buffer.WantsFrame())
-	{
-		Play(buffer, CallbackFrames);
-		plays++;
-	}
+	GBA_CHECK_EQ(buffer.RatePermille(), 990);
 
-	GBA_CHECK_MSG(plays >= 2, "the machine was not held back (" + std::to_string(plays) + " plays)");
-	GBA_CHECK(buffer.WantsFrame());
+	// A thousand frames at ninety-nine hundredths of a frame each come to 1010.1 output frames,
+	// and the last one still starts inside the buffer (at 999.9), so it is played too: 1011 - and
+	// asking for exactly those fills the period with the buffer's own samples and no silence.
+	std::vector<int16_t> out(1011 * 2, 0x7FFF);
+	int produced = buffer.Play(out.data(), 1011);
 
-	// A frame is only allowed once the buffer is back below its cushion, and the machine is not
-	// starving while that happens (what is being played is the burst, not an empty buffer).
-	GBA_CHECK(buffer.Queued() < buffer.TargetFrames());
-	GBA_CHECK(!buffer.Starving());
+	GBA_CHECK_EQ(produced, 1011);
+	GBA_CHECK_EQ(buffer.Queued(), 0);
 	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
+
+	// The output is the buffer read at ninety-nine hundredths of a frame per output frame and
+	// interpolated, so output frame n is the buffer at 0.99n: the first two land inside the first
+	// frame, frame 9 a little past the start of frame 8, and frame 10 at the start of frame 9.
+	GBA_CHECK_EQ((int)out[0], 0);
+	GBA_CHECK_EQ((int)out[2], 0);
+	GBA_CHECK_EQ((int)out[18], 8);
+	GBA_CHECK_EQ((int)out[20], 9);
+
+	// A correction of one for one is an exact copy, which is what every other test relies on.
+	AudioBuffer exact;
+	MakeBuffer(exact);
+	std::vector<int16_t> block = Ramp(7, 32);
+	exact.Push(block.data(), 32);
+	std::vector<int16_t> copy = Play(exact, 32);
+	for (size_t i = 0; i < block.size(); i++)
+		GBA_CHECK_EQ((int)copy[i], (int)block[i]);
 }
 
 GBA_TEST(Audio, LatencyInMilliseconds)
@@ -327,17 +367,21 @@ GBA_TEST(Audio, KeepsTheDeviceRateAndFormat)
 
 GBA_TEST(Audio, FrameLoopAndCallbackStayInStep)
 {
-	// The whole sound path, without SDL: a frame of the GBA mixes 548.625 samples and the device
-	// plays 32768 of them per second. The device's callback is simulated every 512 frames and the
-	// frame loop runs a frame whenever the buffer is behind its cushion, exactly as the frontend
-	// does. One minute of that:
+	// The whole sound path, without SDL: a frame of the GBA mixes 548.625 samples, the device plays
+	// 32768 of them a second, its callback takes 512 at a time, and the frame loop runs one frame
+	// per iteration and steers the mixer's rate from the buffer's level, exactly as the frontend
+	// does. The loop here is paced at 60.00 Hz - a display whose refresh is what the frontend ends
+	// up following - so the machine produces 60 * 548.625 = 32917.5 samples a second while the
+	// device takes 32768: the mixer has to play the buffer 0.46 % fast to keep up. One minute of
+	// that has to be, from the device's side:
 	//
-	//  * the buffer never runs dry (no gap);
-	//  * the delay stays at the cushion, not at the core's four second queue;
-	//  * the machine is driven at the *device's* rate, not at the display's: the loop here is paced
-	//    at 60.00 Hz (the vsync case) and the machine still runs 59.7275 frames a second, i.e. it
-	//    skips a frame every few seconds instead of mixing 0.46 % more sound than the device can
-	//    play - which is what used to be thrown away sample by sample, and heard as a rattle.
+	//  * continuous: every period is filled from the buffer (no gap), and the samples are the
+	//    machine's, all of them, in order, each one played once - nothing repeated and nothing
+	//    missed (the rattle was exactly that: the rate swinging every frame and the level then
+	//    throwing the excess away a few samples at a time);
+	//  * a rate and not noise: the correction may drift, but it must not jerk about - the old
+	//    "step += (level - cushion) / 4" swung the full two percent between neighbouring frames;
+	//  * settled: the delay at the cushion and the rate at the 0.46 % the two clocks disagree by.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
 	buffer.Prime();
@@ -350,10 +394,17 @@ GBA_TEST(Audio, FrameLoopAndCallbackStayInStep)
 	int64_t machineAccum = 0;
 	int64_t deviceAccum = 0;
 
-	int produced = buffer.TargetFrames();		// the primed silence is in the buffer too
-	int taken = 0;
+	int pushed = buffer.TargetFrames();			// the primed silence is in the buffer too
 	int machineFrames = 0;
 	int callbacks = 0;
+	int lowest = buffer.Queued();				// the level never goes below this
+	int highest = buffer.Queued();
+	int worstStep = 0;							// the largest frame to frame change of the rate
+	int repeats = 0;							// output frames that played the previous one again
+	int lateRepeats = 0;						// ... once the correction had settled
+	int skips = 0;								// output frames that missed one
+	int previous = 0;
+	int previousStep = buffer.Step();
 
 	for (int tick = 0; tick < DisplayFrames; tick++)
 	{
@@ -365,51 +416,114 @@ GBA_TEST(Audio, FrameLoopAndCallbackStayInStep)
 			deviceAccum -= 60 * CallbackPeriod;
 
 			std::vector<int16_t> out((size_t)CallbackPeriod * 2, 0x7FFF);
-			taken += buffer.Play(out.data(), CallbackPeriod);
+			buffer.Play(out.data(), CallbackPeriod);
 			callbacks++;
+
+			// The pushed samples are a sawtooth that rises by 64 every frame (and drops back
+			// every 512), so a period of it can be read back frame by frame: what the device
+			// should hear rises by 64, give or take the correction, and a frame that did not
+			// arrive shows up as a jump of 128. A *repeat* is the resampler playing slower than
+			// the machine mixed - legitimate while the level is under the cushion - but once the
+			// loop has settled the rate is above one for good and there should be none of either.
+			if (callbacks > 1)
+			{
+				for (int i = 0; i < CallbackPeriod; i++)
+				{
+					int value = out[(size_t)i * 2];
+					int difference = value - previous;
+					previous = value;
+
+					if (difference == 0)
+					{
+						repeats++;
+
+						if (tick >= DisplayFrames / 2)
+							lateRepeats++;
+					}
+					else if (difference > 66 && difference < 32000)
+					{
+						skips++;
+					}
+				}
+			}
+			else
+			{
+				previous = out[0];
+			}
 		}
 
-		if (buffer.WantsFrame())
-		{
-			machineAccum += 548625;
-			int frames = (int)(machineAccum / 1000);
-			machineAccum -= (int64_t)frames * 1000;
+		// The frame loop: one frame of the machine, then the clock correction.
+		machineAccum += 548625;
+		int frames = (int)(machineAccum / 1000);
+		machineAccum -= (int64_t)frames * 1000;
 
-			std::vector<int16_t> block = Ramp(produced, frames);
-			buffer.Push(block.data(), frames);
-			produced += frames;
-			machineFrames++;
-		}
+		std::vector<int16_t> block = Saw(pushed, frames);
+		buffer.Push(block.data(), frames);
+		pushed += frames;
+		machineFrames++;
+
+		int step = buffer.UpdateClock();
+
+		if (std::abs(step - previousStep) > worstStep)
+			worstStep = std::abs(step - previousStep);
+
+		previousStep = step;
+
+		if (buffer.Queued() < lowest)
+			lowest = buffer.Queued();
+
+		if (buffer.Queued() > highest)
+			highest = buffer.Queued();
 	}
 
 	GBA_CHECK(callbacks > 0);
+	GBA_CHECK_EQ(machineFrames, DisplayFrames);
+
+	// Continuous: nothing was thrown away, the device was never left with a period to fill from
+	// nothing, and the machine's own samples reached it one at a time, in order - no frame of the
+	// sawtooth arrived twice after the loop had settled, and none was missed anywhere.
+	GBA_CHECK_EQ((int)buffer.Drops(), 0);
 	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
-	GBA_CHECK(buffer.Queued() <= buffer.LimitFrames());
 
-	// The machine ran at its own rate (3583.65 frames a minute), not at the display's 3600.
-	GBA_CHECK_MSG(machineFrames < DisplayFrames,
-		"the machine ran " + std::to_string(machineFrames) + " frames");
-	GBA_CHECK_MSG(machineFrames > DisplayFrames * 99 / 100,
-		"the machine ran only " + std::to_string(machineFrames) + " frames");
+	GBA_CHECK_MSG(skips == 0, std::to_string(skips) + " frames were missed");
+	GBA_CHECK_MSG(lateRepeats == 0,
+		std::to_string(lateRepeats) + " of " + std::to_string(repeats) +
+		" repeated frames came after the correction had settled");
 
-	// Nothing had to be thrown away: the device is the clock, so the two rates agree, and the
-	// cushion plus one frame still fits below the mark that drops audio.
-	int dropped = produced - taken - buffer.Queued();
-	GBA_CHECK_MSG(dropped == 0, std::to_string(dropped) + " frames were dropped");
+	// The machine ran once per iteration: its speed is the loop's, not the device's clock.
+	GBA_CHECK_EQ(machineFrames, DisplayFrames);
 
-	// Which keeps the delay at the cushion.
-	GBA_CHECK(buffer.LatencyMs() < 100);
+	// A rate and not noise: the correction moved by at most a thousandth of a percent between two
+	// neighbouring frames (242 was the worst of this run, against 20001 for the old rule).
+	GBA_CHECK_MSG(worstStep <= 1000,
+		"the playback rate jumped " + std::to_string(worstStep) + " millionths in one frame");
+
+	// Settled: the correction found the 0.46 % the two clocks disagree by, the level is back at
+	// the cushion, and the delay is the cushion's business, not the core queue's.
+	GBA_CHECK_MSG(std::abs(buffer.RatePermille() - 1005) <= 2,
+		"the correction settled at " + std::to_string(buffer.RatePermille()) + " permille");
+
 	GBA_CHECK_MSG(std::abs(buffer.Queued() - buffer.TargetFrames()) <= 2 * CallbackPeriod,
 		"the buffer settled at " + std::to_string(buffer.Queued()) + " of a " +
 		std::to_string(buffer.TargetFrames()) + " frame cushion");
+
+	// Which it never left far enough to run dry or to reach the mark that drops audio.
+	GBA_CHECK_MSG(lowest > buffer.TargetFrames() / 2,
+		"the level fell to " + std::to_string(lowest));
+
+	GBA_CHECK_MSG(highest < buffer.LimitFrames(),
+		"the level reached " + std::to_string(highest));
+
+	GBA_CHECK(buffer.LatencyMs() < 100);
 }
 
 GBA_TEST(Audio, AStarvedBufferIsRefilledWithExtraFrames)
 {
 	// A hitch (the host stalled, a frame took far too long) lets the device play on while nothing
 	// is mixed: the buffer runs dry and the device hears a gap. A machine in step with the device
-	// only makes up one frame's worth of audio per frame, so the frontend runs extra frames until
-	// the cushion is back - that is what the catch-up loop does, and this is the rule it uses.
+	// only makes up one frame's worth of audio per frame - the mixer's rate correction is a
+	// fraction of a percent, not a way to catch up on seconds - so the frontend runs extra frames
+	// until the cushion is back. That is what the catch-up loop does, and this is the rule it uses.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
 	buffer.Prime();
@@ -421,8 +535,8 @@ GBA_TEST(Audio, AStarvedBufferIsRefilledWithExtraFrames)
 
 	// The frontend runs frames back to back until the buffer is out of the starving zone (no
 	// callback in between: the catch-up happens inside one iteration of the frame loop). Two
-	// frames of 548 samples take it past half a cushion, and from there the ordinary cushion rule
-	// (WantsFrame) keeps refilling it one frame at a time.
+	// frames of 548 samples take it past half a cushion (819 frames), and from there the frame
+	// loop's ordinary pace makes one frame's worth of audio per frame again.
 	int runs = 0;
 
 	while (buffer.Starving() && runs < 4)
@@ -435,7 +549,6 @@ GBA_TEST(Audio, AStarvedBufferIsRefilledWithExtraFrames)
 	GBA_CHECK_EQ(runs, 2);
 	GBA_CHECK_EQ(buffer.Queued(), 2 * 548);
 	GBA_CHECK(!buffer.Starving());
-	GBA_CHECK(buffer.WantsFrame());
 	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
 	GBA_CHECK_EQ((int)buffer.Drops(), 0);
 }

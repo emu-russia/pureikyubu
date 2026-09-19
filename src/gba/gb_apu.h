@@ -22,7 +22,8 @@
 //  * the trigger behaviour, the sweep unit (shadow register, the immediate overflow check, the
 //    "negate and clear" quirk), the envelope, the LFSR, the wave RAM (including the sample 0 the
 //    wave channel skips on a trigger), the DAC enable rules, NR50's master volume, the PCM12 and
-//    PCM34 registers of the CGB, and the output high pass filter.
+//    PCM34 registers of the CGB, and the output high pass filter (which the settings can turn off,
+//    see SetHighPassFilter).
 //
 // Deliberately not modelled (the Pan Docs describe all of these as hardware quirks that a
 // cartridge must not rely on):
@@ -69,6 +70,19 @@ namespace GBA
 		/// only a CGB answers the PCM12/PCM34 registers.
 		/// </summary>
 		void SetCgb(bool value);
+
+		/// <summary>
+		/// Turn the output high pass filter on or off (it is on by default, which is what the
+		/// hardware has). The filter is what removes the DC offset the DACs leave on the two
+		/// outputs; with it off the frontend gets the raw sum instead - which is what a listener
+		/// who wants the unfiltered signal, or a recording that is going to be filtered later,
+		/// asks for, at the price of the offset (and of the CGB's brighter, thinner sound, which
+		/// is largely this filter's doing).
+		/// </summary>
+		void SetHighPassFilter(bool enabled) { highPass = enabled; }
+
+		/// <summary>True while the output high pass filter is applied.</summary>
+		bool HighPassFilter() const { return highPass; }
 
 		/// <summary>True when the APU models a CGB (the tests and the debugger read this).</summary>
 		bool Cgb() const { return cgb; }
@@ -195,6 +209,10 @@ namespace GBA
 		// The high pass filter of the two outputs (Pan Docs "Audio Details" gives the reference
 		// implementation; the capacitor is dragged towards the signal by 0.999958 at the DMG's
 		// 4194304 Hz and by 0.998943 on the MGB and CGB, rebased here for an arbitrary host rate).
+		// `highPass` is the frontend's setting: off, the two outputs are the raw sum (see
+		// SetHighPassFilter), and the capacitors follow the signal so that turning it back on does
+		// not click.
+		bool highPass = true;
 		double capacitorLeft = 0.0;
 		double capacitorRight = 0.0;
 		double highPassCharge = 0.999958;

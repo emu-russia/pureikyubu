@@ -724,9 +724,20 @@ namespace GBA
 
 		// The high pass filter of the two outputs (Pan Docs "Audio Details" gives this reference
 		// implementation). With every DAC off the outputs are disconnected and read exactly zero.
+		// With the filter turned off (the settings' "highPassFilter") the two outputs are the raw
+		// sum the DACs make, and the capacitors are left holding the signal, so that turning the
+		// filter back on continues from where the signal is instead of from wherever the capacitor
+		// happened to be.
 		double filteredLeft = 0.0;
 		double filteredRight = 0.0;
-		if (anyDac)
+		if (!highPass)
+		{
+			filteredLeft = left;
+			filteredRight = right;
+			capacitorLeft = left;
+			capacitorRight = right;
+		}
+		else if (anyDac)
 		{
 			filteredLeft = left - capacitorLeft;
 			capacitorLeft = left - filteredLeft * highPassCharge;

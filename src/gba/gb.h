@@ -44,6 +44,10 @@ namespace GBA
 		/// <summary>The host sample rate for ReadAudio().</summary>
 		int sampleRate = 48000;
 
+		/// <summary>Apply the APU's output high pass filter (on by default, as the hardware has
+		/// it). Off, ReadAudio() hands back the DACs' raw sum, DC offset and all.</summary>
+		bool highPassFilter = true;
+
 		/// <summary>0 = quiet, 1 = errors, 2 = warnings, 3 = info, 4 = debug.</summary>
 		int logLevel = 2;
 
@@ -121,6 +125,9 @@ namespace GBA
 
 		void SetSampleRate(int hz);
 		int SampleRate() const { return bus->apu.SampleRate(); }
+
+		/// <summary>Turn the APU's output high pass filter on or off; it takes effect at once.</summary>
+		void SetHighPassFilter(bool enabled);
 
 		/// <summary>Choose the shades of the monochrome picture (a CGB ignores it).</summary>
 		void SetPalette(GbPalette palette);

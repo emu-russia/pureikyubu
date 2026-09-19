@@ -37,7 +37,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_bus.h/.cpp` | The address decoder, the open bus, the waitstates and the system clock |
 | `gba_ppu.h/.cpp` | The LCD controller: tile and bitmap backgrounds, sprites, windows, blending, scanline timing |
 | `gba_apu.h/.cpp` | The four legacy channels, the two direct-sound FIFOs (clocked by the timer overflows) and the host mixer |
-| `gba_audio.h` | The mixer buffer between the machine and the host's sound device: the machine pushes the samples into it, the frontend's audio callback plays them (the arrangement dmgemu uses in its `sound.cpp`) |
+| `gba_audio.h` | The mixer buffer between the machine and the host's sound device: the machine pushes the samples into it, the frontend's audio callback plays them at the rate a slow controller steers from the buffer's level (the arrangement dmgemu uses in its `sound.cpp`) |
 | `gba_sio.h/.cpp` | The serial port: normal, multiplayer, UART and JOY bus modes, and the link cable |
 | `gba_dma.h/.cpp` | The four DMA channels, including the sound FIFO and video capture timings |
 | `gba_timers.h/.cpp` | The four timers and their cascade |
@@ -59,7 +59,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gb.h/.cpp` | `GbSystem`: the machine, its boot ROM choice, its link cable |
 | `gb_cpu.h/.cpp` | The LR35902 (SM83) interpreter |
 | `gb_ppu.h/.cpp` | The DMG/CGB LCD: the background, the window, the sprites, the CGB palettes and VRAM banks |
-| `gb_apu.h/.cpp` | The four sound channels (the manual's dividers, the duty phases, the 512 Hz frame sequencer with the length at 256 Hz, the sweep at 128 Hz and the envelope at 64 Hz, the length timer, NR50/NR51 mixing and the high pass filter) and the host mixer |
+| `gb_apu.h/.cpp` | The four sound channels (the manual's dividers, the duty phases, the 512 Hz frame sequencer with the length at 256 Hz, the sweep at 128 Hz and the envelope at 64 Hz, the length timer, NR50/NR51 mixing and the high pass filter, which the settings can turn off) and the host mixer |
 | `gb_cart.h/.cpp` | The cartridge header and the MBC1/2/3/5 mappers with battery saves |
 | `gb_bus.h/.cpp` | The bus, the timer, the joypad, the serial port, OAM DMA and the CGB's double speed |
 | `gb_bootrom.h/.cpp` | The emulator's own 256-byte DMG/CGB boot ROM (the wordmark slides in) |
@@ -87,19 +87,26 @@ queue, and the frontend drains that queue once per frame into the mixer buffer (
 lets the host's sound device play it back from its audio callback (`gba_sdl.cpp` opens the device
 with a callback, exactly as dmgemu does).
 
-The **sound device is the clock of the machine**: a frame is mixed while the buffer is behind its
-cushion (about three video frames, 50 ms), so the machine runs at the rate the device plays and the
-two can never drift apart. A buffer that has run dry - the host stalled, a frame took far too long -
-is refilled with a few extra frames in the same iteration, because a machine in step with the device
+The **machine keeps its own clock and the mixer follows it**: the frame loop runs one frame per
+iteration and `PaceFrame` holds it to the machine's own 59.7275 Hz frame period (the display's
+refresh only adds its own limit on top), so the emulation's speed never follows the sound device's
+crystal. The buffer is kept at a cushion of about three video frames (50 ms) by playing it back at a
+slightly different rate: `AudioBuffer::Play` resamples by the rate `UpdateClock` steers from the
+buffer's level, so the fraction of a percent by which the two clocks disagree - a 60.00 Hz display
+against the GBA's 59.7275 is 0.46 %, i.e. 8 cents - costs neither a growing delay nor dropped
+samples. The steering is a slow PI controller on a *filtered* level (`ClockCorrection`): the device
+plays a whole callback period at a time, so the raw level saws up and down at the beat of the two
+clocks, and a controller that answers that sawtooth instead of the level swings the playback rate
+several percent between one frame and the next - heard as a rattle, with the excess audio thrown
+away on top of it. A buffer that has run dry - the host stalled, a frame took far too long - is
+refilled with a few extra frames in the same iteration, because a machine in step with the device
 only makes up one frame's worth of audio per frame; and a period the device asks for that the buffer
 cannot fill is silence rather than stale samples. The delay therefore stays at the cushion, whatever
-the display and the host do.
+the display and the host do. The window title reports the delay, the rate correction and the
+counters when `showFps` is on.
 
-This is also what keeps the sound clean when `vsync` is on: the GBA's frame is 59.7275 Hz and a
-display's refresh is usually 60.00 Hz, and running a frame for every display frame would make the
-machine mix 0.46 % more sound than the device plays - audio that would then have to be thrown away
-sample by sample, which is heard as a rattle at the display's rate. The picture repeats a frame every
-few seconds instead. The window title reports the delay and the counters when `showFps` is on.
+The DMG/CGB APU's output high pass filter (see `gb_apu.h`) can be turned off with the settings
+file's `audio.highPassFilter`; off, `ReadAudio` hands back the DACs' raw sum.
 
 **Deviation worth knowing**: the LCD renders a whole scanline when its HBlank starts instead of
 composing it dot by dot during the visible part. A game that rewrites VRAM (or the scroll

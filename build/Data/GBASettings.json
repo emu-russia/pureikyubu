@@ -26,7 +26,8 @@
 	{
 		"audioEnabled": true,
 		"sampleRate": 32768,
-		"volume": 100
+		"volume": 100,
+		"highPassFilter": true
 	},
 
 	"input":

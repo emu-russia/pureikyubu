@@ -445,6 +445,8 @@ namespace
 				AssignInt(out.sampleRate, member, "audio.sampleRate", MinSampleRate, MaxSampleRate);
 			else if (name == "volume")
 				AssignInt(out.volume, member, "audio.volume", MinVolume, MaxVolume);
+			else if (name == "highPassFilter")
+				AssignBool(out.highPassFilter, member, "audio.highPassFilter");
 			else
 				UnknownMember("audio", name);
 		}
@@ -659,7 +661,8 @@ namespace GBA
 		text += Section("audio",
 			Member("audioEnabled", Boolean(audioEnabled), false) +
 			Member("sampleRate", Number(sampleRate), false) +
-			Member("volume", Number(volume), true), false);
+			Member("volume", Number(volume), false) +
+			Member("highPassFilter", Boolean(highPassFilter), true), false);
 
 		std::vector<GbaKeyBinding> bindings = BindingsForFile(*this);
 		std::string members;

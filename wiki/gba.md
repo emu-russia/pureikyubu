@@ -70,16 +70,22 @@ the machine *pushes* its samples and the device *pulls* them: nothing has to be 
 delay of the sound cannot grow the way it does when the frontend only drains the core when a queue
 looks short.
 
-The buffer is kept at a cushion of about three video frames (50 ms at 32768 Hz) and the **sound
-device is the clock of the machine**: a frame is mixed while the buffer is behind its cushion, so
-the machine runs at the rate the device plays and the two cannot drift apart. A buffer that ran dry
-(the host stalled, a frame took far too long) is refilled with a few extra frames in the same
-iteration - a machine in step with the device only makes up one frame's worth of audio per frame -
-and a callback period the buffer cannot fill is silence rather than a repeat of the samples before
-it. With `video.vsync` on - the shipped default - the display clock and the GBA's 59.7275 Hz do not
-agree (a 60.00 Hz refresh is 0.46 % faster); because the device is the clock, that costs a repeated
-picture frame every few seconds instead of a growing delay or audio thrown away sample by sample.
-The delay and the counters are part of the window title when `video.showFps` is on.
+The buffer is kept at a cushion of about three video frames (50 ms at 32768 Hz) and the **machine
+keeps its own clock, with the mixer following it**: the frame loop runs one frame per iteration and
+`PaceFrame` holds it to the machine's own 59.7275 Hz frame period (the display's refresh only adds
+its own limit on top), so the emulation's speed never follows the sound device's crystal. The two
+clocks are reconciled by playing the buffer back at a slightly different rate - `AudioBuffer::Play`
+resamples by the rate `UpdateClock` steers from the buffer's level - so the fraction of a percent by
+which they disagree (a 60.00 Hz display against the GBA's 59.7275 is 0.46 %, i.e. 8 cents) costs
+neither a growing delay nor audio thrown away sample by sample. The steering is a slow PI controller
+on a *filtered* level (`ClockCorrection`): because the device takes a whole callback period at a
+time, the raw level saws up and down at the beat of the two clocks, and a controller that answers
+that sawtooth instead of the level swings the playback rate several percent between neighbouring
+frames - a rattle, with the excess audio dropped on top of it. A buffer that ran dry (the host
+stalled, a frame took far too long) is refilled with a few extra frames in the same iteration - a
+machine in step with the device only makes up one frame's worth of audio per frame - and a callback
+period the buffer cannot fill is silence rather than a repeat of the samples before it. The delay,
+the rate correction and the counters are part of the window title when `video.showFps` is on.
 
 The mixer's levels are the hardware's (GBATEK "Max Output Levels"): each of the four PSG channels
 spans a quarter of the output range and each FIFO the whole of it, so a direct sound channel is four
@@ -103,7 +109,7 @@ samples.
 | `info` | a description of the file |
 | `boot` | `biosPath`, `useCustomBootRom`, `skipBootAnimation`, `hleBios` |
 | `video` | `videoScale`, `fullscreen`, `vsync`, `integerScale`, `showFps`, `frameSkip` |
-| `audio` | `audioEnabled`, `sampleRate`, `volume` |
+| `audio` | `audioEnabled`, `sampleRate`, `volume`, `highPassFilter` |
 | `input` | the eleven bindings (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`, `R`, `L`, `SPEED`) |
 | `link` | `linkEnabled`, `linkServer`, `linkAddress`, `linkPlayers` |
 | `emulation` | `rtcEnabled`, `bootWithNoCartridge`, `debugger`, `saveDirectory`, `logLevel` |
@@ -151,7 +157,8 @@ that machine is part of this module too (`gb_*.cpp`, `GB::GbSystem` in `src/gba/
   2097152 Hz and the LFSR at 262144 / (divisor * 2^shift) Hz), with the 512 Hz frame sequencer
   clocking the length at 256 Hz, the sweep at 128 Hz and the envelope at 64 Hz, NR50's master
   volume, NR51's routing and the console's own high pass filter (the CGB's is more aggressive than
-  the DMG's), mixed down to the host's sample rate;
+  the DMG's; `audio.highPassFilter` in the settings turns the filter off), mixed down to the host's
+  sample rate;
 * the **cartridge**: the header and the MBC1/2/3/5 mappers with battery-backed RAM written to a
   `.sav` next to the ROM;
 * a **free 256-byte boot ROM** built from source by the LR35902 emitter in `gb_asm.cpp`, in which

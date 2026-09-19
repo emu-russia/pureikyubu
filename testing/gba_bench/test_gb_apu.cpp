@@ -861,3 +861,47 @@ GBA_TEST(GbApu, HighPassFilterIsModelDependent)
 	GBA_CHECK_MSG(cgb < dmg, "the CGB's filter left " + std::to_string(cgb) +
 		" against the DMG's " + std::to_string(dmg));
 }
+
+GBA_TEST(GbApu, HighPassFilterCanBeTurnedOff)
+{
+	// The frontend's settings can turn the filter off (GbApu::SetHighPassFilter), and then the two
+	// outputs are the DACs' raw sum: the very same constant output stays where it is instead of
+	// being pulled towards zero. One channel at its maximum is the easiest way to make one.
+	auto level = [](bool filter) -> int
+	{
+		Machine m;
+		m.apu().SetHighPassFilter(filter);
+		m.apu().Reset();
+		m.Write(NR52, 0x80);
+		m.Write(NR51, 0x44);
+		m.Write(NR50, 0x77);
+
+		for (int i = 0; i < 16; i++)
+			m.Write((uint16_t)(WaveRam + i), 0xFF);
+
+		m.Write(NR30, 0x80);
+		m.Write(NR32, 0x20);
+		m.Write(NR33, (uint8_t)(1792 & 0xFF));
+		m.Write(NR34, (uint8_t)(0x80 | (1792 >> 8)));
+
+		// 1024 samples is 31 ms, more than five of the DMG filter's 5.7 ms time constants, so a
+		// filtered constant has nothing left by then.
+		m.Tick(1024);
+		m.Drain();
+		m.Tick(1);
+
+		std::vector<int16_t> samples = m.Drain();
+		return samples.empty() ? 0 : samples[0];
+	};
+
+	int filtered = level(true);
+	int raw = level(false);
+
+	// The raw sum is the channel's own 15 of 15 through NR50's volume of eight, on the full scale
+	// of four channels at 15 ("the output level is set to 0Fh ... 0.75V * 4 = 3V"): 120 / 480.
+	const int Expected = (int)((15.0 * 8.0) * (32767.0 / (4.0 * 15.0 * 8.0)));
+
+	GBA_CHECK_EQ(raw, Expected);
+	GBA_CHECK_MSG(filtered > 0 && filtered < raw / 40,
+		"the filter left " + std::to_string(filtered) + " of the raw " + std::to_string(raw));
+}
