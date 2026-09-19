@@ -64,9 +64,10 @@ namespace GBA
 		// without bound: four seconds of stereo frames.
 		const int PendingSeconds = 4;
 
-		// The wave channel's timer driven sample clock remembers the last timer reading; that
-		// reading is invalid right after a reset or a trigger, which is what the marker says.
-		const uint16_t TimerNotPrimed = 0xFFFF;
+		// The wave channel's timer driven digit clock and the FIFO byte clock remember the timer's
+		// running overflow total as it was when they last looked; that total is invalid right after
+		// a reset or a trigger, which is what the marker says.
+		const uint32_t OverflowNotPrimed = 0xFFFFFFFF;
 
 		inline int Clamp16(int value)
 		{
@@ -124,7 +125,7 @@ namespace GBA
 			fifoTimerSelect[i] = false;
 			fifoLeftOnly[i] = fifoRightOnly[i] = false;
 			fifoOutput[i] = 0;
-			fifoAccum[i] = -1;			// -1: no timer reading has been taken yet
+			fifoOverflowBase[i] = OverflowNotPrimed;	// no timer total has been taken yet
 			fifoLatchedSample[i] = 0;
 		}
 		memset(fifo, 0, sizeof(fifo));
@@ -147,7 +148,7 @@ namespace GBA
 		wavePosition = 0;
 		waveLength = 0;
 		waveLengthEnabled = false;
-		lastTimerValue = TimerNotPrimed;
+		waveTimerOverflow = OverflowNotPrimed;
 
 		noiseEnabled = false;
 		noiseDacEnabled = false;
@@ -423,13 +424,24 @@ namespace GBA
 			break;
 
 		case 0x75:		// NR34: frequency high, length flag (6), trigger (7)
+		{
+			// Bit 14 selects the timer that clocks the digits (timer 1 when it is set, timer 0
+			// when it is clear). The running overflow total of the newly selected timer has
+			// nothing to do with the one the channel was counting, so it is taken afresh.
+			bool otherTimer = (Bit(sound3cntX, 14) != 0) != ((value & 0x40) != 0);
+
 			sound3cntX = (sound3cntX & 0x00FF) | ((uint16_t)(value & 0x47) << 8);
 			waveFrequency = sound3cntX & 0x7FF;
+
+			if (otherTimer)
+				waveTimerOverflow = OverflowNotPrimed;
+
 			if (value & 0x80)
 				TriggerWave();
 			else
 				waveLengthEnabled = (value & 0x40) != 0;
 			break;
+		}
 
 		// -- channel 4 ---------------------------------------------------------------------
 		case 0x78:		// NR41: length (write only)
@@ -501,7 +513,7 @@ namespace GBA
 				fifoEnabled[which] = right || left;
 
 				if (fifoTimerSelect[which] != timer)
-					fifoAccum[which] = -1;		// the other timer needs a fresh reading
+					fifoOverflowBase[which] = OverflowNotPrimed;	// the other timer needs a fresh total
 				fifoTimerSelect[which] = timer;
 
 				if (reset)
@@ -512,7 +524,7 @@ namespace GBA
 					fifoHead[which] = fifoTail[which] = fifoCount[which] = 0;
 					fifoLatchedSample[which] = 0;
 					fifoOutput[which] = 0;
-					fifoAccum[which] = -1;
+					fifoOverflowBase[which] = OverflowNotPrimed;
 					fifoRequest[which] = false;
 				}
 			}
@@ -543,7 +555,7 @@ namespace GBA
 					fifoEnabled[i] = false;
 					fifoOutput[i] = 0;
 					fifoLatchedSample[i] = 0;
-					fifoAccum[i] = -1;
+					fifoOverflowBase[i] = OverflowNotPrimed;
 					fifoRequest[i] = false;
 				}
 
@@ -559,7 +571,7 @@ namespace GBA
 				wavePosition = 0;
 				waveLength = 0;
 				waveLengthEnabled = false;
-				lastTimerValue = TimerNotPrimed;
+				waveTimerOverflow = OverflowNotPrimed;
 
 				noiseEnabled = false;
 				noiseDacEnabled = false;
@@ -823,37 +835,44 @@ namespace GBA
 		{
 			if (!fifoEnabled[which])
 			{
-				// An unrouted FIFO is silent and does not consume its samples; the timer reading
-				// starts over when it is routed again.
+				// An unrouted FIFO is silent and does not consume its samples; the timer's running
+				// total is taken afresh when it is routed again, so the overflows that happened
+				// while it was silent are not replayed.
 				fifoOutput[which] = 0;
-				fifoAccum[which] = -1;
+				fifoOverflowBase[which] = OverflowNotPrimed;
 				continue;
 			}
 
 			// The FIFO moves one byte to the output latch per overflow of timer 0 or timer 1
-			// (SOUNDCNT_H bit 10 for A, bit 14 for B). A timer overflow is the counter wrapping
-			// around from FFFFh to its reload value, so the previous reading has to be
-			// remembered to see it; `fifoAccum` holds that reading (-1 = not taken yet).
+			// (SOUNDCNT_H bit 10 for A, bit 14 for B, GBATEK "Sound Channel A and B"). The timer
+			// can overflow more than once between two host samples - a FIFO clocked at 44.1 kHz
+			// overflows about 1.35 times per 32.768 kHz sample - so the mixer moves as many bytes
+			// as the timer counted, not merely one: the difference of two running totals is exact
+			// however the clock is sliced, and the wrap of the 32-bit total is far away.
 			int timer = fifoTimerSelect[which] ? 1 : 0;
-			uint16_t now = bus.timers.Counter(timer);
-			if (fifoAccum[which] < 0)
+			uint32_t now = bus.timers.Overflows(timer);
+			uint32_t overflows = 0;
+
+			if (fifoOverflowBase[which] == OverflowNotPrimed)
 			{
-				fifoAccum[which] = now;
+				fifoOverflowBase[which] = now;
 			}
 			else
 			{
-				if (now < (uint16_t)fifoAccum[which])
+				overflows = now - fifoOverflowBase[which];
+				fifoOverflowBase[which] = now;
+			}
+
+			for (uint32_t i = 0; i < overflows; i++)
+			{
+				// An empty FIFO keeps the last sample it played (the latch) rather than going
+				// silent.
+				if (fifoCount[which] > 0)
 				{
-					// Timer overflow: "Move 8bit data from FIFO to sound circuit". An empty FIFO
-					// keeps the last sample it played (the latch) rather than going silent.
-					if (fifoCount[which] > 0)
-					{
-						fifoLatchedSample[which] = fifo[which][fifoHead[which]];
-						fifoHead[which] = (fifoHead[which] + 1) % FifoSize;
-						fifoCount[which]--;
-					}
+					fifoLatchedSample[which] = fifo[which][fifoHead[which]];
+					fifoHead[which] = (fifoHead[which] + 1) % FifoSize;
+					fifoCount[which]--;
 				}
-				fifoAccum[which] = now;
 			}
 
 			// The sample is a signed 8 bit value (-128..+127, GBATEK "Sound Channel A and B")
@@ -934,16 +953,20 @@ namespace GBA
 
 		if (bus.timers.Running(timerIndex))
 		{
-			uint16_t now = bus.timers.Counter(timerIndex);
-			if (lastTimerValue == TimerNotPrimed)
+			// The timer can overflow more than once between two host samples (its fastest rate,
+			// 16777216/64 = 262144 Hz, is eight times the host rate): the difference of the two
+			// running totals is exactly how many digits the channel advanced, the same way the
+			// FIFOs count their bytes.
+			uint32_t now = bus.timers.Overflows(timerIndex);
+
+			if (waveTimerOverflow == OverflowNotPrimed)
 			{
-				lastTimerValue = now;		// nothing to compare against yet
+				waveTimerOverflow = now;		// nothing to compare against yet
 			}
 			else
 			{
-				if (now < lastTimerValue)
-					advances = 1;			// the counter wrapped: a timer overflow
-				lastTimerValue = now;
+				advances = (int)(now - waveTimerOverflow);
+				waveTimerOverflow = now;
 			}
 		}
 		else
@@ -1106,7 +1129,7 @@ namespace GBA
 		wavePosition = 0;
 		waveSample = WaveDigit(waveRam, wavePosition);
 		wavePhase = 0;
-		lastTimerValue = TimerNotPrimed;
+		waveTimerOverflow = OverflowNotPrimed;
 		waveEnabled = true;
 	}
 

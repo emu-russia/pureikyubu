@@ -112,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\testing\gba_bench\test_apu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_audio.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_bios.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_bootrom.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_cart.cpp" />

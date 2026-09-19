@@ -136,6 +136,7 @@
     <ClInclude Include="..\..\src\gba\gba.h" />
     <ClInclude Include="..\..\src\gba\gba_apu.h" />
     <ClInclude Include="..\..\src\gba\gba_armasm.h" />
+    <ClInclude Include="..\..\src\gba\gba_audio.h" />
     <ClInclude Include="..\..\src\gba\gba_bootrom.h" />
     <ClInclude Include="..\..\src\gba\gba_bus.h" />
     <ClInclude Include="..\..\src\gba\gba_cart.h" />

@@ -176,6 +176,52 @@ GBA_TEST(Timers, CascadeCountsThePreviousOverflow)
 	GBA_CHECK_HEX16(f.Read(0x104), 0xFFFE);
 }
 
+GBA_TEST(Timers, OverflowTotalCountsEveryWrap)
+{
+	// The sound controller's direct-sound FIFOs are clocked by a timer overflow (SOUNDCNT_H bits
+	// 10/14), and a timer can overflow several times between two host samples: the running total of
+	// the wraps is what the mixer reads, so a counter value that happens to come back to where it
+	// was - the period divides the slice - must not hide the wraps in between.
+	Fixture f;
+
+	const uint16_t reload = 0xFF00;					// 256 cycles per overflow
+	f.Write(0x100, reload);						// TM0CNT_L
+	f.Write(0x102, TimerControl(0, false, false));	// TM0CNT_H: F/1, start
+
+	GBA_CHECK_EQ((int)f.bus.timers.Overflows(0), 0);
+
+	// One period: the counter wraps once and is back at the reload value.
+	f.bus.timers.Tick(f.bus, 256);
+	GBA_CHECK_HEX16(f.Read(0x100), reload);
+	GBA_CHECK_EQ((int)f.bus.timers.Overflows(0), 1);
+
+	// Four periods in one slice: the counter is back at the same value again, but four more wraps
+	// happened.
+	f.bus.timers.Tick(f.bus, 1024);
+	GBA_CHECK_HEX16(f.Read(0x100), reload);
+	GBA_CHECK_EQ((int)f.bus.timers.Overflows(0), 5);
+
+	// A stopped timer does not count, and the total is kept across a stop and a restart.
+	f.Write(0x102, 0x0000);
+	f.bus.timers.Tick(f.bus, 4096);
+	GBA_CHECK_EQ((int)f.bus.timers.Overflows(0), 5);
+
+	f.Write(0x102, TimerControl(0, false, false));
+	f.bus.timers.Tick(f.bus, 512);
+	GBA_CHECK_EQ((int)f.bus.timers.Overflows(0), 7);
+
+	// A cascade counts the overflows of the timer before it, so its own total follows that one.
+	Fixture c;
+	c.Write(0x100, 0xFF00);						// TM0CNT_L: 256 cycles per overflow
+	c.Write(0x102, TimerControl(0, false, false));
+	c.Write(0x104, 0xFFFF);						// TM1CNT_L: one count to overflow
+	c.Write(0x106, TimerControl(0, true, false));	// TM1CNT_H: cascade off timer 0
+
+	c.bus.timers.Tick(c.bus, 256);
+	GBA_CHECK_EQ((int)c.bus.timers.Overflows(0), 1);
+	GBA_CHECK_EQ((int)c.bus.timers.Overflows(1), 1);
+}
+
 GBA_TEST(Timers, ReloadWriteOnlyTakesEffectOnTheNextOverflow)
 {
 	Fixture f;

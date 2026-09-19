@@ -47,6 +47,7 @@ official IPL.
 | `Cpu` | The ARM7TDMI: the data processing family with the flags and the barrel shifter, multiplies, the load/store family, the block transfers, the branch family, all the Thumb formats, the mode banking, the exceptions, HALT |
 | `Ppu` | The LCD: text/affine/bitmap backgrounds, sprites, windows, blending, forced blank, the scanline timing and the HBlank/VBlank/VCount interrupts |
 | `Apu` | The four legacy channels, the wave RAM, the noise LFSR, the two FIFOs with their DMA requests, the mixer and the sample rate |
+| `Audio` | The mixer buffer between the machine and the sound device (`src/gba/gba_audio.h`): the push/play round trip and the ring wrap, the cushion and the high water mark, a callback period the buffer cannot fill, the block a stalled frontend pushes, and the frame loop against a simulated device clock |
 | `Timers`, `Dma`, `Sio`, `Keypad`, `Irq` | The four timers and the cascade, the four DMA channels and their start timings, the serial port in normal and multiplayer mode between two attached machines, the keypad conditions, IE/IF/IME |
 | `Cart` | The header, the save-type detection, SRAM, the Flash command set, the EEPROM protocol, the GPIO/RTC port, the `.sav` round trip |
 | `BootRom` | The ARM emitter against the ARM Architecture Reference Manual, the boot ROM image, the animation and the cartridge handover |
@@ -100,10 +101,12 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 
 ## The test suite
 
-Every test passes: **245 of 245**. The suite was not green while the core was being written, and
-every failure was resolved by fixing the emulator or by correcting an expectation that did not
-match GBATEK - never by deleting a test. The failures are listed here because each one names a real
-bug that is easy to reintroduce.
+Every test passes: **278 of 278** on a checkout whose `build/Data/GBASettings.json` has LF endings (a
+Windows checkout with `core.autocrlf` turns that file into CRLF, and the two tests that compare it
+with `DefaultJson()` byte for byte then report the `\r`s as a difference). The suite was not green
+while the core was being written, and every failure was resolved by fixing the emulator or by
+correcting an expectation that did not match GBATEK - never by deleting a test. The failures are
+listed here because each one names a real bug that is easy to reintroduce.
 
 | Test that used to fail | What it turned out to be |
 |---|---|
@@ -116,11 +119,13 @@ bug that is easy to reintroduce.
 | `Ppu.ForcedBlankIsWhite`, `Ppu.WindowMasksOneBg`, `Ppu.TextBg8bpp`, `Ppu.PriorityFightBetweenTwoBgs`, `Ppu.TextBgTileMapWrap512`, `Ppu.VCountMatchInterrupt`, `Ppu.VramWindowsPerMode`, `Ppu.BrightnessDecreaseOfTheBackdrop` | Expectations that did not follow the hardware: the forced blank and the green swap did not reach the line buffer, a window row that is still inside the window, a palette entry written to the wrong offset, a background map that collided with its own tile data, a V-Count match line the test's loop never reached again, the VRAM mirroring formula, and the truncation order of the brightness decrease. |
 | The colour half of `cgb-acid2` (found by running the ROM, not by a unit test) | `GbBus::WriteIo`/`ReadIo` passed the PPU registers `0xFF40-0xFF4B` through but not the CGB palette registers `0xFF68-0xFF6B`, so a colour game could not define a single colour: the whole picture - sprites included, which is why they seemed to be missing - stayed on the grey ramp the machine installs at reset. `GbBus, cgb_palette_registers_are_reachable_through_the_bus` and `GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank` now cover the path. |
 | `Apu.DutyWaveform` and every later test (a crash, not a failure) | The tests drained `Apu::ReadSamples` into an `int16_t buffer[128]`, but the call hands over `maxFrames` *stereo* frames and writes two samples per frame: the 256 byte stack buffer was overflowed and the run died later, in the middle of another suite. Found with AddressSanitizer; the buffers are sized for stereo frames now. |
+| `Apu.FifoFasterThanTheHostRate`, `Timers.OverflowTotalCountsEveryWrap` | A direct-sound FIFO moves one byte per timer overflow, but the mixer compared two readings of the timer's *counter* once per host sample. A timer faster than the host sample rate therefore lost overflows, and one whose period divided the host sample length exactly (TM0CNT_L = FF00h against 512 cycles) lost all of them, because after every second wrap the counter was back at the value it had: a FIFO clocked that way never moved a byte, and direct sound played at the wrong rate. The timers now keep a running total of their wraps (`Timers::Overflows`) and both the FIFOs and channel 3's timer-driven digit clock count with it. |
 
-Everything else passes: the ARM7TDMI (60 tests), the Game Boy machine (63 with its boot ROM and its
-colour palette path), the LCD controller (25), the sound (22), the settings (19), the cartridge (14),
-the boot ROM and the emitter (12), the DMA (7), the SIO (7), the timers/keypad/interrupts (9), the
-demo machine (5) and the BIOS harness (2).
+Everything else passes: the ARM7TDMI (60 tests), the Game Boy machine (64 with its boot ROM and its
+colour palette path), the LCD controller (28), the sound (36, eleven of them the mixer buffer
+between the machine and the sound device), the settings (19), the cartridge (14), the disassemblers
+(13), the boot ROM and the emitter (12), the DMA (8), the SIO (7), the timers/keypad/interrupts
+(10), the demo machine (5) and the BIOS harness (2).
 
 ## Open findings
 

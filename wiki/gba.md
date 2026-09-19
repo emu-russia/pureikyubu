@@ -60,6 +60,31 @@ UART, and the general purpose mode. Two `Sio` objects can be plugged into each o
 transfer and a four-slot multiplayer transfer through it. The JOY bus (`RCNT` bit 15), which is how
 a Game Boy Player talks to a GameCube controller, is decoded but not driven.
 
+## Sound
+
+The sound controller (`src/gba/gba_apu.cpp`) mixes the four legacy channels and the two direct-sound
+FIFOs at the GBA's own 32.768 kHz into a queue, and the frontend (`gba_sdl.cpp`) drains that queue
+once per frame into the mixer buffer of `src/gba/gba_audio.h`. The host's sound device plays the
+buffer from its **audio callback** (SDL is opened with a callback, which is how dmgemu does it), so
+the machine *pushes* its samples and the device *pulls* them: nothing has to be polled, and the
+delay of the sound cannot grow the way it does when the frontend only drains the core when a queue
+looks short.
+
+The buffer is kept at a cushion of about three video frames (50 ms at 32768 Hz). The machine is
+asked to wait once the buffer is a video frame past that mark, audio that does not fit is thrown
+away so the delay stays bounded, and a callback period the buffer cannot fill is silence rather
+than a repeat of the samples before it. With `video.vsync` on - the shipped default - the display
+clock and the GBA's 59.7275 Hz do not agree (a 60.00 Hz refresh is 0.46 % faster), and the buffer is
+what absorbs the difference: a few samples per frame are dropped, which shifts the pitch of the
+sound by that same 0.46 % instead of letting the picture and the sound drift apart. The delay and
+the counters are part of the window title when `video.showFps` is on.
+
+A FIFO byte is moved by a **timer overflow** (SOUNDCNT_H bits 10/14 select timer 0 or 1), and the
+timer can be faster than the host's sample rate. The mixer counts the timer's wraps
+(`Timers::Overflows`) instead of comparing two readings of its counter, so a FIFO clocked at
+44.1 kHz or at 65 kHz keeps its rate rather than losing the overflows that fall between two host
+samples.
+
 ## Settings
 
 `build/Data/GBASettings.json`:

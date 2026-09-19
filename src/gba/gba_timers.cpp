@@ -68,12 +68,17 @@ namespace GBA
 		// header declares no private member for them; the state they need is passed in.
 		// -------------------------------------------------------------------------------------
 
-		void TimerOverflow(GbaBus& bus, uint16_t* reload, uint16_t* control, uint16_t* counter, int index)
+		void TimerOverflow(GbaBus& bus, uint16_t* reload, uint16_t* control, uint16_t* counter,
+			uint32_t* overflows, int index)
 		{
 			// GBATEK: "The reload value is copied into the counter [...] automatically upon
 			// timer overflows", and with TMxCNT_H bit 6 set the overflow also requests that
 			// timer's interrupt (IF bits 3-6 are timer 0-3, see the InterruptBit enum).
 			counter[index] = reload[index];
+
+			// The sound controller's direct-sound FIFO is clocked by this overflow (SOUNDCNT_H
+			// bit 10/14 select timer 0 or 1), so the running total is what the mixer reads.
+			overflows[index]++;
 
 			if (control[index] & TmIrqEnable)
 				bus.irq.Raise((uint16_t)(INT_TIMER0 << index));
@@ -86,13 +91,14 @@ namespace GBA
 			if (next < 4 && (control[next] & TmEnable) && (control[next] & TmCascade))
 			{
 				if (counter[next] == 0xFFFF)
-					TimerOverflow(bus, reload, control, counter, next);
+					TimerOverflow(bus, reload, control, counter, overflows, next);
 				else
 					counter[next]++;
 			}
 		}
 
-		void TimerCountUp(GbaBus& bus, uint16_t* reload, uint16_t* control, uint16_t* counter, int index, int counts)
+		void TimerCountUp(GbaBus& bus, uint16_t* reload, uint16_t* control, uint16_t* counter,
+			uint32_t* overflows, int index, int counts)
 		{
 			if (counts <= 0)
 				return;
@@ -122,7 +128,7 @@ namespace GBA
 			uint64_t rest = past % (uint64_t)period;
 
 			for (uint64_t wrap = 0; wrap < wraps; wrap++)
-				TimerOverflow(bus, reload, control, counter, index);
+				TimerOverflow(bus, reload, control, counter, overflows, index);
 
 			counter[index] = (uint16_t)(reload[index] + rest);
 		}
@@ -138,6 +144,7 @@ namespace GBA
 			control[i] = 0;
 			counter[i] = 0;
 			prescaleAccum[i] = 0;
+			overflows[i] = 0;
 		}
 	}
 
@@ -257,7 +264,7 @@ namespace GBA
 			if (control[i] & TmCascade)
 				continue;		// counted by the overflows of timer i-1, not by the prescaler
 
-			TimerCountUp(bus, reload, control, counter, i, ticks[i]);
+			TimerCountUp(bus, reload, control, counter, overflows, i, ticks[i]);
 		}
 	}
 }

@@ -109,7 +109,7 @@ namespace GBA
 		int wavePosition = 0;		// digit 0..31 (32 samples) or 0..63 (64 samples)
 		int waveLength = 0;			// 256 Hz steps left before the channel stops
 		bool waveLengthEnabled = false;
-		uint16_t lastTimerValue = 0;
+		uint32_t waveTimerOverflow = 0;	// the timer's overflow total when the digit was last clocked
 
 		// Channel 4 (noise)
 		bool noiseEnabled = false;
@@ -138,7 +138,7 @@ namespace GBA
 		bool fifoTimerRight[2]{};
 		bool fifoLeftOnly[2]{}, fifoRightOnly[2]{}, fifoTimerA[2]{};
 		int fifoOutput[2]{};
-		int fifoAccum[2]{};
+		uint32_t fifoOverflowBase[2]{};	// the timer's overflow total when the FIFO was last clocked
 		int fifoLatchedSample[2]{};
 
 		int sampleCounter = 0;

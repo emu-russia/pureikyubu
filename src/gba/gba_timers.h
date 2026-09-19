@@ -35,6 +35,14 @@ namespace GBA
 		/// <summary>The current counter value (for tests and the debugger).</summary>
 		uint16_t Counter(int index) const { return counter[index]; }
 
+		/// <summary>
+		/// How many times the counter has wrapped since the last Reset. The sound controller's
+		/// direct-sound FIFOs are clocked by a timer overflow (GBATEK "Sound Channel A and B"), and
+		/// a timer can overflow several times between two host samples: the running total is what
+		/// lets the mixer move as many bytes as there were overflows instead of one per sample.
+		/// </summary>
+		uint32_t Overflows(int index) const { return overflows[index]; }
+
 		/// <summary>True when the timer is enabled (for tests and the debugger).</summary>
 		bool Running(int index) const { return (control[index] & 0x80) != 0; }
 
@@ -47,5 +55,6 @@ namespace GBA
 		uint16_t control[4]{};		// TMxCNT_H
 		uint16_t counter[4]{};
 		int prescaleAccum[4]{};	// cycles accumulated towards the next prescaler tick
+		uint32_t overflows[4]{};	// wraps since the last Reset (the FIFO sample clock)
 	};
 }

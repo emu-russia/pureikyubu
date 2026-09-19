@@ -1048,6 +1048,37 @@ GBA_TEST(Apu, FifoDmaRefill)
 	GBA_CHECK_EQ(full.Read(RegFifoA), 0x01);			// the oldest byte is still at the head
 }
 
+GBA_TEST(Apu, FifoFasterThanTheHostRate)
+{
+	// A FIFO byte is moved per timer overflow, and the timer may be faster than the host's own
+	// sample rate: TM0CNT_L = FF00h wraps every 256 cycles, i.e. twice per 512 cycle host sample
+	// (65536 Hz against 32768). Both bytes have to be consumed - taking one would play the sample
+	// at half its rate, an octave down - and the period dividing the slice exactly must not hide
+	// the wraps the way a plain comparison of two counter readings does (the counter is back at
+	// FF00h after every second wrap).
+	Machine m;
+	SetupFifoA(m, 0, true, true, 1);
+	StartTimer(m, 0, 0xFF00);
+
+	const uint32_t words[4] = { 0x04030201u, 0x08070605u, 0x0C0B0A09u, 0x100F0E0Du };
+	m.apu().FifoDmaDone(0, words, 4);
+
+	// The first clock of the FIFO only takes the timer's total (the byte that is playing is the
+	// one a previous overflow put there).
+	std::vector<int16_t> warmup = Left(m.Run(SampleCycles));
+	GBA_CHECK_EQ((int)warmup.size(), 1);
+	GBA_CHECK_EQ((int)warmup[0], 0);
+	GBA_CHECK_EQ(m.Read(RegFifoA), 0x01);
+
+	// Three samples, two overflows each: the latch walks 2, 4, 6 and byte 7 is the next one.
+	std::vector<int16_t> mono = Left(m.Run(SampleCycles * 3));
+	GBA_CHECK_EQ((int)mono.size(), 3);
+	GBA_CHECK_EQ((int)mono[0], 2 * 2 * 33);
+	GBA_CHECK_EQ((int)mono[1], 4 * 2 * 33);
+	GBA_CHECK_EQ((int)mono[2], 6 * 2 * 33);
+	GBA_CHECK_EQ(m.Read(RegFifoA), 0x07);
+}
+
 GBA_TEST(Apu, FifoVolumeAndPanning)
 {
 	// One byte every 2048 cycles; the byte is +100, so the level is easy to compare.
@@ -1238,4 +1269,88 @@ GBA_TEST(Apu, ReadSamplesPartial)
 	exact.TickSliced(SampleCycles * 8);
 	int16_t big[100 * 2];		// room for 100 stereo frames
 	GBA_CHECK_EQ(exact.apu().ReadSamples(big, 100), 8);
+}
+
+// ---------------------------------------------------------------------------------------------
+// One video frame of sound (the frontend drains the mixer once per frame)
+// ---------------------------------------------------------------------------------------------
+
+GBA_TEST(Apu, WholeFrameSampleCount)
+{
+	// A frame of the GBA is 228 lines of 1232 cycles = 280896 system cycles, which is 548.625 host
+	// samples at 32768 Hz. The mixer has to split that into whole samples - 548 and 549 of them -
+	// because the frontend hands the device everything the frame produced: an off-by-one here is a
+	// click every frame.
+	const int FrameCycles = 228 * 1232;
+	const int Frames = 8;
+
+	Machine m;
+	EnablePsg(m);
+	PlayChannel1(m, 1792, 2, 15);			// a plain square: no envelope, no length, no sweep
+
+	int total = 0;
+	int shortFrames = 0;
+
+	for (int frame = 0; frame < Frames; frame++)
+	{
+		m.TickSliced(FrameCycles, 64);		// the bus advances the APU in slices of 64 cycles
+		int frames = (int)m.Drain().size() / 2;
+
+		GBA_CHECK_MSG(frames == 548 || frames == 549,
+			"frame " + std::to_string(frame) + ": " + std::to_string(frames) + " samples");
+
+		total += frames;
+
+		if (frames == 548)
+			shortFrames++;
+	}
+
+	// Eight frames are 8 * 280896 / 512 = 4389 samples exactly: five frames of 549 and three of
+	// 548, and the fractional part never accumulates into a lost or duplicated sample.
+	GBA_CHECK_EQ(total, 4389);
+	GBA_CHECK_EQ(shortFrames, 3);
+}
+
+GBA_TEST(Apu, PerFrameDrainKeepsTheStreamWhole)
+{
+	// The frontend drains the mixer after every frame it runs. The samples must come out as one
+	// continuous stream across those boundaries: two identical runs, one drained after every frame
+	// and one drained only at the end, have to produce exactly the same samples in the same order.
+	const int FrameCycles = 228 * 1232;
+	const int Frames = 6;
+
+	auto run = [FrameCycles, Frames](bool perFrame) -> std::vector<int16_t>
+	{
+		Machine m;
+		EnablePsg(m);
+		PlayChannel1(m, 1792, 2, 15);
+
+		std::vector<int16_t> out;
+
+		for (int frame = 0; frame < Frames; frame++)
+		{
+			m.TickSliced(FrameCycles, 64);
+
+			if (perFrame)
+			{
+				std::vector<int16_t> part = m.Drain();
+				out.insert(out.end(), part.begin(), part.end());
+			}
+		}
+
+		if (!perFrame)
+			out = m.Drain();
+
+		return out;
+	};
+
+	std::vector<int16_t> drainedPerFrame = run(true);
+	std::vector<int16_t> drainedAtOnce = run(false);
+
+	// Six frames are 6 * 280896 / 512 = 3291.75, i.e. 3291 samples and not 3292.
+	GBA_CHECK_EQ((int)drainedPerFrame.size(), 3291 * 2);
+	GBA_CHECK_EQ((int)drainedAtOnce.size(), (int)drainedPerFrame.size());
+
+	for (size_t i = 0; i < drainedPerFrame.size(); i++)
+		GBA_CHECK_MSG(drainedPerFrame[i] == drainedAtOnce[i], "sample " + std::to_string(i));
 }
