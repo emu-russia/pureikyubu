@@ -1,15 +1,15 @@
 // The SDL2 frontend of the GBA and Game Boy emulators.
 //
 // This is the "GBA Link / GBA Player" mode of pureikyubu: the emulator runs the portable machine
-// with SDL2 as the backend (window, streaming texture, audio queue, keyboard and game controller),
-// either on a cartridge given on the command line or, with no cartridge at all, on the emulator's
-// own boot ROM, whose SIO link driver initializes the link port - which is what a GBA Link peer or
-// a Game Boy Player replacement needs.
+// with SDL2 as the backend (window, streaming texture, the sound device with its mixer buffer,
+// keyboard and game controller), either on a cartridge given on the command line or, with no
+// cartridge at all, on the emulator's own boot ROM, whose SIO link driver initializes the link
+// port - which is what a GBA Link peer or a Game Boy Player replacement needs.
 //
 // Two machines share the frontend because they differ only in the frame size and in the key
 // mapping: the GBA (240x160, eleven buttons, the bindings from GBASettings.json) and the Game Boy
 // (160x144, eight buttons, the fixed bindings documented in wiki/gba.md). Everything else - the
-// window, the texture, the audio queue, the frame pacing and the hotkeys - is the same code.
+// window, the texture, the sound buffer, the frame pacing and the hotkeys - is the same code.
 //
 // The GameCube side of the emulator is not involved at all (the two machines share the executable
 // and nothing else).

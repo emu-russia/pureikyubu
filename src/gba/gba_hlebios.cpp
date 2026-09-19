@@ -24,6 +24,13 @@ namespace GBA
 		static bool waiting = false;
 		static uint16_t waitMask = 0;
 
+		// The sound driver's state (its work area is the game's, so only what the HLE has to
+		// remember between calls lives here - see the sound driver section below).
+		static uint32_t soundArea = 0;
+		static uint32_t soundMode = 0;
+		static bool soundReady = false;
+		static bool soundDmaOn = false;
+
 		static uint32_t Reg(GbaBus& bus, int index) { return bus.cpu.Reg(index); }
 		static void SetReg(GbaBus& bus, int index, uint32_t value) { bus.cpu.SetReg(index, value); }
 
@@ -40,6 +47,12 @@ namespace GBA
 			memset(callCounts, 0, sizeof(callCounts));
 			waiting = false;
 			waitMask = 0;
+
+			// The sound driver's state is the game's work area, which a reset throws away.
+			soundArea = 0;
+			soundMode = 0;
+			soundReady = false;
+			soundDmaOn = false;
 		}
 
 		uint64_t CallCount(uint32_t comment)
@@ -70,6 +83,7 @@ namespace GBA
 				case SwiBitUnPack:
 				case SwiLz77UnCompWram:
 				case SwiLz77UnCompVram:
+				case SwiHuffUnComp:
 				case SwiRlUnCompWram:
 				case SwiRlUnCompVram:
 				case SwiDiff8bitUnFilterWram:
@@ -77,6 +91,13 @@ namespace GBA
 				case SwiDiff16bitUnFilter:
 				case SwiSoundBias:
 				case SwiMidiKey2Freq:
+				case SwiSoundDriverInit:
+				case SwiSoundDriverMode:
+				case SwiSoundDriverMain:
+				case SwiSoundDriverVSync:
+				case SwiSoundChannelClear:
+				case SwiSoundDriverVSyncOff:
+				case SwiSoundDriverVSyncOn:
 				case SwiHardReset:
 				case SwiCustomHalt:
 					return true;
@@ -442,6 +463,529 @@ namespace GBA
 		}
 
 		// -----------------------------------------------------------------------------------
+		// The sound driver (SWI 1Ah..1Fh, 28h and 29h)
+		//
+		// This is the "M4A" driver the BIOS carries: the game's own MPlay code writes the virtual
+		// channel structures of the SoundArea and calls SoundDriverMain once a frame and
+		// SoundDriverVSync in the VBlank handler, and the driver mixes those channels into the two
+		// direct sound FIFOs.
+		//
+		// The facts here were read out of the official BIOS image (its SWI entry points called with
+		// a probe and the results dumped): the work area is 0xFB0 bytes and starts with the
+		// identifier 68736D53h, the mixed buffer (`pcmbuf`) is two 0x630 byte halves at +0x350
+		// (FIFO A, right) and +0x980 (FIFO B, left), the two FIFO DMAs are armed with SAD pointing
+		// at those halves, DAD at 40000A0h/40000A4h and CNT = B600h (enable, special/FIFO timing,
+		// 32bit, repeat, incrementing source - the source *must* keep running for the music to
+		// stream, which is what GbaDma now does), SOUNDCNT_H is 210Eh (PSG at 50 %, both FIFOs at
+		// 100 %, A to the right, B to the left, both on timer 0) and SOUNDCNT_X gets the master
+		// enable bit. The playback frequency index selects the timer 0 reload from the table
+		// below, which is the BIOS's own.
+		//
+		// The mixer itself is implemented below from the same probe work: the driver's own channel
+		// array (16 entries of 30h bytes at +50h), the envelope state machine, the volume scaling
+		// ((master+1) * volume >> 4, then * rv/lv >> 8), the sample stepping and the ring of
+		// sub-buffers (the stride at +10h, the count at +0Bh and the down counter at +4 that
+		// SoundDriverVSync moves). HleBios.TheMixerMatchesTheOfficialBios runs the same synthetic
+		// channel through both mixers and compares the mixed output byte for byte.
+		//
+		// What is *not* modelled: the reverb (the mode's reverb bits are stored but the driver's
+		// delay line at 01E20h is not), and the pitch stepping is a 16.16 accumulator of the
+		// channel's frequency over the playback frequency - exact when a channel plays its wave at
+		// its own rate (which the differential test pins) and musically right otherwise, but not
+		// bit for bit the BIOS's own fixed point.		// -----------------------------------------------------------------------------------
+
+		const uint32_t SoundAreaSize = 0xFB0;
+		const uint32_t SoundIdent = 0x68736D53;
+		const uint32_t SoundPcmA = 0x350;			// the right channel's mixed buffer
+		const uint32_t SoundPcmB = 0x980;			// the left one
+		const uint32_t SoundPcmHalf = 0x630;		// PCM_BF: bytes per half, and the stride
+
+		// The driver's own channel array: 16 entries of 30h bytes each, right after the header,
+		// ending exactly at `pcmbuf` (50h + 16 * 30h = 350h). GBATEK's documented SoundArea layout
+		// puts `vchn` right after the header, but the real header is a table of the driver's own
+		// code pointers, so the channels are further along - which the disassembly showed as
+		// `add r4, #50h` before the per-channel loop.
+		const uint32_t SoundChannels = 16;
+		const uint32_t SoundChannelBase = 0x50;
+		const uint32_t SoundChannelSize = 0x30;
+
+		// How fast the driver mixes: the playback frequency the mode selected, in Hz. The mode's
+		// index picks a timer 0 reload, and the frequency is the machine's clock over the period.
+		static uint32_t soundRate = 13379;
+		const uint16_t SoundTimerReload[13] =
+		{
+			// Read out of the real BIOS with SoundDriverMode(index) and a timer read that stops the
+			// counter first (TMxCNT_L reads back as the *counter*, so the first measurements were
+			// off by however long the call took). Index 0 is the default, 13379 Hz, like index 4;
+			// the frequencies match GBATEK "SoundDriverMode" bits 16-19: 13379, 5734, 7884, 10512,
+			// 13379, 15768, 18157, 21024, 26758, 31536, 36314, 40137, 42048 Hz.
+			0xFB1A, 0xF492, 0xF7B0, 0xF9C4, 0xFB1A, 0xFBD8, 0xFC64,
+			0xFCE2, 0xFD8D, 0xFDEC, 0xFE32, 0xFE5E, 0xFE71,
+		};
+
+		// The default mode: 8 simultaneous channels, master volume 15, frequency index 4
+		// (13379 Hz), 8 bit DAC (GBATEK "SoundDriverMode").
+		const uint32_t SoundDefaultMode = (8u << 8) | (15u << 12) | (4u << 16) | (9u << 20);
+
+		static void SoundWriteDma(GbaBus& bus)
+		{
+			if (soundArea == 0)
+				return;
+
+			// DMA1 -> FIFO A, DMA2 -> FIFO B (GBATEK "Sound DMA (FIFO Timing Mode)"): 4 units of
+			// 32 bits per request, repeat, 32bit, special timing, incrementing source.
+			bus.Write32(0x040000BC, soundArea + SoundPcmA);
+			bus.Write32(0x040000C0, 0x040000A0);
+			bus.Write16(0x040000C6, (uint16_t)(soundDmaOn ? 0xB600 : 0x0000));
+
+			bus.Write32(0x040000C8, soundArea + SoundPcmB);
+			bus.Write32(0x040000CC, 0x040000A4);
+			bus.Write16(0x040000D2, (uint16_t)(soundDmaOn ? 0xB600 : 0x0000));
+		}
+
+		static void SoundSilence(GbaBus& bus, uint32_t half)
+		{
+			for (uint32_t i = 0; i < SoundPcmHalf; i++)
+				bus.Write8(soundArea + half + i, 0);
+		}
+
+		static void SoundApplyMode(GbaBus& bus)
+		{
+			if (!soundReady)
+				return;
+
+			uint32_t index = (soundMode >> 16) & 0xF;
+			if (index > 12)
+				index = 12;
+
+			// SOUNDCNT_H: PSG volume 1 (50 %), FIFO A and B at 100 %, A to the right, B to the
+			// left, both clocked by timer 0. SOUNDCNT_X: master enable.
+			bus.Write16(0x04000082, 0x210E);
+			bus.Write16(0x04000084, (uint16_t)(bus.Read16(0x04000084) | 0x0080));
+
+			// The mode's other fields land in the work area's header, as the real driver leaves
+			// them (measured): +4 the DMA count, +5 the reverb, +6 the simultaneous channels and
+			// +7 the master volume.
+			bus.Write8(soundArea + 4, 0);
+			bus.Write8(soundArea + 5, (uint8_t)(((soundMode & 0x80) != 0) ? (soundMode & 0x7F) : 0));
+			bus.Write8(soundArea + 6, (uint8_t)((soundMode >> 8) & 0x0F));
+			bus.Write8(soundArea + 7, (uint8_t)((soundMode >> 12) & 0x0F));
+
+			// The playback frequency decides the mixer's own clock: one frame is
+			// `frequency / 60` output samples, which the driver rounds up to 20h samples (the
+			// measured stride for the default 13379 Hz is 0E0h = 224, and 224 divides the 0630h
+			// byte half into 7 sub-buffers - the count the driver keeps at +0Bh).
+			soundRate = 16777216u / (uint32_t)(0x10000 - SoundTimerReload[index]);
+
+			uint32_t stride = ((soundRate / 60) + 31) & ~31u;
+			if (stride == 0)
+				stride = 32;
+
+			uint32_t count = SoundPcmHalf / stride;
+			if (count == 0)
+				count = 1;
+			if (count > 0xFF)
+				count = 0xFF;
+
+			bus.Write32(soundArea + 0x10, stride);
+			bus.Write8(soundArea + 0x0B, (uint8_t)count);
+
+			// Timer 0 is the FIFO's byte clock: prescaler 1, enabled, reloaded with the BIOS's
+			// value for this playback frequency.
+			bus.Write16(0x04000100, SoundTimerReload[index]);
+			bus.Write16(0x04000102, 0x0080);
+
+			SoundWriteDma(bus);
+		}
+
+		static void SoundDriverInit(GbaBus& bus, uint32_t area)
+		{
+			area &= ~3u;
+
+			if (area == 0)
+			{
+				Log(LogLevel::Warn, "HLE BIOS: SoundDriverInit with a null work area");
+				return;
+			}
+
+			// The driver clears its whole work area and then identifies it (the identifier is what
+			// a game's library checks before it uses the driver).
+			for (uint32_t i = 0; i < SoundAreaSize; i++)
+				bus.Write8(area + i, 0);
+
+			bus.Write32(area, SoundIdent);
+
+			soundArea = area;
+			soundMode = SoundDefaultMode;
+			soundReady = true;
+			soundDmaOn = true;
+
+			SetReg(bus, 0, SoundIdent);		// the BIOS returns the identifier in r0
+			SoundSilence(bus, SoundPcmA);
+			SoundSilence(bus, SoundPcmB);
+			SoundApplyMode(bus);
+		}
+
+		static void SoundDriverMode(GbaBus& bus, uint32_t mode)
+		{
+			if (!soundReady)
+				return;
+
+			soundMode = mode;
+			SoundApplyMode(bus);
+		}
+
+		static void SoundChannelClear(GbaBus& bus)
+		{
+			if (!soundReady)
+				return;
+
+			// "Clears all direct sound channels and stops the sound": every virtual channel is
+			// stopped (its status byte zeroed) and the mixed buffers are silenced.
+			for (uint32_t c = 0; c < SoundChannels; c++)
+				bus.Write8(soundArea + SoundChannelBase + c * SoundChannelSize, 0);
+
+			SoundSilence(bus, SoundPcmA);
+			SoundSilence(bus, SoundPcmB);
+		}
+
+		static void SoundDriverMain(GbaBus& bus)
+		{
+			if (!soundReady)
+				return;
+
+			// The driver fills one sub-buffer of a ring per call: the work area names the stride
+			// (one frame's worth of output samples at the mode's playback frequency), the number
+			// of sub-buffers per half and which one is next (its "DmaCount", a *down* counter that
+			// SoundDriverVSync moves). All of that was read out of the official driver: with
+			// 13379 Hz the stride is 0E0h = 224 samples, there are 7 sub-buffers in each 0630h
+			// byte half, and the sub-buffer filled is `count - DmaCount + 1`.
+			uint32_t count = bus.Read8(soundArea + 0x0B);
+			uint32_t stride = bus.Read32(soundArea + 0x10);
+			uint32_t dmaCount = bus.Read8(soundArea + 4);
+
+			if (dmaCount == 0)
+				dmaCount = count;						// 0 stands for "the last one"
+
+			if (count == 0 || stride == 0 || stride > SoundPcmHalf)
+			{
+				SoundSilence(bus, SoundPcmA);
+				SoundSilence(bus, SoundPcmB);
+				return;
+			}
+
+			uint32_t index = (count + 1 - dmaCount) % count;
+			uint32_t right = soundArea + SoundPcmA + index * stride;
+			uint32_t left = soundArea + SoundPcmB + index * stride;
+
+			for (uint32_t i = 0; i < stride; i++)
+			{
+				bus.Write8(right + i, 0);
+				bus.Write8(left + i, 0);
+			}
+
+			uint32_t master = (uint32_t)bus.Read8(soundArea + 7) + 1;	// the volume is 1..16
+			uint32_t channels = bus.Read8(soundArea + 6);
+
+			if (channels > SoundChannels)
+				channels = SoundChannels;
+
+			for (uint32_t c = 0; c < channels; c++)
+			{
+				uint32_t channel = soundArea + SoundChannelBase + c * SoundChannelSize;
+				uint32_t sf = bus.Read8(channel + 0);
+
+				// 0C7h is the mask of "this channel is doing something" the driver tests.
+				if ((sf & 0xC7) == 0)
+					continue;
+
+				uint32_t volume = bus.Read8(channel + 9);
+
+				if (sf & 0x80)
+				{
+					// A start: the envelope begins at zero, the sample pointer goes to the wave
+					// data and the phase to 0.
+					if (sf & 0x40)
+					{
+						// Started and stopped in the same frame, which the driver reads as off.
+						bus.Write8(channel + 0, 0);
+						continue;
+					}
+
+					uint32_t wave = bus.Read32(channel + 0x24);
+					uint32_t loop = bus.Read32(wave + 8);
+					uint32_t size = bus.Read32(wave + 12);
+					uint32_t start = (uint32_t)bus.Read8(wave + 3) & 0x40;	// stat: 4000h = looping
+
+					sf = 3;									// the attack stage
+					if (start != 0)
+						sf |= 0x10;							// looping
+
+					bus.Write8(channel + 0, (uint8_t)sf);
+					bus.Write32(channel + 0x18, size);
+					bus.Write32(channel + 0x1C, 0);			// the phase
+					bus.Write32(channel + 0x20, bus.Read32(channel + 0x20));	// fr is the game's
+					bus.Write32(channel + 0x28, wave + 0x10);	// the sample pointer
+					bus.Write8(channel + 9, 0);
+					bus.Write8(channel + 0x0C, 0);			// the release floor
+
+					// A sample that has already run out stops the channel without mixing.
+					if (size == 0)
+					{
+						bus.Write8(channel + 0, 0);
+						continue;
+					}
+
+					// The driver's start path runs straight into the attack, so a channel that
+					// starts is already at its attack volume for this frame's samples.
+					volume = bus.Read8(channel + 4);
+					if (volume >= 0xFF)
+					{
+						volume = 0xFF;
+						bus.Write8(channel + 0, (uint8_t)(sf - 1));
+					}
+				}
+				else if (sf & 4)
+				{
+					// In the release: a counter runs out and the channel stops.
+					uint32_t timer = bus.Read8(channel + 0x0D);
+					if (timer == 0)
+					{
+						bus.Write8(channel + 0, 0);
+						continue;
+					}
+
+					bus.Write8(channel + 0x0D, (uint8_t)(timer - 1));
+				}
+				else if (sf & 0x40)
+				{
+					// Key off: the volume decays by the release rate, and the channel stops when
+					// it reaches the floor (which a game can set to shorten the release).
+					volume = (volume * bus.Read8(channel + 7)) >> 8;
+
+					uint32_t floor_ = bus.Read8(channel + 0x0C);
+					if (volume > floor_)
+					{
+						// still audible, keep releasing
+					}
+					else
+					{
+						volume = floor_;
+						if (volume == 0)
+						{
+							bus.Write8(channel + 0, 0);
+							continue;
+						}
+
+						bus.Write8(channel + 0, (uint8_t)(sf | 4));
+					}
+				}
+				else if ((sf & 3) == 2)
+				{
+					// Decay: the volume is multiplied by the decay rate until the sustain level.
+					volume = (volume * bus.Read8(channel + 5)) >> 8;
+
+					uint32_t sustain = bus.Read8(channel + 6);
+					if (volume > sustain)
+					{
+						// still decaying
+					}
+					else
+					{
+						volume = sustain;
+						if (sustain == 0)
+						{
+							bus.Write8(channel + 0, 0);
+							continue;
+						}
+
+						bus.Write8(channel + 0, (uint8_t)(sf - 1));		// the sustain stage
+					}
+				}
+				else if ((sf & 3) == 3)
+				{
+					// Attack: the volume rises by the attack rate every frame.
+					volume += bus.Read8(channel + 4);
+					if (volume >= 0xFF)
+					{
+						volume = 0xFF;
+						bus.Write8(channel + 0, (uint8_t)(sf - 1));		// on to the decay
+					}
+				}
+
+				bus.Write8(channel + 9, (uint8_t)volume);
+
+				// The levels the mixer scales the samples with: the master volume (1..16), the
+				// channel's volume and its two side volumes, in the driver's own fixed point.
+				uint32_t level = (master * volume) >> 4;
+				uint32_t rightLevel = (level * bus.Read8(channel + 2)) >> 8;
+				uint32_t leftLevel = (level * bus.Read8(channel + 3)) >> 8;
+
+				bus.Write8(channel + 0x0A, (uint8_t)rightLevel);
+				bus.Write8(channel + 0x0B, (uint8_t)leftLevel);
+
+				if (rightLevel == 0 && leftLevel == 0)
+					continue;
+
+				// Mix the channel's samples into the two halves. The phase is a 16.16 accumulator
+				// that advances by the channel's frequency over the mode's playback frequency, so
+				// a channel playing its wave data at its own rate steps one sample per output
+				// sample (which is what the official driver does with fr = the playback rate).
+				uint32_t wave = bus.Read32(channel + 0x24);
+				uint32_t data = wave + 0x10;
+				uint32_t size = bus.Read32(wave + 12);
+				uint32_t loop = (bus.Read8(wave + 3) & 0x40) ? bus.Read32(wave + 8) : size;
+				uint32_t frequency = bus.Read32(channel + 0x20);
+				uint64_t phase = bus.Read32(channel + 0x1C);
+				uint64_t step = ((uint64_t)frequency << 16) / (soundRate ? soundRate : 1);
+
+				for (uint32_t i = 0; i < stride; i++)
+				{
+					uint32_t position = (uint32_t)(phase >> 16);
+
+					while (position >= size)
+					{
+						// The wave data has run out: a looping sample goes back to its loop point,
+						// a one shot stops the channel (its last sample stays latched).
+						if (loop < size)
+						{
+							phase -= (uint64_t)(size - loop) << 16;
+							position = (uint32_t)(phase >> 16);
+						}
+						else
+						{
+							bus.Write8(channel + 0, 0);
+							position = size - 1;
+							phase = (uint64_t)position << 16;
+							break;
+						}
+					}
+
+					int sample = (int)(int8_t)bus.Read8(data + position);
+
+					if (rightLevel != 0)
+					{
+						int mixed = (int)bus.Read8(right + i) + ((sample * (int)rightLevel) >> 8);
+						if (mixed > 127) mixed = 127;
+						if (mixed < -128) mixed = -128;
+						bus.Write8(right + i, (uint8_t)(int8_t)mixed);
+					}
+
+					if (leftLevel != 0)
+					{
+						int mixed = (int)bus.Read8(left + i) + ((sample * (int)leftLevel) >> 8);
+						if (mixed > 127) mixed = 127;
+						if (mixed < -128) mixed = -128;
+						bus.Write8(left + i, (uint8_t)(int8_t)mixed);
+					}
+
+					phase += step;
+
+					if ((bus.Read8(channel + 0) & 0xC7) == 0)
+						break;								// the channel stopped mid-buffer
+				}
+
+				bus.Write32(channel + 0x1C, (uint32_t)phase);
+			}
+		}
+
+		static void SoundDriverVSync(GbaBus& bus)
+		{
+			// "An extremely short system call that resets the sound DMA" (GBATEK). It also moves
+			// the driver's buffer counter one step down (0 wrapping to the number of sub-buffers),
+			// which is what decides the sub-buffer the next SoundDriverMain fills - measured
+			// against the official driver, whose counter went 0 -> 7 -> 6 -> 5 with 7 sub-buffers.
+			if (soundReady)
+			{
+				uint32_t count = bus.Read8(soundArea + 0x0B);
+				uint32_t dmaCount = bus.Read8(soundArea + 4);
+
+				if (count != 0)
+				{
+					dmaCount = (dmaCount == 0) ? count : dmaCount - 1;
+					bus.Write8(soundArea + 4, (uint8_t)dmaCount);
+				}
+			}
+
+			if (soundReady && soundDmaOn)
+				SoundWriteDma(bus);
+		}
+
+		static void SoundDriverVSyncOff(GbaBus& bus)
+		{
+			if (!soundReady)
+				return;
+
+			// Stop the sound DMA (the two channel control registers) but leave the mixer's state
+			// alone, so VSyncOn can start it again.
+			soundDmaOn = false;
+			bus.Write16(0x040000C6, 0x0000);
+			bus.Write16(0x040000D2, 0x0000);
+		}
+
+		static void SoundDriverVSyncOn(GbaBus& bus)
+		{
+			if (!soundReady)
+				return;
+
+			soundDmaOn = true;
+			SoundWriteDma(bus);
+		}
+
+		/// <summary>
+		/// MidiKey2Freq(wa, mk, fp): the frequency a virtual channel has to be given to play the
+		/// wave data `wa` at MIDI key `mk` with the fine adjustment `fp` (1/256 of a halftone).
+		///
+		/// GBATEK 1Fh: the WaveData's own `freq` is "sampling rate * 2^((180 - original key)/12)",
+		/// so the value for a key is that frequency scaled by 2^((mk - 180)/12) - one octave per
+		/// twelve keys, and the sample plays at its own rate at key 180. The official BIOS computes
+		/// it in fixed point: `2^(n/12)` for the twelve semitones comes from the table below, in
+		/// 16.16, the octave is a shift and the product is truncated. The table is the BIOS's own
+		/// (read out of it with a probe: its entries are the truncated powers, e.g. 69376 for
+		/// 2^(1/12) where the exact value is 69433), which is what makes the results agree exactly
+		/// for a whole key and to within a unit with a fine adjustment.
+		/// </summary>
+		static uint32_t MidiKey2FreqValue(GbaBus& bus, uint32_t waveData, uint32_t key, uint32_t fine)
+		{
+			// 2^(n/12) in 16.16, n = 0..11 (the BIOS's semitone table).
+			static const uint32_t Semitones[12] =
+			{
+				65536, 69376, 73472, 77824, 82560, 87424, 92672, 98176, 103936, 110208, 116736, 123648,
+			};
+
+			uint32_t frequency = bus.Read32(waveData + 4);
+			int relative = (int)(key & 0x7F) - 180;			// the reference key is 180
+			int semitone = relative % 12;
+			int octave = relative / 12;
+
+			if (semitone < 0)
+			{
+				// C++ truncates towards zero, the note has to be split into a non-negative
+				// semitone and the octave it belongs to.
+				semitone += 12;
+				octave -= 1;
+			}
+
+			// frequency * 2^(semitone/12) * 2^octave, in the same fixed point the BIOS uses.
+			uint64_t scaled = (uint64_t)frequency * Semitones[semitone];
+			int shift = 16 - octave;
+
+			if (shift >= 0)
+				scaled >>= shift;
+			else
+				scaled <<= -shift;
+
+			// The fine value is a fraction of a halftone: the BIOS scales by roughly
+			// 2^(fp/256/12), which its own slope puts at 3896/65536 per unit.
+			scaled = (scaled * (uint64_t)(65536 + ((fine & 0xFF) * 3896) / 256)) >> 16;
+
+			if (scaled > 0xFFFFFFFFu)
+				return 0xFFFFFFFFu;
+
+			return (uint32_t)scaled;
+		}
+
+		// -----------------------------------------------------------------------------------
 		// The decompressors
 		// -----------------------------------------------------------------------------------
 
@@ -490,6 +1034,91 @@ namespace GBA
 				// The Vram variant writes halfwords (the VRAM bus is 16-bit). The byte-wise
 				// writes above land in the same place, so nothing else is needed; the flag is
 				// kept so the two entry points stay distinguishable.
+			}
+		}
+
+		/// <summary>
+		/// The GBA's Huffman decompressor (GBATEK "SWI 13h - HuffUnComp"). The stream starts with a
+		/// 32bit header - bits 0-3 the size of one data unit in bits (4 or 8; a 4 bit stream packs
+		/// its symbols into bytes, low nibble first), bits 4-7 the compression type (2), bits 8-31
+		/// the size of the decompressed data in bytes - then an 8bit tree size ((size of the tree
+		/// table / 2) - 1), the tree table itself and the bitstream.
+		///
+		/// A tree node is 8 bits. A node that is not data is: bits 0-5 the offset to the next child
+		/// node, bit 6 "the node1 child is data", bit 7 "the node0 child is data", with
+		/// child0 = (thisAddress AND NOT 1) + offset * 2 + 2 and child1 = child0 + 1. Walking from
+		/// the root, every bit of the bitstream (bit 31 of each 32bit unit first) picks child 0 or
+		/// child 1; landing on a child whose parent flagged it as data appends that node's byte
+		/// (masked to the unit size) to the output and starts again from the root.
+		///
+		/// The output is written in 32bit units, so the last unit is padded with zeros.
+		/// </summary>
+		static void HuffUnComp(GbaBus& bus, uint32_t source, uint32_t dest)
+		{
+			uint32_t header = bus.Read32(source);
+			uint32_t unitBits = header & 0xF;
+			uint32_t outBytes = header >> 8;
+
+			if (header & 0xF0 != 0x20 || unitBits == 0 || unitBits > 8 || outBytes == 0)
+			{
+				Log(LogLevel::Warn, "HLE BIOS: HuffUnComp stream at %08X is not a Huffman header "
+					"(%08X)", source, header);
+				return;
+			}
+
+			uint32_t tree = source + 5;
+			uint32_t bitstream = tree + ((uint32_t)bus.Read8(source + 4) + 1) * 2;
+			uint32_t mask = (1u << unitBits) - 1;
+
+			// The output is written in 32bit units and the hardware does not stop in the middle of
+			// one: it keeps decoding until the unit that holds the last requested byte is full.
+			// (Found by comparing against the official BIOS: with a 7 byte stream its last unit's
+			// fourth byte is a decoded symbol, not a zero.)
+			uint32_t total = (outBytes + 3) & ~3u;
+
+			uint32_t node = tree;			// the root
+			uint32_t write = 0;				// the byte being packed
+			uint32_t filled = 0;			// bits in it
+			uint32_t written = 0;
+			uint32_t bits = 0;				// the bit index into the bitstream
+
+			while (written < total)
+			{
+				uint32_t word = bus.Read32(bitstream + (bits >> 5) * 4);
+				uint32_t bit = (word >> (31 - (bits & 31))) & 1;
+				bits++;
+
+				uint32_t child = (node & ~1u) + (((uint32_t)bus.Read8(node) & 0x3F) * 2) + 2 + bit;
+				uint8_t flags = bus.Read8(node);
+				bool isData = (bit == 0) ? ((flags & 0x80) != 0) : ((flags & 0x40) != 0);
+
+				if (!isData)
+				{
+					node = child;
+					continue;
+				}
+
+				write |= ((uint32_t)bus.Read8(child) & mask) << filled;
+				filled += unitBits;
+
+				if (filled == 8)
+				{
+					bus.Write8(dest + written, (uint8_t)write);
+					written++;
+					write = 0;
+					filled = 0;
+				}
+
+				node = tree;
+			}
+
+			// A stream whose last unit the decoder did not finish (a 4 bit unit that stopped on a
+			// half byte) still ends on a unit boundary: the rest is zero.
+			while (written < total)
+			{
+				bus.Write8(dest + written, (uint8_t)write);
+				written++;
+				write = 0;
 			}
 		}
 
@@ -620,7 +1249,6 @@ namespace GBA
 					return true;
 
 				case SwiDivArm:
-				case SwiDivArm2:
 					Divide(bus, Reg(bus, 1), Reg(bus, 0));
 					Return(bus);
 					return true;
@@ -706,6 +1334,11 @@ namespace GBA
 					Return(bus);
 					return true;
 
+				case SwiHuffUnComp:
+					HuffUnComp(bus, Reg(bus, 0), Reg(bus, 1));
+					Return(bus);
+					return true;
+
 				case SwiRlUnCompWram:
 				case SwiRlUnCompVram:
 					RlUnComp(bus, Reg(bus, 0), Reg(bus, 1));
@@ -733,36 +1366,61 @@ namespace GBA
 				}
 
 				case SwiMidiKey2Freq:
-				{
-					// GBATEK 19.4: the WaveData structure's frequency (offset 4, 1.10.14) is
-					// scaled by the MIDI key and the fine tune value.
-					uint32_t waveData = Reg(bus, 0);
-					int key = (int)(Reg(bus, 1) & 0x7F);
-					int fine = (int)(Reg(bus, 2) & 0xFF);
-
-					uint32_t frequency = bus.Read32(waveData + 4);
-					double value = (double)frequency * pow(2.0, (key - 60) / 12.0) * (1.0 - (fine / 256.0) / 8.0);
-					SetReg(bus, 0, (uint32_t)value);
+					// GBATEK 1Fh: the WaveData's frequency scaled by the key and the fine value,
+					// which is what the real BIOS returns (see MidiKey2FreqValue).
+					SetReg(bus, 0, MidiKey2FreqValue(bus, Reg(bus, 0), Reg(bus, 1), Reg(bus, 2)));
 					Return(bus);
 					return true;
-				}
+
+				case SwiSoundDriverInit:
+					SoundDriverInit(bus, Reg(bus, 0));
+					Return(bus);
+					return true;
+
+				case SwiSoundDriverMode:
+					SoundDriverMode(bus, Reg(bus, 0));
+					Return(bus);
+					return true;
+
+				case SwiSoundDriverMain:
+					SoundDriverMain(bus);
+					Return(bus);
+					return true;
+
+				case SwiSoundDriverVSync:
+					SoundDriverVSync(bus);
+					Return(bus);
+					return true;
+
+				case SwiSoundChannelClear:
+					SoundChannelClear(bus);
+					Return(bus);
+					return true;
+
+				case SwiSoundDriverVSyncOff:
+					SoundDriverVSyncOff(bus);
+					Return(bus);
+					return true;
+
+				case SwiSoundDriverVSyncOn:
+					SoundDriverVSyncOn(bus);
+					Return(bus);
+					return true;
 
 				case SwiHardReset:
 					bus.cpu.Reset();
 					return true;
 
-				// The sound driver entry points and the multiboot slave handshake need the BIOS's
-				// own RAM variables and are not implemented; they are reported once per call so a
-				// game that needs them is visible in the log instead of silently misbehaving.
+				// The multiboot slave handshake and the undocumented sound entry points need the
+				// BIOS's own RAM variables and are not implemented; they are reported so a game
+				// that needs them is visible in the log instead of silently misbehaving.
 				case SwiMultiBoot:
-				case SwiSoundDriverInit:
-				case SwiSoundDriverMain:
-				case SwiSoundDriverMode:
-				case SwiSoundDriverVsync:
-				case SwiSoundChannelClear:
-				case SwiSoundDriverVsyncOff:
-				case SwiSoundDriverVsyncOn:
-				case SwiHuffUnComp:
+				case SwiSoundWhatever0:
+				case SwiSoundWhatever1:
+				case SwiSoundWhatever2:
+				case SwiSoundWhatever3:
+				case SwiSoundWhatever4:
+				case SwiSoundGetJumpList:
 				default:
 					Log(LogLevel::Warn, "HLE BIOS: SWI %02X is not implemented; returning to the caller", comment);
 					Return(bus);

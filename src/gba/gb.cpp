@@ -132,10 +132,11 @@ namespace GBA
 	{
 		settings = newSettings;
 
-		// The palette and the sample rate are presentation settings and take effect at once; the
-		// console kind takes effect on the next Reset(), like the cartridge.
+		// The palette, the sample rate and the filter are presentation settings and take effect at
+		// once; the console kind takes effect on the next Reset(), like the cartridge.
 		bus->ppu.SetPalette(settings.palette);
 		bus->apu.SetSampleRate(settings.sampleRate);
+		bus->apu.SetHighPassFilter(settings.highPassFilter);
 		InstallBootRom();
 	}
 
@@ -143,6 +144,12 @@ namespace GBA
 	{
 		settings.sampleRate = hz;
 		bus->apu.SetSampleRate(hz);
+	}
+
+	void GbSystem::SetHighPassFilter(bool enabled)
+	{
+		settings.highPassFilter = enabled;
+		bus->apu.SetHighPassFilter(enabled);
 	}
 
 	void GbSystem::SetPalette(GbPalette palette)
@@ -189,6 +196,7 @@ namespace GBA
 		bus->SetCgb(settings.cgb);
 		bus->ppu.SetPalette(settings.palette);
 		bus->apu.SetSampleRate(settings.sampleRate);
+		bus->apu.SetHighPassFilter(settings.highPassFilter);
 
 		bus->Reset();
 		bus->cpu.Reset();
@@ -315,15 +323,15 @@ namespace GBA
 
 	void GbSystem::RunFrame()
 	{
-		// One frame is 70224 dots (Pan Docs "Rendering"), but a system clock is one dot in normal
-		// speed and half a dot in double speed, and a program may switch speed in the middle of a
-		// frame. The loop therefore runs until the LCD has finished a frame, with a clock budget
+		// One frame is 70224 dots (Pan Docs "Rendering") and a dot is one clock of the machine's
+		// 4.194304 MHz clock, so one frame is 70224 clocks of the bus. The budget is that frame,
 		// as the safety net for the two cases where the LCD will never finish one: the LCD is off
 		// (a boot ROM that has not turned it on yet, or a program that switched it off), or a
-		// program that never lets the CPU run (a boot ROM that never returns, say).
+		// program that never lets the CPU run (a boot ROM that never returns, say). It used to be
+		// four frames' worth, because the PPU counted four clocks to a dot.
 		int startFrame = bus->ppu.FrameCounter();
 		uint64_t startCycles = bus->TotalCycles();
-		uint64_t budget = (uint64_t)GbDotsPerFrame * (bus->DoubleSpeed() ? 2 : 4);
+		uint64_t budget = (uint64_t)GbDotsPerFrame;
 
 		while (bus->ppu.FrameCounter() == startFrame && bus->TotalCycles() - startCycles < budget)
 		{

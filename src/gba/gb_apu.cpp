@@ -18,25 +18,39 @@ namespace GBA
 		// The 512 Hz frame sequencer (Pan Docs "Audio Details": the envelope is clocked every 8
 		// ticks, the length every 2 and the sweep every 4, which gives this eight step table).
 		// The value is a bit mask: 1 = clock the lengths, 2 = clock the sweep, 4 = the envelope.
+		// The length is clocked by the even steps (256 Hz), the sweep by steps 2 and 6 (128 Hz)
+		// and the envelope by step 7 (64 Hz) - a step that is not in the table clocks nothing.
 		const uint8_t FrameSequencer[8] =
 		{
 			1,		// step 0: length
-			1,		// step 1: length
+			0,		// step 1: -
 			3,		// step 2: length + sweep
-			1,		// step 3: length
+			0,		// step 3: -
 			1,		// step 4: length
-			1,		// step 5: length
+			0,		// step 5: -
 			3,		// step 6: length + sweep
-			5,		// step 7: length + envelope
+			4,		// step 7: envelope
 		};
 
-		// The duty waveforms (Pan Docs "Audio Registers"): a 1 bit is a high output. The waveform
-		// is a bit mask whose bit 0 is the first step of the eight.
-		const uint8_t DutyWaveform[4] = { 0x01, 0x03, 0x0F, 0xFC };
+		// One frame sequencer step: the DIV-APU counter ticks at 512 Hz, i.e. every 8192 system
+		// clocks (Pan Docs "Audio Details": DIV's bit 4 falling edge).
+		const int FrameSequencerCycles = GbCyclesPerSecond / 512;
+
+		// The duty waveforms (Pan Docs "Audio Registers" - and the picture the programming manual
+		// prints next to NR11: 12.5 % is "00000001", 25 % is "10000001", 50 % is "10000111" and
+		// 75 % is "01111110", read from the first duty step to the last). Bit `step` of the mask is
+		// the level of duty step `step`, so the mask of "00000001" has bit 7 set. The phases matter:
+		// they are what makes a pulse channel's first step differ between the four settings.
+		const uint8_t DutyWaveform[4] = { 0x80, 0x81, 0xE1, 0x7E };
 
 		// The noise divisor table (Pan Docs "Audio Registers"): code 0 means 0.5, so the effective
-		// divisors are 0.5, 1, 2, 3, 4, 5, 6, 7.
+		// divisors are 0.5, 1, 2, 3, 4, 5, 6 and 7 - which is 8, 16, ... 112 system clocks per
+		// LFSR step once the 262144 Hz base clock is taken into account (see NoisePeriod).
 		const int NoiseDivisors[8] = { 1, 1, 2, 3, 4, 5, 6, 7 };
+
+		// The length counters of the four channels tick up to these maxima (Pan Docs "Audio").
+		const int PulseLengthMax = 64;
+		const int WaveLengthMax = 256;
 	}
 
 	int GbApu::DutyBit(int duty, int step)
@@ -61,11 +75,13 @@ namespace GBA
 
 		frameSequencerCycles = 0;
 		frameStep = 0;
-		sampleCycles = 0;
+		sampleAccum = 0;
 		capacitorLeft = 0.0;
 		capacitorRight = 0.0;
 		pending.clear();
 
+		// The length counters come up "run out" (the Pulse/Wave/Noise defaults hold the channel's
+		// maximum), so the first trigger arms them from NRx1.
 		SetSampleRate(sampleRate);
 	}
 
@@ -77,15 +93,23 @@ namespace GBA
 			hz = 192000;
 		sampleRate = hz;
 
-		// The sample loop runs on the 4.194304 MHz clock; the host rate picks how many clocks
-		// fall between two output samples.
-		cyclesPerSample = GbCyclesPerSecond / sampleRate;
-		if (cyclesPerSample < 1)
-			cyclesPerSample = 1;
+		// The sample loop runs on the 4.194304 MHz clock and takes one sample every
+		// GbCyclesPerSecond / sampleRate clocks (see Tick, which keeps the fraction exact).
+		sampleAccum = 0;
 
-		// The Pan Docs' reference high pass filter uses 0.999958 at 4194304 Hz; rebasing it for
-		// the host rate (the document's own formula) keeps the cutoff where the hardware has it.
-		highPassCharge = std::pow(0.999958, (double)GbCyclesPerSecond / (double)sampleRate);
+		// The Pan Docs' reference high pass filter uses 0.999958 at 4194304 Hz on the DMG and
+		// 0.998943 on the MGB and CGB; rebasing it for the host rate (the document's own formula)
+		// keeps the cutoff where the hardware has it.
+		double charge = cgb ? 0.998943 : 0.999958;
+		highPassCharge = std::pow(charge, (double)GbCyclesPerSecond / (double)sampleRate);
+	}
+
+	void GbApu::SetCgb(bool value)
+	{
+		cgb = value;
+
+		// The filter is a property of the model, so the charge has to be worked out again.
+		SetSampleRate(sampleRate);
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -99,11 +123,11 @@ namespace GBA
 
 		for (int i = 0; i < cycles; i++)
 		{
-			// The frame sequencer: one step every 512 system clocks, i.e. 512 Hz (Pan Docs
+			// The frame sequencer: one step every 8192 system clocks, i.e. 512 Hz (Pan Docs
 			// "Audio Details"). Its rate does not change in double speed mode (the DIV-APU
 			// divider does), which is why it is driven from the system clock here: the machine
 			// feeds the APU with the clocks the rest of the system also sees.
-			if (++frameSequencerCycles >= 512)
+			if (++frameSequencerCycles >= FrameSequencerCycles)
 			{
 				frameSequencerCycles = 0;
 				ClockFrameSequencer();
@@ -114,9 +138,14 @@ namespace GBA
 			TickWaveChannel();
 			TickNoiseChannel();
 
-			if (++sampleCycles >= cyclesPerSample)
+			// The sample clock: every system clock adds the host rate, and a sample is taken when
+			// the sum reaches the system clock rate. 32768 Hz divides 4194304 exactly (128 clocks
+			// a sample), 44100 and 48000 do not - the fraction is kept here instead of being
+			// rounded away, which used to make those rates play slightly sharp (0.44 % at 48 kHz).
+			sampleAccum += sampleRate;
+			if (sampleAccum >= GbCyclesPerSecond)
 			{
-				sampleCycles = 0;
+				sampleAccum -= GbCyclesPerSecond;
 				MixSample();
 			}
 		}
@@ -200,28 +229,14 @@ namespace GBA
 	void GbApu::ClockLengths()
 	{
 		// The length counters tick at 256 Hz and only while the channel's length enable bit is
-		// set; the channel is switched off when the counter reaches its maximum (Pan Docs
-		// "Audio Details": 64 for the pulse and noise channels, 256 for the wave channel).
-		if (pulse[0].lengthEnabled && pulse[0].lengthCounter > 0 && ++pulse[0].lengthCounter > 64)
-		{
-			pulse[0].lengthCounter = 64;
-			pulse[0].active = false;
-		}
-		if (pulse[1].lengthEnabled && pulse[1].lengthCounter > 0 && ++pulse[1].lengthCounter > 64)
-		{
-			pulse[1].lengthCounter = 64;
-			pulse[1].active = false;
-		}
-		if (wave.lengthEnabled && wave.lengthCounter > 0 && ++wave.lengthCounter > 256)
-		{
-			wave.lengthCounter = 256;
-			wave.active = false;
-		}
-		if (noise.lengthEnabled && noise.lengthCounter > 0 && ++noise.lengthCounter > 64)
-		{
-			noise.lengthCounter = 64;
-			noise.active = false;
-		}
+		// set; the channel is switched off when the counter reaches the channel's maximum: 64 for
+		// the pulse and noise channels, 256 for the wave channel (Pan Docs "Audio" - which makes
+		// the sound length (64 - NRx1) / 256 s, the duration the programming manuals print next
+		// to NRx1).
+		ClockLength(pulse[0].lengthEnabled, pulse[0].lengthCounter, PulseLengthMax, pulse[0].active);
+		ClockLength(pulse[1].lengthEnabled, pulse[1].lengthCounter, PulseLengthMax, pulse[1].active);
+		ClockLength(wave.lengthEnabled, wave.lengthCounter, WaveLengthMax, wave.active);
+		ClockLength(noise.lengthEnabled, noise.lengthCounter, PulseLengthMax, noise.active);
 	}
 
 	void GbApu::ClockEnvelopes()
@@ -329,11 +344,9 @@ namespace GBA
 
 		channel.active = true;
 
-		// A trigger reloads the length counter (the Pan Docs' 63-instead-of-64 quirk is not
-		// modelled; see the header).
-		channel.lengthCounter = 0;
-		if (channel.lengthEnabled && channel.lengthCounter >= 64)
-			channel.active = false;
+		// A trigger re-arms the length counter from NRx1 only if it has run out (Pan Docs "Audio
+		// Registers": "If length timer expired it is reset").
+		ArmLength(channel.lengthCounter, channel.lengthRegister, PulseLengthMax);
 
 		// The envelope reloads its volume from NRx2 and its timer from the period.
 		channel.volume = channel.initialVolume;
@@ -370,9 +383,7 @@ namespace GBA
 		}
 
 		wave.active = true;
-		wave.lengthCounter = 0;
-		if (wave.lengthEnabled && wave.lengthCounter >= 256)
-			wave.active = false;
+		ArmLength(wave.lengthCounter, wave.lengthRegister, WaveLengthMax);
 
 		ReloadWaveTimer();
 		wave.position = 0;
@@ -390,11 +401,14 @@ namespace GBA
 		}
 
 		noise.active = true;
-		noise.lengthCounter = 0;
-		if (noise.lengthEnabled && noise.lengthCounter >= 64)
-			noise.active = false;
+		ArmLength(noise.lengthCounter, noise.lengthRegister, PulseLengthMax);
 
-		noise.lfsr = 0x7FFF;		// the LFSR is reset on a trigger
+		// The LFSR is reset on a trigger. The hardware's state and this one are complements: the
+		// Pan Docs' LFSR (whose feedback is the XNOR of bits 0 and 1, and whose lock-up state is
+		// all ones) starting at 0 is the same sequence as this one - the XOR form the code below
+		// uses - starting at 0x7FFF, with the output polarity swapped (which is why NoiseOutput
+		// reads the bit the way it does).
+		noise.lfsr = 0x7FFF;
 		noise.volume = noise.initialVolume;
 		noise.envelopeTimer = noise.envelopePeriod;
 		noise.envelopeRunning = noise.envelopePeriod != 0;
@@ -476,7 +490,8 @@ namespace GBA
 
 		case 0xFF11:		// NR11: duty and the length reload value
 			pulse[0].duty = (value >> 6) & 0x03;
-			pulse[0].lengthCounter = LengthFromRegister(value & 0x3F, 64);
+			pulse[0].lengthRegister = value & 0x3F;
+			pulse[0].lengthCounter = value & 0x3F;
 			break;
 		case 0xFF12:		// NR12: the envelope and the DAC enable
 			pulse[0].envelopePeriod = value & 0x07;
@@ -500,7 +515,8 @@ namespace GBA
 
 		case 0xFF16:
 			pulse[1].duty = (value >> 6) & 0x03;
-			pulse[1].lengthCounter = LengthFromRegister(value & 0x3F, 64);
+			pulse[1].lengthRegister = value & 0x3F;
+			pulse[1].lengthCounter = value & 0x3F;
 			break;
 		case 0xFF17:
 			pulse[1].envelopePeriod = value & 0x07;
@@ -528,7 +544,8 @@ namespace GBA
 				wave.active = false;
 			break;
 		case 0xFF1B:		// NR31: the length reload value (8 bits)
-			wave.lengthCounter = LengthFromRegister(value, 256);
+			wave.lengthRegister = value;
+			wave.lengthCounter = value;
 			break;
 		case 0xFF1C:		// NR32: the output level
 			wave.volumeCode = (value >> 5) & 0x03;
@@ -544,7 +561,8 @@ namespace GBA
 			break;
 
 		case 0xFF20:		// NR41: the length reload value (6 bits)
-			noise.lengthCounter = LengthFromRegister(value & 0x3F, 64);
+			noise.lengthRegister = value & 0x3F;
+			noise.lengthCounter = value & 0x3F;
 			break;
 		case 0xFF21:		// NR42: the envelope and the DAC enable
 			noise.envelopePeriod = value & 0x07;
@@ -646,7 +664,9 @@ namespace GBA
 	{
 		if (!noise.dacEnabled || !noise.active)
 			return 0;
-		// Bit 0 of the LFSR selects between the envelope's volume and silence.
+		// Bit 0 of the LFSR selects between the volume and silence (Pan Docs "Audio Registers").
+		// The register here is the complement of the one the document describes (see
+		// TriggerNoise), which is why the comparison is the other way round.
 		return (noise.lfsr & 1) ? 0 : noise.volume;
 	}
 
@@ -661,6 +681,17 @@ namespace GBA
 		}
 	}
 
+	uint8_t GbApu::ReadPcm(uint16_t address) const
+	{
+		// PCM12 (0xFF76) holds channel 1 in its low nibble and channel 2 in its high one, PCM34
+		// (0xFF77) the same for channels 3 and 4 (Pan Docs "Audio Details"). They exist on the
+		// CGB only; the bus only asks a CGB for them.
+		if ((address & 1) == 0)
+			return (uint8_t)(ChannelOutput(0) | (ChannelOutput(1) << 4));
+
+		return (uint8_t)(ChannelOutput(2) | (ChannelOutput(3) << 4));
+	}
+
 	// ---------------------------------------------------------------------------------------
 	// The mixer
 	// ---------------------------------------------------------------------------------------
@@ -668,8 +699,8 @@ namespace GBA
 	void GbApu::MixSample()
 	{
 		// The four DACs are summed per side according to NR51's routing, then scaled by NR50's
-		// master volume for that side (Pan Docs "Audio Details": a master volume of 0 counts as
-		// 1 and 7 as 8, and the amplifier never fully mutes an input).
+		// master volume for that side (Pan Docs "NR50": a volume of 0 counts as 1 and 7 as 8, and
+		// "the amplifier never mutes a non-silent input").
 		int outputs[4] = { PulseOutput(pulse[0]), PulseOutput(pulse[1]), WaveOutput(), NoiseOutput() };
 
 		bool anyDac = pulse[0].dacEnabled || pulse[1].dacEnabled || wave.dacEnabled || noise.dacEnabled;
@@ -678,21 +709,35 @@ namespace GBA
 		int sumRight = 0;
 		for (int i = 0; i < 4; i++)
 		{
+			// NR51: bits 0-3 route channels 1-4 to the right output and bits 4-7 to the left one
+			// (Pan Docs "NR51"). The two halves used to be swapped here, which mirrored the whole
+			// stereo image.
 			int bit = 1 << i;
-			if (nr51 & bit)
-				sumLeft += outputs[i];
 			if (nr51 & (bit << 4))
+				sumLeft += outputs[i];
+			if (nr51 & bit)
 				sumRight += outputs[i];
 		}
 
-		double left = (double)sumLeft;
-		double right = (double)sumRight;
+		double left = (double)(sumLeft * (((nr50 >> 4) & 0x07) + 1));
+		double right = (double)(sumRight * ((nr50 & 0x07) + 1));
 
 		// The high pass filter of the two outputs (Pan Docs "Audio Details" gives this reference
 		// implementation). With every DAC off the outputs are disconnected and read exactly zero.
+		// With the filter turned off (the settings' "highPassFilter") the two outputs are the raw
+		// sum the DACs make, and the capacitors are left holding the signal, so that turning the
+		// filter back on continues from where the signal is instead of from wherever the capacitor
+		// happened to be.
 		double filteredLeft = 0.0;
 		double filteredRight = 0.0;
-		if (anyDac)
+		if (!highPass)
+		{
+			filteredLeft = left;
+			filteredRight = right;
+			capacitorLeft = left;
+			capacitorRight = right;
+		}
+		else if (anyDac)
 		{
 			filteredLeft = left - capacitorLeft;
 			capacitorLeft = left - filteredLeft * highPassCharge;
@@ -705,10 +750,12 @@ namespace GBA
 			capacitorRight = 0.0;
 		}
 
-		// Each DAC maps the digital value 0..15 to a swing of one unit (Pan Docs "Audio
-		// Details"), so a side carries up to four units and the master volume scales it by up to
-		// eight. 64 units is therefore the full scale used to reach a 16-bit host sample.
-		const double Scale = 32767.0 / 64.0;
+		// Each DAC turns its 4-bit level into one unit of amplitude and the master volume scales a
+		// side by up to eight, so four channels at full volume with NR50 = 7 are the full scale -
+		// which is the 3V the programming manual describes ("when the output level is set to 0Fh,
+		// each sound is output at 0.75V; 0.75V * 4 = 3V").
+		const double FullScale = 4.0 * 15.0 * 8.0;
+		const double Scale = 32767.0 / FullScale;
 
 		int leftSample = (int)(filteredLeft * Scale);
 		int rightSample = (int)(filteredRight * Scale);

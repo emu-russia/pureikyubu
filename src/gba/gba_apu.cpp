@@ -46,8 +46,10 @@ namespace GBA
 		const int NoiseDivisor[8] = { 8, 16, 32, 48, 64, 80, 96, 112 };
 		const int NoiseGbaScale = 4;
 
-		// GBATEK "Wave Duty": the four duty patterns as 8 step bits, step 0 being the bit the
-		// picture starts with (the high part first: 12.5 % is "-_______" = one high step).
+		// GBATEK "Wave Duty": the four duty patterns as 8 step bits, step 0 being the first step of
+		// the picture (which starts with the high part: 12.5 % is "-_______" = one high step at the
+		// start, 75 % is "------__" = six). The Pan Docs print the same cycles as the bit strings
+		// "00000001", "10000001", "10000111" and "01111110", which differ only in the phase.
 		const uint8_t DutyPattern[4] = { 0x01, 0x03, 0x0F, 0x3F };
 
 		// The FIFO is 8 x 32 bit = 32 bytes deep and the DMA is asked for four words (16 bytes)
@@ -55,18 +57,41 @@ namespace GBA
 		const int FifoSize = 32;
 		const int FifoRequestLevel = 16;
 
-		// The GBA's digital mixer sums four PSGs at +/-0x80 and two FIFOs at +/-0x100, i.e. at
-		// most +/-992 in the units used here; MixScale maps that onto the host's 16 bit range
-		// (992 * 33 = 32736, about +/-32767 at master volume 100 %).
-		const int MixScale = 33;
+		// GBATEK "Max Output Levels": each FIFO spans the full output range (+/-0x200) and each of
+		// the four PSG channels a quarter of it (+/-0x80), so a FIFO is four times a PSG channel
+		// and the six together reach 0x600. The hardware's 10 bit output is that window (+/-0x200)
+		// around SOUNDBIAS, so a single FIFO at full volume can already fill it and a loud mix is
+		// clipped there - which is what MixScale and Clamp16 do.
+		//
+		// The levels here are the DC free equivalents of the hardware's: its DAC levels are biased
+		// (digital 0 is the bottom of the range rather than the middle), and the output's high pass
+		// filter removes that bias anyway, so a channel at volume 0 is true silence here. A PSG
+		// channel at volume v swings +/-PsgLevel(v) - a quarter of the window at 15 - and a FIFO
+		// sample +/-FifoScale, the whole window for the most negative sample.
+		const int MixScale = 64;						// the +/-512 window is full scale
+		const int FifoScale = 4;
+		const int PsgFull = 128;						// a quarter of the window, at volume 15
+
+		inline int PsgLevel(int volume)
+		{
+			return volume * PsgFull / 15;
+		}
+
+		// The wave channel's digits are unsigned, so its level is centred on the middle of the
+		// quarter: digit 0 is the bottom of it (-128) and digit 15 the top (+128).
+		inline int WaveLevel(int digit)
+		{
+			return (digit * 256 + 7) / 15 - 128;
+		}
 
 		// `pending` is capped so a frontend that stops draining cannot make the mixer grow
 		// without bound: four seconds of stereo frames.
 		const int PendingSeconds = 4;
 
-		// The wave channel's timer driven sample clock remembers the last timer reading; that
-		// reading is invalid right after a reset or a trigger, which is what the marker says.
-		const uint16_t TimerNotPrimed = 0xFFFF;
+		// The FIFO byte clock remembers the timer's running overflow total as it was when it last
+		// looked; that total is invalid right after a reset or a trigger, which is what the marker
+		// says.
+		const uint32_t OverflowNotPrimed = 0xFFFFFFFF;
 
 		inline int Clamp16(int value)
 		{
@@ -77,20 +102,28 @@ namespace GBA
 			return value;
 		}
 
-		// One step of the sweep unit: X(t) = X(t-1) +/- X(t-1)/2^n (GBATEK "SOUND1CNT_L").
-		// The result is checked against the 11 bit frequency range by the caller.
+		// One step of the sweep unit: X(t) = X(t-1) +/- X(t-1)/2^n (GBATEK "SOUND1CNT_L"). In
+		// subtraction mode the result stops at the pre-calculation value when it would go below
+		// zero (the AGB manual: "In a subtraction operation, if the subtrahend is less than 0, the
+		// result is the pre-calculation value X(t) = X(t-1)"), so only an addition can overflow the
+		// 11 bits - which is what the caller checks for.
 		inline int SweepFrequency(int shadow, int shift, bool increase)
 		{
 			int delta = shadow >> shift;
-			return increase ? shadow + delta : shadow - delta;
+
+			if (increase)
+				return shadow + delta;
+
+			int result = shadow - delta;
+			return (result < 0) ? shadow : result;
 		}
 
 		// The wave RAM is played as 4 bit digits, the HIGH nibble of a byte first (GBATEK
 		// "WAVE_RAM": "MSBs of 1st byte, followed by LSBs of 1st byte, followed by MSBs of 2nd
-		// byte, and so on").
-		inline int WaveDigit(const uint8_t* ram, int position)
+		// byte, and so on"). `position` is a digit of one bank (0..31).
+		inline int WaveDigit(const uint8_t* bank, int position)
 		{
-			uint8_t byte = ram[(position & 0x1F) >> 1];
+			uint8_t byte = bank[(position & 0x1F) >> 1];
 			return (position & 1) ? (byte & 0x0F) : (byte >> 4);
 		}
 	}
@@ -124,7 +157,7 @@ namespace GBA
 			fifoTimerSelect[i] = false;
 			fifoLeftOnly[i] = fifoRightOnly[i] = false;
 			fifoOutput[i] = 0;
-			fifoAccum[i] = -1;			// -1: no timer reading has been taken yet
+			fifoOverflowBase[i] = OverflowNotPrimed;	// no timer total has been taken yet
 			fifoLatchedSample[i] = 0;
 		}
 		memset(fifo, 0, sizeof(fifo));
@@ -147,7 +180,6 @@ namespace GBA
 		wavePosition = 0;
 		waveLength = 0;
 		waveLengthEnabled = false;
-		lastTimerValue = TimerNotPrimed;
 
 		noiseEnabled = false;
 		noiseDacEnabled = false;
@@ -268,10 +300,12 @@ namespace GBA
 		case 0x94: case 0x95: case 0x96: case 0x97:
 		case 0x98: case 0x99: case 0x9A: case 0x9B:
 		case 0x9C: case 0x9D: case 0x9E: case 0x9F:
-			// The wave RAM is read/write. GBATEK notes that on the real hardware it is a shift
-			// register, so the positions move while the channel plays; the array here keeps the
-			// bytes where they were written (see the deviation note in MixWave).
-			return waveRam[offset - 0x90];
+			// The wave RAM is read/write, and reading (or writing) it addresses the bank that is
+			// *not* selected for playback (GBATEK "SOUND3CNT_L": "The currently selected Bank
+			// Number will be played back, while reading/writing to/from wave RAM will address the
+			// other (not selected) bank"). The shift register the hardware uses instead of an
+			// address pointer is not modelled, so the bytes stay where they were written.
+			return waveRam[waveBank ^ 1][offset - 0x90];
 
 		case 0xA0: case 0xA1: case 0xA2: case 0xA3:
 		case 0xA4: case 0xA5: case 0xA6: case 0xA7:
@@ -501,7 +535,7 @@ namespace GBA
 				fifoEnabled[which] = right || left;
 
 				if (fifoTimerSelect[which] != timer)
-					fifoAccum[which] = -1;		// the other timer needs a fresh reading
+					fifoOverflowBase[which] = OverflowNotPrimed;	// the other timer needs a fresh total
 				fifoTimerSelect[which] = timer;
 
 				if (reset)
@@ -512,7 +546,7 @@ namespace GBA
 					fifoHead[which] = fifoTail[which] = fifoCount[which] = 0;
 					fifoLatchedSample[which] = 0;
 					fifoOutput[which] = 0;
-					fifoAccum[which] = -1;
+					fifoOverflowBase[which] = OverflowNotPrimed;
 					fifoRequest[which] = false;
 				}
 			}
@@ -543,7 +577,7 @@ namespace GBA
 					fifoEnabled[i] = false;
 					fifoOutput[i] = 0;
 					fifoLatchedSample[i] = 0;
-					fifoAccum[i] = -1;
+					fifoOverflowBase[i] = OverflowNotPrimed;
 					fifoRequest[i] = false;
 				}
 
@@ -559,7 +593,6 @@ namespace GBA
 				wavePosition = 0;
 				waveLength = 0;
 				waveLengthEnabled = false;
-				lastTimerValue = TimerNotPrimed;
 
 				noiseEnabled = false;
 				noiseDacEnabled = false;
@@ -600,9 +633,8 @@ namespace GBA
 		default:
 			if (offset >= 0x90 && offset <= 0x9F)
 			{
-				// The wave RAM. GBATEK notes that the CPU addresses the bank that is *not*
-				// being played; this implementation keeps one 16 byte pattern (see MixWave).
-				waveRam[offset - 0x90] = value;
+				// The wave RAM (see Read8: the CPU addresses the bank that is not played back).
+				waveRam[waveBank ^ 1][offset - 0x90] = value;
 			}
 			else if (offset >= 0xA0 && offset <= 0xA7)
 			{
@@ -733,12 +765,8 @@ namespace GBA
 	{
 		// The four legacy channels are stepped by one host sample here, the two FIFOs are
 		// clocked by their timers inside MixFifo (it needs the bus for the timer counters).
-		// MixLegacy returns the four levels packed as offset bytes because the header's helper
-		// returns a single int and every channel has to be routed through its own NR51 bits.
-		int packed = MixLegacy(bus);
 		int psg[4];
-		for (int i = 0; i < 4; i++)
-			psg[i] = (int)(((uint32_t)packed >> (i * 8)) & 0xFF) - 128;
+		MixLegacy(bus, psg);
 		MixFifo(bus);
 
 		// SOUNDCNT_H bits 0-1 scale the four PSGs: 0 = 25 %, 1 = 50 %, 2 = 100 %, 3 is
@@ -766,8 +794,19 @@ namespace GBA
 				left += level;
 		}
 
-		// The FIFOs are routed by SOUNDCNT_H bits 8/9 (A) and 12/13 (B). They span the full
-		// output range, twice a PSG channel's quarter (GBATEK "Max Output Levels").
+		// SOUNDCNT_L bits 0-2 (right) and 4-6 (left) are the master volume of the four PSG
+		// channels. The AGB manual's SOUNDCNT_L says the output level "can be set to any of 8
+		// levels. However, there is no effect on direct sound", and that NR50/NR51 are "based on
+		// their counterparts in CGB" - so it is the Game Boy's master volume (0 counting as 1 and
+		// 7 as 8, none of the eight levels being a mute) and it must be applied to the PSG sum
+		// *before* the two FIFOs are added.
+		int masterRight = (soundcntL & 7) + 1;
+		int masterLeft = ((soundcntL >> 4) & 7) + 1;
+		right = (right * masterRight) >> 3;
+		left = (left * masterLeft) >> 3;
+
+		// The FIFOs are routed by SOUNDCNT_H bits 8/9 (A) and 12/13 (B) and are not touched by
+		// SOUNDCNT_L's level (see above).
 		if (Bit(soundcntH, 8))
 			right += fifoOutput[0];
 		if (Bit(soundcntH, 9))
@@ -776,13 +815,6 @@ namespace GBA
 			right += fifoOutput[1];
 		if (Bit(soundcntH, 13))
 			left += fifoOutput[1];
-
-		// SOUNDCNT_L bits 0-2 (right) and 4-6 (left) are the master volume: 0 mutes the side
-		// completely and 7 is 100 %, the six other values being 1/8 to 6/8 of full scale.
-		int masterRight = soundcntL & 7;
-		int masterLeft = (soundcntL >> 4) & 7;
-		right = masterRight ? ((right * (masterRight + 1)) >> 3) : 0;
-		left = masterLeft ? ((left * (masterLeft + 1)) >> 3) : 0;
 
 		int16_t outLeft = (int16_t)Clamp16(left * MixScale);
 		int16_t outRight = (int16_t)Clamp16(right * MixScale);
@@ -799,20 +831,15 @@ namespace GBA
 		return 0;
 	}
 
-	int Apu::MixLegacy(GbaBus& bus)
+	void Apu::MixLegacy(GbaBus& bus, int levels[4])
 	{
-		// The four legacy channels, in the order channel 1, 2, 3, 4. The result travels as four
-		// offset bytes (level + 128, levels are in -120..+120) because OutputSample has to apply
-		// the NR51 panning of every channel separately.
-		int levels[4];
+		// The four legacy channels, in the order channel 1, 2, 3, 4. Every channel's level is
+		// handed over on its own because OutputSample has to apply the NR51 panning of each of
+		// them separately.
 		levels[0] = MixSquare(square[0]);
 		levels[1] = MixSquare(square[1]);
-		levels[2] = MixWave(bus);
+		levels[2] = MixWave();
 		levels[3] = MixNoise(bus);
-
-		uint32_t packed = (uint32_t)(levels[0] + 128) | ((uint32_t)(levels[1] + 128) << 8) |
-			((uint32_t)(levels[2] + 128) << 16) | ((uint32_t)(levels[3] + 128) << 24);
-		return (int)packed;
 	}
 
 	int Apu::MixFifo(GbaBus& bus)
@@ -823,43 +850,50 @@ namespace GBA
 		{
 			if (!fifoEnabled[which])
 			{
-				// An unrouted FIFO is silent and does not consume its samples; the timer reading
-				// starts over when it is routed again.
+				// An unrouted FIFO is silent and does not consume its samples; the timer's running
+				// total is taken afresh when it is routed again, so the overflows that happened
+				// while it was silent are not replayed.
 				fifoOutput[which] = 0;
-				fifoAccum[which] = -1;
+				fifoOverflowBase[which] = OverflowNotPrimed;
 				continue;
 			}
 
 			// The FIFO moves one byte to the output latch per overflow of timer 0 or timer 1
-			// (SOUNDCNT_H bit 10 for A, bit 14 for B). A timer overflow is the counter wrapping
-			// around from FFFFh to its reload value, so the previous reading has to be
-			// remembered to see it; `fifoAccum` holds that reading (-1 = not taken yet).
+			// (SOUNDCNT_H bit 10 for A, bit 14 for B, GBATEK "Sound Channel A and B"). The timer
+			// can overflow more than once between two host samples - a FIFO clocked at 44.1 kHz
+			// overflows about 1.35 times per 32.768 kHz sample - so the mixer moves as many bytes
+			// as the timer counted, not merely one: the difference of two running totals is exact
+			// however the clock is sliced, and the wrap of the 32-bit total is far away.
 			int timer = fifoTimerSelect[which] ? 1 : 0;
-			uint16_t now = bus.timers.Counter(timer);
-			if (fifoAccum[which] < 0)
+			uint32_t now = bus.timers.Overflows(timer);
+			uint32_t overflows = 0;
+
+			if (fifoOverflowBase[which] == OverflowNotPrimed)
 			{
-				fifoAccum[which] = now;
+				fifoOverflowBase[which] = now;
 			}
 			else
 			{
-				if (now < (uint16_t)fifoAccum[which])
+				overflows = now - fifoOverflowBase[which];
+				fifoOverflowBase[which] = now;
+			}
+
+			for (uint32_t i = 0; i < overflows; i++)
+			{
+				// An empty FIFO keeps the last sample it played (the latch) rather than going
+				// silent.
+				if (fifoCount[which] > 0)
 				{
-					// Timer overflow: "Move 8bit data from FIFO to sound circuit". An empty FIFO
-					// keeps the last sample it played (the latch) rather than going silent.
-					if (fifoCount[which] > 0)
-					{
-						fifoLatchedSample[which] = fifo[which][fifoHead[which]];
-						fifoHead[which] = (fifoHead[which] + 1) % FifoSize;
-						fifoCount[which]--;
-					}
+					fifoLatchedSample[which] = fifo[which][fifoHead[which]];
+					fifoHead[which] = (fifoHead[which] + 1) % FifoSize;
+					fifoCount[which]--;
 				}
-				fifoAccum[which] = now;
 			}
 
 			// The sample is a signed 8 bit value (-128..+127, GBATEK "Sound Channel A and B")
-			// that spans the full output range, i.e. twice a PSG channel's quarter, and
-			// SOUNDCNT_H bit 2/3 selects 50 % or 100 % for it.
-			int sample = (int)(int8_t)fifoLatchedSample[which] << 1;
+			// that spans the full output range - four times a PSG channel's quarter (GBATEK
+			// "Max Output Levels") - and SOUNDCNT_H bit 2/3 selects 50 % or 100 % for it.
+			int sample = (int)(int8_t)fifoLatchedSample[which] * FifoScale;
 			if (!fifoVolume[which])
 				sample >>= 1;
 			fifoOutput[which] = sample;
@@ -883,10 +917,10 @@ namespace GBA
 		// The level the generator holds at the start of this host sample; the clock is advanced
 		// afterwards, so the sample that *ends* at a step boundary still belongs to the old step
 		// (a zero order hold of the level at the sample's start).
-		// The envelope's volume scales the level; the GBA's digital mixer gives a channel at
-		// volume v a range of +/-v*8 (GBATEK: each PSG spans a quarter of the output range).
+		// The envelope's volume is the amplitude of the pulse: the channel swings across the
+		// quarter of the output range GBATEK gives it (see PsgLevel).
 		int high = DutyWaveform(ch.duty, ch.dutyStep);
-		ch.sample = (high ? ch.volume : -ch.volume) * 8;
+		ch.sample = high ? PsgLevel(ch.volume) : -PsgLevel(ch.volume);
 
 		// The duty step advances at eight times the channel's frequency (Pan Docs "Pulse
 		// channels"): the frequency is 131072/(2048-n) Hz, so one duty step lasts
@@ -902,7 +936,7 @@ namespace GBA
 		return ch.sample;
 	}
 
-	int Apu::MixWave(GbaBus& bus)
+	int Apu::MixWave()
 	{
 		if (!waveEnabled || !waveDacEnabled)
 		{
@@ -913,9 +947,9 @@ namespace GBA
 		// The level the generator holds at the start of this host sample (the clock is advanced
 		// afterwards, so the digit that a step boundary ends on is still the old one).
 		// NR32 bits 5-6 shift the digital value: 0 = mute, 1 = 100 %, 2 = 50 %, 3 = 25 %, and
-		// bit 7 forces 75 % (GBATEK "SOUND3CNT_H"). The shift is applied to the signed level
-		// here (the hardware shifts the digital value, which biases it towards 0).
-		int sample = waveSample * 16 - 120;
+		// bit 7 forces 75 % (GBATEK "SOUND3CNT_H"). The shift is applied to the level here (the
+		// hardware shifts the digital value, which biases it towards 0).
+		int sample = WaveLevel(waveSample);
 		if (waveForceVolume)
 			sample = (sample * 3) >> 2;
 		else if (waveVolume == 0)
@@ -923,48 +957,31 @@ namespace GBA
 		else
 			sample >>= (waveVolume - 1);
 
-		// The digit position advances either at the NR33 sample rate (2097152/(2048-n) digits
-		// per second, i.e. 8*(2048-n) cycles per digit) or, on the GBA, at the overflow of a
-		// timer. SOUND3CNT_X bit 14 (the DMG's length flag, which also stays in use) both
-		// enables the timer path and selects the timer: timer 1 when it is set, timer 0 when it
-		// is clear. The timer path is only taken while that timer is running, so a program that
-		// merely enables the length flag keeps the NR33 sample rate.
-		int timerIndex = Bit(sound3cntX, 14);
+		// The digit position advances at the channel's own sample rate, 2097152/(2048-n) digits a
+		// second, i.e. 8 * (2048 - n) system cycles a digit (GBATEK "SOUND3CNT_X"). SOUND3CNT_X
+		// bit 14 is the length flag and nothing else: only the two direct sound FIFOs are clocked
+		// by a timer, so this channel's rate never depends on one.
 		int advances = 0;
-
-		if (bus.timers.Running(timerIndex))
+		int period = 8 * (2048 - (waveFrequency & 0x7FF));
+		wavePhase += sampleCounter;
+		while (wavePhase >= period)
 		{
-			uint16_t now = bus.timers.Counter(timerIndex);
-			if (lastTimerValue == TimerNotPrimed)
-			{
-				lastTimerValue = now;		// nothing to compare against yet
-			}
-			else
-			{
-				if (now < lastTimerValue)
-					advances = 1;			// the counter wrapped: a timer overflow
-				lastTimerValue = now;
-			}
-		}
-		else
-		{
-			int period = 8 * (2048 - (waveFrequency & 0x7FF));
-			wavePhase += sampleCounter;
-			while (wavePhase >= period)
-			{
-				wavePhase -= period;
-				advances++;
-			}
+			wavePhase -= period;
+			advances++;
 		}
 
 		for (int i = 0; i < advances; i++)
 		{
-			// NR30 bit 5 = 0 plays one bank of 32 digits, = 1 plays both banks (64 digits).
-			// GBATEK's two 16 byte banks need 32 bytes of RAM; the frozen header only has 16, so
-			// the second bank is the same 16 bytes (the bank bit still selects where the 64 digit
-			// pass starts, which is what the hardware rule asks for).
+			// NR30 bit 5 = 0 plays one bank of 32 digits, = 1 plays both banks (64 digits): the
+			// pass starts in the bank NR30 bit 6 selected and continues in the other one (GBATEK
+			// "SOUND3CNT_L": "output will start by replaying the currently selected bank").
 			wavePosition = (wavePosition + 1) % (waveDimension ? 64 : 32);
-			waveSample = WaveDigit(waveRam, wavePosition);
+
+			int bank = waveBank;
+			if (waveDimension && wavePosition >= 32)
+				bank ^= 1;
+
+			waveSample = WaveDigit(waveRam[bank], wavePosition);
 		}
 
 		return sample;
@@ -982,7 +999,7 @@ namespace GBA
 		// The level the generator holds at the start of this host sample; the LFSR is clocked
 		// afterwards, so a clock edge that falls on the sample boundary shows up in the next
 		// sample.
-		int level = noiseSample ? noiseEnvelopeVolume : -noiseEnvelopeVolume;
+		int level = noiseSample ? PsgLevel(noiseEnvelopeVolume) : -PsgLevel(noiseEnvelopeVolume);
 
 		// NR43: r selects the divider and s the clock shift, so one LFSR step lasts
 		// divisor[r] * 2^s system cycles / 4 (see the table at the top). A clock shift of 14 or
@@ -1006,7 +1023,7 @@ namespace GBA
 			}
 		}
 
-		return level * 8;
+		return level;
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -1071,7 +1088,7 @@ namespace GBA
 			if (ch.sweepShift != 0)
 			{
 				int calculated = SweepFrequency(ch.shadowFrequency, ch.sweepShift, ch.sweepUp);
-				if (calculated < 0 || calculated > 2047)
+				if (calculated > 2047)
 					ch.enabled = false;
 			}
 		}
@@ -1104,9 +1121,8 @@ namespace GBA
 		// behavior documented in the Pan Docs "Obscure Behavior", GBA difference in GBATEK
 		// "GBA Unpredictable Things" 9.3.3): nothing is written to waveRam here.
 		wavePosition = 0;
-		waveSample = WaveDigit(waveRam, wavePosition);
+		waveSample = WaveDigit(waveRam[waveBank], wavePosition);
 		wavePhase = 0;
-		lastTimerValue = TimerNotPrimed;
 		waveEnabled = true;
 	}
 
@@ -1185,7 +1201,7 @@ namespace GBA
 						square[0].sweepNegateUsed = true;
 
 					int calculated = SweepFrequency(shadow, square[0].sweepShift, square[0].sweepUp);
-					if (calculated < 0 || calculated > 2047)
+					if (calculated > 2047)
 					{
 						square[0].enabled = false;
 					}

@@ -103,6 +103,7 @@ namespace
 		GBA_CHECK_MSG(actual.audioEnabled == expected.audioEnabled, what + ": audioEnabled");
 		GBA_CHECK_MSG(actual.sampleRate == expected.sampleRate, what + ": sampleRate");
 		GBA_CHECK_MSG(actual.volume == expected.volume, what + ": volume");
+		GBA_CHECK_MSG(actual.highPassFilter == expected.highPassFilter, what + ": highPassFilter");
 
 		GBA_CHECK_MSG(actual.linkEnabled == expected.linkEnabled, what + ": linkEnabled");
 		GBA_CHECK_MSG(actual.linkServer == expected.linkServer, what + ": linkServer");
@@ -151,6 +152,7 @@ GBA_TEST(Settings, Defaults)
 	GBA_CHECK(settings.audioEnabled);
 	GBA_CHECK_EQ(settings.sampleRate, 32768);
 	GBA_CHECK_EQ(settings.volume, 100);
+	GBA_CHECK(settings.highPassFilter);		// the hardware has the filter; the setting turns it off
 
 	GBA_CHECK(!settings.linkEnabled);
 	GBA_CHECK(!settings.linkServer);
@@ -229,6 +231,7 @@ GBA_TEST(Settings, SaveAndLoad)
 	settings.audioEnabled = false;
 	settings.sampleRate = 48000;
 	settings.volume = 42;
+	settings.highPassFilter = false;
 	settings.linkEnabled = true;
 	settings.linkServer = true;
 	settings.linkAddress = "10.0.0.2:33333";
@@ -654,7 +657,8 @@ GBA_TEST(Settings, MistypedValues)
 	std::string error;
 	const char* const document =
 		"{\"boot\": {\"useCustomBootRom\": \"yes\"}, \"video\": {\"videoScale\": \"three\"}, "
-		"\"audio\": {\"sampleRate\": null}, \"emulation\": {\"saveDirectory\": 7}, "
+		"\"audio\": {\"sampleRate\": null, \"highPassFilter\": \"yes\"}, "
+		"\"emulation\": {\"saveDirectory\": 7}, "
 		"\"link\": {\"linkAddress\": [\"a\", \"b\"]}, \"input\": {\"A\": 3, \"B\": {}}}";
 
 	GBA_CHECK_MSG(GbaSettings::Parse(document, settings, &error),

@@ -10,9 +10,16 @@
 //
 // Covered: SoftReset, RegisterRamReset, Halt, Stop, IntrWait, VBlankIntrWait, Div, DivArm,
 // Sqrt, ArcTan, ArcTan2, CpuSet, CpuFastSet, BgAffineSet, ObjAffineSet, the four decompressors
-// (LZ77, run-length, Huffman, the two difference filters), SoundBias, MidiKey2Freq, MultiBoot
-// and the two "custom" hooks the hardware leaves to the game (CustomHalt). The maths helpers
-// keep the BIOS's exact results, including Div's remainder convention and ArcTan's table.
+// (LZ77, run-length, Huffman, the two difference filters), SoundBias, the BIOS's sound driver
+// (SoundDriverInit/Mode/Main/VSync/ChannelClear/VSyncOff/VSyncOn, which is the mixer M4A games
+// use) and its MidiKey2Freq, MultiBoot and the two "custom" hooks the hardware leaves to the game
+// (CustomHalt). The maths helpers keep the BIOS's exact results, including Div's remainder
+// convention and ArcTan's table.
+//
+// The SWI numbers are the official ones (GBATEK "GBA BIOS Functions"): the sound driver is
+// 1Ah..1Fh and 28h/29h, *not* the 28h..2Fh block a first version of this file used - 1Ah was even
+// labelled "DivArm2" and divided, so a game's SoundDriverInit returned nonsense and its music
+// never started.
 
 #pragma once
 
@@ -51,18 +58,23 @@ namespace GBA
 		SwiDiff8bitUnFilterVram = 0x17,
 		SwiDiff16bitUnFilter = 0x18,
 		SwiSoundBias = 0x19,
-		SwiDivArm2 = 0x1A,			// an alias of DivArm some SDKs use
+		SwiSoundDriverInit = 0x1A,
+		SwiSoundDriverMode = 0x1B,
+		SwiSoundDriverMain = 0x1C,
+		SwiSoundDriverVSync = 0x1D,
+		SwiSoundChannelClear = 0x1E,
+		SwiMidiKey2Freq = 0x1F,
+		SwiSoundWhatever0 = 0x20,
+		SwiSoundWhatever1 = 0x21,
+		SwiSoundWhatever2 = 0x22,
+		SwiSoundWhatever3 = 0x23,
+		SwiSoundWhatever4 = 0x24,
+		SwiMultiBoot = 0x25,
 		SwiHardReset = 0x26,
 		SwiCustomHalt = 0x27,
-		SwiSoundDriverInit = 0x28,
-		SwiSoundDriverMain = 0x29,
-		SwiSoundDriverMode = 0x2A,
-		SwiSoundDriverVsync = 0x2B,
-		SwiSoundChannelClear = 0x2C,
-		SwiMidiKey2Freq = 0x2D,
-		SwiSoundDriverVsyncOff = 0x2E,
-		SwiSoundDriverVsyncOn = 0x2F,
-		SwiMultiBoot = 0x25,
+		SwiSoundDriverVSyncOff = 0x28,
+		SwiSoundDriverVSyncOn = 0x29,
+		SwiSoundGetJumpList = 0x2A,
 	};
 
 	namespace HleBios

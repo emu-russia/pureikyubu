@@ -93,9 +93,11 @@ namespace GBA
 		// -- running -------------------------------------------------------------------------
 
 		/// <summary>
-		/// Advance the LCD by `cycles` of the 4.194304 MHz clock (four cycles per dot in normal
-		/// speed, two in CGB double speed). Returns the interrupt bits the LCD requested: 0x01 for
-		/// VBlank, 0x02 for the STAT interrupt. The caller ORs them into IF.
+		/// Advance the LCD by `cycles` clocks of the machine's 4.194304 MHz clock. The dot clock
+		/// is that same 4.194304 MHz clock on a DMG/CGB, so one clock is one dot, a line is 456 of
+		/// them and a frame 70224, i.e. 16.74 ms. `doubleSpeed` is the CGB's CPU speed and does not
+		/// touch the LCD. Returns the interrupt bits the LCD requested: 0x01 for VBlank, 0x02 for
+		/// the STAT interrupt. The caller ORs them into IF.
 		/// </summary>
 		uint8_t Tick(int cycles, bool doubleSpeed);
 

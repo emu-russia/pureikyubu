@@ -68,6 +68,7 @@ namespace GBA
 	{
 		cgb = value;
 		ppu.SetCgb(value);
+		apu.SetCgb(value);
 
 		if (!value)
 		{
@@ -237,6 +238,11 @@ namespace GBA
 		// monochrome console, where the addresses read back as 0xFF anyway.
 		if (address >= 0xFF68 && address <= 0xFF6B)
 			return ppu.ReadRegister(address);
+
+		// PCM12/PCM34 (0xFF76/0xFF77) are the CGB's window on the four generation circuits (Pan
+		// Docs "Audio Details"); a monochrome console has no such registers.
+		if (cgb && (address == 0xFF76 || address == 0xFF77))
+			return apu.ReadPcm(address);
 
 		switch (address)
 		{

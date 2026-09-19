@@ -9,6 +9,7 @@
 
 #include "gba_sdl.h"
 #include "gba.h"
+#include "gba_audio.h"
 #include "gba_bootrom.h"
 #include "gba_debug.h"
 #include "gb.h"
@@ -124,7 +125,7 @@ namespace GBA
 	}
 
 	// ---------------------------------------------------------------------------------------
-	// The SDL2 host: the window, the streaming texture and the audio queue
+	// The SDL2 host: the window, the streaming texture and the sound device
 	// ---------------------------------------------------------------------------------------
 
 	class Host
@@ -134,6 +135,10 @@ namespace GBA
 		SDL_Renderer* renderer = nullptr;
 		SDL_Texture* texture = nullptr;
 		SDL_AudioDeviceID audio = 0;
+
+		// The mixer buffer the audio callback plays (see gba_audio.h). The machine pushes into
+		// it every frame; SDL pulls from it on its own audio thread.
+		AudioBuffer sound;
 
 		int width = 0;
 		int height = 0;
@@ -219,11 +224,18 @@ namespace GBA
 
 			if (audioEnabled)
 			{
+				// The device is opened in *callback* mode: the mixer buffer is what feeds it (see
+				// gba_audio.h), and SDL calls AudioCallback on its own audio thread with a period
+				// of `samples` frames. 512 frames is about 16 ms at the GBA's 32768 Hz: short
+				// enough to not add much delay, long enough that the OS is not asked for a
+				// miniature buffer.
 				SDL_AudioSpec want{}, have{};
 				want.freq = sampleRate;
 				want.format = AUDIO_S16SYS;
 				want.channels = 2;
-				want.samples = 1024;
+				want.samples = 512;
+				want.callback = AudioCallback;
+				want.userdata = &sound;
 
 				audio = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
 
@@ -234,8 +246,12 @@ namespace GBA
 				}
 				else
 				{
-					// The core follows the device's rate if it gave us another one.
+					// The core follows the device's rate if it gave us another one. The buffer is
+					// sized and primed before the device is started, so its first callbacks
+					// already find the cushion of silence.
 					sampleRate = have.freq;
+					sound.Reset(have.freq, have.samples);
+					sound.Prime();
 					SDL_PauseAudioDevice(audio, 0);
 				}
 			}
@@ -251,25 +267,85 @@ namespace GBA
 			SDL_RenderPresent(renderer);
 		}
 
-		void QueueAudio(const int16_t* samples, int frames)
+		/// <summary>
+		/// SDL's audio callback (dmgemu's `Mixer`): it plays what the machine pushed into the
+		/// mixer buffer. `stream` holds `len` bytes of AUDIO_S16SYS stereo frames, and the buffer
+		/// fills the whole of it - the samples it has, then silence.
+		/// </summary>
+		static void SDLCALL AudioCallback(void* userdata, Uint8* stream, int len)
 		{
-			if (audio != 0 && frames > 0)
+			AudioBuffer* mixer = (AudioBuffer*)userdata;
+
+			if (mixer != nullptr)
 			{
-				SDL_QueueAudio(audio, samples, (Uint32)(frames * 2 * sizeof(int16_t)));
+				mixer->Play((int16_t*)stream, len / (int)(2 * sizeof(int16_t)));
 			}
 		}
 
-		/// <summary>True when the audio queue is short enough to take another frame.</summary>
-		bool NeedsAudio() const
+		/// <summary>True while the mixer buffer is short enough that another frame is needed at
+		/// once to refill it (the catch-up of the frame loop).</summary>
+		bool SoundStarving() const
 		{
-			if (audio == 0)
+			return audio != 0 && audioEnabled && sound.Starving();
+		}
+
+		/// <summary>
+		/// Steer the mixer's playback rate from the buffer's level (see AudioBuffer::UpdateClock):
+		/// this is what lets the machine keep its own speed while the sound device's clock is
+		/// slightly different.
+		/// </summary>
+		void UpdateAudioClock()
+		{
+			if (audio != 0 && audioEnabled)
 			{
-				return false;
+				sound.UpdateClock();
+			}
+		}
+
+		/// <summary>Push the samples the machine mixed in one frame into the mixer buffer.</summary>
+		void PushAudio(const int16_t* frames, int count)
+		{
+			if (audio != 0 && audioEnabled)
+			{
+				sound.Push(frames, count);
+			}
+		}
+
+		/// <summary>
+		/// The sound status for the window title: the delay the buffer adds, how far the device's
+		/// clock is from the machine's (the mixer's rate correction), and the counters that say the
+		/// sound is not keeping up.
+		/// </summary>
+		std::string AudioText() const
+		{
+			if (audio == 0 || !audioEnabled)
+			{
+				return std::string();
 			}
 
-			// About two frames of audio: enough to survive a hiccup, little enough to stay in sync.
-			uint32_t target = (uint32_t)((uint64_t)sampleRate * 2 * 2 / 60 * 2);
-			return SDL_GetQueuedAudioSize(audio) < target;
+			char text[128];
+			snprintf(text, sizeof(text), " - sound %i ms", sound.LatencyMs());
+
+			std::string status = text;
+
+			int rate = sound.RatePermille();
+
+			if (rate != 1000)
+			{
+				int delta = rate - 1000;
+				snprintf(text, sizeof(text), " (%s%i.%i%%)", delta < 0 ? "-" : "+",
+					(delta < 0 ? -delta : delta) / 10, (delta < 0 ? -delta : delta) % 10);
+				status += text;
+			}
+
+			if (sound.Underruns() > 0 || sound.Drops() > 0)
+			{
+				snprintf(text, sizeof(text), " [%u gaps, %u drops]",
+					sound.Underruns(), sound.Drops());
+				status += text;
+			}
+
+			return status;
 		}
 
 		void HandleHotkey(SDL_Keycode key, bool down, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow, bool& debugger)
@@ -344,14 +420,15 @@ namespace GBA
 			printf("emu: screenshot -> %s\n", name);
 		}
 
-		/// <summary>Wait for the next frame boundary when the renderer is not paced by vsync.</summary>
+		/// <summary>
+		/// Wait for the next frame boundary: the machine's own frame rate is the wall clock's
+		/// (59.7275 Hz for both machines), whatever the display does. With vsync on the renderer
+		/// already waits for the display, and this only takes up the slack between its refresh and
+		/// the machine's (so a 120 Hz display does not run the machine twice as fast); with vsync
+		/// off it is the only thing pacing the loop.
+		/// </summary>
 		void PaceFrame(uint64_t frameIndex, uint32_t startTicks, double frameMilliseconds, uint32_t& paceStart, uint64_t& paceFrames)
 		{
-			if (vsync)
-			{
-				return;
-			}
-
 			paceFrames++;
 			uint32_t next = paceStart + (uint32_t)(frameMilliseconds * paceFrames);
 			uint32_t now = SDL_GetTicks();
@@ -589,6 +666,40 @@ namespace GBA
 	static const double GbaFrameMilliseconds = 1000.0 * 228.0 * 1232.0 / (double)CyclesPerSecond;
 	static const double GbFrameMilliseconds = 1000.0 * 154.0 * 456.0 / 4194304.0;
 
+	// A sound device that stops calling the callback (it was removed, its driver stalled) must not
+	// stop the machine: the frame loop never waits for it, and the mixer buffer's own drop rule is
+	// what keeps the delay bounded in that case.
+	static const int SoundCatchUpFrames = 4;
+
+	/// <summary>
+	/// Hand everything the machine mixed for the frame it just ran to the mixer buffer: the core
+	/// queues its samples (`System::ReadAudio`) and the frontend pushes them, so the device always
+	/// gets a whole frame at a time and the core's queue stays empty. With `discard` the samples
+	/// are dropped instead, which is what fast forward wants (no stale audio when it ends).
+	/// </summary>
+	template <typename System>
+	static void DrainFrameAudio(System& system, Host& host, std::vector<int16_t>& scratch, bool discard)
+	{
+		const int Chunk = 2048;			// frames per call; one frame of the machine is ~549
+
+		scratch.resize((size_t)Chunk * 2);
+
+		for (;;)
+		{
+			int got = system.ReadAudio(scratch.data(), Chunk);
+
+			if (got <= 0)
+			{
+				break;
+			}
+
+			if (!discard)
+			{
+				host.PushAudio(scratch.data(), got);
+			}
+		}
+	}
+
 	int RunSdlFrontend(const std::string& romPath, bool linkMode, const GbaSettings& settings)
 	{
 		SetLogSink(FrontendLog, nullptr);
@@ -687,25 +798,50 @@ namespace GBA
 				printf("gba: battery saved%s%s\n", saveError.empty() ? "" : " - ", saveError.c_str());
 			}
 
-			system.SetPressedKeys(input.Pressed());
-			system.RunFrame();
-			frames++;
-
+			// The machine runs one frame per iteration, so its speed is the frame loop's pace -
+			// `PaceFrame`, which holds the loop to the machine's own 59.7275 Hz frame period
+			// whether vsync is on or off - and not the sound device's clock, which would make the
+			// emulation follow whatever the device's crystal happens to do. The difference between
+			// the two clocks is absorbed by the mixer instead, which plays the buffer at a slightly
+			// different rate (Host::UpdateAudioClock); a buffer that ran dry is refilled with extra
+			// frames here, but only while this frame still has time left, so a machine that cannot
+			// keep up does not lose the display to the catch-up as well.
 			if (fastForward)
 			{
-				// Fast forward runs the machine as fast as the host allows; the audio is left to
-				// run dry so the pitch does not turn into noise.
-				for (int i = 0; i < 3; i++)
+				// Fast forward runs the machine as fast as the host allows; the sound of the
+				// frames is thrown away rather than pushed, so leaving fast forward does not start
+				// with seconds of stale audio and the pitch does not turn into noise.
+				for (int i = 0; i < 4; i++)
 				{
+					system.SetPressedKeys(input.Pressed());
 					system.RunFrame();
 					frames++;
 				}
+
+				DrainFrameAudio(system, host, samples, true);
 			}
-			else if (host.NeedsAudio())
+			else
 			{
-				samples.resize(2048 * 2);
-				int got = system.ReadAudio(samples.data(), 2048);
-				host.QueueAudio(samples.data(), got);
+				uint32_t started = SDL_GetTicks();
+
+				system.SetPressedKeys(input.Pressed());
+				system.RunFrame();
+				frames++;
+				DrainFrameAudio(system, host, samples, false);
+
+				for (int extra = 1; extra < SoundCatchUpFrames && host.SoundStarving(); extra++)
+				{
+					if (SDL_GetTicks() - started >= (uint32_t)GbaFrameMilliseconds)
+					{
+						break;
+					}
+
+					system.RunFrame();
+					frames++;
+					DrainFrameAudio(system, host, samples, false);
+				}
+
+				host.UpdateAudioClock();
 			}
 
 			host.Present(system.FrameBuffer());
@@ -720,11 +856,12 @@ namespace GBA
 			if (settings.showFps)
 			{
 				char title[256];
-				snprintf(title, sizeof(title), "pureikyubu GBA - %s - %.1f fps%s%s",
+				snprintf(title, sizeof(title), "pureikyubu GBA - %s - %.1f fps%s%s%s",
 					system.RomTitle().empty()
 						? (system.LinkMode() ? "link mode" : "no cartridge")
 						: system.RomTitle().c_str(),
 					host.fps,
+					host.AudioText().c_str(),
 					fastForward ? " [fast forward]" : "",
 					system.Link().Peer() != nullptr ? " [linked]" : "");
 				SDL_SetWindowTitle(host.window, title);
@@ -751,6 +888,7 @@ namespace GBA
 
 		GbSettings gbSettings = GbSettings::Defaults();
 		gbSettings.sampleRate = settings.sampleRate;
+		gbSettings.highPassFilter = settings.highPassFilter;
 		gbSettings.useBootRom = settings.useCustomBootRom;
 		gbSettings.logLevel = settings.logLevel;
 
@@ -854,23 +992,42 @@ namespace GBA
 				printf("gb: battery saved%s%s\n", saveError.empty() ? "" : " - ", saveError.c_str());
 			}
 
-			system.SetPressedKeys(input.Pressed());
-			system.RunFrame();
-			frames++;
-
+			// The machine runs one frame per iteration and the mixer absorbs the difference
+			// between the frame loop's clock and the sound device's, exactly as in the GBA loop
+			// above (the Game Boy's frame is 59.7275 Hz too).
 			if (fastForward)
 			{
-				for (int i = 0; i < 3; i++)
+				for (int i = 0; i < 4; i++)
 				{
+					system.SetPressedKeys(input.Pressed());
 					system.RunFrame();
 					frames++;
 				}
+
+				DrainFrameAudio(system, host, samples, true);
 			}
-			else if (host.NeedsAudio())
+			else
 			{
-				samples.resize(2048 * 2);
-				int got = system.ReadAudio(samples.data(), 2048);
-				host.QueueAudio(samples.data(), got);
+				uint32_t started = SDL_GetTicks();
+
+				system.SetPressedKeys(input.Pressed());
+				system.RunFrame();
+				frames++;
+				DrainFrameAudio(system, host, samples, false);
+
+				for (int extra = 1; extra < SoundCatchUpFrames && host.SoundStarving(); extra++)
+				{
+					if (SDL_GetTicks() - started >= (uint32_t)GbFrameMilliseconds)
+					{
+						break;
+					}
+
+					system.RunFrame();
+					frames++;
+					DrainFrameAudio(system, host, samples, false);
+				}
+
+				host.UpdateAudioClock();
 			}
 
 			host.Present(system.FrameBuffer());
@@ -885,10 +1042,11 @@ namespace GBA
 			if (settings.showFps)
 			{
 				char title[256];
-				snprintf(title, sizeof(title), "pureikyubu Game Boy - %s - %s - %.1f fps%s",
+				snprintf(title, sizeof(title), "pureikyubu Game Boy - %s - %s - %.1f fps%s%s",
 					system.Cgb() ? "CGB" : "DMG",
 					system.RomTitle().empty() ? "no cartridge" : system.RomTitle().c_str(),
 					host.fps,
+					host.AudioText().c_str(),
 					fastForward ? " [fast forward]" : "");
 				SDL_SetWindowTitle(host.window, title);
 			}

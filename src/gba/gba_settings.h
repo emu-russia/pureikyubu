@@ -50,6 +50,10 @@ namespace GBA
 		int sampleRate = 32768;
 		int volume = 100;
 
+		/// <summary>The DMG/CGB APU's output high pass filter (on by default; see
+		/// GbApu::SetHighPassFilter). Off, the sound is the DACs' raw sum, DC offset and all.</summary>
+		bool highPassFilter = true;
+
 		// -- input -------------------------------------------------------------------------
 
 		std::vector<GbaKeyBinding> keys;

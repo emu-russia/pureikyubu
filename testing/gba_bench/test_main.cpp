@@ -226,6 +226,25 @@ namespace
 	// The ROM harness
 	// ---------------------------------------------------------------------------------------
 
+	/// <summary>
+	/// Print what the core logs. Without a sink `GBA::Log` throws the message away, so a run says
+	/// nothing at all about the calls the machine could not answer ("SWI 13 is not implemented",
+	/// a malformed cartridge header, an out of range setting): a ROM that hangs is then a black
+	/// screen with no explanation. The harness prints warnings and errors, and everything when
+	/// `--log` is given.
+	/// </summary>
+	void HarnessLog(LogLevel level, const char* text, void* user)
+	{
+		bool verbose = user != nullptr;
+		bool important = level == LogLevel::Warn || level == LogLevel::Error;
+
+		if (verbose || important)
+		{
+			printf("  %s: %s\n",
+				level == LogLevel::Error ? "error" : (level == LogLevel::Warn ? "warn" : "log"), text);
+		}
+	}
+
 	struct HarnessOptions
 	{
 		std::string rom;
@@ -241,9 +260,12 @@ namespace
 		int trace = 0;				// --trace: how many instructions of the last frame to keep
 		int frames = 60;
 		int pngEvery = 0;
+		int sampleRate = 0;			// --rate: the mixer's rate (0 = the machine's own default)
 		bool bootRomOnly = false;
 		bool demo = false;
 		bool noCustomBoot = false;
+		bool noHpf = false;			// --no-hpf: the Game Boy APU without its high pass filter
+		bool log = false;			// --log: print everything the core logs, not just warnings
 		bool bench = false;
 		bool linkTest = false;
 		bool quiet = false;
@@ -429,7 +451,11 @@ namespace
 		settings.logLevel = options.quiet ? 0 : 3;
 		if (options.noCustomBoot)
 			settings.useCustomBootRom = false;
+		if (options.sampleRate > 0)
+			settings.sampleRate = options.sampleRate;
 		system.ApplySettings(settings);
+
+		SetLogSink(HarnessLog, options.log ? (void*)1 : nullptr);
 
 		if (!options.bios.empty())
 		{
@@ -567,7 +593,12 @@ namespace
 		settings.cgb = !options.gbDmg;
 		settings.useBootRom = !options.noCustomBoot;
 		settings.bootRomPath = options.gbBios;
+		settings.highPassFilter = !options.noHpf;
 		settings.logLevel = options.quiet ? 0 : 4;
+
+		if (options.sampleRate > 0)
+			settings.sampleRate = options.sampleRate;
+
 		system.ApplySettings(settings);
 
 		std::string error;
@@ -585,6 +616,23 @@ namespace
 		if (!options.pngDir.empty())
 			MakeDirectory(options.pngDir);
 
+		// `--wav <file>`: the same recording the GBA harness makes (see there) - the machine's own
+		// mixer output, drained once per frame.
+		WavWriter wav;
+		std::vector<int16_t> audio;
+
+		if (!options.wavPath.empty())
+		{
+			if (!wav.Open(options.wavPath, system.SampleRate()))
+			{
+				printf("gb harness: cannot write %s\n", options.wavPath.c_str());
+				return 2;
+			}
+
+			printf("gb harness: recording the audio to %s at %i Hz\n",
+				options.wavPath.c_str(), system.SampleRate());
+		}
+
 		auto start = std::chrono::steady_clock::now();
 		uint64_t startCycles = system.Cycles();
 
@@ -596,6 +644,12 @@ namespace
 			system.SetPressedKeys((uint8_t)options.keys);
 
 			system.RunFrame();
+
+			if (!options.wavPath.empty())
+			{
+				audio.resize(4096 * 2);
+				wav.Write(audio.data(), system.ReadAudio(audio.data(), 4096));
+			}
 
 			uint32_t hash = FrameHash(system.FrameBuffer(), GbScreenWidth * GbScreenHeight);
 
@@ -613,6 +667,13 @@ namespace
 				if (!GbaTest::WritePng(name, system.FrameBuffer(), GbScreenWidth, GbScreenHeight, 3))
 					printf("  (cannot write %s)\n", name);
 			}
+		}
+
+		wav.Close();
+
+		if (!options.wavPath.empty())
+		{
+			printf("gb harness: wrote %s\n", options.wavPath.c_str());
 		}
 
 		auto end = std::chrono::steady_clock::now();
@@ -721,6 +782,7 @@ namespace
 			"                    mask is the GbButton one of gb_bus.h - 0x10 = A, 0x80 = Start)\n"
 			"  --bios <file>     use a real BIOS image instead of the built-in one\n"
 			"  --wav <file>      record what the sound hardware produces into a WAV file\n"
+			"  --rate N          mix at N Hz instead of the machine's own default\n"
 			"  --trace N         step the last frame instruction by instruction and print the last N\n"
 			"                    of them (with the disassembly), for a program that seems stuck\n"
 			"  --no-custom-boot  do not run the custom boot ROM\n"
@@ -728,6 +790,8 @@ namespace
 			"                    monochrome console)\n"
 			"  --gb-bios <file>  run a real Game Boy boot ROM: the DMG's 256 bytes or the CGB's 2304\n"
 			"                    (--bios is the *GBA*'s BIOS, this is the Game Boy's)\n"
+			"  --no-hpf          the Game Boy APU without its output high pass filter (the raw sum)\n"
+			"  --log             print everything the core logs (warnings are printed either way)\n"
 			"  --bench           print the emulation speed\n"
 			"  --quiet           only print the final summary\n");
 	}
@@ -819,6 +883,9 @@ int main(int argc, char** argv)
 			else if (arg == "--gb-dmg") { options.gb = true; options.gbDmg = true; }
 			else if (arg == "--gb-bios") { options.gb = true; options.gbBios = next("--gb-bios"); }
 			else if (arg == "--no-custom-boot") options.noCustomBoot = true;
+			else if (arg == "--no-hpf") options.noHpf = true;
+			else if (arg == "--log") options.log = true;
+			else if (arg == "--rate") options.sampleRate = atoi(next("--rate").c_str());
 			else if (arg == "--bench") options.bench = true;
 			else if (arg == "--trace") options.trace = atoi(next("--trace").c_str());
 			else if (arg == "--quiet") options.quiet = true;
