@@ -226,6 +226,25 @@ namespace
 	// The ROM harness
 	// ---------------------------------------------------------------------------------------
 
+	/// <summary>
+	/// Print what the core logs. Without a sink `GBA::Log` throws the message away, so a run says
+	/// nothing at all about the calls the machine could not answer ("SWI 13 is not implemented",
+	/// a malformed cartridge header, an out of range setting): a ROM that hangs is then a black
+	/// screen with no explanation. The harness prints warnings and errors, and everything when
+	/// `--log` is given.
+	/// </summary>
+	void HarnessLog(LogLevel level, const char* text, void* user)
+	{
+		bool verbose = user != nullptr;
+		bool important = level == LogLevel::Warn || level == LogLevel::Error;
+
+		if (verbose || important)
+		{
+			printf("  %s: %s\n",
+				level == LogLevel::Error ? "error" : (level == LogLevel::Warn ? "warn" : "log"), text);
+		}
+	}
+
 	struct HarnessOptions
 	{
 		std::string rom;
@@ -246,6 +265,7 @@ namespace
 		bool demo = false;
 		bool noCustomBoot = false;
 		bool noHpf = false;			// --no-hpf: the Game Boy APU without its high pass filter
+		bool log = false;			// --log: print everything the core logs, not just warnings
 		bool bench = false;
 		bool linkTest = false;
 		bool quiet = false;
@@ -431,7 +451,11 @@ namespace
 		settings.logLevel = options.quiet ? 0 : 3;
 		if (options.noCustomBoot)
 			settings.useCustomBootRom = false;
+		if (options.sampleRate > 0)
+			settings.sampleRate = options.sampleRate;
 		system.ApplySettings(settings);
+
+		SetLogSink(HarnessLog, options.log ? (void*)1 : nullptr);
 
 		if (!options.bios.empty())
 		{
@@ -767,6 +791,7 @@ namespace
 			"  --gb-bios <file>  run a real Game Boy boot ROM: the DMG's 256 bytes or the CGB's 2304\n"
 			"                    (--bios is the *GBA*'s BIOS, this is the Game Boy's)\n"
 			"  --no-hpf          the Game Boy APU without its output high pass filter (the raw sum)\n"
+			"  --log             print everything the core logs (warnings are printed either way)\n"
 			"  --bench           print the emulation speed\n"
 			"  --quiet           only print the final summary\n");
 	}
@@ -859,6 +884,7 @@ int main(int argc, char** argv)
 			else if (arg == "--gb-bios") { options.gb = true; options.gbBios = next("--gb-bios"); }
 			else if (arg == "--no-custom-boot") options.noCustomBoot = true;
 			else if (arg == "--no-hpf") options.noHpf = true;
+			else if (arg == "--log") options.log = true;
 			else if (arg == "--rate") options.sampleRate = atoi(next("--rate").c_str());
 			else if (arg == "--bench") options.bench = true;
 			else if (arg == "--trace") options.trace = atoi(next("--trace").c_str());

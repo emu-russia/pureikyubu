@@ -35,6 +35,15 @@
 //
 // Word count 0 means 0x4000 units for DMA0-2 (14bit registers) and 0x10000 for DMA3.
 //
+// What a transfer reloads is what GBATEK "Source and Destination Address and Word Count Registers"
+// lists: "Upon DMA Enable (Bit 15) changing from 0 to 1: Reloads SAD, DAD, CNT_L. Upon Repeat:
+// Reloads CNT_L, and optionally DAD (Increment+Reload)." The source address is *not* reloaded on a
+// repeat, so a repeating channel streams forward through its source; a program that wants the same
+// block again either re-arms the channel (the 0 -> 1 edge copies SAD back into the pointer) or sets
+// the source control to "fixed". A sound DMA is always repeating - the FIFO asks for 16 bytes at a
+// time - so a source that restarted on every refill would play the first 16 bytes of the music for
+// ever, which is what this used to do.
+//
 // Address ranges (GBATEK "DMA Transfers"): only DMA3 may transfer to/from the Game Pak (ROM,
 // Flash, the EEPROM bit stream); DMA0-2 are restricted to internal memory (BIOS, EWRAM, IWRAM,
 // I/O, palette, VRAM, OAM). No channel can reach the 8bit SRAM/Flash save window.
@@ -160,7 +169,7 @@ namespace GBA
 			if (((channel.control & DmaTiming) >> 12) != 3)
 				return false;
 
-			return IsFifo(channel.destLatch) || IsFifo(channel.dest);
+			return IsFifo(channel.destRegister) || IsFifo(channel.destLatch) || IsFifo(channel.dest);
 		}
 
 		/// <summary>
@@ -297,18 +306,30 @@ namespace GBA
 		{
 		case RegSad:		// DMAxSAD: 32bit, written as two halfwords
 			if (highHalf)
-				channel.sourceLatch = (channel.sourceLatch & 0xFFFF) | ((uint32_t)value << 16);
+				channel.sourceRegister = (channel.sourceRegister & 0xFFFF) | ((uint32_t)value << 16);
 			else
-				channel.sourceLatch = (channel.sourceLatch & 0xFFFF0000) | value;
-			channel.source = (uint16_t)channel.sourceLatch;
+				channel.sourceRegister = (channel.sourceRegister & 0xFFFF0000) | value;
+
+			channel.source = (uint16_t)channel.sourceRegister;
+
+			// A running transfer owns its pointers: a write to SAD while the channel is enabled
+			// only changes the register (the pointer is reloaded from it on the next 0 -> 1 edge),
+			// while an idle channel keeps the latch in step so that a read of DMAxSAD_H sees the
+			// address the transfer will use.
+			if (!channel.active)
+				channel.sourceLatch = channel.sourceRegister;
 			return;
 
 		case RegDad:		// DMAxDAD: 32bit, written as two halfwords
 			if (highHalf)
-				channel.destLatch = (channel.destLatch & 0xFFFF) | ((uint32_t)value << 16);
+				channel.destRegister = (channel.destRegister & 0xFFFF) | ((uint32_t)value << 16);
 			else
-				channel.destLatch = (channel.destLatch & 0xFFFF0000) | value;
-			channel.dest = (uint16_t)channel.destLatch;
+				channel.destRegister = (channel.destRegister & 0xFFFF0000) | value;
+
+			channel.dest = (uint16_t)channel.destRegister;
+
+			if (!channel.active)
+				channel.destLatch = channel.destRegister;
 			return;
 
 		case RegCount:		// DMAxCNT_L: 14bit for DMA0-2, 16bit for DMA3
@@ -336,19 +357,15 @@ namespace GBA
 
 		if (!wasEnabled)
 		{
-			// Enable changed 0 -> 1: reload SAD, DAD and CNT_L (GBATEK "Source and Destination
-			// Address and Word Count Registers"). Both halves of SAD and DAD are in the latches
-			// by now, so the transfer gets the full 32bit addresses.
+			// Enable changed 0 -> 1: "Reloads SAD, DAD, CNT_L" (GBATEK "Source and Destination
+			// Address and Word Count Registers"). The registers have the full addresses by now,
+			// so the transfer starts from the beginning of the block whichever way the last one
+			// ended.
+			channel.sourceLatch = channel.sourceRegister;
+			channel.destLatch = channel.destRegister;
 			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
 			channel.active = true;
 			channel.pending = false;
-
-			if (((channel.control & DmaDestControl) >> 5) == 3)
-			{
-				// "Increment + reload": remember the address the transfer starts from, because
-				// DAD is put back to it before every repeat.
-				channel.destLatch = UnionAddress(channel.dest, channel.destLatch);
-			}
 		}
 
 		uint16_t timing = (uint16_t)((channel.control & DmaTiming) >> 12);
@@ -463,8 +480,8 @@ namespace GBA
 		// armed through CNT_H, so obviously stale latches are filled in from the registers.
 		if (!channel.active || channel.latched <= 0)
 		{
-			channel.sourceLatch = UnionAddress(channel.source, channel.sourceLatch);
-			channel.destLatch = UnionAddress(channel.dest, channel.destLatch);
+			channel.sourceLatch = channel.sourceRegister;
+			channel.destLatch = channel.destRegister;
 			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
 			channel.active = true;
 		}
@@ -474,12 +491,15 @@ namespace GBA
 
 		if (channel.active)
 		{
-			// Repeat: the enable bit stays set and the transfer restarts from the addresses it
-			// was started with on the next start condition. "Upon Repeat: Reloads CNT_L, and
-			// optionally DAD" (GBATEK "Source and Destination Address and Word Count Registers").
-			channel.sourceLatch = UnionAddress(channel.source, channel.sourceLatch);
+			// Repeat: the enable bit stays set and the transfer runs again on the next start
+			// condition. "Upon Repeat: Reloads CNT_L, and optionally DAD (Increment+Reload)"
+			// (GBATEK "Source and Destination Address and Word Count Registers") - the source
+			// pointer is *not* reloaded, it carries on where the last block ended. That is what
+			// streams a sound buffer through the FIFO: reloading SAD here would restart the DMA
+			// from the same 16 bytes on every refill, so a game's music came out as one short
+			// loop buzzing at the FIFO's byte rate instead of the music.
 			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
-			ApplyDestReload(channel, UnionAddress(channel.dest, channel.destLatch));
+			ApplyDestReload(channel, channel.destRegister);
 		}
 
 		return cycles;
@@ -677,7 +697,7 @@ namespace GBA
 			// Repeat with "increment + reload": DAD goes back to the address the transfer was
 			// started from, so the next start condition writes the same block again (GBATEK
 			// "Upon Repeat: Reloads CNT_L, and optionally DAD").
-			channel.destLatch = UnionAddress(channel.dest, channel.destLatch);
+			channel.destLatch = channel.destRegister;
 		}
 
 		// The waitstates the transfer stole from the CPU.

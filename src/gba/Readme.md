@@ -39,7 +39,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_apu.h/.cpp` | The four legacy channels, the two direct-sound FIFOs (clocked by the timer overflows) and the host mixer |
 | `gba_audio.h` | The mixer buffer between the machine and the host's sound device: the machine pushes the samples into it, the frontend's audio callback plays them at the rate a slow controller steers from the buffer's level (the arrangement dmgemu uses in its `sound.cpp`) |
 | `gba_sio.h/.cpp` | The serial port: normal, multiplayer, UART and JOY bus modes, and the link cable |
-| `gba_dma.h/.cpp` | The four DMA channels, including the sound FIFO and video capture timings |
+| `gba_dma.h/.cpp` | The four DMA channels, including the sound FIFO and video capture timings (a repeat reloads the word count, and DAD only for "increment + reload" - the source pointer keeps running, which is what streams a sound buffer through a FIFO) |
 | `gba_timers.h/.cpp` | The four timers and their cascade |
 | `gba_irq.h/.cpp` | IE/IF/IME |
 | `gba_keypad.h/.cpp` | KEYINPUT/KEYCNT and the keypad interrupt |

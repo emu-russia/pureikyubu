@@ -387,13 +387,25 @@ GBA_TEST(Dma, WordCountZeroWrapsToTheMaximum)
 
 GBA_TEST(Dma, RepeatTransferRestartedByVBlank)
 {
+	// What a repeat reloads is what GBATEK "Source and Destination Address and Word Count
+	// Registers" lists: "Upon DMA Enable (Bit 15) changing from 0 to 1: Reloads SAD, DAD, CNT_L.
+	// Upon Repeat: Reloads CNT_L, and optionally DAD (Increment+Reload)." SAD is *not* on the
+	// repeat list, so a repeating channel carries on through its source while the count - and,
+	// with the destination control set to increment + reload, DAD - start over for the next
+	// start condition. (A stream through the sound FIFO is the case that makes this obvious: the
+	// FIFO asks for 16 bytes at a time, and a source that restarted every time would only ever
+	// play the first 16 bytes of the music.) A program that wants the same block again sets the
+	// source control to "fixed" instead, which is what the last part of this test checks.
 	Fixture f;
 
+	// Four halfwords of source data at 0x02000000, so that two repeating transfers can be told
+	// apart, and a zeroed destination at 0x02000100.
 	f.WriteMem16(0x02000000, 0xCAFE);
 	f.WriteMem16(0x02000002, 0xBABE);
+	f.WriteMem16(0x02000004, 0x0DD0);
+	f.WriteMem16(0x02000006, 0x0FF1);
 	f.WriteMem16(0x02000100, 0x0000);
 	f.WriteMem16(0x02000102, 0x0000);
-	f.WriteMem16(0x02000104, 0x0000);
 
 	// DMA3, source increment, destination increment + reload, repeat, VBlank (timing 1),
 	// word count 2 (GBATEK DMAxCNT_H bits 5-6 = 3, bits 12-13 = 1, bit 9 = 1).
@@ -412,14 +424,41 @@ GBA_TEST(Dma, RepeatTransferRestartedByVBlank)
 	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0xCAFE);
 	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0xBABE);
 
-	// The repeat bit keeps the channel enabled and DAD reloaded, so the next VBlank writes the
-	// same two words to the same place again (GBATEK "DMA Repeat bit").
+	// The repeat bit keeps the channel enabled, so the next VBlank writes two more words to the
+	// same place (DAD was reloaded): the source, which was not reloaded, is now two halfwords on.
 	GBA_CHECK(f.bus.dma.Active(3));
 	GBA_CHECK_HEX16(f.Read(0x0DE), (uint16_t)(0x0200 | 0x1000 | 0x0060 | 0x8000));
 
 	f.WriteMem16(0x02000100, 0x0000);
+	f.WriteMem16(0x02000102, 0x0000);
+	f.bus.dma.OnVBlank(f.bus);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0x0DD0);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0x0FF1);
+
+	// A repeat whose source control is "fixed" reads the same word for every unit, which is how a
+	// block is filled with one value: both halfwords of the destination get the first word.
+	f.Write(0x0DE, 0x0000);										// stop
+	f.Write(0x0D4, 0x0000);										// SAD = 0x02000000
+	f.Write(0x0D6, 0x0200);
+	f.Write(0x0DE, (uint16_t)(0x0200 | 0x1000 | 0x0060 | 0x8000 | 0x0100));	// source fixed, start
+
+	f.WriteMem16(0x02000100, 0x0000);
+	f.WriteMem16(0x02000102, 0x0000);
 	f.bus.dma.OnVBlank(f.bus);
 	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0xCAFE);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0xCAFE);
+
+	// To copy a *block* again, a program re-arms the channel: the register still holds the address
+	// the transfer started from (a transfer never changes it), so the 0 -> 1 edge puts the source
+	// pointer back and the next VBlank copies the first two halfwords once more.
+	f.Write(0x0DE, 0x0000);										// stop
+	f.Write(0x0DE, (uint16_t)(0x0200 | 0x1000 | 0x0060 | 0x8000));	// source increment again, start
+
+	f.WriteMem16(0x02000100, 0x0000);
+	f.WriteMem16(0x02000102, 0x0000);
+	f.bus.dma.OnVBlank(f.bus);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000100), 0xCAFE);
+	GBA_CHECK_HEX16((uint16_t)f.ReadMem16(0x02000102), 0xBABE);
 
 	// Clearing the enable bit stops the repetition.
 	f.Write(0x0DE, (uint16_t)(0x0200 | 0x1000 | 0x0060));
@@ -511,6 +550,79 @@ GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
 	GBA_CHECK(!f.bus.apu.FifoRequest(1));
 }
 
+GBA_TEST(Dma, ARepeatingFifoTransferStreamsForward)
+{
+	// A repeating sound DMA streams a buffer: every refill the FIFO asks for moves the *next* 16
+	// bytes, so the source pointer carries on from where the last block ended. GBATEK "Source and
+	// Destination Address and Word Count Registers" is what says so - "Upon DMA Enable (Bit 15)
+	// changing from 0 to 1: Reloads SAD, DAD, CNT_L. Upon Repeat: Reloads CNT_L, and optionally
+	// DAD (Increment+Reload)" - SAD is not on the repeat list. Reloading it there restarts the
+	// stream from the same 16 bytes on every refill, which is heard as one short loop buzzing at
+	// the FIFO's byte rate instead of the music (Metroid Fusion's soundtrack was exactly that).
+	Fixture f;
+
+	// 64 bytes of source data, every byte different (byte i + 1, so that a sample of zero cannot
+	// be mistaken for a byte that played).
+	const int Bytes = 64;
+	for (int i = 0; i < Bytes / 2; i++)
+		f.WriteMem16(0x02000000 + i * 2, (uint16_t)((i * 2 + 2) << 8 | (i * 2 + 1)));
+
+	// DMA1: special timing, incremental source, FIFO A destination, 32bit units, repeat, enabled.
+	f.Write(0x0BC, 0x0000);						// DMA1SAD_L
+	f.Write(0x0BE, 0x0200);						// DMA1SAD_H: 0x02000000
+	f.Write(0x0C0, 0x00A0);						// DMA1DAD_L
+	f.Write(0x0C2, 0x0400);						// DMA1DAD_H: 0x040000A0
+	f.Write(0x0C4, Bytes / 4);					// DMA1CNT_L
+	f.Write(0x0C6, (uint16_t)(0x3000 | 0x0400 | 0x0200 | 0x8000));	// special, 32bit, repeat, enable
+
+	// SOUNDCNT_H: FIFO A on both outputs at 100%, timer 0; SOUNDCNT_X: master enable.
+	f.Write(0x082, 0x0304);
+	f.Write(0x084, 0x0080);
+
+	// Timer 0 overflows every 512 cycles, i.e. once per host sample at 32768 Hz: one FIFO byte
+	// per sample, so the stream can be read back one byte at a time.
+	f.Write(0x100, 0xFE00);						// TM0CNT_L: 512 cycles
+	f.Write(0x102, 0x0080);						// TM0CNT_H: enable, prescaler 1
+	f.bus.apu.SetSampleRate(32768);
+
+	// Drain a few refills' worth of bytes. The very first sample only takes the timer's running
+	// total (the byte that plays is the one a previous overflow put in the latch), so the first
+	// byte can still be the stale one; what matters is that the *stream* moves on - with the
+	// source reloaded on every refill the FIFO only ever plays the buffer's first 16 bytes.
+	std::vector<int> played;
+	for (int i = 0; i < 40; i++)
+	{
+		f.bus.timers.Tick(f.bus, 512);
+		f.bus.apu.Tick(f.bus, 512);
+
+		int16_t frame[2] = { 0, 0 };
+		if (f.bus.apu.ReadSamples(frame, 1) == 1)
+			played.push_back((int)frame[0] / (4 * 64));	// the byte, undoing FifoScale and MixScale
+	}
+
+	GBA_CHECK_MSG(played.size() >= 32,
+		"the FIFO played only " + std::to_string(played.size()) + " bytes");
+	GBA_CHECK_MSG(played.back() >= 32,
+		"the stream stopped at byte " + std::to_string(played.back()) + " of the buffer");
+
+	bool consecutive = true;
+	for (size_t i = played.size() - 20; i < played.size(); i++)
+	{
+		if (played[i] != played[i - 1] + 1)
+			consecutive = false;
+	}
+
+	GBA_CHECK_MSG(consecutive, "the bytes did not come out in order: " +
+		std::to_string(played[played.size() - 3]) + ", " +
+		std::to_string(played[played.size() - 2]) + ", " +
+		std::to_string(played[played.size() - 1]));
+
+	// The register is untouched by the transfer (GBATEK: "The hardware does NOT change the content
+	// of these registers"), so it still reads 0x02000000.
+	GBA_CHECK_HEX16(f.Read(0x0BC), 0x0000);
+	GBA_CHECK_HEX16(f.Read(0x0BE), 0x0200);
+}
+
 GBA_TEST(Dma, VideoMemoryTransferLandsWhereItShould)
 {
 	// The GBA BIOS's boot animation copies its graphics into VRAM with the DMA (and so do games),
@@ -543,8 +655,26 @@ GBA_TEST(Dma, VideoMemoryTransferLandsWhereItShould)
 	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x1C3F), 0x00);
 
 	// A 32-bit transfer into the object tile area behaves the same way (the BIOS puts the
-	// animation's sprites there). Its source continues where the first transfer stopped, at
-	// 0x02000200, so the first halfword it moves is payload halfword 256 = 0x1100.
+	// animation's sprites there). A new 0 -> 1 enable copies SAD from the register again (GBATEK
+	// "Source and Destination Address and Word Count Registers"), and a transfer does not change
+	// the register - so this second transfer starts from the payload's first halfword, exactly as
+	// the first one did, and the 64 32bit units it moves are payload halfwords 0..255.
+	f.Write(0x0D8, 0x0000);
+	f.Write(0x0DA, 0x0601);
+	f.Write(0x0DC, 64);
+	f.Write(0x0DE, (uint16_t)(0x8400));		// immediate, 32-bit units, enable
+
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000), 0x00);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10001), 0x10);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000 + 254), 0x7F);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000 + 255), 0x10);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x10000 + 256), 0x00);
+	GBA_CHECK_HEX16(f.bus.ppu.ReadVram(0x0FFFF), 0x00);
+
+	// Writing SAD is what makes a transfer carry on: the third one starts where the first stopped
+	// (0x02000200), so the first halfword it moves is payload halfword 256 = 0x1100.
+	f.Write(0x0D4, 0x0200);				// DMA3 SAD = 0x02000200
+	f.Write(0x0D6, 0x0200);
 	f.Write(0x0D8, 0x0000);
 	f.Write(0x0DA, 0x0601);
 	f.Write(0x0DC, 64);

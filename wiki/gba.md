@@ -206,7 +206,12 @@ Also not implemented:
 * **The JOY bus** (a GameCube controller on the link port) and the Game Boy Player's own boot
   protocol. The emulator-to-emulator link cable *is* implemented and tested on both machines.
 * **The BIOS sound driver** (`SWI 0x28`-`0x2F`) and the Huffman decompressor: reported and
-  returned from, not implemented.
+  returned from, not implemented. Games whose music engine *is* the BIOS's (a large part of the
+  GBA's library) therefore play nothing but sound effects, and a game whose graphics are
+  Huffman-compressed in the ROM does not boot at all - Metroid Fusion is one of those, and it
+  runs with a real BIOS image (`build/Data/gba_bios.bin`, or `--bios <file>` in the harness),
+  which executes the real routines instead. The harness prints the core's warnings, so a run that
+  falls back to these stubs says so.
 * **Save states and rewind**; the battery-backed save memory (SRAM/Flash/EEPROM on the GBA,
   the mapper RAM on the Game Boy) *is* implemented and written to a `.sav` next to the ROM.
 * **Cycle-exact LCD timing**: a scanline is composed when its HBlank starts rather than dot by
