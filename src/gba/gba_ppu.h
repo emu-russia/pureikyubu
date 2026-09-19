@@ -1,11 +1,16 @@
 // GBA LCD controller (the "PPU").
 //
-// Implemented from GBATEK "LCD" and "LCD VRAM Bitmap BG" / "LCD OBJ" / "LCD Color Palettes":
+// Implemented from GBATEK ("LCD" and its sub-chapters, "LCD VRAM Bitmap BG", "LCD OBJ",
+// "LCD Color Palettes", "LCD Dimensions and Timings") and the AGB Programming Manual v1.1
+// (chapter 5 "Image System", chapter 6 "Rendering Functions", chapter 8 "Window Feature" and
+// chapter 9 "Color Special Effects"):
 //
 //   * DISPCNT/DISPSTAT/VCOUNT and the BG, window, mosaic and blending registers
 //     (0x04000000 .. 0x0400004C);
 //   * the tile modes 0, 1 and 2 (four text/affine backgrounds);
-//   * the bitmap modes 3 (16-bit), 4 (8-bit, double buffered) and 5 (16-bit, 160x128);
+//   * the bitmap modes 3 (16-bit), 4 (8-bit, double buffered) and 5 (16-bit, 160x128), which
+//     are BG2 and are sampled through the BG2 rotation/scaling registers like an affine tile
+//     layer (the manual 6.2.2 and its BG mode table);
 //   * sprites: normal, semi-transparent, windowed, affine and affine double-size, with the
 //     OBJ window;
 //   * the mosaic filter for backgrounds and sprites;
@@ -13,6 +18,26 @@
 //     brighten, darken), including the "first target" alpha rule of the sprite layer;
 //   * the scanline timing: 1232 cycles per line, 160 visible lines, 68 VBlank lines, the
 //     HBlank/VBlank/VCount interrupts and the forced-blank white screen.
+//
+// Deliberate deviations, all recorded here so they are not mistaken for verified hardware:
+//
+//   * **Line-at-a-time composition.** A whole scanline is composed when its HBlank starts
+//     instead of dot by dot, so a program that changes a register inside the visible part of a
+//     line sees the change one line early. This is the same simplification the Game Boy side of
+//     the emulator makes.
+//   * **The per-line OBJ cycle budget is not modelled.** GBATEK "Maximum Number of Sprites per
+//     Line" gives a line 1210 rendering cycles (954 with DISPCNT bit 5 set) and the cost of
+//     every OBJ, so a line with too many or too large OBJs drops the last ones; this renderer
+//     draws every OBJ that covers the line, and DISPCNT bit 5 therefore changes nothing.
+//   * **VRAM/OAM/Palette waitstates are not modelled.** GBATEK "VRAM, OAM, and Palette RAM
+//     Access": on the GBA the CPU may reach them at any time, a waitstate being inserted when
+//     the display controller is using the memory in the same cycle (the data is never lost, as
+//     it is on a DMG). The accesses here are immediate.
+//   * **The H-Blank flag timing.** DISPSTAT bit 1 is set when the visible part of the line ends
+//     (cycle 960), which is what the manual's timing table gives ("Visible 240 dots, 960
+//     cycles; H-Blanking 68 dots, 272 cycles"). GBATEK 4000004h instead remarks that the flag
+//     is "0" for a total of 1006 cycles, i.e. rises 46 cycles later; that remark is not
+//     followed.
 //
 // The output is a 240x160 XRGB8888 frame buffer for the host, plus the raw 15-bit colour of
 // every pixel of the last rendered line, which is what the unit tests compare against their own

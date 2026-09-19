@@ -122,13 +122,18 @@ namespace
 	// EEPROM helpers (GBATEK "GBA Cart Backup EEPROM")
 	//
 	// The chip sees one bit per 16bit write, so a transfer is a list of bits here and each
-	// bit becomes one halfword write into the ROM window.
+	// bit becomes one halfword write into the ROM window. The window matters: GBATEK has the
+	// chip answering "anywhere at D000000h-DFFFFFFh" on a cartridge of 16 MByte or less, and
+	// reads inside the ROM image must keep returning the ROM - that is how a game fetches its
+	// own EEPROM routine from the cartridge while the chip drives the bus.
 	// -------------------------------------------------------------------------------------
+
+	const uint32_t EepromWindow = 0x0D000000;
 
 	void EepromSendBits(Cart& cart, const std::vector<uint8_t>& bits)
 	{
 		for (size_t i = 0; i < bits.size(); i++)
-			cart.WriteRom16(ScratchBus(), 0, (uint16_t)(bits[i] & 1));
+			cart.WriteRom16(ScratchBus(), EepromWindow, (uint16_t)(bits[i] & 1));
 	}
 
 	// The write request: "10", the address (MSB first), 64 data bits (MSB first), a "0".
@@ -165,7 +170,7 @@ namespace
 		GBA_CHECK_MSG(!cart.EepromBusy(), "the EEPROM must be idle before a transfer");
 		for (size_t i = 0; i < bits.size(); i++)
 		{
-			cart.WriteRom16(ScratchBus(), 0, (uint16_t)(bits[i] & 1));
+			cart.WriteRom16(ScratchBus(), EepromWindow, (uint16_t)(bits[i] & 1));
 			if (completes && i + 1 == bits.size())
 				GBA_CHECK_MSG(!cart.EepromBusy(), "the last write bit completes the transfer");
 			else
@@ -179,13 +184,13 @@ namespace
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			GBA_CHECK_HEX16(cart.ReadRom16(0), 0x0000);
+			GBA_CHECK_HEX16(cart.ReadRom16(EepromWindow), 0x0000);
 			GBA_CHECK(cart.EepromBusy());
 		}
 		uint8_t data[8] = {};
 		for (int i = 0; i < 64; i++)
 		{
-			uint8_t bit = (uint8_t)(cart.ReadRom16(0) & 1);
+			uint8_t bit = (uint8_t)(cart.ReadRom16(EepromWindow) & 1);
 			data[i / 8] = (uint8_t)((data[i / 8] << 1) | bit);
 		}
 		GBA_CHECK_MSG(!cart.EepromBusy(), "the 68 bit read stream ends the transfer");
@@ -674,6 +679,50 @@ GBA_TEST(Cart, Eeprom512WriteRead)
 	// A different block was not touched.
 	EepromSendRequest(cart, EepromReadRequest(block + 1, 6), false);
 	EepromReadData(cart, readBack);
+	for (int i = 0; i < 8; i++)
+		GBA_CHECK_HEX16(readBack[i], 0xFF);
+}
+
+GBA_TEST(Cart, EepromOnlyAnswersInItsOwnWindow)
+{
+	// GBATEK "GBA Cart Backup EEPROM": "the eeprom can be then addressed at
+	// DFFFF00h..DFFFFFFh. Respectively, with eeprom, ROM is restricted to
+	// 8000000h-9FFFeFFh ... On carts with 16MB or smaller ROM, eeprom can be alternately
+	// accessed anywhere at D000000h-DFFFFFFh."
+	//
+	// Reads inside the ROM image therefore keep returning the ROM even while the chip drives
+	// the bus, which is what lets a game run its EEPROM routine *from the cartridge*: The
+	// Legend of Zelda: The Minish Cap executes the routine at 080B1568h between the read
+	// request and the data transfer, and serving those instruction fetches from the EEPROM's
+	// shift register fed the CPU 0001h words and sent it into a data table.
+	std::string error;
+	std::vector<uint8_t> image = MakeRom();
+	PutSignature(image, 0x120, "EEPROM_V");
+
+	Cart cart;
+	GBA_CHECK_MSG(cart.LoadRom(image, error), error);
+	GBA_CHECK(cart.GetSaveType() == SaveType::Eeprom512B);
+
+	// A write inside the image is a plain (ignored) ROM write: only the chip's own window
+	// clocks a bit in.
+	cart.WriteRom16(ScratchBus(), 0x08001000, 0x0001);
+	GBA_CHECK_MSG(!cart.EepromBusy(), "a write in the ROM image must not start a transfer");
+
+	// Start a read transfer: the chip turns the bus around after the dummy bit.
+	EepromSendRequest(cart, EepromReadRequest(0x2A, 6), false);
+	GBA_CHECK(cart.EepromBusy());
+
+	// The image still reads as ROM - instruction fetches included - while the transfer runs.
+	const uint16_t expected = (uint16_t)(image[0x1000] | (image[0x1001] << 8));
+	GBA_CHECK_HEX16(cart.ReadRom16(0x08001000), expected);
+	GBA_CHECK_HEX32(cart.ReadRom32(0x08001000),
+		((uint32_t)cart.ReadRom16(0x08001002) << 16) | expected);
+
+	// The chip's own window is the only place its bits come from, and the 68 access stream
+	// still arrives intact (a fresh save is erased, all ones).
+	uint8_t readBack[8] = {};
+	EepromReadData(cart, readBack);
+	GBA_CHECK_MSG(!cart.EepromBusy(), "the 68 bit read stream ends the transfer");
 	for (int i = 0; i < 8; i++)
 		GBA_CHECK_HEX16(readBack[i], 0xFF);
 }

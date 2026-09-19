@@ -110,7 +110,9 @@ namespace GBA
 		const uint32_t BITMAP_OBJ_TILES = 0x14000;	// the same area in the bitmap modes
 		const uint32_t BITMAP_FRAME1 = 0x0A000;
 
-		const int BITMAP_STRIDE_16 = 480;		// modes 3/5: two bytes per dot
+		const int BITMAP_STRIDE_16 = 480;		// mode 3: two bytes per dot over the full 240 dot line
+		const int BITMAP_STRIDE_5 = 320;		// mode 5: the frame is only 160 dots wide, so a
+												// line is 320 bytes (40 KByte per 160x128 frame)
 		const int BITMAP_STRIDE_8 = 240;		// mode 4: one byte per dot
 		const int MODE3_HEIGHT = 160;
 		const int MODE4_HEIGHT = 160;
@@ -184,6 +186,19 @@ namespace GBA
 		// -----------------------------------------------------------------------------------
 
 		const uint32_t REFERENCE_MASK = 0x0FFFFFFF;
+
+		/// <summary>
+		/// Land a 28-bit reference point in a signed int32. GBATEK 4000028h: bits 0-7 are the
+		/// fraction, bits 8-26 the integer part and bit 27 the sign; bits 28-31 are ignored
+		/// (a signed value has all its high bits equal, so cutting to 28 bits and sign-extending
+		/// bit 27 is exactly the value the hardware uses). The consumers reduce the coordinate
+		/// modulo a power of two, so the unsigned form happened to sample the same texels, but
+		/// the register is a signed coordinate and the emulator keeps it as one.
+		/// </summary>
+		inline int32_t SignExtendReference(uint32_t value)
+		{
+			return (int32_t)((value & REFERENCE_MASK) << 4) >> 4;
+		}
 
 		/// <summary>Round a source coordinate to the nearest texel, which is the texel the
 		/// hardware samples for a rotated/scaled layer.</summary>
@@ -262,15 +277,12 @@ namespace GBA
 		{
 			int left = (reg >> 8) & 0xFF;		// bits 8-15: X1, the leftmost coordinate
 			int right = reg & 0xFF;				// bits 0-7: X2, the rightmost coordinate + 1
-			const int limit = ScreenWidth;
-
-			if (left > limit) left = limit;
-			if (right > limit) right = limit;
 
 			// GBATEK 4000040h: "Garbage values of X2>240 or X1>X2 are interpreted as X2=240".
-			// An inverted range (X1 > X2) therefore encloses no dots.
-			if (left > right)
-				right = left;
+			// So an inverted range is not an empty window but one that reaches the right edge,
+			// and X1 is taken as written.
+			if (right > ScreenWidth || left > right)
+				right = ScreenWidth;
 
 			x1 = left;
 			x2 = right;
@@ -281,10 +293,9 @@ namespace GBA
 			int first = (reg >> 8) & 0xFF;
 			int last = reg & 0xFF;
 
-			if (first > ScreenHeight) first = ScreenHeight;
-			if (last > ScreenHeight) last = ScreenHeight;
-			if (first > last)
-				last = first;
+			// GBATEK 4000044h: "Garbage values of Y2>160 or Y1>Y2 are interpreted as Y2=160".
+			if (last > ScreenHeight || first > last)
+				last = ScreenHeight;
 
 			y1 = first;
 			y2 = last;
@@ -421,12 +432,14 @@ namespace GBA
 			}
 
 			// Mode 5: the frame is 160x128 dots inside the 240x160 screen, two bytes per dot and
-			// 320 bytes per line. The dots outside of the 160x128 area are not part of the frame
-			// buffer, so the layers below (ultimately the backdrop) show through there.
+			// 320 bytes per line (the frame occupies exactly 40 KByte, the manual 6.2.4.3 puts
+			// line 1 at 140h and line 2 at 2A0h). The dots outside of the 160x128 area are not
+			// part of the frame buffer, so the layers below (ultimately the backdrop) show
+			// through there.
 			if (x < 0 || x >= MODE5_WIDTH || y < 0 || y >= MODE5_HEIGHT)
 				return NO_PIXEL;
 
-			return ReadVram16(ppu, page + (uint32_t)y * BITMAP_STRIDE_16 + (uint32_t)x * 2);
+			return ReadVram16(ppu, page + (uint32_t)y * BITMAP_STRIDE_5 + (uint32_t)x * 2);
 		}
 	}
 
@@ -632,23 +645,23 @@ namespace GBA
 			// the internal register (GBATEK 4000028h: a write outside of VBlank takes effect for
 			// the current scanline immediately). The latch's high 4 bits are never written.
 			bgxLatch[0] = (bgxLatch[0] & 0x0FFF0000u) | value;
-			bgx[0] = (int32_t)(bgxLatch[0] & REFERENCE_MASK);
+			bgx[0] = SignExtendReference(bgxLatch[0]);
 			break;
 
 		case 0x02A:
 			// BG2X_H: only bits 0-11 exist; writing it must not disturb the low 16 bits.
 			bgxLatch[0] = ((uint32_t)(value & 0x0FFF) << 16) | (bgxLatch[0] & 0xFFFF);
-			bgx[0] = (int32_t)(bgxLatch[0] & REFERENCE_MASK);
+			bgx[0] = SignExtendReference(bgxLatch[0]);
 			break;
 
 		case 0x02C:
 			bgyLatch[0] = (bgyLatch[0] & 0x0FFF0000u) | value;
-			bgy[0] = (int32_t)(bgyLatch[0] & REFERENCE_MASK);
+			bgy[0] = SignExtendReference(bgyLatch[0]);
 			break;
 
 		case 0x02E:
 			bgyLatch[0] = ((uint32_t)(value & 0x0FFF) << 16) | (bgyLatch[0] & 0xFFFF);
-			bgy[0] = (int32_t)(bgyLatch[0] & REFERENCE_MASK);
+			bgy[0] = SignExtendReference(bgyLatch[0]);
 			break;
 
 		case 0x030: bgpa[1] = (int16_t)value; break;
@@ -658,22 +671,22 @@ namespace GBA
 
 		case 0x038:
 			bgxLatch[1] = (bgxLatch[1] & 0x0FFF0000u) | value;
-			bgx[1] = (int32_t)(bgxLatch[1] & REFERENCE_MASK);
+			bgx[1] = SignExtendReference(bgxLatch[1]);
 			break;
 
 		case 0x03A:
 			bgxLatch[1] = ((uint32_t)(value & 0x0FFF) << 16) | (bgxLatch[1] & 0xFFFF);
-			bgx[1] = (int32_t)(bgxLatch[1] & REFERENCE_MASK);
+			bgx[1] = SignExtendReference(bgxLatch[1]);
 			break;
 
 		case 0x03C:
 			bgyLatch[1] = (bgyLatch[1] & 0x0FFF0000u) | value;
-			bgy[1] = (int32_t)(bgyLatch[1] & REFERENCE_MASK);
+			bgy[1] = SignExtendReference(bgyLatch[1]);
 			break;
 
 		case 0x03E:
 			bgyLatch[1] = ((uint32_t)(value & 0x0FFF) << 16) | (bgyLatch[1] & 0xFFFF);
-			bgy[1] = (int32_t)(bgyLatch[1] & REFERENCE_MASK);
+			bgy[1] = SignExtendReference(bgyLatch[1]);
 			break;
 
 		case 0x040: win0h = value; break;
@@ -889,10 +902,10 @@ namespace GBA
 			// GBATEK 4000028h: the reference points are copied from the write latches to the
 			// internal registers during each VBlank, i.e. they define the origin of the topmost
 			// scanline.
-			bgx[0] = (int32_t)(bgxLatch[0] & REFERENCE_MASK);
-			bgy[0] = (int32_t)(bgyLatch[0] & REFERENCE_MASK);
-			bgx[1] = (int32_t)(bgxLatch[1] & REFERENCE_MASK);
-			bgy[1] = (int32_t)(bgyLatch[1] & REFERENCE_MASK);
+			bgx[0] = SignExtendReference(bgxLatch[0]);
+			bgy[0] = SignExtendReference(bgyLatch[0]);
+			bgx[1] = SignExtendReference(bgxLatch[1]);
+			bgy[1] = SignExtendReference(bgyLatch[1]);
 		}
 		else
 		{
@@ -902,8 +915,8 @@ namespace GBA
 			// of PB is 0x0100 and the increment is the raw register value.
 			for (int i = 0; i < 2; i++)
 			{
-				bgx[i] = (int32_t)((uint32_t)(bgx[i] + (int32_t)bgpb[i]) & REFERENCE_MASK);
-				bgy[i] = (int32_t)((uint32_t)(bgy[i] + (int32_t)bgpd[i]) & REFERENCE_MASK);
+				bgx[i] = SignExtendReference((uint32_t)(bgx[i] + (int32_t)bgpb[i]));
+				bgy[i] = SignExtendReference((uint32_t)(bgy[i] + (int32_t)bgpd[i]));
 			}
 		}
 
@@ -987,34 +1000,44 @@ namespace GBA
 
 		for (int x = 0; x < ScreenWidth; x++)
 		{
-			uint16_t color = line[x];
-
 			if (state.forcedBlank)
 			{
 				// Forced blank (DISPCNT bit 7) makes the LCD display white lines (GBATEK
 				// "Blanking Bits"). It is the last stage of the pipeline, so the line buffer -
 				// what the rest of the emulator and the debugger see - holds the white dot too.
-				color = 0x7FFF;
+				line[x] = 0x7FFF;
 			}
-
-			if ((greenswap & 1) != 0)
-			{
-				// Undocumented Green Swap (4000002h): the green intensities of each group of two
-				// dots are exchanged. It is a final-stage effect, so it applies to the white lines
-				// of a forced blank as well.
-				color = Swap16(color);
-			}
-
-			line[x] = color;
-			target[x] = Color15ToXrgb(color);
 		}
+
+		if ((greenswap & 1) != 0)
+		{
+			// Undocumented Green Swap (4000002h): "each pixel group is output as BgRbGr (ie.
+			// green intensity of each two pixels exchanged)". The hardware drives the LCD with
+			// two dots at a time, so the green field (bits 5-9) of the dot at an even X and of
+			// the dot after it change places; the red and blue fields stay where they are. It is
+			// a final-stage effect, so it applies to the white lines of a forced blank as well
+			// (where both greens are 31 and nothing visibly changes).
+			for (int x = 0; x + 1 < ScreenWidth; x += 2)
+			{
+				const uint16_t left = line[x];
+				const uint16_t right = line[x + 1];
+				line[x] = (uint16_t)((left & ~0x03E0) | (right & 0x03E0));
+				line[x + 1] = (uint16_t)((right & ~0x03E0) | (left & 0x03E0));
+			}
+		}
+
+		for (int x = 0; x < ScreenWidth; x++)
+			target[x] = Color15ToXrgb(line[x]);
 	}
 
 	void Ppu::RenderSprites(GbaBus& bus)
 	{
 		(void)bus;
 
-		const bool objWindowEnabled = (dispcnt & (1 << DC_OBJ_WIN_ENABLE)) != 0;
+		// GBATEK "The OBJ Window": "Both DISPCNT Bits 12 and 15 must be set when defining OBJ
+		// Window region(s)", so clearing the OBJ master enable removes the OBJ window as well.
+		const bool objWindowEnabled = (dispcnt & (1 << DC_OBJ_ENABLE)) != 0 &&
+			(dispcnt & (1 << DC_OBJ_WIN_ENABLE)) != 0;
 
 		// GBATEK 400004Ch: the OBJ mosaic block is anchored at the upper-left of the screen and
 		// its size comes from the upper half of MOSAIC. An OBJ with the mosaic bit samples the
@@ -1078,7 +1101,18 @@ namespace GBA
 			// area starts half of itself before the center: with the identity matrix the OBJ lands
 			// exactly on (X, Y)-(X + width, Y + height).
 			sprite.left = (attr1 & 0x1FF) + sprite.baseWidth / 2 - sprite.width / 2;
-			sprite.top = (attr0 & 0xFF) + sprite.baseHeight / 2 - sprite.height / 2;
+
+			// The hardware compares the scanline against the 8-bit Y coordinate, so an OBJ whose
+			// vertical range runs past line 255 wraps around and appears at the top of the screen.
+			// GBATEK "OBJ Attribute 0" cautions exactly that: a very large OBJ (128 pixels tall,
+			// i.e. a double-sized 64 pixel one) "located at Y>128 will be treated as at Y>-128,
+			// the OBJ is then displayed parts offscreen at the TOP of the display, it is then NOT
+			// displayed at the bottom".
+			int objY = attr0 & 0xFF;
+			if (objY + sprite.height > 256)
+				objY -= 256;
+
+			sprite.top = objY + sprite.baseHeight / 2 - sprite.height / 2;
 
 			// A sprite off the top or bottom of this scanline is not sampled at all. (It still
 			// consumes its OBJ slot, as GBATEK "Maximum Number of Sprites per Line" warns.)
@@ -1316,9 +1350,14 @@ namespace GBA
 		if (!exists)
 			return;
 
-		// BG2/BG3 are the rotation/scaling layers in the modes 2-5. In the tile mode 0 they are
-		// text layers, and in mode 1 only BG2 is affine (see the mode table above).
-		const bool affine = (state.mode >= 2 && index >= 2);
+		// BG2/BG3 are the rotation/scaling layers. The mode 1 ("Mixed") keeps BG0 and BG1 as text
+		// layers but makes **BG2** affine - GBATEK's mode table prints "1 Mixed 012-" and the AGB
+		// manual's table has the same "Yes" under Rotation/Scaling for mode 1, with the manual
+		// 6.1.7 adding that "Parameters used in rotation and scaling operations are specified for
+		// BG2 and BG3". Treating BG2 in mode 1 as a text layer (mode >= 2 && index >= 2) made
+		// every mode 1 game that uses its affine layer - the Final Fantasy V Advance intro's
+		// zooming logo, for one - fetch tiles out of a map that is not a map at all.
+		const bool affine = (state.mode == 1) ? (index == 2) : (state.mode >= 2 && index >= 2);
 
 		const uint16_t control = Read16(0x008 + index * 2, 0);
 		const int priority = (control >> BGCNT_PRIORITY) & 3;
@@ -1343,21 +1382,15 @@ namespace GBA
 			uint16_t color = 0;
 			bool opaque;
 
-			if (IsBitmapMode(state.mode))
-			{
-				// GBATEK "LCD VRAM Bitmap BG": the bitmap modes have no tile map and no
-				// rotation/scaling of their own - BG2PA-PD and the reference point belong to the
-				// tile affine modes 1 and 2 - so the frame buffer is displayed 1:1 at the screen
-				// coordinate (BitmapPixel handles the page, the mode 5 window and the mode 4
-				// palette). The mosaic still quantises the sample point.
-				color = BitmapPixel(*this, sourceX, sourceY);
-				opaque = (color != NO_PIXEL);
-			}
-			else
-			{
-				opaque = affine ? AffineBgDot(state, index, sourceX, sourceY, color)
-					: TextBgDot(index, sourceX, sourceY, color);
-			}
+			// The four layers are all sampled through AffineBgDot when they are affine, and the
+			// bitmap modes are affine too: the manual 6.2.2, "The parameters for Bitmap BG
+			// Rotation/Scaling use BG2 related registers (BG2X_L, BG2X_H, BG2Y_L, BG2Y_H,
+			// BG2PA, BG2PB, BG2PC, and BG2PD)", and its BG mode table lists the modes 3-5 as
+			// rotation/scaling capable. AffineBgDot handles the frame buffer as well as the tile
+			// map, so a bitmap is rotated, scaled and scrolled by the BG2 registers exactly as an
+			// affine tile layer is.
+			opaque = affine ? AffineBgDot(state, index, sourceX, sourceY, color)
+				: TextBgDot(index, sourceX, sourceY, color);
 
 			if (opaque)
 				PushDot(pixels[x], below[x], priority, (uint8_t)index, color, false);
@@ -1479,13 +1512,12 @@ namespace GBA
 
 		if (IsBitmapMode(state.mode))
 		{
-			// GBATEK "LCD VRAM Bitmap BG" and 4000020h: the bitmap modes have no rotation or
-			// scaling at all. BG2PA-PD and the reference point registers belong to the *tile*
-			// affine modes 1 and 2; in modes 3/4/5 the frame buffer is displayed 1:1, so the
-			// source dot is the screen dot. (Routing a bitmap mode through the matrix makes every
-			// dot of a fresh machine read (0,0) - the registers reset to zero - and the whole
-			// screen falls back to the backdrop.)
-			color = BitmapPixel(*this, sourceX, sourceY);
+			// The bitmap modes have no map to look a tile up in, so the rotation/scaling result
+			// (texelX, texelY) is the frame buffer coordinate itself. BitmapPixel rejects the
+			// dots outside of the frame, which the manual 6.2.2 describes as becoming
+			// transparent ("With Bitmap BG, if the displayed portion exceeds the edges of the
+			// screen due to the rotation/scaling operation, that area becomes transparent").
+			color = BitmapPixel(*this, texelX, texelY);
 			return color != NO_PIXEL;
 		}
 
@@ -1545,28 +1577,37 @@ namespace GBA
 		const uint16_t secondColor = hasBelow ? below.color : top.color;
 
 		// The colour special effect is enabled per window region by bit 5 of WININ/WINOUT
-		// (GBATEK 4000048h/400004Ah).
+		// (GBATEK 4000048h/400004Ah: "Color Special Effect (0=Disable, 1=Enable)"); the window
+		// feature exists to switch the effects off in a region, so it gates the alpha blending
+		// as well as the brightness ("BG0-3,OBJ layers and Color Special Effects can be
+		// separately enabled or disabled in each of these regions").
 		const uint16_t windowBits = state.windowsActive
 			? WindowBits(state.windowMask[x], state.winin, state.winout) : WINDOW_ALL;
 		const bool effectAllowed = (windowBits & (1 << WIN_EFFECT)) != 0;
 
+		// "For this effect, the top-most non-transparent pixel must be selected as 1st Target,
+		// and the next-lower non-transparent pixel must be selected as 2nd Target, if so - and
+		// only if so, then color intensities of 1st and 2nd Target are mixed" (GBATEK
+		// 4000050h). A semi-transparent OBJ forces the alpha mode whatever BLDCNT bits 6-7 say,
+		// but it still needs a 2nd target: the manual's table has the effect "performed only
+		// when a semi-transparent OBJ is present and is followed immediately by a 2nd target
+		// screen". If nothing below it is selected as a 2nd target, the OBJ is drawn at normal
+		// intensity.
+		const bool secondSelected = (state.bldcnt & (1 << (BLD_2ND + secondLayer))) != 0;
+
 		bool hasSecond = false;
 		uint16_t second = 0;
 
-		if (semi)
+		if (effectAllowed && semi && secondSelected)
 		{
 			// A semi-transparent OBJ is alpha blended with whatever it covers, and that
 			// semi-transparency then wins over the brightness effect of BLDCNT.
 			hasSecond = true;
 			second = secondColor;
 		}
-		else if (effect == 1 && firstTarget &&
-			(state.bldcnt & (1 << (BLD_2ND + secondLayer))) != 0)
+		else if (effectAllowed && effect == 1 && firstTarget && secondSelected)
 		{
-			// "For this effect, the top-most non-transparent pixel must be selected as 1st
-			// Target, and the next-lower non-transparent pixel must be selected as 2nd Target,
-			// if so - and only if so, then color intensities of 1st and 2nd Target are mixed"
-			// (GBATEK 4000050h). The 1st target does not have to be a 2nd target as well.
+			// The 1st target does not have to be a 2nd target as well.
 			hasSecond = true;
 			second = secondColor;
 		}

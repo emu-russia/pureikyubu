@@ -148,6 +148,19 @@ namespace
 		return true;
 	}
 
+	/// <summary>
+	/// Render the lines 0..last in order. An affine layer's internal reference point is advanced
+	/// by PB/PD once per rendered scanline (GBATEK "Internal Reference Point Registers"), so a
+	/// test that checks an affine line has to let the lines before it render, exactly as
+	/// Ppu::Tick does. Rendering line 0 first also reloads the reference from the write latch,
+	/// which makes the helper reusable after the registers change.
+	/// </summary>
+	void RenderUpTo(GbaBus& bus, int last)
+	{
+		for (int y = 0; y <= last; y++)
+			bus.ppu.RenderLine(bus, y);
+	}
+
 	// ---------------------------------------------------------------------------------------
 	// Reference helpers. These read the same memory the PPU reads, but they never call the
 	// renderer: every expected pixel is computed here from the GBATEK rules.
@@ -668,20 +681,26 @@ GBA_TEST(Ppu, Mode3DirectColor)
 	GbaBus bus;
 	SetupDisplay(bus);
 
+	// The bitmap BG is sampled through the BG2 rotation/scaling registers (the manual 6.2.2),
+	// so a 1:1 frame needs the identity matrix the real BIOS leaves behind (PA = PD = 0x0100,
+	// PB = PC = 0 and a zero reference point).
+	WriteReg(bus, BG2PA, 0x0100);
+	WriteReg(bus, 0x026, 0x0100);
+
 	WriteReg(bus, DISPCNT, DC_MODE3 | DC_BG2);
 
 	// GBATEK "BG Mode 3": two bytes per dot, 480 bytes per line, 240x160 dots at 0x06000000.
 	const uint32_t offset = (uint32_t)10 * 480 + (uint32_t)50 * 2;
 	WriteVram16(bus, offset, 0x7FFF);
 
-	bus.ppu.RenderLine(bus, 10);
+	RenderUpTo(bus, 10);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(50), 0x7FFF);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(49), 0x0000);		// the backdrop
 
 	// Mode 3 has no transparent colour, so a black bitmap dot is drawn as black and not as the
 	// backdrop. Put a distinct backdrop in and check that dot (0, 0) stays black.
 	WritePal16(bus, 0x0000, 0x001F);
-	bus.ppu.RenderLine(bus, 10);
+	RenderUpTo(bus, 10);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x0000);
 }
 
@@ -697,18 +716,22 @@ GBA_TEST(Ppu, Mode4PagesAndPalette)
 	WritePal16(bus, 5 * 2, 0x001F);
 	WritePal16(bus, 7 * 2, 0x03E0);
 
+	// The 1:1 identity matrix, as the BIOS leaves the BG2 affine registers (manual 6.2.2).
+	WriteReg(bus, BG2PA, 0x0100);
+	WriteReg(bus, 0x026, 0x0100);
+
 	WriteReg(bus, DISPCNT, DC_MODE4 | DC_BG2);
-	bus.ppu.RenderLine(bus, 20);
+	RenderUpTo(bus, 20);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(30), 0x001F);
 
 	WriteReg(bus, DISPCNT, DC_MODE4 | DC_BG2 | DC_FRAME1);
-	bus.ppu.RenderLine(bus, 20);
+	RenderUpTo(bus, 20);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(30), 0x03E0);
 
 	// Palette colour 0 is transparent in mode 4, so the backdrop shows (GBATEK "BG Mode 4").
 	WritePal16(bus, 0x0000, 0x7C00);
 	bus.ppu.WriteVram(0x0A000 + 20 * 240 + 31, 0);
-	bus.ppu.RenderLine(bus, 20);
+	RenderUpTo(bus, 20);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(31), 0x7C00);
 }
 
@@ -1329,10 +1352,13 @@ GBA_TEST(Ppu, ForcedBlankIsWhite)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(239), 0x7FFF);
 	GBA_CHECK_HEX32(bus.ppu.Frame()[0], Color15ToXrgb(0x7FFF));
 
-	// The Green Swap bit is applied to the blank screen too (it is a final-stage effect).
+	// The Green Swap bit is a final-stage effect, so it reaches the blank screen too. It swaps
+	// the green fields of each pair of dots (GBATEK 4000002h: "green intensity of each two
+	// pixels exchanged"), and a white line has green = 31 everywhere, so it comes back white.
 	WriteReg(bus, GREENSWP, 1);
 	bus.ppu.RenderLine(bus, 0);
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), Swap16(0x7FFF));
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x7FFF);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(1), 0x7FFF);
 
 	WriteReg(bus, GREENSWP, 0);
 	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0);
@@ -1509,4 +1535,325 @@ GBA_TEST(Ppu, VCountMatchInterrupt)
 	WriteReg(bus, DISPSTAT, (uint16_t)((matchLine << 8) | STAT_VCOUNT_IRQ));
 	GBA_CHECK((bus.ppu.DispStat() & STAT_VCOUNT) != 0);
 	GBA_CHECK_EQ(bus.irq.ReadIF() & INT_VCOUNT, INT_VCOUNT);
+}
+
+// ===========================================================================================
+// The bitmap modes, the window edges, the green swap and the special-effect gates
+// (an audit against GBATEK and the AGB Programming Manual v1.1)
+// ===========================================================================================
+
+GBA_TEST(Ppu, BitmapModeSamplesThroughTheBg2AffineMatrix)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// The manual 6.2.2: "The parameters for Bitmap BG Rotation/Scaling use BG2 related registers
+	// (BG2X_L, BG2X_H, BG2Y_L, BG2Y_H, BG2PA, BG2PB, BG2PC, and BG2PD)", and its BG mode table
+	// lists the modes 3-5 as rotation/scaling capable. PA = 0.5 (0x0080) halves the horizontal
+	// source step, so screen dot 20 reads frame buffer dot 10 and screen dot 40 reads dot 20;
+	// PC stays 0 and PD = 1.0 keeps the vertical 1:1.
+	WriteVram16(bus, 5 * 480 + 10 * 2, 0x7C00);		// blue at (10, 5)
+	WriteVram16(bus, 5 * 480 + 20 * 2, 0x001F);		// red at (20, 5)
+
+	WriteReg(bus, BG2PA, 0x0080);
+	WriteReg(bus, 0x022, 0x0000);
+	WriteReg(bus, 0x024, 0x0000);
+	WriteReg(bus, 0x026, 0x0100);
+
+	WriteReg(bus, DISPCNT, DC_MODE3 | DC_BG2);
+	RenderUpTo(bus, 5);
+
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(20), 0x7C00);		// (20, 5) samples (10, 5)
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(40), 0x001F);		// (40, 5) samples (20, 5)
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x0000);		// (0, 5) samples (0, 5), a black dot
+}
+
+GBA_TEST(Ppu, Mode5UsesA320ByteLine)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// GBATEK "BG Mode 5": 160x128 dots, two bytes per dot, and "the background occupies exactly
+	// 40 KBytes". The manual's address map (6.2.4.3) puts line 1 at 140h and line 2 at 2A0h, so a
+	// line is 320 bytes - not the 480 of the 240 dot wide mode 3.
+	WriteVram16(bus, 1 * 320 + 10 * 2, 0x7FFF);
+	WriteVram16(bus, 1 * 480 + 10 * 2, 0x001F);		// where a 480 byte stride would look
+
+	WriteReg(bus, BG2PA, 0x0100);
+	WriteReg(bus, 0x026, 0x0100);
+	WriteReg(bus, DISPCNT, DC_MODE5 | DC_BG2);
+	RenderUpTo(bus, 1);
+
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x7FFF);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(11), 0x0000);		// the 40 KByte frame's next dot
+
+	// The dots outside of the 160x128 frame show the backdrop (the manual 6.2.2: the area past
+	// the edges of a rotated bitmap "becomes transparent").
+	WritePal16(bus, 0x0000, 0x03E0);
+	RenderUpTo(bus, 1);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(160), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(239), 0x03E0);
+}
+
+GBA_TEST(Ppu, NegativeAffineReferenceSamplesTheWrappedTexel)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// A rotation around a screen centre puts the reference point at a negative coordinate, and
+	// the register holds it as a 28-bit signed value (GBATEK 4000028h: bit 27 is the sign). Here
+	// the reference is (-1, -1) dots, so with the area overflow bit set the top-left dot samples
+	// texel (127, 127) of the 128x128 map - the last entry of the map.
+	WriteReg(bus, BG2CNT, (1 << 2) | 0x2000);		// char base 1 (0x4000), size 0, overflow on
+	bus.ppu.WriteVram(15 * 16 + 15, 1);				// map entry (15, 15) -> tile 1
+	FillVram(bus, 0x4000 + 1 * 64, 64, 6);			// tile 1 is solid palette index 6
+	WritePal16(bus, 6 * 2, 0x1234);
+
+	WriteReg(bus, BG2PA, 0x0100);
+	WriteReg(bus, 0x022, 0x0000);
+	WriteReg(bus, 0x024, 0x0000);
+	WriteReg(bus, 0x026, 0x0100);
+
+	// -1 dot in 8.8 fixed point is 0xFFFFFF00; cut to 28 bits that is 0x0FFFFF00, which is what
+	// the two reference point halves write.
+	WriteReg(bus, BG2X_L, 0xFF00);
+	WriteReg(bus, 0x02A, 0x0FFF);
+	WriteReg(bus, 0x02C, 0xFF00);
+	WriteReg(bus, 0x02E, 0x0FFF);
+
+	WriteReg(bus, DISPCNT, 0x0002 | DC_BG2);
+	bus.ppu.RenderLine(bus, 0);
+
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x1234);
+}
+
+GBA_TEST(Ppu, WindowGarbageDimensionsReachTheScreenEdge)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// A solid BG0 behind the window (same setup as WindowMasksOneBg).
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
+	WritePal16(bus, 0x0002, 0x03E0);
+	FillVram(bus, 0x0000, 32, 0x11);
+
+	// GBATEK 4000040h: "Garbage values of X2>240 or X1>X2 are interpreted as X2=240"; 4000044h
+	// does the same with Y2=160. An inverted range is therefore a window that reaches the right
+	// (bottom) edge, not an empty one.
+	WriteReg(bus, WIN0H, (10 << 8) | 2);			// X1 = 10, X2 = 2 (inverted)
+	WriteReg(bus, WIN0V, (5 << 8) | 1);				// Y1 = 5, Y2 = 1 (inverted)
+	WriteReg(bus, WININ, 0x0001);					// window 0 shows BG0
+	WriteReg(bus, WINOUT, 0x0000);					// outside: the backdrop only
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_WIN0);
+
+	bus.ppu.RenderLine(bus, 5);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x0000);		// left of X1
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);		// inside
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(239), 0x03E0);	// X2 was taken as 240, not as 2
+
+	bus.ppu.RenderLine(bus, 4);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x0000);		// above Y1
+	bus.ppu.RenderLine(bus, 159);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);		// Y2 was taken as 160
+}
+
+GBA_TEST(Ppu, ObjWindowNeedsBothDisplayFlags)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// Same setup as ObjWindowMasksTheLayers: a solid BG0 and an 8x8 OBJ in window mode whose dots
+	// mark the OBJ window.
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
+	WritePal16(bus, 0x0002, 0x03E0);
+	FillVram(bus, 0x0000, 32, 0x11);
+	FillVram(bus, OBJ_TILES, 32, 0x11);
+	WriteOam16(bus, 0x00, 20 | (2 << 10));
+	WriteOam16(bus, 0x02, 10);
+	WriteOam16(bus, 0x04, 0);
+
+	// WINOUT: the OBJ window shows nothing, the outside shows BG0.
+	WriteReg(bus, WINOUT, (0x00 << 8) | 0x01);
+
+	// GBATEK "The OBJ Window": "Both DISPCNT Bits 12 and 15 must be set when defining OBJ Window
+	// region(s)". With bit 12 (OBJ enable) clear the window does not exist, so BG0 covers the
+	// whole line even though bit 15 is set.
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ_WIN);
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+
+	// With both bits set the window region hides BG0 again.
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ | DC_OBJ_WIN);
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+}
+
+GBA_TEST(Ppu, GreenSwapExchangesTheGreenOfEachPair)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// GBATEK 4000002h: with the green swap set "each pixel group is output as BgRbGr (ie. green
+	// intensity of each two pixels exchanged)". Two mode 3 dots: dot 0 is green + red, dot 1 is
+	// blue only, so the exchange leaves dot 0 red and dot 1 blue plus the other dot's green.
+	const uint16_t left = (uint16_t)((31 << 5) | 0x001F);
+	const uint16_t right = 0x7C00;
+	WriteVram16(bus, 0, left);
+	WriteVram16(bus, 2, right);
+
+	WriteReg(bus, BG2PA, 0x0100);
+	WriteReg(bus, 0x026, 0x0100);
+	WriteReg(bus, DISPCNT, DC_MODE3 | DC_BG2);
+	WriteReg(bus, GREENSWP, 1);
+	bus.ppu.RenderLine(bus, 0);
+
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x001F);				// red, green moved to dot 1
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(1), (uint16_t)(0x7C00 | (31 << 5)));
+}
+
+GBA_TEST(Ppu, SemiTransparentObjWithoutASecondTargetIsOpaque)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// A solid red BG0 under a semi-transparent blue sprite.
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x4000, 0));
+	WritePal16(bus, 0x0002, 0x001F);
+	FillVram(bus, 0x4000, 32, 0x11);
+	WriteVram16(bus, 0x0000, 0x0000);
+
+	FillVram(bus, OBJ_TILES, 32, 0x55);
+	WritePal16(bus, 0x200 + 5 * 2, 0x7C00);
+
+	WriteOam16(bus, 0x00, 20 | (1 << 10));			// semi-transparent
+	WriteOam16(bus, 0x02, 10);
+	WriteOam16(bus, 0x04, 0);
+
+	// The manual's effect table: the semi-transparency blend is "performed only when a
+	// semi-transparent OBJ is present and is followed immediately by a 2nd target screen". With
+	// no 2nd target selected the sprite keeps its own colour.
+	WriteReg(bus, BLDCNT, (1 << 4));				// OBJ 1st target, no 2nd targets
+	WriteReg(bus, BLDALPHA, 8 | (8 << 8));
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ);
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x7C00);
+
+	// BG0 as the 2nd target turns the blend on.
+	WriteReg(bus, BLDCNT, (1 << 4) | (1 << 8));
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), Blend15(0x7C00, 0x001F, 8, 8));
+}
+
+GBA_TEST(Ppu, WindowEffectBitGatesTheAlphaBlend)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// BG0 red over BG1 blue with BLDCNT asking for an alpha blend (same setup as
+	// AlphaBlendingOfTwoBgs).
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x4000, 0));
+	WriteReg(bus, BG1CNT, BG_CNT(1, 0x4000, 1));
+	WritePal16(bus, 0x0002, 0x001F);
+	WritePal16(bus, 0x0022, 0x7C00);
+	FillVram(bus, 0x4000, 32, 0x11);
+	FillVram(bus, 0x4020, 32, 0x11);
+	WriteVram16(bus, 0x0000, 0x0000);
+	WriteVram16(bus, 0x0800, 0x1000);
+
+	WriteReg(bus, BLDCNT, 0x0001 | (1 << 9) | (1 << 6));
+	WriteReg(bus, BLDALPHA, 8 | (8 << 8));
+
+	// Window 0 covers the whole screen but its WININ has the colour special effect bit (5)
+	// clear, so the blend does not happen there.
+	WriteReg(bus, WIN0H, (0 << 8) | 240);
+	WriteReg(bus, WIN0V, (0 << 8) | 160);
+	WriteReg(bus, WININ, 0x0003);					// BG0 + BG1, effect off
+	WriteReg(bus, WINOUT, 0x003F);					// outside: everything + effect
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_BG1 | DC_WIN0);
+
+	// Line 5 is inside the window and inside the background maps' first tile row, where the
+	// map entries the test wrote are the ones that are fetched.
+	bus.ppu.RenderLine(bus, 5);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x001F);	// the top layer at normal intensity
+
+	// Setting the effect bit in the window turns the blend back on.
+	WriteReg(bus, WININ, 0x0023);
+	bus.ppu.RenderLine(bus, 5);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), Blend15(0x001F, 0x7C00, 8, 8));
+}
+
+GBA_TEST(Ppu, TallDoubleSizedObjWrapsToTheTopOfTheScreen)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// GBATEK "OBJ Attribute 0": a 128 pixel tall OBJ (a double-sized 64x64 one) "located at
+	// Y>128 will be treated as at Y>-128, the OBJ is then displayed parts offscreen at the TOP
+	// of the display, it is then NOT displayed at the bottom". Y = 200 wraps to -56, so the
+	// sprite shows on the first 40 lines.
+	FillVram(bus, OBJ_TILES, 0x2000, 0x11);			// every tile solid colour index 1
+	WritePal16(bus, 0x200 + 1 * 2, 0x001F);
+
+	// Affine (identity) + double size, square 64x64, at (100, 200).
+	WriteOam16(bus, 0x00, 200 | (1 << 8) | (1 << 9));
+	WriteOam16(bus, 0x02, 100 | (3 << 14));
+	WriteOam16(bus, 0x04, 0);
+	WriteOam16(bus, 0x06, 0x0100);					// group 0 PA = 1.0
+	WriteOam16(bus, 0x0E, 0x0000);					// PB
+	WriteOam16(bus, 0x16, 0x0000);					// PC
+	WriteOam16(bus, 0x1E, 0x0100);					// PD = 1.0
+
+	WritePal16(bus, 0x0000, 0x03E0);				// a green backdrop
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ);
+
+	bus.ppu.RenderLine(bus, 0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x001F);	// the wrapped sprite is at the top
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(50), 0x03E0);		// outside of it (and of X = 100..163)
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(99), 0x03E0);
+
+	// The sprite is not displayed at the bottom of the screen.
+	bus.ppu.RenderLine(bus, 159);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+}
+
+GBA_TEST(Ppu, Mode1Bg2IsTheAffineLayer)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// GBATEK's mode table prints mode 1 as "Mixed 012-": BG0 and BG1 stay text layers and **BG2**
+	// is the rotation/scaling one. The AGB manual's table marks mode 1 "Yes" under
+	// Rotation/Scaling and 6.1.7 adds that the parameters "are specified for BG2 and BG3", so a
+	// mode 1 renderer that treats BG2 as text (the `mode >= 2 && index >= 2` test this test was
+	// written for) fetches halfword map entries out of a map that is one byte per entry - which
+	// is exactly how Final Fantasy V Advance's zooming logo turned into noise.
+	//
+	// BG2CNT: priority 0, character base 0, 256 colours (bit 7), screen base block 4 (0x2000),
+	// size 0 (a 128x128 dot map).
+	WriteReg(bus, BG2CNT, (1 << 7) | (4 << 8));
+
+	// A rotation/scaling map holds one byte per entry: the entry of texel (16, 8) is the tile row
+	// 1, column 2. It selects tile 1, which is solid palette index 6.
+	bus.ppu.WriteVram(0x2000 + 1 * 16 + 2, 1);
+	FillVram(bus, 1 * 64, 64, 6);
+	WritePal16(bus, 6 * 2, 0x1234);
+
+	// PA = PD = 0.5 (0x0080), PB = PC = 0 and a zero reference point, so screen dot (32, 16)
+	// samples texel (16, 8).
+	WriteReg(bus, BG2PA, 0x0080);
+	WriteReg(bus, 0x022, 0x0000);
+	WriteReg(bus, 0x024, 0x0000);
+	WriteReg(bus, 0x026, 0x0080);
+
+	WriteReg(bus, DISPCNT, DC_MODE1 | DC_BG2);
+	RenderUpTo(bus, 16);
+
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(32), 0x1234);
+
+	// The same layer read as text would have taken the halfword at BG2CNT's screen base (0x2000,
+	// which holds the bytes 01 00 ...) as a map entry - tile 1 of palette 0 - and fetched it from
+	// character base 0, where nothing was written, so the dot would be the black backdrop.
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x0000);
 }

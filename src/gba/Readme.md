@@ -35,7 +35,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_types.h` | Common types, the memory map constants, the interrupt bits and the colour helpers |
 | `arm7tdmi.h/.cpp` | The ARM7TDMI interpreter (ARM and Thumb, all seven modes, the exceptions, HALT) |
 | `gba_bus.h/.cpp` | The address decoder, the open bus, the waitstates and the system clock |
-| `gba_ppu.h/.cpp` | The LCD controller: tile and bitmap backgrounds, sprites, windows, blending, scanline timing |
+| `gba_ppu.h/.cpp` | The LCD controller: tile and bitmap backgrounds (the bitmap modes are BG2 and are sampled through the BG2 rotation/scaling registers, as the AGB manual 6.2.2 describes), sprites with the OBJ window, the WIN0/WIN1/WINOBJ regions, the mosaic, the colour special effects and the scanline timing |
 | `gba_apu.h/.cpp` | The four legacy channels, the two direct-sound FIFOs (clocked by the timer overflows) and the host mixer |
 | `gba_audio.h` | The mixer buffer between the machine and the host's sound device: the machine pushes the samples into it, the frontend's audio callback plays them at the rate a slow controller steers from the buffer's level (the arrangement dmgemu uses in its `sound.cpp`) |
 | `gba_sio.h/.cpp` | The serial port: normal, multiplayer, UART and JOY bus modes, and the link cable |
@@ -43,7 +43,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_timers.h/.cpp` | The four timers and their cascade |
 | `gba_irq.h/.cpp` | IE/IF/IME |
 | `gba_keypad.h/.cpp` | KEYINPUT/KEYCNT and the keypad interrupt |
-| `gba_cart.h/.cpp` | The ROM, the save memory (SRAM/Flash/EEPROM), the GPIO/RTC port |
+| `gba_cart.h/.cpp` | The ROM, the save memory (SRAM/Flash/EEPROM), the GPIO/RTC port. The EEPROM answers only in its own window (0D000000h-0DFFFFFFh on a cartridge of 16 MByte or less, the last 256 bytes of the image on a 32 MByte one), so a game can fetch its EEPROM routine's instructions from the ROM while the chip drives the bus |
 | `gba_hlebios.h/.cpp` | The BIOS service calls implemented in the host |
 | `gba_armasm.h/.cpp` | A small ARM/Thumb emitter: the boot ROM and the test ROMs are built with it |
 | `gba_bootrom.h/.cpp` | The pureikyubu boot ROM (logo animation) and its SIO link driver |

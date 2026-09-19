@@ -290,6 +290,15 @@ namespace GBA
 				bus->cpu.WriteCPSR(ModeSystem);
 				bus->irq.WriteIME(true);
 				bus->Write8(0x04000300, 1);		// POSTFLG
+
+				// The BIOS also leaves the BG2 rotation/scaling matrix at the identity: it
+				// programs BG2PA = BG2PD = 0x0100 during its display setup, and the bitmap modes
+				// are sampled through those registers (the manual 6.2.2). Without them a mode
+				// 3/4/5 game that never touches the matrix would show one frame buffer dot over
+				// the whole screen.
+				bus->ppu.Write16(*bus, 0x020, 0x0100, (int)bus->TotalCycles());
+				bus->ppu.Write16(*bus, 0x026, 0x0100, (int)bus->TotalCycles());
+
 				bus->cpu.BranchTo(MemRom1);
 			}
 			else

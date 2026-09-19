@@ -563,6 +563,24 @@ namespace GBA
 				emitter.Mov(0, 0);
 				emitter.Str(0, 1, 0, Cond::AL, true);
 
+				// The bitmap BG is sampled through the BG2 rotation/scaling registers (the
+				// manual 6.2.2: "The parameters for Bitmap BG Rotation/Scaling use BG2 related
+				// registers ... BG2PA, BG2PB, BG2PC, and BG2PD"), so a 1:1 picture needs the
+				// identity matrix: BG2PA = BG2PD = 0x0100, BG2PB = BG2PC = 0 and the reference
+				// point zero. The real BIOS leaves exactly these values behind for the
+				// cartridge, so a mode 3/4/5 game that never touches them still displays.
+				LoadConst(1, RegDispCnt);
+				LoadConst(0, 0x0100);
+				emitter.Strh(0, 1, 0x20);						// BG2PA = 1.0
+				emitter.Strh(0, 1, 0x26);						// BG2PD = 1.0
+				emitter.Mov(0, 0);
+				emitter.Strh(0, 1, 0x22);						// BG2PB = 0
+				emitter.Strh(0, 1, 0x24);						// BG2PC = 0
+				emitter.Strh(0, 1, 0x28);						// BG2X_L
+				emitter.Strh(0, 1, 0x2A);						// BG2X_H
+				emitter.Strh(0, 1, 0x2C);						// BG2Y_L
+				emitter.Strh(0, 1, 0x2E);						// BG2Y_H
+
 				// DISPCNT = 0x0403: mode 3 (240x160, 16bpp bitmap) with BG2 on, which is the layer
 				// a bitmap mode draws through (GBATEK "LCD I/O Registers" and "LCD VRAM Bitmap BG").
 				LoadConst(1, RegDispCnt);
