@@ -125,6 +125,8 @@
     <ClCompile Include="..\..\testing\gba_bench\test_gb_cart.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_cpu.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_ppu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_hlebios.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_hledecomp.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_io.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_main.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_ppu.cpp" />
@@ -133,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\json.h" />
     <ClInclude Include="..\..\src\verify.h" />
+    <ClInclude Include="..\..\testing\gba_bench\hle_probe.h" />
     <ClInclude Include="..\..\testing\gba_bench\png.h" />
   </ItemGroup>
   <ItemGroup>

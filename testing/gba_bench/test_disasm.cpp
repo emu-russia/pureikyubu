@@ -113,8 +113,11 @@ GBA_TEST(Disasm, arm_transfers)
 	image.Word(0xE4905004);					// LDR r5, [r0], #4
 	image.Word(0xE5D26000);					// LDRB r6, [r2]
 	image.Word(0xE7810002);					// STR r0, [r1, r2]
-	image.Word(0xE1A01002);					// MOV r1, r2
-	image.Word(0xE1D210B2);					// LDRH r1, [r2, r2] (bit 22 = register offset)
+	image.Word(0xE5B10004);					// LDR r0, [r1, #4]! (pre-indexed, writeback)
+	image.Word(0xE19210B2);					// LDRH r1, [r2, r2] (bit 22 clear = register offset)
+	image.Word(0xE19211B3);					// LDRH r1, [r2, r3, lsl #1]
+	image.Word(0xE1D210B2);					// LDRH r1, [r2, #2] (bit 22 set = immediate)
+	image.Word(0xE1F210B2);					// LDRH r1, [r2, #2]! (pre-indexed, writeback)
 	image.Word(0xE5921002);					// LDR r1, [r2, #2]
 	image.Word(0xE5821004);					// STR r1, [r2, #4]
 	image.Word(0xE5C21000);					// STRB r1, [r2]
@@ -123,10 +126,14 @@ GBA_TEST(Disasm, arm_transfers)
 	GBA_CHECK_STR(ArmAt(image, 0x04), std::string("ldr r5, [r0], #4"));
 	GBA_CHECK_STR(ArmAt(image, 0x08), std::string("ldrb r6, [r2]"));
 	GBA_CHECK_STR(ArmAt(image, 0x0C), std::string("str r0, [r1, r2]"));
+	GBA_CHECK_STR(ArmAt(image, 0x10), std::string("ldr r0, [r1, #4]!"));
 	GBA_CHECK_STR(ArmAt(image, 0x14), std::string("ldrh r1, [r2, r2]"));
-	GBA_CHECK_STR(ArmAt(image, 0x18), std::string("ldr r1, [r2, #2]"));
-	GBA_CHECK_STR(ArmAt(image, 0x1C), std::string("str r1, [r2, #4]"));
-	GBA_CHECK_STR(ArmAt(image, 0x20), std::string("strb r1, [r2]"));
+	GBA_CHECK_STR(ArmAt(image, 0x18), std::string("ldrh r1, [r2, r3, lsl #1]"));
+	GBA_CHECK_STR(ArmAt(image, 0x1C), std::string("ldrh r1, [r2, #2]"));
+	GBA_CHECK_STR(ArmAt(image, 0x20), std::string("ldrh r1, [r2, #2]!"));
+	GBA_CHECK_STR(ArmAt(image, 0x24), std::string("ldr r1, [r2, #2]"));
+	GBA_CHECK_STR(ArmAt(image, 0x28), std::string("str r1, [r2, #4]"));
+	GBA_CHECK_STR(ArmAt(image, 0x2C), std::string("strb r1, [r2]"));
 }
 
 GBA_TEST(Disasm, arm_block_transfers_and_branches)
