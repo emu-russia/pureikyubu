@@ -485,6 +485,29 @@ namespace GBA
 		// into pcmbuf). Until it is, Main keeps the buffer silent rather than letting the FIFOs
 		// play whatever was left behind - the game's sound effects (which go through the PSG
 		// channels, set up by the registers below) still work.
+		//
+		// Where the mixer lives in the official image, for whoever finishes it (found by stepping
+		// into the SWI and disassembling - the driver is Thumb with an ARM inner loop):
+		//
+		//   * SWI 1Ch enters at 01DC8h (Thumb). It checks the work area's identifier against
+		//     68736D53h, increments it, then computes the mixed buffer it is about to fill:
+		//     `pcmbuf = <literal at 02104h> + area + (area[0Bh] - (area[04h] - 1)) * area[10h]`,
+		//     where area[04h] is the documented "DmaCount" (which buffer), area[0Bh] a count and
+		//     area[10h] the stride (the "NoUse" field) - the two literals are the offsets 350h and
+		//     980h the FIFO DMAs point at. The area's +20h, +24h and +28h hold *Thumb code
+		//     pointers* (called through a trampoline at 02102h), which is why the header has to be
+		//     read as the driver's own rather than as the documented SoundArea.
+		//   * At 01E1Ch it switches to ARM (`add r1, pc, #0` / `bx r1` -> 01E24h) and runs the
+		//     per-sample loop at 01E30h: signed bytes are read out of the channel's mix state
+		//     (`ldrsb`, the reverb path adding a delay line), summed, scaled by the channel's
+		//     volume (`mul` then `mov r0, r1, asr #9`, a 9 bit volume scale) and stored to both
+		//     output halves, with `tst r0, #80h` / `addne r0, #1` as the sign fix-up of an 8 bit
+		//     result. The loop count is the stride, so one pass fills a whole buffer.
+		//   * The Thumb loop at 01E8Eh..01E9Eh clears two 15 entry arrays through a pair of
+		//     pointers with `stmia`: the per-channel mix state of the driver's virtual channels.
+		//     That is where the channel array's *layout* has to be read from next - GBATEK puts
+		//     `vchn` right after the header, but the real header is a table of code pointers, so
+		//     the array is elsewhere and the stride it uses is what the per-channel loop indexes.
 		// -----------------------------------------------------------------------------------
 
 		const uint32_t SoundAreaSize = 0xFB0;
