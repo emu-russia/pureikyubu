@@ -368,14 +368,117 @@ GBA_TEST(HleBios, TheSoundDriverSetsUpTheFifos)
 	GBA_CHECK_HEX16(caller.Bus().Read16(0x040000C6), 0xB600);
 	GBA_CHECK_HEX16(caller.Bus().Read16(0x040000D2), 0xB600);
 
-	// Until the mixer is written, Main keeps the mixed buffer silent: a game without a real BIOS
-	// gets silence where its music would be, not whatever the FIFOs happen to hold.
-	caller.Bus().Write8(Work + 0x350, 0x7F);
-	caller.Bus().Write8(Work + 0x980, 0x7F);
+	// Until the mixer writes into them, Main still fills a sub-buffer of the ring (the driver's
+	// own layout): with 7 sub-buffers of 0xE0h bytes the first call after VSync lands at +0E0h,
+	// and with no channels playing that sub-buffer is silence.
+	uint32_t ringCount = caller.Bus().Read8(Work + 0x0B);
+	uint32_t ringStride = caller.Bus().Read32(Work + 0x10);
+	uint32_t ringDma = caller.Bus().Read8(Work + 4);
+	if (ringDma == 0)
+		ringDma = ringCount;
+	uint32_t ringIndex = (ringCount + 1 - ringDma) % ringCount;
+	uint32_t ringOffset = ringIndex * ringStride;
+
+	caller.Bus().Write8(Work + 0x350 + ringOffset, 0x7F);
+	caller.Bus().Write8(Work + 0x980 + ringOffset, 0x7F);
 	caller.Call(SwiSoundDriverMain);
-	GBA_CHECK_EQ((int)caller.Bus().Read8(Work + 0x350), 0);
-	GBA_CHECK_EQ((int)caller.Bus().Read8(Work + 0x980), 0);
+	GBA_CHECK_EQ((int)caller.Bus().Read8(Work + 0x350 + ringOffset), 0);
+	GBA_CHECK_EQ((int)caller.Bus().Read8(Work + 0x980 + ringOffset), 0);
 	GBA_CHECK_HEX16(caller.Bus().Read16(0x040000C6), 0xB600);
+}
+
+// -------------------------------------------------------------------------------------------
+// The mixer
+// -------------------------------------------------------------------------------------------
+
+namespace
+{
+	/// <summary>
+	/// One virtual channel of the driver's own array (16 entries of 0x30 bytes at work+0x50),
+	/// playing a synthetic wave: a 64 sample ramp with no loop, so the mixed output is easy to
+	/// predict. The field offsets are the ones the disassembled driver reads.
+	/// </summary>
+	void SetupChannel(GbaBus& bus, uint32_t work, uint32_t wave)
+	{
+		for (uint32_t i = 0; i < 128; i++)
+			bus.Write8(wave + i, 0);
+
+		bus.Write32(wave + 0, 0);					// type/stat: no loop
+		bus.Write32(wave + 4, 13379);				// freq: the sample rate at its own key
+		bus.Write32(wave + 8, 0);					// loop
+		bus.Write32(wave + 12, 64);					// size
+		for (uint32_t i = 0; i < 64; i++)
+			bus.Write8(wave + 16 + i, (uint8_t)(0x10 + i));
+
+		uint32_t channel = work + 0x50;
+
+		bus.Write8(channel + 0x00, 0x80);			// sf: start
+		bus.Write8(channel + 0x02, 0xFF);			// rv
+		bus.Write8(channel + 0x03, 0xFF);			// lv
+		bus.Write8(channel + 0x04, 0xFF);			// at
+		bus.Write8(channel + 0x05, 0xFF);			// de
+		bus.Write8(channel + 0x06, 0xFF);			// su
+		bus.Write8(channel + 0x07, 0x00);			// re
+		bus.Write32(channel + 0x20, 13379);			// fr: one sample per output sample
+		bus.Write32(channel + 0x24, wave);			// wp
+	}
+
+	/// <summary>The sub-buffer the next Main fills, as bytes (the ring index the driver uses).</summary>
+	std::vector<uint8_t> MixedOutput(GbaBus& bus, uint32_t work, uint32_t half, uint32_t bytes)
+	{
+		uint32_t count = bus.Read8(work + 0x0B);
+		uint32_t stride = bus.Read32(work + 0x10);
+		uint32_t dmaCount = bus.Read8(work + 4);
+		if (dmaCount == 0)
+			dmaCount = count;
+
+		uint32_t index = (count + 1 - dmaCount) % count;
+		return Bytes(bus, work + half + index * stride, bytes);
+	}
+}
+
+GBA_TEST(HleBios, TheMixerMatchesTheOfficialBios)
+{
+	if (FindBiosImage().empty())
+	{
+		GbaTest::Note("no real BIOS image - the mixer comparison is skipped");
+		return;
+	}
+
+	// The same synthetic channel through both mixers, then the mixed output byte for byte. This is
+	// the strongest check the harness has for the sound driver: the official BIOS's own mixer is
+	// the reference for the envelope, the volume scaling, the sample stepping and the ring.
+	SwiCaller hle(false);
+	SwiCaller real(true);
+
+	for (SwiCaller* caller : { &hle, &real })
+	{
+		caller->Call(SwiSoundDriverInit, Work);
+		caller->Call(SwiSoundDriverMode, 0x0094F800);
+		SetupChannel(caller->Bus(), Work, Source);
+		caller->Call(SwiSoundDriverVSync);
+		caller->Call(SwiSoundDriverMain);
+	}
+
+	std::vector<uint8_t> mine = MixedOutput(hle.Bus(), Work, 0x350, 64);
+	std::vector<uint8_t> theirs = MixedOutput(real.Bus(), Work, 0x350, 64);
+
+	// The ramp has to come out as the ramp scaled by the channel's level, which is what makes the
+	// comparison meaningful rather than two silences matching.
+	GBA_CHECK_MSG(mine[0] != 0, "the HLE mixer produced silence: " + Dump(mine));
+	GBA_CHECK_MSG(mine[0] == 0x0F,
+		"the first mixed byte is " + GbaTest::Hex(mine[0]) + ", expected 0x0F (the wave data's "
+		"0x10 scaled by the full level) in " + Dump(mine));
+
+	for (size_t i = 0; i < mine.size(); i++)
+		GBA_CHECK_MSG(mine[i] == theirs[i],
+			"byte " + std::to_string(i) + ": HLE " + GbaTest::Hex(mine[i]) +
+			" against the BIOS " + GbaTest::Hex(theirs[i]) +
+			"\n    HLE  " + Dump(mine) + "\n    BIOS " + Dump(theirs));
+
+	// The left half gets the same samples (the channel is centred).
+	std::vector<uint8_t> mineLeft = MixedOutput(hle.Bus(), Work, 0x980, 64);
+	GBA_CHECK_MSG(mineLeft[0] == mine[0], "the left half does not match the right one");
 }
 
 GBA_TEST(HleBios, TheSoundDriverMatchesTheOfficialBios)
