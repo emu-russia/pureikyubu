@@ -51,10 +51,10 @@ namespace
 	void RunFrames(GbPpu& ppu, int frames, bool cgb = false)
 	{
 		int start = ppu.FrameCounter();
-		// A frame is 70224 dots; give it a clock budget that is one frame and a half, and stop
-		// as soon as the counter moves.
+		// A frame is 70224 dots and a dot is one clock, so a frame is 70224 ticks of this call:
+		// give it six frames' worth as the budget and stop as soon as the counter moves.
 		for (int i = 0; i < (int)(GbDotsPerFrame * 6) && ppu.FrameCounter() - start < frames; i++)
-			ppu.Tick(4, cgb);
+			ppu.Tick(1, cgb);
 	}
 
 	/// <summary>The pixel the frame buffer holds at (x, y).</summary>
@@ -642,7 +642,7 @@ GBA_TEST(GbBus, cgb_palette_registers_are_reachable_through_the_bus)
 
 	for (int frame = 0; frame < 2; frame++)
 		for (int i = 0; i < 20000; i++)
-			bus.ppu.Tick(4, false);
+			bus.ppu.Tick(1, false);
 
 	// The picture is red - which it cannot be if the bus drops the palette writes (the grey ramp
 	// the machine installs at reset is what the screen would keep showing).
@@ -807,30 +807,30 @@ GBA_TEST(GbPpu, mode_timing_is_the_documented_one)
 	GBA_CHECK_EQ(ppu.Ly(), 0);
 
 	// 80 dots later the PPU is in mode 3.
-	ppu.Tick(80 * 4, false);
+	ppu.Tick(80, false);
 	GBA_CHECK_EQ(ppu.Mode(), 3);
 
 	// Mode 3 lasts 172..289 dots; a plain line with no objects and no window is the minimum.
-	ppu.Tick(172 * 4, false);
+	ppu.Tick(172, false);
 	GBA_CHECK_EQ(ppu.Mode(), 0);
 	GBA_CHECK_MSG(ppu.LastMode3Length() >= 172 && ppu.LastMode3Length() <= 289,
 		"mode 3 must be between 172 and 289 dots");
 
 	// The rest of the line is mode 0, and then LY becomes 1.
-	ppu.Tick(204 * 4, false);
+	ppu.Tick(204, false);
 	GBA_CHECK_EQ(ppu.Ly(), 1);
 	GBA_CHECK_EQ(ppu.Mode(), 2);
 
 	// Run to the end of the visible lines: LY 144 is VBlank (mode 1).
 	int guard = 0;
 	while (ppu.Ly() < 144 && guard++ < 200)
-		ppu.Tick(GbDotsPerLine * 4, false);
+		ppu.Tick(GbDotsPerLine, false);
 	GBA_CHECK_EQ(ppu.Ly(), 144);
 	GBA_CHECK_EQ(ppu.Mode(), 1);
 
 	// VBlank is ten lines; the frame counter moves when LY wraps back to 0.
 	while (ppu.FrameCounter() == 0 && guard++ < 400)
-		ppu.Tick(GbDotsPerLine * 4, false);
+		ppu.Tick(GbDotsPerLine, false);
 	GBA_CHECK_EQ(ppu.FrameCounter(), 1);
 	GBA_CHECK_EQ(ppu.Ly(), 0);
 }
@@ -847,7 +847,7 @@ GBA_TEST(GbPpu, stat_interrupt_rides_the_shared_line)
 
 	// The line is already high (mode 2 is running), so nothing more is requested until it drops
 	// and rises again.
-	uint8_t request = ppu.Tick(GbDotsPerLine * 4, false);
+	uint8_t request = ppu.Tick(GbDotsPerLine, false);
 	(void)request;
 
 	// Enable both mode 0 and mode 1: the line never goes low between them, so mode 1 produces no
@@ -857,7 +857,7 @@ GBA_TEST(GbPpu, stat_interrupt_rides_the_shared_line)
 	int requests = 0;
 	for (int i = 0; i < 160; i++)
 	{
-		if (ppu.Tick(GbDotsPerLine * 4, false) & 0x02)
+		if (ppu.Tick(GbDotsPerLine, false) & 0x02)
 			requests++;
 	}
 	// Mode 0 rises once per line, but mode 1 holds the line high across the bottom of the frame,
@@ -879,7 +879,7 @@ GBA_TEST(GbPpu, lyc_comparison_and_the_stat_flag)
 	// Run to LY 16 and check the flag comes back (the comparison is "constantly" updated).
 	int guard = 0;
 	while (ppu.Ly() < 16 && guard++ < 100)
-		ppu.Tick(GbDotsPerLine * 4, false);
+		ppu.Tick(GbDotsPerLine, false);
 	GBA_CHECK_EQ(ppu.Ly(), 16);
 	GBA_CHECK_MSG((ppu.Stat() & 0x04) != 0, "LYC = LY must be visible while the line runs");
 }
@@ -891,7 +891,7 @@ GBA_TEST(GbPpu, lcd_off_blanks_and_unlocks_memory)
 
 	// With the LCD on, mode 3 blocks VRAM (Pan Docs "Accessing VRAM and OAM"); with it off
 	// everything is accessible and the mode reads 0.
-	ppu.Tick(80 * 4, false);
+	ppu.Tick(80, false);
 	GBA_CHECK_EQ(ppu.Mode(), 3);
 	GBA_CHECK_MSG(ppu.VramBlocked(), "VRAM is blocked in mode 3");
 	GBA_CHECK_MSG(ppu.OamBlocked(), "OAM is blocked in mode 2/3");

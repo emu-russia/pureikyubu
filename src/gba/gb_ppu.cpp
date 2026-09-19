@@ -428,9 +428,20 @@ namespace GBA
 
 	uint8_t GbPpu::Tick(int cycles, bool doubleSpeed)
 	{
-		// A dot is four of the CPU's clocks in normal speed and two in double speed (Pan Docs
-		// "Rendering": the dot clock is 2^22 Hz and the CPU runs at twice that in double speed).
-		int dotsToRun = doubleSpeed ? (cycles / 2) : (cycles / 4);
+		// The bus is ticked in clocks of the machine's 4.194304 MHz clock (2^22 Hz) and the dot
+		// clock is that same clock on this machine - one dot is one clock, so a line is 456 clocks
+		// and a frame is 70224 of them, i.e. 16.74 ms, which is what the frontend paces a frame to
+		// (Pan Docs "Rendering": "the LCD's dot clock is 2^22 Hz"). The CPU's own M-cycle is four
+		// of these clocks (see GbBus::Run), and a CGB in double speed runs its CPU twice as fast
+		// without touching the LCD: the dot clock stays where it is, so the mode makes no
+		// difference here. Reading this as "four clocks to a dot" - the relationship a *GBA* has
+		// between its 16.7 MHz system clock and its LCD - made a frame 280896 clocks long, four
+		// times the machine's own, which every other device then saw as four times its clock: the
+		// timer ran at 64 kHz, the APU mixed four samples for every one the sound device could
+		// play (it plays 738.35 a frame at 44.1 kHz, and the mixer was handed 2940), and the CPU
+		// had four frames of its own work to do in one.
+		int dotsToRun = cycles;
+		(void)doubleSpeed;
 		uint8_t request = 0;
 
 		while (true)
