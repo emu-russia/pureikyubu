@@ -386,7 +386,7 @@ namespace GBA
 		// advance a state machine. The header declares the ROM reads const (the CPU's path
 		// only inspects the image), hence the const_cast: a Cart is never really const.
 		Cart* self = const_cast<Cart*>(this);
-		if (self->EepromDriving())
+		if (self->EepromDriving() && InEepromWindow(offset))
 			return self->EepromReadWord();
 
 		// The cartridge bus is 16 bits wide: a read at an odd address returns the *aligned*
@@ -404,7 +404,7 @@ namespace GBA
 			return 0xFFFFFFFF;
 
 		Cart* self = const_cast<Cart*>(this);
-		if (self->EepromDriving())
+		if (self->EepromDriving() && InEepromWindow(offset))
 		{
 			// GBATEK "GBA System Control": a 32bit access is split into two 16bit accesses,
 			// so it clocks two bits out of the EEPROM (the low halfword first).
@@ -438,7 +438,7 @@ namespace GBA
 		if (rom.empty())
 			return;					// no cartridge: the write is ignored
 
-		if (saveType == SaveType::Eeprom512B || saveType == SaveType::Eeprom8K)
+		if ((saveType == SaveType::Eeprom512B || saveType == SaveType::Eeprom8K) && InEepromWindow(offset))
 		{
 			EepromWriteBit(value);
 			return;
@@ -892,6 +892,24 @@ namespace GBA
 	// The chip select is not visible to us (the bus only passes the halfword), so the transfer
 	// is ended by the bit count: exactly what the DMA3 length tells the chip on hardware.
 	// ---------------------------------------------------------------------------------------
+
+	bool Cart::InEepromWindow(uint32_t address) const
+	{
+		// GBATEK "GBA Cart Backup EEPROM": "The eeprom must be used with 8 waitstates ... the
+		// eeprom can be then addressed at DFFFF00h..DFFFFFFh. Respectively, with eeprom, ROM is
+		// restricted to 8000000h-9FFFeFFh (max 1FFFF00h bytes = 32MB minus 256 bytes). On carts
+		// with 16MB or smaller ROM, eeprom can be alternately accessed anywhere at
+		// D000000h-DFFFFFFh."
+		//
+		// So on a full 32 MByte cartridge the chip owns the last 256 bytes of the image, and on
+		// everything smaller it answers in the 0D000000h-0DFFFFFFh window the games actually
+		// use. Everywhere else the ROM still drives the bus: a game runs its EEPROM routine
+		// *from the cartridge*, so those reads are instruction fetches.
+		if (rom.size() >= 0x2000000u)
+			return address >= 0x09FFFF00u && address < 0x0A000000u;
+
+		return address >= 0x0D000000u && address < 0x0E000000u;
+	}
 
 	bool Cart::EepromDriving() const
 	{

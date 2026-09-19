@@ -189,6 +189,15 @@ namespace GBA
 		bool EepromDriving() const;
 		uint16_t EepromReadWord();
 
+		/// <summary>
+		/// True when this address is in the EEPROM's own window rather than in the ROM image.
+		/// The chip is decoded from the top of the cartridge address space, so an access inside
+		/// the ROM image must keep returning the ROM even while the chip is driving the bus -
+		/// that is what lets a game fetch its EEPROM routine's own instructions from the
+		/// cartridge (The Legend of Zelda: The Minish Cap does exactly that).
+		/// </summary>
+		bool InEepromWindow(uint32_t address) const;
+
 		bool RtcSelected() const;
 		void RtcTick();
 		void RtcDecodeCommand();

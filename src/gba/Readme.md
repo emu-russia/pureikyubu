@@ -43,7 +43,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_timers.h/.cpp` | The four timers and their cascade |
 | `gba_irq.h/.cpp` | IE/IF/IME |
 | `gba_keypad.h/.cpp` | KEYINPUT/KEYCNT and the keypad interrupt |
-| `gba_cart.h/.cpp` | The ROM, the save memory (SRAM/Flash/EEPROM), the GPIO/RTC port |
+| `gba_cart.h/.cpp` | The ROM, the save memory (SRAM/Flash/EEPROM), the GPIO/RTC port. The EEPROM answers only in its own window (0D000000h-0DFFFFFFh on a cartridge of 16 MByte or less, the last 256 bytes of the image on a 32 MByte one), so a game can fetch its EEPROM routine's instructions from the ROM while the chip drives the bus |
 | `gba_hlebios.h/.cpp` | The BIOS service calls implemented in the host |
 | `gba_armasm.h/.cpp` | A small ARM/Thumb emitter: the boot ROM and the test ROMs are built with it |
 | `gba_bootrom.h/.cpp` | The pureikyubu boot ROM (logo animation) and its SIO link driver |
