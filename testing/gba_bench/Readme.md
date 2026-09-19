@@ -48,7 +48,7 @@ official IPL.
 | `Ppu` | The LCD: text/affine/bitmap backgrounds, sprites, windows, blending, forced blank, the scanline timing and the HBlank/VBlank/VCount interrupts |
 | `Apu` | The four legacy channels, the wave RAM, the noise LFSR, the two FIFOs with their DMA requests, the mixer and the sample rate |
 | `GbApu` | The Game Boy (DMG/CGB) sound controller: the divider rates of the four channels against the manual's frequency formulas, the duty waveform phases, the length timer, the 512 Hz frame sequencer with the envelope at 64 Hz and the sweep at 128 Hz, the wave RAM access order and volume shifts, the noise LFSR sequence, NR50/NR51 mixing, the exact sample clock, PCM12/PCM34 and the CGB's high pass filter |
-| `Audio` | The mixer buffer between the machine and the sound device (`src/gba/gba_audio.h`): the push/play round trip and the ring wrap, the cushion and the high water mark, a callback period the buffer cannot fill, the block a stalled frontend pushes, and the frame loop against a simulated device clock |
+| `Audio` | The mixer buffer between the machine and the sound device (`src/gba/gba_audio.h`): the push/play round trip and the ring wrap, the cushion that makes the device the clock of the machine, the catch-up of a buffer that ran dry, a callback period the buffer cannot fill, the block a stalled frontend pushes, and the frame loop against a simulated device clock |
 | `Timers`, `Dma`, `Sio`, `Keypad`, `Irq` | The four timers and the cascade, the four DMA channels and their start timings, the serial port in normal and multiplayer mode between two attached machines, the keypad conditions, IE/IF/IME |
 | `Cart` | The header, the save-type detection, SRAM, the Flash command set, the EEPROM protocol, the GPIO/RTC port, the `.sav` round trip |
 | `BootRom` | The ARM emitter against the ARM Architecture Reference Manual, the boot ROM image, the animation and the cartridge handover |
@@ -88,6 +88,13 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
   bitmap modes, 0x10000 in the tile modes).
 * **Save states, rewind, the EEPROM's "last byte is the AND of the old and new value" quirk, and
   the real-time clock's per-minute interrupt register** are not implemented.
+* **The GBA's sound output stage is not modelled**: SOUNDBIAS is stored and read back, but neither
+  its bias level (which only shifts the unsigned representation of the samples) nor the PWM
+  amplitude resolution (9/8/7/6 bit at 32.768/65.536/131.072/262.144 kHz) change the mix, which is
+  produced as clean 16 bit samples. The wave RAM is plain memory rather than the shift register the
+  hardware uses, so a read cannot return a digit that has moved, and the duty waveforms follow
+  GBATEK's drawing (a high run that starts at the first of the eight steps) where the Pan Docs print
+  the same four cycles as bit strings - the two differ only in the phase.
 * **The Game Boy (DMG/CGB) machine** is a separate core (`src/gba/gb_*.cpp`) with its own tests
   (`test_gb_*.cpp`) and its own harness mode (`--gb`); the GBA in Game Boy compatibility mode does
   not run it, and the GBA cartridge slot does not accept a Game Boy cartridge.
@@ -102,7 +109,7 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 
 ## The test suite
 
-Every test passes: **304 of 304** on a checkout whose `build/Data/GBASettings.json` has LF endings (a
+Every test passes: **309 of 309** on a checkout whose `build/Data/GBASettings.json` has LF endings (a
 Windows checkout with `core.autocrlf` turns that file into CRLF, and the two tests that compare it
 with `DefaultJson()` byte for byte then report the `\r`s as a difference). The suite was not green
 while the core was being written, and every failure was resolved by fixing the emulator or by
@@ -123,12 +130,15 @@ listed here because each one names a real bug that is easy to reintroduce.
 | `Apu.FifoFasterThanTheHostRate`, `Timers.OverflowTotalCountsEveryWrap` | A direct-sound FIFO moves one byte per timer overflow, but the mixer compared two readings of the timer's *counter* once per host sample. A timer faster than the host sample rate therefore lost overflows, and one whose period divided the host sample length exactly (TM0CNT_L = FF00h against 512 cycles) lost all of them, because after every second wrap the counter was back at the value it had: a FIFO clocked that way never moved a byte, and direct sound played at the wrong rate. The timers now keep a running total of their wraps (`Timers::Overflows`) and both the FIFOs and channel 3's timer-driven digit clock count with it. |
 | `GbBus, cgb_power_up_svbk_maps_bank_one_not_bank_zero`, `GbBus, cgb_svbk_selects_banks_two_to_seven_and_zero_means_one` (found by running Metroid II, not by a unit test) | The WRAM bank register (SVBK, 0xFF70) mapped a written 0 to bank **0** instead of bank 1, so a CGB whose SVBK was still at its power-up value 0xF8 aliased `0xC000-0xCFFF` and `0xD000-0xDFFF` onto one 4 KByte page. A DMG-only cartridge that runs in compatibility mode and keeps its variables or stack in the upper bank then had its own low-RAM scratch overwrite them: Metroid II stored a return address at 0xDFFB, read back 0x0000 and restarted from the reset vector for ever (the screen never left the boot marker). Pan Docs "CGB Registers" FF70: "except 0, which maps bank 1 instead". |
 | `GbApu, DutyWaveformPhases` and the rest of the `GbApu` suite (the module had **no** tests at all, which is how these lived in it) | The Game Boy APU was wrong in almost every clock it has. The frame sequencer stepped every **512** system clocks instead of every **8192** (Pan Docs: one DIV-APU tick is 512 Hz, and its bit 4 falls every 8192 clocks), so the length, the envelope and the sweep all ran sixteen times too fast, and it clocked the length on step 7 as well, which made it 320 Hz with a jitter instead of 256. The length counters were loaded with `64 - NRx1` and counted *up* to 64, i.e. backwards: a note meant to last (64 - st) / 256 s lasted st / 256 s. The pulse and wave dividers ran at `(2048 - x) * 2` and `(2048 - x)` system clocks instead of `*4` and `*2` (the manuals: the pulse divider is clocked at 1048576 Hz and the wave divider at 2097152 Hz), so every pulse and wave note was an **octave high**. The four duty waveforms had the right ratios but the wrong phases (the docs print 12.5 % as `00000001` and 75 % as `01111110`; the table was `0x01, 0x03, 0x0F, 0xFC`), NR50's master volume was never applied to the mix at all, and NR51's two halves were swapped, so a channel panned hard left came out on the right and the whole stereo image was mirrored. The `GbApu` suite now pins the divider rates, the duty phases, the length timings, the envelope and sweep clocks, the wave RAM read order, the LFSR sequence, the mixer's levels and NR50, the PCM12/PCM34 registers and the CGB's own high pass filter. |
+| `Apu.WaveTimerSampling` (the test had to be rewritten), `Apu.WaveRamBanks`, `Apu.DirectSoundIsFourTimesAPsgChannel`, `Apu.MasterVolumeDoesNotTouchDirectSound`, `Apu.SweepUnderflowKeepsTheFrequency` | The GBA's sound controller was checked against GBATEK and the AGB Programming Manual (chapter 10) and had four more things wrong. **Channel 3 was clocked by a timer**: SOUND3CNT_X bit 14 was read as a timer selector as well as the length flag, so any program that enabled the length while a timer was running - the usual case for music - had its wave channel detuned (the manual and GBATEK: bit 14 is the length flag and nothing else, only the two direct sound FIFOs are timer driven). **The mixer's levels were wrong**: the FIFOs were given twice a PSG channel's amplitude instead of four times it, and SOUNDCNT_L's output level scaled the direct sound as well, while the manual says it has "no effect on direct sound"; the levels now follow GBATEK's "Max Output Levels" (a PSG channel spans a quarter of the output range, a FIFO the whole of it, and the sum is clipped by the 10 bit output stage). **The waveform RAM was a single bank**: the GBA has two banks of 16 bytes, the CPU reaches the one that is not playing, and it never played the second bank - games that double buffer a wave pattern played the wrong data (also, the levels had to stop being packed into bytes, which silently truncated the quarter's top level). **A decreasing sweep that would underflow stopped the channel**, where the manual says "the result is the pre-calculation value X(t) = X(t-1)". |
+| `Audio.AStarvedBufferIsRefilledWithExtraFrames`, `Audio.WantsFrameFollowsTheCushion` (the frontend's sound path, found by listening to a real game) | The machine was run once per display frame and the mixer buffer only threw away what did not fit: on a 60.00 Hz vsync the machine therefore mixed 0.46 % more sound than the device played, and the excess was dropped a couple of samples at a time - a rattle at the display's rate - while a buffer that ran dry could only creep back one frame at a time. The device is now the clock of the machine (a frame is mixed while the buffer is behind its cushion) and a starved buffer is refilled with extra frames in the same iteration. |
 
 Everything else passes: the ARM7TDMI (66 tests), the Game Boy machine (82 - its CPU, LCD, cartridge,
 boot ROM, the CGB WRAM/palette bus paths and the fifteen APU tests), the LCD controller (30), the
-sound (36, eleven of them the mixer buffer between the machine and the sound device), the settings
-(19), the cartridge (14), the disassemblers (13), the boot ROM and the emitter (12), the DMA (8), the
-SIO (7), the timers/keypad/interrupts (10), the demo machine (5) and the BIOS harness (2).
+sound (41: the GBA's 29 channel and mixer tests and the twelve of the mixer buffer between the
+machine and the sound device), the settings (19), the cartridge (14), the disassemblers (13), the
+boot ROM and the emitter (12), the DMA (8), the SIO (7), the timers/keypad/interrupts (10), the demo
+machine (5) and the BIOS harness (2).
 
 ## Open findings
 

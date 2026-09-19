@@ -70,14 +70,23 @@ the machine *pushes* its samples and the device *pulls* them: nothing has to be 
 delay of the sound cannot grow the way it does when the frontend only drains the core when a queue
 looks short.
 
-The buffer is kept at a cushion of about three video frames (50 ms at 32768 Hz). The machine is
-asked to wait once the buffer is a video frame past that mark, audio that does not fit is thrown
-away so the delay stays bounded, and a callback period the buffer cannot fill is silence rather
-than a repeat of the samples before it. With `video.vsync` on - the shipped default - the display
-clock and the GBA's 59.7275 Hz do not agree (a 60.00 Hz refresh is 0.46 % faster), and the buffer is
-what absorbs the difference: a few samples per frame are dropped, which shifts the pitch of the
-sound by that same 0.46 % instead of letting the picture and the sound drift apart. The delay and
-the counters are part of the window title when `video.showFps` is on.
+The buffer is kept at a cushion of about three video frames (50 ms at 32768 Hz) and the **sound
+device is the clock of the machine**: a frame is mixed while the buffer is behind its cushion, so
+the machine runs at the rate the device plays and the two cannot drift apart. A buffer that ran dry
+(the host stalled, a frame took far too long) is refilled with a few extra frames in the same
+iteration - a machine in step with the device only makes up one frame's worth of audio per frame -
+and a callback period the buffer cannot fill is silence rather than a repeat of the samples before
+it. With `video.vsync` on - the shipped default - the display clock and the GBA's 59.7275 Hz do not
+agree (a 60.00 Hz refresh is 0.46 % faster); because the device is the clock, that costs a repeated
+picture frame every few seconds instead of a growing delay or audio thrown away sample by sample.
+The delay and the counters are part of the window title when `video.showFps` is on.
+
+The mixer's levels are the hardware's (GBATEK "Max Output Levels"): each of the four PSG channels
+spans a quarter of the output range and each FIFO the whole of it, so a direct sound channel is four
+times a PSG channel and a loud mix is clipped, exactly as the GBA's 10 bit output clips it. The
+legacy channels follow the AGB Programming Manual: the (64 - st) / 256 s lengths, the n / 64 s
+envelope, the n / 128 s sweep, the 131072 / (2048 - x) Hz tone, and the waveform RAM's two banks,
+one of which plays while the CPU sees the other.
 
 A FIFO byte is moved by a **timer overflow** (SOUNDCNT_H bits 10/14 select timer 0 or 1), and the
 timer can be faster than the host's sample rate. The mixer counts the timer's wraps

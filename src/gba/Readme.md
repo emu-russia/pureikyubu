@@ -85,18 +85,21 @@ timers, the LCD, the serial port, the sound and the DMA.
 The APU mixes one sample per 512 system cycles (32768 Hz, the rate the GBA mixes at) into its own
 queue, and the frontend drains that queue once per frame into the mixer buffer (`gba_audio.h`) and
 lets the host's sound device play it back from its audio callback (`gba_sdl.cpp` opens the device
-with a callback, exactly as dmgemu does). The buffer is kept at a cushion of about three video
-frames: the machine is asked to wait when it is a frame past it, a block of audio that is longer
-than the cushion is trimmed to its newest frames, and a period the device asks for that the buffer
-cannot fill is silence rather than stale samples. That is what keeps the delay of the sound
-bounded - the alternative, letting the core's queue grow and polling it once per frame, makes the
-sound lag seconds behind after a fast-forward or a stalled window and click where it is refilled.
+with a callback, exactly as dmgemu does).
 
-The two clocks do not agree when `vsync` is on: the GBA's frame is 59.7275 Hz and a display's
-refresh is usually 60.00 Hz, so the machine mixes 0.46 % more sound than the device plays. The
-buffer throws the few samples per frame that do not fit away, which turns that difference into a
-0.46 % higher pitch instead of a growing delay (the window title reports the delay and the drops
-when `showFps` is on).
+The **sound device is the clock of the machine**: a frame is mixed while the buffer is behind its
+cushion (about three video frames, 50 ms), so the machine runs at the rate the device plays and the
+two can never drift apart. A buffer that has run dry - the host stalled, a frame took far too long -
+is refilled with a few extra frames in the same iteration, because a machine in step with the device
+only makes up one frame's worth of audio per frame; and a period the device asks for that the buffer
+cannot fill is silence rather than stale samples. The delay therefore stays at the cushion, whatever
+the display and the host do.
+
+This is also what keeps the sound clean when `vsync` is on: the GBA's frame is 59.7275 Hz and a
+display's refresh is usually 60.00 Hz, and running a frame for every display frame would make the
+machine mix 0.46 % more sound than the device plays - audio that would then have to be thrown away
+sample by sample, which is heard as a rattle at the display's rate. The picture repeats a frame every
+few seconds instead. The window title reports the delay and the counters when `showFps` is on.
 
 **Deviation worth knowing**: the LCD renders a whole scanline when its HBlank starts instead of
 composing it dot by dot during the visible part. A game that rewrites VRAM (or the scroll

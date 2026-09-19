@@ -222,25 +222,63 @@ GBA_TEST(Audio, SmallCorrectionDropsOnlyTheExcess)
 	GBA_CHECK_EQ(played[played.size() - 2], (int16_t)(10000 + extra - 1));
 }
 
-GBA_TEST(Audio, WantsFrameFollowsTheHighWaterMark)
+GBA_TEST(Audio, WantsFrameFollowsTheCushion)
 {
-	// The frontend runs a frame of the machine only while the buffer has room for it. The cushion
-	// is the normal level and it is *not* a reason to hold the machine back: the mark is above it.
+	// The frontend runs a frame of the machine while the buffer is behind its cushion, which is
+	// what makes the device the clock of the machine: the machine produces a frame only when the
+	// device has played one.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
 	buffer.Prime();
 
+	GBA_CHECK_EQ(buffer.Queued(), buffer.TargetFrames());
+	GBA_CHECK(!buffer.WantsFrame());				// exactly at the cushion: nothing is owed yet
+	GBA_CHECK(!buffer.Starving());
+
+	// The device plays a callback period: now the machine owes it a frame.
+	Play(buffer, CallbackFrames);
+	GBA_CHECK_EQ(buffer.Queued(), buffer.TargetFrames() - CallbackFrames);
 	GBA_CHECK(buffer.WantsFrame());
+	GBA_CHECK(!buffer.Starving());
+
+	// Half a cushion short is where the frontend starts refilling with extra frames.
+	Play(buffer, buffer.TargetFrames() / 2);
+	GBA_CHECK(buffer.WantsFrame());
+	GBA_CHECK(buffer.Starving());
+}
+
+GBA_TEST(Audio, ABurstIsHeldBackUntilTheDeviceCatchesUp)
+{
+	// A burst (a stalled frontend that pushes everything the core accumulated) puts the buffer
+	// above its cushion: the machine is not given another frame until the device has played the
+	// excess back, so a burst cannot keep turning into drops.
+	AudioBuffer buffer;
+	MakeBuffer(buffer);
+	buffer.Prime();
 
 	int room = buffer.LimitFrames() - buffer.Queued();
-	std::vector<int16_t> block = Ramp(1, room);
-	buffer.Push(block.data(), room);
+	std::vector<int16_t> burst = Ramp(1, room);
+	buffer.Push(burst.data(), room);
 	GBA_CHECK_EQ(buffer.Queued(), buffer.LimitFrames());
-	GBA_CHECK(!buffer.WantsFrame());
 
-	// The device plays a callback period: the machine may run again.
-	Play(buffer, CallbackFrames);
+	// The burst is more than a cushion above the mark the machine waits for, and a callback period
+	// takes about half a cushion back: several periods pass before a frame may run again.
+	int plays = 0;
+
+	while (plays < 8 && !buffer.WantsFrame())
+	{
+		Play(buffer, CallbackFrames);
+		plays++;
+	}
+
+	GBA_CHECK_MSG(plays >= 2, "the machine was not held back (" + std::to_string(plays) + " plays)");
 	GBA_CHECK(buffer.WantsFrame());
+
+	// A frame is only allowed once the buffer is back below its cushion, and the machine is not
+	// starving while that happens (what is being played is the burst, not an empty buffer).
+	GBA_CHECK(buffer.Queued() < buffer.TargetFrames());
+	GBA_CHECK(!buffer.Starving());
+	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
 }
 
 GBA_TEST(Audio, LatencyInMilliseconds)
@@ -290,16 +328,16 @@ GBA_TEST(Audio, KeepsTheDeviceRateAndFormat)
 GBA_TEST(Audio, FrameLoopAndCallbackStayInStep)
 {
 	// The whole sound path, without SDL: a frame of the GBA mixes 548.625 samples and the device
-	// plays 32768 of them per second. The frame loop pushes one frame of audio whenever the buffer
-	// has room and the device's callback is simulated every 512 frames. One minute of this: the
-	// buffer must never run dry (a gap) and the delay must stay at the cushion.
+	// plays 32768 of them per second. The device's callback is simulated every 512 frames and the
+	// frame loop runs a frame whenever the buffer is behind its cushion, exactly as the frontend
+	// does. One minute of that:
 	//
-	// The machine is driven at 60 display frames per second here, i.e. 0.46 % faster than the
-	// GBA's own 59.7275 Hz - the case of `vsync` on a 60 Hz display, and the one that used to make
-	// the delay grow to the core's four second queue. What the buffer does about it is to throw
-	// away the handful of samples per frame that do not fit, which is the 0.46 % the two clocks
-	// disagree by: no gap, no growing delay, and the machine is not held back (the picture is
-	// untouched).
+	//  * the buffer never runs dry (no gap);
+	//  * the delay stays at the cushion, not at the core's four second queue;
+	//  * the machine is driven at the *device's* rate, not at the display's: the loop here is paced
+	//    at 60.00 Hz (the vsync case) and the machine still runs 59.7275 frames a second, i.e. it
+	//    skips a frame every few seconds instead of mixing 0.46 % more sound than the device can
+	//    play - which is what used to be thrown away sample by sample, and heard as a rattle.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
 	buffer.Prime();
@@ -348,57 +386,56 @@ GBA_TEST(Audio, FrameLoopAndCallbackStayInStep)
 	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
 	GBA_CHECK(buffer.Queued() <= buffer.LimitFrames());
 
-	// The display clock did not hold the machine back: it ran every one of the 3600 frames.
-	GBA_CHECK_EQ(machineFrames, DisplayFrames);
+	// The machine ran at its own rate (3583.65 frames a minute), not at the display's 3600.
+	GBA_CHECK_MSG(machineFrames < DisplayFrames,
+		"the machine ran " + std::to_string(machineFrames) + " frames");
+	GBA_CHECK_MSG(machineFrames > DisplayFrames * 99 / 100,
+		"the machine ran only " + std::to_string(machineFrames) + " frames");
 
-	// Every frame that was pushed was played, is still queued, or was thrown away - and what was
-	// thrown away is the 0.46 % the two clocks disagree by (about nine thousand frames a minute),
-	// not a chunk of audio.
+	// Nothing had to be thrown away: the device is the clock, so the two rates agree, and the
+	// cushion plus one frame still fits below the mark that drops audio.
 	int dropped = produced - taken - buffer.Queued();
-	GBA_CHECK_MSG(dropped > 0, "the two clocks disagree, something has to be dropped");
-	GBA_CHECK_MSG(dropped > produced / 500,
-		"dropped only " + std::to_string(dropped) + " of " + std::to_string(produced));
-	GBA_CHECK_MSG(dropped < produced / 100,
-		"dropped " + std::to_string(dropped) + " of " + std::to_string(produced));
+	GBA_CHECK_MSG(dropped == 0, std::to_string(dropped) + " frames were dropped");
 
-	// Which keeps the delay at the cushion instead of at the core's four second queue.
+	// Which keeps the delay at the cushion.
 	GBA_CHECK(buffer.LatencyMs() < 100);
+	GBA_CHECK_MSG(std::abs(buffer.Queued() - buffer.TargetFrames()) <= 2 * CallbackPeriod,
+		"the buffer settled at " + std::to_string(buffer.Queued()) + " of a " +
+		std::to_string(buffer.TargetFrames()) + " frame cushion");
 }
 
-GBA_TEST(Audio, AStalledMachineIsHeldBack)
+GBA_TEST(Audio, AStarvedBufferIsRefilledWithExtraFrames)
 {
-	// The other half of the frame loop's rule: when the buffer is full because the machine ran
-	// ahead (a frontend that was stalled, a device that stopped calling the callback), the machine
-	// is not given another frame until the device has taken some of it - so a burst cannot turn
-	// into a stream of drops.
+	// A hitch (the host stalled, a frame took far too long) lets the device play on while nothing
+	// is mixed: the buffer runs dry and the device hears a gap. A machine in step with the device
+	// only makes up one frame's worth of audio per frame, so the frontend runs extra frames until
+	// the cushion is back - that is what the catch-up loop does, and this is the rule it uses.
 	AudioBuffer buffer;
 	MakeBuffer(buffer);
 	buffer.Prime();
 
-	// Fill the buffer to the mark, exactly as pushing a burst does.
-	int room = buffer.LimitFrames() - buffer.Queued();
-	std::vector<int16_t> burst = Ramp(1, room);
-	buffer.Push(burst.data(), room);
+	// The buffer is emptied (the stall) and its cushion is what a catch-up has to restore.
+	Play(buffer, buffer.Queued());
+	GBA_CHECK_EQ(buffer.Queued(), 0);
+	GBA_CHECK(buffer.Starving());
 
-	// Four display frames: the first one is refused (the buffer is at the mark), and after that the
-	// machine runs once per callback period - it is the device that sets the pace until the buffer
-	// is back to its cushion.
-	int frames = 0;
+	// The frontend runs frames back to back until the buffer is out of the starving zone (no
+	// callback in between: the catch-up happens inside one iteration of the frame loop). Two
+	// frames of 548 samples take it past half a cushion, and from there the ordinary cushion rule
+	// (WantsFrame) keeps refilling it one frame at a time.
+	int runs = 0;
 
-	for (int tick = 0; tick < 4; tick++)
+	while (buffer.Starving() && runs < 4)
 	{
-		if (buffer.WantsFrame())
-			frames++;
-
-		Play(buffer, CallbackFrames);
+		std::vector<int16_t> block = Ramp(runs * 1000, 548);
+		buffer.Push(block.data(), 548);
+		runs++;
 	}
 
-	GBA_CHECK_EQ(frames, 3);
-	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
-
-	// Once drained it is free again.
-	for (int tick = 0; tick < 20; tick++)
-		Play(buffer, CallbackFrames);
-
+	GBA_CHECK_EQ(runs, 2);
+	GBA_CHECK_EQ(buffer.Queued(), 2 * 548);
+	GBA_CHECK(!buffer.Starving());
 	GBA_CHECK(buffer.WantsFrame());
+	GBA_CHECK_EQ((int)buffer.Underruns(), 0);
+	GBA_CHECK_EQ((int)buffer.Drops(), 0);
 }

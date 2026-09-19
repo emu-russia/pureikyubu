@@ -283,9 +283,9 @@ namespace GBA
 		}
 
 		/// <summary>
-		/// True while the sound device wants another frame of the machine: the buffer is at or
-		/// past its high water mark when the machine has produced more than the device has
-		/// played. Without a device the machine is never held back.
+		/// True while the sound device wants another frame of the machine: the mixer buffer is
+		/// behind its cushion, which is what makes the device the clock of the machine. Without a
+		/// device the machine is never held back.
 		/// </summary>
 		bool WantsSoundFrame() const
 		{
@@ -295,6 +295,13 @@ namespace GBA
 			}
 
 			return sound.WantsFrame();
+		}
+
+		/// <summary>True while the mixer buffer is short enough that another frame is needed at
+		/// once to refill it (the catch-up of the frame loop).</summary>
+		bool SoundStarving() const
+		{
+			return audio != 0 && audioEnabled && sound.Starving();
 		}
 
 		/// <summary>Push the samples the machine mixed in one frame into the mixer buffer.</summary>
@@ -655,6 +662,13 @@ namespace GBA
 	// buffer's own drop rule is what keeps the delay bounded in that case.
 	static const uint32_t SoundStallMilliseconds = 250;
 
+	// The most frames one iteration of the frame loop may run to refill a starved mixer buffer (see
+	// AudioBuffer::Starving). A machine in step with the device only makes up one frame's worth of
+	// audio per frame, so a buffer that ran dry - the host stalled, the device played on while
+	// nothing was mixed - needs a few extra frames at once; the cap keeps a machine that is simply
+	// too slow from melting down instead of catching up.
+	static const int SoundCatchUpFrames = 4;
+
 	/// <summary>
 	/// Hand everything the machine mixed for the frame it just ran to the mixer buffer: the core
 	/// queues its samples (`System::ReadAudio`) and the frontend pushes them, so the device always
@@ -783,15 +797,16 @@ namespace GBA
 				printf("gba: battery saved%s%s\n", saveError.empty() ? "" : " - ", saveError.c_str());
 			}
 
-			// The frame runs while the mixer buffer has room for it (see Host::WantsSoundFrame).
-			// With vsync on, the display's refresh rate (usually 60.00 Hz) is not the GBA's
-			// 59.7275 Hz, so the machine mixes 0.46 % more sound than the device plays; the buffer
-			// absorbs that by throwing away the few samples per frame that do not fit (see
-			// gba_audio.h), which keeps the delay at the cushion and leaves the picture alone. The
-			// gate is the backstop for a machine that is genuinely ahead - a burst pushed after the
-			// frontend was stalled, a device that stopped calling the callback - so that the delay
-			// can never grow past the buffer. `SoundStallMilliseconds` is the way out when the
-			// device itself has stopped.
+			// The sound device is the clock of the machine: a frame is mixed while the mixer buffer
+			// is behind its cushion (see Host::WantsSoundFrame), which keeps the delay at the
+			// cushion and the audio exact. The display's refresh rate (usually 60.00 Hz) is not the
+			// GBA's 59.7275 Hz, so running a frame for every display frame would make the machine
+			// mix 0.46 % more sound than the device plays - audio that would then have to be thrown
+			// away sample by sample, which is heard as a rattle at the display's rate. The gate is
+			// also the backstop for a machine that is genuinely ahead (a burst pushed after the
+			// frontend was stalled, a device that stopped calling the callback), so the delay can
+			// never grow past the buffer; `SoundStallMilliseconds` is the way out when the device
+			// itself has stopped.
 			uint32_t now = SDL_GetTicks();
 			bool stalled = (now - lastMachineFrame) > SoundStallMilliseconds;
 
@@ -799,17 +814,14 @@ namespace GBA
 			{
 				lastMachineFrame = now;
 
-				system.SetPressedKeys(input.Pressed());
-				system.RunFrame();
-				frames++;
-
 				if (fastForward)
 				{
 					// Fast forward runs the machine as fast as the host allows; the sound of the
-					// extra frames is thrown away rather than pushed, so leaving fast forward does
-					// not start with seconds of stale audio and the pitch does not turn into noise.
-					for (int i = 0; i < 3; i++)
+					// frames is thrown away rather than pushed, so leaving fast forward does not
+					// start with seconds of stale audio and the pitch does not turn into noise.
+					for (int i = 0; i < 4; i++)
 					{
+						system.SetPressedKeys(input.Pressed());
 						system.RunFrame();
 						frames++;
 					}
@@ -818,7 +830,22 @@ namespace GBA
 				}
 				else
 				{
-					DrainFrameAudio(system, host, samples, false);
+					// One frame, and then as many more as it takes to put the cushion back: a
+					// buffer that ran dry (the host stalled, the device played on while nothing was
+					// mixed) cannot be refilled by the machine's own rate, which is exactly the
+					// device's.
+					for (int run = 0; ; run++)
+					{
+						system.SetPressedKeys(input.Pressed());
+						system.RunFrame();
+						frames++;
+						DrainFrameAudio(system, host, samples, false);
+
+						if (run + 1 >= SoundCatchUpFrames || !host.SoundStarving())
+						{
+							break;
+						}
+					}
 				}
 			}
 
@@ -971,7 +998,8 @@ namespace GBA
 			}
 
 			// The mixer buffer and the sound device, exactly as in the GBA loop above (the Game Boy
-			// frame is 59.7275 Hz too).
+			// frame is 59.7275 Hz too): the device is the clock, and a buffer that ran dry is
+			// refilled with a few extra frames in the same iteration.
 			uint32_t now = SDL_GetTicks();
 			bool stalled = (now - lastMachineFrame) > SoundStallMilliseconds;
 
@@ -979,14 +1007,11 @@ namespace GBA
 			{
 				lastMachineFrame = now;
 
-				system.SetPressedKeys(input.Pressed());
-				system.RunFrame();
-				frames++;
-
 				if (fastForward)
 				{
-					for (int i = 0; i < 3; i++)
+					for (int i = 0; i < 4; i++)
 					{
+						system.SetPressedKeys(input.Pressed());
 						system.RunFrame();
 						frames++;
 					}
@@ -995,7 +1020,18 @@ namespace GBA
 				}
 				else
 				{
-					DrainFrameAudio(system, host, samples, false);
+					for (int run = 0; ; run++)
+					{
+						system.SetPressedKeys(input.Pressed());
+						system.RunFrame();
+						frames++;
+						DrainFrameAudio(system, host, samples, false);
+
+						if (run + 1 >= SoundCatchUpFrames || !host.SoundStarving())
+						{
+							break;
+						}
+					}
 				}
 			}
 

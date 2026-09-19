@@ -43,6 +43,14 @@ namespace
 	const int LengthStep = FrameStep * 2;							// 65536: two sequencer steps
 	const int EnvelopeStep = FrameStep * 8;							// 262144: eight sequencer steps
 
+	// The mixer's scale (GBATEK "Max Output Levels"): each FIFO spans the full output range
+	// (+/-0x200) and each of the four PSG channels a quarter of it (+/-0x80). The APU mixes in the
+	// hardware's units - a PSG channel at full volume is +/-128, a FIFO sample +/-4 - and maps the
+	// window (+/-512, the hardware's 10 bit output around SOUNDBIAS) onto full scale, so the scale
+	// is 32767 / 512 = 64 (a loud mix is clipped there, exactly as the hardware clips it).
+	const int MixScale = 64;
+	const int PsgFull = 128;						// a PSG channel's amplitude at volume 15
+
 	// -- the machine under test ---------------------------------------------------------------
 
 	struct Machine
@@ -214,7 +222,10 @@ namespace
 	};
 
 	// Write 32 digits into the 16 wave RAM bytes. The pattern is played as the MSBs of the first
-	// byte, then its LSBs, then the MSBs of the second byte, and so on (GBATEK "WAVE_RAM").
+	// byte, then its LSBs, then the MSBs of the second byte, and so on (GBATEK "WAVE_RAM"), and it
+	// lands in the bank the CPU can reach - the one that is *not* selected for playback by NR30
+	// bit 6 - so a test that wants to hear it selects the other bank afterwards (which is what a
+	// program does to swap a double buffered pattern in).
 	void WriteWaveRam(Machine& m, const int* digits, int count)
 	{
 		for (int i = 0; i < 16; i++)
@@ -223,6 +234,12 @@ namespace
 			int low = digits[(i * 2 + 1) % count];
 			m.Write(RegWaveRam + i, (uint8_t)((high << 4) | low));
 		}
+	}
+
+	// The byte the CPU sees at wave RAM offset `index` (0..15) - the bank that is not played.
+	uint8_t ReadWaveRam(Machine& m, int index)
+	{
+		return m.Read((uint32_t)(RegWaveRam + index));
 	}
 
 	// GBATEK "Noise Random Generator": X = X SHR 1; if carry (the bit shifted out) then the
@@ -520,7 +537,7 @@ GBA_TEST(Apu, DutyWaveform)
 		GBA_CHECK_EQ(MeasurePeriod(mono), 64);
 
 		// The level is the envelope volume times the quarter range on both phases.
-		GBA_CHECK_EQ(Peak(mono), 15 * 8 * 33);
+		GBA_CHECK_EQ(Peak(mono), PsgFull * MixScale);
 	}
 }
 
@@ -643,11 +660,14 @@ GBA_TEST(Apu, Envelope)
 	m.Write(RegNR14, (uint8_t)(0x80 | (1792 >> 8)));
 
 	int before = Peak(Left(m.Run(EnvelopeStep)));
-	GBA_CHECK_EQ(before, 15 * 8 * 33);
+	GBA_CHECK_EQ(before, PsgFull * MixScale);
 
 	int after = Peak(Left(m.Run(EnvelopeStep)));
-	GBA_CHECK_EQ(after, 14 * 8 * 33);
-	GBA_CHECK_EQ(after * 15, before * 14);
+	GBA_CHECK_EQ(after, (14 * PsgFull / 15) * MixScale);
+
+	// The level is proportional to the volume: both are the same fraction of the channel's quarter
+	// (the two whole numbers differ by the rounding of the model, so one level step of slack).
+	GBA_CHECK(std::abs(after - before * 14 / 15) <= MixScale);
 
 	// Direction = increase from volume 0: the channel is silent until the first step raises it.
 	Machine up;
@@ -660,7 +680,7 @@ GBA_TEST(Apu, Envelope)
 	GBA_CHECK(Silent(Left(up.Run(EnvelopeStep))));
 	std::vector<int16_t> raised = Left(up.Run(EnvelopeStep));
 	GBA_CHECK(!Silent(raised));
-	GBA_CHECK_EQ(Peak(raised), 1 * 8 * 33);
+	GBA_CHECK_EQ(Peak(raised), (1 * PsgFull / 15) * MixScale);
 }
 
 GBA_TEST(Apu, LengthCounter)
@@ -764,22 +784,28 @@ GBA_TEST(Apu, WavePlayback)
 
 	Machine m;
 	EnablePsg(m);
-	WriteWaveRam(m, RampDigits, 32);
+	WriteWaveRam(m, RampDigits, 32);						// lands in bank 1 (NR30 bit 6 = 0)
 	m.Write(RegNR32, 0x20);								// volume 100 %
-	m.Write(RegNR30, 0x80);								// DAC on, dimension 0, bank 0
+	m.Write(RegNR30, 0xC0);								// DAC on, dimension 0, bank 1 plays
 	m.Write(RegNR33, (uint8_t)(Frequency & 0xFF));
 	m.Write(RegNR34, (uint8_t)(0x80 | (Frequency >> 8)));
 
 	std::vector<int16_t> pass = Left(m.Run(SampleCycles * 32));
 	GBA_CHECK_EQ((int)pass.size(), 32);
 
-	// The DAC is linear in the 4 bit digit (GBATEK: each PSG spans a quarter of the output
-	// range), so the rising ramp of digits 0..15 gives a constant difference, and digit 16 is
-	// digit 0 again.
+	// The DAC is linear in the 4 bit digit (GBATEK: each PSG spans a quarter of the output range,
+	// 256 units over the 16 digits), so the rising ramp of digits 0..15 steps up by 17 or 18 units
+	// - the quarter does not divide evenly by 15 - and digit 16 is digit 0 again.
 	int step = pass[1] - pass[0];
 	GBA_CHECK(step > 0);
 	for (int i = 0; i < 15; i++)
-		GBA_CHECK_EQ(pass[i + 1] - pass[i], step);
+	{
+		int difference = pass[i + 1] - pass[i];
+		GBA_CHECK_MSG(difference == 17 * MixScale || difference == 18 * MixScale,
+			"digit " + std::to_string(i) + " to " + std::to_string(i + 1) + ": " +
+			std::to_string(difference));
+	}
+	GBA_CHECK_EQ(pass[15] - pass[0], 256 * MixScale);	// the quarter the channel spans
 	GBA_CHECK_EQ((int)pass[16], (int)pass[0]);
 	GBA_CHECK_EQ((int)pass[31], (int)pass[15]);
 	GBA_CHECK(pass[15] > pass[0]);
@@ -790,23 +816,29 @@ GBA_TEST(Apu, WavePlayback)
 	for (int i = 0; i < 32; i++)
 		GBA_CHECK_EQ((int)again[i], (int)pass[i]);
 
-	// NR30 bit 5 = 1 plays both banks: the loop is 64 digits long and, because the header can
-	// only store one bank, the same 32 digits appear twice (see the deviation note in MixWave).
-	m.Write(RegNR30, 0xA0);
+	// A double buffered pattern: with bank 1 playing, the CPU now writes bank 0 (the bank that is
+	// not selected). The 64 digit mode (NR30 bit 5) then plays the selected bank first and the
+	// other one after it.
+	const int ReverseDigits[32] =
+	{
+		15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+		15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+	};
+	WriteWaveRam(m, ReverseDigits, 32);					// into bank 0
+
+	m.Write(RegNR30, 0xE0);								// DAC on, two banks, bank 1 first
 	m.Write(RegNR34, (uint8_t)(0x80 | (Frequency >> 8)));
 	std::vector<int16_t> both = Left(m.Run(SampleCycles * 64));
 	GBA_CHECK_EQ((int)both.size(), 64);
-	for (int i = 0; i < 64; i++)
-		GBA_CHECK_EQ((int)both[i], (int)pass[i % 32]);
 
-	// Bank 1 plays the same 16 bytes: the frozen header has one 16 byte array, so the two banks
-	// alias (documented deviation).
-	m.Write(RegNR30, 0xC0);
-	m.Write(RegNR34, (uint8_t)(0x80 | (Frequency >> 8)));
-	std::vector<int16_t> bank1 = Left(m.Run(SampleCycles * 32));
-	GbaTest::Note("channel 3 bank 1 aliases bank 0: gba_apu.h stores a single 16 byte wave RAM");
 	for (int i = 0; i < 32; i++)
-		GBA_CHECK_EQ((int)bank1[i], (int)pass[i]);
+		GBA_CHECK_EQ((int)both[i], (int)pass[i]);		// the selected bank
+
+	// The second half is the *other* bank, which holds the descending pattern just written there:
+	// its first digit is 14, so the level walks down instead of up.
+	GBA_CHECK(both[32] != both[0]);
+	GBA_CHECK(both[32] > both[33]);
+	GBA_CHECK(both[32] > both[63]);
 
 	// NR32 bits 5-6 scale the digital value: 50 % and 25 %, and bit 7 forces 75 % (GBATEK
 	// "SOUND3CNT_H"). The peak of the pattern is digit 15, so the ratios are exact.
@@ -815,7 +847,7 @@ GBA_TEST(Apu, WavePlayback)
 
 	for (int i = 0; i < 3; i++)
 	{
-		m.Write(RegNR30, 0x80);
+		m.Write(RegNR30, 0xC0);
 		m.Write(RegNR32, cases[i].nr32);
 		m.Write(RegNR34, (uint8_t)(0x80 | (Frequency >> 8)));
 		int peak = Peak(Left(m.Run(SampleCycles * 32)));
@@ -828,49 +860,102 @@ GBA_TEST(Apu, WavePlayback)
 	GBA_CHECK(Silent(Left(m.Run(SampleCycles * 32))));
 }
 
-GBA_TEST(Apu, WaveTimerSampling)
+GBA_TEST(Apu, WaveRamBanks)
 {
-	// SOUND3CNT_X bit 14 selects the wave channel's clock source on the GBA. It also carries the
-	// length flag, so this test sets it and selects timer 1: with TM1CNT_L = F000h the timer
-	// overflows every 4096 cycles, i.e. one wave digit every 4096/512 = 8 host samples.
-	const int Frequency = 1984;							// the register rate would be 1 sample/digit
+	// "The currently selected Bank Number (NR30 bit 6) will be played back, while reading/writing
+	// to/from wave RAM will address the other (not selected) bank" (GBATEK "SOUND3CNT_L"), and the
+	// GBA has two banks of 16 bytes - 32 digits each - while the CGB has one.
+	Machine m;
+	EnablePsg(m);
+	m.Write(RegNR30, 0x80);								// DAC on, bank 0 selected for playback
+
+	// The CPU writes bank 1 and reads it back at the same addresses.
+	for (int i = 0; i < 16; i++)
+		m.Write((uint32_t)(RegWaveRam + i), (uint8_t)(0x10 + i));
+
+	for (int i = 0; i < 16; i++)
+		GBA_CHECK_EQ((int)ReadWaveRam(m, i), 0x10 + i);
+
+	// Selecting the other bank for playback moves the CPU's window to bank 0, which is still zero.
+	m.Write(RegNR30, 0xC0);
+	for (int i = 0; i < 16; i++)
+		GBA_CHECK_EQ((int)ReadWaveRam(m, i), 0x00);
+
+	for (int i = 0; i < 16; i++)
+		m.Write((uint32_t)(RegWaveRam + i), (uint8_t)(0xA0 + i));
+
+	m.Write(RegNR30, 0x80);
+	for (int i = 0; i < 16; i++)
+		GBA_CHECK_EQ((int)ReadWaveRam(m, i), 0x10 + i);
+
+	// Both banks play their own digits: bank 1 holds 0x10, 0x11, ... (digits 1, 0, 1, 1, 1, 2,
+	// ...) and bank 0 holds 0xA0, 0xA1, ... (digits 10, 0, 10, 1, ...). A trigger puts the bank's
+	// first digit into the sample buffer and holds it for one period, so the first sample is the
+	// 1 of 0x10 and the second the 0 of its low nibble.
+	m.Write(RegNR30, 0xE0);								// DAC on, two banks, bank 1 first
+	m.Write(RegNR32, 0x20);
+	m.Write(RegNR33, (uint8_t)(1984 & 0xFF));
+	m.Write(RegNR34, (uint8_t)(0x80 | (1984 >> 8)));
+
+	std::vector<int16_t> both = Left(m.Run(SampleCycles * 64));
+	GBA_CHECK_EQ((int)both.size(), 64);
+
+	GBA_CHECK(both[0] > both[1]);						// bank 1: digit 1, then digit 0
+	GBA_CHECK(both[32] > 0);							// bank 0: digit 10 of 0xA0 is positive
+	GBA_CHECK(both[32] > both[33]);					// ... and then its low nibble, 0
+	GBA_CHECK(both[32] != both[0]);
+}
+
+GBA_TEST(Apu, WaveLengthFlagIsNotATimerMode)
+{
+	// SOUND3CNT_X bit 14 is the length flag and nothing else ("Sound Length Flag", AGB Programming
+	// Manual NR34; GBATEK has the same table: only the two direct sound FIFOs are clocked by a
+	// timer). The channel used to treat the bit as a timer selector, which detuned the wave
+	// channel of any program that enabled the length while a timer happened to be running - the
+	// usual case for music. This is the regression test: the digit rate stays the NR33 one.
+	const int Frequency = 1984;							// one digit per host sample
 
 	Machine m;
 	EnablePsg(m);
 	WriteWaveRam(m, RampDigits, 32);
 	m.Write(RegNR31, 0x00);								// 256 length steps, far away
 	m.Write(RegNR32, 0x20);
-	m.Write(RegNR30, 0x80);
-	m.Write(RegNR33, (uint8_t)(Frequency & 0xFF));
+	m.Write(RegNR30, 0xC0);								// DAC on, bank 1 (where the pattern went)
 
-	m.bus.timers.Write16(m.bus, 0x104, 0xF000);			// TM1CNT_L
+	// A timer running at a rate that is nothing like the digit rate: if the channel were clocked
+	// by it, the sample rate would be eight times slower.
+	m.bus.timers.Write16(m.bus, 0x104, 0xF000);			// TM1CNT_L: an overflow every 4096 cycles
 	m.bus.timers.Write16(m.bus, 0x106, 0x0080);			// TM1CNT_H: prescaler 1, running
 
-	m.Write(RegNR34, (uint8_t)(0x80 | 0x40 | (Frequency >> 8)));	// trigger + length flag = timer 1
+	m.Write(RegNR33, (uint8_t)(Frequency & 0xFF));
+	m.Write(RegNR34, (uint8_t)(0x80 | 0x40 | (Frequency >> 8)));	// trigger, length flag set
 
-	std::vector<int16_t> mono = Left(m.Run(SampleCycles * 64));
-	GBA_CHECK_EQ((int)mono.size(), 64);
+	std::vector<int16_t> mono = Left(m.Run(SampleCycles * 32));
+	GBA_CHECK_EQ((int)mono.size(), 32);
 
-	// Every digit lasts exactly eight samples, so the output is a staircase in steps of eight.
-	int runs = 0;
-	for (int i = 1; i < 64; i++)
-	{
+	// One digit per host sample: every sample differs from the one before it (the ramp pattern),
+	// which is what the NR33 rate gives and what the timer rate would not.
+	int changes = 0;
+	for (int i = 1; i < 32; i++)
 		if (mono[i] != mono[i - 1])
-		{
-			GBA_CHECK_EQ(i % 8, 0);
-			runs++;
-		}
-	}
-	GBA_CHECK_EQ(runs, 7);
+			changes++;
 
-	// With the bit clear the channel takes timer 0 instead, which is not running here, so the
-	// digit clock falls back to NR33 - one digit per host sample.
-	m.bus.timers.Write16(m.bus, 0x106, 0x0000);			// stop timer 1
-	m.Write(RegNR34, (uint8_t)(0x80 | (Frequency >> 8)));
-	std::vector<int16_t> fast = Left(m.Run(SampleCycles * 8));
-	GBA_CHECK_EQ((int)fast.size(), 8);
-	for (int i = 1; i < 8; i++)
-		GBA_CHECK(fast[i] != fast[i - 1]);
+	GBA_CHECK_MSG(changes >= 30, "the digit rate followed the timer: " + std::to_string(changes) +
+		" changes in 32 samples");
+
+	// The length flag does what it says: with the length counter close to its end the channel
+	// stops.
+	Machine short_;
+	EnablePsg(short_);
+	WriteWaveRam(short_, RampDigits, 32);
+	short_.Write(RegNR31, 0xFE);							// two length steps
+	short_.Write(RegNR32, 0x20);
+	short_.Write(RegNR30, 0xC0);
+	short_.Write(RegNR33, (uint8_t)(Frequency & 0xFF));
+	short_.Write(RegNR34, (uint8_t)(0x80 | 0x40 | (Frequency >> 8)));
+
+	short_.Run(SampleCycles * 4 * 128);					// more than two 256 Hz ticks
+	GBA_CHECK_EQ((int)(short_.Read(RegCntX) & 0x04), 0);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -911,7 +996,7 @@ GBA_TEST(Apu, NoiseLfsr)
 		GBA_CHECK_EQ(expected[firstHigh], 1);
 
 		// The level is the envelope volume times the quarter range.
-		GBA_CHECK_EQ(Peak(mono), 15 * 8 * 33);
+		GBA_CHECK_EQ(Peak(mono), PsgFull * MixScale);
 	}
 }
 
@@ -965,9 +1050,9 @@ GBA_TEST(Apu, NoiseEnvelope)
 	m.Write(RegNR44, 0x80);
 
 	int before = Peak(Left(m.Run(EnvelopeStep)));
-	GBA_CHECK_EQ(before, 15 * 8 * 33);
+	GBA_CHECK_EQ(before, PsgFull * MixScale);
 	int after = Peak(Left(m.Run(EnvelopeStep)));
-	GBA_CHECK_EQ(after, 14 * 8 * 33);
+	GBA_CHECK_EQ(after, (14 * PsgFull / 15) * MixScale);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1073,9 +1158,9 @@ GBA_TEST(Apu, FifoFasterThanTheHostRate)
 	// Three samples, two overflows each: the latch walks 2, 4, 6 and byte 7 is the next one.
 	std::vector<int16_t> mono = Left(m.Run(SampleCycles * 3));
 	GBA_CHECK_EQ((int)mono.size(), 3);
-	GBA_CHECK_EQ((int)mono[0], 2 * 2 * 33);
-	GBA_CHECK_EQ((int)mono[1], 4 * 2 * 33);
-	GBA_CHECK_EQ((int)mono[2], 6 * 2 * 33);
+	GBA_CHECK_EQ((int)mono[0], 2 * 4 * MixScale);
+	GBA_CHECK_EQ((int)mono[1], 4 * 4 * MixScale);
+	GBA_CHECK_EQ((int)mono[2], 6 * 4 * MixScale);
 	GBA_CHECK_EQ(m.Read(RegFifoA), 0x07);
 }
 
@@ -1098,7 +1183,7 @@ GBA_TEST(Apu, FifoVolumeAndPanning)
 	GBA_CHECK(!Silent(full));
 	int peak100 = Peak(Left(full));
 	int peak50 = Peak(Left(run(0, true, true)));
-	GBA_CHECK_EQ(peak100, 100 * 2 * 33);
+	GBA_CHECK_EQ(peak100, 100 * 4 * MixScale);
 	GBA_CHECK_EQ(peak50 * 2, peak100);
 
 	// SOUNDCNT_H bit 8 routes FIFO A to the right, bit 9 to the left; a FIFO that is routed
@@ -1145,8 +1230,9 @@ GBA_TEST(Apu, FifoTimerSelect)
 
 GBA_TEST(Apu, MasterVolumeAndPanning)
 {
-	// NR50 bits 0-2 (right) and 4-6 (left) scale the mixed signal; 0 mutes the side and 7 is
-	// 100 %, so volume 3 gives half of volume 7 (GBATEK "SOUNDCNT_L").
+	// SOUNDCNT_L bits 0-2 (right) and 4-6 (left) scale the four PSG channels over eight levels.
+	// The register is the Game Boy's NR50 ("NR50 and NR51 are each based on their counterparts in
+	// CGB", AGB Programming Manual 10.7), so 0 counts as 1 and 7 as 8 and no level is a mute.
 	auto run = [](uint8_t nr50, uint8_t nr51, uint8_t cntl) -> std::vector<int16_t>
 	{
 		Machine m;
@@ -1159,19 +1245,22 @@ GBA_TEST(Apu, MasterVolumeAndPanning)
 	};
 
 	std::vector<int16_t> full = run(0x77, 0xFF, 0x02);
-	GBA_CHECK_EQ(Peak(Left(full)), 15 * 8 * 33);
-	GBA_CHECK_EQ(Peak(Right(full)), 15 * 8 * 33);
+	GBA_CHECK_EQ(Peak(Left(full)), PsgFull * MixScale);
+	GBA_CHECK_EQ(Peak(Right(full)), PsgFull * MixScale);
 
-	// Master volume 0 is silence on both sides.
-	GBA_CHECK(Silent(run(0x00, 0xFF, 0x02)));
+	// Level 0 is the quietest of the eight, one eighth of level 7 - not a mute (a program that
+	// wants silence uses the channel enables or SOUNDCNT_X).
+	std::vector<int16_t> quietest = run(0x00, 0xFF, 0x02);
+	GBA_CHECK(!Silent(quietest));
+	GBA_CHECK_EQ(Peak(Left(quietest)) * 8, Peak(Left(full)));
 
 	// Half volume: (3 + 1) / 8 of full scale.
 	GBA_CHECK_EQ(Peak(Left(run(0x33, 0xFF, 0x02))) * 2, Peak(Left(full)));
 
 	// Separate left and right volumes.
-	std::vector<int16_t> split = run(0x07, 0xFF, 0x02);		// left 0 (mute), right 7
-	GBA_CHECK(Silent(Left(split)));
-	GBA_CHECK(!Silent(Right(split)));
+	std::vector<int16_t> split = run(0x07, 0xFF, 0x02);		// left 0 (quietest), right 7
+	GBA_CHECK(Peak(Left(split)) > 0);
+	GBA_CHECK_EQ(Peak(Left(split)) * 8, Peak(Right(split)));
 
 	// NR51: bit 8 routes channel 1 to the right, bit 12 to the left.
 	std::vector<int16_t> rightOnly = run(0x77, 0x01, 0x02);
@@ -1187,6 +1276,108 @@ GBA_TEST(Apu, MasterVolumeAndPanning)
 	// SOUNDCNT_H bits 0-1 scale the four PSGs: 0 = 25 %, 1 = 50 %, 2 = 100 %.
 	GBA_CHECK_EQ(Peak(Left(run(0x77, 0xFF, 0x00))) * 4, Peak(Left(full)));
 	GBA_CHECK_EQ(Peak(Left(run(0x77, 0xFF, 0x01))) * 2, Peak(Left(full)));
+}
+
+GBA_TEST(Apu, DirectSoundIsFourTimesAPsgChannel)
+{
+	// GBATEK "Max Output Levels": each FIFO "can span the FULL output range (+/-200h)" while each
+	// of the four PSGs spans "one QUARTER of the output range (+/-80h)" - a direct sound sample is
+	// therefore four times a PSG channel's, which is what makes the DMA channels the loud ones.
+	const int Frequency = 1792;							// a plain 50 % square, full volume
+
+	Machine psg;
+	EnablePsg(psg);
+	PlayChannel1(psg, Frequency, 2, 15);
+	std::vector<int16_t> square = Left(psg.Run(SampleCycles * 64));
+	int psgPeak = Peak(square);
+	GBA_CHECK_EQ(psgPeak, PsgFull * MixScale);
+
+	// A FIFO byte of 127 at full volume, played by a timer that overflows once per host sample.
+	Machine fifo;
+	SetupFifoA(fifo, 0, true, true, 1);
+	StartTimer(fifo, 0, 0xFF00);						// an overflow every 256 cycles
+	const uint32_t words[4] = { 0x7F7F7F7Fu, 0x7F7F7F7Fu, 0x7F7F7F7Fu, 0x7F7F7F7Fu };
+	fifo.apu().FifoDmaDone(0, words, 4);
+	fifo.Run(SampleCycles * 4);							// let the first bytes latch
+	std::vector<int16_t> loud = Left(fifo.Run(SampleCycles * 8));
+	int fifoPeak = Peak(loud);
+
+	GBA_CHECK_EQ(fifoPeak, 127 * 4 * MixScale);
+
+	// The relation GBATEK states: the FIFO's sample spans the full output range (+/-0x200, 512
+	// units) and a PSG channel's a quarter of it (+/-0x80, 128 units), so the two peaks are in the
+	// ratio 508 : 128 - four fifths of one to one, i.e. the four to one the document gives.
+	GBA_CHECK_EQ(fifoPeak * PsgFull, psgPeak * 508);
+}
+
+GBA_TEST(Apu, MasterVolumeDoesNotTouchDirectSound)
+{
+	// "L output level can be set to any of 8 levels. However, there is no effect on direct sound"
+	// (AGB Programming Manual 10.7, SOUNDCNT_L): the level scales the four PSG channels only. The
+	// two FIFOs have their own volume in SOUNDCNT_H.
+	const uint32_t words[4] = { 0x40404040u, 0x40404040u, 0x40404040u, 0x40404040u };
+
+	auto run = [&](uint8_t nr50) -> std::vector<int16_t>
+	{
+		Machine m;
+		SetupFifoA(m, 0, true, true, 1);
+		m.Write(RegNR50, nr50);
+		StartTimer(m, 0, 0xF800);						// an overflow every 2048 cycles
+		m.apu().FifoDmaDone(0, words, 4);
+		m.Run(2048);									// the first byte is played
+		return m.Run(2048);
+	};
+
+	int loud = Peak(Left(run(0x77)));
+	int quiet = Peak(Left(run(0x00)));
+
+	GBA_CHECK(loud > 0);
+	GBA_CHECK_EQ(quiet, loud);
+
+	// The same level does scale a PSG channel, which is what makes the rule visible.
+	Machine psg;
+	EnablePsg(psg);
+	psg.Write(RegNR50, 0x00);
+	PlayChannel1(psg, 1792, 2, 15);
+	int psgQuiet = Peak(Left(psg.Run(SampleCycles * 64)));
+	GBA_CHECK(psgQuiet > 0);
+	GBA_CHECK(psgQuiet < PsgFull * MixScale);
+}
+
+GBA_TEST(Apu, SweepUnderflowKeepsTheFrequency)
+{
+	// "In a subtraction operation, if the subtrahend is less than 0, the result is the
+	// pre-calculation value X(t) = X(t-1)" (AGB Programming Manual 10.3, NR10): a decreasing sweep
+	// cannot take the frequency below zero, and - unlike a decreasing sweep that *overflows* in
+	// addition mode - it does not stop the channel either.
+	Machine m;
+	EnablePsg(m);
+	m.Write(RegNR10, 0x19);								// pace 1, subtraction, shift 1
+
+	// A period of 1 shifted right by one is zero, so every iteration computes 1 - 0 = 1: the
+	// frequency never changes and the channel keeps playing.
+	PlayChannel1(m, 1, 2, 15);
+	m.Write(RegNR10, 0x19);								// PlayChannel1 wrote NR10 = 0, set it again
+	m.Write(RegNR14, 0x81);								// trigger with the period's high bits
+
+	GBA_CHECK_EQ((int)(m.Read(RegCntX) & 0x01), 1);
+
+	// Three sweep iterations (128 Hz each, i.e. 32768 cycles): the channel must still be on.
+	m.Run(LengthStep * 3);
+	GBA_CHECK_EQ((int)(m.Read(RegCntX) & 0x01), 1);
+	GBA_CHECK(!Silent(Left(m.Run(LengthStep))));
+
+	// A period of 0 would make the subtraction's result negative (0 - 0 = 0, no: 0 - 0 is 0), so
+	// use a period of 3 with a shift of 2: 3 - 0 = 3, still no underflow; the underflow needs a
+	// period smaller than its own shift, which is the case above. What the channel must never do
+	// is disappear because of it - which is what this test pins.
+	Machine overflow;
+	EnablePsg(overflow);
+	overflow.Write(RegNR10, 0x11);						// pace 1, addition, shift 1
+	PlayChannel1(overflow, 1792, 2, 15);
+	overflow.Write(RegNR10, 0x11);
+	overflow.Write(RegNR14, 0x87);						// trigger: 1792 + 896 overflows at once
+	GBA_CHECK_EQ((int)(overflow.Read(RegCntX) & 0x01), 0);	// addition mode still stops it
 }
 
 GBA_TEST(Apu, SampleRateCount)

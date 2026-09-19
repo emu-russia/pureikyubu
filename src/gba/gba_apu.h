@@ -2,13 +2,30 @@
 // noise channel (SOUND1CNT .. SOUND4CNT) and the two direct-sound FIFO channels A and B
 // (SOUNDCNT_H, FIFO_A at 0x040000A0 and FIFO_B at 0x040000A4).
 //
-// Implemented from GBATEK "GBA Sound" and the DMG audio chapter of the Pan Docs (the four
-// legacy channels are the Game Boy's APU with the GBA's frequency range and without the
-// envelope/ sweep differences noted in GBATEK 9.1).
+// Implemented from GBATEK "GBA Sound" (the register map, the channel formulas, the DMA sound
+// protocol and the "Max Output Levels" of the mixer) and, for the legacy channels, from the AGB
+// Programming Manual ("Sound", chapter 10: the four channels' registers, the (64-n)/256 s lengths,
+// the n/64 s envelope, the n/128 s sweep, the 4194304 / (4 * 8 * (2048 - fdat)) Hz tone and the
+// waveform RAM's two banks). The manual states that NR10-NR14 "conform with those of CGB", so the
+// legacy channels are the Game Boy's APU with the GBA's clock.
 //
 // The APU runs at the host's sample rate (32768 Hz by default, the rate the GBA mixes at). The
 // FIFO channels are fed by DMA in "special" timing: the APU raises a request when a FIFO holds
 // fewer than 16 bytes, and the DMA refills it with four words.
+//
+// Deliberately not modelled:
+//
+//  * **SOUNDBIAS and the PWM output stage** (GBATEK "4000088h"): the bias level only shifts the
+//    unsigned representation of the samples, and the amplitude resolution (9/8/7/6 bit at
+//    32.768/65.536/131.072/262.144 kHz) is a property of the final PWM output, not of the mixer.
+//    The register is stored and readable, nothing else.
+//  * **The wave RAM shift register** (GBATEK "WAVE_RAM"): on hardware the whole RAM is shifted as
+//    it plays, so a read can return a digit that has moved. Here the RAM is plain memory (the CPU
+//    still sees the bank that is not being played, which is the documented access rule).
+//  * **The duty waveform phase**: GBATEK draws each duty cycle as a high run that starts at the
+//    first of the eight steps (12.5 % = "-_______"), while the Pan Docs print the same cycles as
+//    bit strings ("00000001"). The two agree on the duty ratios and differ only in the phase,
+//    which the documents call hardly noticeable; the table below follows GBATEK.
 
 #pragma once
 
@@ -60,7 +77,10 @@ namespace GBA
 		uint16_t sound4cntL = 0, sound4cntH = 0;
 		uint16_t soundcntL = 0, soundcntH = 0, soundcntX = 0;
 		uint16_t soundbias = 0x200;
-		uint8_t waveRam[16]{};
+
+		// The wave pattern RAM: two banks of 16 bytes (32 digits each), while the CPU sees the
+		// bank that is not being played (see Read8/Write8).
+		uint8_t waveRam[2][16]{};
 
 		// -- state -------------------------------------------------------------------------
 
@@ -109,7 +129,6 @@ namespace GBA
 		int wavePosition = 0;		// digit 0..31 (32 samples) or 0..63 (64 samples)
 		int waveLength = 0;			// 256 Hz steps left before the channel stops
 		bool waveLengthEnabled = false;
-		uint32_t waveTimerOverflow = 0;	// the timer's overflow total when the digit was last clocked
 
 		// Channel 4 (noise)
 		bool noiseEnabled = false;
@@ -150,10 +169,10 @@ namespace GBA
 		// -- helpers -----------------------------------------------------------------------
 
 		int OutputSample(GbaBus& bus);
-		int MixLegacy(GbaBus& bus);
+		void MixLegacy(GbaBus& bus, int levels[4]);
 		int MixFifo(GbaBus& bus);
 		int MixSquare(SquareChannel& ch);
-		int MixWave(GbaBus& bus);
+		int MixWave();
 		int MixNoise(GbaBus& bus);
 
 		void TriggerSquare(int index);

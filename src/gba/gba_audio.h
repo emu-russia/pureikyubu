@@ -18,10 +18,19 @@
 //
 // What this buffer does instead:
 //
-//  * it is kept at a *cushion* of audio (see TargetFrames): the machine is asked to wait once the
-//    buffer is a video frame past it (WantsFrame), and audio that does not fit is dropped instead
-//    of letting the delay of the sound grow. A block longer than the cushion - a frontend that was
-//    stalled and then pushes everything the core accumulated - is trimmed to its newest frames;
+//  * it is kept at a *cushion* of audio (see TargetFrames) and the machine is run from that
+//    cushion: a frame is mixed while the buffer is behind it (WantsFrame), which locks the
+//    machine's rate to the device's own - the sound device *is* the clock. A display refresh that
+//    is not the GBA's 59.7275 Hz can therefore not make the machine mix more sound than the
+//    device plays, which is what used to leave the excess to be thrown away sample by sample (a
+//    rattle at the display's rate);
+//  * a buffer that is short of the cushion is refilled with extra frames in the same iteration
+//    (Starving), because one frame only makes up for one frame's worth of audio: without that a
+//    stall of the host - the device plays on while nothing is mixed - leaves the device clicking
+//    for seconds while the buffer creeps back;
+//  * the delay stays bounded: audio that still does not fit (a frontend that pushed a whole queue
+//    at once, a machine that was stalled for a long time) is dropped, and a block longer than the
+//    cushion is trimmed to its newest frames;
 //  * Play always fills the whole period the device hands to the callback: the samples that are
 //    there, then silence. A late frame is therefore a short gap in the right place and not a
 //    repeat of stale samples, and the callback never leaves the device's buffer untouched.
@@ -72,11 +81,13 @@ namespace GBA
 			if (target > capacity / 2)
 				target = capacity / 2;
 
-			// One video frame above the cushion is where the machine is asked to wait. That
-			// hysteresis is what keeps the rule from being asked again for every single frame,
-			// while a machine that is ahead of the device only loses the few samples per frame
-			// that the two clocks disagree by.
-			limit = target + this->rate / 60;
+			// Two video frames above the cushion is where the buffer starts throwing audio away. It
+			// is a safety net, not the normal way of keeping the delay down: the frontend's cushion
+			// rule (WantsFrame) leaves the buffer at the cushion, and one more frame on top of it
+			// (the frame that is being mixed when the device plays) still fits - so nothing at all
+			// is dropped while the machine and the device are in step, and only a burst (a stalled
+			// frontend that pushes everything the core accumulated at once) reaches this mark.
+			limit = target + this->rate / 30;
 			if (limit >= capacity)
 				limit = capacity - 1;
 			if (limit <= target)
@@ -161,8 +172,22 @@ namespace GBA
 			write.store(w + (uint64_t)count, std::memory_order_release);
 		}
 
-		/// <summary>True while the buffer has room for another frame of the machine.</summary>
-		bool WantsFrame() const { return (capacity == 0) || (Queued() < limit); }
+		/// <summary>
+		/// True while the machine should mix another frame: the buffer is behind its cushion. This
+		/// is what makes the sound device the clock of the machine - it runs at the rate the device
+		/// plays, not at the rate of the display - so the two clocks can never disagree by more
+		/// than the cushion absorbs.
+		/// </summary>
+		bool WantsFrame() const { return (capacity == 0) || (Queued() < target); }
+
+		/// <summary>
+		/// True while the buffer is so short that the device is about to run dry: the frontend runs
+		/// extra frames in the same iteration to refill the cushion. A machine in step with the
+		/// device only produces one frame's worth of audio per frame, so without this a hitch (the
+		/// host stalled, a frame took far too long) would be heard as clicks for seconds while the
+		/// buffer creeps back a couple of samples at a time.
+		/// </summary>
+		bool Starving() const { return (capacity != 0) && (Queued() < target / 2); }
 
 		/// <summary>How many frames are waiting for the audio callback.</summary>
 		int Queued() const
@@ -189,10 +214,9 @@ namespace GBA
 		uint32_t Underruns() const { return underruns.load(std::memory_order_relaxed); }
 
 		/// <summary>
-		/// How many pushes had to throw audio away because the machine was ahead of the device.
-		/// A display refresh that is not the GBA's 59.7275 Hz makes this happen for every frame,
-		/// and what is thrown away is then the few samples the two clocks disagree by; a stalled
-		/// frontend makes it happen once, with everything that does not fit the cushion.
+		/// How many pushes had to throw audio away. In step with the device nothing is thrown away
+		/// (the machine is run from the cushion, see WantsFrame); this counts the resyncs a stalled
+		/// frontend or a long burst causes.
 		/// </summary>
 		uint32_t Drops() const { return drops.load(std::memory_order_relaxed); }
 
