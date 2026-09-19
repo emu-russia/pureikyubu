@@ -869,9 +869,10 @@ namespace GBA
 		gbSettings.useBootRom = settings.useCustomBootRom;
 		gbSettings.logLevel = settings.logLevel;
 
-		// The console kind follows the cartridge's CGB flag: a CGB-only or CGB-compatible
-		// cartridge runs on a CGB, a plain DMG cartridge on a DMG - unless the user asked for one
-		// of them explicitly.
+		// The console kind: a CGB by default, with a DMG-only cartridge running on it in
+		// compatibility mode (Pan Docs KEY0; the machine greys the picture because the emulator
+		// does not implement the CGB's compatibility palette tables). `--gb-dmg` asks for the
+		// monochrome console instead.
 		if (!forceDmg)
 		{
 			gbSettings.cgb = true;

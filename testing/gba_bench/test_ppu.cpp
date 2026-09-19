@@ -989,7 +989,43 @@ GBA_TEST(Ppu, SemiTransparentSpriteAlphaBlendsWithTheBg)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(18), 0x001F);
 }
 
-GBA_TEST(Ppu, AlphaBlendingOfTwoBgs)
+GBA_TEST(Ppu, SemiTransparentSpriteOverTheBackdropBlendsWithTheBackdropColour)
+	{
+		// The boot animation flies its semi-transparent letter sprites over nothing but the
+		// backdrop, so what they blend with is BG palette colour 0. With EVA = 16 and EVB = 0 the
+		// sprite must keep its own colour exactly: any whitening there makes the letters vanish
+		// into the white background while they animate.
+		GbaBus bus;
+		SetupDisplay(bus);
+
+		FillVram(bus, OBJ_TILES, 32, 0x55);
+		WritePal16(bus, 0x200 + 5 * 2, 0x7C00);			// the sprite's colour: blue
+		WritePal16(bus, 0, 0x7FFF);						// the backdrop: white
+
+		WriteOam16(bus, 0x00, 20 | (1 << 10));			// OBJ mode 1: semi-transparent
+		WriteOam16(bus, 0x02, 10);
+		WriteOam16(bus, 0x04, 0);
+
+		WriteReg(bus, BLDCNT, (1 << 6) | (1 << 4) | (1 << 13));	// OBJ 1st, backdrop 2nd
+		WriteReg(bus, BLDALPHA, 16 | (0 << 8));
+
+		WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ);
+		bus.ppu.RenderLine(bus, 20);
+
+		GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x7C00);	// EVA = 16, EVB = 0: the sprite itself
+
+		// Half and half: the letters pass through a pale phase while the BIOS ramps EVA/EVB, and
+		// that phase has to be a mix of the sprite and the backdrop colour.
+		WriteReg(bus, BLDALPHA, 8 | (8 << 8));
+		bus.ppu.RenderLine(bus, 20);
+		GBA_CHECK_HEX16(bus.ppu.LinePixel(10), Blend15(0x7C00, 0x7FFF, 8, 8));
+
+		// Outside the sprite only the backdrop is left, and a backdrop that is not a 1st target
+		// keeps its own colour.
+		GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x7FFF);
+	}
+
+	GBA_TEST(Ppu, AlphaBlendingOfTwoBgs)
 {
 	GbaBus bus;
 	SetupDisplay(bus);
@@ -1220,6 +1256,56 @@ GBA_TEST(Ppu, ObjWindowOfALargeSprite)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(40), 0x03E0);
 	bus.ppu.RenderLine(bus, 84);
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(40), 0x0000);
+}
+
+GBA_TEST(Ppu, ObjWindowSpritesAreNotHiddenByTheObjsInFrontOfThem)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// A solid BG0 (as in ObjWindowMasksTheLayers): it is what the OBJ window reveals.
+	WriteReg(bus, BG0CNT, BG_CNT(0, 0x0000, 8));
+	WritePal16(bus, 0x0002, 0x03E0);		// BG palette 0 entry 1 = green
+	FillVram(bus, 0x0000, 32, 0x11);
+
+	// Every OBJ tile is solid colour index 1, so the two sprites below are opaque over their whole
+	// 8x8 area.
+	FillVram(bus, OBJ_TILES, 32, 0x11);
+
+	// OBJ0 is displayed (mode 0) and OBJ1 is a window sprite (mode 2) over the same dots. The
+	// window is the union of the non-transparent dots of *every* window sprite, whatever its OAM
+	// position and whatever is drawn in front of it (GBATEK "The OBJ Window"), so the window has
+	// to exist where OBJ0 is displayed: the real BIOS's boot animation puts its window sprites
+	// after the sprites it displays, and a scan that stopped at the first displayed sprite left
+	// the window empty (the whole animation came out as the backdrop).
+	WriteOam16(bus, 0x00, 20);					// OBJ0: Y = 20, OBJ mode 0
+	WriteOam16(bus, 0x02, 10);					// X = 10
+	WriteOam16(bus, 0x04, 0);
+	WriteOam16(bus, 0x08, 20 | (2 << 10));		// OBJ1: Y = 20, OBJ mode 2 (OBJ window)
+	WriteOam16(bus, 0x0A, 10);
+	WriteOam16(bus, 0x0C, 0);
+
+	WriteReg(bus, WINOUT, 0x2100);
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0 | DC_OBJ | DC_OBJ_WIN);
+
+	bus.ppu.RenderLine(bus, 20);
+
+	// WINOUT keeps the OBJ layer out of the OBJ window region, so the dots OBJ1 marks show BG0
+	// even though OBJ0 is displayed on them.
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(17), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(18), 0x0000);
+
+	// The OAM order of the two sprites does not matter: with the window sprite first the same
+	// dots are inside the window.
+	WriteOam16(bus, 0x00, 20 | (2 << 10));
+	WriteOam16(bus, 0x08, 20);
+	bus.ppu.RenderLine(bus, 20);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(9), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(10), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(17), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(18), 0x0000);
 }
 
 GBA_TEST(Ppu, ForcedBlankIsWhite)

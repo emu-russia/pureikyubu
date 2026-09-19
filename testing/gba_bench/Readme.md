@@ -126,6 +126,12 @@ colour palette path), the LCD controller (28), the sound (36, eleven of them the
 between the machine and the sound device), the settings (19), the cartridge (14), the disassemblers
 (13), the boot ROM and the emitter (12), the DMA (8), the SIO (7), the timers/keypad/interrupts
 (10), the demo machine (5) and the BIOS harness (2).
+| `GbBus, cgb_power_up_svbk_maps_bank_one_not_bank_zero`, `GbBus, cgb_svbk_selects_banks_two_to_seven_and_zero_means_one` (found by running Metroid II, not by a unit test) | The WRAM bank register (SVBK, 0xFF70) mapped a written 0 to bank **0** instead of bank 1, so a CGB whose SVBK was still at its power-up value 0xF8 aliased `0xC000-0xCFFF` and `0xD000-0xDFFF` onto one 4 KByte page. A DMG-only cartridge that runs in compatibility mode and keeps its variables or stack in the upper bank then had its own low-RAM scratch overwrite them: Metroid II stored a return address at 0xDFFB, read back 0x0000 and restarted from the reset vector for ever (the screen never left the boot marker). Pan Docs "CGB Registers" FF70: "except 0, which maps bank 1 instead". |
+
+Everything else passes: the ARM7TDMI (60 tests), the Game Boy machine (67 - its CPU, LCD, cartridge,
+boot ROM and the CGB WRAM/palette bus paths), the LCD controller (28), the sound (22), the settings
+(19), the cartridge (14), the disassemblers (13), the boot ROM and the emitter (12), the DMA (8), the
+SIO (7), the timers/keypad/interrupts (9), the demo machine (5) and the BIOS harness (2).
 
 ## Open findings
 

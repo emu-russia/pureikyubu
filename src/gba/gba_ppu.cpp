@@ -1113,9 +1113,17 @@ namespace GBA
 			sprites[spriteCount++] = sprite;
 		}
 
-		// Second pass, per dot: the first sprite in OAM order that covers the dot is the top-most
-		// OBJ ("OBJ0 is always having priority above OBJ1-127", GBATEK "Priority"), so the scan
-		// stops at the first hit. An OBJ-window sprite is only tested for the window mask.
+		// Second pass, per dot. The two OBJ features are resolved separately, because they do not
+		// share a scan:
+		//
+		//   * the OBJ window is the union of the non-transparent dots of *every* OBJ-window
+		//     (OBJ mode 2) sprite, whatever its OAM position (GBATEK "The OBJ Window"): a window
+		//     sprite that sits behind a sprite that is displayed still marks the window. The real
+		//     BIOS's boot animation relies on exactly that - it puts its window sprites after the
+		//     sprites it displays - so the region is found first and on its own;
+		//   * the displayed OBJ is the first non-window sprite in OAM order that covers the dot
+		//     ("OBJ0 is always having priority above OBJ1-127", GBATEK "Priority"), so that scan
+		//     stops at the first hit and skips the window sprites entirely.
 		for (int x = 0; x < ScreenWidth; x++)
 		{
 			pixels[x].color = 0;
@@ -1127,12 +1135,41 @@ namespace GBA
 			// written per line here, so a dot that an OBJ covered on the previous line is not
 			// still part of the window.
 			windowMask[x] = MASK_OUTSIDE;
+		}
 
-			bool inObjWindow = false;
-
+		if (objWindowEnabled)
+		{
 			for (int i = 0; i < spriteCount; i++)
 			{
 				const Sprite& sprite = sprites[i];
+
+				if (!sprite.objWindow)
+					continue;
+
+				const int first = (sprite.left < 0) ? 0 : sprite.left;
+				const int last = (sprite.left + sprite.width > ScreenWidth) ? ScreenWidth : sprite.left + sprite.width;
+
+				for (int x = first; x < last; x++)
+				{
+					// A mosaic OBJ samples the origin dot of its mosaic block.
+					int sampleX = x;
+					if (sprite.mosaic)
+						sampleX = (x / mosaicH) * mosaicH;
+
+					if (SpritePixel(*this, sprite, sampleX, mosaicOriginY) != NO_PIXEL)
+						windowMask[x] = MASK_OBJWIN;
+				}
+			}
+		}
+
+		for (int x = 0; x < ScreenWidth; x++)
+		{
+			for (int i = 0; i < spriteCount; i++)
+			{
+				const Sprite& sprite = sprites[i];
+
+				if (sprite.objWindow)
+					continue;
 
 				if (x < sprite.left || x >= sprite.left + sprite.width)
 					continue;
@@ -1147,26 +1184,12 @@ namespace GBA
 				if (color == NO_PIXEL)
 					continue;
 
-				if (sprite.objWindow)
-				{
-					// The OBJ window: the sprite is not drawn, its non-transparent dots mark the
-					// window region (GBATEK "The OBJ Window"). The region only exists when
-					// DISPCNT bit 15 is set.
-					if (objWindowEnabled)
-						inObjWindow = true;
-
-					continue;
-				}
-
 				pixels[x].color = color;
 				pixels[x].layer = LAYER_OBJ;
 				pixels[x].priority = (uint8_t)sprite.objPriority;
 				pixels[x].semiTransparent = sprite.semiTransparent;
 				break;
 			}
-
-			if (inObjWindow)
-				windowMask[x] = MASK_OBJWIN;
 		}
 	}
 

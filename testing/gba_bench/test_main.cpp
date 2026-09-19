@@ -590,6 +590,11 @@ namespace
 
 		for (int frame = 0; frame < options.frames; frame++)
 		{
+			// The Game Boy's joypad bits (gb_bus.h) are not the GBA's KEY_* bits, so --keys takes
+			// the GbButton mask here; the value is held for the whole run, exactly as the GBA
+			// harness holds its own mask.
+			system.SetPressedKeys((uint8_t)options.keys);
+
 			system.RunFrame();
 
 			uint32_t hash = FrameHash(system.FrameBuffer(), GbScreenWidth * GbScreenHeight);
@@ -712,7 +717,8 @@ namespace
 			"  --frames N        how many frames to run (default 60)\n"
 			"  --png <dir>       dump frames as PNG into <dir>\n"
 			"  --png-every N     dump every N-th frame (default: only with --png, every 10th)\n"
-			"  --keys <mask>     hold the keys named by the bits (see gba_keypad.h)\n"
+			"  --keys <mask>     hold the keys named by the bits (see gba_keypad.h; with --gb the\n"
+			"                    mask is the GbButton one of gb_bus.h - 0x10 = A, 0x80 = Start)\n"
 			"  --bios <file>     use a real BIOS image instead of the built-in one\n"
 			"  --wav <file>      record what the sound hardware produces into a WAV file\n"
 			"  --trace N         step the last frame instruction by instruction and print the last N\n"

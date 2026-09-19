@@ -2704,4 +2704,252 @@ namespace
 		t.EnterThumb(CodeBase);
 		GBA_CHECK_EQ(t.Step(), 1);
 	}
+
+	GBA_TEST(Cpu, LoadStoreHalfwordRegisterOffset)
+	{
+		// The BIOS's BitUnPack reads its item count with "ldrh r7,[r2,r0]" and the LZ77 routine
+		// next to it stores with "strheq r3,[r1],r2", so the register offset form of the extra
+		// load/store instructions (pre- and post-indexed) is what the boot graphics depend on.
+		Bench b;
+		b.Poke16(DataBase + 0x10, 0x1234);
+		b.Poke16(DataBase + 0x20, 0x8001);
+
+		// LDRH r5,[r1,r2] with r2 = 0x10.
+		b.Arm(CodeBase, { Enc::HalfTransfer(Enc::AL, true, true, false, 5, 1, 2, false) });
+		b.SetR(1, DataBase);
+		b.SetR(2, 0x10);
+		b.EnterArm(CodeBase);
+		b.Step();
+		GBA_CHECK_EQ(b.R(5), 0x1234u);
+		GBA_CHECK_EQ(b.R(1), DataBase);			// the offset form does not write the base back
+
+		// The same instruction with r2 = 0x20 must read the *other* halfword: a decoder that
+		// dropped Rm (or ignored the I bit) would read at DataBase and fail here.
+		b.SetR(1, DataBase);
+		b.SetR(2, 0x20);
+		b.EnterArm(CodeBase);
+		b.Step();
+		GBA_CHECK_EQ(b.R(5), 0x8001u);
+
+		// LDRSH r6,[r1,r2] sign extends the halfword.
+		b.Arm(CodeBase, { Enc::HalfTransfer(Enc::AL, true, true, true, 6, 1, 2, false) });
+		b.SetR(1, DataBase);
+		b.SetR(2, 0x20);
+		b.EnterArm(CodeBase);
+		b.Step();
+		GBA_CHECK_EQ(b.R(6), 0xFFFF8001u);
+
+		// STRH r3,[r1],r2: a post-indexed register offset, which writes the base back.
+		b.Arm(CodeBase, { Enc::HalfTransfer(Enc::AL, false, true, false, 3, 1, 2, false, false) });
+		b.SetR(1, DataBase + 0x40);
+		b.SetR(2, 4);
+		b.SetR(3, 0xBEEF);
+		b.EnterArm(CodeBase);
+		b.Step();
+		GBA_CHECK_EQ(b.Peek16(DataBase + 0x40), 0xBEEFu);
+		GBA_CHECK_EQ(b.R(1), DataBase + 0x44u);
+	}
+
+	GBA_TEST(Cpu, ThumbLoadMultipleWithR7DoesNotSkipTheNextInstruction)
+	{
+		// A Thumb register list is eight bits wide (r0-r7), so "r7 in the list" is *not* a load of
+		// the PC: LDMIA r0!,{r5,r7} advances the PC by two bytes and the instruction after it runs.
+		// This is the BIOS's own idiom for loading the BitUnPack parameter block (LDMIA r1!,{r5,r7});
+		// treating bit 7 as "r15 in the list" skipped the ADD that put the block on the stack.
+		Bench b;
+		b.Poke(DataBase, 0x55555555);
+		b.Poke(DataBase + 4, 0x77777777);
+		b.Thumb(CodeBase, {
+			Enc::ThumbMultiple(true, 0, 0xA0),		// LDMIA r0!, {r5, r7}
+			Enc::ThumbMovCmpAddSub(2, 6, 0x11),		// ADD r6, #0x11
+		});
+		b.EnterThumb(CodeBase);
+		b.SetR(0, DataBase);
+		b.SetR(6, 0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(5), 0x55555555u);
+		GBA_CHECK_EQ(b.R(7), 0x77777777u);
+		GBA_CHECK_EQ(b.R(0), DataBase + 8);
+		GBA_CHECK_EQ(b.Cpu().CurrentPC(), CodeBase + 2);
+		b.Step();
+		GBA_CHECK_EQ(b.R(6), 0x11u);
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// Thumb coverage: one test per encoding format of ARM DDI 0100E 4.5 (Table 4-1), including
+	// the corner cases the format table does not spell out.
+	// ---------------------------------------------------------------------------------------
+
+	GBA_TEST(Cpu, ThumbFormat1MoveShiftedRegister)
+	{
+		// LSL/LSR/ASR Rd, Rs, #imm5. N and Z come from the result, C from the last bit shifted
+		// out; LSL #0 shifts nothing and leaves C alone, and LSR #0 / ASR #0 mean a shift of 32.
+		Bench b;
+		b.Thumb(CodeBase, {
+			Enc::ThumbShift(0, 0, 1, 0),		// LSL r0, r1, #0
+			Enc::ThumbShift(0, 1, 1, 2),		// LSL r2, r1, #1
+			Enc::ThumbShift(0, 31, 3, 4),		// LSL r4, r3, #31
+			Enc::ThumbShift(1, 0, 1, 5),		// LSR r5, r1, #0   (= 32)
+			Enc::ThumbShift(1, 1, 3, 6),		// LSR r6, r3, #1
+			Enc::ThumbShift(2, 0, 3, 7),		// ASR r7, r3, #0   (= 32)
+			Enc::ThumbShift(2, 1, 3, 0),		// ASR r0, r3, #1
+		});
+		b.EnterThumb(CodeBase);
+
+		b.SetR(1, 0x80000001);
+		b.SetNzcv(CBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(0), 0x80000001u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit | CBit);
+
+		b.SetR(1, 0x80000001);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(2), 0x00000002u);
+		GBA_CHECK_EQ(b.Nzcv(), CBit);
+
+		b.SetR(3, 1);
+		b.SetNzcv(CBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(4), 0x80000000u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit);
+
+		b.SetR(1, 0x80000000);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(5), 0u);
+		GBA_CHECK_EQ(b.Nzcv(), ZBit | CBit);
+
+		b.SetR(3, 0x80000001);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(6), 0x40000000u);
+		GBA_CHECK_EQ(b.Nzcv(), CBit);
+
+		b.SetR(3, 0x80000000);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(7), 0xFFFFFFFFu);
+		GBA_CHECK_EQ(b.Nzcv(), NBit | CBit);
+
+		b.SetR(3, 0x80000000);
+		b.SetNzcv(CBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(0), 0xC0000000u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit);
+	}
+
+	GBA_TEST(Cpu, ThumbRegisterShiftByZeroLeavesTheCarryAlone)
+	{
+		// Format 4's shift ops take the amount from a register, so an amount of 0 shifts nothing
+		// and leaves C as it was (unlike the immediate forms, where a field of 0 means 32).
+		Bench b;
+		b.Thumb(CodeBase, {
+			Enc::ThumbAlu(2, 2, 0),			// LSL r0, r2
+			Enc::ThumbAlu(3, 2, 1),			// LSR r1, r2
+			Enc::ThumbAlu(4, 2, 3),			// ASR r3, r2
+		});
+		b.EnterThumb(CodeBase);
+		b.SetR(0, 0x12345678);
+		b.SetR(1, 0x80000000);
+		b.SetR(3, 0x80000000);
+		b.SetR(2, 0);
+		b.SetNzcv(NBit | CBit);			// N = 1, C = 1 before the shifts
+		b.Step();
+		GBA_CHECK_EQ(b.R(0), 0x12345678u);
+		GBA_CHECK_EQ(b.Nzcv(), CBit);	// N and Z come from the value, C survives the shift by 0
+		b.Step();
+		GBA_CHECK_EQ(b.R(1), 0x80000000u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit | CBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(3), 0x80000000u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit | CBit);
+	}
+
+	GBA_TEST(Cpu, ThumbRegisterShiftByLargeAmounts)
+	{
+		Bench b;
+		b.Thumb(CodeBase, {
+			Enc::ThumbAlu(3, 2, 1),			// LSR r1, r2
+			Enc::ThumbAlu(4, 2, 3),			// ASR r3, r2
+		});
+		b.EnterThumb(CodeBase);
+		b.SetR(1, 0x80000000);
+		b.SetR(3, 0x80000000);
+		b.SetR(2, 32);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(1), 0u);
+		GBA_CHECK_EQ(b.Nzcv(), ZBit | CBit);
+		b.SetR(2, 1);
+		b.SetNzcv(CBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(3), 0xC0000000u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit);
+	}
+
+	GBA_TEST(Cpu, ThumbFormat2And3AddSubtract)
+	{
+		// Format 2 (ADD/SUB Rd, Rs, Rn or #imm3) and format 3 (MOV/CMP/ADD/SUB Rd, #imm8).
+		Bench b;
+		b.Thumb(CodeBase, {
+			Enc::ThumbAddSub(false, false, 2, 1, 0),	// ADD r0, r1, r2
+			Enc::ThumbAddSub(false, true, 2, 1, 3),		// SUB r3, r1, r2
+			Enc::ThumbAddSub(true, false, 3, 1, 4),		// ADD r4, r1, #3
+			Enc::ThumbAddSub(true, true, 1, 1, 5),		// SUB r5, r1, #1
+			Enc::ThumbMovCmpAddSub(0, 6, 0),			// MOV r6, #0
+			Enc::ThumbMovCmpAddSub(1, 7, 0x10),			// CMP r7, #0x10
+			Enc::ThumbMovCmpAddSub(2, 0, 0xFF),			// ADD r0, #0xFF
+			Enc::ThumbMovCmpAddSub(3, 1, 1),			// SUB r1, #1
+		});
+		b.EnterThumb(CodeBase);
+
+		b.SetR(1, 0x7FFFFFFF);
+		b.SetR(2, 1);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(0), 0x80000000u);
+		GBA_CHECK_EQ(b.Nzcv(), NBit | VBit);
+
+		b.SetR(1, 0);
+		b.SetR(2, 1);
+		b.SetNzcv(CBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(3), 0xFFFFFFFFu);
+		GBA_CHECK_EQ(b.Nzcv(), NBit);
+
+		b.SetR(1, 0xFFFFFFFF);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(4), 0x00000002u);
+		GBA_CHECK_EQ(b.Nzcv(), CBit);
+
+		b.SetR(1, 0);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(5), 0xFFFFFFFFu);
+		GBA_CHECK_EQ(b.Nzcv(), NBit);
+
+		b.SetNzcv(CBit | VBit);
+		b.Step();
+		GBA_CHECK_EQ(b.R(6), 0u);
+		GBA_CHECK_EQ(b.Nzcv(), ZBit | CBit | VBit);
+
+		b.SetR(7, 0x10);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(7), 0x10u);
+		GBA_CHECK_EQ(b.Nzcv(), ZBit | CBit);
+
+		b.SetR(0, 1);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(0), 0x100u);
+
+		b.SetR(1, 0);
+		b.SetNzcv(0);
+		b.Step();
+		GBA_CHECK_EQ(b.R(1), 0xFFFFFFFFu);
+		GBA_CHECK_EQ(b.Nzcv(), NBit);
+	}
 }
