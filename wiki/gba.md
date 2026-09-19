@@ -205,13 +205,17 @@ Also not implemented:
 
 * **The JOY bus** (a GameCube controller on the link port) and the Game Boy Player's own boot
   protocol. The emulator-to-emulator link cable *is* implemented and tested on both machines.
-* **The BIOS sound driver** (`SWI 0x28`-`0x2F`) and the Huffman decompressor: reported and
-  returned from, not implemented. Games whose music engine *is* the BIOS's (a large part of the
-  GBA's library) therefore play nothing but sound effects, and a game whose graphics are
-  Huffman-compressed in the ROM does not boot at all - Metroid Fusion is one of those, and it
-  runs with a real BIOS image (`build/Data/gba_bios.bin`, or `--bios <file>` in the harness),
-  which executes the real routines instead. The harness prints the core's warnings, so a run that
-  falls back to these stubs says so.
+* **The BIOS sound driver** (`SWI 0x1A`-`0x1F` and `0x28`/`0x29`) and the Huffman decompressor: the
+  entry points and everything a probe could measure out of the real BIOS are implemented in the host
+  (`gba_hlebios.cpp`): the work area's identifier and layout, the mixed buffer and the two FIFO DMA
+  channels, the mode's registers and the playback frequency table, `MidiKey2Freq` in the BIOS's own
+  fixed point, and `HuffUnComp` byte for byte. What is still missing is the driver's **mixer**
+  (the virtual channels into `pcmbuf`), so a game whose music engine *is* the BIOS's gets silence
+  without a real BIOS image rather than music - and a game whose graphics are Huffman-compressed
+  does not boot without one either (Metroid Fusion is such a game). With a real BIOS
+  (`build/Data/gba_bios.bin`, or `--bios <file>` in the harness) the real routines run instead of
+  the HLE ones and both work. The harness prints the core's warnings, so a run that falls back to
+  an unimplemented call says so.
 * **Save states and rewind**; the battery-backed save memory (SRAM/Flash/EEPROM on the GBA,
   the mapper RAM on the Game Boy) *is* implemented and written to a `.sav` next to the ROM.
 * **Cycle-exact LCD timing**: a scanline is composed when its HBlank starts rather than dot by
