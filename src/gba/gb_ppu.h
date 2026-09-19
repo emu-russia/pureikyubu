@@ -19,9 +19,21 @@
 //    289. The fine grained per-object accounting of "Rendering.html" is not modelled, so a
 //    program that counts dots inside mode 3 sees a slightly different number.
 //  * **The monochrome-only quirks** that Pan Docs describes (the WX = 166 line-down bug, the
+//    WX = 0 "stutter" where the window is switched in before the fine scroll adjustment, the
 //    colour-0 pixel inserted when the window is disabled exactly on a tile boundary, the
 //    DMG spurious STAT interrupt on a STAT write, the dropped leftmost sprite pixel) are *not*
-//    modelled; each one is called out in the code where it would apply.
+//    modelled; each one is called out in the code where it would apply. The spurious STAT
+//    interrupt is the one quirk that Pan Docs says the CGB in DMG mode does *not* have, so its
+//    absence is exact on a CGB.
+//
+// The console kind and the cartridge's own mode are two different things, and this class carries
+// both: `cgb` is the hardware (the colour palettes, the VRAM banks, the extra registers) and
+// `dmgCompat` is a CGB running a monochrome cartridge in DMG compatibility mode. The manual's
+// rules for that mode - LCDC bit 0 blanks the background and the window, the window bit 5 is
+// overridden by it, the OBJ priority is the X coordinate rather than the OAM position, and the
+// OBJ palette and bank bits are the DMG's - are applied when `dmgCompat` is set, while the
+// picture still comes from the CGB palette memory (Pan Docs "Power Up Sequence": "the CGB
+// palettes are still being used ... BGP, OBP0, and OBP1 actually index into the CGB palettes").
 
 #pragma once
 
@@ -68,12 +80,32 @@ namespace GBA
 		void SetCgb(bool value) { cgb = value; }
 		bool Cgb() const { return cgb; }
 
+		/// <summary>
+		/// A CGB running a monochrome cartridge in DMG compatibility mode (the cartridge's CGB
+		/// flag is clear, so the real boot ROM switches the machine to the DMG rules). It only
+		/// means anything when `cgb` is set; a plain DMG is in the mode by definition.
+		/// </summary>
+		void SetDmgCompat(bool value) { dmgCompat = value; }
+		bool DmgCompat() const { return dmgCompat; }
+
+		/// <summary>Use the DMG's OBJ selection priority (the X coordinate) rather than the CGB's
+		/// OAM order. This is what OPRI (0xFF6C) selects on a CGB; Pan Docs "CGB Registers".</summary>
+		void SetDmgObjectPriority(bool value) { dmgObjectPriority = value; }
+		bool DmgObjectPriority() const { return dmgObjectPriority; }
+
 		void Reset();
 
 		// -- the CPU's view of the register file ---------------------------------------------
 
 		uint8_t ReadRegister(uint16_t address) const;
-		void WriteRegister(uint16_t address, uint8_t value);
+
+		/// <summary>
+		/// Write a register. Returns the interrupt bits the write requested: 0x02 when the STAT
+		/// line rose (a STAT or LYC write can raise it, Pan Docs "STAT": LYC is compared
+		/// "constantly" and the shared line is edge triggered), and no bits otherwise. The caller
+		/// ORs them into IF, exactly as it does with Tick's.
+		/// </summary>
+		uint8_t WriteRegister(uint16_t address, uint8_t value);
 
 		/// <summary>True when the PPU owns VRAM or OAM right now (Pan Docs "Accessing VRAM and
 		/// OAM"): VRAM is blocked in mode 3, OAM in modes 2 and 3, CRAM in mode 3.</summary>
@@ -146,9 +178,10 @@ namespace GBA
 		/// documented 172..289 range and the penalties).</summary>
 		int LastMode3Length() const { return lastMode3Length; }
 
-		/// <summary>Recompute STAT's read-only bits and the interrupt line (a test can call it
-		/// after a register write to see the effect).</summary>
-		void RefreshStat();
+		/// <summary>Recompute STAT's read-only bits and the interrupt line, returning the STAT
+		/// request bit (0x02) when the line rose (a test can call it after a register write to see
+		/// the effect).</summary>
+		uint8_t RefreshStat();
 
 	private:
 		// -- registers (Pan Docs "LCDC" / "STAT" / "Scrolling") -------------------------------
@@ -206,12 +239,27 @@ namespace GBA
 		// -- configuration -------------------------------------------------------------------
 
 		bool cgb = false;
+		bool dmgCompat = false;			// a CGB running a monochrome cartridge
+		bool dmgObjectPriority = false;	// OPRI (0xFF6C): the DMG's X order, not the OAM order
 		GbPalette shadePalette = GbPalette::Green;
+
+		/// <summary>True when the DMG's display rules apply: a monochrome console, or a CGB in
+		/// DMG compatibility mode (the manual's "DMG or CGB in DMG mode").</summary>
+		bool DmgRules() const { return !cgb || dmgCompat; }
 
 		// -- the scanline --------------------------------------------------------------------
 
-		/// <summary>Start a visible line: the OAM scan (mode 2) and the window's Y condition.</summary>
-		void BeginVisibleLine();
+		/// <summary>
+		/// Start a visible line: the OAM scan (mode 2) and the window's Y condition. Returns the
+		/// interrupt bits the mode 2 entry requested (0x02 when the STAT line rose), which the
+		/// caller has to pass on - the mode 2 source and an LYC that matches the new LY are both
+		/// detected here, and dropping the return value loses every line start's STAT interrupt.
+		/// </summary>
+		uint8_t BeginVisibleLine();
+
+		/// <summary>The blank (white) picture a disabled LCD shows (Pan Docs "LCDC" bit 7: "the
+		/// screen is blank, which on DMG is displayed as a white 'whiter' than color #0").</summary>
+		void BlankFrame();
 
 		/// <summary>The dot count the current scanline started at (a multiple of 456).</summary>
 		uint64_t LineStart() const { return dots - (dots % GbDotsPerLine); }

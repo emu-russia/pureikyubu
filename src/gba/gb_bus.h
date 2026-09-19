@@ -5,7 +5,7 @@
 //
 // Written from the Pan Docs "Memory Map", "Timer and Divider Registers", "Timer Obscure
 // Behaviour", "Serial Data Transfer (Link Cable)", "Joypad Input", "CGB Registers" (KEY1, VBK,
-// HDMA1-5, RP, SVBK) and the Game Boy Programming Manual for the DMA behaviour.
+// HDMA1-5, RP, OPRI, SVBK) and the Game Boy Programming Manual for the DMA behaviour.
 //
 // The clock: this module counts the *system* clocks - the 4.194304 MHz the timer, the LCD and the
 // sound controller run on - and lets the CPU have one M-cycle for every four of them (two in CGB
@@ -301,6 +301,14 @@ namespace GBA
 		void TickHdma();
 		void StartOamDma(uint8_t value);
 		void CopyOamDmaByte();
+
+		/// <summary>
+		/// HDMA5 (0xFF55) as a read returns it: the lower seven bits are the blocks left minus one,
+		/// and bit 7 is 0 while an HBlank DMA is active and 1 once it has finished or been stopped
+		/// (Pan Docs "CGB Registers": "Reading Bit 7 of FF55 can be used to confirm if the DMA
+		/// transfer is active (1=Not Active, 0=Active)").
+		/// </summary>
+		uint8_t Hdma5Value() const;
 
 		/// <summary>Start a CGB HDMA/GDMA transfer from HDMA5 (Pan Docs "CGB Registers").</summary>
 		void StartHdma(uint8_t value);

@@ -90,6 +90,11 @@ namespace GBA
 		windowLine = 0;
 		lineSpriteCount = 0;
 
+		// The console kind survives a reset (SetCgb/SetDmgCompat decide it); the machine re-applies
+		// the cartridge's compatibility mode right after this call. OPRI is a register, so it
+		// comes back at its power-up value.
+		dmgObjectPriority = false;
+
 		frame.assign((size_t)GbScreenWidth * GbScreenHeight, BlankWhite);
 		for (int x = 0; x < GbScreenWidth; x++)
 			line[x] = BlankWhite;
@@ -152,6 +157,7 @@ namespace GBA
 			mode = 0;
 			modeEndDots = LineStart() + GbDotsPerLine;
 			statLine = false;
+			BlankFrame();
 		}
 		RefreshStat();
 	}
@@ -163,9 +169,9 @@ namespace GBA
 		case 0xFF40: return lcdc;
 		case 0xFF41:
 			// Bits 1-0 (the mode) read 0 while the PPU is disabled (Pan Docs "STAT"), bit 7 is
-			// unused and reads back as one on hardware.
-			if (!lcdEnabled)
-				return (uint8_t)((stat & 0xF8) | 0x80);
+			// unused and reads back as one on hardware. Bit 2 (LY = LYC) is *not* part of that:
+			// the comparison is "constantly" updated, so it stays live with the LCD off (LY then
+			// reads 0).
 			return (uint8_t)(stat | 0x80);
 		case 0xFF42: return scy;
 		case 0xFF43: return scx;
@@ -192,8 +198,13 @@ namespace GBA
 		}
 	}
 
-	void GbPpu::WriteRegister(uint16_t address, uint8_t value)
+	uint8_t GbPpu::WriteRegister(uint16_t address, uint8_t value)
 	{
+		// A write that changes LCDC, STAT or LYC can move the shared STAT line, and the interrupt
+		// is requested on its rising edge (Pan Docs "Interrupt Sources"). The request is
+		// accumulated here and handed back to the bus, which ORs it into IF.
+		uint8_t request = 0;
+
 		switch (address)
 		{
 		case 0xFF40:
@@ -218,6 +229,7 @@ namespace GBA
 				windowActive = false;
 				windowLine = 0;
 				statLine = false;
+				BlankFrame();
 			}
 			else if (!wasEnabled && lcdEnabled)
 			{
@@ -227,17 +239,19 @@ namespace GBA
 				ly = 0;
 				windowActive = false;
 				windowLine = 0;
-				BeginVisibleLine();
+				request |= BeginVisibleLine();
 			}
-			RefreshStat();
+			request |= RefreshStat();
 			break;
 		}
 
 		case 0xFF41:
-			// Only bits 3-6 are writable; bits 0-2 belong to the PPU (Pan Docs "STAT"). The
-			// monochrome "spurious interrupt on a STAT write" quirk is not modelled.
+			// Only bits 3-6 are writable; bits 0-2 belong to the PPU (Pan Docs "STAT"). Enabling
+			// a source whose condition is already true raises the shared line and so requests the
+			// interrupt (the monochrome "spurious interrupt" write quirk is a different thing and
+			// is not modelled).
 			stat = (uint8_t)((stat & 0x07) | (value & 0x78));
-			RefreshStat();
+			request |= RefreshStat();
 			break;
 
 		case 0xFF42: scy = value; break;
@@ -247,7 +261,7 @@ namespace GBA
 			// LYC is re-compared "constantly" (Pan Docs "STAT"), so a write can raise the STAT
 			// line immediately and request an interrupt.
 			lyc = value;
-			RefreshStat();
+			request |= RefreshStat();
 			break;
 		case 0xFF47: bgp = value; break;
 		case 0xFF48: obp0 = value; break;
@@ -293,6 +307,8 @@ namespace GBA
 		default:
 			break;
 		}
+
+		return request;
 	}
 
 	// ---------------------------------------------------------------------------------------
@@ -318,15 +334,14 @@ namespace GBA
 		return level;
 	}
 
-	void GbPpu::RefreshStat()
+	uint8_t GbPpu::RefreshStat()
 	{
-		// Bit 2 tracks LY = LYC, bits 1-0 the mode (both are read-only).
+		// Bits 1-0 are the mode and are read-only; so is bit 2 (LY = LYC). The mode reads 0 while
+		// the LCD is off (Pan Docs "STAT"), and bit 2 is then still live because LY reads 0.
 		stat = (uint8_t)(stat & 0x78);
-		if (ly == lyc)
-			stat |= 0x04;
 		if (lcdEnabled)
 			stat |= (uint8_t)(mode & 0x03);
-		statLine = StatLineLevel();
+		return UpdateStatLine();
 	}
 
 	uint8_t GbPpu::UpdateStatLine()
@@ -356,11 +371,24 @@ namespace GBA
 	// The scanline state machine
 	// ---------------------------------------------------------------------------------------
 
-	void GbPpu::BeginVisibleLine()
+	void GbPpu::BlankFrame()
+	{
+		// The LCD driver outputs blanks while the PPU is off, so the picture does not linger: it
+		// becomes the panel's white (Pan Docs "LCDC" bit 7). The sprite scan is stale too.
+		for (size_t i = 0; i < frame.size(); i++)
+			frame[i] = BlankWhite;
+		for (int x = 0; x < GbScreenWidth; x++)
+			line[x] = BlankWhite;
+		lineSpriteCount = 0;
+	}
+
+	uint8_t GbPpu::BeginVisibleLine()
 	{
 		// Mode 2 is the OAM scan (Pan Docs "Rendering": 80 dots). The deadline is stored as an
-		// absolute dot count so a caller can stop ticking in the middle of a mode safely.
-		EnterMode(2);
+		// absolute dot count so a caller can stop ticking in the middle of a mode safely. Entering
+		// mode 2 is where a line's STAT interrupt is born: the mode 2 source turns on, and an LYC
+		// that equals the new LY matches here, so the request must be handed back to the caller.
+		uint8_t request = EnterMode(2);
 		modeEndDots = LineStart() + 80;
 		ScanOam();
 
@@ -368,6 +396,8 @@ namespace GBA
 		// beginning of a scanline when WY = LY and held for the rest of the frame.
 		if (lcdEnabled && (unsigned)ly == wy && ly < GbVisibleLines)
 			windowActive = true;
+
+		return request;
 	}
 
 	void GbPpu::ScanOam()
@@ -403,18 +433,27 @@ namespace GBA
 		// plus 6..11 dots for every object on the line. The documented range is 172..289.
 		int length = 160 + 12 + (scx & 0x07);
 
-		bool windowRenders = windowActive && (lcdc & 0x20) && wx >= 7 && wx <= 166;
+		// A DMG (or a CGB in DMG compatibility mode) ignores the window when LCDC bit 0 is clear,
+		// so it is not switched in and costs no penalty (Pan Docs "LCDC" bit 0 / "Tile Maps").
+		bool windowRenders = windowActive && (lcdc & 0x20) && wx >= 7 && wx <= 166
+			&& (!DmgRules() || (lcdc & 0x01));
 		if (windowRenders)
 			length += 6;
 
 		for (int i = 0; i < lineSpriteCount; i++)
 		{
-			// Pan Docs "Rendering" footnote: an object whose OAM X is 0 (fully off the left
-			// side) always costs 11 dots regardless of SCX; otherwise 6..11.
+			// Pan Docs "Rendering", the OBJ penalty algorithm: the object costs 6 dots plus the
+			// dots the background fetch still owes on the tile it starts over, "or zero if
+			// negative", which is the flat 6 once the object sits at least five pixels into its
+			// tile. The fine grained accounting (which tile a previous object already fetched, and
+			// where the window puts the tile) is not modelled, so the pixel's offset in the tile
+			// is approximated by the object's own X.
+			// Footnote: an object whose OAM X is 0 (fully off the left side) always costs 11 dots
+			// regardless of SCX.
 			if (oam[lineSprites[i].index * 4 + 1] == 0)
 				length += 11;
 			else
-				length += 11 - (lineSprites[i].x & 0x07);
+				length += 11 - ((lineSprites[i].x & 0x07) < 5 ? (lineSprites[i].x & 0x07) : 5);
 		}
 
 		if (length < 172)
@@ -491,7 +530,7 @@ namespace GBA
 					}
 					else
 					{
-						BeginVisibleLine();
+						request |= BeginVisibleLine();
 					}
 				}
 				else
@@ -503,7 +542,7 @@ namespace GBA
 						ly = 0;
 						frameCounter++;
 						windowLine = 0;
-						BeginVisibleLine();
+						request |= BeginVisibleLine();
 					}
 					else
 					{
@@ -540,7 +579,8 @@ namespace GBA
 		// masking the tile X with 31 and the pixel Y with 255).
 		int mapX, mapY, mapBase, pixelY;
 
-		bool windowHere = windowActive && (lcdc & 0x20) && wx >= 7 && wx <= 166 && x >= wx - 7;
+		bool windowHere = windowActive && (lcdc & 0x20) && wx >= 7 && wx <= 166 && x >= wx - 7
+			&& (!DmgRules() || (lcdc & 0x01));
 		if (windowHere)
 		{
 			// The window's top-left pixel is (WX - 7, WY); it has its own line counter and does
@@ -566,9 +606,12 @@ namespace GBA
 		palette = 0;
 		int tileBank = 0;
 
-		if (cgb)
+		if (cgb && !dmgCompat)
 		{
 			// VRAM bank 1 holds the attribute byte for every map entry (Pan Docs "Tile Maps").
+			// A CGB in DMG compatibility mode does not have bank switching (the manual, "BG
+			// Display Data": "Bank 1 ... is not present in this mode"), so the map entry is the
+			// whole of the tile's description and the palette comes from BGP.
 			attributes = vram[1][mapAddress];
 
 			// Bit 6 is the Y flip, bit 5 the X flip (both apply to the tile's pixels).
@@ -610,11 +653,14 @@ namespace GBA
 		bool tall = (lcdc & 0x04) != 0;
 		int height = tall ? 16 : 8;
 
-		// The object priority order. On a monochrome console the object with the smaller X wins
-		// and ties are broken by the OAM index; on a CGB only the OAM index matters (Pan Docs
-		// "OAM": "the smaller the X coordinate, the higher the priority" vs "only the object's
-		// location in OAM determines its priority"). This is a small insertion sort over at most
-		// ten entries.
+		// The object priority order. On a monochrome console, and on a CGB in DMG compatibility
+		// mode (which is what OPRI selects, Pan Docs "CGB Registers"), the object with the smaller
+		// X wins and ties are broken by the OAM index; on a CGB only the OAM index matters (Pan
+		// Docs "OAM": "the smaller the X coordinate, the higher the priority" vs "only the
+		// object's location in OAM determines its priority"). This is a small insertion sort over
+		// at most ten entries.
+		bool xPriority = DmgRules() || dmgObjectPriority;
+
 		int order[10];
 		for (int i = 0; i < lineSpriteCount; i++)
 			order[i] = i;
@@ -625,7 +671,7 @@ namespace GBA
 			while (j >= 0)
 			{
 				bool swap;
-				if (cgb)
+				if (!xPriority)
 					swap = lineSprites[order[j]].index > lineSprites[key].index;
 				else if (lineSprites[order[j]].x != lineSprites[key].x)
 					swap = lineSprites[order[j]].x > lineSprites[key].x;
@@ -648,10 +694,10 @@ namespace GBA
 			if (cgb || (lcdc & 0x01) || (windowActive && (lcdc & 0x20)))
 				bgIndex = FetchBgPixel(x, y, bgPalette, bgAttributes);
 
-			// On a monochrome console a clear LCDC bit 0 blanks the background and the window to
-			// colour 0 (Pan Docs "LCDC": "both background and window become blank"); on a CGB
-			// the bit is only the master priority.
-			if (!cgb && !(lcdc & 0x01))
+			// On a monochrome console, and on a CGB in DMG compatibility mode, a clear LCDC bit 0
+			// blanks the background and the window to colour 0 (Pan Docs "LCDC": "both background
+			// and window become blank"); in CGB mode the bit is only the master priority.
+			if (DmgRules() && !(lcdc & 0x01))
 				bgIndex = 0;
 
 			int index = bgIndex;
@@ -679,7 +725,10 @@ namespace GBA
 					if (tall)
 						tileIndex = (tileIndex & 0xFE) | ((objectRow >= 8) ? 1 : 0);
 
-					int objectBank = (cgb && (sprite.attributes & 0x08)) ? 1 : 0;
+					// The tile bank (OAM attribute bit 3) is a CGB only bit; so is the palette
+					// field (bits 0-2). In DMG mode the object palette is bit 4 of the attribute
+					// (Pan Docs "OAM" byte 3).
+					int objectBank = (cgb && !dmgCompat && (sprite.attributes & 0x08)) ? 1 : 0;
 					int column = x - sprite.x;
 					if (sprite.attributes & 0x20)
 						column = 7 - column;					// the X flip
@@ -697,7 +746,8 @@ namespace GBA
 						continue;			// colour index 0 is transparent for objects
 
 					index = objectIndex;
-					palette = cgb ? (sprite.attributes & 0x07) : ((sprite.attributes & 0x10) ? 1 : 0);
+					palette = DmgRules() ? ((sprite.attributes & 0x10) ? 1 : 0)
+						: (sprite.attributes & 0x07);
 					fromObject = true;
 
 					// The BG-over-OBJ flag (Pan Docs "OAM" byte 3 bit 7), and the CGB three-flag
@@ -712,11 +762,12 @@ namespace GBA
 			if (fromObject)
 			{
 				// Pan Docs "OAM" (the BG-over-OBJ flag) and "Tile Maps" (the CGB three-flag
-				// table): on a CGB the background wins when LCDC bit 0 is set, the BG colour
+				// table): in CGB mode the background wins when LCDC bit 0 is set, the BG colour
 				// index is not zero and *either* the object's or the background's priority bit is
-				// set. On a monochrome console only the object's flag matters.
+				// set. In DMG mode (a monochrome console, or a CGB in compatibility mode) only the
+				// object's flag matters.
 				bool bgWins;
-				if (cgb)
+				if (!DmgRules())
 					bgWins = (lcdc & 0x01) && bgIndex != 0 && (bgHasPriority || (bgAttributes & 0x80));
 				else
 					bgWins = bgHasPriority && bgIndex != 0;
@@ -724,7 +775,7 @@ namespace GBA
 				if (bgWins)
 				{
 					index = bgIndex;
-					palette = cgb ? (bgAttributes & 0x07) : 0;
+					palette = DmgRules() ? 0 : (bgAttributes & 0x07);
 					fromObject = false;
 				}
 			}
@@ -735,7 +786,8 @@ namespace GBA
 		// The window's own line counter advances when the window actually rendered, and then the
 		// background fetcher is reset - Pan Docs: the counter "only gets incremented when the
 		// window is visible".
-		bool windowRendered = windowActive && (lcdc & 0x20) && wx >= 7 && wx <= 166 && wx - 7 < GbScreenWidth;
+		bool windowRendered = windowActive && (lcdc & 0x20) && wx >= 7 && wx <= 166
+			&& wx - 7 < GbScreenWidth && (!DmgRules() || (lcdc & 0x01));
 		if (cgb && !(lcdc & 0x20))
 			windowActive = false;		// the CGB resets the Y condition when the window is off
 		if (windowRendered)
@@ -771,6 +823,19 @@ namespace GBA
 
 	uint32_t GbPpu::ShadePixel(int index, int palette, uint8_t attributes, bool object) const
 	{
+		if (cgb && dmgCompat)
+		{
+			// A CGB running a monochrome cartridge in DMG compatibility mode: the picture still
+			// comes from the CGB palette memory, and BGP (for the background and the window) or
+			// OBP0/OBP1 (for the objects) selects the entry in it (Pan Docs "Power Up Sequence",
+			// the compatibility palettes; the manual section 2.5, "Display Using Earlier DMG
+			// Software"). The background uses BG palette 0 and an object OBJ palette 0 or 1, which
+			// is what the reset grey ramp (SetGreyscalePalettes) fills.
+			uint8_t registerValue = object ? (palette == 0 ? obp0 : obp1) : bgp;
+			int shade = (registerValue >> (index * 2)) & 0x03;
+			return CgbColor(object ? (palette == 0 ? 0 : 1) : 0, shade, object);
+		}
+
 		// A CGB always draws through the colour palette memory; the attribute's bit 7 belongs to
 		// the priority logic and is not part of the palette index. A DMG (non-CGB) picture uses
 		// BGP for the background and the window and OBP0/OBP1 for the objects.

@@ -192,7 +192,8 @@ namespace GBA
 	void GbSystem::Reset()
 	{
 		// The console kind comes from the settings; a DMG cartridge on a CGB still runs in colour
-		// compatibility mode (the CGB simply finds no attribute data in VRAM bank 1).
+		// compatibility mode, where the PPU applies the DMG display rules and BGP/OBP0/OBP1 index
+		// into the CGB palette memory (see the block below).
 		bus->SetCgb(settings.cgb);
 		bus->ppu.SetPalette(settings.palette);
 		bus->apu.SetSampleRate(settings.sampleRate);
@@ -204,11 +205,23 @@ namespace GBA
 		bus->apu.Reset();
 		bus->cart.SetUnixTime((uint64_t)time(nullptr));
 
-		// On a CGB the picture comes from the colour palette memory, so the monochrome BGP
-		// register the boot ROM writes has no effect there: the machine installs a grey ramp
-		// instead (the real CGB boot ROM's "compatibility palettes", simplified).
+		// A CGB running a monochrome cartridge is in DMG compatibility mode: the PPU applies the
+		// manual's DMG display rules (LCDC bit 0 blanks the background and the window, the DMG
+		// object priority order, BGP/OBP0/OBP1 index into the CGB palettes) and OPRI is set the
+		// way the real CGB boot ROM sets it for a DMG-only cartridge (Pan Docs "Power Up
+		// Sequence": $01 is written to OPRI).
+		const bool dmgCompat = settings.cgb && bus->cart.IsLoaded() && !bus->cart.CgbCompatible();
+		bus->ppu.SetDmgCompat(dmgCompat);
+
+		// On a CGB the picture comes from the colour palette memory rather than the four grey
+		// shades: the machine installs a grey ramp there (the real CGB boot ROM derives its
+		// "compatibility palettes" from the cartridge's title instead). In DMG compatibility mode
+		// BGP/OBP0/OBP1 index into that ramp (see GbPpu::ShadePixel).
 		if (settings.cgb)
+		{
 			bus->ppu.SetGreyscalePalettes();
+			bus->WriteByte(0xFF6C, dmgCompat ? 0x01 : 0x00);
+		}
 
 		// The interrupt and hardware state the boot ROM (or the direct start) expects.
 		bus->SetIe(0x00);

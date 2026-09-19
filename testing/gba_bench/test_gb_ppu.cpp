@@ -903,11 +903,33 @@ GBA_TEST(GbPpu, lcd_off_blanks_and_unlocks_memory)
 	GBA_CHECK_MSG(!ppu.VramBlocked(), "VRAM is free while the LCD is off");
 	GBA_CHECK_MSG(!ppu.OamBlocked(), "OAM is free while the LCD is off");
 
-	// Off means blank: the last frame stays as it was, and turning it back on starts at LY 0.
+	// Turning it back on starts the LCD at LY 0 and the top of the frame.
 	ppu.WriteRegister(0xFF40, 0x91);
 	GBA_CHECK_MSG(ppu.LcdEnabled(), "the LCD comes back on");
 	GBA_CHECK_EQ(ppu.Ly(), 0);
 	GBA_CHECK_EQ(ppu.Mode(), 2);
+}
+
+GBA_TEST(GbPpu, lcd_off_shows_the_blank_white)
+{
+	GbPpu ppu;
+	SetupBackground(ppu);
+
+	const char* const dark[8] =
+	{
+		"33333333", "33333333", "33333333", "33333333",
+		"33333333", "33333333", "33333333", "33333333",
+	};
+	WriteTile(ppu.VramBank(0), 1, dark);
+	ppu.VramBank(0)[0x1800] = 1;
+	RunFrames(ppu, 2);
+	GBA_CHECK_HEX32(Pixel(ppu, 0, 0), Shade3);
+
+	// Pan Docs "LCDC" bit 7: with the display disabled "the screen is blank, which on DMG is
+	// displayed as a white 'whiter' than color #0", so the picture does not linger.
+	ppu.WriteRegister(0xFF40, 0x00);
+	GBA_CHECK_HEX32(Pixel(ppu, 0, 0), 0xFFFFFFFF);
+	GBA_CHECK_HEX32(Pixel(ppu, 100, 100), 0xFFFFFFFF);
 }
 
 GBA_TEST(GbPpu, frame_output_is_xrgb8888_and_uses_the_palette)
@@ -934,4 +956,204 @@ GBA_TEST(GbPpu, frame_output_is_xrgb8888_and_uses_the_palette)
 	ppu.SetPalette(GbPalette::Green);
 	RunFrames(ppu, 2);
 	GBA_CHECK_HEX32(Pixel(ppu, 0, 0), Shade3);
+}
+
+// ---------------------------------------------------------------------------------------
+// The STAT line and the DMG compatibility mode
+// ---------------------------------------------------------------------------------------
+
+GBA_TEST(GbPpu, a_register_write_can_raise_the_stat_line)
+{
+	GbPpu ppu;
+	ppu.Reset();
+
+	// Nothing is selected yet, so the shared STAT line is low and a LYC write requests nothing.
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF45, 0x00), 0x00);
+
+	// Enabling the LYC source while LY = LYC raises the line: the write itself requests the
+	// interrupt (Pan Docs "STAT": "The Game Boy constantly compares ... and (if enabled) a STAT
+	// interrupt is requested").
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF41, 0x40), 0x02);
+
+	// The line is already high, so the same LYC value again is blocked (Pan Docs "STAT blocking").
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF45, 0x00), 0x00);
+
+	// Moving LYC off LY drops the line, and bringing it back raises it again.
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF45, 0x50), 0x00);
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF45, 0x00), 0x02);
+}
+
+GBA_TEST(GbPpu, stat_coincidence_flag_survives_the_lcd_being_off)
+{
+	GbPpu ppu;
+	ppu.Reset();
+	ppu.WriteRegister(0xFF45, 0x00);
+	ppu.WriteRegister(0xFF40, 0x00);				// the LCD off: LY reads 0
+
+	GBA_CHECK_EQ(ppu.ReadRegister(0xFF44), 0x00);
+	GBA_CHECK_MSG((ppu.ReadRegister(0xFF41) & 0x03) == 0, "the mode must read 0 while the LCD is off");
+	GBA_CHECK_MSG((ppu.ReadRegister(0xFF41) & 0x04) != 0,
+		"LY = LYC is updated constantly, so it stays set with the LCD off and LYC = 0");
+
+	ppu.WriteRegister(0xFF45, 0x12);
+	GBA_CHECK_MSG((ppu.ReadRegister(0xFF41) & 0x04) == 0, "a LYC the LCD-off LY does not match clears it");
+}
+
+GBA_TEST(GbPpu, cgb_compat_lcdc0_blanks_the_background_like_a_dmg)
+{
+	GbPpu ppu;
+	ppu.Reset();
+	ppu.SetCgb(true);
+	ppu.SetDmgCompat(true);						// a monochrome cartridge on a CGB
+	ppu.SetGreyscalePalettes();
+
+	ppu.WriteRegister(0xFF40, 0x91);			// LCD on, BG on, 0x8000 data, 0x9800 map
+	ppu.WriteRegister(0xFF42, 0x00);
+	ppu.WriteRegister(0xFF43, 0x00);
+	ppu.WriteRegister(0xFF47, 0xE4);			// BGP identity: index 0 white .. index 3 black
+
+	const char* const dark[8] =
+	{
+		"33333333", "33333333", "33333333", "33333333",
+		"33333333", "33333333", "33333333", "33333333",
+	};
+	WriteTile(ppu.VramBank(0), 1, dark);
+	ppu.VramBank(0)[0x1800] = 1;
+
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 0, 0), 0xFF000000);		// the background's index 3 through BGP
+
+	// In DMG compatibility mode LCDC bit 0 is not the CGB's master priority: it blanks the
+	// background and the window (Pan Docs "LCDC" bit 0, the "Non-CGB Mode" half).
+	ppu.WriteRegister(0xFF40, 0x90);
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 0, 0), 0xFFFFFFFF);		// blanked to colour 0, BGP's shade 0
+}
+
+GBA_TEST(GbPpu, cgb_compat_and_opri_use_the_dmg_x_priority)
+{
+	GbPpu ppu;
+	ppu.Reset();
+	ppu.SetCgb(true);
+	ppu.SetDmgCompat(true);
+	ppu.SetGreyscalePalettes();
+
+	ppu.WriteRegister(0xFF40, 0x93);			// LCD on, BG on, OBJ on
+	ppu.WriteRegister(0xFF42, 0x00);
+	ppu.WriteRegister(0xFF43, 0x00);
+	ppu.WriteRegister(0xFF47, 0xE4);
+	ppu.WriteRegister(0xFF48, 0xE4);			// OBP0 identity, as the compatibility mode reads it
+
+	// Tile 4 is colour index 3, tile 6 is index 2.
+	const char* const solid3[8] =
+	{
+		"33333333", "33333333", "33333333", "33333333",
+		"33333333", "33333333", "33333333", "33333333",
+	};
+	const char* const solid2[8] =
+	{
+		"22222222", "22222222", "22222222", "22222222",
+		"22222222", "22222222", "22222222", "22222222",
+	};
+	WriteTile(ppu.VramBank(0), 4, solid3);
+	WriteTile(ppu.VramBank(0), 6, solid2);
+
+	// The later object in OAM has the smaller X, which is the higher priority on a DMG.
+	uint8_t* oam = ppu.Oam();
+	oam[0] = 16; oam[1] = 8 + 30; oam[2] = 6; oam[3] = 0x00;
+	oam[4] = 16; oam[5] = 8 + 28; oam[6] = 4; oam[7] = 0x00;
+
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 29, 0), 0xFF000000);		// object 1 alone: index 3, black
+	GBA_CHECK_HEX32(Pixel(ppu, 30, 0), 0xFF000000);		// over the overlap the smaller X wins
+
+	// A real CGB mode uses the OAM order instead: object 0 (X 30) covers 30..37.
+	ppu.SetDmgCompat(false);
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 30, 0), 0xFF525252);		// object 0's index 2: dark grey
+	GBA_CHECK_HEX32(Pixel(ppu, 29, 0), 0xFF000000);		// object 1 alone is still there
+
+	// OPRI selects the DMG order on a CGB even without the compatibility mode (Pan Docs
+	// "CGB Registers" FF6C).
+	ppu.SetDmgObjectPriority(true);
+	RunFrames(ppu, 2, true);
+	GBA_CHECK_HEX32(Pixel(ppu, 30, 0), 0xFF000000);
+}
+
+GBA_TEST(GbPpu, object_penalty_stays_in_the_documented_six_to_eleven_dots)
+{
+	GbPpu ppu;
+	SetupBackground(ppu);
+
+	const char* const dark[8] =
+	{
+		"33333333", "33333333", "33333333", "33333333",
+		"33333333", "33333333", "33333333", "33333333",
+	};
+	WriteTile(ppu.VramBank(0), 4, dark);
+	ppu.WriteRegister(0xFF48, 0xE4);
+	ppu.WriteRegister(0xFF40, 0x93);		// objects on
+
+	// The object covers the last visible line (OAM Y = 152 is screen Y 136), so the length
+	// LastMode3Length() reports after a frame is that line's.
+	uint8_t* oam = ppu.Oam();
+	oam[0] = 152;
+	oam[2] = 4;
+	oam[3] = 0x00;
+
+	// Screen X 0 (OAM X 8): the leftmost pixel is on its tile's first column, so the fetch it
+	// waits for owes 7 - 2 = 5 dots and the object costs 6 + 5 = 11 (Pan Docs "Rendering").
+	oam[1] = 8 + 0;
+	RunFrames(ppu, 1);
+	GBA_CHECK_EQ(ppu.LastMode3Length(), 172 + 11);
+
+	// Screen X 6 (OAM X 14): the fetch it waits for owes 7 - 6 - 2 = -1 dots, i.e. zero ("or zero
+	// if negative"), so the object costs the flat 6. The unclamped 11 - (X mod 8) gave 5 here and
+	// 4 on the column after it, undercounting mode 3.
+	oam[1] = 8 + 6;
+	RunFrames(ppu, 1);
+	GBA_CHECK_EQ(ppu.LastMode3Length(), 172 + 6);
+
+	// The tile's last column is the floor as well.
+	oam[1] = 8 + 7;
+	RunFrames(ppu, 1);
+	GBA_CHECK_EQ(ppu.LastMode3Length(), 172 + 6);
+}
+
+GBA_TEST(GbPpu, a_line_start_requests_the_mode_two_interrupt)
+{
+	GbPpu ppu;
+	ppu.Reset();
+
+	// Turning the mode 2 source on while mode 2 is already running is a rising edge of its own.
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF41, 0x20), 0x02);
+
+	// Line 0 then runs out (mode 3, mode 0) and line 1 begins with mode 2: the line fell when
+	// mode 3 started and rises again here. BeginVisibleLine() used to drop EnterMode(2)'s return
+	// value, so this edge - and with it every mode 2 and LYC interrupt at a line start - was lost.
+	uint8_t request = ppu.Tick(GbDotsPerLine, false);
+
+	GBA_CHECK_EQ(ppu.Ly(), 1);
+	GBA_CHECK_EQ(ppu.Mode(), 2);
+	GBA_CHECK_MSG((request & 0x02) != 0,
+		"entering mode 2 at the start of a line must request the STAT interrupt");
+}
+
+GBA_TEST(GbPpu, a_line_start_requests_the_lyc_interrupt)
+{
+	GbPpu ppu;
+	ppu.Reset();
+
+	// LYC = LY = 0 already, so enabling the LYC source raises the line at once.
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF41, 0x40), 0x02);
+	// Move LYC to line 1, which drops the line again.
+	GBA_CHECK_EQ(ppu.WriteRegister(0xFF45, 0x01), 0x00);
+
+	// At the start of line 1 LY becomes 1 and matches LYC: the request is born in
+	// BeginVisibleLine(), exactly where the visible line raster effects need it.
+	uint8_t request = ppu.Tick(GbDotsPerLine, false);
+
+	GBA_CHECK_EQ(ppu.Ly(), 1);
+	GBA_CHECK_MSG((request & 0x02) != 0,
+		"LYC matching the new LY at the start of a line must request the STAT interrupt");
 }

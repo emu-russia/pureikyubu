@@ -47,6 +47,7 @@ namespace GBA
 		hdmaSource = 0xFFFF;
 		hdmaDest = 0xFFFF;
 		hdmaBlocks = 0;
+		hdmaLastMode = -1;
 
 		key1 = 0x7E;
 		vbk = 0xFE;
@@ -75,6 +76,9 @@ namespace GBA
 			key1 = 0x7E;
 			vbk = 0xFE;
 			svbk = 0xF8;
+			opri = 0x00;
+			ppu.SetDmgObjectPriority(false);
+			ppu.SetDmgCompat(false);
 		}
 	}
 
@@ -189,7 +193,7 @@ namespace GBA
 		case 0xFF52: return hdma2;
 		case 0xFF53: return hdma3;
 		case 0xFF54: return hdma4;
-		case 0xFF55: return hdma5;
+		case 0xFF55: return Hdma5Value();
 		case 0xFF6C: return cgb ? opri : 0xFF;
 		case 0xFF70: return cgb ? svbk : 0xFF;
 		default: return 0xFF;
@@ -266,12 +270,10 @@ namespace GBA
 		case 0xFF53: return hdma3;
 		case 0xFF54: return hdma4;
 		case 0xFF55:
-			// HDMA5: while an HBlank DMA is running bit 7 is set and bits 0-6 count the 16 byte
-			// blocks left minus one; otherwise the register keeps its last value (0xFF once a
-			// transfer has finished, Pan Docs "CGB Registers").
-			if (hdmaActive && hdmaHblank && hdmaBlocks > 0)
-				return (uint8_t)(0x80 | ((hdmaBlocks - 1) & 0x7F));
-			return hdma5;
+			// HDMA5: while an HBlank DMA runs bit 7 is clear and bits 0-6 count the 16 byte blocks
+			// left minus one; once it has finished the register reads 0xFF, and a transfer stopped
+			// by a write keeps bit 7 set with the blocks that were left (Pan Docs "CGB Registers").
+			return Hdma5Value();
 		case 0xFF6C: return cgb ? opri : 0xFF;
 		case 0xFF70: return cgb ? svbk : 0xFF;
 		default: return 0xFF;
@@ -408,10 +410,13 @@ namespace GBA
 			return;
 		}
 
-		// 0xFF46 (DMA) is the bus's register between the PPU's LYC and BGP.
+		// 0xFF46 (DMA) is the bus's register between the PPU's LYC and BGP. A write can move the
+		// shared STAT line (STAT and LYC in particular), and the PPU hands the rising edge back as
+		// an interrupt request, which goes into IF here.
 		if (address >= 0xFF40 && address <= 0xFF4B && address != 0xFF46)
 		{
-			ppu.WriteRegister(address, value);
+			if (ppu.WriteRegister(address, value) & 0x02)
+				RequestInterrupt(GbIntStat);
 			return;
 		}
 
@@ -513,7 +518,13 @@ namespace GBA
 
 		case 0xFF6C:
 			if (cgb)
+			{
+				// OPRI (Pan Docs "CGB Registers"): bit 0 selects the object priority mode, 0 for
+				// the CGB's OAM order and 1 for the DMG's X coordinate order. The PPU does the
+				// sorting, so it is told here.
 				opri = (uint8_t)(value & 0x01);
+				ppu.SetDmgObjectPriority(opri != 0);
+			}
 			break;
 
 		case 0xFF70:
@@ -794,6 +805,17 @@ namespace GBA
 		ppu.Oam()[index] = value;
 	}
 
+	uint8_t GbBus::Hdma5Value() const
+	{
+		// While an HBlank DMA is running bit 7 reads 0 and the lower bits count the blocks left
+		// (minus one). Otherwise the register keeps the value the last write or the end of the
+		// transfer left: 0xFF when it finished, or bit 7 set with the blocks that were left when
+		// the program stopped it.
+		if (hdmaActive && hdmaHblank && hdmaBlocks > 0)
+			return (uint8_t)((hdmaBlocks - 1) & 0x7F);
+		return hdma5;
+	}
+
 	void GbBus::StartHdma(uint8_t value)
 	{
 		// HDMA1-5 (Pan Docs "CGB Registers"): HDMA5's bit 7 selects the mode. Zero means a
@@ -815,15 +837,18 @@ namespace GBA
 		}
 
 		// The source and destination come from the four address registers, with the low four
-		// bits dropped (Pan Docs: "the lower 4 bits are ignored"); the destination is always in
-		// VRAM, bank 0.
+		// bits dropped (Pan Docs: "the lower 4 bits are ignored"); the destination is in VRAM,
+		// in the bank VBK (0xFF4F) selects.
 		hdmaSource = (uint16_t)(((hdma1 << 8) | hdma2) & 0xFFF0);
 		hdmaDest = (uint16_t)(0x8000 | (((hdma3 << 8) | hdma4) & 0x1FF0));
 		hdmaBlocks = blocks;
 
 		if ((value & 0x80) == 0)
 		{
-			// General purpose DMA: all the blocks now, and the CPU is halted for the duration.
+			// General purpose DMA: all the blocks at once. The manual and Pan Docs both say the
+			// CPU is halted for the duration (about 8 system clocks per 16 byte block); this
+			// emulator performs the whole transfer inside the register write instead of charging
+			// those clocks, so only the copy itself is modelled.
 			hdmaActive = false;
 			hdmaHblank = false;
 			while (hdmaBlocks > 0)
@@ -833,6 +858,10 @@ namespace GBA
 		}
 		else
 		{
+			// HBlank DMA: one 16 byte block per HBlank, driven by the mode 0 edge in TickDevices
+			// (nothing during VBlank, and the transfer resumes at the next frame if it is still
+			// running). The manual's "CPU processing is halted during a DMA transfer period" is
+			// not charged as clocks either: the block is copied when the HBlank begins.
 			hdmaActive = true;
 			hdmaHblank = true;
 			hdma5 = (uint8_t)(0x80 | ((hdmaBlocks - 1) & 0x7F));
@@ -855,7 +884,11 @@ namespace GBA
 			uint16_t dest = (uint16_t)((hdmaDest + i) & 0x1FFF);
 
 			// The source may be the cartridge ROM, the cartridge RAM or the WRAM; the
-			// destination is always VRAM, bank 0.
+			// destination is always VRAM, in the bank VBK selects. The manual is explicit
+			// (chapter 2, "DMA Transfers in CGB"): "The LCD display RAM area (8000h-9FFFh)
+			// selected as the transfer destination is the bank specified by register VBK";
+			// Pan Docs "CGB Registers" says the same ("the program should not change the
+			// Destination VRAM bank (FF4F) ... until the transfer has completed").
 			uint8_t value;
 			if (source < 0x8000)
 				value = cart.ReadRom(source);
@@ -869,11 +902,14 @@ namespace GBA
 			else
 				value = Peek(source);
 
-			ppu.VramBank(0)[dest] = value;
+			ppu.VramBank(vbk & 0x01)[dest] = value;
 		}
 
-		// The addresses wrap within their regions (Pan Docs gives the masks: the source stays
-		// inside 0x0000..0x7FF0 and the destination inside 0x8000..0x9FF0).
+		// The addresses advance by a block. Pan Docs gives the destination's mask ("Only bits 12-4
+		// are respected"), so 0x8000..0x9FF0 wraps there; the source's own wrap is not specified,
+		// and this emulator keeps it inside the 0x0000..0x7FF0 half of the address space (a
+		// transfer whose source starts in 0xA000..0xDFF0 therefore wraps into the ROM rather than
+		// into echo RAM).
 		hdmaSource = (uint16_t)((hdmaSource + 16) & 0x7FF0);
 		hdmaDest = (uint16_t)(0x8000 | ((hdmaDest + 16) & 0x1FF0));
 
