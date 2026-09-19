@@ -1876,9 +1876,14 @@ namespace GBA
 		uint32_t armOpcode = (load ? 0xE8B00000u : 0xE8A00000u) | ((uint32_t)rb << 16) | list;
 		uint32_t cycles = ArmBlockTransfer(armOpcode);
 
-		// Same as PUSH/POP: two bytes, not the four the ARM decoder charges, unless the load
-		// brought r15 in (an empty list does that through the ARM7TDMI's oddity).
-		bool branched = load && (list == 0 || (list & 0x80) != 0);
+		// Same as PUSH/POP: two bytes, not the four the ARM decoder charges. The only load that
+		// leaves the PC somewhere else is the ARM7TDMI's empty-list oddity - LDMIA Rb!,{} reads
+		// r15 from [Rb] instead of transferring nothing. A Thumb list is eight bits wide (r0-r7),
+		// so it can never name r15: testing bit 7 here treats "r7 in the list" as a load of the PC
+		// and silently skips the instruction after every LDMIA that touches r7. The BIOS loads its
+		// BitUnPack parameter block with exactly that instruction (LDMIA r1!,{r5,r7}), so the skip
+		// left the block on the stack empty and the boot animation without its glyph data.
+		bool branched = load && list == 0;
 		if (!branched)
 			currentPC = address + 2;
 		return cycles;

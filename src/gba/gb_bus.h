@@ -285,6 +285,16 @@ namespace GBA
 		void WriteIo(uint16_t address, uint8_t value);
 		uint8_t PeekIo(uint16_t address) const;
 
+		/// <summary>
+		/// The WRAM bank the hardware maps at 0xD000..0xDFFF: the bank SVBK selects on a CGB,
+		/// always bank 1 on a DMG and on a CGB whose SVBK asks for bank 0 (Pan Docs "CGB
+		/// Registers" FF70: "Writing a value will map the corresponding bank to D000-DFFF,
+		/// except 0, which maps bank 1 instead"). Without the 0-&gt;1 rule a CGB started with the
+		/// power-up SVBK aliases 0xC000..0xCFFF onto 0xD000..0xDFFF and a DMG cartridge that
+		/// keeps its variables in the upper bank corrupts them.
+		/// </summary>
+		int WramBank() const;
+
 		bool TimerInputHigh() const;
 		void TickTimer(int systemCycles);
 		void TickSerial(int systemCycles);
