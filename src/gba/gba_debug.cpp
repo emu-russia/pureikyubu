@@ -796,8 +796,8 @@ namespace GBA
 			(lcdc & 0x10) ? 0x8000 : 0x8800, (lcdc & 0x08) ? 0x9C00 : 0x9800);
 		MdBullet(md, "sprites: **%s**, window layer: **%s**",
 			(lcdc & 0x04) ? "8x16" : "8x8", YesNo(ppu.WindowActive()));
-		MdBullet(md, "CGB: **%s**, VRAM bank: **%i**, WRAM bank: **%i**",
-			YesNo(ppu.Cgb()), bus.Vbk() & 1, bus.Svbk() & 7);
+		MdBullet(md, "CGB: **%s**, compatibility mode: **%s**, VRAM bank: **%i**, WRAM bank: **%i**",
+			YesNo(ppu.Cgb()), YesNo(ppu.DmgCompat()), bus.Vbk() & 1, bus.Svbk() & 7);
 
 		return md;
 	}

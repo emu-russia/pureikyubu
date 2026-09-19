@@ -58,7 +58,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 |---|---|
 | `gb.h/.cpp` | `GbSystem`: the machine, its boot ROM choice, its link cable |
 | `gb_cpu.h/.cpp` | The LR35902 (SM83) interpreter |
-| `gb_ppu.h/.cpp` | The DMG/CGB LCD: the background, the window, the sprites, the CGB palettes and VRAM banks |
+| `gb_ppu.h/.cpp` | The DMG/CGB LCD: the background, the window, the sprites, the CGB palettes and VRAM banks, the shared STAT/LYC interrupt line, and the DMG display rules a monochrome cartridge gets on a CGB (LCDC bit 0 blanking, the DMG object priority OPRI selects, BGP/OBP0/OBP1 indexing the CGB palettes) |
 | `gb_apu.h/.cpp` | The four sound channels (the manual's dividers, the duty phases, the 512 Hz frame sequencer with the length at 256 Hz, the sweep at 128 Hz and the envelope at 64 Hz, the length timer, NR50/NR51 mixing and the high pass filter, which the settings can turn off) and the host mixer |
 | `gb_cart.h/.cpp` | The cartridge header and the MBC1/2/3/5 mappers with battery saves |
 | `gb_bus.h/.cpp` | The bus, the timer, the joypad, the serial port, OAM DMA and the CGB's double speed |

@@ -98,3 +98,99 @@ GBA_TEST(GbBus, dmg_upper_wram_is_bank_one_and_svbk_is_not_there)
 	GBA_CHECK_EQ(bus.ReadByte(0xFF70), 0xFF);
 	GBA_CHECK_EQ(bus.ReadByte(0xD000), 0x66);
 }
+
+// ---------------------------------------------------------------------------------------
+// The CGB's VRAM DMA (HDMA/GDMA) and OPRI
+// ---------------------------------------------------------------------------------------
+
+namespace
+{
+	/// <summary>A CGB bus with the PPU reset, the way the palette test above prepares it.</summary>
+	void PrepareCgbWithPpu(GbBus& bus)
+	{
+		bus.cpu.bus = &bus;
+		bus.SetCgb(true);
+		bus.Reset();
+		bus.ppu.Reset();
+		bus.ppu.SetCgb(true);
+	}
+}
+
+GBA_TEST(GbBus, hdma_writes_to_the_vram_bank_vbk_selects)
+{
+	GbBus bus;
+	PrepareCgbWithPpu(bus);
+
+	// Source 0xC000, destination 0x8000, one 16 byte block, general purpose (HDMA5 bit 7 clear).
+	bus.WriteByte(0xC000, 0x42);
+	bus.WriteByte(0xFF51, 0xC0);
+	bus.WriteByte(0xFF52, 0x00);
+	bus.WriteByte(0xFF53, 0x80);
+	bus.WriteByte(0xFF54, 0x00);
+
+	bus.WriteByte(0xFF4F, 0x00);			// VBK = 0
+	bus.WriteByte(0xFF55, 0x00);
+	GBA_CHECK_EQ(bus.ppu.VramBank(0)[0], 0x42);
+
+	// The manual is explicit that the destination bank follows VBK (chapter 2, "DMA Transfers in
+	// CGB": "the bank specified by register VBK"), and Pan Docs "CGB Registers" warns a program
+	// not to change VBK while a transfer runs for the same reason.
+	bus.WriteByte(0xC000, 0x77);
+	bus.WriteByte(0xFF51, 0xC0);
+	bus.WriteByte(0xFF52, 0x00);
+	bus.WriteByte(0xFF53, 0x80);
+	bus.WriteByte(0xFF54, 0x00);
+	bus.WriteByte(0xFF4F, 0x01);			// VBK = 1
+	bus.WriteByte(0xFF55, 0x00);
+	GBA_CHECK_EQ(bus.ppu.VramBank(1)[0], 0x77);
+	GBA_CHECK_EQ(bus.ppu.VramBank(0)[0], 0x42);		// bank 0 was not touched again
+}
+
+GBA_TEST(GbBus, hdma5_reads_active_with_bit_seven_clear)
+{
+	GbBus bus;
+	PrepareCgbWithPpu(bus);
+
+	bus.WriteByte(0xFF51, 0xC0);
+	bus.WriteByte(0xFF52, 0x00);
+	bus.WriteByte(0xFF53, 0x80);
+	bus.WriteByte(0xFF54, 0x00);
+	bus.WriteByte(0xFF55, 0x83);			// HBlank mode, four 16 byte blocks
+
+	// Active: bit 7 reads 0 and the low seven bits are the blocks left minus one (Pan Docs "CGB
+	// Registers": "Reading Bit 7 of FF55 can be used to confirm if the DMA transfer is active
+	// (1=Not Active, 0=Active)").
+	GBA_CHECK_MSG(bus.HdmaActive(), "the HBlank DMA must be running");
+	GBA_CHECK_MSG((bus.ReadByte(0xFF55) & 0x80) == 0, "bit 7 must read 0 while the DMA is active");
+	GBA_CHECK_EQ(bus.ReadByte(0xFF55), 0x03);
+
+	// Writing bit 7 clear stops it, and the register then keeps bit 7 set with the blocks that
+	// were left (Pan Docs: "Bit 7 will be read as 1").
+	bus.WriteByte(0xFF55, 0x00);
+	GBA_CHECK_MSG(!bus.HdmaActive(), "the write must stop the DMA");
+	GBA_CHECK_EQ(bus.ReadByte(0xFF55), 0x83);
+	GBA_CHECK_MSG((bus.ReadByte(0xFF55) & 0x80) != 0, "bit 7 must read 1 once it is stopped");
+}
+
+GBA_TEST(GbBus, opri_selects_the_dmg_object_priority)
+{
+	GbBus bus;
+	PrepareCgbWithPpu(bus);
+
+	// OPRI (0xFF6C): 0 is the CGB's OAM priority, 1 is the DMG's X coordinate priority, and the
+	// PPU is the one that sorts, so it has to see the bit (Pan Docs "CGB Registers").
+	GBA_CHECK_EQ(bus.ReadByte(0xFF6C), 0x00);
+	GBA_CHECK_MSG(!bus.ppu.DmgObjectPriority(), "the CGB starts with the OAM order");
+
+	bus.WriteByte(0xFF6C, 0x01);
+	GBA_CHECK_EQ(bus.ReadByte(0xFF6C), 0x01);
+	GBA_CHECK_MSG(bus.ppu.DmgObjectPriority(), "OPRI bit 0 must reach the PPU");
+
+	bus.WriteByte(0xFF6C, 0x00);
+	GBA_CHECK_MSG(!bus.ppu.DmgObjectPriority(), "clearing OPRI must restore the OAM order");
+
+	// A monochrome console has no OPRI at all.
+	bus.SetCgb(false);
+	GBA_CHECK_EQ(bus.ReadByte(0xFF6C), 0xFF);
+	GBA_CHECK_MSG(!bus.ppu.DmgObjectPriority(), "a DMG never uses OPRI");
+}

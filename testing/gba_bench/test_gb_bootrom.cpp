@@ -525,3 +525,36 @@ GBA_TEST(GbBootRom, cgb_boot_rom_is_split_around_the_cartridge_header)
 	GBA_CHECK_EQ(machine.Bus().ReadByte(0x0140), 0xAB);
 	GBA_CHECK_EQ(machine.Bus().ReadByte(0x01FF), 0xCD);
 }
+
+GBA_TEST(GbBootRom, dmg_cartridge_on_a_cgb_selects_the_compatibility_mode)
+{
+	// The machine, not the PPU, decides the compatibility mode from the cartridge's CGB flag
+	// (0x0143 bit 7): a monochrome cartridge on a CGB runs with the DMG display rules and OPRI
+	// set, exactly as the real CGB boot ROM sets it up (Pan Docs "Power Up Sequence").
+	std::vector<uint8_t> cartridge = BuildTestCartridge();
+	GBA_CHECK_MSG((cartridge[GbHeaderCgbFlag] & 0x80) == 0, "the test cartridge is monochrome");
+
+	GbSystem machine;
+	GbSettings settings = GbSettings::Defaults();
+	settings.cgb = true;
+	machine.ApplySettings(settings);
+
+	std::string error;
+	GBA_CHECK_MSG(machine.LoadRomImage(cartridge, error), "the test cartridge must load: " + error);
+	machine.Reset();
+
+	GBA_CHECK_MSG(machine.Lcd().Cgb(), "the console is a CGB");
+	GBA_CHECK_MSG(machine.Lcd().DmgCompat(), "a monochrome cartridge on a CGB is in compatibility mode");
+	GBA_CHECK_MSG(machine.Lcd().DmgObjectPriority(), "OPRI selects the DMG object priority");
+	GBA_CHECK_EQ(machine.Bus().Peek(0xFF6C), 0x01);
+
+	// A cartridge that asks for CGB functions is not: the CGB's own rules (and its OAM object
+	// priority) apply.
+	cartridge[GbHeaderCgbFlag] = 0x80;
+	GBA_CHECK_MSG(machine.LoadRomImage(cartridge, error), "the colour cartridge must load: " + error);
+	machine.Reset();
+
+	GBA_CHECK_MSG(!machine.Lcd().DmgCompat(), "a CGB cartridge is not in compatibility mode");
+	GBA_CHECK_MSG(!machine.Lcd().DmgObjectPriority(), "and OPRI stays at the CGB's OAM order");
+	GBA_CHECK_EQ(machine.Bus().Peek(0xFF6C), 0x00);
+}
