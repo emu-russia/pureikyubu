@@ -122,6 +122,19 @@ namespace GBA
 	// The memory map
 	// ---------------------------------------------------------------------------------------
 
+	int GbBus::WramBank() const
+	{
+		// Pan Docs "CGB Registers" FF70: banks 1-7 can be selected into 0xD000..0xDFFF and a
+		// written 0 maps bank 1 as well. Bank 0 is never visible at 0xD000, which is what makes
+		// the upper WRAM work on a CGB that has not touched SVBK yet (the power-up value 0xF8
+		// has its bank bits clear).
+		if (!cgb)
+			return 1;
+
+		int bank = svbk & 0x07;
+		return (bank == 0) ? 1 : bank;
+	}
+
 	uint8_t GbBus::Peek(uint16_t address) const
 	{
 		if (address < 0x8000)
@@ -132,7 +145,7 @@ namespace GBA
 			return cart.ReadRam(address);
 		if (address < 0xE000)
 			return (address < 0xD000) ? wram[0][address - 0xC000]
-				: wram[cgb ? (svbk & 0x07) : 1][address - 0xD000];
+				: wram[WramBank()][address - 0xD000];
 		if (address < 0xFE00)
 			return Peek((uint16_t)(address - 0x2000));		// echo RAM
 		if (address < 0xFEA0)
@@ -290,7 +303,7 @@ namespace GBA
 			// (bank 1 on a DMG, Pan Docs "CGB Registers").
 			if (address < 0xD000)
 				return wram[0][address - 0xC000];
-			return wram[cgb ? (svbk & 0x07) : 1][address - 0xD000];
+			return wram[WramBank()][address - 0xD000];
 		}
 
 		if (address < 0xFE00)
@@ -346,7 +359,7 @@ namespace GBA
 			if (address < 0xD000)
 				wram[0][address - 0xC000] = value;
 			else
-				wram[cgb ? (svbk & 0x07) : 1][address - 0xD000] = value;
+				wram[WramBank()][address - 0xD000] = value;
 			return;
 		}
 
@@ -500,10 +513,10 @@ namespace GBA
 		case 0xFF70:
 			if (cgb)
 			{
-				// SVBK selects the WRAM bank at 0xD000; a written 0 selects bank 1 (Pan Docs
-				// "CGB Registers").
-				uint8_t bank = (uint8_t)(value & 0x07);
-				svbk = (uint8_t)(0xF8 | (bank == 0 ? 1 : bank));
+				// SVBK selects the WRAM bank at 0xD000. The register keeps the bank bits as they
+				// were written (so a written 0 reads back as 0); the "a written 0 selects bank 1"
+				// rule of Pan Docs "CGB Registers" lives in WramBank(), which every accessor uses.
+				svbk = (uint8_t)(0xF8 | (value & 0x07));
 			}
 			break;
 
@@ -846,7 +859,7 @@ namespace GBA
 				value = cart.ReadRam(source);
 			else if (source < 0xE000)
 				value = (source < 0xD000) ? wram[0][source - 0xC000]
-					: wram[cgb ? (svbk & 0x07) : 1][source - 0xD000];
+					: wram[WramBank()][source - 0xD000];
 			else
 				value = Peek(source);
 

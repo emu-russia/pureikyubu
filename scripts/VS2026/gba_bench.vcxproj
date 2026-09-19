@@ -119,6 +119,7 @@
     <ClCompile Include="..\..\testing\gba_bench\test_demo.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_disasm.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_bootrom.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_gb_bus.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_cart.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_cpu.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_gb_ppu.cpp" />

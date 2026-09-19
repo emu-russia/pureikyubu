@@ -100,7 +100,7 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 
 ## The test suite
 
-Every test passes: **245 of 245**. The suite was not green while the core was being written, and
+Every test passes: **266 of 266**. The suite was not green while the core was being written, and
 every failure was resolved by fixing the emulator or by correcting an expectation that did not
 match GBATEK - never by deleting a test. The failures are listed here because each one names a real
 bug that is easy to reintroduce.
@@ -116,11 +116,12 @@ bug that is easy to reintroduce.
 | `Ppu.ForcedBlankIsWhite`, `Ppu.WindowMasksOneBg`, `Ppu.TextBg8bpp`, `Ppu.PriorityFightBetweenTwoBgs`, `Ppu.TextBgTileMapWrap512`, `Ppu.VCountMatchInterrupt`, `Ppu.VramWindowsPerMode`, `Ppu.BrightnessDecreaseOfTheBackdrop` | Expectations that did not follow the hardware: the forced blank and the green swap did not reach the line buffer, a window row that is still inside the window, a palette entry written to the wrong offset, a background map that collided with its own tile data, a V-Count match line the test's loop never reached again, the VRAM mirroring formula, and the truncation order of the brightness decrease. |
 | The colour half of `cgb-acid2` (found by running the ROM, not by a unit test) | `GbBus::WriteIo`/`ReadIo` passed the PPU registers `0xFF40-0xFF4B` through but not the CGB palette registers `0xFF68-0xFF6B`, so a colour game could not define a single colour: the whole picture - sprites included, which is why they seemed to be missing - stayed on the grey ramp the machine installs at reset. `GbBus, cgb_palette_registers_are_reachable_through_the_bus` and `GbPpu, cgb_sprites_use_the_object_palette_and_the_tile_bank` now cover the path. |
 | `Apu.DutyWaveform` and every later test (a crash, not a failure) | The tests drained `Apu::ReadSamples` into an `int16_t buffer[128]`, but the call hands over `maxFrames` *stereo* frames and writes two samples per frame: the 256 byte stack buffer was overflowed and the run died later, in the middle of another suite. Found with AddressSanitizer; the buffers are sized for stereo frames now. |
+| `GbBus, cgb_power_up_svbk_maps_bank_one_not_bank_zero`, `GbBus, cgb_svbk_selects_banks_two_to_seven_and_zero_means_one` (found by running Metroid II, not by a unit test) | The WRAM bank register (SVBK, 0xFF70) mapped a written 0 to bank **0** instead of bank 1, so a CGB whose SVBK was still at its power-up value 0xF8 aliased `0xC000-0xCFFF` and `0xD000-0xDFFF` onto one 4 KByte page. A DMG-only cartridge that runs in compatibility mode and keeps its variables or stack in the upper bank then had its own low-RAM scratch overwrite them: Metroid II stored a return address at 0xDFFB, read back 0x0000 and restarted from the reset vector for ever (the screen never left the boot marker). Pan Docs "CGB Registers" FF70: "except 0, which maps bank 1 instead". |
 
-Everything else passes: the ARM7TDMI (60 tests), the Game Boy machine (63 with its boot ROM and its
-colour palette path), the LCD controller (25), the sound (22), the settings (19), the cartridge (14),
-the boot ROM and the emitter (12), the DMA (7), the SIO (7), the timers/keypad/interrupts (9), the
-demo machine (5) and the BIOS harness (2).
+Everything else passes: the ARM7TDMI (60 tests), the Game Boy machine (67 - its CPU, LCD, cartridge,
+boot ROM and the CGB WRAM/palette bus paths), the LCD controller (28), the sound (22), the settings
+(19), the cartridge (14), the disassemblers (13), the boot ROM and the emitter (12), the DMA (8), the
+SIO (7), the timers/keypad/interrupts (9), the demo machine (5) and the BIOS harness (2).
 
 ## Open findings
 
