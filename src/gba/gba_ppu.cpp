@@ -545,19 +545,20 @@ namespace GBA
 		case REG_BLDCNT: return bldcnt;
 		case 0x052: return bldalpha;
 
-		// BG0-3HOFS/VOFS (0x010..0x01F) are write-only on the hardware (GBATEK 4000010h marks
-		// them (W)): the PPU keeps no readable copy of the offsets, so a read returns the low
-		// byte, which is the part the debugger and the tests are interested in. The affine
-		// parameters keep their 16-bit value, and a reference point returns its write latch, the
-		// readable half of the two-register write protocol (GBATEK 4000028h).
-		case 0x010: return (uint16_t)(bghofs[0] & 0xFF);
-		case 0x012: return (uint16_t)(bgvofs[0] & 0xFF);
-		case 0x014: return (uint16_t)(bghofs[1] & 0xFF);
-		case 0x016: return (uint16_t)(bgvofs[1] & 0xFF);
-		case 0x018: return (uint16_t)(bghofs[2] & 0xFF);
-		case 0x01A: return (uint16_t)(bgvofs[2] & 0xFF);
-		case 0x01C: return (uint16_t)(bghofs[3] & 0xFF);
-		case 0x01E: return (uint16_t)(bgvofs[3] & 0xFF);
+		// BG0-3HOFS/VOFS (0x010..0x01F) are write-only on the hardware (GBATEK 4000010h and the
+		// AGB manual 6.1.8 mark them (W)), so there is no documented read value; the PPU hands
+		// back the offset it holds, which is the full 9 bits of the register - GBATEK's bit
+		// table is "0-8 Offset (0-511), 9-15 Not used". The affine parameters keep their 16-bit
+		// value, and a reference point returns its write latch, the readable half of the
+		// two-register write protocol (GBATEK 4000028h).
+		case 0x010: return bghofs[0];
+		case 0x012: return bgvofs[0];
+		case 0x014: return bghofs[1];
+		case 0x016: return bgvofs[1];
+		case 0x018: return bghofs[2];
+		case 0x01A: return bgvofs[2];
+		case 0x01C: return bghofs[3];
+		case 0x01E: return bgvofs[3];
 		case 0x020: return (uint16_t)bgpa[0];
 		case 0x022: return (uint16_t)bgpb[0];
 		case 0x024: return (uint16_t)bgpc[0];
@@ -1418,9 +1419,14 @@ namespace GBA
 		const uint32_t screenBase = (uint32_t)(((control >> BGCNT_SCREEN_BASE) & 0x1F) * 0x800);
 
 		// The scroll offsets are applied and the map wraps through its own size (GBATEK 4000008h:
-		// "When the screen is scrolled it'll always wraparound").
-		const int sx = (sourceX + Read16(0x010 + index * 4, 0)) & (mapWidthDots - 1);
-		const int sy = (sourceY + Read16(0x012 + index * 4, 0)) & (mapHeightDots - 1);
+		// "When the screen is scrolled it'll always wraparound"). The offset is 9 bits (0-511),
+		// so the *stored* value is what scrolls the layer: going through Read16 would take the
+		// register's readable form, which is truncated to eight bits here, and a layer scrolled
+		// past dot 255 would then jump 256 dots. Castlevania: Circle of the Moon's attract demo
+		// scrolls a room to exactly that point, and the truncated offset showed the map's other
+		// half as a band of the wrong tiles ("corrupt background").
+		const int sx = (sourceX + bghofs[index]) & (mapWidthDots - 1);
+		const int sy = (sourceY + bgvofs[index]) & (mapHeightDots - 1);
 
 		// The map entry: bits 0-9 the tile number, bit 10 the horizontal flip, bit 11 the vertical
 		// flip and bits 12-15 the palette (GBATEK "Text BG Screen"). The map is made of 256x256
