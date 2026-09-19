@@ -199,13 +199,16 @@ namespace GBA
 				offset = (up ? ", " : ", -") + operand;
 			}
 
+			// A writeback is written *after* the closing bracket - "[r1, #4]!" - which is where the
+			// assembler syntax puts it, and neither form had a test until the halfword one was
+			// fixed.
 			std::string text = "[" + std::string(ArmRegisters[base]);
 			if (pre)
 			{
 				text += offset;
+				text += "]";
 				if (writeback)
 					text += "!";
-				text += "]";
 			}
 			else
 			{
@@ -332,9 +335,13 @@ namespace GBA
 			bool up = (instruction & 0x00800000) != 0;
 			bool writeback = (instruction & 0x00200000) != 0;
 
-			// Bit 22 selects a register offset: "offsetH ... 1 S H 1 offsetL" is either the high
-			// nibble of an immediate or the register (A3.4.3).
-			bool registerOffset = (instruction & 0x00400000) != 0;
+			// Bit 22 selects the offset form: set, the offset is the immediate
+			// "(bits 11-8) << 4 | (bits 3-0)"; clear, it is the register in bits 3-0 shifted left
+			// by the amount in bits 11-8, with bit 7 and bits 6-5 = 01 fixed (A5.3 "Load/store
+			// halfword"). Reading it the other way round prints an immediate as a register and a
+			// register as an immediate, which is how the BIOS's `ldrh r9, [r1, -r8]` came out as
+			// `ldrh r9, [r1, -#8]`.
+			bool immediateOffset = (instruction & 0x00400000) != 0;
 
 			if (!load && type != 1)
 				return "undef";							// only STRH has a store form
@@ -350,11 +357,7 @@ namespace GBA
 			uint32_t target = (instruction >> 12) & 0xF;
 
 			std::string offset;
-			if (registerOffset)
-			{
-				offset = (up ? ", " : ", -") + std::string(ArmRegisters[instruction & 0xF]);
-			}
-			else
+			if (immediateOffset)
 			{
 				uint32_t value = ((instruction >> 4) & 0xF0) | (instruction & 0xF);
 				if (value == 0)
@@ -362,14 +365,21 @@ namespace GBA
 				else
 					offset = (up ? ", #" : ", -#") + Dec(value);
 			}
+			else
+			{
+				uint32_t shift = (instruction >> 8) & 0xF;
+				offset = (up ? ", " : ", -") + std::string(ArmRegisters[instruction & 0xF]);
+				if (shift != 0)
+					offset += ", lsl #" + Dec(shift);
+			}
 
 			std::string address = "[" + std::string(ArmRegisters[base]);
 			if (pre)
 			{
 				address += offset;
+				address += "]";
 				if (writeback)
 					address += "!";
-				address += "]";
 			}
 			else
 			{
