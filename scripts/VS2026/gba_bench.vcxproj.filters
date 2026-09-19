@@ -28,6 +28,9 @@
     <ClCompile Include="..\..\testing\gba_bench\test_disasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\testing\gba_bench\test_gb_apu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\testing\gba_bench\test_gb_bootrom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -138,7 +138,11 @@ that machine is part of this module too (`gb_*.cpp`, `GB::GbSystem` in `src/gba/
   background and eight sprite palettes with the VRAM attribute map (flips, tile bank, BG-to-OAM
   priority), the STAT/LY/LYC interrupts and the CGB's HDMA/GDMA;
 * the **four sound channels** (two squares with sweep and envelope, the wave channel, the noise
-  LFSR) and a host-rate mixer;
+  LFSR) driven by the manual's dividers (the pulse divider at 1048576 Hz, the wave divider at
+  2097152 Hz and the LFSR at 262144 / (divisor * 2^shift) Hz), with the 512 Hz frame sequencer
+  clocking the length at 256 Hz, the sweep at 128 Hz and the envelope at 64 Hz, NR50's master
+  volume, NR51's routing and the console's own high pass filter (the CGB's is more aggressive than
+  the DMG's), mixed down to the host's sample rate;
 * the **cartridge**: the header and the MBC1/2/3/5 mappers with battery-backed RAM written to a
   `.sav` next to the ROM;
 * a **free 256-byte boot ROM** built from source by the LR35902 emitter in `gb_asm.cpp`, in which
