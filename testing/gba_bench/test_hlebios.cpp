@@ -8,6 +8,7 @@
 // specification run either way.
 
 #include "gba_test.h"
+#include "hle_probe.h"
 
 #include "gba.h"
 #include "gba_hlebios.h"
@@ -20,135 +21,14 @@ using namespace GBA;
 
 namespace
 {
-	const uint32_t Stub = 0x02000000;			// the little test routine (EWRAM)
-	const uint32_t Work = 0x02001000;			// a SoundArea-sized work area
-	const uint32_t Source = 0x02020000;		// decompressor source
-	const uint32_t Output = 0x02021000;		// decompressor destination
-
-	/// <summary>The BIOS image the user may have put next to the harness ("" when there is none).</summary>
-	std::string FindBiosImage()
-	{
-		static const char* candidates[] =
-		{
-			"testing/gba_bench/bios/gba_bios.bin",
-			"../testing/gba_bench/bios/gba_bios.bin",
-			"/mnt/c/Work/pureikyubu/testing/gba_bench/bios/gba_bios.bin",
-			"bios/gba_bios.bin",
-			"gba_bios.bin",
-		};
-
-		for (const char* candidate : candidates)
-		{
-			FILE* f = fopen(candidate, "rb");
-			if (f != nullptr)
-			{
-				fseek(f, 0, SEEK_END);
-				long size = ftell(f);
-				fclose(f);
-
-				if (size == (long)BiosSize)
-					return candidate;
-			}
-		}
-
-		return "";
-	}
+	using namespace GbaProbe;
 
 	/// <summary>
-	/// A machine to call a SWI through: `real` selects the official BIOS (its own dispatcher runs
-	/// the function) or the HLE path (the host implements it). Both are called the same way, by
-	/// executing a `swi n` instruction from a stub in EWRAM, so a test can compare the two.
-	/// </summary>
-	class SwiCaller
-	{
-		GbaSystem system;
-
-	public:
-		explicit SwiCaller(bool real)
-		{
-			GbaSettings settings = GbaSettings::Defaults();
-			settings.useCustomBootRom = !real;
-			settings.hleBios = !real;
-
-			if (real)
-				settings.biosPath = FindBiosImage();
-
-			system.ApplySettings(settings);
-			system.Reset();
-
-			if (real)
-			{
-				// The official BIOS starts with its own boot sequence; let it finish its
-				// initialization (POSTFLG is what says it is done) and then take the CPU over,
-				// because the boot itself (health screen, key wait) is not what we are testing.
-				for (int i = 0; i < 200000 && Bus().Read8(0x04000300) == 0; i++)
-					system.RunCycles(16);
-			}
-		}
-
-		GbaBus& Bus() { return system.Bus(); }
-
-		/// <summary>Call SWI `number` and run until it returns. False when it never came back.</summary>
-		bool Call(uint32_t number, uint32_t r0 = 0, uint32_t r1 = 0, uint32_t r2 = 0, uint32_t r3 = 0)
-		{
-			// The SWI comment field is bits 16-23 of the instruction (GBATEK), and the stub ends
-			// in an endless branch, which is where the test waits for the call to come back.
-			Bus().Write32(Stub + 0, 0xEF000000u | ((number & 0xFF) << 16));
-			Bus().Write32(Stub + 4, 0xEAFFFFFEu);
-
-			system.Cpu().SetReg(0, r0);
-			system.Cpu().SetReg(1, r1);
-			system.Cpu().SetReg(2, r2);
-			system.Cpu().SetReg(3, r3);
-			system.Cpu().SetReg(13, 0x03007F00);
-			system.Cpu().BranchTo(Stub);
-
-			for (int i = 0; i < 2000000; i++)
-			{
-				if (system.Cpu().CurrentPC() == Stub + 4)
-					return true;
-				system.RunCycles(4);
-			}
-
-			return false;
-		}
-
-		uint32_t R0() { return system.Cpu().Reg(0); }
-	};
-
-	/// <summary>
-	/// The timer 0 reload the driver programmed: TMxCNT_L reads back as the *counter*, which keeps
-	/// counting between the call and the read, so the timer is stopped and enabled again first -
-	/// enabling a GBA timer loads the counter from the reload.
-	/// </summary>
-	uint16_t Timer0Reload(GbaBus& bus)
-	{
-		bus.Write16(0x04000102, 0x0000);
-		bus.Write16(0x04000102, 0x0080);
-		return bus.Read16(0x04000100);
-	}
-
-	/// <summary>The bytes at an address, as a vector.</summary>
-	std::vector<uint8_t> Bytes(GbaBus& bus, uint32_t address, uint32_t count)
-	{
-		std::vector<uint8_t> out;
-		for (uint32_t i = 0; i < count; i++)
-			out.push_back(bus.Read8(address + i));
-		return out;
-	}
-
-	std::string Dump(const std::vector<uint8_t>& bytes)
-	{
-		std::string text;
-		for (uint8_t byte : bytes)
-			text += GbaTest::Hex(byte) + " ";
-		return text;
-	}
-
-	/// <summary>
-	/// A well-formed Huffman stream: an 8 bit unit size, a tree whose root has both children as
-	/// data, and the given bitstream. The tree table is one node plus two data bytes, so its
-	/// "(size / 2) - 1" header byte is 1 - which puts the bitstream at source + 5 + (1 + 1) * 2.
+	/// A well-formed Huffman stream: a tree whose root has both children as data, and the given
+	/// bitstream. The tree table is one node plus two data bytes, which is the 4 byte table whose
+	/// "(size / 2) - 1" header byte is 1, so the bitstream starts at
+	/// source + 4 + (1 + 1) * 2 = source + 8 - the first address after the table (the BIOS's own
+	/// arithmetic, which is `add r0, r2, r10, lsl #1` with r2 = source + 4).
 	/// </summary>
 	void BuildHuffmanStream(GbaBus& bus, uint32_t source, uint32_t bitstream, uint32_t outBytes,
 		uint8_t node0, uint8_t node1, uint32_t unitBits = 8)
@@ -162,7 +42,19 @@ namespace
 		bus.Write8(source + 5, 0xC0);				// the root: both children are data
 		bus.Write8(source + 6, node0);				// child0 = (addr AND NOT 1) + 0 * 2 + 2
 		bus.Write8(source + 7, node1);				// child1
-		bus.Write32(source + 9, bitstream);
+		bus.Write32(source + 8, bitstream);
+	}
+
+	/// <summary>
+	/// The timer 0 reload the driver programmed: TMxCNT_L reads back as the *counter*, which keeps
+	/// counting between the call and the read, so the timer is stopped and enabled again first -
+	/// enabling a GBA timer loads the counter from the reload.
+	/// </summary>
+	uint16_t Timer0Reload(GbaBus& bus)
+	{
+		bus.Write16(0x04000102, 0x0000);
+		bus.Write16(0x04000102, 0x0080);
+		return bus.Read16(0x04000100);
 	}
 }
 
@@ -610,9 +502,11 @@ GBA_TEST(HleBios, HuffmanMatchesTheOfficialBios)
 	SwiCaller hle(false);
 	SwiCaller real(true);
 
-	// A tree with a *node* under the root: the leaf trees below never take the child addressing
-	// path, which is the one a real stream's tree is walked with (child0 =
-	// (address AND NOT 1) + offset * 2 + 2), so it is the easiest to get wrong.
+	// A tree with a *node* under the root, and a bitstream at an address whose 32bit unit is not
+	// word aligned: both the child addressing and the ARM7TDMI's rotated `ldr` of the bitstream are
+	// needed to get this one right. The bits come out as 1001 1001 1000 ... because the unit is
+	// loaded from source + 10, so the bytes the rotation puts in front are source + 9 and
+	// source + 8 - which are the tree's own two data bytes 99h and 88h.
 	{
 		SwiCaller treeHle(false);
 		SwiCaller treeReal(true);
@@ -628,12 +522,11 @@ GBA_TEST(HleBios, HuffmanMatchesTheOfficialBios)
 			bus.Write8(Source + 4, 2);						// (tree table / 2) - 1 -> 6 bytes
 			bus.Write8(Source + 5, 0x40);					// root: child0 a node, child1 data
 			bus.Write8(Source + 6, 0xC0);					// child0: both children are data
-			bus.Write8(Source + 7, 0x77);					// the root's data child
+			bus.Write8(Source + 7, 0x77);					// the root's data child (bit 1)
 			bus.Write8(Source + 8, 0x88);					// the node's child0
 			bus.Write8(Source + 9, 0x99);					// the node's child1
-			bus.Write8(Source + 10, 0);						// padding to the 32bit stream
-			bus.Write32(Source + 11, 0x0C800000);			// bits: 0000 1100 1000 ...
-			bus.Write32(Source + 15, 0xFFFFFFFF);
+			bus.Write8(Source + 10, 0x00);					// the bitstream starts here
+			bus.Write8(Source + 11, 0x00);
 
 			for (uint32_t i = 0; i < 8; i++)
 				bus.Write8(Output + i, 0xEE);
@@ -644,28 +537,22 @@ GBA_TEST(HleBios, HuffmanMatchesTheOfficialBios)
 		std::vector<uint8_t> mineTree = Bytes(treeHle.Bus(), Output, 8);
 		std::vector<uint8_t> theirsTree = Bytes(treeReal.Bus(), Output, 8);
 
+		// 1 -> the root's data child, 0 0 -> down to the node and its child0, 1 1 -> the root's data
+		// child twice.
+		const std::vector<uint8_t> expectedTree = { 0x77, 0x88, 0x77, 0x77, 0xEE, 0xEE, 0xEE, 0xEE };
+
 		GBA_CHECK_MSG(mineTree[0] != 0xEE, "the tree stream was not decompressed");
 
-		// OPEN FINDING: the hardware's tree walk is not what this HLE does - nor what GBATEK's
-		// description of the child addressing and the two "end" flags gives - as soon as a tree has
-		// a *node* under the root. The official BIOS decodes this stream to 77 88 77 77 where the
-		// HLE gives 88 88 88 88, so the leaf trees the rest of this test uses (a root whose two
-		// children are both data) are the only shape the HLE is known to get right - which is why
-		// a game whose graphics use bigger trees (Metroid Fusion does) still does not boot on the
-		// HLE. The next step is the same one that finished the sound driver: read the walk out of
-		// the BIOS's own HuffUnComp (SWI 13h) with the disassembler.
-		bool same = true;
-		for (size_t i = 0; i < mineTree.size(); i++)
-		{
-			if (mineTree[i] != theirsTree[i])
-				same = false;
-		}
+		for (size_t i = 0; i < expectedTree.size(); i++)
+			GBA_CHECK_MSG(mineTree[i] == expectedTree[i],
+				"deep tree byte " + std::to_string(i) + ": HLE " + GbaTest::Hex(mineTree[i]) +
+				", expected " + GbaTest::Hex(expectedTree[i]) + " (" + Dump(mineTree) + ")");
 
-		if (!same)
-		{
-			GbaTest::Note("OPEN FINDING: a deep Huffman tree decodes differently: HLE " +
-				Dump(mineTree) + "against the BIOS " + Dump(theirsTree));
-		}
+		for (size_t i = 0; i < mineTree.size(); i++)
+			GBA_CHECK_MSG(mineTree[i] == theirsTree[i],
+				"deep tree byte " + std::to_string(i) + ": HLE " + GbaTest::Hex(mineTree[i]) +
+				" against the BIOS " + GbaTest::Hex(theirsTree[i]) +
+				"\n    HLE  " + Dump(mineTree) + "\n    BIOS " + Dump(theirsTree));
 	}
 
 	for (const Case& c : cases)
@@ -693,3 +580,146 @@ GBA_TEST(HleBios, HuffmanMatchesTheOfficialBios)
 				GbaTest::Hex(mine[i]) + " against the BIOS " + GbaTest::Hex(theirs[i]));
 	}
 }
+
+namespace
+{
+	/// <summary>A tiny deterministic generator, so a failure can be reproduced from its case number.</summary>
+	struct Random
+	{
+		uint32_t state;
+
+		explicit Random(uint32_t seed) : state(seed) {}
+
+		uint32_t Next()
+		{
+			state ^= state << 13;
+			state ^= state >> 17;
+			state ^= state << 5;
+			return state;
+		}
+	};
+
+	/// <summary>
+	/// Lay out one node of a random Huffman tree. The byte at `at` becomes a node whose two
+	/// children are the next free pair of adjacent bytes; a child is written as data (its byte is a
+	/// symbol) or as another node, and the parent's flags say which, exactly as the format has it.
+	/// </summary>
+	void BuildRandomNode(uint8_t* image, uint32_t base, uint32_t limit, uint32_t& nextFree,
+		uint32_t at, int depth, Random& random)
+	{
+		if (depth <= 0 || nextFree + 2 > limit)
+		{
+			image[at - base] = (uint8_t)random.Next();
+			return;
+		}
+
+		uint32_t pair = nextFree;
+		nextFree += 2;
+
+		bool leaf0 = depth == 1 || (random.Next() % 3) == 0;
+		bool leaf1 = depth == 1 || (random.Next() % 3) == 0;
+
+		uint32_t offset = (pair - (at & ~1u)) / 2 - 1;
+		uint8_t flags = (uint8_t)((leaf0 ? 0x80 : 0x00) | (leaf1 ? 0x40 : 0x00));
+		image[at - base] = (uint8_t)((offset & 0x3F) | flags);
+
+		BuildRandomNode(image, base, limit, nextFree, pair, leaf0 ? 0 : depth - 1, random);
+		BuildRandomNode(image, base, limit, nextFree, pair + 1, leaf1 ? 0 : depth - 1, random);
+	}
+}
+
+GBA_TEST(HleBios, HuffmanMatchesTheOfficialBiosOnRandomTrees)
+{
+	// The hand written cases above cover the paths that were read out of the BIOS's own HuffUnComp
+	// (the child addressing, the two leaf flags, the rotated bitstream load, the unit that is
+	// written whole). This walks random streams - random trees with nodes and data children at
+	// random offsets, random bitstreams, both unit sizes - through both implementations, because a
+	// decompressor is only as right as the streams it has never seen.
+	if (FindBiosImage().empty())
+	{
+		GbaTest::Note("no real BIOS image in testing/gba_bench/bios/ - the comparison is skipped "
+			"(put your own gba_bios.bin there to run it)");
+		return;
+	}
+
+	SwiCaller hle(false);
+	SwiCaller real(true);
+
+	const uint32_t ImageBase = Source;
+	const uint32_t ImageSize = 512;			// the tree, the bitstream, and the bytes the walk may read
+	const uint32_t TreeBase = Source + 5;
+	const uint32_t TreeLimit = Source + 61;	// the tree table stays small enough for 6 bit offsets
+	const uint32_t OutputSize = 32;
+
+	const int iterations = 300;
+	int failures = 0;
+
+	for (int iteration = 0; iteration < iterations; iteration++)
+	{
+		Random random(0x9E3779B9u ^ (uint32_t)iteration * 2654435761u);
+
+		uint32_t unitBits = (random.Next() & 1) ? 4 : 8;
+		uint32_t outBytes = 1 + (random.Next() % 24);
+
+		std::vector<uint8_t> image(ImageSize);
+		for (uint32_t i = 0; i < ImageSize; i++)
+			image[i] = (uint8_t)random.Next();
+
+		// The header and the tree, then the bitstream after it - the BIOS's own address arithmetic
+		// for the bitstream is source + 4 + (treeSize + 1) * 2, so the tree size byte is whatever
+		// makes that land on the first free even byte after the tree.
+		uint32_t nextFree = TreeBase + 1;
+
+		if (nextFree & 1)
+			nextFree++;
+
+		BuildRandomNode(image.data(), ImageBase, TreeLimit, nextFree, TreeBase,
+			1 + (int)(random.Next() % 3), random);
+
+		uint32_t bitstream = (nextFree + 1) & ~1u;
+		uint32_t treeSizeByte = (bitstream - (Source + 4)) / 2 - 1;
+
+		uint32_t header = 0x20 | unitBits | (outBytes << 8);
+		image[0] = (uint8_t)header;
+		image[1] = (uint8_t)(header >> 8);
+		image[2] = (uint8_t)(header >> 16);
+		image[3] = (uint8_t)(header >> 24);
+		image[4] = (uint8_t)treeSizeByte;
+
+		// Every byte the decompressor will read has to be identical in both machines, or a
+		// difference in the output could be a difference in the memory rather than in the walk.
+		for (uint32_t i = 0; i < ImageSize; i++)
+		{
+			hle.Bus().Write8(ImageBase + i, image[i]);
+			real.Bus().Write8(ImageBase + i, image[i]);
+		}
+
+		for (uint32_t i = 0; i < OutputSize; i++)
+		{
+			hle.Bus().Write8(Output + i, 0xEE);
+			real.Bus().Write8(Output + i, 0xEE);
+		}
+
+		GBA_CHECK(hle.Call(SwiHuffUnComp, Source, Output));
+		GBA_CHECK(real.Call(SwiHuffUnComp, Source, Output));
+
+		std::vector<uint8_t> mine = Bytes(hle.Bus(), Output, OutputSize);
+		std::vector<uint8_t> theirs = Bytes(real.Bus(), Output, OutputSize);
+
+		if (mine == theirs)
+			continue;
+
+		failures++;
+
+		if (failures <= 3)
+		{
+			GbaTest::Note("random case " + std::to_string(iteration) + " (" +
+				std::to_string(unitBits) + " bit units, " + std::to_string(outBytes) + " bytes out):"
+				"\n    HLE  " + Dump(mine) + "\n    BIOS " + Dump(theirs));
+		}
+	}
+
+	GBA_CHECK_MSG(failures == 0, std::to_string(failures) + " of " + std::to_string(iterations) +
+		" random streams decoded differently");
+}
+

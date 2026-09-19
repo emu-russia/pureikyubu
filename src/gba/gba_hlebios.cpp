@@ -403,65 +403,62 @@ namespace GBA
 			}
 		}
 
+		/// <summary>
+		/// BitUnPack (GBATEK "SWI 10h"): widen every source unit to the destination width. The
+		/// data offset is added to units that are not zero; its top bit, not a byte of its own, is
+		/// the "add it to zero units too" flag (the official BIOS reads it as `mov r8, r11, lsr
+		/// #31` and clears it with `lsl #1 / lsr #1`). The units come out of each source byte
+		/// least significant first and the result is accumulated into 32bit words - a trailing
+		/// partial word is dropped, because the BIOS only ever stores whole ones.
+		/// </summary>
 		static void BitUnPack(GbaBus& bus, uint32_t source, uint32_t dest, uint32_t info)
 		{
-			uint16_t sourceLength = bus.Read16(info + 0);
-			uint8_t sourceWidth = bus.Read8(info + 2);
-			uint8_t destWidth = bus.Read8(info + 3);
-			uint32_t dataOffset = bus.Read32(info + 4);
-			uint8_t flags = bus.Read8(info + 8);
+			uint32_t sourceLength = bus.Read16(info + 0);
+			uint32_t sourceWidth = bus.Read8(info + 2);
+			uint32_t destWidth = bus.Read8(info + 3);
+			uint32_t offsetField = bus.Read32(info + 4);
+			bool zeroIsOffset = (offsetField & 0x80000000u) != 0;
+			uint32_t dataOffset = offsetField & 0x7FFFFFFFu;
 
-			if (sourceWidth == 0 || sourceWidth > 8 || destWidth == 0 || destWidth > 8)
+			const bool validSource = sourceWidth == 1 || sourceWidth == 2 || sourceWidth == 4 || sourceWidth == 8;
+			const bool validDest = destWidth == 1 || destWidth == 2 || destWidth == 4 || destWidth == 8 ||
+				destWidth == 16 || destWidth == 32;
+
+			if (!validSource || !validDest)
 			{
-				Log(LogLevel::Warn, "BitUnPack: source/dest width %i/%i is not supported", sourceWidth, destWidth);
+				Log(LogLevel::Warn, "BitUnPack: source/dest width %i/%i is not supported", sourceWidth,
+					destWidth);
 				return;
 			}
 
-			uint32_t destMask = (destWidth == 8) ? 0xFF : ((1u << destWidth) - 1);
-			uint32_t destBit = 0;
-			uint8_t writeByte = 0;
-			uint32_t byteBits = 0;
+			uint32_t unitMask = (sourceWidth == 8) ? 0xFF : ((1u << sourceWidth) - 1);
+			uint32_t accumulator = 0;
+			uint32_t bits = 0;
 
-			for (uint32_t i = 0; i < (uint32_t)sourceLength * 8 / sourceWidth; i++)
+			for (uint32_t i = 0; i < sourceLength; i++)
 			{
-				// Read one source unit.
-				uint8_t byte = bus.Read8(source + (i * sourceWidth) / 8);
-				uint32_t shift = (i * sourceWidth) % 8;
-				uint32_t value = (byte >> shift) & ((1u << sourceWidth) - 1);
+				uint8_t byte = bus.Read8(source + i);
 
-				if (flags & 0x01)
+				for (uint32_t shift = 0; shift < 8; shift += sourceWidth)
 				{
-					value = (value + dataOffset) & destMask;
-				}
-				else if (value != 0)
-				{
-					value = (value + dataOffset) & destMask;
-				}
+					uint32_t value = (byte >> shift) & unitMask;
 
-				// Write it to the destination, bit by bit.
-				for (int b = 0; b < destWidth; b++)
-				{
-					if ((value >> b) & 1)
+					if (value != 0 || zeroIsOffset)
+						value += dataOffset;
+
+					accumulator |= value << bits;
+					bits += destWidth;
+
+					if (bits >= 32)
 					{
-						writeByte |= (uint8_t)(1 << byteBits);
-					}
-					byteBits++;
-					if (byteBits == 8)
-					{
-						bus.Write8(dest + destBit, writeByte);
-						destBit++;
-						writeByte = 0;
-						byteBits = 0;
+						bus.Write32(dest, accumulator);
+						dest += 4;
+						accumulator = 0;
+						bits = 0;
 					}
 				}
-			}
-
-			if (byteBits != 0)
-			{
-				bus.Write8(dest + destBit, writeByte);
 			}
 		}
-
 		// -----------------------------------------------------------------------------------
 		// The sound driver (SWI 1Ah..1Fh, 28h and 29h)
 		//
@@ -989,51 +986,93 @@ namespace GBA
 		// The decompressors
 		// -----------------------------------------------------------------------------------
 
-		/// <summary>The GBA's LZ77 variant: a 4-bit length and a 12-bit backward offset.</summary>
+		/// <summary>
+		/// A decompressor's destination as the BIOS writes it. The Wram variants write single
+		/// bytes; the Vram ones write 16bit units, because VRAM has no byte writes. The Vram form
+		/// keeps one byte pending until its pair is complete, exactly like the halfword
+		/// accumulator the BIOS uses - so a byte that has been produced but not yet paired is not
+		/// in memory yet, and an odd final byte is never written at all. That is not cosmetic: a
+		/// back reference that reaches the pending byte reads the old memory instead (GBATEK's
+		/// caution that the LZ77 Vram function works with disp 1..FFFh but not 0).
+		/// </summary>
+		class DecompressedOutput
+		{
+		public:
+			DecompressedOutput(GbaBus& bus, uint32_t address, bool wide)
+				: bus(bus), address(address), wide(wide) {}
+
+			void Put(uint8_t value)
+			{
+				if (!wide)
+				{
+					bus.Write8(address++, value);
+					return;
+				}
+
+				if (!pending)
+				{
+					low = value;
+					pending = true;
+					address++;
+					return;
+				}
+
+				bus.Write16(address & ~1u, (uint16_t)(low | (value << 8)));
+				address++;
+				pending = false;
+			}
+
+			/// <summary>Where the next produced byte lands - a back reference's base address.</summary>
+			uint32_t Position() const { return address; }
+
+		private:
+			GbaBus& bus;
+			uint32_t address;
+			bool wide;
+			bool pending = false;
+			uint8_t low = 0;
+		};
+
+		/// <summary>
+		/// The GBA's LZ77 variant: a flag byte (MSB first) and eight blocks, each block either a
+		/// literal byte or "copy N+3 bytes from dest-disp-1" (GBATEK "LZ77UnComp").
+		///
+		/// The byte count in the header decides where the BIOS stops reading blocks; it is not a
+		/// limit on how much a block writes, so it copies the whole of the block that crosses the
+		/// end. (Found with the official BIOS: a stream whose last block reaches one byte past its
+		/// size has that byte written.)
+		/// </summary>
 		static void Lz77UnComp(GbaBus& bus, uint32_t source, uint32_t dest, bool vram)
 		{
 			uint32_t header = (bus.Read8(source + 1) | (bus.Read8(source + 2) << 8) | (bus.Read8(source + 3) << 16));
 			uint32_t src = source + 4;
-			uint32_t dst = dest;
-			uint32_t written = 0;
+			int32_t remaining = (int32_t)header;
+			DecompressedOutput out(bus, dest, vram);
 
-			while (written < header)
+			while (remaining > 0)
 			{
 				uint8_t flags = bus.Read8(src++);
 
-				for (int bit = 0; bit < 8 && written < header; bit++)
+				for (int bit = 7; bit >= 0 && remaining > 0; bit--)
 				{
-					if (flags & 0x80)
+					if (flags & (1u << bit))
 					{
 						uint8_t b0 = bus.Read8(src++);
 						uint8_t b1 = bus.Read8(src++);
 						uint32_t length = (b0 >> 4) + 3;
 						uint32_t offset = (((b0 & 0xF) << 8) | b1) + 1;
 
-						for (uint32_t i = 0; i < length && written < header; i++)
-						{
-							uint8_t value = bus.Read8(dst - offset);
-							bus.Write8(dst, value);
-							dst++;
-							written++;
-						}
+						remaining -= (int32_t)length;
+
+						for (uint32_t i = 0; i < length; i++)
+							out.Put(bus.Read8(out.Position() - offset));
 					}
 					else
 					{
-						bus.Write8(dst, bus.Read8(src++));
-						dst++;
-						written++;
+						out.Put(bus.Read8(src++));
+						remaining--;
 					}
-
-					flags <<= 1;
 				}
-			}
-
-			if (vram)
-			{
-				// The Vram variant writes halfwords (the VRAM bus is 16-bit). The byte-wise
-				// writes above land in the same place, so nothing else is needed; the flag is
-				// kept so the two entry points stay distinguishable.
 			}
 		}
 
@@ -1044,52 +1083,89 @@ namespace GBA
 		/// the size of the decompressed data in bytes - then an 8bit tree size ((size of the tree
 		/// table / 2) - 1), the tree table itself and the bitstream.
 		///
-		/// A tree node is 8 bits. A node that is not data is: bits 0-5 the offset to the next child
-		/// node, bit 6 "the node1 child is data", bit 7 "the node0 child is data", with
-		/// child0 = (thisAddress AND NOT 1) + offset * 2 + 2 and child1 = child0 + 1. Walking from
-		/// the root, every bit of the bitstream (bit 31 of each 32bit unit first) picks child 0 or
-		/// child 1; landing on a child whose parent flagged it as data appends that node's byte
-		/// (masked to the unit size) to the output and starts again from the root.
+		/// A tree node is 8 bits: bits 0-5 the offset to its children, bit 6 "the child taken when
+		/// the bit is 1 is data", bit 7 "the child taken when the bit is 0 is data". The children
+		/// are a pair of adjacent bytes:
 		///
-		/// The output is written in 32bit units, so the last unit is padded with zeros.
+		///     child0 = (thisAddress AND NOT 1) + offset * 2 + 2   (even)
+		///     child1 = child0 + 1                                 (odd)
+		///
+		/// Walking from the root, every bit of the bitstream picks child 0 or child 1; landing on a
+		/// child whose parent flagged it as data appends that child's byte to the output and starts
+		/// again from the root. A byte can therefore be data for one branch and a node for the
+		/// other - the two flags are what keeps that unambiguous.
+		///
+		/// The output is written in 32bit units: the stream is decoded until the unit holding the
+		/// last requested byte is full, so a byte count that is not a multiple of four still has its
+		/// last unit written whole (confirmed against the official BIOS, whose loop only tests its
+		/// remaining-byte counter between units).
+		///
+		/// The bitstream is read the way the BIOS reads it: `ldr r5, [r0], #4` from the byte after
+		/// the tree table, so a 32bit unit loaded from an address that is not word aligned is the
+		/// ARM7TDMI's rotated word - the first *byte* consumed is the one at the unit address, and
+		/// the two bytes before it come last. That is not a detail that can be dropped: with the
+		/// deep tree the differential test uses, the rotation is what puts 99h/88h - which are also
+		/// the tree's data bytes - in front of the bitstream that starts after them.
 		/// </summary>
 		static void HuffUnComp(GbaBus& bus, uint32_t source, uint32_t dest)
 		{
 			uint32_t header = bus.Read32(source);
 			uint32_t unitBits = header & 0xF;
-			uint32_t outBytes = header >> 8;
+			int32_t outBytes = (int32_t)(header >> 8);
 
-			if (header & 0xF0 != 0x20 || unitBits == 0 || unitBits > 8 || outBytes == 0)
+			if ((header & 0xF0) != 0x20 || (unitBits != 4 && unitBits != 8) || outBytes <= 0)
 			{
 				Log(LogLevel::Warn, "HLE BIOS: HuffUnComp stream at %08X is not a Huffman header "
 					"(%08X)", source, header);
 				return;
 			}
 
+			// The BIOS computes the bitstream address as source + 4 + (treeSize + 1) * 2 - the tree
+			// size byte sits at source + 4 and the root at source + 5.
 			uint32_t tree = source + 5;
-			uint32_t bitstream = tree + ((uint32_t)bus.Read8(source + 4) + 1) * 2;
-			uint32_t mask = (1u << unitBits) - 1;
+			uint32_t bitstream = source + 4 + ((uint32_t)bus.Read8(source + 4) + 1) * 2;
 
-			// The output is written in 32bit units and the hardware does not stop in the middle of
-			// one: it keeps decoding until the unit that holds the last requested byte is full.
-			// (Found by comparing against the official BIOS: with a 7 byte stream its last unit's
-			// fourth byte is a decoded symbol, not a zero.)
-			uint32_t total = (outBytes + 3) & ~3u;
+			// A word of the output holds 32 / unitBits symbols; the BIOS counts them and stores the
+			// accumulator as a 32bit unit. `remaining` is the byte counter its loop drives, which
+			// goes negative on the unit that covers the last requested byte.
+			uint32_t unitsPerWord = 32 / unitBits;
+			int32_t remaining = outBytes;
 
 			uint32_t node = tree;			// the root
-			uint32_t write = 0;				// the byte being packed
-			uint32_t filled = 0;			// bits in it
-			uint32_t written = 0;
-			uint32_t bits = 0;				// the bit index into the bitstream
+			uint32_t accumulator = 0;
+			uint32_t units = 0;
+			uint32_t bits = 0;				// bits consumed from the bitstream
+			uint32_t word = 0;
+			uint32_t wordBits = 0;
 
-			while (written < total)
+			// A malformed tree cannot cycle (the child address always moves forward), but it can
+			// walk far outside its own table looking for a data flag, so keep a ceiling on it: the
+			// hardware would loop until it found one.
+			uint32_t visits = 0;
+			uint32_t visitLimit = (uint32_t)((outBytes + 3) & ~3) * 256 + 4096;
+
+			while (remaining > 0 && visits++ < visitLimit)
 			{
-				uint32_t word = bus.Read32(bitstream + (bits >> 5) * 4);
-				uint32_t bit = (word >> (31 - (bits & 31))) & 1;
+				if (wordBits == 0)
+				{
+					uint32_t address = bitstream + (bits >> 5) * 4;
+					word = bus.Read32(address & ~3u);
+					uint32_t rotation = (address & 3) * 8;
+
+					if (rotation != 0)
+						word = (word >> rotation) | (word << (32 - rotation));
+
+					wordBits = 32;
+				}
+
+				uint32_t bit = (word >> 31) & 1;
+				word <<= 1;
+				wordBits--;
 				bits++;
 
-				uint32_t child = (node & ~1u) + (((uint32_t)bus.Read8(node) & 0x3F) * 2) + 2 + bit;
 				uint8_t flags = bus.Read8(node);
+				uint32_t child = (node & ~1u) + (((uint32_t)flags & 0x3F) + 1) * 2 + bit;
+
 				bool isData = (bit == 0) ? ((flags & 0x80) != 0) : ((flags & 0x40) != 0);
 
 				if (!isData)
@@ -1098,90 +1174,112 @@ namespace GBA
 					continue;
 				}
 
-				write |= ((uint32_t)bus.Read8(child) & mask) << filled;
-				filled += unitBits;
-
-				if (filled == 8)
-				{
-					bus.Write8(dest + written, (uint8_t)write);
-					written++;
-					write = 0;
-					filled = 0;
-				}
-
+				// The accumulator is shifted by the unit size and the byte's low unitBits bits are
+				// dropped in at the top; with 4 or 8 bit units a word is exactly `unitsPerWord`
+				// symbols, so the first symbol ends up in the low bits - little endian.
+				accumulator = (accumulator >> unitBits) |
+					((uint32_t)bus.Read8(child) << (32 - unitBits));
 				node = tree;
+
+				if (++units == unitsPerWord)
+				{
+					bus.Write32(dest, accumulator);
+					dest += 4;
+					remaining -= 4;
+					units = 0;
+					accumulator = 0;
+				}
 			}
 
-			// A stream whose last unit the decoder did not finish (a 4 bit unit that stopped on a
-			// half byte) still ends on a unit boundary: the rest is zero.
-			while (written < total)
+			if (visits >= visitLimit)
 			{
-				bus.Write8(dest + written, (uint8_t)write);
-				written++;
-				write = 0;
+				Log(LogLevel::Warn, "HLE BIOS: HuffUnComp stream at %08X has a broken tree (gave up "
+					"after %u nodes)", source, visits);
 			}
 		}
 
-		/// <summary>The GBA's run-length variant: a length byte and the byte to repeat.</summary>
-		static void RlUnComp(GbaBus& bus, uint32_t source, uint32_t dest)
+		/// <summary>
+		/// The GBA's run-length variant (GBATEK "RLUnComp"). The flag byte is *not* a bit field of
+		/// eight blocks like LZ77's: bit 7 says whether the run is compressed and bits 0-6 are its
+		/// length (N-1 bytes to copy, or N-3 copies of one byte), so one flag byte and one data run
+		/// is the whole unit. An earlier version here read the flag as eight bits, which turned
+		/// every run into a set of literals.
+		/// </summary>
+		static void RlUnComp(GbaBus& bus, uint32_t source, uint32_t dest, bool vram)
 		{
 			uint32_t header = (bus.Read8(source + 1) | (bus.Read8(source + 2) << 8) | (bus.Read8(source + 3) << 16));
 			uint32_t src = source + 4;
-			uint32_t dst = dest;
-			uint32_t written = 0;
+			int32_t remaining = (int32_t)header;
+			DecompressedOutput out(bus, dest, vram);
 
-			while (written < header)
+			while (remaining > 0)
 			{
 				uint8_t flags = bus.Read8(src++);
+				uint32_t length = (uint32_t)(flags & 0x7F);
 
-				for (int bit = 0; bit < 8 && written < header; bit++)
+				if (flags & 0x80)
 				{
-					if (flags & 0x80)
-					{
-						uint8_t length = bus.Read8(src++);
-						uint8_t value = bus.Read8(src++);
+					length += 3;
+					uint8_t value = bus.Read8(src++);
+					remaining -= (int32_t)length;
 
-						for (uint32_t i = 0; i < (uint32_t)length + 3 && written < header; i++)
-						{
-							bus.Write8(dst++, value);
-							written++;
-						}
-					}
-					else
-					{
-						bus.Write8(dst++, bus.Read8(src++));
-						written++;
-					}
+					for (uint32_t i = 0; i < length; i++)
+						out.Put(value);
+				}
+				else
+				{
+					length += 1;
+					remaining -= (int32_t)length;
 
-					flags <<= 1;
+					for (uint32_t i = 0; i < length; i++)
+						out.Put(bus.Read8(src++));
 				}
 			}
 		}
 
-		/// <summary>The GBA's delta filters: the first byte is absolute, the rest are deltas.</summary>
-		static void DiffUnFilter(GbaBus& bus, uint32_t source, uint32_t dest, int width)
+		/// <summary>
+		/// The GBA's delta filters (GBATEK "Diff8bit/Diff16bitUnFilter"): the first unit is
+		/// absolute and every following unit is a delta added to the previous one, in 8 or 16 bit
+		/// arithmetic. The byte count in the header is the size after decompression; the BIOS
+		/// writes the first unit before it looks at that count at all.
+		/// </summary>
+		static void DiffUnFilter(GbaBus& bus, uint32_t source, uint32_t dest, int width, bool vram)
 		{
 			uint32_t header = (bus.Read8(source + 1) | (bus.Read8(source + 2) << 8) | (bus.Read8(source + 3) << 16));
 			uint32_t src = source + 4;
+			int32_t remaining = (int32_t)header;
 
 			if (width == 1)
 			{
-				uint8_t value = 0;
-				for (uint32_t i = 0; i < header; i++)
+				DecompressedOutput out(bus, dest, vram);
+				uint8_t value = bus.Read8(src++);
+
+				out.Put(value);
+				remaining--;
+
+				while (remaining > 0)
 				{
-					value = (uint8_t)(value + bus.Read8(src + i));
-					bus.Write8(dest + i, value);
+					value = (uint8_t)(value + bus.Read8(src++));
+					out.Put(value);
+					remaining--;
 				}
 			}
 			else
 			{
-				uint8_t value = 0;
-				uint32_t halves = header / 2;
-				for (uint32_t i = 0; i < halves; i++)
+				uint16_t value = bus.Read16(src);
+				src += 2;
+
+				bus.Write16(dest, value);
+				dest += 2;
+				remaining -= 2;
+
+				while (remaining > 0)
 				{
-					value = (uint8_t)(value + bus.Read8(src + i));
-					bus.Write8(dest + i * 2, value);
-					bus.Write8(dest + i * 2 + 1, 0);
+					value = (uint16_t)(value + bus.Read16(src));
+					src += 2;
+					bus.Write16(dest, value);
+					dest += 2;
+					remaining -= 2;
 				}
 			}
 		}
@@ -1340,19 +1438,27 @@ namespace GBA
 					return true;
 
 				case SwiRlUnCompWram:
+					RlUnComp(bus, Reg(bus, 0), Reg(bus, 1), false);
+					Return(bus);
+					return true;
+
 				case SwiRlUnCompVram:
-					RlUnComp(bus, Reg(bus, 0), Reg(bus, 1));
+					RlUnComp(bus, Reg(bus, 0), Reg(bus, 1), true);
 					Return(bus);
 					return true;
 
 				case SwiDiff8bitUnFilterWram:
+					DiffUnFilter(bus, Reg(bus, 0), Reg(bus, 1), 1, false);
+					Return(bus);
+					return true;
+
 				case SwiDiff8bitUnFilterVram:
-					DiffUnFilter(bus, Reg(bus, 0), Reg(bus, 1), 1);
+					DiffUnFilter(bus, Reg(bus, 0), Reg(bus, 1), 1, true);
 					Return(bus);
 					return true;
 
 				case SwiDiff16bitUnFilter:
-					DiffUnFilter(bus, Reg(bus, 0), Reg(bus, 1), 2);
+					DiffUnFilter(bus, Reg(bus, 0), Reg(bus, 1), 2, false);
 					Return(bus);
 					return true;
 

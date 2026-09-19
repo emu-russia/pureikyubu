@@ -7,10 +7,11 @@
 // What the ROM does, in the order it does it:
 //
 //   1. the ARM exception vector table at 0x00000000 (eight branches, ARM Architecture Reference Manual A2.6) and the
-//      handlers: a real IRQ handler that acknowledges IF, calls the game's handler at 0x03007FFC
-//      when one is installed (GBATEK "BIOS RAM") and returns with SUBS PC, LR, #4; a SWI handler
-//      that returns (the BIOS service calls are handled in the host by gba_hlebios.cpp) and a trap
-//      loop the undefined/abort vectors point at;
+//      handlers: an IRQ handler that saves the caller's registers, calls the handler installed at
+//      0x03007FFC (GBATEK "BIOS RAM") - which is the one that acknowledges IF, as it is on the
+//      official BIOS - and returns with SUBS PC, LR, #4; a SWI handler that returns (the BIOS
+//      service calls are handled in the host by gba_hlebios.cpp) and a trap loop the
+//      undefined/abort vectors point at;
 //   2. the pureikyubu logo animation - a rotating wireframe cube that collapses into the flat cube
 //      mark while the wordmark scrolls in from the right - drawn into the mode 3 16bpp bitmap with
 //      a Bresenham line drawer, over a vertical gradient with an animated star field;
@@ -19,10 +20,11 @@
 //      Cartridge Header") fails, means "no cartridge" and starts the link driver instead;
 //   4. the cartridge handover: System mode, the BIOS stacks, IME = 1, I and F clear, POSTFLG = 1,
 //      DISPCNT = 0, r0-r12 = 0, then LDR PC, [PC, #-4] to 0x08000000 (ARM state, bit 0 clear);
-//   5. the SIO link driver: multi-player mode at 115200 bps with the completion interrupt on, a
-//      small handshake state machine, a "LINK" status screen, and a mailbox in IWRAM at
-//      0x03007FF0 (status, word sent, word received, transfer count) that the harness and the unit
-//      tests read from outside.
+//   5. the SIO link driver: multi-player mode at 115200 bps with the completion interrupt on (and
+//      its own acknowledge-and-return handler installed at 0x03007FFC, because the BIOS leaves the
+//      acknowledging to the handler), a small handshake state machine, a "LINK" status screen, and a
+//      mailbox in IWRAM at 0x03007FF0 (status, word sent, word received, transfer count) that the
+//      harness and the unit tests read from outside.
 //
 // Two things about the code generation are worth knowing before reading the routines:
 //
@@ -483,11 +485,12 @@ namespace GBA
 				const uint32_t irqSaved = 0x000F | (1u << 12) | (1u << 14);		// r0-r3, r12, lr
 				SaveRegs(irqSaved);
 
-				// Acknowledge every cause the interrupt controller raised: writing a 1 back to a
-				// bit of IF clears it (GBATEK "Interrupt Control").
-				LoadConst(0, RegIrq + 2);
-				emitter.Ldrh(1, 0, 0);
-				emitter.Strh(1, 0, 0);
+				// Acknowledge nothing here. The official BIOS only saves the registers and calls
+				// the handler (`stmdb sp!, {r0-r3,r12,lr}; mov r0, #0x04000000; add lr, pc, #0;
+				// ldr pc, [r0, #-4]`), so the handler sees IF exactly as the hardware raised it and
+				// is the one that acknowledges it. Acknowledging first hid the cause from the
+				// handler: Metroid Fusion's handler reads IF, finds nothing set and returns without
+				// doing its per frame work, which freezes the game on the "press start" screen.
 
 				// The game's handler lives at 0x03007FFC (GBATEK "BIOS RAM"). The boot ROM clears
 				// that word, so zero means "the game has not installed one".
@@ -1391,6 +1394,19 @@ namespace GBA
 			// port that only ever shows our own word is the handshake state.
 			void BootRomBuilder::EmitLinkDriver()
 			{
+				// The SIO port raises its completion interrupt below, so something has to be in
+				// the handler slot: the BIOS calls whatever 0x03007FFC points at and the handler
+				// is the one that acknowledges the cause (writing a raised bit of IF back clears
+				// it). The official BIOS clears nothing on the handler's behalf, so a handler that
+				// returns without acknowledging leaves the interrupt requested and the CPU spins
+				// between the interrupt entry and this routine - which is exactly what happened
+				// while the boot ROM's IRQ handler did the acknowledging itself.
+				const uint32_t acknowledgeIrq = emitter.PC();
+				LoadConst(0, RegIrq + 2);
+				emitter.Ldrh(1, 0, 0);
+				emitter.Strh(1, 0, 0);								// write the raised bits back
+				emitter.Bx(14);
+
 				emitter.Label("LinkDriver");
 				linkEntry = emitter.PC();
 
@@ -1434,6 +1450,10 @@ namespace GBA
 				LoadConst(1, RegSioCnt);
 				LoadConst(0, 0x6003);
 				emitter.Strh(0, 1, 0);								// multi-player, 115200 bps, IRQ on
+				// Install the acknowledge routine above as the handler before enabling anything.
+				LoadConst(1, 0x03007FFC);
+				LoadConst(0, acknowledgeIrq);
+				emitter.Str(0, 1, 0);
 				LoadConst(1, RegIrq);
 				emitter.Mov(0, 0x80);
 				emitter.Strh(0, 1, 0);								// IE = the SIO bit
