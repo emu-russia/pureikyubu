@@ -35,7 +35,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_types.h` | Common types, the memory map constants, the interrupt bits and the colour helpers |
 | `arm7tdmi.h/.cpp` | The ARM7TDMI interpreter (ARM and Thumb, all seven modes, the exceptions, HALT) |
 | `gba_bus.h/.cpp` | The address decoder, the open bus, the waitstates and the system clock |
-| `gba_ppu.h/.cpp` | The LCD controller: tile and bitmap backgrounds, sprites, windows, blending, scanline timing |
+| `gba_ppu.h/.cpp` | The LCD controller: tile and bitmap backgrounds (the bitmap modes are BG2 and are sampled through the BG2 rotation/scaling registers, as the AGB manual 6.2.2 describes), sprites with the OBJ window, the WIN0/WIN1/WINOBJ regions, the mosaic, the colour special effects and the scanline timing |
 | `gba_apu.h/.cpp` | The four legacy channels, the two direct-sound FIFOs (clocked by the timer overflows) and the host mixer |
 | `gba_audio.h` | The mixer buffer between the machine and the host's sound device: the machine pushes the samples into it, the frontend's audio callback plays them at the rate a slow controller steers from the buffer's level (the arrangement dmgemu uses in its `sound.cpp`) |
 | `gba_sio.h/.cpp` | The serial port: normal, multiplayer, UART and JOY bus modes, and the link cable |
