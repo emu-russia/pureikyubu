@@ -98,6 +98,7 @@ namespace
 		GBA_CHECK_MSG(actual.vsync == expected.vsync, what + ": vsync");
 		GBA_CHECK_MSG(actual.integerScale == expected.integerScale, what + ": integerScale");
 		GBA_CHECK_MSG(actual.showFps == expected.showFps, what + ": showFps");
+		GBA_CHECK_MSG(actual.lcdEffect == expected.lcdEffect, what + ": lcdEffect");
 		GBA_CHECK_MSG(actual.frameSkip == expected.frameSkip, what + ": frameSkip");
 
 		GBA_CHECK_MSG(actual.audioEnabled == expected.audioEnabled, what + ": audioEnabled");
@@ -147,6 +148,7 @@ GBA_TEST(Settings, Defaults)
 	GBA_CHECK(settings.vsync);
 	GBA_CHECK(settings.integerScale);
 	GBA_CHECK(settings.showFps);
+	GBA_CHECK(settings.lcdEffect);			// the LCD ghosting effect is on by default
 	GBA_CHECK(!settings.frameSkip);
 
 	GBA_CHECK(settings.audioEnabled);
@@ -227,6 +229,7 @@ GBA_TEST(Settings, SaveAndLoad)
 	settings.vsync = false;
 	settings.integerScale = false;
 	settings.showFps = false;
+	settings.lcdEffect = false;
 	settings.frameSkip = true;
 	settings.audioEnabled = false;
 	settings.sampleRate = 48000;

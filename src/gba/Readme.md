@@ -50,7 +50,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_settings.h/.cpp` | `build/Data/GBASettings.json` |
 | `gba.h/.cpp` | `GbaSystem`: what a frontend talks to |
 | `gba_debug.h/.cpp` | The debug interface of both machines for the new debugger (debugui2) and the JDI command line. This is the one file of the module that is compiled with the host rather than into the portable library: JDI, Markdown and the debugger live on the GameCube side, and their headers need the third-party paths the module deliberately does not have (see the header comment) |
-| `gba_sdl.h/.cpp` | The SDL2 frontend of both machines (the `--gba` / `--gb` modes) |
+| `gba_sdl.h/.cpp` | The SDL2 frontend of both machines (the `--gba` / `--gb` modes), including the LCD ghosting effect (`video.lcdEffect`, dmgemu's `lcd_effect`) |
 
 ### The Game Boy (DMG/CGB)
 
