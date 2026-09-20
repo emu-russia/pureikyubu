@@ -389,7 +389,8 @@ namespace GBA
 
 			case 0x02:
 			{
-				AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
+				if (!dmaAccess)
+					AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
 				uint32_t value = ewram.Read32(address - MemEwram);
 				openBus = value;
 				return value;
@@ -414,7 +415,8 @@ namespace GBA
 			{
 				// Palette RAM 1/1/2, VRAM 1/1/2, OAM 1/1/2 (GBATEK "GBA Memory Map"): the two
 				// 16 bit halves cost a cycle each, the CPU counts one for the whole access.
-				AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
+				if (!dmaAccess)
+					AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
 				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
 				return value;
 			}
@@ -618,7 +620,8 @@ namespace GBA
 		// The two halves have charged their own waitstates by then; what is left is the 32 bit
 		// access's own extra cycle on the memories that take 1/1/2 (GBATEK "GBA Memory Map"),
 		// because the CPU counts one cycle for the whole store.
-		AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
+		if (!dmaAccess)
+			AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
 		Write16(address, (uint16_t)value);
 		Write16(address + 2, (uint16_t)(value >> 16));
 	}
@@ -1007,6 +1010,33 @@ namespace GBA
 	// ---------------------------------------------------------------------------------------
 	// The clock
 	// ---------------------------------------------------------------------------------------
+
+	void GbaBus::TickDevices(int cycles)
+	{
+		int budget = cycles;
+		int guard = 0;
+
+		while (budget > 0 && guard++ < 1000000)
+		{
+			int slice = (budget > 64) ? 64 : budget;
+
+			totalCycles += slice;
+
+			timers.Tick(*this, slice);
+			ppu.Tick(*this, slice);
+			sio.Tick(*this, slice);
+			apu.Tick(*this, slice);
+
+			budget -= slice;
+
+			if (keypad.IrqRequested())
+			{
+				irq.Raise(INT_KEYPAD);
+			}
+
+			HleBios::Tick(*this);
+		}
+	}
 
 	void GbaBus::Tick(int cpuCycles)
 	{

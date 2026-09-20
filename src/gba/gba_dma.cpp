@@ -471,6 +471,14 @@ namespace GBA
 
 	int Dma::RunNow(GbaBus& bus, int index)
 	{
+		// A transfer owns the bus until it finishes. This is the choke point every trigger goes
+		// through (the register write, OnVBlank/OnHBlank, the video capture and the FIFO
+		// refill), and a transfer now advances the clock as it runs, so the LCD can raise an
+		// HBlank or VBlank request from *inside* one: such a request must not start a nested
+		// transfer, it waits for the channel's next trigger.
+		if (inTransfer)
+			return 0;
+
 		if (index < 0 || index > 3)
 			return 0;
 
@@ -518,6 +526,12 @@ namespace GBA
 
 	void Dma::Trigger(GbaBus& bus, int timing)
 	{
+		// A transfer owns the bus until it finishes (the same simplification the cycle
+		// accounting makes), so a request that arrives while one runs does not start a nested
+		// transfer; its channel stays armed and runs on its next trigger.
+		if (inTransfer)
+			return;
+
 		// The channels are examined in priority order (DMA0 first, GBATEK "DMA Transfers"): a
 		// lower-priority channel would be held while a higher-priority one runs. Here each
 		// triggered channel runs to completion in turn.
@@ -545,6 +559,21 @@ namespace GBA
 	int Dma::Perform(GbaBus& bus, int index)
 	{
 		Channel& channel = channels[index];
+
+		struct TransferGuard
+		{
+			Dma& dma;
+			GbaBus& bus;
+			TransferGuard(Dma& d, GbaBus& b) : dma(d), bus(b)
+			{
+				dma.inTransfer = true;
+				// The DMA counts its own bus cycles (see the per-unit accounting below), so the
+				// 32 bit accesses it makes must not also charge the extra cycle the *CPU* pays
+				// for a 32 bit access on a 16 bit bus.
+				bus.dmaAccess = true;
+			}
+			~TransferGuard() { dma.inTransfer = false; bus.dmaAccess = false; }
+		} guard(*this, bus);
 
 		if (!channel.active || (channel.control & DmaEnable) == 0)
 			return 0;
@@ -588,6 +617,11 @@ namespace GBA
 		uint32_t source = channel.sourceLatch;
 		uint32_t dest = channel.destLatch;
 		int cycles = 0;
+
+		// The waitstates the CPU's own access accumulated before it started this transfer do not
+		// belong to the DMA: they are held aside so that the per-unit draining below cannot
+		// swallow them.
+		int pending = bus.TakeWaitCycles();
 
 		uint32_t fifoWords[4] = { 0, 0, 0, 0 };
 		int fifoCount = 0;
@@ -645,8 +679,13 @@ namespace GBA
 
 			// "Of which, 1N+(n-1)S are read cycles, and the other 1N+(n-1)S are write cycles"
 			// (GBATEK "Transfer Rate/Timing"): two bus cycles per unit, 4 bytes wide when the
-			// transfer is a 32bit one.
+			// transfer is a 32bit one. They are *spent* here rather than charged to the next
+			// slice: the hardware steals the bus one cycle at a time, so the timers, the LCD and
+			// the sound keep moving between one unit and the next. The AGB aging cartridge
+			// measures memory speed by DMA-sampling Timer 0, and a transfer that froze the clock
+			// gave it the same sample 128 times in a row.
 			cycles += word ? 4 : 2;
+			bus.TickDevices(bus.TakeWaitCycles() + (word ? 4 : 2));
 		}
 
 		// "The internal time for DMA processing is 2I (normally), or 4I (if both source and
@@ -701,7 +740,11 @@ namespace GBA
 		}
 
 		// The waitstates the transfer stole from the CPU.
-		bus.AddWaitCycles(cycles);
+		// "The internal time for DMA processing is 2I (normally), or 4I (if both source and
+		// destination are in gamepak memory area)" (GBATEK "Transfer Rate/Timing"): it is part
+		// of the transfer's elapsed time as well.
+		bus.TickDevices((IsCartridge(channel.sourceLatch) && IsCartridge(channel.destLatch)) ? 4 : 2);
+		bus.AddWaitCycles(pending);
 		return cycles;
 	}
 }

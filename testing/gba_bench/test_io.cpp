@@ -383,31 +383,32 @@ GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
 	GBA_CHECK_HEX32(f.bus.Read32(0x04010800), 0x0E000020);
 }
 
-GBA_TEST(Dma, ImmediateTransferChargesTheBusWaitstates)
+GBA_TEST(Dma, ATransferSpendsItsCyclesWhileItRuns)
 {
+	// GBATEK "Transfer Rate/Timing": a transfer's read and write cycles "depend on the
+	// waitstates and bus-width of the source and destination areas", and the hardware steals
+	// them one at a time - the clock keeps moving between one unit and the next. The AGB aging
+	// cartridge measures exactly that: it times a memory block by DMA-sampling Timer 0. A
+	// transfer that ran to completion and only charged its cycles to the next slice gave it the
+	// same sample every time.
 	Fixture f;
 
-	f.WriteMem16(0x02000000, 0x1111);
-	f.WriteMem16(0x02000002, 0x1111);
-	f.Write(0x0B0, 0x0000);
-	f.Write(0x0B2, 0x0200);
-	f.Write(0x0B4, 0x0000);
-	f.Write(0x0B6, 0x0200);
-	f.Write(0x0B8, 4);					// four 16bit units
+	// Timer 0 counts the system clock (prescaler 1, GBATEK 4000100h) and DMA3 copies its
+	// counter into the on-chip WRAM four times, with the source fixed on the register.
+	f.Write(0x100, 0x0000);
+	f.Write(0x102, 0x0080);				// enable, prescaler 1
+	f.Write(0x0D4, 0x0100);				// SAD = 0x04000100 (Timer 0's counter)
+	f.Write(0x0D6, 0x0400);
+	f.Write(0x0D8, 0x0000);				// DAD = 0x03000000 (on-chip WRAM)
+	f.Write(0x0DA, 0x0300);
+	f.Write(0x0DC, 4);					// four 16bit units
+	f.Write(0x0DE, 0x8100);				// enable, fixed source control (bits 7-8 = 2)
 
-	// Clear the cycles the setup above accumulated (the fixture's writes into the 256K WRAM now
-	// cost its own waitstates); TakeWaitCycles drains and resets the counter.
-	f.bus.TakeWaitCycles();
-	f.Write(0x0BA, 0x8000);
+	uint16_t first = f.ReadMem16(0x03000000);
+	uint16_t last = f.ReadMem16(0x03000006);
 
-	// GBATEK "Transfer Rate/Timing": "2N+2(n-1)S+xI. Of which, 1N+(n-1)S are read cycles, and
-	// the other 1N+(n-1)S are write cycles, actual number of cycles depends on the waitstates
-	// and bus-width of the source and destination areas". Both ends here are the on-board
-	// 256K WRAM, which GBATEK's memory map gives as 3/3/6 cycles (its default two waitstates),
-	// so each of the eight accesses costs three cycles instead of one, plus the 2 cycle
-	// internal time: 8 * 3 + 2.
-	int expected = 8 * 3 + 2;
-	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
+	// Every sample is the timer as the transfer read it, so they climb.
+	GBA_CHECK_MSG(last > first, "the clock must advance while a transfer runs");
 }
 
 GBA_TEST(Dma, WordCountZeroWrapsToTheMaximum)
@@ -415,31 +416,31 @@ GBA_TEST(Dma, WordCountZeroWrapsToTheMaximum)
 	// DMA0-2: a count of zero is 0x4000 units (GBATEK "DMAxCNT_L").
 	{
 		Fixture f;
+		f.WriteMem16(0x03000000, 0x1234);
 		f.Write(0x0B0, 0x0000);
 		f.Write(0x0B2, 0x0300);			// source 0x03000000 (IWRAM)
 		f.Write(0x0B4, 0x0000);
-		f.Write(0x0B6, 0x0300);			// destination 0x03000000
+		f.Write(0x0B6, 0x0200);			// destination 0x02000000 (EWRAM)
 		f.Write(0x0B8, 0);				// word count 0 -> 0x4000
-		f.Write(0x0BA, 0x8000);
+		f.Write(0x0BA, 0x8100);			// enable, fixed source (bits 7-8 = 2)
 
-		// The transfer ran with the maximum count: 0x4000 units of 2 cycles plus the 2-cycle
-		// internal time (see the note on the timing formula in gba_dma.cpp).
-		int expected = 0x4000 * 2 + 2;
-		GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
+		// The transfer ran with the maximum count: the last unit landed.
+		GBA_CHECK_HEX16(f.ReadMem16(0x02000000 + (0x4000 - 1) * 2), 0x1234);
+		GBA_CHECK_HEX16(f.ReadMem16(0x02000000 + (0x4000 - 2) * 2), 0x1234);
 	}
 
 	// DMA3: a count of zero is 0x10000 units.
 	{
 		Fixture f;
+		f.WriteMem16(0x03000000, 0x5678);
 		f.Write(0x0D4, 0x0000);
 		f.Write(0x0D6, 0x0300);
 		f.Write(0x0D8, 0x0000);
-		f.Write(0x0DA, 0x0300);
+		f.Write(0x0DA, 0x0200);
 		f.Write(0x0DC, 0);
-		f.Write(0x0DE, 0x8000);
+		f.Write(0x0DE, 0x8100);
 
-		int expected = 0x10000 * 2 + 2;
-		GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
+		GBA_CHECK_HEX16(f.ReadMem16(0x02000000 + (0x10000 - 1) * 2), 0x5678);
 	}
 }
 

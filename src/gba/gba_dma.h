@@ -89,6 +89,9 @@ namespace GBA
 
 	private:
 		Channel channels[4]{};
+
+		/// <summary>True while a transfer is running (see Dma::Trigger).</summary>
+		bool inTransfer = false;
 		bool fifoRequest[2]{};		// a FIFO asked for a refill since the last service
 		bool scanlineRequest = false;
 

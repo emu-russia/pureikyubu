@@ -83,6 +83,13 @@ namespace GBA
 		/// <summary>Add the waitstates of a memory access to the current slice.</summary>
 		void AddWaitCycles(int cycles) { waitCycles += cycles; }
 
+		/// <summary>
+		/// True while the DMA engine is transferring: a transfer accounts for its own bus cycles
+		/// (see Dma::Perform), so a 32 bit access it makes must not add the reconciliation cycle
+		/// that a 32 bit *CPU* access on a 16 bit bus costs.
+		/// </summary>
+		bool dmaAccess = false;
+
 		/// <summary>Take (and clear) the waitstates accumulated since the last call.</summary>
 		int TakeWaitCycles();
 
@@ -92,6 +99,13 @@ namespace GBA
 
 		/// <summary>Advance every device by the CPU's cycles plus the waitstates.</summary>
 		void Tick(int cpuCycles);
+
+		/// <summary>
+		/// Advance the clock-driven devices by `cycles` without servicing DMA requests. A DMA
+		/// transfer spends its own cycles while it runs (see Dma::Perform), and a nested request
+		/// must not start another transfer from inside it.
+		/// </summary>
+		void TickDevices(int cycles);
 
 		/// <summary>The cycle counter the DMA and the PPU use as their time base.</summary>
 		uint64_t CycleCounter() const { return totalCycles; }
