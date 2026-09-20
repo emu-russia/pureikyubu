@@ -1485,14 +1485,17 @@ GBA_TEST(Ppu, ScanlineTimingOneFrame)
 	GBA_CHECK_HEX16(bus.ppu.VCount(), 1);
 }
 
-GBA_TEST(Ppu, HBlankInterruptOncePerVisibleLine)
+GBA_TEST(Ppu, HBlankInterruptOncePerLine)
 {
 	GbaBus bus;
 	SetupDisplay(bus);
 
-	// The line counter is observed through DISPSTAT: the PPU raises the interrupt at the start of
-	// every visible line's HBlank, i.e. 160 times in a frame, and never during VBlank
-	// (GBATEK "LCD Dimensions and Timings": "no H-Blank interrupts are generated within V-Blank").
+	// The line counter is observed through DISPSTAT: the PPU raises the interrupt at every line's
+	// HBlank edge, the 160 visible ones and the 68 hidden ones. GBATEK 4000004h: "The H-Blank
+	// conditions are generated once per scanline, including for the 'hidden' scanlines during
+	// V-Blank", which the aging cartridge's H BLANK INTR checks confirm - it enables the
+	// interrupt on a hidden line and expects the flag. (GBATEK's timing chapter adds "no H-Blank
+	// interrupts are generated within V-Blank period"; the hardware does not bear that out.)
 	bus.ppu.ResetFrameCounter();
 	WriteReg(bus, DISPSTAT, STAT_HBLANK_IRQ);
 
@@ -1507,7 +1510,7 @@ GBA_TEST(Ppu, HBlankInterruptOncePerVisibleLine)
 			hblankLines++;
 	}
 
-	GBA_CHECK_EQ(hblankLines, ScreenHeight);
+	GBA_CHECK_EQ(hblankLines, ScanlinesTotal);
 	GBA_CHECK_EQ(bus.ppu.FrameCounter(), 1);
 }
 

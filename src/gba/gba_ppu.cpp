@@ -33,6 +33,8 @@
 // 68 blank dots = 272 cycles make 1232 cycles per line; 160 visible lines and 68 VBlank lines.
 
 #include "gba_ppu.h"
+#include <cstdio>
+#include <cstdlib>
 #include "gba_bus.h"
 
 namespace GBA
@@ -815,17 +817,26 @@ namespace GBA
 
 			if (before < visibleCycles && lineCycles >= visibleCycles && vcount < ScreenHeight)
 			{
-				// The interrupt and the DMA triggers belong to the blanking *interval*, which
-				// starts when the visible part ends (GBATEK "LCD Dimensions and Timings":
-				// "H-Blanking 68 dots ... 272 cycles"); only DISPSTAT's H-Blank *flag* is
-				// delayed by another 46 cycles (4000004h, see HBlankFlagCycles). GBATEK:
-				// "no H-Blank interrupts are generated within V-Blank", so the hidden lines do
-				// none of this.
+				// The interrupt belongs to the blanking *interval*, which starts when the visible
+				// part ends (GBATEK "LCD Dimensions and Timings": "H-Blanking 68 dots ... 272
+				// cycles"); DISPSTAT's H-Blank *flag* is delayed by another 46 cycles (4000004h,
+				// see HBlankFlagCycles).
 				if ((dispstat & 0x10) != 0)
 					bus.irq.Raise(INT_HBLANK);
 
 				bus.dma.OnHBlank(bus);
 				bus.dma.OnScanline(bus);
+			}
+
+			if (before < visibleCycles && lineCycles >= visibleCycles && vcount >= ScreenHeight)
+			{
+				// "The H-Blank conditions are generated once per scanline, including for the
+				// 'hidden' scanlines during V-Blank" (GBATEK 4000004h). The aging cartridge's
+				// H BLANK INTR checks pin this: it enables the interrupt on a hidden line and
+				// expects the flag. (GBATEK's timing chapter adds "no H-Blank interrupts are
+				// generated within V-Blank period", which the hardware does not bear out.)
+				if ((dispstat & 0x10) != 0)
+					bus.irq.Raise(INT_HBLANK);
 			}
 
 			if (lineCycles >= CyclesPerScanline)

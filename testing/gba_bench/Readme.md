@@ -82,6 +82,13 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
   triggers stay at the start of the blanking interval (cycle 960), which is where GBATEK's
   "LCD Dimensions and Timings" puts "H-Blanking 68 dots ... 272 cycles"; the aging cartridge's
   `H BLANK STATUS` check is what pinned the flag's own delay.
+* **The H-Blank interrupt is generated on the hidden (V-Blank) lines too.** GBATEK 4000004h:
+  "The H-Blank conditions are generated once per scanline, including for the 'hidden' scanlines
+  during V-Blank" - 228 interrupts a frame, not 160. Its timing chapter instead says "no H-Blank
+  interrupts are generated within V-Blank period"; the aging cartridge's `H BLANK INTR` and
+  `H BLANK INTR FLAG` checks enable the interrupt on a hidden line and expect the flag, so the
+  DISPSTAT wording is the one followed. The HBlank DMA triggers still fire on the visible lines
+  only (see `Dma::OnScanline` for the video capture).
 * **The internal RAM's own access times follow GBATEK's memory map, except for the display
   memory.** The CPU's cycle counts are exact, the cartridge's waitstates follow WAITCNT, and the
   on-board 256K WRAM (a 16-bit bus) charges its 3/3/6 cycles - with the waitstate count taken from
