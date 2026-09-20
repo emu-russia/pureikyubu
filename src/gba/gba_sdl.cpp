@@ -146,6 +146,13 @@ namespace GBA
 		bool vsync = false;
 		bool audioEnabled = false;
 
+		// The LCD effect (settings.video.lcdEffect, dmgemu's `lcd_effect`): the frame that is
+		// shown is the blend of the machine's frame with the last one shown, which is the
+		// ghosting an LCD has while the picture moves. `lcdBuffer` is that last shown frame; it
+		// starts black, exactly as dmgemu's frame buffer does, so the first frames fade in.
+		bool lcdEffect = true;
+		std::vector<uint32_t> lcdBuffer;
+
 		double fps = 0.0;
 		int screenshots = 0;
 
@@ -163,6 +170,7 @@ namespace GBA
 			height = frameHeight;
 			sampleRate = settings.sampleRate;
 			audioEnabled = settings.audioEnabled;
+			lcdEffect = settings.lcdEffect;
 
 			if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS) != 0)
 			{
@@ -259,9 +267,38 @@ namespace GBA
 			return true;
 		}
 
+		/// <summary>
+		/// Show one frame. With the LCD effect on it is blended half and half with the frame
+		/// before it (`(previous &gt;&gt; 1) + (current &gt;&gt; 1)`, the recipe dmgemu's
+		/// `lcd_refresh` uses): a still picture settles after a few frames, a moving one leaves
+		/// the ghosting a real LCD has. The blend is recursive - the buffer holds the frame that
+		/// was shown, not the machine's - so the trail decays by half every frame. Each of the
+		/// three colour bytes is halved on its own; the mask drops the bit that a shift pushes
+		/// across a byte boundary. The machine's own frame is never touched, so `FrameBuffer()`
+		/// - what the screenshots and the debug interface read - stays clean.
+		/// </summary>
 		void Present(const uint32_t* pixels)
 		{
-			SDL_UpdateTexture(texture, nullptr, pixels, width * 4);
+			const uint32_t* shown = pixels;
+
+			if (lcdEffect)
+			{
+				size_t count = (size_t)width * (size_t)height;
+
+				if (lcdBuffer.size() != count)
+				{
+					lcdBuffer.assign(count, 0);
+				}
+
+				for (size_t i = 0; i < count; i++)
+				{
+					lcdBuffer[i] = (0x7F7F7Fu & (lcdBuffer[i] >> 1)) + (0x7F7F7Fu & (pixels[i] >> 1));
+				}
+
+				shown = lcdBuffer.data();
+			}
+
+			SDL_UpdateTexture(texture, nullptr, shown, width * 4);
 			SDL_RenderClear(renderer);
 			SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 			SDL_RenderPresent(renderer);

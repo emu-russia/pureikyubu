@@ -425,6 +425,8 @@ namespace
 				AssignBool(out.integerScale, member, "video.integerScale");
 			else if (name == "showFps")
 				AssignBool(out.showFps, member, "video.showFps");
+			else if (name == "lcdEffect")
+				AssignBool(out.lcdEffect, member, "video.lcdEffect");
 			else if (name == "frameSkip")
 				AssignBool(out.frameSkip, member, "video.frameSkip");
 			else
@@ -656,6 +658,7 @@ namespace GBA
 			Member("vsync", Boolean(vsync), false) +
 			Member("integerScale", Boolean(integerScale), false) +
 			Member("showFps", Boolean(showFps), false) +
+			Member("lcdEffect", Boolean(lcdEffect), false) +
 			Member("frameSkip", Boolean(frameSkip), true), false);
 
 		text += Section("audio",

@@ -19,6 +19,7 @@
 		"vsync": true,
 		"integerScale": true,
 		"showFps": true,
+		"lcdEffect": true,
 		"frameSkip": false
 	},
 

@@ -42,6 +42,12 @@ namespace GBA
 		bool vsync = true;
 		bool integerScale = true;
 		bool showFps = true;
+
+		/// <summary>The LCD ghosting effect dmgemu's `lcd_effect` draws: every shown frame is
+		/// blended half and half with the one before it. On by default; the setting is the
+		/// frontend's, the cores themselves always return a clean frame.</summary>
+		bool lcdEffect = true;
+
 		bool frameSkip = false;
 
 		// -- audio -------------------------------------------------------------------------

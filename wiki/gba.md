@@ -108,7 +108,7 @@ samples.
 |---|---|
 | `info` | a description of the file |
 | `boot` | `biosPath`, `useCustomBootRom`, `skipBootAnimation`, `hleBios` |
-| `video` | `videoScale`, `fullscreen`, `vsync`, `integerScale`, `showFps`, `frameSkip` |
+| `video` | `videoScale`, `fullscreen`, `vsync`, `integerScale`, `showFps`, `lcdEffect`, `frameSkip` |
 | `audio` | `audioEnabled`, `sampleRate`, `volume`, `highPassFilter` |
 | `input` | the eleven bindings (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`, `R`, `L`, `SPEED`) |
 | `link` | `linkEnabled`, `linkServer`, `linkAddress`, `linkPlayers` |
@@ -124,6 +124,15 @@ the defaults are byte-identical, and the test suite asserts that.
 `emulation.debugger` (false by default) opens the debugger window together with the machine. The
 portable debug interface - the JDI node and the MCP transport - comes up either way, and `F2` opens
 and closes the window at any time.
+
+`video.lcdEffect` (true by default) is dmgemu's LCD effect, and both machines get it: the frame the
+frontend puts on the screen is the blend of the machine's frame with the frame before it
+(`(previous >> 1) + (current >> 1)`, one channel at a time), which is the ghosting a real LCD shows
+while the picture moves. The blend looks at the frame that was shown, not at the machine's, so a
+trail left by a moving sprite decays by half every frame while a still picture settles within a few
+of them; the buffer starts black, so the first frames fade in. The effect lives in the frontend
+(`gba_sdl.cpp`) and only there: `FrameBuffer()` still returns the clean frame, which is what the
+screenshots and the debug interface read.
 
 ## Tests
 
