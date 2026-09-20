@@ -783,6 +783,13 @@ namespace GBA
 		// 1232 are the HBlank interval (GBATEK "Horizontal Dimensions").
 		const int visibleCycles = ScreenWidth * 4;
 
+		// The H-Blank *flag* (and with it the interrupt and the DMA trigger) rises 46 cycles
+		// after the visible part ends: "the H-Blank flag is '0' for a total of 1006 cycles"
+		// (GBATEK 4000004h). The scanline is composed at the 960 edge, where the CPU's writes
+		// begin to belong to the next line - that part is the documented line-at-a-time
+		// composition, not the hardware's blanking signal.
+		const int hblankCycles = 960 + 46;
+
 		while (cycles > 0)
 		{
 			// Consume up to the next edge of the LCD. There are two per line: the start of HBlank
@@ -801,13 +808,17 @@ namespace GBA
 
 			if (before < visibleCycles && lineCycles >= visibleCycles && vcount < ScreenHeight)
 			{
-				// The whole scanline is composed here, when its HBlank starts (the documented
+				// The whole scanline is composed here, when its visible part ends (the documented
 				// deviation: the hardware draws it dot by dot during the visible part).
 				RenderLine(bus, vcount);
+			}
 
-				// The HBlank edge sets DISPSTAT's H-Blank flag (which Read16 derives from the
-				// line position), raises the HBlank interrupt when bit 4 enables it and triggers
-				// the HBlank DMA and the video capture DMA. GBATEK "LCD Dimensions and Timings":
+			if (before < visibleCycles && lineCycles >= visibleCycles && vcount < ScreenHeight)
+			{
+				// The interrupt and the DMA triggers belong to the blanking *interval*, which
+				// starts when the visible part ends (GBATEK "LCD Dimensions and Timings":
+				// "H-Blanking 68 dots ... 272 cycles"); only DISPSTAT's H-Blank *flag* is
+				// delayed by another 46 cycles (4000004h, see HBlankFlagCycles). GBATEK:
 				// "no H-Blank interrupts are generated within V-Blank", so the hidden lines do
 				// none of this.
 				if ((dispstat & 0x10) != 0)
@@ -884,8 +895,12 @@ namespace GBA
 		if (vcount >= ScreenHeight && vcount < ScanlinesTotal - 1)
 			value |= STAT_VBLANK;			// set in the lines 160..226
 
-		if (lineCycles >= ScreenWidth * 4)
-			value |= STAT_HBLANK;			// the visible part of the line is over
+		// GBATEK 4000004h: "Although the drawing time is only 960 cycles (240*4), the H-Blank
+		// flag is '0' for a total of 1006 cycles", so the flag rises 46 cycles into the blanking
+		// interval rather than at its start. It does so on the hidden lines too ("toggled in all
+		// lines, 0..227").
+		if (lineCycles >= HBlankFlagCycles)
+			value |= STAT_HBLANK;
 
 		if (vcount == (uint16_t)(dispstat >> 8))
 			value |= STAT_VCOUNT;			// VCOUNT matches the setting

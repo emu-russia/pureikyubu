@@ -196,7 +196,34 @@ namespace GBA
 			return count <= 17;
 		}
 
-		/// <summary>The number of units the current (or next) transfer moves.</summary>
+		/// <summary>
+	/// The number of bus cycles one 16 bit or 32 bit access takes on this region. GBATEK's
+	/// "GBA Memory Map" lists the bus width of every region: a 32 bit access is split into two
+	/// on the 16 bit buses (the on-board 256K WRAM, Palette RAM, VRAM and the Game Pak), while
+	/// the 32 bit buses (the BIOS, the on-chip 32K WRAM, the I/O area and OAM) serve it in one.
+	/// A DMA's per-unit cost is one read cycle plus one write cycle (GBATEK "Transfer
+	/// Rate/Timing"), so this is what each of the two costs.
+	/// </summary>
+	int AccessBusCycles(uint32_t address, bool word)
+	{
+		if (!word)
+			return 1;
+
+		switch (address >> 24)
+		{
+		case 0x02:						// on-board 256K WRAM (16 bit)
+		case 0x05:						// Palette RAM (16 bit)
+		case 0x06:						// VRAM (16 bit)
+		case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
+			return 2;					// Game Pak ROM/Flash (16 bit)
+		case 0x0E: case 0x0F:
+			return 4;					// Game Pak SRAM (8 bit)
+		default:
+			return 1;					// BIOS, 32K WRAM, I/O and OAM are 32 bit
+		}
+	}
+
+	/// <summary>The number of units the current (or next) transfer moves.</summary>
 		int UnitCount(const Dma::Channel& channel, int index)
 		{
 			if (channel.latched > 0)
@@ -684,8 +711,9 @@ namespace GBA
 			// the sound keep moving between one unit and the next. The AGB aging cartridge
 			// measures memory speed by DMA-sampling Timer 0, and a transfer that froze the clock
 			// gave it the same sample 128 times in a row.
-			cycles += word ? 4 : 2;
-			bus.TickDevices(bus.TakeWaitCycles() + (word ? 4 : 2));
+			int unitCycles = AccessBusCycles(source, word) + AccessBusCycles(dest, word);
+			cycles += unitCycles;
+			bus.TickDevices(bus.TakeWaitCycles() + unitCycles);
 		}
 
 		// "The internal time for DMA processing is 2I (normally), or 4I (if both source and

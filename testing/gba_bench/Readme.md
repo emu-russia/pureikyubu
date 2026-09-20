@@ -76,9 +76,12 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
   take their documented 1/1/2 cycles (`Bus, InternalMemoryTimingsFollowTheMemoryMap`) but never
   the extra contention cycle. The `Ppu` test `RegisterReadBack` and the `memory` test ROM pin the
   data rules.
-* **DISPSTAT's H-Blank flag rises when the visible part of the line ends** (cycle 960), which is
-  what the manual's timing table gives. GBATEK 4000004h instead says the flag is "0" for 1006
-  cycles, i.e. it rises 46 cycles later; that remark is not followed.
+* **DISPSTAT's H-Blank flag rises 46 cycles after the visible part of the line ends** (cycle
+  1006), as GBATEK 4000004h has it: "Although the drawing time is only 960 cycles (240*4), the
+  H-Blank flag is '0' for a total of 1006 cycles". The interrupt and the HBlank/video capture DMA
+  triggers stay at the start of the blanking interval (cycle 960), which is where GBATEK's
+  "LCD Dimensions and Timings" puts "H-Blanking 68 dots ... 272 cycles"; the aging cartridge's
+  `H BLANK STATUS` check is what pinned the flag's own delay.
 * **The internal RAM's own access times follow GBATEK's memory map, except for the display
   memory.** The CPU's cycle counts are exact, the cartridge's waitstates follow WAITCNT, and the
   on-board 256K WRAM (a 16-bit bus) charges its 3/3/6 cycles - with the waitstate count taken from
