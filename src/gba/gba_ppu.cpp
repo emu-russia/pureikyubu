@@ -312,9 +312,9 @@ namespace GBA
 			const int px = sx - sprite.left;	// 0..width-1
 			const int py = sy - sprite.top;		// 0..height-1
 
-			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the upper-left
-			// of the OBJ, so a dot of the display area is measured from its middle, which is where
-			// the rotation center sits. The matrix is 8.8 fixed point.
+			// The rotation center is the middle of the display area (see the note on the OBJ's
+			// X/Y in RenderSprites), so a dot of that area is measured from its middle. The matrix
+			// is 8.8 fixed point.
 			const int32_t offsetX = px - sprite.width / 2;
 			const int32_t offsetY = py - sprite.height / 2;
 			const int32_t srcX = sprite.pa * offsetX + sprite.pb * offsetY;
@@ -1130,25 +1130,35 @@ namespace GBA
 			sprite.width = sprite.doubleSize ? dim.width * 2 : dim.width;
 			sprite.height = sprite.doubleSize ? dim.height * 2 : dim.height;
 
-			// GBATEK "OBJ Reference Point & Rotation Center": the reference point is the OBJ's X/Y
-			// attributes and the rotation center sits in the middle of the base OBJ, i.e. half the
-			// base size right and below the reference point. That center is also the middle of the
-			// display area (twice the base size when the double-size flag is set), so the display
-			// area starts half of itself before the center: with the identity matrix the OBJ lands
-			// exactly on (X, Y)-(X + width, Y + height).
-			sprite.left = (attr1 & 0x1FF) + sprite.baseWidth / 2 - sprite.width / 2;
+			// The X/Y attributes are the upper-left corner of the OBJ's display area, and the
+			// rotation/scaling center is the middle of that area - half a base size right and below
+			// the reference point normally, a whole one when the double-size flag is set. With the
+			// identity matrix the base OBJ therefore lands on (X + base/2, Y + base/2)-(X + 3*base/2,
+			// Y + 3*base/2) once it is doubled, i.e. in the middle of the doubled rectangle rather
+			// than at its corner. Tonc "Affine sprites" 11.3.1 states it for the doubled area: "the
+			// sprites' origin is shifted to the center of this rectangle, so that q0 is now one full
+			// sprite-size away from the top-left corner" (its 11.5 c_q = m*s with m = 1/2 or 1).
+			//
+			// The real BIOS's boot animation is what makes this visible: it scales each letter down
+			// until the frame it hands the letter over to the plain 32x64 sprite that rests in the
+			// wordmark. Anchoring the doubled OBJ at its corner (which is what this renderer did)
+			// put every letter half a base size too high, and each one snapped down when it landed.
+			sprite.left = (int)(attr1 & 0x1FF);
 
 			// The hardware compares the scanline against the 8-bit Y coordinate, so an OBJ whose
 			// vertical range runs past line 255 wraps around and appears at the top of the screen.
 			// GBATEK "OBJ Attribute 0" cautions exactly that: a very large OBJ (128 pixels tall,
 			// i.e. a double-sized 64 pixel one) "located at Y>128 will be treated as at Y>-128,
 			// the OBJ is then displayed parts offscreen at the TOP of the display, it is then NOT
-			// displayed at the bottom".
+			// displayed at the bottom". The wrapping is what a row of 16x16 letterbox OBJs at
+			// Y=240..243 uses on Final Fantasy V Advance's attract screen: each one sits exactly
+			// 240 rows below its partner at Y=0..3, so the rows that wrap fill the gaps the wavy
+			// top edge of the bar leaves.
 			int objY = attr0 & 0xFF;
 			if (objY + sprite.height > 256)
 				objY -= 256;
 
-			sprite.top = objY + sprite.baseHeight / 2 - sprite.height / 2;
+			sprite.top = objY;
 
 			// A sprite off the top or bottom of this scanline is not sampled at all. (It still
 			// consumes its OBJ slot, as GBATEK "Maximum Number of Sprites per Line" warns.)

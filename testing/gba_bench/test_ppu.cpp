@@ -1866,7 +1866,8 @@ GBA_TEST(Ppu, TallDoubleSizedObjWrapsToTheTopOfTheScreen)
 	// GBATEK "OBJ Attribute 0": a 128 pixel tall OBJ (a double-sized 64x64 one) "located at
 	// Y>128 will be treated as at Y>-128, the OBJ is then displayed parts offscreen at the TOP
 	// of the display, it is then NOT displayed at the bottom". Y = 200 wraps to -56, so the
-	// sprite shows on the first 40 lines.
+	// doubled area covers the lines -56..71 and the sprite, which the double-size flag puts in
+	// the middle of that area, the lines -24..39: it shows on the first 40 lines.
 	FillVram(bus, OBJ_TILES, 0x2000, 0x11);			// every tile solid colour index 1
 	WritePal16(bus, 0x200 + 1 * 2, 0x001F);
 
@@ -1883,13 +1884,68 @@ GBA_TEST(Ppu, TallDoubleSizedObjWrapsToTheTopOfTheScreen)
 	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ);
 
 	bus.ppu.RenderLine(bus, 0);
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x001F);	// the wrapped sprite is at the top
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(50), 0x03E0);		// outside of it (and of X = 100..163)
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(99), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(132), 0x001F);	// the wrapped sprite is at the top
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(195), 0x001F);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);	// outside of it (and of X = 132..195)
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(131), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(196), 0x03E0);
+
+	// The last line the wrapped sprite reaches is 39; 38 and 39 are inside it, 37 and 40 are
+	// above and below the OBJ itself.
+	bus.ppu.RenderLine(bus, 39);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(132), 0x001F);
+	bus.ppu.RenderLine(bus, 40);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(132), 0x03E0);
 
 	// The sprite is not displayed at the bottom of the screen.
 	bus.ppu.RenderLine(bus, 159);
-	GBA_CHECK_HEX16(bus.ppu.LinePixel(100), 0x03E0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(132), 0x03E0);
+}
+
+GBA_TEST(Ppu, DoubleSizedAffineSpriteSitsInTheMiddleOfItsDoubledArea)
+{
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// The OBJ's X/Y are the upper-left corner of its display area; the double-size flag makes that
+	// area 32x32 around a 16x16 sprite and puts the rotation/scaling center in the middle of it, so
+	// with the identity matrix the sprite covers (58, 38)-(73, 53) - a half base size right and
+	// below the corner. Tonc "Affine sprites" 11.3.1: doubled, "the sprites' origin is shifted to
+	// the center of this rectangle, so that q0 is now one full sprite-size away from the top-left
+	// corner". The real BIOS's boot logo lands its scaling letters on exactly these positions.
+	FillVram(bus, OBJ_TILES, 4 * 64, 0x01);			// the four 256-colour tiles of the OBJ
+	WritePal16(bus, 0x200 + 1 * 2, 0x001F);
+
+	// attr0: Y | rotation/scaling (bit 8) | double size (bit 9) | colours 256 (bit 13);
+	// attr1: X | size 1 (16x16); attr2: tile 0.
+	WriteOam16(bus, 0x00, 30 | (1 << 8) | (1 << 9) | 0x2000);
+	WriteOam16(bus, 0x02, 50 | (1 << 14));
+	WriteOam16(bus, 0x04, 0);
+	WriteOam16(bus, 0x06, 0x0100);					// group 0 PA = 1.0
+	WriteOam16(bus, 0x0E, 0x0000);					// PB
+	WriteOam16(bus, 0x16, 0x0000);					// PC
+	WriteOam16(bus, 0x1E, 0x0100);					// PD = 1.0
+
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_OBJ | DC_OBJ_1D);
+
+	// The corner of the doubled area and the line before the sprite are empty.
+	bus.ppu.RenderLine(bus, 30);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(58), 0x0000);
+	bus.ppu.RenderLine(bus, 37);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(58), 0x0000);
+
+	// The sprite's first line is 38 and its first column 58.
+	bus.ppu.RenderLine(bus, 38);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(58), 0x001F);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(73), 0x001F);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(57), 0x0000);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(74), 0x0000);
+
+	// Its last line is 53, one line above the bottom of the doubled area.
+	bus.ppu.RenderLine(bus, 53);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(58), 0x001F);
+	bus.ppu.RenderLine(bus, 54);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(58), 0x0000);
 }
 
 GBA_TEST(Ppu, Mode1Bg2IsTheAffineLayer)
