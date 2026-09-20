@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Notes 1.9.1 — pureikyubu</title>
+<meta name="description" content="Release notes for pureikyubu 1.9.1: the maintenance release that makes the integrated Game Boy Advance and Game Boy sound and time the way the hardware does, fixes the HLE BIOS, removes the legacy debug console and the Win32 front end, and adds the SDL settings and memory-card dialogs, an x86 recompiler and Windows 7 support.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="gba.html">GBA</a>
+      <a href="gfxsoft.html">Soft GFX</a>
+      <a href="mcp.html">MCP</a>
+      <a href="release_notes_1.9.1.html" aria-current="page">Release Notes 1.9.1</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="release_notes_1.9.1.html" class="active" hreflang="en">EN</a>
+      <a href="release_notes_1.9.1_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<main class="article">
+  <div class="wrap">
+
+    <div class="article-header">
+      <h1>pureikyubu 1.9.1 — Release Notes</h1>
+      <div class="meta">
+        September 2026 · previous release 1.9 (September 2026) ·
+        <a href="RELEASE_NOTES_1.9.1.md">Markdown version</a>
+      </div>
+    </div>
+
+    <p>
+      Version 1.9.1 is the maintenance release that finishes what 1.9 started. The integrated Game
+      Boy Advance and Game Boy now <strong>sound</strong> and <strong>time</strong> the way the
+      hardware does: the Game Boy's LCD runs on its own 4.194304 MHz clock, the Game Boy APU was
+      rewritten against the manuals and has tests for the first time, the GBA's sound controller and
+      its host-side BIOS sound driver match the official IPL, and the aging cartridge's timing checks
+      pass. On the GameCube side the release is about the interface and the build: the legacy debug
+      console and the Win32 front end are gone in favour of the single SDL2 one, the SDL port gains
+      the settings and memory-card dialogs it was missing, the TEV gets its swap tables, and the
+      recompilers run on 32-bit hosts and Windows 7. The portable suite closes at
+      <strong>362 of 362 tests</strong>.
+    </p>
+
+    <figure>
+      <img src="imgstore/gba_minish_cap.png" alt="The Legend of Zelda: The Minish Cap played by the emulator's own boot ROM">
+      <figcaption><strong>The Minish Cap.</strong>Booted by the emulator's own boot ROM (no official
+        BIOS image), with the intro music at the engine's own rate and the EEPROM save library
+        working. Its soundtrack is what pinned the V-Counter match interrupt down.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="imgstore/gba_metroid_fusion.png" alt="Metroid Fusion running on the integrated Game Boy Advance">
+      <figcaption><strong>Metroid Fusion.</strong>On the high-level BIOS the game now draws the same
+        frames, pixel for pixel, as it does on the official BIOS image, with no image shipped:
+        <code>HuffUnComp</code>, the IRQ contract and the mixer were read out of the official
+        IPL.</figcaption>
+    </figure>
+
+    <div class="toc">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#highlights">Highlights</a></li>
+        <li><a href="#added">Added</a></li>
+        <li><a href="#changed">Changed</a></li>
+        <li><a href="#fixed">Fixed</a></li>
+        <li><a href="#known">Known issues</a></li>
+        <li><a href="#next">Up next</a></li>
+        <li><a href="#build">Building</a></li>
+      </ol>
+    </div>
+
+    <h2 id="highlights">Highlights</h2>
+    <ul>
+      <li><strong>The portable machines sound right.</strong> The Game Boy's APU was wrong in almost
+        every clock it has — the frame sequencer ran sixteen times too fast, the length counters
+        counted backwards, the pulse and wave dividers were half their rate (every note an octave
+        high), the duty phases were wrong and NR51 was swapped, which mirrored the whole stereo image.
+        The suite that now pins it down (<code>GbApu</code>, fifteen tests) is new; the module had no
+        tests at all. On the GBA, channel 3 was clocked by a timer, the mixer's levels were half of
+        what the hardware gives the direct-sound FIFOs, the waveform RAM lost its second bank, and a
+        decreasing sweep that underflowed stopped the channel.</li>
+      <li><strong>The portable machines time right.</strong> The Game Boy's LCD advanced one dot per
+        <em>four</em> clocks — a GBA rule — so a frame was 280896 clocks instead of 70224 and every
+        device that counts clocks got four times its rate per frame of picture. The dot clock is now
+        the machine's own 4.194304 MHz clock, one clock per dot. The GBA's memory model caught up with
+        GBATEK: the internal memories charge their documented access cycles (including the
+        undocumented <code>4000800h</code> waitstate register), the Game Pak uses the first/second
+        access times of <code>WAITCNT</code> with the 128 KByte non-sequential rule, a DMA transfer
+        spends its cycles <em>while</em> it runs, and a transfer no longer rewrites the
+        <code>SAD</code>/<code>DAD</code> registers.</li>
+      <li><strong>The HLE BIOS is the official BIOS.</strong> The host-side BIOS calls have the
+        official SWI numbers now (the sound driver is <code>1Ah..1Fh</code>/<code>28h</code>/
+        <code>29h</code>, not <code>28h..2Fh</code>), the four decompressors were read out of the
+        official image and fixed (<code>HuffUnComp</code>'s bitstream starts at
+        <code>source + 4 + (treeSize + 1) * 2</code> and is read as a rotated word; <code>RL</code>'s
+        flag byte is one token, not eight), the sound driver mixes its twelve virtual channels, and
+        the IRQ contract is the hardware's: acknowledging <code>IF</code> is the handler's job.
+        Metroid Fusion on the high-level BIOS now draws the same frames as on the real image.</li>
+      <li><strong>Nintendo's own aging cartridge runs.</strong> The AGB aging cartridge
+        (<code>AGB_CHECKER_TCHK10</code>) is the release's oracle, exactly as the real BIOS image is
+        for the HLE. Eleven of its checks were answered by the timing work — five MEMORY sub-tests, the
+        H-Blank status and interrupt flags, the video capture window, <code>KEY INTR</code>, the DMA
+        priority preemption and the address-control registers.</li>
+      <li><strong>One front end and one debugger.</strong> The Win32 front end
+        (<code>ui.cpp</code>, 4940 lines, with its DirectSound, GDI and <code>GetAsyncKeyState</code>
+        back ends) and the legacy debug console are gone; the SDL2 front end is the only build, and
+        the Debug menu has one item that opens the new debugger. The SDL port gains the two dialogs it
+        was missing — <strong>Options → Settings…</strong> and <strong>Options → Memcards</strong>.</li>
+      <li><strong>32-bit and Windows 7.</strong> The recompilers exist as x86 modules next to the
+        x86-64 ones: the 32-bit host no longer falls back to the interpreter, and the same sources
+        build a 32-bit emulator. The Windows projects target Windows 7
+        (<code>_WIN32_WINNT=0x0601</code>), the oldest Windows SDL2 2.28 and the emulator run on.</li>
+      <li><strong>The Flipper's TEV gets its swap tables.</strong> The two 2-bit fields of
+        <code>TEV_ALPHA_ENV</code> are the raster and texel swap-table selects, not a mode and a fixed
+        component pick; the four tables are the low four bits of <code>TEV_KSEL_2k</code>. The CP's BP
+        write mask (<code>0xFE</code>) limits the very next register write, which is what keeps the
+        library's shared payloads from clobbering each other. The demo <code>tev-swap</code>'s
+        doughnuts come out grey (0.0% saturated pixels, was 69%).</li>
+    </ul>
+
+    <h2 id="added">Added</h2>
+
+    <h3>The Game Boy side of the portable core</h3>
+    <ul>
+      <li>A <code>GbApu</code> suite (fifteen tests) and a <code>GbPpu</code> suite for the Game Boy
+        machine, which had none: the divider rates of the four channels against the manuals'
+        frequency formulas, the duty waveform phases, the length timer, the 512 Hz frame sequencer
+        with the envelope at 64 Hz and the sweep at 128 Hz, the wave RAM access order and volume
+        shifts, the noise LFSR sequence, NR50/NR51 mixing, the exact sample clock, PCM12/PCM34 (the
+        CGB's view of the four generation circuits), the CGB's own high pass filter and the setting
+        that turns it off. On the LCD side: the mode timings in the machine's own clocks (one clock to
+        a dot, 456 to a line), the STAT/LYC interrupts, the CGB attribute map, the DMG compatibility
+        rules and OPRI, the HDMA destination bank, and the LCD-off blank.</li>
+      <li><strong>The two Acid2 pictures are pixel for pixel identical to Matt Currie's reference
+        images</strong> — <code>dmg-acid2</code> on the DMG, <code>dmg-acid2</code> on a CGB in DMG
+        mode (shade for shade through the emulator's own grey ramp) and <code>cgb-acid2</code> on the
+        CGB. They are what found the lost line-start STAT interrupts, and they are the end-to-end
+        check of the one-line-at-a-time renderer.</li>
+      <li>A way to listen and to compare: <code>--wav &lt;file&gt;</code> records the mix in both
+        harnesses, <code>--rate N</code> changes the sample rate and <code>--no-hpf</code> turns the
+        DMG/CGB high pass filter off (<code>audio.highPassFilter</code>), which is what a recording
+        that will be filtered later wants. The GBA harness also got <code>--log</code> (the core's own
+        warnings, e.g. an unimplemented SWI, used to be thrown away) and <code>--bios</code>.</li>
+      <li>The Game Boy frontend blends each shown frame with the one before it — dmgemu's
+        <code>lcd_effect</code>, the trail an LCD leaves while the picture moves. It lives in
+        <code>Host::Present</code>, so a <code>.gba</code> and a <code>.gb</code>/<code>.gbc</code>
+        run get it from the same code, and <code>video.lcdEffect</code> turns it off (on by default).
+        The cores are not touched: the frame the screenshots and the debug interface read stays
+        clean.</li>
+      <li><code>--keys</code> is pushed through to the Game Boy machine, which is how the Metroid II
+        run below was checked.</li>
+    </ul>
+
+    <h3>Build and tooling</h3>
+    <ul>
+      <li><strong>The recompilers on 32-bit hosts (issue #417).</strong> <code>gekkojit_x64.cpp</code>,
+        <code>gekkojit_ps_x64.cpp</code>, <code>dspjit_x64.cpp</code> and
+        <code>gekkojit_layout_x64.h</code> are marked x86-64-only and each got a 32-bit sibling
+        (<code>jit_x86.h</code>, <code>gekkojit_layout_x86.h</code>, <code>gekkojit_x86.cpp</code>,
+        <code>gekkojit_ps_x86.cpp</code>, <code>dspjit_x86.cpp</code>). The translator is the x86-64
+        one adapted to eight general purpose registers, four of them callee-saved, with the layout
+        written down in <code>gekkojit_layout_x86.h</code>, and the state hash of a workload is
+        identical on all four JIT builds — MSVC and GCC, x86-64 and i386.</li>
+      <li><strong>Windows 7.</strong> The Visual Studio projects and <code>CMakeLists.txt</code> carry
+        both module sets and let the preprocessor pick; the emulator projects define
+        <code>_WIN32_WINNT=0x0601</code> and <code>WINVER=0x0601</code>, and no emulator source calls
+        an API newer than that, so the Windows 7 target of SDL2 2.28 is the oldest the emulator runs
+        on.</li>
+      <li>SDL2 is linked as a static library from the bundled tree.</li>
+      <li><code>testing/gba_bench</code> grew the <code>Bus</code>, <code>HleBios</code>,
+        <code>GbBus</code>, <code>GbApu</code>, <code>GbPpu</code>, <code>Audio</code> and
+        <code>Settings</code> suites; the Visual Studio project and the Readme follow, so the Windows
+        build of the harness compiles the tests that compare the host BIOS with the official image.</li>
+    </ul>
+
+    <h2 id="changed">Changed</h2>
+
+    <h3>The SDL front end is the only one (issues #421, #422, #420)</h3>
+    <ul>
+      <li>The Win32 front end and its back ends are deleted: <code>ui.cpp</code> (the main window, the
+        menu, the game selector, the settings property sheet, the controller and memory-card
+        dialogs), <code>audio.cpp</code>/<code>audio.h</code> (DirectSound), <code>video.cpp</code>
+        (GDI) and <code>pad.cpp</code> (<code>GetAsyncKeyState</code>), together with the dialog,
+        menu, accelerator and bitmap templates only they used. The interfaces the rest of the
+        emulator speaks stay where they were; the application icon stays in the resource script.</li>
+      <li>The settings of the two ports are one pair of files again (<code>Data/DefaultSettings.json</code>
+        and <code>Data/Settings.json</code>); the Windows/SDL split is gone, and the
+        <code>DOLDEBUG</code> key, unread since the debug console was removed, is gone with it.</li>
+      <li>The legacy debug console is gone (<code>cui.*</code>, <code>cuinull.cpp</code>,
+        <code>cuisdl.cpp</code>, <code>debugui.*</code>). The Debug menu of both ports carries a
+        single item, <strong>Open Debugger…</strong>, which opens or closes a DebugUI2 session; the
+        crash report reaches the front end with the same <code>UIReport</code> command it used when
+        no console was open.</li>
+      <li>The SDL port can mount a DolphinSDK folder again — <strong>File → Mount DolphinSDK as
+        DVD…</strong> was a stub there and now opens the directory browser and calls
+        <code>DvdMountSDK</code>.</li>
+      <li><strong>The settings dialog and the memory cards (issue #420).</strong> <strong>Options →
+        Settings…</strong> is one window with a tab per Win32 property-sheet page: the directories the
+        selector scans and the file filter (<strong>GUI/Selector</strong>), and the emulated console
+        version plus the three firmware images (<strong>GCN Hardware</strong>). The version combo
+        carries a "User defined" entry so a hand-edited configuration is shown as it is; Apply writes
+        the configuration the way <code>SaveSettings</code> does, with the paths going back through
+        <code>AddSelectorPath</code>, and Cancel drops the copy. <strong>Options → Memcards</strong>
+        is a window per slot: the connection flag, the save policy (<code>SyncSave</code>) and the
+        card file, with <strong>Create New…</strong> asking for one of the six sizes the hardware has.
+        Unlike the Win32 dialog, which left the running card alone until the next boot, OK re-points
+        (flushing the card it replaces) or connects a card that is already open.</li>
+    </ul>
+
+    <h3>The GBA/Game Boy core</h3>
+    <ul>
+      <li><strong>The sound controller against GBATEK and the AGB manual.</strong> Channel 3 is
+        clocked by <code>NR33</code> and not by a timer — <code>SOUND3CNT_X</code> bit 14 is the
+        length flag and nothing else, and only the two direct-sound FIFOs are timer driven; the
+        waveform RAM is two banks of 16 bytes with the CPU reaching the one that is not playing; the
+        mixer follows GBATEK's "Max Output Levels" (a PSG channel spans a quarter of the output range,
+        a FIFO the whole of it, and <code>SOUNDCNT_L</code>'s level has "no effect on direct sound");
+        a decreasing sweep that would underflow keeps the frequency instead of stopping the channel;
+        and the sum is clipped by the 10-bit output stage as the hardware clips it.</li>
+      <li><strong>The device is the clock of the machine.</strong> The machine pushes every sample it
+        mixes into the mixer buffer and the device plays it from its own audio callback. The buffer
+        keeps a cushion of three video frames, throws away what does not fit, fills a period it
+        cannot fill with silence instead of stale samples, and reports its delay, gaps and drops in
+        the window title. The frame loop holds the machine back only when the buffer is genuinely
+        ahead, and fast forward throws its sound away. The rate correction is a slow PI controller on
+        a <em>filtered</em> level, gains worked out from the loop: the old one-liner answered a
+        sawtooth with an undamped integrator whose period worked out at half a frame, which swung the
+        full ±1% between neighbouring frames and threw away 9450 frames a minute.</li>
+      <li><strong>A repeating DMA streams its source.</strong> GBATEK reloads
+        <code>CNT_L</code> and optionally <code>DAD</code> on a repeat — not <code>SAD</code>, so the
+        source pointer carries on. A sound DMA is always repeating (the FIFO asks for 16 bytes at a
+        time), so the old code restarted the stream at the same address on every refill and the FIFO
+        played one 16-byte block over and over — a high buzzy squeak that vaguely followed the tune.
+        A transfer also does not change the <code>SAD</code>/<code>DAD</code> registers, which hold
+        the values the CPU wrote; the running pointers live in the engine.</li>
+      <li><strong>The video capture runs on the lines GBATEK gives it</strong> — started at
+        <code>VCOUNT=2</code>, repeated each scanline, stopped at <code>VCOUNT=162</code> with the
+        channel's enable bit self-cleared — and a higher-priority DMA request that arrives while a
+        transfer is running is serviced at the next unit boundary instead of being lost until the
+        channel's next trigger.</li>
+      <li><strong>The EEPROM answers only in its own window.</strong> GBATEK puts the chip at
+        <code>D000000h-DFFFFFFh</code> on a cartridge of 16 MByte or less (or in the last 256 bytes of
+        a full 32 MByte image); everywhere else the ROM still drives the bus. That is what lets a game
+        run its own EEPROM routine <em>from the cartridge</em> — Minish Cap fetches instructions
+        between the read request and the data transfer. The chip's idle read also drives bit 0, the
+        ready line the games poll after a write, instead of returning the mirrored ROM.</li>
+      <li>The host-side sound driver's channel array is <strong>twelve entries of 40h bytes</strong>
+        at <code>50h + n * 40h</code> (GBATEK: 1-12 channels), not sixteen of 30h; a DMA's unit size
+        follows <code>CNT_H</code> bit 10 on every channel, not just DMA3; the DMA's per-unit cost
+        follows the bus width of the source and destination; and the internal memories charge their
+        documented cycles, with the on-board 256K WRAM's waitstates taken from the undocumented
+        <code>4000800h</code>.</li>
+      <li>An idle <code>WAITCNT</code> bit 15 (the read-only Game Pak Type Flag) can no longer be set
+        by a write, and <code>DISPCNT</code> bit 5 — the "H-Blank Interval Free" flag — no longer
+        silently means something else to the renderer.</li>
+    </ul>
+
+    <h3>The GBA HLE BIOS</h3>
+    <ul>
+      <li>The SWI numbers are the official ones: the sound driver at <code>1Ah..1Fh</code>, with
+        <code>VSyncOff</code>/<code>VSyncOn</code> at <code>28h</code>/<code>29h</code>. Before, the
+        whole block was at <code>28h..2Fh</code> and <code>1Ah</code> was called
+        <code>DivArm2</code>, so a game's <code>SoundDriverInit</code> was answered with a
+        <em>division</em> and its music never started.</li>
+      <li><code>HuffUnComp</code>, <code>BitUnPack</code>, <code>LZ77</code> (both write variants),
+        <code>RL</code> and the two delta filters were re-read out of the official image's own code
+        and are now covered by a differential test that encodes random data into valid streams and
+        compares the bytes both implementations wrote. <code>MidiKey2Freq</code> uses the BIOS's own
+        fixed point — a 16.16 semitone table, the octave as a shift, the product truncated, the fine
+        value as a slope — instead of a double-precision guess.</li>
+      <li>The sound driver's entry points are implemented from what a probe can measure out of the
+        real BIOS: the work area's identifier <code>68736D53h</code> and its <code>0FB0h</code> size,
+        the <code>pcmbuf</code> layout (two <code>0630h</code> byte halves at <code>+0350h</code> and
+        <code>+0980h</code>), the two FIFO DMAs (<code>B600h</code>: repeating, 32-bit, with an
+        incrementing source), <code>SOUNDCNT_H</code> <code>210Eh</code>, the timer 0 reload for every
+        playback frequency index, and <code>SoundDriverMain</code>, which mixes the twelve virtual
+        channels with the driver's own envelope state machine and fixed-point levels. The reverb is
+        not modelled, and the sample stepping is a 16.16 accumulator rather than the driver's exact
+        arithmetic.</li>
+      <li>The IRQ contract is the hardware's: the custom boot ROM no longer acknowledges
+        <code>IF</code> before dispatching, because the official BIOS does not either. Metroid
+        Fusion's handler reads <code>IF</code> to see what happened, so a pre-acknowledged IF left it
+        doing nothing every frame and the game froze on its title screen. The SIO link driver now
+        installs its own acknowledge-and-return handler, which is what a program enabling that
+        interrupt has to do.</li>
+    </ul>
+
+    <h3>Gekko, the TEV and the build</h3>
+    <ul>
+      <li><strong>TEV swap tables and the compare operation.</strong> The two 2-bit fields of
+        <code>TEV_ALPHA_ENV</code> are the swap-table selects (<code>GXSetTevSwapMode</code>'s raster
+        and texel selects) and the four tables are the low four bits of
+        <code>TEV_KSEL_2k</code>/<code>2k+1</code>; <code>TEV_KSEL</code> resets to the tables GX
+        initialisation programs (RGBA/RRRA/GGGA/BBBA). The compare operation shares the same bits, so
+        it is decoded the way the driver encodes it — the bias field's fourth value marks it, the sub
+        bit picks the comparison — and the mask tests the pre-shift stage value.</li>
+      <li><strong>The CP's BP write mask (0xFE).</strong> A write to it limits which bits of the very
+        next BP register write are updated and then clears itself. The library uses it for the
+        registers whose payload two features share — the K constant selects and the swap tables of
+        <code>TEV_KSEL</code>, the cull mode of <code>GEN_MODE</code>, the blend mode of
+        <code>PE_CMODE1</code> — so without it the swap tables would be clobbered by the first
+        <code>GXSetTevKColorSel</code>. The mask travels down the CP chain with the write and each
+        block merges it into its own register value.</li>
+      <li><strong>Two TEV arithmetic details.</strong> The interpolated blend factor is a u0.8
+        fraction normalised over 256, so 255 is exactly 1.0 and 128 is 129/256 (all three copies of
+        the model divided by 255, half an LSB away), and <code>DIVIDE_2</code> truncates without
+        rounding. A bit-exact model of the design's stage then matches the demo on all 64
+        argument-sweep states, all 24 arithmetic states and the 11 states that used to separate the two
+        models.</li>
+      <li><strong>The disassembler.</strong> The halfword transfer's bit 22 selects the offset form and
+        was inverted, so every immediate offset printed as a register and every register offset as an
+        immediate — the official BIOS's own decompressors were unreadable. A register offset's shift is
+        printed now, and a pre-indexed writeback is outside the bracket
+        (<code>[r1, #4]!</code>, not <code>[r1, #4!]</code>). Both are what made the HLE BIOS work
+        above possible.</li>
+      <li><strong>The GBA module uses the stdint types</strong> (issue #419) instead of the project's
+        <code>u8</code>/<code>s8</code> aliases; <code>json.cpp</code> is self-contained (the standard
+        library, <code>verify.h</code> and its own UTF-8 codec), so the portable core compiles it next
+        to its own sources without SDL, OpenGL or ImGui, and the GBA settings reader uses the shared
+        Json engine (issue #423) instead of its hand-written parser.</li>
+      <li><strong>The debugger window is opt-in</strong> in <code>--gba</code>/<code>--gb</code>:
+        <code>emulation.debugger</code> (false by default) decides whether it opens with the machine;
+        the JDI node and the MCP transport come up either way, and <code>F2</code> opens and closes
+        the window as before.</li>
+    </ul>
+
+    <h2 id="fixed">Fixed</h2>
+
+    <h3>The portable machines</h3>
+    <ul>
+      <li><strong>The Game Boy's clock (found by capturing <code>zelda.gb</code> and comparing it with
+        another emulator).</strong> The LCD advanced one dot per four clocks, so a frame was 280896
+        clocks instead of 70224: the APU mixed 2940 samples a frame where the device plays 738.35, so
+        three quarters of the music was thrown away in bursts (the rattle that would not go away no
+        matter how the buffer was steered); DIV ran at 64 kHz instead of 16384 Hz and the serial port
+        at four times its baud rate; and the CPU had four frames of work to get through in one. The
+        emitter now runs on one clock per dot.</li>
+      <li><strong>The Game Boy APU's every rate.</strong> The frame sequencer stepped every 512 system
+        clocks instead of 8192, so the length, the envelope and the sweep all ran sixteen times too
+        fast, and it clocked the length on step 7 as well (320 Hz with jitter instead of 256). The
+        length counters loaded <code>64 - NRx1</code> and counted <em>up</em> to 64 — backwards. The
+        pulse and wave dividers ran at <code>(2048 - x) * 2</code> and <code>(2048 - x)</code> instead
+        of <code>* 4</code> and <code>* 2</code>. The four duty waveforms had the right ratios but the
+        wrong phases. NR50's master volume was never applied to the mix, and NR51's halves were
+        swapped, which mirrored the whole stereo image. The sample clock now keeps the fraction of a
+        clock it used to round away.</li>
+      <li><strong>The line-start STAT interrupts.</strong> <code>BeginVisibleLine</code> called
+        <code>EnterMode(2)</code> and threw its return value away, so the STAT request a line start
+        produces — the mode 2 source turning on, and an LYC that matches the new <code>LY</code> —
+        never reached <code>IF</code>. Every visible line's mode 2 and LYC interrupt was lost (the
+        ones inside VBlank still worked, which is why it hid), and the raster effects driven by
+        <code>LY=LYC</code> that draw the Acid2 hair, eye, mouth and footer never ran. A register
+        write can raise the STAT line now (enabling a source whose condition is already true, or a
+        <code>LYC</code> write that makes it match "constantly"), and STAT bit 2 stays live while the
+        LCD is off.</li>
+      <li><strong>A CGB running a monochrome cartridge (the frontend's default for a DMG game)</strong>
+        ignored the DMG's own display rules: <code>LCDC</code> bit 0 was the CGB's master priority
+        instead of blanking the background and the window, the window bit was not overridden by it,
+        objects were prioritised by OAM position instead of X (<code>OPRI</code> was stored but never
+        reached the PPU), the bank 1 attribute map was read although the manual says that bank "is not
+        present in this mode", and <code>BGP</code>/<code>OBP0</code>/<code>OBP1</code> were ignored
+        instead of indexing the CGB palettes.</li>
+      <li><strong>The CGB's VRAM DMA</strong> always wrote bank 0, while the manual is explicit that
+        the destination is <code>VBK</code>, and reading <code>HDMA5</code> during an active HBlank
+        transfer returned bit 7 set, which Pan Docs defines as "Not Active". The mode 3 OBJ penalty
+        <code>11 - (X mod 8)</code> dropped to 4 or 5 on the last two columns of a tile where Pan Docs
+        floors it at 6. Turning the LCD off left the last picture in the frame buffer instead of the
+        blank white of the disabled screen.</li>
+      <li><strong>The GBA LCD audited against the manuals.</strong> BG2 is affine in mode 1 (Final
+        Fantasy V Advance's "SQUARE ENIX PRESENTS" screen was a field of noise); the bitmap modes
+        sample through the BG2 matrix (the boot ROM and the no-BIOS start leave the identity matrix,
+        as the real BIOS programs it); mode 5's bitmap line is 320 bytes and not mode 3's 480; a
+        window's garbage dimensions reach the screen edge; the OBJ window needs <code>DISPCNT</code>
+        bits 12 <em>and</em> 15; the Green Swap exchanges the green of each pair of dots instead of
+        byte-swapping every pixel; a semi-transparent OBJ needs a 2nd target selected in
+        <code>BLDCNT</code> and the window's effect bit gates the alpha blend as well as the
+        brightness; an OBJ whose 8-bit Y range runs past line 255 wraps to the top; and the 28-bit
+        affine reference point is kept sign-extended.</li>
+      <li><strong>The text layers' scroll offsets.</strong> <code>BGxHOFS</code>/<code>BGxVOFS</code>
+        hold a nine-bit offset (0-511) but were sampled through the register's readable form, which
+        the PPU trimmed to eight bits. Castlevania: Circle of the Moon's attract demo scrolled a room
+        to dot 296, the renderer used 40, and the top of the screen showed whatever the map's other
+        half happens to hold — a band of green "corrupt background" — while the camera appeared frozen
+        relative to the player.</li>
+      <li><strong>A double-sized affine OBJ is anchored in the middle of its doubled area.</strong>
+        The X/Y attributes are the upper-left corner of the display area and the rotation/scaling
+        centre is the middle of that area — half a base size right and below the reference point
+        normally, a whole one when the double-size flag is set. Every doubled OBJ sat half a base size
+        too high and too far left; the real BIOS's boot animation is what pinned it (the 64x64 letters
+        snapped down by 32 pixels on their landing frame). Final Fantasy V Advance's letterbox also
+        pins the OBJ Y wrap: its rows of 16x16 OBJs at <code>Y=240..243</code> fill the gaps the
+        wrapped lines leave.</li>
+      <li><strong>The V-Counter match interrupt is an edge, not a level.</strong>
+        <code>UpdateVCountMatch</code> requested it whenever the match condition was true on an
+        evaluation, and a <code>DISPSTAT</code> write evaluates it too, so a program that wrote the
+        register back while <code>VCOUNT</code> still equalled its setting took two match interrupts
+        for one line. Minish Cap writes <code>DISPSTAT</code> at line 80 of every frame — in the
+        handler of the match it has just taken — and its own copy of the BIOS sound driver advances
+        its sequencer once per match, so the intro music ticked twice per frame: the notes came twice
+        as fast and the track ran out of sequence at 11 s. It is now the edge of the gated (match AND
+        enable) condition, which is what GBATEK's "requested when the flag becomes set" means; a
+        program that enables the interrupt while the counter already matches still gets it.</li>
+      <li><strong>The Save file of a fresh Minish Cap cartridge came up corrupted.</strong> The
+        EEPROM's ready line (bit 0 of the ROM bus in the chip's window) was never driven, so the save
+        library's poll after a write always saw a busy chip, every write timed out, and after three
+        attempts the library stamped its <code>DAMEDAME</code> failure marker over the block it was
+        writing — file headers included. With the ready line on the bus every write is verified on the
+        first attempt.</li>
+      <li><strong>The HLE sound driver's channel array was misaligned.</strong> Sixteen entries of 30h
+        bytes spans the same 300h bytes as the real twelve of 40h, which hid the mistake: only channel
+        0 landed where the official driver looks, so channels 1..11 were mixed from the next channel's
+        envelope and volume bytes — heard as wrong notes, crackle and an apparent speed change.</li>
+      <li><strong>The halfword transfer offset form</strong> in the disassembler (see Changed), which
+        is what made the decompressors readable.</li>
+    </ul>
+
+    <h3>The core, the harness and the shell</h3>
+    <ul>
+      <li><strong>Thumb <code>LDMIA</code>/<code>STMIA</code> skipped an instruction.</strong>
+        <code>ThumbMultipleTransfer</code> treated bit 7 of the register list as "r15 in the list",
+        but a Thumb register list is eight bits wide (r0-r7) and can never name r15. The BIOS loads
+        its <code>BitUnPack</code> parameter block with <code>LDMIA r1!,{r5,r7}</code>, so the
+        instruction that followed was skipped, the block stayed zero, <code>BitUnPack</code> read a
+        zero item count and bailed out: the seven letter sprites had no glyph data and the boot
+        animation was invisible. This is why the emulator's own boot ROM did not draw.</li>
+      <li><strong><code>SVBK</code> maps a written 0 to WRAM bank 1.</strong> A DMG-only cartridge runs
+        on the emulated CGB in compatibility mode, and the register mapped a written 0 to bank 0. With
+        the power-up value <code>0xF8</code> that aliased <code>0xC000-0xCFFF</code> and
+        <code>0xD000-0xDFFF</code> onto one 4 KByte page, so a game whose variables or stack live in
+        the upper bank had its own low-RAM scratch overwrite them: Metroid II kept a return address at
+        <code>0xDFFB</code>, read back <code>0x0000</code> and restarted from the reset vector for
+        ever.</li>
+      <li><strong>Json's one-byte UTF-8 sequences.</strong> The local decoder's shortest-form table had
+        entries for two, three and four bytes only, so every ASCII character came out as U+FFFD. Since
+        <code>AddUtf8String</code> is how the whole debug interface builds its Json, the regression
+        corrupted every answer made that way — the Markdown panels of the debugger, the disassembly
+        and the symbol names, the reports, the MCP tool answers and the OS time of the status bar
+        (which showed a row of question marks). Of the 16 unit-test failures at the parent commit, 15
+        were this.</li>
+      <li><strong>The <code>Apu::ReadSamples</code> call site in the tests</strong> handed a
+        <code>maxFrames</code> count to an <code>int16_t buffer[128]</code> while the call writes two
+        samples per frame: the 256-byte stack buffer was overflowed and the run died later, in the
+        middle of another suite. Found with AddressSanitizer; the buffers are sized for stereo frames
+        now.</li>
+      <li><strong>The DMA transfer's unit size</strong> follows <code>CNT_H</code> bit 10 on every
+        channel (see Changed), which is why the Minish Cap engine's per-frame 32-bit
+        <code>DMA0</code> block was half copied before.</li>
+    </ul>
+
+    <h2 id="known">Known issues</h2>
+    <ul>
+      <li>The official GBA BIOS runs its boot and <strong>its animation is now drawn</strong>: the
+        mode 2 BG3 that is only visible inside the OBJ window, with the nine 32x64/64x64 window
+        sprites, <code>WINOUT = 0x3F27</code> and alpha blending around it. Both the emulator's own
+        boot ROM and the real image hand over to a cartridge. What is left to model on the cartridge
+        side is the EEPROM window of a full 32 MByte image (the last 256 bytes); the harness exercises
+        the 16 MByte layout, where the chip answers anywhere at <code>D000000h-DFFFFFFh</code>.</li>
+      <li>A real <strong>Game Boy Color</strong> cartridge's picture is still work in progress: the
+        machine boots, runs its own boot ROM and passes its tests, but at some moments its frame does
+        not match VRAM. The remaining difference is read as the mode 3 line length (a line is composed
+        at once rather than dot by dot), the HBlank/HDMA timing and the PPU-internal VRAM read-block
+        windows. DMG and CGB in DMG mode are exact against the Acid2 references.</li>
+      <li>The GBA's per-line OBJ cycle budget and <code>DISPCNT</code> bit 5 are not modelled, and the
+        VRAM/OAM/Palette contention cycle ("+1 cycle if the GBA accesses video memory at the same
+        time") is not: the accesses take their documented 1/1/2 cycles but never the extra one. The
+        cartridge prefetch buffer is modelled as a waitstate rule rather than as a real 8-halfword
+        buffer.</li>
+      <li>A preempted DMA transfer runs to <em>its</em> end before the preempted one resumes instead
+        of the two interleaving a unit at a time. Nintendo's aging cartridge's remaining failures
+        (the waitstate/prefetch checks, <code>KEY INPUT SIMPLE</code>) are in this area, and are
+        recorded in <code>testing/gba_bench/Readme.md</code> with the addresses of its test table.</li>
+      <li>The GBA's sound output stage is not modelled: <code>SOUNDBIAS</code> is stored and read
+        back, but neither its bias level nor the PWM amplitude resolution changes the mix, which is
+        produced as clean 16-bit samples. The wave RAM is plain memory rather than the hardware's
+        shift register.</li>
+      <li>The sound driver's reverb is not modelled on the HLE path (the mode's reverb bits are
+        stored, the driver's delay line is not), and the pitch stepping is a 16.16 accumulator rather
+        than the driver's exact fixed point.</li>
+      <li>Save states, rewind, the EEPROM's "last byte is the AND of the old and new value" quirk and
+        the RTC's per-minute interrupt register are not implemented on the portable machines.</li>
+      <li>The serial port's JOY bus mode (<code>RCNT</code> bit 15, a GameCube controller on the link
+        port) is decoded but not driven; UART mode works register-wise but has no peer. The
+        emulator-to-emulator cable (normal and multiplayer) is implemented and tested.</li>
+      <li>The Linux build still has no sound and no input for the GameCube side, and the Linux
+        headless target has no OpenGL offscreen backend (the Visual Studio one does). The two
+        <code>Settings</code> tests that compare <code>build/Data/GBASettings.json</code> with the
+        defaults byte for byte need that file to have LF endings; a Windows checkout with
+        <code>core.autocrlf</code> reports the <code>\r</code>s as a difference.</li>
+      <li>Nintendo's aging cartridge is not fully green: ten checks still fail, all of them in the
+        waitstate/prefetch area above. The GBA's <code>Ppu</code> test <code>RegisterReadBack</code>
+        and the <code>memory</code> test ROM pin the data rules where the timing is approximated.</li>
+    </ul>
+
+    <h2 id="next">Up next</h2>
+    <p>
+      The portable core is the work of the next release as well: the Game Boy Color picture, the
+      remaining aging-cartridge checks (the waitstate model and the real prefetch buffer), and the
+      <strong>GBA Link</strong> and <strong>Game Boy Player</strong> jobs the integrated machine
+      exists for — a GameCube title with a GBA in its link port is the test that proves them.
+    </p>
+    <p>
+      1.9.1 is a maintenance release inside the 1.9 line. Release <strong>2.0</strong> remains the
+      next major version, the <strong>peripheral release</strong>: the EXI bus and the devices on it
+      (memory cards, the Broadband Adapter, the RTC), the serial interface and the pads, the disk
+      interface and the drive, and the link port the GBA side already has. After that the project
+      moves into its steady state of planned, methodical improvement.
+    </p>
+
+    <h2 id="build">Building</h2>
+    <p><strong>Windows.</strong> Open <code>scripts/VS2026/pureikyubu.sln</code> in Visual Studio 2026
+      and build. The emulator is the SDL2 front end in every configuration — there is no second port
+      any more — and the solution holds the same four projects: <code>pureikyubu</code>,
+      <code>SDL2</code> (a static library), <code>GBA</code> and <code>gba_bench</code>. Both x64 and
+      x86 (Win32) build, the recompilers follow the host, and the projects target Windows 7. The
+      <code>pureikyubu_headless</code> target is part of the solution but is not built by "Build
+      Solution".</p>
+    <p><strong>Linux.</strong></p>
+    <pre><code>sudo apt install libglew-dev libsdl2-dev
+git clone https://github.com/emu-russia/pureikyubu.git
+cd pureikyubu
+git submodule update --init
+cd build &amp;&amp; cmake .. &amp;&amp; make
+./pureikyubu pong.dol
+cmake -DHEADLESS=ON .. &amp;&amp; make          # the windowless target</code></pre>
+    <p><strong>Tests.</strong></p>
+    <pre><code>MSBuild scripts/VS2026/pureikyubu_test.slnx -p:Configuration=Release -p:Platform=x64
+vstest.console.exe scripts/VS2026/x64/Release/pureikyubu_test.dll /Platform:x64</code></pre>
+    <p>The portable machines have their own harness — <strong>362 of 362 tests pass</strong>:</p>
+    <pre><code>testing/gba_bench/check.sh
+testing/gba_bench/get_test_roms.sh     # the public test ROMs and the two Acid2 pictures</code></pre>
+
+    <p class="note">
+      The previous releases are still available:
+      <a href="release_notes_1.9.html">Release Notes 1.9</a> ·
+      <a href="release_notes_1.9_ru.html">Заметки о релизе 1.9</a> ·
+      <a href="release_notes_1.8.html">Release Notes 1.8</a> ·
+      <a href="release_notes_1.7.html">Release Notes 1.7</a> ·
+      <a href="RELEASE_NOTES_1.9.1.md">Markdown</a>. The long story of the work after
+      release 1.6 is in the <a href="digest.html">digest</a>.
+    </p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Nintendo GameCube, Game Boy, Game Boy Color and Game Boy Advance are trademarks of Nintendo; this emulator is not affiliated with Nintendo.</div>
+    <div><a href="security.html">Security</a> · <a href="index.html">Home</a> · <a href="release_notes_1.9.html">Release Notes 1.9</a> · <a href="release_notes_1.8.html">Release Notes 1.8 (archive)</a> · <a href="release_notes_1.7.html">Release Notes 1.7 (archive)</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>
