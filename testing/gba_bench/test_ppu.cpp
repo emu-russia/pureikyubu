@@ -1160,6 +1160,34 @@ GBA_TEST(Ppu, BrightnessDecreaseOfTheBackdrop)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x7FFF);
 }
 
+GBA_TEST(Ppu, HBlankFlagRises46CyclesIntoTheBlankingInterval)
+{
+	// GBATEK 4000004h: "Although the drawing time is only 960 cycles (240*4), the H-Blank flag is
+	// '0' for a total of 1006 cycles". The flag is what software polls; the H-Blank interrupt and
+	// the HBlank/video capture DMA triggers belong to the blanking interval itself, which GBATEK
+	// "LCD Dimensions and Timings" gives as "H-Blanking 68 dots ... 272 cycles" starting when the
+	// visible part ends. The AGB aging cartridge's H BLANK STATUS check is what pinned the flag's
+	// own 46 cycle delay.
+	GbaBus bus;
+	SetupDisplay(bus);
+	WriteReg(bus, DISPCNT, DC_MODE0);
+	WriteReg(bus, DISPSTAT, 0x10);				// H-Blank IRQ enable
+
+	bus.irq.Acknowledge(0x3FFF);
+
+	// The visible part of line 0 ends at cycle 960: the interrupt is requested there, but the
+	// flag stays clear.
+	bus.ppu.Tick(bus, 960);
+	GBA_CHECK_HEX16(bus.ppu.Read16(DISPSTAT, 0) & 0x02, 0x00);
+	GBA_CHECK_HEX16(bus.irq.ReadIF() & 0x0002, 0x0002);
+
+	// It rises at cycle 1006.
+	bus.ppu.Tick(bus, 45);
+	GBA_CHECK_HEX16(bus.ppu.Read16(DISPSTAT, 0) & 0x02, 0x00);
+	bus.ppu.Tick(bus, 1);
+	GBA_CHECK_HEX16(bus.ppu.Read16(DISPSTAT, 0) & 0x02, 0x02);
+}
+
 GBA_TEST(Ppu, WindowMasksOneBg)
 {
 	GbaBus bus;
@@ -1457,14 +1485,17 @@ GBA_TEST(Ppu, ScanlineTimingOneFrame)
 	GBA_CHECK_HEX16(bus.ppu.VCount(), 1);
 }
 
-GBA_TEST(Ppu, HBlankInterruptOncePerVisibleLine)
+GBA_TEST(Ppu, HBlankInterruptOncePerLine)
 {
 	GbaBus bus;
 	SetupDisplay(bus);
 
-	// The line counter is observed through DISPSTAT: the PPU raises the interrupt at the start of
-	// every visible line's HBlank, i.e. 160 times in a frame, and never during VBlank
-	// (GBATEK "LCD Dimensions and Timings": "no H-Blank interrupts are generated within V-Blank").
+	// The line counter is observed through DISPSTAT: the PPU raises the interrupt at every line's
+	// HBlank edge, the 160 visible ones and the 68 hidden ones. GBATEK 4000004h: "The H-Blank
+	// conditions are generated once per scanline, including for the 'hidden' scanlines during
+	// V-Blank", which the aging cartridge's H BLANK INTR checks confirm - it enables the
+	// interrupt on a hidden line and expects the flag. (GBATEK's timing chapter adds "no H-Blank
+	// interrupts are generated within V-Blank period"; the hardware does not bear that out.)
 	bus.ppu.ResetFrameCounter();
 	WriteReg(bus, DISPSTAT, STAT_HBLANK_IRQ);
 
@@ -1479,7 +1510,7 @@ GBA_TEST(Ppu, HBlankInterruptOncePerVisibleLine)
 			hblankLines++;
 	}
 
-	GBA_CHECK_EQ(hblankLines, ScreenHeight);
+	GBA_CHECK_EQ(hblankLines, ScanlinesTotal);
 	GBA_CHECK_EQ(bus.ppu.FrameCounter(), 1);
 }
 

@@ -456,6 +456,9 @@ namespace GBA
 		// bits 25-26 select the region (0 = wait state 0, 1 = wait state 1, 2 = wait state 2).
 		int region = (int)((offset >> 25) & 3);
 
+		// Each region's first access field is bits 2-3, 5-6 and 8-9 (GBATEK 4000204h), so the
+		// mask is 3 (Bits takes a mask, not a width): the region's second access bit sits just
+		// above its first access field and must not leak into the index.
 		int firstIndex = (region == 1) ? (int)Bits((uint16_t)waitcnt, 5, (uint16_t)3)
 			: (region == 2) ? (int)Bits((uint16_t)waitcnt, 8, (uint16_t)3)
 			: (int)Bits((uint16_t)waitcnt, 2, (uint16_t)3);
@@ -463,12 +466,6 @@ namespace GBA
 		int second = (region == 1) ? (((waitcnt & 0x0080) != 0) ? 1 : 4)
 			: (region == 2) ? (((waitcnt & 0x0400) != 0) ? 1 : 8)
 			: (((waitcnt & 0x0010) != 0) ? 1 : 2);
-
-		// GBATEK "GBA GamePak Prefetch": with the prefetch buffer running, the CPU is served
-		// from the eight halfword buffer, which is the cheap form of "the second access is one
-		// cycle when the buffer is on and the region runs at its lowest first access time".
-		if (sequential && (waitcnt & 0x4000) != 0 && firstIndex == 2)
-			return 0;
 
 		int waits = sequential ? second : RomFirstWaits[firstIndex & 3];
 

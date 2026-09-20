@@ -83,6 +83,13 @@ namespace GBA
 		/// <summary>Add the waitstates of a memory access to the current slice.</summary>
 		void AddWaitCycles(int cycles) { waitCycles += cycles; }
 
+		/// <summary>
+		/// True while the DMA engine is transferring: a transfer accounts for its own bus cycles
+		/// (see Dma::Perform), so a 32 bit access it makes must not add the reconciliation cycle
+		/// that a 32 bit *CPU* access on a 16 bit bus costs.
+		/// </summary>
+		bool dmaAccess = false;
+
 		/// <summary>Take (and clear) the waitstates accumulated since the last call.</summary>
 		int TakeWaitCycles();
 
@@ -92,6 +99,13 @@ namespace GBA
 
 		/// <summary>Advance every device by the CPU's cycles plus the waitstates.</summary>
 		void Tick(int cpuCycles);
+
+		/// <summary>
+		/// Advance the clock-driven devices by `cycles` without servicing DMA requests. A DMA
+		/// transfer spends its own cycles while it runs (see Dma::Perform), and a nested request
+		/// must not start another transfer from inside it.
+		/// </summary>
+		void TickDevices(int cycles);
 
 		/// <summary>The cycle counter the DMA and the PPU use as their time base.</summary>
 		uint64_t CycleCounter() const { return totalCycles; }
@@ -157,6 +171,31 @@ namespace GBA
 		uint16_t waitcnt = 0;
 		int sramWait = 0;
 
+		// Where the last Game Pak access ended, and whether the bus has been reading the
+		// cartridge without interruption (GBATEK 4000204h's first/second access timing).
+		uint32_t romNext = 0;
+		bool romChain = false;
+
+		// Set while the CPU is fetching an instruction, which is what the Game Pak prefetch
+		// buffer serves.
+		bool fetching = false;
+		uint32_t memControl = 0x0D000020;	// 4000800h: bits 24-27 are the 256K WRAM waits
+
+		/// <summary>The 256K WRAM waitstate count (2 by default, 4000800h bits 24-27 = 15-n).</summary>
+		int WramWaitStates() const;
+
+		/// <summary>
+		/// True for the mirrored 4000800h access: the register is four bytes wide and repeats in
+		/// every 64K page of the I/O area (GBATEK 4000800h).
+		/// </summary>
+		bool IsMemControl(uint32_t address) const
+		{
+			if ((address >> 24) != 0x04)
+				return false;
+			uint32_t within = address & 0xFFFF;
+			return within >= 0x800 && within <= 0x803;
+		}
+
 		// The registers the bus decodes itself (WAITCNT, IE/IF/IME, POSTFLG, HALTCNT).
 		uint16_t ReadIo16(uint32_t offset);
 		uint8_t ReadIo8(uint32_t offset);
@@ -168,6 +207,29 @@ namespace GBA
 		void IoWrite16(uint32_t offset, uint16_t value);
 
 		void UpdateWaitStates();
+
+		/// <summary>
+		/// The extra cycles an access to the internal memories costs on top of the CPU's own N/S
+		/// cycle, from GBATEK's "GBA Memory Map" table: the on-board 256K WRAM is a 16 bit bus
+		/// with waitstates (3/3/6 cycles by default, set by the undocumented 4000800h register)
+		/// while VRAM, OAM and Palette RAM are 1/1/2 - one cycle for 8 and 16 bit accesses and
+		/// two for a 32 bit one. The BIOS, the 32K on-chip WRAM and the I/O area are 1/1/1 and
+		/// need nothing.
+		/// </summary>
+		int InternalWaitCycles(uint32_t address, int bytes) const;
+
+		/// <summary>True when this Game Pak access continues the previous one (the ROM's "second
+		/// access", the sequential timing).</summary>
+		bool RomSequential(uint32_t address) const;
+
+		/// <summary>
+		/// Charge a Game Pak access. GBATEK's WAITCNT table gives the *total* access time of the
+		/// first (non-sequential) and the second (sequential) access, and the CPU (or the DMA)
+		/// already counts one cycle for the access itself, so the waitstates added here are that
+		/// figure less one - per 16 bit fragment, of which a 32 bit access has two (the second
+		/// always sequential). A *code fetch* with the prefetch buffer running costs nothing.
+		/// </summary>
+		void ChargeRom(uint32_t address, int bytes, bool fetch);
 
 		friend class Dma;
 	};

@@ -28,6 +28,11 @@ namespace GBA
 	// scheduled from this clock. The four cycle counts per dot give 1232 cycles per scanline.
 	const int CyclesPerSecond = 16777216;
 	const int CyclesPerScanline = 1232;
+
+	// The H-Blank condition (the DISPSTAT flag, the interrupt and the HBlank/DMA triggers) rises
+	// 46 cycles after the visible part of a line ends: GBATEK 4000004h, "Although the drawing
+	// time is only 960 cycles (240*4), the H-Blank flag is '0' for a total of 1006 cycles".
+	const int HBlankFlagCycles = 960 + 46;
 	const int ScanlinesTotal = 228;			// 160 visible + 68 VBlank
 	const int CyclesPerFrame = CyclesPerScanline * ScanlinesTotal;
 

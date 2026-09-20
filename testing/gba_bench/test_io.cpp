@@ -331,25 +331,179 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 	}
 }
 
-GBA_TEST(Dma, ImmediateTransferChargesTheBusWaitstates)
+GBA_TEST(Timers, PrescalerDividesTheSystemClock)
 {
+	// GBATEK 4000100h: the prescaler divides the 16.78 MHz clock by 1, 64, 256 or 1024. The AGB
+	// aging cartridge measures exactly this: it loads a timer's reload value and control and then
+	// spins a fixed loop (1024 iterations of a three cycle branch), reading the counter
+	// afterwards. 3072 cycles are 3072, 48, 12 and 3 ticks.
+	const int expected[4] = { 3072, 48, 12, 3 };
+
 	Fixture f;
 
-	f.WriteMem16(0x02000000, 0x1111);
-	f.WriteMem16(0x02000002, 0x1111);
-	f.Write(0x0B0, 0x0000);
+	for (int p = 0; p < 4; p++)
+	{
+		f.Write(0x100, 0x0000);				// TM0CNT_L = 0
+		f.Write(0x102, (uint16_t)(0x0080 | p));	// enable, prescaler p
+		f.bus.Tick(3072);
+		uint16_t count = f.Read(0x100);
+		f.Write(0x102, 0x0000);				// stop
+
+		GBA_CHECK_EQ(count, (uint16_t)expected[p]);
+	}
+}
+
+GBA_TEST(Bus, SubwordReadsLandOnTheRightByteLanes)
+{
+	// ARM7TDMI Technical Reference Manual (ARM DDI 0210B) 3.6.4 "Byte and halfword accesses" and
+	// its Table 3-7 "Read accesses": a memory narrower than the transfer has to present the data
+	// on the byte lanes the core samples - for a little-endian system a halfword goes on D[15:0]
+	// when A[1] is clear and on D[31:16] when it is set, and a byte on D[7:0], D[15:8], D[23:16]
+	// or D[31:24] by A[1:0]. The manual adds: "For subword reads the value is placed in the ARM
+	// register in the least significant bits regardless of the byte lane used to read the data."
+	//
+	// An emulator whose memories are byte arrays satisfies this by assembling wide accesses from
+	// narrow ones on those lanes, which is what this pins down: a 32 bit read built from two
+	// halfwords must put the second one in the *upper* half, and one built from four bytes must
+	// land them in little-endian order.
+	Fixture f;
+	const uint16_t lo = 0x3344, hi = 0x1122;
+
+	// A 32 bit memory (the on-chip WRAM): each byte address is its own lane.
+	f.bus.Write32(0x03000000, (uint32_t)(hi << 16) | lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x03000000), lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x03000002), hi);
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000000), (uint16_t)(lo & 0xFF));
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000001), (uint16_t)(lo >> 8));
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000002), (uint16_t)(hi & 0xFF));
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000003), (uint16_t)(hi >> 8));
+
+	// A 16 bit memory (EWRAM, VRAM): the halves are still assembled into the right lanes.
+	f.bus.Write16(0x02000000, lo);
+	f.bus.Write16(0x02000002, hi);
+	GBA_CHECK_HEX32(f.bus.Read32(0x02000000), ((uint32_t)hi << 16) | lo);
+
+	f.bus.Write16(0x06000000, lo);
+	f.bus.Write16(0x06000002, hi);
+	GBA_CHECK_HEX32(f.bus.Read32(0x06000000), ((uint32_t)hi << 16) | lo);
+
+	// The palette is the one memory with a documented GBA quirk of its own (GBATEK "LCD Color
+	// Palettes"): an 8 bit store drives *both* byte lanes, so the byte shows up in each half.
+	f.bus.Write8(0x05000000, 0x5A);
+	GBA_CHECK_HEX16(f.bus.Read16(0x05000000), 0x5A5A);
+
+	// OAM is 32 bit: a halfword read takes the half its address selects.
+	f.bus.Write32(0x07000000, ((uint32_t)hi << 16) | lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x07000000), lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x07000002), hi);
+}
+
+GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
+{
+	// GBATEK "GBA Memory Map" gives the access cycles of the internal memories, and the aging
+	// cartridge measures them: the on-board 256K WRAM is a 16 bit bus at 3/3/6 cycles (its
+	// waitstates come from the undocumented 4000800h register), VRAM/OAM/Palette RAM are 1/1/2,
+	// and the BIOS, the 32K on-chip WRAM and the I/O area are 1/1/1.
+	Fixture f;
+
+	// The 32K on-chip WRAM and the I/O area need nothing on top of the CPU's own cycle.
+	f.bus.TakeWaitCycles();
+	f.WriteMem16(0x03000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 0);
+
+	f.bus.TakeWaitCycles();
+	f.Write(0x200, 0x0001);					// IE, an I/O register
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 0);
+
+	// VRAM: 16 bit accesses take one cycle, a 32 bit one takes two.
+	f.bus.TakeWaitCycles();
+	f.WriteMem16(0x06000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 0);
+
+	f.bus.TakeWaitCycles();
+	f.bus.Write32(0x06000000, 0x12345678);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 1);
+
+	// The 256K WRAM: 3 cycles for 8 and 16 bit, 6 for 32 bit (two bus cycles of three).
+	f.bus.TakeWaitCycles();
+	f.WriteMem16(0x02000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 2);
+
+	f.bus.TakeWaitCycles();
+	f.bus.Write32(0x02000000, 0x12345678);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 5);
+
+	// 4000800h selects those waitstates: 0Eh is one waitstate, so 8/16 bit cost two cycles and
+	// 32 bit four (GBATEK 4000800h: "The fastest possible setting would be 0Eh (1 waitstate,
+	// 2/2/4 cycles)").
+	f.bus.TakeWaitCycles();
+	f.Write(0x800, 0x0020);					// the low half: the 256K WRAM enable
+	f.Write(0x802, 0x0E00);					// the high half: bits 24-27 = 0Eh
+	f.WriteMem16(0x02000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 1);
+
+	f.bus.TakeWaitCycles();
+	f.bus.Write32(0x02000000, 0x12345678);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 3);
+
+	// The register is mirrored across the I/O area in 64K steps.
+	GBA_CHECK_HEX32(f.bus.Read32(0x04010800), 0x0E000020);
+}
+
+GBA_TEST(Dma, AddressRegistersKeepTheirWrittenValue)
+{
+	// GBATEK "Source and Destination Address and Word Count Registers": "The SAD, DAD, and CNT_L
+	// registers are holding the initial start addresses, and initial length. The hardware does
+	// NOT change the content of these registers during or after the transfer. The actual transfer
+	// takes place by using internal pointer/counter registers."
+	Fixture f;
+
+	f.WriteMem16(0x02000000, 0x1234);
+	f.WriteMem16(0x02000002, 0x5678);
+	f.Write(0x0B0, 0x0000);				// SAD = 0x02000000
 	f.Write(0x0B2, 0x0200);
-	f.Write(0x0B4, 0x0000);
+	f.Write(0x0B4, 0x0100);				// DAD = 0x02000100
 	f.Write(0x0B6, 0x0200);
-	f.Write(0x0B8, 4);					// four 16bit units
+	f.Write(0x0B8, 2);					// two 16bit units
+	f.Write(0x0BA, 0x8000);				// run it
 
-	f.bus.AddWaitCycles(0);
-	f.Write(0x0BA, 0x8000);
+	// The transfer moved the internal pointers, and the data arrived ...
+	GBA_CHECK_HEX16(f.bus.Read16(0x02000100), 0x1234);
+	GBA_CHECK_HEX16(f.bus.Read16(0x02000102), 0x5678);
 
-	// GBATEK "Transfer Rate/Timing": two bus cycles per unit (one read, one write) plus the
-	// 2-cycle internal time, and nothing here is in the Game Pak.
-	int expected = 4 * 2 + 2;
-	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
+	// ... but the registers still read what was written.
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B0), 0x0000);
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B2), 0x0200);
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B4), 0x0100);
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B6), 0x0200);
+}
+
+GBA_TEST(Dma, ATransferSpendsItsCyclesWhileItRuns)
+{
+	// GBATEK "Transfer Rate/Timing": a transfer's read and write cycles "depend on the
+	// waitstates and bus-width of the source and destination areas", and the hardware steals
+	// them one at a time - the clock keeps moving between one unit and the next. The AGB aging
+	// cartridge measures exactly that: it times a memory block by DMA-sampling Timer 0. A
+	// transfer that ran to completion and only charged its cycles to the next slice gave it the
+	// same sample every time.
+	Fixture f;
+
+	// Timer 0 counts the system clock (prescaler 1, GBATEK 4000100h) and DMA3 copies its
+	// counter into the on-chip WRAM four times, with the source fixed on the register.
+	f.Write(0x100, 0x0000);
+	f.Write(0x102, 0x0080);				// enable, prescaler 1
+	f.Write(0x0D4, 0x0100);				// SAD = 0x04000100 (Timer 0's counter)
+	f.Write(0x0D6, 0x0400);
+	f.Write(0x0D8, 0x0000);				// DAD = 0x03000000 (on-chip WRAM)
+	f.Write(0x0DA, 0x0300);
+	f.Write(0x0DC, 4);					// four 16bit units
+	f.Write(0x0DE, 0x8100);				// enable, fixed source control (bits 7-8 = 2)
+
+	uint16_t first = f.ReadMem16(0x03000000);
+	uint16_t last = f.ReadMem16(0x03000006);
+
+	// Every sample is the timer as the transfer read it, so they climb.
+	GBA_CHECK_MSG(last > first, "the clock must advance while a transfer runs");
 }
 
 GBA_TEST(Dma, WordCountZeroWrapsToTheMaximum)
@@ -357,32 +511,68 @@ GBA_TEST(Dma, WordCountZeroWrapsToTheMaximum)
 	// DMA0-2: a count of zero is 0x4000 units (GBATEK "DMAxCNT_L").
 	{
 		Fixture f;
+		f.WriteMem16(0x03000000, 0x1234);
 		f.Write(0x0B0, 0x0000);
 		f.Write(0x0B2, 0x0300);			// source 0x03000000 (IWRAM)
 		f.Write(0x0B4, 0x0000);
-		f.Write(0x0B6, 0x0300);			// destination 0x03000000
+		f.Write(0x0B6, 0x0200);			// destination 0x02000000 (EWRAM)
 		f.Write(0x0B8, 0);				// word count 0 -> 0x4000
-		f.Write(0x0BA, 0x8000);
+		f.Write(0x0BA, 0x8100);			// enable, fixed source (bits 7-8 = 2)
 
-		// The transfer ran with the maximum count: 0x4000 units of 2 cycles plus the 2-cycle
-		// internal time (see the note on the timing formula in gba_dma.cpp).
-		int expected = 0x4000 * 2 + 2;
-		GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
+		// The transfer ran with the maximum count: the last unit landed.
+		GBA_CHECK_HEX16(f.ReadMem16(0x02000000 + (0x4000 - 1) * 2), 0x1234);
+		GBA_CHECK_HEX16(f.ReadMem16(0x02000000 + (0x4000 - 2) * 2), 0x1234);
 	}
 
 	// DMA3: a count of zero is 0x10000 units.
 	{
 		Fixture f;
+		f.WriteMem16(0x03000000, 0x5678);
 		f.Write(0x0D4, 0x0000);
 		f.Write(0x0D6, 0x0300);
 		f.Write(0x0D8, 0x0000);
-		f.Write(0x0DA, 0x0300);
+		f.Write(0x0DA, 0x0200);
 		f.Write(0x0DC, 0);
-		f.Write(0x0DE, 0x8000);
+		f.Write(0x0DE, 0x8100);
 
-		int expected = 0x10000 * 2 + 2;
-		GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
+		GBA_CHECK_HEX16(f.ReadMem16(0x02000000 + (0x10000 - 1) * 2), 0x5678);
 	}
+}
+
+GBA_TEST(Dma, VideoCaptureRunsFromLineTwoAndStopsAt162)
+{
+	// GBATEK "Video Capture Mode (DMA3 only)": "the transfer is started when VCOUNT=2, it is then
+	// repeated each scanline, and it gets stopped when VCOUNT=162", and "Transfer End: The DMA
+	// Enable flag (Bit 15) is automatically cleared upon completion of the transfer". The aging
+	// cartridge's DMA DISPLAY START check syncs to the counter and reads both of those back.
+	Fixture f;
+
+	// DMA3 in capture mode: fixed source on VCOUNT, one 16bit unit per line, into EWRAM.
+	f.Write(0x0D4, 0x0006);				// SAD = 0x04000006 (VCOUNT)
+	f.Write(0x0D6, 0x0400);
+	f.Write(0x0D8, 0x0000);				// DAD = 0x02000000
+	f.Write(0x0DA, 0x0200);
+	f.Write(0x0DC, 1);					// one unit per scanline
+	f.Write(0x0DE, 0xB300);				// enable, timing 3 (capture), repeat, fixed source
+
+	// Nothing is captured while the counter is on the first two lines.
+	f.bus.Tick(CyclesPerScanline * 2 - 8);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000000), 0x0000);
+
+	// The capture starts when the counter becomes 2.
+	f.bus.Tick(16);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000000), 0x0002);
+
+	// One line later it has run again, with the counter at 3.
+	f.bus.Tick(CyclesPerScanline);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000002), 0x0003);
+
+	// It keeps running ...
+	GBA_CHECK((f.Read(0x0DE) & 0x8000) != 0);
+
+	// ... until the counter reaches 162, where the enable clears itself.
+	f.bus.Tick(CyclesPerScanline * 160);
+	GBA_CHECK_HEX16((uint16_t)(f.Read(0x0DE) & 0x8000), 0x0000);
 }
 
 GBA_TEST(Dma, RepeatTransferRestartedByVBlank)
@@ -1010,10 +1200,19 @@ GBA_TEST(Keypad, AndConditionNeedsEverySelectedKey)
 	f.bus.keypad.SetPressed(KEY_A | KEY_B);
 	GBA_CHECK(f.bus.keypad.ConditionMet());
 
-	// With nothing selected there is no condition to meet.
+	// With nothing selected there is no condition to meet in OR mode, and a vacuous one in AND
+	// mode - "an interrupt is requested when ALL of the selected buttons are pressed", and all
+	// of none are. That is the trick the AGB aging cartridge uses to raise the keypad interrupt
+	// with nothing held down (KEYCNT = C000h), and because the request is level driven it stays
+	// up until the register is written again.
 	f.bus.keypad.Reset();
 	f.bus.keypad.SetPressed(0xFFFF);
 	GBA_CHECK(!f.bus.keypad.ConditionMet());
+
+	f.bus.keypad.Reset();
+	f.bus.keypad.WriteKeyCnt(0xC000);
+	GBA_CHECK(f.bus.keypad.ConditionMet());
+	GBA_CHECK(f.bus.keypad.IrqRequested());
 }
 
 // ===========================================================================================

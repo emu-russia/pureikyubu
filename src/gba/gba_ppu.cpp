@@ -33,6 +33,8 @@
 // 68 blank dots = 272 cycles make 1232 cycles per line; 160 visible lines and 68 VBlank lines.
 
 #include "gba_ppu.h"
+#include <cstdio>
+#include <cstdlib>
 #include "gba_bus.h"
 
 namespace GBA
@@ -783,6 +785,13 @@ namespace GBA
 		// 1232 are the HBlank interval (GBATEK "Horizontal Dimensions").
 		const int visibleCycles = ScreenWidth * 4;
 
+		// The H-Blank *flag* (and with it the interrupt and the DMA trigger) rises 46 cycles
+		// after the visible part ends: "the H-Blank flag is '0' for a total of 1006 cycles"
+		// (GBATEK 4000004h). The scanline is composed at the 960 edge, where the CPU's writes
+		// begin to belong to the next line - that part is the documented line-at-a-time
+		// composition, not the hardware's blanking signal.
+		const int hblankCycles = 960 + 46;
+
 		while (cycles > 0)
 		{
 			// Consume up to the next edge of the LCD. There are two per line: the start of HBlank
@@ -801,26 +810,48 @@ namespace GBA
 
 			if (before < visibleCycles && lineCycles >= visibleCycles && vcount < ScreenHeight)
 			{
-				// The whole scanline is composed here, when its HBlank starts (the documented
+				// The whole scanline is composed here, when its visible part ends (the documented
 				// deviation: the hardware draws it dot by dot during the visible part).
 				RenderLine(bus, vcount);
+			}
 
-				// The HBlank edge sets DISPSTAT's H-Blank flag (which Read16 derives from the
-				// line position), raises the HBlank interrupt when bit 4 enables it and triggers
-				// the HBlank DMA and the video capture DMA. GBATEK "LCD Dimensions and Timings":
-				// "no H-Blank interrupts are generated within V-Blank", so the hidden lines do
-				// none of this.
+			if (before < visibleCycles && lineCycles >= visibleCycles && vcount < ScreenHeight)
+			{
+				// The interrupt belongs to the blanking *interval*, which starts when the visible
+				// part ends (GBATEK "LCD Dimensions and Timings": "H-Blanking 68 dots ... 272
+				// cycles"); DISPSTAT's H-Blank *flag* is delayed by another 46 cycles (4000004h,
+				// see HBlankFlagCycles).
 				if ((dispstat & 0x10) != 0)
 					bus.irq.Raise(INT_HBLANK);
 
 				bus.dma.OnHBlank(bus);
-				bus.dma.OnScanline(bus);
+			}
+
+			if (before < visibleCycles && lineCycles >= visibleCycles && vcount >= ScreenHeight)
+			{
+				// "The H-Blank conditions are generated once per scanline, including for the
+				// 'hidden' scanlines during V-Blank" (GBATEK 4000004h). The aging cartridge's
+				// H BLANK INTR checks pin this: it enables the interrupt on a hidden line and
+				// expects the flag. (GBATEK's timing chapter adds "no H-Blank interrupts are
+				// generated within V-Blank period", which the hardware does not bear out.)
+				if ((dispstat & 0x10) != 0)
+					bus.irq.Raise(INT_HBLANK);
 			}
 
 			if (lineCycles >= CyclesPerScanline)
 			{
 				lineCycles -= CyclesPerScanline;
 				AdvanceVCount(bus);
+
+				// Video capture (GBATEK "Video Capture Mode (DMA3 only)"): "Capture works similar
+				// like HBlank DMA, however, the transfer is started when VCOUNT=2, it is then
+				// repeated each scanline, and it gets stopped when VCOUNT=162" - the 160 lines
+				// 2..161, i.e. the visible area shifted by the two lines the LCD's own framing
+				// hides, and one capture per line rather than at the blanking edge.
+				if (vcount >= 2 && vcount <= 161)
+					bus.dma.OnScanline(bus);
+				else if (vcount == 162)
+					bus.dma.EndVideoCapture();
 			}
 		}
 	}
@@ -884,8 +915,12 @@ namespace GBA
 		if (vcount >= ScreenHeight && vcount < ScanlinesTotal - 1)
 			value |= STAT_VBLANK;			// set in the lines 160..226
 
-		if (lineCycles >= ScreenWidth * 4)
-			value |= STAT_HBLANK;			// the visible part of the line is over
+		// GBATEK 4000004h: "Although the drawing time is only 960 cycles (240*4), the H-Blank
+		// flag is '0' for a total of 1006 cycles", so the flag rises 46 cycles into the blanking
+		// interval rather than at its start. It does so on the hidden lines too ("toggled in all
+		// lines, 0..227").
+		if (lineCycles >= HBlankFlagCycles)
+			value |= STAT_HBLANK;
 
 		if (vcount == (uint16_t)(dispstat >> 8))
 			value |= STAT_VCOUNT;			// VCOUNT matches the setting
