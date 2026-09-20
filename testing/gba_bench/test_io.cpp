@@ -331,6 +331,58 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 	}
 }
 
+GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
+{
+	// GBATEK "GBA Memory Map" gives the access cycles of the internal memories, and the aging
+	// cartridge measures them: the on-board 256K WRAM is a 16 bit bus at 3/3/6 cycles (its
+	// waitstates come from the undocumented 4000800h register), VRAM/OAM/Palette RAM are 1/1/2,
+	// and the BIOS, the 32K on-chip WRAM and the I/O area are 1/1/1.
+	Fixture f;
+
+	// The 32K on-chip WRAM and the I/O area need nothing on top of the CPU's own cycle.
+	f.bus.TakeWaitCycles();
+	f.WriteMem16(0x03000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 0);
+
+	f.bus.TakeWaitCycles();
+	f.Write(0x200, 0x0001);					// IE, an I/O register
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 0);
+
+	// VRAM: 16 bit accesses take one cycle, a 32 bit one takes two.
+	f.bus.TakeWaitCycles();
+	f.WriteMem16(0x06000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 0);
+
+	f.bus.TakeWaitCycles();
+	f.bus.Write32(0x06000000, 0x12345678);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 1);
+
+	// The 256K WRAM: 3 cycles for 8 and 16 bit, 6 for 32 bit (two bus cycles of three).
+	f.bus.TakeWaitCycles();
+	f.WriteMem16(0x02000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 2);
+
+	f.bus.TakeWaitCycles();
+	f.bus.Write32(0x02000000, 0x12345678);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 5);
+
+	// 4000800h selects those waitstates: 0Eh is one waitstate, so 8/16 bit cost two cycles and
+	// 32 bit four (GBATEK 4000800h: "The fastest possible setting would be 0Eh (1 waitstate,
+	// 2/2/4 cycles)").
+	f.bus.TakeWaitCycles();
+	f.Write(0x800, 0x0020);					// the low half: the 256K WRAM enable
+	f.Write(0x802, 0x0E00);					// the high half: bits 24-27 = 0Eh
+	f.WriteMem16(0x02000000, 0x1234);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 1);
+
+	f.bus.TakeWaitCycles();
+	f.bus.Write32(0x02000000, 0x12345678);
+	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), 3);
+
+	// The register is mirrored across the I/O area in 64K steps.
+	GBA_CHECK_HEX32(f.bus.Read32(0x04010800), 0x0E000020);
+}
+
 GBA_TEST(Dma, ImmediateTransferChargesTheBusWaitstates)
 {
 	Fixture f;
@@ -343,12 +395,18 @@ GBA_TEST(Dma, ImmediateTransferChargesTheBusWaitstates)
 	f.Write(0x0B6, 0x0200);
 	f.Write(0x0B8, 4);					// four 16bit units
 
-	f.bus.AddWaitCycles(0);
+	// Clear the cycles the setup above accumulated (the fixture's writes into the 256K WRAM now
+	// cost its own waitstates); TakeWaitCycles drains and resets the counter.
+	f.bus.TakeWaitCycles();
 	f.Write(0x0BA, 0x8000);
 
-	// GBATEK "Transfer Rate/Timing": two bus cycles per unit (one read, one write) plus the
-	// 2-cycle internal time, and nothing here is in the Game Pak.
-	int expected = 4 * 2 + 2;
+	// GBATEK "Transfer Rate/Timing": "2N+2(n-1)S+xI. Of which, 1N+(n-1)S are read cycles, and
+	// the other 1N+(n-1)S are write cycles, actual number of cycles depends on the waitstates
+	// and bus-width of the source and destination areas". Both ends here are the on-board
+	// 256K WRAM, which GBATEK's memory map gives as 3/3/6 cycles (its default two waitstates),
+	// so each of the eight accesses costs three cycles instead of one, plus the 2 cycle
+	// internal time: 8 * 3 + 2.
+	int expected = 8 * 3 + 2;
 	GBA_CHECK_EQ(f.bus.TakeWaitCycles(), expected);
 }
 

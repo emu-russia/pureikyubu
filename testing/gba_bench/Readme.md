@@ -70,17 +70,23 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
   gives a visible line 1210 rendering cycles (954 with DISPCNT bit 5, the "H-Blank Interval Free"
   flag) and a cost per OBJ, so hardware drops the OBJs that no longer fit; the renderer draws
   every OBJ that covers the line and DISPCNT bit 5 changes nothing.
-* **VRAM/OAM/Palette waitstates are not modelled.** GBATEK "VRAM, OAM, and Palette RAM Access":
+* **VRAM/OAM/Palette contention is not modelled.** GBATEK "VRAM, OAM, and Palette RAM Access":
   on the GBA the CPU may reach the display memory at any time, with a waitstate inserted when the
   controller is using it in the same cycle (unlike a DMG, no access is lost). The accesses here
-  are immediate. The `Ppu` test `RegisterReadBack` and the `memory` test ROM pin the data rules.
+  take their documented 1/1/2 cycles (`Bus, InternalMemoryTimingsFollowTheMemoryMap`) but never
+  the extra contention cycle. The `Ppu` test `RegisterReadBack` and the `memory` test ROM pin the
+  data rules.
 * **DISPSTAT's H-Blank flag rises when the visible part of the line ends** (cycle 960), which is
   what the manual's timing table gives. GBATEK 4000004h instead says the flag is "0" for 1006
   cycles, i.e. it rises 46 cycles later; that remark is not followed.
-* **The internal RAM's own access times are not modelled.** The CPU's cycle counts are exact and
-  the cartridge's waitstates follow WAITCNT, but EWRAM (a 16-bit bus) and IWRAM (32-bit) are
-  treated as zero-wait. The cartridge prefetch buffer is modelled as a waitstate rule rather than
-  as a real 8-halfword buffer.
+* **The internal RAM's own access times follow GBATEK's memory map, except for the display
+  memory.** The CPU's cycle counts are exact, the cartridge's waitstates follow WAITCNT, and the
+  on-board 256K WRAM (a 16-bit bus) charges its 3/3/6 cycles - with the waitstate count taken from
+  the undocumented 4000800h register, whose default 0Dh is the documented two waits - while VRAM,
+  OAM and Palette RAM charge the documented 1/1/2. What is still missing is GBATEK's "+1 cycle if
+  the GBA accesses video memory at the same time" (the renderer composes a whole line at once
+  rather than dot by dot), and the cartridge prefetch buffer is modelled as a waitstate rule
+  rather than as a real 8-halfword buffer.
 * **DMA charges its stolen cycles to the next slice** of the system clock instead of interleaving
   with the CPU instruction that started it, and a DMA transfer runs to completion in one go. The
   word counts, the address adjustments and the start timings themselves follow GBATEK.

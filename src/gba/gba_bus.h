@@ -156,6 +156,22 @@ namespace GBA
 		// WAITCNT (0x04000204) and the derived SRAM/ROM waitstates.
 		uint16_t waitcnt = 0;
 		int sramWait = 0;
+		uint32_t memControl = 0x0D000020;	// 4000800h: bits 24-27 are the 256K WRAM waits
+
+		/// <summary>The 256K WRAM waitstate count (2 by default, 4000800h bits 24-27 = 15-n).</summary>
+		int WramWaitStates() const;
+
+		/// <summary>
+		/// True for the mirrored 4000800h access: the register is four bytes wide and repeats in
+		/// every 64K page of the I/O area (GBATEK 4000800h).
+		/// </summary>
+		bool IsMemControl(uint32_t address) const
+		{
+			if ((address >> 24) != 0x04)
+				return false;
+			uint32_t within = address & 0xFFFF;
+			return within >= 0x800 && within <= 0x803;
+		}
 
 		// The registers the bus decodes itself (WAITCNT, IE/IF/IME, POSTFLG, HALTCNT).
 		uint16_t ReadIo16(uint32_t offset);
@@ -168,6 +184,16 @@ namespace GBA
 		void IoWrite16(uint32_t offset, uint16_t value);
 
 		void UpdateWaitStates();
+
+		/// <summary>
+		/// The extra cycles an access to the internal memories costs on top of the CPU's own N/S
+		/// cycle, from GBATEK's "GBA Memory Map" table: the on-board 256K WRAM is a 16 bit bus
+		/// with waitstates (3/3/6 cycles by default, set by the undocumented 4000800h register)
+		/// while VRAM, OAM and Palette RAM are 1/1/2 - one cycle for 8 and 16 bit accesses and
+		/// two for a 32 bit one. The BIOS, the 32K on-chip WRAM and the I/O area are 1/1/1 and
+		/// need nothing.
+		/// </summary>
+		int InternalWaitCycles(uint32_t address, int bytes) const;
 
 		friend class Dma;
 	};

@@ -105,6 +105,36 @@ namespace GBA
 		sramWait = sramWaits[waitcnt & 3];
 	}
 
+	int GbaBus::WramWaitStates() const
+	{
+		// GBATEK 4000800h: "The default value 0Dh in Bits 24-27 selects 2 waitstates for 256K
+		// WRAM (ie. 3/3/6 cycles 8/16/32bit accesses). The fastest possible setting would be
+		// 0Eh (1 waitstate ...)"; value 15 is no waitstate at all.
+		int waits = 15 - (int)((memControl >> 24) & 0xF);
+		return (waits < 0) ? 0 : waits;
+	}
+
+	int GbaBus::InternalWaitCycles(uint32_t address, int bytes) const
+	{
+		switch (address >> 24)
+		{
+		case 0x02:
+			// On-board 256K WRAM: 1 + waits cycles for 8 and 16 bit accesses, and two such
+			// accesses for a 32 bit one (2 * (1 + waits)).
+			return (bytes == 4) ? (2 * (1 + WramWaitStates()) - 1) : WramWaitStates();
+
+		case 0x05:			// Palette RAM
+		case 0x06:			// VRAM
+		case 0x07:			// OAM
+			// 1/1/2: a 32 bit access is two bus cycles where the CPU counts one.
+			return (bytes == 4) ? 1 : 0;
+
+		default:
+			// BIOS, the 32K on-chip WRAM and the I/O area are 1/1/1.
+			return 0;
+		}
+	}
+
 	int GbaBus::TakeWaitCycles()
 	{
 		int cycles = waitCycles;
@@ -132,6 +162,7 @@ namespace GBA
 				return (uint8_t)(openBus >> ((address & 3) * 8));
 
 			case 0x02:
+				AddWaitCycles(InternalWaitCycles(address, 1));
 				openBus = (openBus & 0xFFFFFF00u) | ewram.Read8(address - MemEwram);
 				return (uint8_t)openBus;
 
@@ -140,6 +171,8 @@ namespace GBA
 				return (uint8_t)openBus;
 
 			case 0x04:
+				if (IsMemControl(address))
+					return (uint8_t)(memControl >> ((address & 3) * 8));
 				return ReadIo8(address & (IoSize - 1));
 
 			case 0x05:
@@ -197,6 +230,7 @@ namespace GBA
 
 			case 0x02:
 			{
+				AddWaitCycles(InternalWaitCycles(address, 2));
 				uint16_t value = ewram.Read16(address - MemEwram);
 				openBus = value;
 				return value;
@@ -210,6 +244,8 @@ namespace GBA
 			}
 
 			case 0x04:
+				if (IsMemControl(address))
+					return (uint16_t)(memControl >> ((address & 2) * 8));
 				return ReadIo16(address & (IoSize - 1));
 
 			case 0x05:
@@ -353,6 +389,7 @@ namespace GBA
 
 			case 0x02:
 			{
+				AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
 				uint32_t value = ewram.Read32(address - MemEwram);
 				openBus = value;
 				return value;
@@ -366,23 +403,18 @@ namespace GBA
 			}
 
 			case 0x04:
+				if (IsMemControl(address))
+					return memControl;
 				return (uint32_t)ReadIo16(address & (IoSize - 1))
 					| ((uint32_t)ReadIo16((address + 2) & (IoSize - 1)) << 16);
 
 			case 0x05:
-			{
-				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
-				return value;
-			}
-
 			case 0x06:
-			{
-				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
-				return value;
-			}
-
 			case 0x07:
 			{
+				// Palette RAM 1/1/2, VRAM 1/1/2, OAM 1/1/2 (GBATEK "GBA Memory Map"): the two
+				// 16 bit halves cost a cycle each, the CPU counts one for the whole access.
+				AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
 				uint32_t value = (uint32_t)Read16(address) | ((uint32_t)Read16(address + 2) << 16);
 				return value;
 			}
@@ -437,6 +469,7 @@ namespace GBA
 				break;
 
 			case 0x02:
+				AddWaitCycles(InternalWaitCycles(address, 1));
 				ewram.Write8(address - MemEwram, value);
 				break;
 
@@ -445,6 +478,12 @@ namespace GBA
 				break;
 
 			case 0x04:
+				if (IsMemControl(address))
+				{
+					uint32_t shift = (address & 3) * 8;
+					memControl = (memControl & ~(0xFFu << shift)) | ((uint32_t)value << shift);
+					break;
+				}
 				WriteIo8(address & (IoSize - 1), value);
 				break;
 
@@ -513,6 +552,7 @@ namespace GBA
 				break;
 
 			case 0x02:
+				AddWaitCycles(InternalWaitCycles(address, 2));
 				ewram.Write16(address - MemEwram, value);
 				break;
 
@@ -521,6 +561,12 @@ namespace GBA
 				break;
 
 			case 0x04:
+				if (IsMemControl(address))
+				{
+					uint32_t shift = (address & 2) * 8;
+					memControl = (memControl & ~(0xFFFFu << shift)) | ((uint32_t)value << shift);
+					break;
+				}
 				WriteIo16(address & (IoSize - 1), value);
 				break;
 
@@ -568,6 +614,11 @@ namespace GBA
 		// A 32-bit write is two 16-bit writes, which is exactly what the 16-bit bus does; the
 		// order matters for the peripherals that auto-increment (the FIFOs), so the halves are
 		// written low first, as the hardware does.
+		//
+		// The two halves have charged their own waitstates by then; what is left is the 32 bit
+		// access's own extra cycle on the memories that take 1/1/2 (GBATEK "GBA Memory Map"),
+		// because the CPU counts one cycle for the whole store.
+		AddWaitCycles(InternalWaitCycles(address, 4) - 2 * InternalWaitCycles(address, 2));
 		Write16(address, (uint16_t)value);
 		Write16(address + 2, (uint16_t)(value >> 16));
 	}
@@ -800,7 +851,9 @@ namespace GBA
 				break;
 
 			case 0x204:
-				waitcnt = value;
+				// Bit 15 is the read-only Game Pak Type Flag (GBATEK 4000204h: "(Read Only)
+				// (0=GBA, 1=CGB) (IN35 signal)"), so a write cannot set it on a GBA cartridge.
+				waitcnt = (uint16_t)(value & 0x7FFF);
 				UpdateWaitStates();
 				break;
 
