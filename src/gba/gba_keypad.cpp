@@ -32,11 +32,19 @@ namespace GBA
 		// complement of the KEYINPUT register the software reads.
 		uint16_t selected = (uint16_t)(control & 0x03FF);
 
-		if (selected == 0)
-			return false;
-
 		if (control & 0x8000)
-			return (pressed & selected) == selected;	// logical AND: all selected keys down
+		{
+			// Logical AND: "an interrupt is requested when ALL of the selected buttons are
+			// pressed" (GBATEK 4000132h). With no button selected that is vacuously true, so the
+			// request is up the moment the register is written - which is how the AGB aging
+			// cartridge raises the keypad interrupt with nothing held down: it puts KEYCNT at
+			// C000h (logical AND, empty selection) and expects the flag. The request is level
+			// driven, so it stays up until the condition is cleared.
+			return (pressed & selected) == selected;
+		}
+
+		if (selected == 0)
+			return false;								// logical OR: nothing to press
 
 		return (pressed & selected) != 0;				// logical OR: any selected key down
 	}

@@ -1091,10 +1091,19 @@ GBA_TEST(Keypad, AndConditionNeedsEverySelectedKey)
 	f.bus.keypad.SetPressed(KEY_A | KEY_B);
 	GBA_CHECK(f.bus.keypad.ConditionMet());
 
-	// With nothing selected there is no condition to meet.
+	// With nothing selected there is no condition to meet in OR mode, and a vacuous one in AND
+	// mode - "an interrupt is requested when ALL of the selected buttons are pressed", and all
+	// of none are. That is the trick the AGB aging cartridge uses to raise the keypad interrupt
+	// with nothing held down (KEYCNT = C000h), and because the request is level driven it stays
+	// up until the register is written again.
 	f.bus.keypad.Reset();
 	f.bus.keypad.SetPressed(0xFFFF);
 	GBA_CHECK(!f.bus.keypad.ConditionMet());
+
+	f.bus.keypad.Reset();
+	f.bus.keypad.WriteKeyCnt(0xC000);
+	GBA_CHECK(f.bus.keypad.ConditionMet());
+	GBA_CHECK(f.bus.keypad.IrqRequested());
 }
 
 // ===========================================================================================

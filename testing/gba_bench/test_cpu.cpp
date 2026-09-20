@@ -1990,7 +1990,34 @@ namespace
 		GBA_CHECK_EQ(b.R(0), 0x11u);
 	}
 
-	GBA_TEST(Cpu, IrqWithImeClearDoesNotFire)
+		GBA_TEST(Irq, KeypadInterruptIsTakenWithAKeyHeld)
+	{
+		// The AGB aging cartridge's KEY INTR check holds a key, puts KEYCNT at 43FFh (every key
+		// selected, logical OR, interrupt enabled), sets IME and expects the BIOS to have seen the
+		// interrupt a handful of instructions later. The whole chain is pinned here: the keypad's
+		// level driven request reaches IF, and the CPU takes it.
+		Bench b;
+		b.InstallBios(VectorIrq, Enc::DpImm(Enc::AL, Enc::SUB, true, 14, 15, 4));
+		b.Arm(CodeBase, { Enc::DpImm(Enc::AL, Enc::MOV, false, 0, 0, 0x11) });
+		b.EnterArm(CodeBase);
+
+		b.bus.keypad.Reset();
+		b.bus.keypad.SetPressed(KEY_START);
+		b.bus.Write16(0x04000132, (uint16_t)(0x4000 | 0x03FF));	// KEYCNT: any key, IRQ enabled
+		b.bus.irq.WriteIE(INT_KEYPAD);
+		b.bus.irq.WriteIME(true);
+		b.Cpu().WriteCPSR(b.Cpu().ReadCPSR() & ~FlagI);			// let the IRQ in
+
+		// The request is raised as the clock runs (the pad's condition is level driven).
+		b.bus.Tick(4);
+		GBA_CHECK((b.bus.irq.ReadIF() & INT_KEYPAD) != 0);
+
+		b.Step();
+		GBA_CHECK(b.Cpu().Mode() == ModeIrq);
+		GBA_CHECK_EQ(b.Cpu().CurrentPC(), VectorIrq);
+	}
+
+GBA_TEST(Cpu, IrqWithImeClearDoesNotFire)
 	{
 		Bench b;
 		b.Arm(CodeBase, { Enc::DpImm(Enc::AL, Enc::MOV, false, 0, 0, 0x11) });
