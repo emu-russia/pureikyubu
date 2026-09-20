@@ -189,6 +189,10 @@ namespace GBA
 		bool EepromDriving() const;
 		uint16_t EepromReadWord();
 
+		/// <summary>True for an idle access in the EEPROM's own window: the chip is selected but
+		/// not shifting a block out, so it drives its ready line (bit0) on the bus.</summary>
+		bool EepromIdle(uint32_t address) const;
+
 		/// <summary>
 		/// True when this address is in the EEPROM's own window rather than in the ROM image.
 		/// The chip is decoded from the top of the cartridge address space, so an access inside

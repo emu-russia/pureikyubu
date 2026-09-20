@@ -218,10 +218,11 @@ Also not implemented:
   entry points and everything a probe could measure out of the real BIOS are implemented in the host
   (`gba_hlebios.cpp`): the work area's identifier and layout, the mixed buffer and the two FIFO DMA
   channels, the mode's registers and the playback frequency table, `MidiKey2Freq` in the BIOS's own
-  fixed point, and `HuffUnComp` byte for byte. What is still missing is the driver's **mixer**
-  (the virtual channels into `pcmbuf`), so a game whose music engine *is* the BIOS's gets silence
-  without a real BIOS image rather than music - and a game whose graphics are Huffman-compressed
-  does not boot without one either (Metroid Fusion is such a game). With a real BIOS
+  fixed point, and `HuffUnComp` byte for byte. The driver's **mixer** is implemented too (the
+  twelve virtual channels of the driver's array, `50h + n * 40h`, mixed into `pcmbuf`), so a game
+  whose music engine *is* the BIOS's gets its music without a real BIOS image as well; a game whose
+  graphics are Huffman-compressed does not boot without one (Metroid Fusion is such a game). With a
+  real BIOS
   (`build/Data/gba_bios.bin`, or `--bios <file>` in the harness) the real routines run instead of
   the HLE ones and both work. The harness prints the core's warnings, so a run that falls back to
   an unimplemented call says so.

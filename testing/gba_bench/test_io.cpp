@@ -331,6 +331,50 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 	}
 }
 
+GBA_TEST(Dma, TheUnitSizeFollowsTheTransferTypeOnEveryChannel)
+{
+	// GBATEK "DMAxCNT_H": "Specifies the number of data units to be transferred, each unit is
+	// 16bit or 32bit depending on the transfer type" - bit 10 is not a DMA3 privilege. A channel
+	// stuck on 16bit units moves half of what the game asked for: The Minish Cap's sound engine
+	// streams its per-frame block with a 32bit DMA0 (CNT_H = 8400h, four units) and its music
+	// came out distorted while the games that only use 16bit DMA0-2 were fine.
+	const int unitBytes[2] = { 2, 4 };		// bit 10 clear = 16bit, set = 32bit
+
+	for (int index = 0; index < 3; index++)
+	{
+		uint32_t sad = 0x0B0 + index * 0x0C;
+		uint32_t dad = 0x0B4 + index * 0x0C;
+		uint32_t cnt = 0x0B8 + index * 0x0C;
+
+		for (int word = 0; word < 2; word++)
+		{
+			Fixture f;
+
+			for (uint32_t i = 0; i < 32; i++)
+			{
+				f.bus.Write8(0x02000000 + i, (uint8_t)(0x40 + i));
+				f.bus.Write8(0x02000100 + i, 0);
+			}
+
+			f.Write(sad, 0x0000); f.Write(sad + 2, 0x0200);		// SAD = 02000000h
+			f.Write(dad, 0x0100); f.Write(dad + 2, 0x0200);		// DAD = 02000100h
+			f.Write(cnt, 4);									// four units
+			f.Write(cnt + 2, (uint16_t)(0x8000 | (word ? 0x0400 : 0x0000)));
+
+			uint32_t moved = 4u * (uint32_t)unitBytes[word];
+			for (uint32_t i = 0; i < 32; i++)
+			{
+				uint8_t expected = (i < moved) ? (uint8_t)(0x40 + i) : 0x00;
+				GBA_CHECK_MSG(f.bus.Read8(0x02000100 + i) == expected,
+					"DMA" + std::to_string(index) + (word ? " 32bit" : " 16bit") +
+					" byte " + std::to_string(i) + " is " +
+					GbaTest::Hex(f.bus.Read8(0x02000100 + i)) + ", expected " +
+					GbaTest::Hex(expected));
+			}
+		}
+	}
+}
+
 GBA_TEST(Timers, PrescalerDividesTheSystemClock)
 {
 	// GBATEK 4000100h: the prescaler divides the 16.78 MHz clock by 1, 64, 256 or 1024. The AGB

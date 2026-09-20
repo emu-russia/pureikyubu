@@ -683,6 +683,54 @@ GBA_TEST(Cart, Eeprom512WriteRead)
 		GBA_CHECK_HEX16(readBack[i], 0xFF);
 }
 
+GBA_TEST(Cart, EepromIdleReadDrivesTheReadyLine)
+{
+	// GBATEK "GBA Cart Backup EEPROM": the chip drives bit0 of the bus, and while it is not
+	// shifting a block out that bit is its ready line ("after a write, wait until bit0 is 1").
+	// A game polls exactly this bit - Minish Cap's save library does it in a loop with a VCOUNT
+	// timeout - so a window that answers with the ROM the chip mirrors instead leaves every
+	// write looking failed and the library marks good blocks as damaged.
+	std::string error;
+	std::vector<uint8_t> image = MakeRom();
+	PutSignature(image, 0x120, "EEPROM_V");
+
+	// Make the byte the window mirrors have bit0 low, so a plain ROM read would look "busy".
+	image[0] = 0x00;
+	image[1] = 0x12;
+
+	Cart cart;
+	GBA_CHECK_MSG(cart.LoadRom(image, error), error);
+	GBA_CHECK(cart.GetSaveType() == SaveType::Eeprom512B);
+
+	// Idle: the ready line is high, and the upper bits are the ROM the window mirrors.
+	GBA_CHECK_MSG((cart.ReadRom16(EepromWindow) & 1) == 1,
+		"an idle EEPROM read must return the ready line in bit0");
+	GBA_CHECK_MSG((cart.ReadRom8(EepromWindow) & 1) == 1,
+		"a byte read must return the ready line too");
+
+	const uint16_t mirror = (uint16_t)(image[0] | (image[1] << 8));
+	GBA_CHECK_HEX16((uint16_t)(cart.ReadRom16(EepromWindow) & 0xFFFEu),
+		(uint16_t)(mirror & 0xFFFEu));
+
+	// A write completes inside the write itself, so the line is high again straight after it.
+	const uint8_t written[8] = { 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0 };
+	EepromSendRequest(cart, EepromWriteStream(0x2A, 6, written), true);
+	GBA_CHECK_MSG((cart.ReadRom16(EepromWindow) & 1) == 1,
+		"the ready line is high after a write completes");
+
+	// While the chip shifts a block out the window returns its bits, not the ready line.
+	EepromSendRequest(cart, EepromReadRequest(0x2A, 6), false);
+	GBA_CHECK(cart.EepromBusy());
+
+	uint8_t readBack[8] = {};
+	EepromReadData(cart, readBack);
+	for (int i = 0; i < 8; i++)
+		GBA_CHECK_HEX16(readBack[i], written[i]);
+
+	// Outside the chip's window the ROM is untouched, ready line and all.
+	GBA_CHECK_HEX16(cart.ReadRom16(0x08000000), mirror);
+}
+
 GBA_TEST(Cart, EepromOnlyAnswersInItsOwnWindow)
 {
 	// GBATEK "GBA Cart Backup EEPROM": "the eeprom can be then addressed at
