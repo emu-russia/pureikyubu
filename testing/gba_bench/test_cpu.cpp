@@ -2953,3 +2953,38 @@ namespace
 		GBA_CHECK_EQ(b.Nzcv(), NBit);
 	}
 }
+
+GBA_TEST(Cpu, ExecutesACopiedRoutineBelowTheStackPointer)
+{
+	// The aging cartridge's helper at 0F150h copies a routine to the words just below the stack
+	// pointer and jumps into the copy with "bx sp", pointing LR at the Thumb code that restores
+	// SP. Both of the cartridge's checks that go through it (TIMER PRESCALER and KEY INTR) use
+	// the trick, so the mechanism itself has to work: an ARM routine reached through "bx sp",
+	// returning with "bx lr" to an odd address.
+	Bench bench;
+
+	// The call: "bx sp", from on-chip WRAM (the address is even, so ARM state).
+	const uint32_t caller = 0x03000000;
+	bench.Poke(caller, 0xE12FFF1Du);			// bx sp
+
+	// The copy, below the stack pointer: "mov r0, #7" then "bx lr".
+	const uint32_t routine = 0x03007E00;
+	bench.Poke(routine + 0, 0xE3A00007u);		// mov r0, #7
+	bench.Poke(routine + 4, 0xE12FFF1Eu);		// bx lr
+
+	// The Thumb landing pad the helper returns to (an odd address).
+	const uint32_t landing = 0x03007F00;
+	bench.Poke16(landing, 0x46C0);				// nop
+
+	bench.SetR(13, routine);					// sp = the copy
+	bench.SetR(14, landing | 1u);				// lr = the Thumb landing pad
+	bench.EnterArm(caller);
+
+	bench.Steps(2);								// bx sp, mov r0, #7
+	GBA_CHECK_EQ(bench.R(0), 7u);
+	GBA_CHECK(bench.bus.cpu.CurrentPC() == routine + 4);
+
+	bench.Steps(1);								// bx lr
+	GBA_CHECK(bench.bus.cpu.CurrentPC() == landing);
+	GBA_CHECK(bench.bus.cpu.ThumbState());
+}
