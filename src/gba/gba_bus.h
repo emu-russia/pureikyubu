@@ -170,6 +170,15 @@ namespace GBA
 		// WAITCNT (0x04000204) and the derived SRAM/ROM waitstates.
 		uint16_t waitcnt = 0;
 		int sramWait = 0;
+
+		// Where the last Game Pak access ended, and whether the bus has been reading the
+		// cartridge without interruption (GBATEK 4000204h's first/second access timing).
+		uint32_t romNext = 0;
+		bool romChain = false;
+
+		// Set while the CPU is fetching an instruction, which is what the Game Pak prefetch
+		// buffer serves.
+		bool fetching = false;
 		uint32_t memControl = 0x0D000020;	// 4000800h: bits 24-27 are the 256K WRAM waits
 
 		/// <summary>The 256K WRAM waitstate count (2 by default, 4000800h bits 24-27 = 15-n).</summary>
@@ -208,6 +217,19 @@ namespace GBA
 		/// need nothing.
 		/// </summary>
 		int InternalWaitCycles(uint32_t address, int bytes) const;
+
+		/// <summary>True when this Game Pak access continues the previous one (the ROM's "second
+		/// access", the sequential timing).</summary>
+		bool RomSequential(uint32_t address) const;
+
+		/// <summary>
+		/// Charge a Game Pak access. GBATEK's WAITCNT table gives the *total* access time of the
+		/// first (non-sequential) and the second (sequential) access, and the CPU (or the DMA)
+		/// already counts one cycle for the access itself, so the waitstates added here are that
+		/// figure less one - per 16 bit fragment, of which a 32 bit access has two (the second
+		/// always sequential). A *code fetch* with the prefetch buffer running costs nothing.
+		/// </summary>
+		void ChargeRom(uint32_t address, int bytes, bool fetch);
 
 		friend class Dma;
 	};

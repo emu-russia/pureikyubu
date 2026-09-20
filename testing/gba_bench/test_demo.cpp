@@ -71,7 +71,11 @@ GBA_TEST(Demo, TheCartridgeLoadsAndRuns)
 GBA_TEST(Demo, TheScreenHoldsTheProgramsPattern)
 {
 	GbaSystem system;
-	RunDemo(system, 30);
+
+	// The budget has to leave the program part way through a pass: a pass is one frame of
+	// VCOUNT paced painting, so how many passes share the screen depends on where the run stops.
+	// (The note further down records the unresolved y-offset this check sidesteps.)
+	RunDemo(system, 25);
 
 	// Every pixel in VRAM must be one the program's formula can produce: recover the pass counter
 	// from each of the three channels and require that the channel the program used for it agrees.

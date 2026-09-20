@@ -353,6 +353,51 @@ GBA_TEST(Timers, PrescalerDividesTheSystemClock)
 	}
 }
 
+GBA_TEST(Bus, SubwordReadsLandOnTheRightByteLanes)
+{
+	// ARM7TDMI Technical Reference Manual (ARM DDI 0210B) 3.6.4 "Byte and halfword accesses" and
+	// its Table 3-7 "Read accesses": a memory narrower than the transfer has to present the data
+	// on the byte lanes the core samples - for a little-endian system a halfword goes on D[15:0]
+	// when A[1] is clear and on D[31:16] when it is set, and a byte on D[7:0], D[15:8], D[23:16]
+	// or D[31:24] by A[1:0]. The manual adds: "For subword reads the value is placed in the ARM
+	// register in the least significant bits regardless of the byte lane used to read the data."
+	//
+	// An emulator whose memories are byte arrays satisfies this by assembling wide accesses from
+	// narrow ones on those lanes, which is what this pins down: a 32 bit read built from two
+	// halfwords must put the second one in the *upper* half, and one built from four bytes must
+	// land them in little-endian order.
+	Fixture f;
+	const uint16_t lo = 0x3344, hi = 0x1122;
+
+	// A 32 bit memory (the on-chip WRAM): each byte address is its own lane.
+	f.bus.Write32(0x03000000, (uint32_t)(hi << 16) | lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x03000000), lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x03000002), hi);
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000000), (uint16_t)(lo & 0xFF));
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000001), (uint16_t)(lo >> 8));
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000002), (uint16_t)(hi & 0xFF));
+	GBA_CHECK_HEX16(f.bus.Read8(0x03000003), (uint16_t)(hi >> 8));
+
+	// A 16 bit memory (EWRAM, VRAM): the halves are still assembled into the right lanes.
+	f.bus.Write16(0x02000000, lo);
+	f.bus.Write16(0x02000002, hi);
+	GBA_CHECK_HEX32(f.bus.Read32(0x02000000), ((uint32_t)hi << 16) | lo);
+
+	f.bus.Write16(0x06000000, lo);
+	f.bus.Write16(0x06000002, hi);
+	GBA_CHECK_HEX32(f.bus.Read32(0x06000000), ((uint32_t)hi << 16) | lo);
+
+	// The palette is the one memory with a documented GBA quirk of its own (GBATEK "LCD Color
+	// Palettes"): an 8 bit store drives *both* byte lanes, so the byte shows up in each half.
+	f.bus.Write8(0x05000000, 0x5A);
+	GBA_CHECK_HEX16(f.bus.Read16(0x05000000), 0x5A5A);
+
+	// OAM is 32 bit: a halfword read takes the half its address selects.
+	f.bus.Write32(0x07000000, ((uint32_t)hi << 16) | lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x07000000), lo);
+	GBA_CHECK_HEX16(f.bus.Read16(0x07000002), hi);
+}
+
 GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
 {
 	// GBATEK "GBA Memory Map" gives the access cycles of the internal memories, and the aging

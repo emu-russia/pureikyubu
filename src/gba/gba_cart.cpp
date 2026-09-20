@@ -467,12 +467,6 @@ namespace GBA
 			: (region == 2) ? (((waitcnt & 0x0400) != 0) ? 1 : 8)
 			: (((waitcnt & 0x0010) != 0) ? 1 : 2);
 
-		// GBATEK "GBA GamePak Prefetch": with the prefetch buffer running, the CPU is served
-		// from the eight halfword buffer, which is the cheap form of "the second access is one
-		// cycle when the buffer is on and the region runs at its lowest first access time".
-		if (sequential && (waitcnt & 0x4000) != 0 && firstIndex == 2)
-			return 0;
-
 		int waits = sequential ? second : RomFirstWaits[firstIndex & 3];
 
 		// A 128 Mbit (16 MByte) pak takes one cycle longer on the first access: the bigger

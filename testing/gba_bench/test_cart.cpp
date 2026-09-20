@@ -1037,12 +1037,11 @@ GBA_TEST(Cart, WaitStates)
 	GBA_CHECK_EQ(cart.WaitStates(0x0000000, false, 0x4317), 3);
 	GBA_CHECK_EQ(cart.WaitStates(0x0000000, true, 0x4317), 1);
 
-	// The second access is a single cycle when the prefetch buffer is on (bit14) and the
-	// region runs at its lowest first access time (2 cycles, bits 2-3 = 2).
+	// The prefetch buffer (bit 14) is the bus's business, not this table's: it serves *fetches*,
+	// which GbaBus::ChargeRom makes free; a data access keeps its WAITCNT timing.
 	GBA_CHECK_EQ(cart.WaitStates(0x0000000, false, 0x4008), 2);
-	GBA_CHECK_EQ(cart.WaitStates(0x0000000, true, 0x4008), 0);
-	// Without the prefetch buffer the second access keeps its WAITCNT setting (bit4 = 1 -> 1,
-	// bit4 = 0 -> 2).
+	GBA_CHECK_EQ(cart.WaitStates(0x0000000, true, 0x4008), 2);
+	// The second access keeps its WAITCNT setting (bit4 = 1 -> 1, bit4 = 0 -> 2).
 	GBA_CHECK_EQ(cart.WaitStates(0x0000000, true, 0x0010), 1);
 	GBA_CHECK_EQ(cart.WaitStates(0x0000000, true, 0x0008), 2);
 

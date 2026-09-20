@@ -135,6 +135,58 @@ namespace GBA
 		}
 	}
 
+	bool GbaBus::RomSequential(uint32_t address) const
+	{
+		// "The GBA forcefully uses non-sequential timing at the beginning of each 128K-block of
+		// gamepak ROM, eg. 'LDMIA [801fff8h],r0-r7' will have non-sequential timing at 8020000h"
+		// (GBATEK "GBA GamePak Prefetch").
+		if ((address & 0x1FFFF) == 0)
+			return false;
+
+		return romChain && address == romNext;
+	}
+
+	void GbaBus::ChargeRom(uint32_t address, int bytes, bool fetch)
+	{
+		// Whether this access continues the previous one has to be asked *before* the chain is
+		// moved on to this access's end.
+		bool sequential = RomSequential(address);
+
+		romNext = address + (uint32_t)bytes;
+		romChain = true;
+
+		// The prefetch buffer holds the next eight halfwords, so a fetch is served from it and
+		// costs nothing beyond the CPU's own cycle: the AGB aging cartridge's PREFETCH BUFFER
+		// check measures a tight loop in the cartridge twice, 24 cycles with bit 14 of WAITCNT
+		// set against 51 without, and only the first of those two adds up this way.
+		if (fetch && (waitcnt & 0x4000) != 0)
+			return;
+
+		int total = cart.WaitStates(address, sequential, waitcnt);
+
+		if (bytes == 4)
+		{
+			// "GamePak uses 16bit data bus, so that a 32bit access is split into TWO 16bit
+			// accesses (of which, the second fragment is always sequential, even if the first
+			// fragment was non-sequential)" (GBATEK 4000204h).
+			total += cart.WaitStates(address + 2, true, waitcnt);
+		}
+
+		// A 32 bit access is two fragments on this 16 bit bus, so the CPU pays one cycle more
+		// than the single N cycle our interpreter counts for it; the second fragment's cycle is
+		// added here. The DMA engine counts both fragments itself, so it does not need it.
+		int counted = 1;
+		if (bytes == 4)
+			counted = dmaAccess ? 2 : 0;
+
+		if (total > counted)
+			AddWaitCycles(total - counted);
+
+		if (getenv("GBA_TRACE_ROM") && bytes == 4 && address >= 0x08003260u && address < 0x080032B0u)
+			fprintf(stderr, "ROMF32 %08X total=%d counted=%d seq=%d pref=%d fetch=%d\n",
+				address, total, counted, (int)sequential, (waitcnt & 0x4000) ? 1 : 0, (int)fetch);
+	}
+
 	int GbaBus::TakeWaitCycles()
 	{
 		int cycles = waitCycles;
@@ -193,7 +245,7 @@ namespace GBA
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
 			{
-				AddWaitCycles(cart.WaitStates(address, true, waitcnt));
+				ChargeRom(address, 1, fetching);
 
 				uint8_t value = IsGpioAddress(address) ? cart.ReadGpio(address) : cart.ReadRom8(address);
 				openBus = (openBus & 0xFFFFFF00u) | value;
@@ -246,6 +298,12 @@ namespace GBA
 			case 0x04:
 				if (IsMemControl(address))
 					return (uint16_t)(memControl >> ((address & 2) * 8));
+				if (getenv("GBA_TRACE_TMR") && (address & 0x00FFFFFF) == 0x000100)
+				{
+					uint16_t v = ReadIo16(address & (IoSize - 1));
+					fprintf(stderr, "TM %d %04X\n", ppu.FrameCounter(), (unsigned)v);
+					return v;
+				}
 				return ReadIo16(address & (IoSize - 1));
 
 			case 0x05:
@@ -275,7 +333,7 @@ namespace GBA
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
 			{
-				AddWaitCycles(cart.WaitStates(address, true, waitcnt));
+				ChargeRom(address, 2, fetching);
 
 				uint16_t value;
 
@@ -423,7 +481,7 @@ namespace GBA
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
 			{
-				AddWaitCycles(cart.WaitStates(address, true, waitcnt) * 2);
+				ChargeRom(address, 4, fetching);
 
 				uint32_t value;
 
@@ -519,7 +577,7 @@ namespace GBA
 				break;
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
-				AddWaitCycles(cart.WaitStates(address, true, waitcnt));
+				ChargeRom(address, 2, false);
 
 				if (IsGpioAddress(address))
 				{
@@ -587,7 +645,7 @@ namespace GBA
 				break;
 
 			case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D:
-				AddWaitCycles(cart.WaitStates(address, true, waitcnt));
+				ChargeRom(address, 2, false);
 
 				if (IsGpioAddress(address))
 				{
@@ -632,20 +690,34 @@ namespace GBA
 
 	uint16_t GbaBus::Fetch16(uint32_t address)
 	{
+		fetching = true;
 		uint16_t value = Read16(address);
+		fetching = false;
 
-		// A code fetch from the cartridge also runs the prefetch buffer. The buffer is modelled
-		// as "the second access is free when it is enabled" in Cart::WaitStates, so nothing else
-		// is charged here.
 		openBus = value;
 		return value;
 	}
 
 	uint32_t GbaBus::Fetch32(uint32_t address)
 	{
-		// An ARM instruction fetch is two 16-bit fetches on the cartridge bus.
+		uint32_t region = address >> 24;
+
+		if (region >= 0x08 && region <= 0x0D && !IsGpioAddress(address))
+		{
+			// An ARM instruction fetch from the cartridge is one 32 bit access, so that the
+			// second 16 bit fragment takes the ROM's sequential timing and the access is charged
+			// as a whole (see ChargeRom).
+			ChargeRom(address, 4, true);
+			uint32_t value = cart.ReadRom32(address);
+			openBus = value;
+			return value;
+		}
+
+		fetching = true;
 		uint32_t low = Read16(address);
 		uint32_t high = Read16(address + 2);
+		fetching = false;
+
 		openBus = low | (high << 16);
 		return low | (high << 16);
 	}
