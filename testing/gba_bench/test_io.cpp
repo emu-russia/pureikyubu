@@ -331,6 +331,28 @@ GBA_TEST(Dma, ImmediateTransferWithIncrementDecrementAndFixed)
 	}
 }
 
+GBA_TEST(Timers, PrescalerDividesTheSystemClock)
+{
+	// GBATEK 4000100h: the prescaler divides the 16.78 MHz clock by 1, 64, 256 or 1024. The AGB
+	// aging cartridge measures exactly this: it loads a timer's reload value and control and then
+	// spins a fixed loop (1024 iterations of a three cycle branch), reading the counter
+	// afterwards. 3072 cycles are 3072, 48, 12 and 3 ticks.
+	const int expected[4] = { 3072, 48, 12, 3 };
+
+	Fixture f;
+
+	for (int p = 0; p < 4; p++)
+	{
+		f.Write(0x100, 0x0000);				// TM0CNT_L = 0
+		f.Write(0x102, (uint16_t)(0x0080 | p));	// enable, prescaler p
+		f.bus.Tick(3072);
+		uint16_t count = f.Read(0x100);
+		f.Write(0x102, 0x0000);				// stop
+
+		GBA_CHECK_EQ(count, (uint16_t)expected[p]);
+	}
+}
+
 GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
 {
 	// GBATEK "GBA Memory Map" gives the access cycles of the internal memories, and the aging
