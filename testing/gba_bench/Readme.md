@@ -99,9 +99,12 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
   the GBA accesses video memory at the same time" (the renderer composes a whole line at once
   rather than dot by dot), and the cartridge prefetch buffer is modelled as a waitstate rule
   rather than as a real 8-halfword buffer.
-* **A DMA transfer runs to completion in one go**, so a request that arrives while one is running
-  (an HBlank/VBlank trigger, or a FIFO refill the sound asks for) waits for the channel's next
-  trigger instead of preempting it by priority. Its *cycles* are no longer part of this
+* **A DMA transfer can be preempted by a higher priority channel, but only whole transfers run.**
+  A request that arrives while one is running is remembered on its channel and the running
+  transfer lets the higher priority ones in at its next unit boundary (GBATEK "DMA Priority":
+  DMA0 is highest), which is what the aging cartridge's DMA PRIORITY check looks for. What is
+  still coarse is that the preempting transfer then runs to *its* end before the preempted one
+  resumes, instead of the two interleaving a unit at a time. Its *cycles* are no longer part of this
   deviation: the transfer spends them as it runs - GBATEK "Transfer Rate/Timing" gives the read
   and write cycles per unit and the hardware steals them one at a time, so the timers, the LCD
   and the sound keep moving between one unit and the next (the AGB aging cartridge measures

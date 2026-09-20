@@ -548,6 +548,7 @@ namespace GBA
 		}
 
 		channel.pending = false;
+		channel.triggered = false;
 		int cycles = Perform(bus, index);
 
 		if (channel.active)
@@ -579,15 +580,12 @@ namespace GBA
 
 	void Dma::Trigger(GbaBus& bus, int timing)
 	{
-		// A transfer owns the bus until it finishes (the same simplification the cycle
-		// accounting makes), so a request that arrives while one runs does not start a nested
-		// transfer; its channel stays armed and runs on its next trigger.
-		if (inTransfer)
-			return;
-
-		// The channels are examined in priority order (DMA0 first, GBATEK "DMA Transfers"): a
-		// lower-priority channel would be held while a higher-priority one runs. Here each
-		// triggered channel runs to completion in turn.
+		// The channels are examined in priority order (DMA0 first, GBATEK "DMA Transfers"). A
+		// request that arrives while a transfer is running does not start a nested transfer from
+		// here: it is remembered on the channel, and the running transfer lets the higher
+		// priority ones in at its next unit boundary (GBATEK "DMA Priority": "DMA0 has the
+		// highest priority"). The AGB aging cartridge's DMA PRIORITY check is exactly that - a
+		// HBlank request that lands in the middle of a long immediate transfer.
 		for (int i = 0; i < 4; i++)
 		{
 			Channel& channel = channels[i];
@@ -596,6 +594,12 @@ namespace GBA
 
 			if (((channel.control & DmaTiming) >> 12) != timing)
 				continue;
+
+			if (inTransfer)
+			{
+				channel.triggered = true;
+				continue;
+			}
 
 			if (timing == 1 && LooksLikeEeprom(i, channel, (uint32_t)UnitCount(channel, i)))
 			{
@@ -619,13 +623,21 @@ namespace GBA
 			GbaBus& bus;
 			TransferGuard(Dma& d, GbaBus& b) : dma(d), bus(b)
 			{
+				dma.transferDepth++;
 				dma.inTransfer = true;
 				// The DMA counts its own bus cycles (see the per-unit accounting below), so the
 				// 32 bit accesses it makes must not also charge the extra cycle the *CPU* pays
 				// for a 32 bit access on a 16 bit bus.
 				bus.dmaAccess = true;
 			}
-			~TransferGuard() { dma.inTransfer = false; bus.dmaAccess = false; }
+			~TransferGuard()
+			{
+				if (--dma.transferDepth == 0)
+				{
+					dma.inTransfer = false;
+					bus.dmaAccess = false;
+				}
+			}
 		} guard(*this, bus);
 
 		if (!channel.active || (channel.control & DmaEnable) == 0)
@@ -681,6 +693,21 @@ namespace GBA
 
 		for (int unit = 0; unit < units; unit++)
 		{
+			// A channel of higher priority that was triggered while this transfer runs takes the
+			// bus at this unit boundary and runs its own transfer, after which this one carries
+			// on where it stopped (GBATEK "DMA Priority" plus the "may offhold sound DMA" note in
+			// "Sound DMA (FIFO Timing Mode)"). The cap keeps a pathological chain of triggers from
+			// nesting without end.
+			for (int p = 0; p < index && transferDepth < 8; p++)
+			{
+				Channel& other = channels[p];
+				if (other.triggered && other.active && (other.control & DmaEnable) != 0)
+				{
+					other.triggered = false;
+					Perform(bus, p);
+				}
+			}
+
 			// Only DMA3 reaches the Game Pak; DMA0-2 read internal memory. Nothing can reach the
 			// 8bit SRAM. An access a channel may not make returns the open bus value (all ones on
 			// an idle bus) or is dropped, as the hardware does.

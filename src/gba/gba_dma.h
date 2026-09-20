@@ -35,6 +35,7 @@ namespace GBA
 			uint16_t control = 0;		// DMAxCNT_H
 			bool active = false;	// the channel is enabled and not finished
 			bool pending = false;	// it was triggered and waits for its slice
+			bool triggered = false;	// its start condition arrived while another transfer ran
 			int latched = 0;		// words left in the current transfer
 
 			// The addresses the *registers* hold, in full, and what a read of SAD/DAD returns.
@@ -97,6 +98,9 @@ namespace GBA
 
 	private:
 		Channel channels[4]{};
+
+		/// <summary>How many transfers are on the stack (see Dma::Trigger).</summary>
+		int transferDepth = 0;
 
 		/// <summary>True while a transfer is running (see Dma::Trigger).</summary>
 		bool inTransfer = false;
