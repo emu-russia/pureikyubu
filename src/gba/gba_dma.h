@@ -29,26 +29,27 @@ namespace GBA
 		/// <summary>One channel's registers, which are also what the debugger shows.</summary>
 		struct Channel
 		{
-			uint32_t source = 0;		// DMAxSAD (the low half, which is what a read returns)
-			uint32_t dest = 0;			// DMAxDAD (the low half, which is what a read returns)
+			uint32_t source = 0;		// DMAxSAD_L, the low half of the register a read serves
+			uint32_t dest = 0;			// DMAxDAD_L, likewise
 			uint16_t count = 0;			// DMAxCNT_L
 			uint16_t control = 0;		// DMAxCNT_H
 			bool active = false;	// the channel is enabled and not finished
 			bool pending = false;	// it was triggered and waits for its slice
 			int latched = 0;		// words left in the current transfer
 
-			// The addresses the *registers* hold, in full. A transfer copies them into the
-			// pointers below when the enable bit goes from 0 to 1 (GBATEK "Source and Destination
-			// Address and Word Count Registers"), and a repeat copies only the word count (and
-			// optionally DAD) - so the source pointer keeps running, which is what streams a
-			// sound buffer through the FIFO. Writing SAD/DAD while a transfer runs therefore has
-			// to leave the pointer alone.
+			// The addresses the *registers* hold, in full, and what a read of SAD/DAD returns.
+			// The hardware never changes them during or after a transfer (GBATEK "Source and
+			// Destination Address and Word Count Registers"), so they only move when the CPU
+			// writes them. A transfer copies them into the pointers below when the enable bit
+			// goes from 0 to 1, and a repeat copies only the word count (and optionally DAD) -
+			// so the source pointer keeps running, which is what streams a sound buffer through
+			// the FIFO. Writing SAD/DAD while a transfer runs therefore has to leave the pointer
+			// alone.
 			uint32_t sourceRegister = 0;
 			uint32_t destRegister = 0;
 
-			// The running pointers. While the channel is idle, `sourceLatch` doubles as "the high
-			// half of SAD seen so far", which is what a read of DMAxSAD_H returns (see the note at
-			// the top of the .cpp).
+			// The running pointers, which the transfer advances and the next 0 -> 1 enable edge
+			// reloads from the registers.
 			uint32_t sourceLatch = 0;
 			uint32_t destLatch = 0;
 		};

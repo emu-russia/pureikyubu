@@ -405,6 +405,34 @@ GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
 	GBA_CHECK_HEX32(f.bus.Read32(0x04010800), 0x0E000020);
 }
 
+GBA_TEST(Dma, AddressRegistersKeepTheirWrittenValue)
+{
+	// GBATEK "Source and Destination Address and Word Count Registers": "The SAD, DAD, and CNT_L
+	// registers are holding the initial start addresses, and initial length. The hardware does
+	// NOT change the content of these registers during or after the transfer. The actual transfer
+	// takes place by using internal pointer/counter registers."
+	Fixture f;
+
+	f.WriteMem16(0x02000000, 0x1234);
+	f.WriteMem16(0x02000002, 0x5678);
+	f.Write(0x0B0, 0x0000);				// SAD = 0x02000000
+	f.Write(0x0B2, 0x0200);
+	f.Write(0x0B4, 0x0100);				// DAD = 0x02000100
+	f.Write(0x0B6, 0x0200);
+	f.Write(0x0B8, 2);					// two 16bit units
+	f.Write(0x0BA, 0x8000);				// run it
+
+	// The transfer moved the internal pointers, and the data arrived ...
+	GBA_CHECK_HEX16(f.bus.Read16(0x02000100), 0x1234);
+	GBA_CHECK_HEX16(f.bus.Read16(0x02000102), 0x5678);
+
+	// ... but the registers still read what was written.
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B0), 0x0000);
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B2), 0x0200);
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B4), 0x0100);
+	GBA_CHECK_HEX16(f.bus.Read16(0x040000B6), 0x0200);
+}
+
 GBA_TEST(Dma, ATransferSpendsItsCyclesWhileItRuns)
 {
 	// GBATEK "Transfer Rate/Timing": a transfer's read and write cycles "depend on the

@@ -296,14 +296,20 @@ namespace GBA
 		switch (reg)
 		{
 		case RegSad:
+			// "The SAD, DAD, and CNT_L registers are holding the initial start addresses, and
+			// initial length. The hardware does NOT change the content of these registers during
+			// or after the transfer. The actual transfer takes place by using internal
+			// pointer/counter registers." (GBATEK "Source and Destination Address and Word Count
+			// Registers"). A read therefore returns what the CPU wrote, not where the transfer
+			// ended - the aging cartridge's ADDRESS CONTROL checks read these back.
 			if (within == 2)
-				return (uint16_t)(channel.sourceLatch >> 16);
-			return (uint16_t)channel.source;
+				return (uint16_t)(channel.sourceRegister >> 16);
+			return (uint16_t)channel.sourceRegister;
 
 		case RegDad:
 			if (within == 6)
-				return (uint16_t)(channel.destLatch >> 16);
-			return (uint16_t)channel.dest;
+				return (uint16_t)(channel.destRegister >> 16);
+			return (uint16_t)channel.destRegister;
 
 		case RegCount:
 			return channel.count;
@@ -755,18 +761,10 @@ namespace GBA
 
 		channel.sourceLatch = source;
 		channel.destLatch = dest;
-		// The transfer advanced the internal pointers: keep both the latches (what the next
-		// trigger uses) and the register view in step, so a debugger that reads SAD/DAD back sees
-		// the address the transfer ended on.
-		// Keep the register view at the address the transfer started from while the channel
-		// repeats: the next trigger re-latches SAD and (for "increment + reload") DAD from there,
-		// so that is what the registers have to show. A one-shot transfer instead leaves the
-		// registers showing where it ended up.
-		if ((channel.control & DmaRepeat) == 0)
-		{
-			channel.source = source;
-			channel.dest = dest;
-		}
+		// The transfer advanced the internal pointers; the registers themselves are untouched
+		// (GBATEK: "The hardware does NOT change the content of these registers during or after
+		// the transfer"), so nothing copies the pointers back into Channel::source/::dest - a
+		// read of SAD/DAD must keep returning the address the CPU wrote.
 		channel.latched = 0;
 
 		// The word count has been transferred: raise the channel's interrupt when bit 14 asks
