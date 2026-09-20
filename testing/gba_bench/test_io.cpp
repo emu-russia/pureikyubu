@@ -466,6 +466,42 @@ GBA_TEST(Dma, WordCountZeroWrapsToTheMaximum)
 	}
 }
 
+GBA_TEST(Dma, VideoCaptureRunsFromLineTwoAndStopsAt162)
+{
+	// GBATEK "Video Capture Mode (DMA3 only)": "the transfer is started when VCOUNT=2, it is then
+	// repeated each scanline, and it gets stopped when VCOUNT=162", and "Transfer End: The DMA
+	// Enable flag (Bit 15) is automatically cleared upon completion of the transfer". The aging
+	// cartridge's DMA DISPLAY START check syncs to the counter and reads both of those back.
+	Fixture f;
+
+	// DMA3 in capture mode: fixed source on VCOUNT, one 16bit unit per line, into EWRAM.
+	f.Write(0x0D4, 0x0006);				// SAD = 0x04000006 (VCOUNT)
+	f.Write(0x0D6, 0x0400);
+	f.Write(0x0D8, 0x0000);				// DAD = 0x02000000
+	f.Write(0x0DA, 0x0200);
+	f.Write(0x0DC, 1);					// one unit per scanline
+	f.Write(0x0DE, 0xB300);				// enable, timing 3 (capture), repeat, fixed source
+
+	// Nothing is captured while the counter is on the first two lines.
+	f.bus.Tick(CyclesPerScanline * 2 - 8);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000000), 0x0000);
+
+	// The capture starts when the counter becomes 2.
+	f.bus.Tick(16);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000000), 0x0002);
+
+	// One line later it has run again, with the counter at 3.
+	f.bus.Tick(CyclesPerScanline);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000002), 0x0003);
+
+	// It keeps running ...
+	GBA_CHECK((f.Read(0x0DE) & 0x8000) != 0);
+
+	// ... until the counter reaches 162, where the enable clears itself.
+	f.bus.Tick(CyclesPerScanline * 160);
+	GBA_CHECK_HEX16((uint16_t)(f.Read(0x0DE) & 0x8000), 0x0000);
+}
+
 GBA_TEST(Dma, RepeatTransferRestartedByVBlank)
 {
 	// What a repeat reloads is what GBATEK "Source and Destination Address and Word Count

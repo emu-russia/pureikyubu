@@ -420,8 +420,8 @@ namespace GBA
 	{
 		// Video capture (GBATEK "Video Capture Mode (DMA3 only)"): start timing 3 on DMA3 with
 		// the destination in VRAM. It works like an HBlank transfer - the number of units in the
-		// word count register is copied once per scanline - and the capture runs for the visible
-		// lines only, which is the window the PPU's scanline callback delimits.
+		// word count register is copied once per scanline - and the PPU calls this for the lines
+		// the capture covers, 2..161 (see the trigger in Ppu::Tick).
 		Channel& channel = channels[3];
 		if (!channel.active || !(channel.control & DmaEnable))
 			return;
@@ -436,6 +436,26 @@ namespace GBA
 		channel.pending = true;
 		RunNow(bus, 3);
 		channel.pending = false;
+	}
+
+	void Dma::EndVideoCapture()
+	{
+		Channel& channel = channels[3];
+
+		if (!channel.active || (channel.control & DmaEnable) == 0)
+			return;
+
+		if (((channel.control & DmaTiming) >> 12) != 3)
+			return;
+
+		if (IsFifoMode(channel, 3))
+			return;
+
+		// "Transfer End: The DMA Enable flag (Bit 15) is automatically cleared upon completion of
+		// the transfer" (GBATEK "Video Capture Mode (DMA3 only)").
+		channel.active = false;
+		channel.pending = false;
+		channel.control &= (uint16_t)~DmaEnable;
 	}
 
 	void Dma::OnFifoRequest(GbaBus& bus, int fifo)

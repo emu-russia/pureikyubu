@@ -70,6 +70,13 @@ namespace GBA
 		/// <summary>The video capture channel (DMA3 special) runs once per scanline.</summary>
 		void OnScanline(GbaBus& bus);
 
+		/// <summary>
+		/// "Capture ... gets stopped when VCOUNT=162" and "The DMA Enable flag (Bit 15) is
+		/// automatically cleared upon completion of the transfer" (GBATEK "Video Capture Mode
+		/// (DMA3 only)"): the channel that was capturing drops its enable.
+		/// </summary>
+		void EndVideoCapture();
+
 		/// <summary>The sound FIFOs ask for a refill (the bus calls this from the APU).</summary>
 		void OnFifoRequest(GbaBus& bus, int channel);
 

@@ -88,7 +88,9 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
   interrupts are generated within V-Blank period"; the aging cartridge's `H BLANK INTR` and
   `H BLANK INTR FLAG` checks enable the interrupt on a hidden line and expect the flag, so the
   DISPSTAT wording is the one followed. The HBlank DMA triggers still fire on the visible lines
-  only (see `Dma::OnScanline` for the video capture).
+  only; the video capture is a separate trigger, on the lines GBATEK gives it ("the transfer is
+  started when VCOUNT=2, it is then repeated each scanline, and it gets stopped when VCOUNT=162",
+  with "The DMA Enable flag (Bit 15) automatically cleared upon completion").
 * **The internal RAM's own access times follow GBATEK's memory map, except for the display
   memory.** The CPU's cycle counts are exact, the cartridge's waitstates follow WAITCNT, and the
   on-board 256K WRAM (a 16-bit bus) charges its 3/3/6 cycles - with the waitstate count taken from

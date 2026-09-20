@@ -825,7 +825,6 @@ namespace GBA
 					bus.irq.Raise(INT_HBLANK);
 
 				bus.dma.OnHBlank(bus);
-				bus.dma.OnScanline(bus);
 			}
 
 			if (before < visibleCycles && lineCycles >= visibleCycles && vcount >= ScreenHeight)
@@ -843,6 +842,16 @@ namespace GBA
 			{
 				lineCycles -= CyclesPerScanline;
 				AdvanceVCount(bus);
+
+				// Video capture (GBATEK "Video Capture Mode (DMA3 only)"): "Capture works similar
+				// like HBlank DMA, however, the transfer is started when VCOUNT=2, it is then
+				// repeated each scanline, and it gets stopped when VCOUNT=162" - the 160 lines
+				// 2..161, i.e. the visible area shifted by the two lines the LCD's own framing
+				// hides, and one capture per line rather than at the blanking edge.
+				if (vcount >= 2 && vcount <= 161)
+					bus.dma.OnScanline(bus);
+				else if (vcount == 162)
+					bus.dma.EndVideoCapture();
 			}
 		}
 	}
