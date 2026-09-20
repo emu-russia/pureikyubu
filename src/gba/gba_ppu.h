@@ -156,6 +156,7 @@ namespace GBA
 
 		uint16_t dispstat = 0;			// 0x004 of DISPSTAT, the read-only bits are kept here
 		uint16_t vcount = 0;
+		bool vcountIrqLine = false;		// the V-Counter match interrupt line (see UpdateVCountMatch)
 
 		// -- memory ------------------------------------------------------------------------
 

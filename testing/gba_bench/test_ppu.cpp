@@ -1611,6 +1611,50 @@ GBA_TEST(Ppu, VCountMatchInterrupt)
 	GBA_CHECK_EQ(bus.irq.ReadIF() & INT_VCOUNT, INT_VCOUNT);
 }
 
+GBA_TEST(Ppu, VCountMatchWriteDuringTheMatchDoesNotRequestItTwice)
+{
+	// The request belongs to the gated match *becoming* true (GBATEK 4000004h: "interrupt ...
+	// requested when the flag becomes set"), not to the condition merely being true while the CPU
+	// writes DISPSTAT. Minish Cap's sound driver writes DISPSTAT back on line 80 of every frame
+	// and advances its sequencer on each V-Counter interrupt, so a second request there runs its
+	// music at double speed - this test is the unit side of that bug.
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	const int matchLine = 80;
+	WriteReg(bus, DISPSTAT, (uint16_t)((matchLine << 8) | STAT_VCOUNT_IRQ));
+
+	// Run the line counter up to the match: the interrupt appears exactly once.
+	while (bus.ppu.VCount() != (uint16_t)matchLine)
+		bus.Tick(CyclesPerScanline);
+
+	GBA_CHECK_EQ(bus.irq.ReadIF() & INT_VCOUNT, INT_VCOUNT);
+
+	// Writing the same DISPSTAT value while the match is still true must not request it again.
+	bus.irq.WriteIF(0x3FFF);
+	WriteReg(bus, DISPSTAT, (uint16_t)((matchLine << 8) | STAT_VCOUNT_IRQ));
+	GBA_CHECK((bus.ppu.DispStat() & STAT_VCOUNT) != 0);
+	GBA_CHECK_EQ(bus.irq.ReadIF() & INT_VCOUNT, 0);
+
+	// The next frame's match is still requested, so the fix suppresses the repeat and not the
+	// interrupt itself.
+	bus.irq.WriteIF(0x3FFF);
+	int matches = 0;
+
+	for (int line = 0; line < ScanlinesTotal; line++)
+	{
+		bus.Tick(CyclesPerScanline);
+
+		if ((bus.irq.ReadIF() & INT_VCOUNT) != 0)
+		{
+			matches++;
+			bus.irq.WriteIF(0x3FFF);
+		}
+	}
+
+	GBA_CHECK_EQ(matches, 1);
+}
+
 // ===========================================================================================
 // The bitmap modes, the window edges, the green swap and the special-effect gates
 // (an audit against GBATEK and the AGB Programming Manual v1.1)
