@@ -66,7 +66,7 @@ namespace GBA
 		const uint16_t DmaDestControl = 0x0060;		// bits 5-6
 		const uint16_t DmaSourceControl = 0x0180;	// bits 7-8
 		const uint16_t DmaRepeat = 0x0200;			// bit 9
-		const uint16_t DmaWord = 0x0400;			// bit 10 (DMA3 only)
+		const uint16_t DmaWord = 0x0400;			// bit 10: 0 = 16bit units, 1 = 32bit (every channel)
 		const uint16_t DmaDrq = 0x0800;				// bit 11 (DMA3 only, Game Pak DRQ)
 		const uint16_t DmaTiming = 0x3000;			// bits 12-13
 		const uint16_t DmaIrq = 0x4000;				// bit 14
@@ -154,10 +154,16 @@ namespace GBA
 			return false;
 		}
 
-		/// <summary>The unit size of a 32bit transfer (GBATEK DMAxCNT_H bit 10, DMA3 only).</summary>
+		/// <summary>
+		/// The unit size of a transfer: GBATEK DMAxCNT_H bit 10 selects it on *every* channel
+		/// ("Specifies the number of data units to be transferred, each unit is 16bit or 32bit
+		/// depending on the transfer type"). Only the FIFO timing mode ignores it, and that is
+		/// forced to a word transfer in Dma::Perform.
+		/// </summary>
 		bool UsesWords(const Dma::Channel& channel, int index)
 		{
-			return index == 3 && (channel.control & DmaWord) != 0;
+			(void)index;
+			return (channel.control & DmaWord) != 0;
 		}
 
 		/// <summary>True for a special-timing channel whose destination is a sound FIFO.</summary>

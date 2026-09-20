@@ -286,11 +286,12 @@ GBA_TEST(HleBios, TheSoundDriverSetsUpTheFifos)
 namespace
 {
 	/// <summary>
-	/// One virtual channel of the driver's own array (16 entries of 0x30 bytes at work+0x50),
-	/// playing a synthetic wave: a 64 sample ramp with no loop, so the mixed output is easy to
-	/// predict. The field offsets are the ones the disassembled driver reads.
+	/// One virtual channel of the driver's own array (12 entries of 0x40 bytes at work+0x50), playing a
+	/// synthetic wave: a 64 sample ramp with no loop, so the mixed output is easy to predict. The
+	/// field offsets and the stride are the ones the official driver's own mixer reads (verified by
+	/// putting the channel at each candidate offset and seeing which one the BIOS mixes).
 	/// </summary>
-	void SetupChannel(GbaBus& bus, uint32_t work, uint32_t wave)
+	void SetupChannel(GbaBus& bus, uint32_t work, uint32_t wave, uint32_t index = 0)
 	{
 		for (uint32_t i = 0; i < 128; i++)
 			bus.Write8(wave + i, 0);
@@ -302,7 +303,7 @@ namespace
 		for (uint32_t i = 0; i < 64; i++)
 			bus.Write8(wave + 16 + i, (uint8_t)(0x10 + i));
 
-		uint32_t channel = work + 0x50;
+		uint32_t channel = work + 0x50 + index * 0x40;
 
 		bus.Write8(channel + 0x00, 0x80);			// sf: start
 		bus.Write8(channel + 0x02, 0xFF);			// rv
@@ -327,6 +328,52 @@ namespace
 		uint32_t index = (count + 1 - dmaCount) % count;
 		return Bytes(bus, work + half + index * stride, bytes);
 	}
+}
+
+GBA_TEST(HleBios, TheMixerReadsEveryChannelWhereTheOfficialDriverDoes)
+{
+	if (FindBiosImage().empty())
+	{
+		GbaTest::Note("no real BIOS image - the mixer comparison is skipped");
+		return;
+	}
+
+	// The channel array is 12 entries of 40h bytes: `work + 50h + n * 40h`, the twelve ending
+	// exactly at `pcmbuf` (50h + 12 * 40h = 350h). GBATEK "SoundDriverMode" bits 8-11 confirm the
+	// count ("1-12 channels"); the stride was read out of the official driver's own mixer by
+	// putting a channel at each candidate offset and seeing which one came out of the mix.
+	//
+	// A 16 x 30h array spans the same 300h bytes, which is what made the wrong layout look right:
+	// channel 0 matched and channels 1..11 were mixed from misaligned bytes (a game's music came
+	// out as the wrong notes with the envelope and volume bytes of its neighbours).
+	const uint32_t channelIndex = 7;
+
+	SwiCaller hle(false);
+	SwiCaller real(true);
+
+	for (SwiCaller* caller : { &hle, &real })
+	{
+		caller->Call(SwiSoundDriverInit, Work);
+		caller->Call(SwiSoundDriverMode, (12u << 8) | 0x0094F800u);
+
+		for (uint32_t i = 0x50; i < 0x350; i++)
+			caller->Bus().Write8(Work + i, 0);
+
+		SetupChannel(caller->Bus(), Work, Source, channelIndex);
+		caller->Call(SwiSoundDriverVSync);
+		caller->Call(SwiSoundDriverMain);
+	}
+
+	std::vector<uint8_t> mine = MixedOutput(hle.Bus(), Work, 0x350, 64);
+	std::vector<uint8_t> theirs = MixedOutput(real.Bus(), Work, 0x350, 64);
+
+	GBA_CHECK_MSG(mine[0] != 0, "the HLE mixer produced silence: " + Dump(mine));
+
+	for (size_t i = 0; i < mine.size(); i++)
+		GBA_CHECK_MSG(mine[i] == theirs[i],
+			"byte " + std::to_string(i) + ": HLE " + GbaTest::Hex(mine[i]) +
+			" against the BIOS " + GbaTest::Hex(theirs[i]) +
+			"\n    HLE  " + Dump(mine) + "\n    BIOS " + Dump(theirs));
 }
 
 GBA_TEST(HleBios, TheMixerMatchesTheOfficialBios)

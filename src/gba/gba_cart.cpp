@@ -370,10 +370,31 @@ namespace GBA
 		return (index < rom.size()) ? rom[index] : 0xFF;
 	}
 
+	/// <summary>
+	/// True when this access is an idle EEPROM access: the chip is selected (the address is in
+	/// its own window on an EEPROM cartridge) but it is not shifting a 64bit block out. The
+	/// chip drives bit0 of the bus in that state - its "ready" line - and the games poll it
+	/// exactly there after a write (GBATEK "GBA Cart Backup EEPROM": "after a write, wait until
+	/// bit0 is 1"). Without it the poll reads whatever the ROM mirrors into the window and a
+	/// write times out and is treated as failed, which is how the save library of a game ends up
+	/// marking good blocks as damaged.
+	/// </summary>
+	bool Cart::EepromIdle(uint32_t address) const
+	{
+		if (saveType != SaveType::Eeprom512B && saveType != SaveType::Eeprom8K)
+			return false;
+
+		return InEepromWindow(address) && !EepromDriving();
+	}
+
 	uint8_t Cart::ReadRom8(uint32_t offset) const
 	{
 		if (rom.empty())
 			return 0xFF;
+
+		if (EepromIdle(offset))
+			return (uint8_t)((RomByte(offset) & ~1u) | (eepromOutput & 1));
+
 		return RomByte(offset);
 	}
 
@@ -395,7 +416,13 @@ namespace GBA
 		uint32_t index = (offset & romMask) & ~1u;
 		uint16_t low = RomByte(index);
 		uint16_t high = RomByte(index + 1);
-		return (uint16_t)(low | (high << 8));
+		uint16_t value = (uint16_t)(low | (high << 8));
+
+		// An idle chip drives its ready line on bit0 instead of the ROM byte the window mirrors.
+		if (EepromIdle(offset))
+			value = (uint16_t)((value & ~1u) | (self->eepromOutput & 1));
+
+		return value;
 	}
 
 	uint32_t Cart::ReadRom32(uint32_t offset) const

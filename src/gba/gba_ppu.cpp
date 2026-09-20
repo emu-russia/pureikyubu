@@ -488,6 +488,7 @@ namespace GBA
 
 		dispstat = 0;
 		vcount = 0;
+		vcountIrqLine = false;
 
 		currentLine = 0;
 		lineCycles = 0;
@@ -613,7 +614,10 @@ namespace GBA
 			// Bits 3-5 are the IRQ enables and bits 8-15 the V-Count setting, both R/W; bits 0-2
 			// are the read-only flags and bits 6-7 are not used in GBA mode (GBATEK 4000004h). The
 			// whole word is kept (the read side masks it), because the setting shares the member
-			// with the flags.
+			// with the flags. The write can change the match and the enable, so the interrupt
+			// line is re-evaluated; UpdateVCountMatch only requests the interrupt when the
+			// condition *becomes* true, which is what keeps a write during the program's own
+			// match from requesting a second one (see there).
 			dispstat = value;
 			UpdateVCountMatch(&bus);
 			break;
@@ -887,18 +891,27 @@ namespace GBA
 
 	void Ppu::UpdateVCountMatch(GbaBus* bus)	{
 		// The V-Counter flag is set while VCOUNT equals the setting in the high byte of DISPSTAT
-		// (bits 8-15); the interrupt is requested when bit 5 enables it (GBATEK 4000004h).
-		if (vcount == (uint16_t)(dispstat >> 8))
-		{
-			dispstat |= STAT_VCOUNT;
+		// (bits 8-15); bit 5 gates its interrupt (GBATEK 4000004h).
+		bool matched = (vcount == (uint16_t)(dispstat >> 8));
 
-			if (bus != nullptr && (dispstat & 0x20) != 0)
-				bus->irq.Raise(INT_VCOUNT);
-		}
+		if (matched)
+			dispstat |= STAT_VCOUNT;
 		else
-		{
 			dispstat &= (uint16_t)~STAT_VCOUNT;
-		}
+
+		// The interrupt belongs to the gated condition *becoming* true: GBATEK 4000004h requests
+		// it "when the flag becomes set", and the enable is the other half of the same request
+		// line, so turning it on while the counter already matches requests it as well. A write
+		// that leaves the condition true does *not* request it again - the line is a level, and
+		// re-requesting would hand a program that writes DISPSTAT back during its own match two
+		// interrupts per frame. Minish Cap's sound driver does exactly that on line 80 and ticks
+		// its sequencer per match, so its music would run at double speed.
+		bool requested = matched && (dispstat & 0x20) != 0;
+
+		if (bus != nullptr && requested && !vcountIrqLine)
+			bus->irq.Raise(INT_VCOUNT);
+
+		vcountIrqLine = requested;
 	}
 
 	// ---------------------------------------------------------------------------------------

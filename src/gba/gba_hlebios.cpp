@@ -497,14 +497,18 @@ namespace GBA
 		const uint32_t SoundPcmB = 0x980;			// the left one
 		const uint32_t SoundPcmHalf = 0x630;		// PCM_BF: bytes per half, and the stride
 
-		// The driver's own channel array: 16 entries of 30h bytes each, right after the header,
-		// ending exactly at `pcmbuf` (50h + 16 * 30h = 350h). GBATEK's documented SoundArea layout
+		// The driver's own channel array: 12 entries of 40h bytes each, right after the header,
+		// ending exactly at `pcmbuf` (50h + 12 * 40h = 350h). GBATEK's documented SoundArea layout
 		// puts `vchn` right after the header, but the real header is a table of the driver's own
 		// code pointers, so the channels are further along - which the disassembly showed as
-		// `add r4, #50h` before the per-channel loop.
-		const uint32_t SoundChannels = 16;
+		// `add r4, #50h` before the per-channel loop. The count and the stride were both read out
+		// of the official driver: GBATEK "SoundDriverMode" bits 8-11 give "1-12 channels", and
+		// putting a channel at 50h + n * 30h against 50h + n * 40h and running the BIOS's own mixer
+		// shows it reads the 40h one (the 16 x 30h array spans the same 300h bytes, which is how
+		// the wrong stride hid: only channel 0 landed where the official driver looks).
+		const uint32_t SoundChannels = 12;
 		const uint32_t SoundChannelBase = 0x50;
-		const uint32_t SoundChannelSize = 0x30;
+		const uint32_t SoundChannelSize = 0x40;
 
 		// How fast the driver mixes: the playback frequency the mode selected, in Hz. The mode's
 		// index picks a timer 0 reload, and the frequency is the machine's clock over the period.
