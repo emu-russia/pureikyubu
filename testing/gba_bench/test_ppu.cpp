@@ -526,6 +526,49 @@ GBA_TEST(Ppu, TextBgTileMapWrap512)
 	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x001F);
 }
 
+GBA_TEST(Ppu, VerticalScrollPastTheFirstMapBlock)
+{
+	// GBATEK 4000010h: the BGxHOFS/VOFS offset occupies bits 0-8, i.e. 0-511. A layer scrolled
+	// past dot 255 therefore addresses the map's *second* 256 dot block; a value cut down to
+	// eight bits is 256 dots short and shows the wrong half of the map. Castlevania: Circle of
+	// the Moon's attract demo scrolls a room to exactly that point, where the truncated offset
+	// filled the top of the screen with the tiles the map happens to hold there.
+	GbaBus bus;
+	SetupDisplay(bus);
+
+	// BG0: 4bpp, character base 0, screen base 0, size 2 = 256x512 dots. The map is SC0 at the
+	// map base and SC1 2 KByte further on (GBATEK 4000008h).
+	WriteReg(bus, BG0CNT, (uint16_t)(BG_CNT(0, 0x0000, 0) | (2 << 14)));
+
+	// Tile 0 is solid palette index 1 (red), tile 1 solid index 2 (green).
+	FillVram(bus, 0x0000, 32, 0x11);
+	FillVram(bus, 0x0020, 32, 0x22);
+	WritePal16(bus, 0x0002, 0x001F);
+	WritePal16(bus, 0x0004, 0x03E0);
+
+	// SC0's tile row 5 holds tile 0, SC1's holds tile 1.
+	WriteVram16(bus, 0x0000 + 5 * 32 * 2, 0x0000);
+	WriteVram16(bus, 0x0800 + 5 * 32 * 2, 0x0001);
+
+	WriteReg(bus, DISPCNT, DC_MODE0 | DC_BG0);
+
+	// VOFS = 296: line 0 samples source dot 296, which is the second block's tile row 5.
+	WriteReg(bus, BG0VOFS, 296);
+	bus.ppu.RenderLine(bus, 0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x03E0);
+
+	// 296 with the top bit lost would be 40, i.e. SC0's tile row 5 - the red tile. That is the
+	// regression this test exists for.
+	WriteReg(bus, BG0VOFS, 40);
+	bus.ppu.RenderLine(bus, 0);
+	GBA_CHECK_HEX16(bus.ppu.LinePixel(0), 0x001F);
+
+	// The offset also occupies nine bits in the register itself, not eight.
+	WriteReg(bus, BG0VOFS, 296);
+	GBA_CHECK_HEX16(bus.ppu.Read16(0x012, 0), 296);
+	GBA_CHECK_HEX16(bus.ppu.Read16(0x010, 0), 0);		// the horizontal offset is untouched
+}
+
 GBA_TEST(Ppu, PriorityFightBetweenTwoBgs)
 {
 	GbaBus bus;
