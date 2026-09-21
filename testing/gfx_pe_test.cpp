@@ -454,7 +454,7 @@ namespace pureikyubutest
 		// with: the live registers cannot be used there, because by then the game may have
 		// programmed them for its next copy, and Metroid Prime left the clear Z at 0 that way,
 		// which made its LEQUAL depth test reject every draw (issue #349).
-		TEST_METHOD(Pe_TextureCopyClearRunsWithTheCopyAndADisplayCopyClearIsKeptForTheNextFrame)
+		TEST_METHOD(Pe_ACopyClearRunsWithTheCopyAndKeepsTheValuesItWasProgrammedWith)
 		{
 			RequireGL();
 			GfxTestMachine& m = M();
@@ -467,7 +467,7 @@ namespace pureikyubutest
 			DrawQuad(m, 0x80, 0x80, 0x80);
 
 			// The clear colour of this copy, and the depth it must leave behind. The clear only
-			// covers the rectangle the copy reads (gfx-pe.md 5.1), so the frame rectangle has to be
+			// covers the rectangle the copy reads (gfx-pe.md 5.1), so the rectangle has to be
 			// programmed for the whole frame to be cleared.
 			m.BpLoad(PE_COPY_SRC_ADDR_ID, 0);
 			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() - 1) | ((m.gfx->RenderHeight() - 1) << 10));
@@ -482,11 +482,10 @@ namespace pureikyubutest
 			m.ReadColorPixel(320, 240, rgb);
 			Assert::AreEqual<int>(0xff, rgb[0], L"the clear of a texture copy runs with the copy");
 
-			// A display copy's clear cannot run with the copy: the backend shows the EFB where the
-			// hardware would show the XFB the copy wrote, so clearing it right away would wipe the
-			// picture that is about to be presented. It waits for the frame begin instead, and it
-			// uses the values that copy was programmed with rather than the live registers, which
-			// by then hold the next copy's.
+			// A display copy hands the rectangle over to the XFB the display shows and clears the
+			// EFB rectangle it read in the same command (gfx-pe.md 5.1, 5.6). The clear uses the
+			// values that copy was programmed with, not the live registers, which may already
+			// belong to the next copy.
 			m.BpLoad(PE_COPY_CLEAR_AR_ID, 0xff);
 			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0);
 			m.BpLoad(PE_COPY_CLEAR_Z_ID, 0x800000);
@@ -497,10 +496,8 @@ namespace pureikyubutest
 			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0);
 			m.BpLoad(PE_COPY_CLEAR_Z_ID, 0);
 
-			// The next frame starts cleared with the values of the copy that asked for the clear.
-			m.BeginFrame();
 			m.ReadColorPixel(320, 240, rgb);
-			Assert::AreEqual<int>(0xff, rgb[0], L"the clear colour is the colour of that copy");
+			Assert::AreEqual<int>(0xff, rgb[0], L"the clear ran with the copy, with the colour it was programmed with");
 			Assert::AreEqual<int>(0, rgb[1], L"...");
 			Assert::AreEqual(0.5f, m.ReadDepthPixel(320, 240), 0.01f,
 				L"the clear Z is the Z of that copy, not the one programmed later");

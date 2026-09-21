@@ -182,9 +182,15 @@ namespace GFX
 	#define GEN_REJECT_BACK 2
 	#define GEN_REJECT_ALL 3
 
-	// The screen-space origin of the scissor rectangle: the programmed values carry a bias of this
-	// constant, i.e. register = screen coordinate + 342 (gfx-su.md 4.1, GX_SetScissor).
-	#define SU_SCISSOR_ORIGIN 342
+	// The scissor rectangle is programmed in the coordinate space of the quad stream the XF
+	// produces, whose origin is PE_QUAD_OFFSET (gfx-su.md 4.1, gfx-pe.md 6.20): the PE subtracts
+	// the offset, in quad units, from the incoming quads to address the EFB. The register is
+	// therefore biased by twice the offset, and the bias follows the register - a title that moves
+	// the picture by reprogramming the offset (the bootrom renders its frame in two chunks that
+	// way) clips it against the rectangle that belongs to the new origin. The GX API programs an
+	// offset of 171 at init and adds the matching 342 to every scissor coordinate it writes, which
+	// is where the constant this emulator used to carry came from.
+	#define SU_QUAD_OFFSET_RESET 170
 
 	struct SUState
 	{
@@ -256,6 +262,10 @@ namespace GFX
 
 		//! The scissor rectangle in screen coordinates (the origin is the top left corner of the EFB).
 		void Scissor(int* x, int* y, int* w, int* h) const;
+
+		//! PE_QUAD_OFFSET changed: the rectangle is expressed in the coordinate space whose origin
+		//! that register moves, so it is converted again.
+		void RefreshScissor() { ApplyScissor(); }
 
 		//! The render target changed size: the reset rectangle follows it, a programmed one is only
 		//! converted again (both end up in the GL scissor box).

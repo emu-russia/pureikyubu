@@ -67,9 +67,6 @@ namespace Flipper
 		fifo->Reset();
 
 		tickPerFifo = 100;
-		updateTbrValue = Core->GetTicks() + (int64_t)tickPerFifo * (int64_t)FifoBatch;
-
-		cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 
 		// clear counters
 		tris = pts = lines = 0;
@@ -77,12 +74,6 @@ namespace Flipper
 
 	CommandProcessor::~CommandProcessor()
 	{
-		if (cp_thread)
-		{
-			EMUJoinThread(cp_thread);
-			cp_thread = nullptr;
-		}
-
 		delete fifo;
 	}
 
@@ -274,51 +265,7 @@ namespace Flipper
 			(!AtBreakPoint() || (cpregs.sr & CP_SR_BPINT) == 0);
 	}
 
-	// Called every Flipper tick step by the CPU thread. The CP thread is woken once per `FifoBatch`
-	// FIFO entries of emulated CP time, so it can drain a batch and go back to sleep instead of
-	// polling the time base in a tight loop (see the notes at Gekko::CpuStats).
-	void CommandProcessor::TickSync(int64_t ticks)
-	{
-		if (cp_thread == nullptr)
-		{
-			return;
-		}
-
-		// See Flipper::Update: a backwards jump of the time base (a CPU reset) invalidates the
-		// anchor and has to be picked up, or the FIFO would stop draining.
-		if (ticks < updateTbrValue && (updateTbrValue - ticks) < (int64_t)tickPerFifo * (int64_t)FifoBatch)
-		{
-			return;
-		}
-
-		// A backwards jump of the time base (a CPU reset) has to be picked up as well, or the
-		// reader would stay parked in the future for as long as the reset set it back.
-		if (ticks < lastDrainTick)
-		{
-			lastDrainTick = ticks;
-		}
-
-		// Waking the thread must not move the drain anchor: the CP thread works out how many
-		// entries it owes from the time that passed since it last drained, and a wake-up that
-		// also reset the anchor would make that budget zero whenever the thread happens to be
-		// scheduled promptly - the reader then only ran as fast as the host scheduled it.
-		updateTbrValue = ticks + (int64_t)tickPerFifo * (int64_t)FifoBatch;
-		fifoEvent.Signal();
-	}
-
-	void CommandProcessor::CPThread(void* Param)
-	{
-		CommandProcessor* cp = (CommandProcessor*)Param;
-
-		// Block until the CPU thread says that a batch of FIFO entries is due (or until the safety
-		// timeout expires, so that a missed wakeup cannot stall the graphics pipeline).
-		cp->fifoEvent.Wait(2);
-
-		// The thread only has to hand over the entries the emulated CP owes by now; DrainFifo
-		// works that out from the time base and returns straight away when nothing is due.
-		cp->DrainFifo();
-	}
-
+	// The emulated CP consumes one FIFO entry every `tickPerFifo` ticks, so the entries it owes
 	// The emulated CP consumes one FIFO entry every `tickPerFifo` ticks, so the entries it owes
 	// follow from the time that passed since the last drain. The anchor only moves by the entries
 	// actually drained: nothing owed is ever dropped, and no extra batch limit is applied, because
@@ -328,6 +275,13 @@ namespace Flipper
 	void CommandProcessor::DrainFifo()
 	{
 		fifoLock.Lock();
+
+		// A CPU reset can set the time base back; the anchor has to follow it, or the reader
+		// would stay parked in the future for as long as the reset set it back.
+		if (Core->GetTicks() < lastDrainTick)
+		{
+			lastDrainTick = Core->GetTicks();
+		}
 
 		int64_t budget = (Core->GetTicks() - lastDrainTick) / (int64_t)tickPerFifo;
 		if (budget > 0)
@@ -732,12 +686,6 @@ namespace Flipper
 				// Buffered; the CP thread runs the commands.
 			}
 			fifoLock.Unlock();
-
-			// The CP thread has something to parse now.
-			if (fifo->GetSize() >= FifoBatch * 32)
-			{
-				fifoEvent.Signal();
-			}
 		}
 	}
 

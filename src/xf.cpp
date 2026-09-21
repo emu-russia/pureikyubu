@@ -992,10 +992,22 @@ void main()
 		// convert the coefficients to human usable form
 		//
 
+		// The viewport registers are programmed in the coordinate space of the quad stream, whose
+		// origin is PE_QUAD_OFFSET: the PE subtracts the offset, in quad units, from the quads to
+		// address the EFB (gfx-pe.md 6.20). The window coordinates below are EFB pixels, so the
+		// origin comes off here. It follows the register, which is what lets a title render its
+		// frame in several chunks, each shifted to the top of the EFB (the bootrom does that for
+		// the whole frame it copies out).
+		int ox = 0, oy = 0;
+		if (gfx != nullptr)
+		{
+			gfx->QuadOrigin(&ox, &oy);
+		}
+
 		w = xf.viewportScale[0] * 2;									// w / 2
 		h = -xf.viewportScale[1] * 2;									// -h / 2
-		x = xf.viewportOffset[0] - xf.viewportScale[0] - 342;			// x + w/2 + 342
-		y = xf.viewportOffset[1] + xf.viewportScale[1] - 342;			// y + h/2 + 342
+		x = xf.viewportOffset[0] - xf.viewportScale[0] - (float)ox;	// x + w/2 - origin
+		y = xf.viewportOffset[1] + xf.viewportScale[1] - (float)oy;	// y + h/2 - origin
 		zf = xf.viewportOffset[2] / 16777215.0f;						// ZMAX * zfar
 		zn = -((xf.viewportScale[2] / 16777215.0f) - zf);				// ZMAX * (zfar - znear)
 
@@ -1241,12 +1253,19 @@ void main()
 	{
 		if (viewportSet)
 		{
+			int origin[2] = { 0, 0 };
+			if (gfx != nullptr)
+			{
+				gfx->QuadOrigin(&origin[0], &origin[1]);
+			}
+
 			for (int i = 0; i < 3; i++)
 			{
 				scale[i] = xf.viewportScale[i];
-				// gfx-su.md 4.1: the programmed values carry the +342 origin bias of the SU, so
-				// the window coordinate is the mapped value minus that constant.
-				offset[i] = xf.viewportOffset[i] - (i < 2 ? (float)SU_SCISSOR_ORIGIN : 0.0f);
+				// gfx-su.md 4.1: the programmed values are in the coordinate space of the quad
+				// stream, so the window coordinate is the mapped value minus the origin of that
+				// space (PE_QUAD_OFFSET, see the shader pipeline's ApplyViewport).
+				offset[i] = xf.viewportOffset[i] - (i < 2 ? (float)origin[i] : 0.0f);
 			}
 			return;
 		}

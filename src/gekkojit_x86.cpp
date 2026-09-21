@@ -272,6 +272,9 @@ static bool IsBranchInstr(Instruction instr)
 
 uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 {
+	// Where the next Flipper-side deadline sits inside GekkoCore (see flipper.h).
+	const int32_t FlipperDeadlineOff = (int32_t)offsetof(GekkoCore, flipperDeadline);
+	static_assert(FlipperDeadlineOff > 0 && FlipperDeadlineOff < 0x7fff'0000, "the deadline has to fit a disp32");
 	uint64_t compileStart = cycleProfile ? ReadCycleCounter() : 0;
 
 	if (code == nullptr)
@@ -465,12 +468,20 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	e.mov_m32_imm(X86::ESP, LoopTicksSlot, 0);
 	e.mov_m32_imm(X86::ESP, LoopBudgetSlot, LoopBudget);
 
+	// How many ticks are left before the Flipper-side work is due. The difference fits in
+	// 32 bits (Flipper::FlipperTickStep is 100), so the low halves are enough.
+	e.mov_r32_m(T0, RegRegs, TbOff);
+	e.mov_r32_m(T1, RegCore, FlipperDeadlineOff);
+	e.sub_r32_r32(T1, T0);
+	e.mov_m32_r(X86::ESP, DeadlineSlot, T1);
+
 	// Where a back edge has to return to: the first instruction of the block, after the
 	// prologue, so that the loop body is not re-entered through the saves.
 	size_t bodyStart = e.pos;
 
 	std::vector<size_t> normalExits;		// jump to the normal epilogue
 	std::vector<size_t> takenExits;			// jump to the taken branch epilogue
+	std::vector<size_t> backEdgeExits;		// jump to the back edge epilogue
 	std::vector<size_t> exceptionExits;		// jump to the exception epilogue
 
 	// A taken branch that targets the start of the block it is in is translated as an
@@ -487,8 +498,22 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 		e.sub_m32_imm8(X86::ESP, LoopBudgetSlot, 1);
 
 		size_t again = e.jcc_rel32(X86::CcNE);
-		takenExits.push_back(e.jmp_rel32());		// budget exhausted: leave with pc = target
+		backEdgeExits.push_back(e.jmp_rel32());		// budget exhausted: leave with pc = target
 		e.patch32(again, e.rel(again));
+
+		// The Flipper-side work only happens when the block leaves: `Run` applies the ticks
+		// the block owes and that is what drives SyncFlipper. A guest loop that polls a
+		// device register therefore never sees the device move while it stays in the block,
+		// while the interpreter polls it against a device that has been stepped. Leave as
+		// soon as the block's own ticks have caught up with the deadline, so that the
+		// device is stepped before the guest looks at it again.
+		e.mov_r32_m(T0, X86::ESP, LoopTicksSlot);
+		e.alu_r32_r32(X86::AluAdd, T0, RegCount);
+		e.mov_r32_m(T1, X86::ESP, DeadlineSlot);
+		e.alu_r32_r32(X86::AluCmp, T0, T1);
+		size_t notDue = e.jcc_rel32(X86::CcB);
+		backEdgeExits.push_back(e.jmp_rel32());		// the tick is due: leave with pc = target
+		e.patch32(notDue, e.rel(notDue));
 
 		size_t back = e.jmp_rel32();
 		e.patch32(back, (uint32_t)((int64_t)bodyStart - (int64_t)(back + 4)));
@@ -937,6 +962,33 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 			emitEffectiveAddress(ra, rb, indexed, zeroRa, (int32_t)di.Imm.Signed);
 			e.mov_m32_r(X86::ESP, EaSlot, X86::EAX);
 
+			// A device register reached from inside a block would be read or written against
+			// the time base of the block's *entry*: the generated code applies the block's
+			// ticks only when it leaves. The interpreter has the tick of this very
+			// instruction, and the device code timestamps with it - the DSP's tick anchor,
+			// the AI DMA's next block, the DVD's next sample - so a block about to touch the
+			// register block leaves first and lets `Run` apply the ticks up to here. It leaves
+			// with pc on the access, so the dispatcher re-enters on a block whose first
+			// instruction is that access, and that one runs on the right tick. The graphics
+			// FIFO is written far too often to leave the block for, so the compare stops at
+			// the register block.
+			if (count > 1)
+			{
+				// T2 is scratch here: the helper call reloads it (the load path builds
+				// &gpr[rd] in it, the store path loads the data), and EAX has to stay
+				// the effective address the helper is called with.
+				e.mov_r32_r32(T2, X86::EAX);
+				e.and_r32_imm(T2, 0xffff'0000);
+				e.alu_r32_imm(X86::AluCmp, T2, 0xcc00'0000);
+				size_t notDevice = e.jcc_rel32(X86::CcNE);
+				e.mov_r32_imm(RegPc, curPc);
+				// The instruction has already been counted but has not retired: `Run` ticks
+				// what the block retired, and this one runs after the dispatcher re-enters.
+				e.alu_r32_imm(X86::AluSub, RegCount, 1);
+				normalExits.push_back(e.jmp_rel32());
+				e.patch32(notDevice, e.rel(notDevice));
+			}
+
 			// regs.pc has to be current before the helper runs: an access fault makes
 			// the helper raise the exception, which stores regs.pc into SRR0.
 			e.mov_m32_r(RegRegs, PcOff, RegPc);
@@ -1004,6 +1056,33 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 
 			emitEffectiveAddress(ra, rb, indexed, zeroRa, (int32_t)di.Imm.Signed);
 			e.mov_m32_r(X86::ESP, EaSlot, X86::EAX);
+
+			// A device register reached from inside a block would be read or written against
+			// the time base of the block's *entry*: the generated code applies the block's
+			// ticks only when it leaves. The interpreter has the tick of this very
+			// instruction, and the device code timestamps with it - the DSP's tick anchor,
+			// the AI DMA's next block, the DVD's next sample - so a block about to touch the
+			// register block leaves first and lets `Run` apply the ticks up to here. It leaves
+			// with pc on the access, so the dispatcher re-enters on a block whose first
+			// instruction is that access, and that one runs on the right tick. The graphics
+			// FIFO is written far too often to leave the block for, so the compare stops at
+			// the register block.
+			if (count > 1)
+			{
+				// T2 is scratch here: the helper call reloads it (the load path builds
+				// &gpr[rd] in it, the store path loads the data), and EAX has to stay
+				// the effective address the helper is called with.
+				e.mov_r32_r32(T2, X86::EAX);
+				e.and_r32_imm(T2, 0xffff'0000);
+				e.alu_r32_imm(X86::AluCmp, T2, 0xcc00'0000);
+				size_t notDevice = e.jcc_rel32(X86::CcNE);
+				e.mov_r32_imm(RegPc, curPc);
+				// The instruction has already been counted but has not retired: `Run` ticks
+				// what the block retired, and this one runs after the dispatcher re-enters.
+				e.alu_r32_imm(X86::AluSub, RegCount, 1);
+				normalExits.push_back(e.jmp_rel32());
+				e.patch32(notDevice, e.rel(notDevice));
+			}
 
 			// regs.pc has to be current before the helper runs: an access fault makes
 			// the helper raise the exception, which stores regs.pc into SRR0.
@@ -1294,6 +1373,15 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	emitFinish(JitExitKind::TakenBranch, true);
 	emitEpilogue();
 
+	// The head of a self-loop the budget or the Flipper deadline cut short. It leaves with the
+	// same pc a taken branch would, but the guest never executed the branch that points there
+	// (see JitExitKind::BackEdge).
+	size_t backEdgeJump = e.jmp_rel32();
+	size_t backEdgeBody = e.pos;
+	e.patch32(backEdgeJump, e.rel(backEdgeJump));
+	emitFinish(JitExitKind::BackEdge, true);
+	emitEpilogue();
+
 	// An exception was raised: the helper has already set regs.pc to the vector.
 	size_t exceptionBody = e.pos;
 	emitFinish(JitExitKind::Exception, false);
@@ -1301,6 +1389,7 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 
 	for (size_t at : normalExits) e.patch32(at, (uint32_t)(normalBody - (at + 4)));
 	for (size_t at : takenExits) e.patch32(at, (uint32_t)(takenBody - (at + 4)));
+	for (size_t at : backEdgeExits) e.patch32(at, (uint32_t)(backEdgeBody - (at + 4)));
 	for (size_t at : exceptionExits) e.patch32(at, (uint32_t)(exceptionBody - (at + 4)));
 
 	if (e.overflow)
@@ -1429,7 +1518,29 @@ void Jit::RunInner()
 		break;
 
 	case JitExitKind::TakenBranch:
-		if (ticks > 0) core->TickN(ticks);
+		// The branch's own tick belongs to either BranchCheck or the instruction loop, never to
+		// both. The interpreter runs BranchCheck first - which ticks the branch and then looks
+		// at the interrupt line - and the loop ticks once more only when no exception is pending.
+		// An external interrupt takes BranchCheck's tick away (it returns before ticking), a
+		// decrementer interrupt takes the loop's (the pending exception skips it), and with no
+		// interrupt both happen. So tick everything before the branch here, let BranchCheck do
+		// its part, and add the loop's tick only when it is still due.
+		//
+		// `exit.ticks` counts the branches the block took on its own back edge and says nothing
+		// about this exit: a block that looped a few times and then left on a *conditional*
+		// branch the guest really took owes that branch both of its ticks like any other taken
+		// branch.
+		if (ticks > 1) core->TickN(ticks - 1);
+		interp->BranchCheck();
+		if (!core->exception) core->Tick();
+		break;
+
+	case JitExitKind::BackEdge:
+		// The self-loop was cut short instead: the branch that would go back to the loop head
+		// once more is one the guest has not run, so `exit.ticks` already holds the extra tick
+		// of every branch that did run and BranchCheck's tick is the only one still due - the
+		// second one belongs to a branch the guest has not executed yet.
+		if (ticks > 1) core->TickN(ticks - 1);
 		interp->BranchCheck();
 		break;
 

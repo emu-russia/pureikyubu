@@ -396,6 +396,11 @@ namespace GFX
 		void UploadUniforms(GLProgram& program);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
 
+		//! PE_QUAD_OFFSET changed: the viewport registers are expressed in the coordinate space
+		//! whose origin that register moves, so the emulator viewport is recalculated. A viewport
+		//! that was never programmed keeps the default one.
+		void RefreshViewport() { if (viewportSet) ApplyViewport(); }
+
 		// -------------------------------------------------------------------------------------
 		// Software pipeline (GFX_PIPELINE = soft, issue #384)
 		//

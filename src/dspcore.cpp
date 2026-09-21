@@ -522,7 +522,11 @@ namespace DSP
 						regs.eas->clear();
 						regs.lcs->clear();
 
-						regs.pc = programBase;
+						// A reset restarts the core at the vector the CDCR reset-vector bit
+						// (userom) selects: 0x0000 (IRAM) when it is clear, 0x8000 (IROM) when
+						// it is set (dsp.md section 4.6). The interrupt vectors above stay
+						// relative to the program that is running.
+						regs.pc = dsp->GetUserRom() ? IROM_START_ADDRESS : 0;
 					}
 					else
 					{
@@ -798,20 +802,6 @@ namespace DSP
 		dsp->Suspend();
 	}
 
-	// Called by the CPU thread every Flipper tick step. Waking up on every step would mean about
-	// half a million scheduler wakeups per second, so the thread is woken once per `DspWakeTicks`
-	// and then drains a whole batch.
-	void DspCore::TickSync(int64_t ticks)
-	{
-		if (ticks < wakeTick)
-		{
-			return;
-		}
-
-		wakeTick = ticks + DspWakeTicks;
-		workEvent.Signal();
-	}
-
 	void DspCore::HoldMailbox()
 	{
 		if (Core != nullptr)
@@ -820,15 +810,24 @@ namespace DSP
 		}
 	}
 
-	void DspCore::WaitForWork()
-	{
-		// The safety timeout keeps a missed wakeup from stalling the DSP forever.
-		workEvent.Wait(2);
-		Gekko::stats.dspWakes++;
-	}
-
+	// Called by the CPU thread, from `Flipper::Update`, on every Flipper tick step. The core runs
+	// one instruction per `GekkoTicksPerDspInstruction` ticks of Gekko time (dsp.md section 1), so
+	// this executes exactly the instructions the time base owes - no more, because the guest has
+	// not given the DSP that time yet, and no less, because the DSP state is visible to the guest:
+	// its mailboxes, the ARAM it fills and the interrupt it raises to the CPU all have to be a
+	// function of the time base alone.
+	//
+	// This used to be a device thread, woken in batches from here, which capped the work at one
+	// wake-up's worth and dropped whatever backlog the host had let pile up. Dropping it made the
+	// DSP, and therefore every interrupt it raises, depend on how fast the host happened to be
+	// running - the same frame came out differently from run to run.
 	void DspCore::Update()
 	{
+		if (!dsp->IsRunning())
+		{
+			return;
+		}
+
 		uint64_t ticks = Core->GetTicks();
 
 		// We need to suspend DspCore execution for a while until the CPU writes all data to Mailbox registers.
@@ -839,50 +838,33 @@ namespace DSP
 			return;
 		}
 
-		// Execute everything the emulated DSP could have executed since it last ran, up to one
-		// wakeup's worth. The anchor is taken again at the end exactly as the one-instruction-at-a-
-		// time version did: the DSP is limited by the host, not by the emulated clock, and the
-		// backlog is dropped rather than accumulated.
-		int64_t budget = DspWakeTicks / GekkoTicksPerDspInstruction;
-
-		while (budget > 0 && (int64_t)ticks >= dsp->savedGekkoTicks + GekkoTicksPerDspInstruction)
+		while ((int64_t)ticks >= dsp->savedGekkoTicks + GekkoTicksPerDspInstruction)
 		{
-			// Test breakpoints and canaries
-			if (dsp->IsRunning())
+			TestCanary(regs.pc);
+
+			if (TestBreakpoint(regs.pc))
 			{
-				TestCanary(regs.pc);
+				Halt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
+				dsp->Suspend();
+				Core->Suspend();
+				return;
+			}
 
-				if (TestBreakpoint(regs.pc))
-				{
-					Halt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
-					dsp->Suspend();
-					Core->Suspend();
-					return;
-				}
-
-				if (regs.pc == oneShotBreakpoint)
-				{
-					oneShotBreakpoint = 0xffff;
-					dsp->Suspend();
-					Core->Suspend();
-					return;
-				}
+			if (regs.pc == oneShotBreakpoint)
+			{
+				oneShotBreakpoint = 0xffff;
+				dsp->Suspend();
+				Core->Suspend();
+				return;
 			}
 
 			// One compiled basic block, or one interpreted instruction when the pc cannot be
-			// compiled. A block retires several words at once, so it can overshoot the
-			// remaining budget; the emulated clock is advanced by what actually retired, and
-			// the batch simply ends earlier (the backlog is dropped either way).
+			// compiled. A block retires several words at once, so it can overshoot the time owed
+			// by a few ticks; the clock is advanced by what actually retired and the next step
+			// simply owes that much less.
 			uint32_t retired = RunJitBlock();
 			Gekko::stats.dspInstrs += retired;
 			dsp->savedGekkoTicks += (int64_t)retired * GekkoTicksPerDspInstruction;
-
-			budget = ((int64_t)retired >= budget) ? 0 : (budget - (int64_t)retired);
-		}
-
-		if (dsp->savedGekkoTicks <= (int64_t)ticks)
-		{
-			dsp->savedGekkoTicks = (int64_t)ticks;
 		}
 	}
 

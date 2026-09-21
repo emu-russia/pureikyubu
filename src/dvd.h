@@ -101,6 +101,15 @@ namespace DVD
 // Sector size
 #define DVD_SECTOR_SIZE     2048
 
+// Drive error codes as the drive reports them through Request Error (0xE0) and latches into
+// DIIMMBUF as it raises DIERR. The Dolphin SDK splits the code in two: the *top byte* is the kind
+// of condition (0x01 "no disc", 0x02 "wrong disc", 0x03 "cover closed"; anything else reads as
+// "cover open") and the low 24 bits are the sense detail, which its error table knows
+// (0x62800 among them). The IPL picks its screen from the resulting state: with this code an
+// empty drive leaves it on its normal bootstrap animation, while a code the SDK cannot classify
+// sends it to the "disc could not be read" screen.
+#define DVD_ERROR_NO_DISC   0x01062800
+
 // DiskID
 
 #define DVD_DISKID_MAGIC 0xC2339F3D
@@ -368,6 +377,7 @@ namespace DVD
 		GetStreamEnable,
 		GetStreamOffset,
 		GetStreamBogus,
+		GetErrorCode,
 	};
 
 	class DduCore
@@ -390,8 +400,12 @@ namespace DVD
 
 #pragma region "DDU commands Data bus processing"
 
-		Thread* dduThread = nullptr;
-		static void DduThreadProc(void* Parameter);
+		//! One step of the DDU transfer state machine. `StartTransfer` runs it to completion on
+		//! the thread that programmed the transfer, so the DMA and the transfer-complete
+		//! interrupt are a function of the guest instruction stream rather than of a device
+		//! thread's scheduling.
+		void PumpOnce();
+		bool pumping = false;
 		void ExecuteCommand();
 		bool ddBusBusy = false;		// Command-in/Data-out transfer in progress
 		static const int transferRate = 2000000;	// Bytes / second
@@ -417,8 +431,6 @@ namespace DVD
 
 #pragma region "DVD Audio processing"
 
-		Thread* dvdAudioThread = nullptr;
-		static void DvdAudioThreadProc(void* Parameter);
 		uint32_t streamSeekVal = 0;					// Current seek for streaming (sample-based)
 		int32_t streamCount = 0;				// Decoded LR sample counter
 		DduStreamCallback streamCallback = nullptr;
@@ -455,6 +467,10 @@ namespace DVD
 		void OpenCover();
 		void CloseCover();
 		CoverStatus GetCoverStatus() { return coverStatus; }
+
+		//! The sense code of the last drive error, as the drive latches it for the DI (see
+		//! `DIIMMBUF`): the SDK reads it there when DIERR is raised.
+		uint32_t GetLastError() { return errorCode; }
 
 		// Host interface to cover events
 		void SetCoverOpenCallback(DduCallback callback, void *ctx)
@@ -504,6 +520,11 @@ namespace DVD
 
 		void EnableAudioStreamClock(bool enable);
 		bool IsAudioStreamClockEnabled() { return streamClockEnabled; }
+
+		//! One DVD-audio sample tick, due every `TicksPerSample` ticks. The CPU thread runs it
+		//! from `Flipper::Update`, on the same thread as the DI transfer it shares the drive state
+		//! with.
+		void AudioTick(int64_t ticks);
 		void SetDvdAudioSampleRate(DvdAudioSampleRate rate);
 		void SetStreamCallback(DduStreamCallback callback, void *ctx)
 		{

@@ -69,6 +69,10 @@ static_assert(FrameSize % 16 == 0, "esp must be 16 byte aligned at the helper ca
 static const int32_t EaSlot = 0;				// effective address across a helper call
 static const int32_t LoopTicksSlot = 8;			// taken branches retired on a back edge
 static const int32_t LoopBudgetSlot = 12;		// remaining iterations of a back edge
+// How many ticks the block could still retire before the Flipper-side work is due, taken
+// at the block entry. A self-looping block leaves when its own ticks catch up with it, so
+// that the work - and every device register the loop may be polling - is up to date.
+static const int32_t DeadlineSlot = 16;
 static const int32_t ConstSlot = 24;			// 8 byte staging area (PS constants)
 
 // The cdecl argument slots. The return address and the four saved registers sit
@@ -105,6 +109,13 @@ enum class JitExitKind : uint32_t
 	Normal = 0,			// pc is in regs.pc, a plain fallthrough
 	TakenBranch = 1,	// pc is the branch target, BranchCheck still has to run
 	Exception = 2,		// a helper already set regs.pc to the exception vector
+
+	// The self-loop ran out of budget or reached the Flipper deadline: pc is the head of the
+	// loop, which is where the branch that was taken last points - but the branch that would
+	// go back to it once more is one the guest has not executed. The block's `ticks` already
+	// account for every branch that *was* taken, so the only tick left to pay is the one
+	// BranchCheck gives (see Run).
+	BackEdge = 3,
 };
 
 struct JitExit

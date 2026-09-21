@@ -141,15 +141,28 @@ namespace Flipper
 		vi->VIUpdate();
 		si->SIPoll(vi->GetCurrentLine());
 
-		// ... and let the CP thread know when it has a batch of FIFO entries to consume, and the
-		// AI thread when the next audio DMA block is due.
-		cp->TickSync(ticks);
+		// ... and step the devices that have to run in lock step with the CPU. They used to run on
+		// their own threads, woken from here: the work they owe is a function of the time base, so
+		// stepping them here instead does not change what they do - but it does make *when* they do
+		// it, and therefore when their interrupts reach the CPU, a function of the time base too.
+		// A device thread delivers its interrupt whenever the host happens to schedule it, and a
+		// guest that only samples its interrupt line at instruction boundaries - the movie player
+		// decodes in a tight loop - then sees the same frame come out differently from run to run.
+		cp->DrainFifo();
 		DSP::AITickSync(ticks);
 
-		// The DSP core has its own thread as well, woken in batches.
+		// The DSP core is stepped here too: one instruction per `GekkoTicksPerDspInstruction`
+		// ticks, which is what its 81 MHz clock works out to.
 		if (DSP != nullptr)
 		{
-			DSP->core->TickSync(ticks);
+			DSP->core->Update();
+		}
+
+		// ... and the DVD-audio sample clock, whose streaming shares the drive read pointer with
+		// the DI transfer.
+		if (DVD::DDU != nullptr)
+		{
+			DVD::DDU->AudioTick(ticks);
 		}
 	}
 

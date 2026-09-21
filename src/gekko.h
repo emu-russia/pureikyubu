@@ -680,7 +680,6 @@ namespace Gekko
 		uint64_t mmioReads = 0;			// ... of those, the ones that hit the register space
 		uint64_t mmioWrites = 0;
 		uint64_t dspInstrs = 0;			// DSP instructions executed
-		uint64_t dspWakes = 0;			// Times the DSP thread was woken
 		uint64_t aiFeeds = 0;			// AI DMA blocks pushed into the mixer
 		uint64_t aiInts = 0;			// AIDINT (DMA complete) interrupts
 
@@ -882,8 +881,13 @@ namespace Gekko
 			}
 		}
 
-		// Apply n ticks at once. Identical to n calls of Tick(), which is what the
-		// recompiler uses for a whole basic block.
+		// Apply n ticks at once. The recompiler uses this for a whole basic block, and the batch
+		// is split at the Flipper deadline exactly the way n calls of Tick() would: the Flipper
+		// work is due at a tick of its own, not at a basic block boundary, and doing the whole
+		// block's worth at the boundary would make the emulated state - and every interrupt the
+		// devices raise - depend on how many instructions the recompiler happened to put in one
+		// block. That is what made a movie frame come out different under the recompiler than
+		// under the interpreter.
 		void TickN(uint32_t n)
 		{
 			if (n == 0)
@@ -891,15 +895,29 @@ namespace Gekko
 				return;
 			}
 
-			regs.tb.uval += (uint64_t)CounterStep * n;
+			uint32_t total = n;
 
-			if (regs.tb.sval >= flipperDeadline)
+			while (n != 0)
 			{
-				SyncFlipper();
+				int64_t toDeadline = flipperDeadline - regs.tb.sval;
+				if (toDeadline <= 0)
+				{
+					SyncFlipper();
+					continue;
+				}
+
+				uint32_t step = ((uint64_t)toDeadline < (uint64_t)n) ? (uint32_t)toDeadline : n;
+				regs.tb.uval += (uint64_t)CounterStep * step;
+				n -= step;
+
+				if (regs.tb.sval >= flipperDeadline)
+				{
+					SyncFlipper();
+				}
 			}
 
 			uint32_t old = regs.spr[SPR::DEC];
-			regs.spr[SPR::DEC] -= DecrementerStep * n;
+			regs.spr[SPR::DEC] -= DecrementerStep * total;
 
 			if (regs.spr[SPR::DEC] & 0x8000'0000)
 			{

@@ -220,11 +220,13 @@ static int HeadlessMain()
 			// The local MCP server (issue #383): the client that started the emulator drives it
 			// through the debug interface, so the front end steps aside and only waits for it. An
 			// image on the command line is started right away, which is how a client attaches to a
-			// running game.
-			if (!cmdline.image.empty())
+			// running game. `--ipl` starts the boot ROM instead, with the image (or with an empty
+			// drive when there is none).
+			if (!cmdline.image.empty() || cmdline.ipl)
 			{
-				Say("Loading %s...\n", Util::WstringToString(cmdline.image).c_str());
-				UI::Jdi->LoadFile(Util::WstringToString(cmdline.image));
+				std::wstring file = cmdline.image.empty() ? std::wstring(L"Bootrom") : cmdline.image;
+				Say("Loading %s...\n", Util::WstringToString(file).c_str());
+				UI::Jdi->LoadFile(Util::WstringToString(file));
 				UI::Jdi->Run();
 			}
 

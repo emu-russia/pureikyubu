@@ -13,6 +13,10 @@ namespace DSP
 
 	static void write_cdcr(uint32_t addr, uint32_t data, void* ctx)
 	{
+		// The bootstrap DSP-DMA is armed by the 1->0 edge of this bit, so the old value has to
+		// be read before the write is applied (dsp.md 4.7).
+		bool oldUserRom = (CDCR & CDCR_RESETMOD) != 0;
+
 		if (dsp_ai.log)
 		{
 			Report(Channel::AI, "CDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n",
@@ -75,9 +79,6 @@ namespace DSP
 		// and the CPU re-enters the handler forever.
 		DSPUpdateInt();
 
-		// DSP DMA always ready
-		CDCR &= ~CDCR_DSPDMA;
-
 		// Reset modifier bit
 		if (data & CDCR_RESETMOD)
 		{
@@ -92,6 +93,19 @@ namespace DSP
 		Flipper::DSP->SetResetBit((data >> 0) & 1);
 		Flipper::DSP->SetIntBit((data >> 1) & 1);
 		Flipper::DSP->SetHaltBit((data >> 2) & 1);
+
+		// A 1->0 edge of userom, with the core halted, is the CPU-initiated bootstrap DSP-DMA:
+		// the fixed 1 KB download from main-memory 0x0100_0000 into IRAM word 0 (dsp.md 4.7).
+		// It runs on the DSP-DMA engine, so the DSP-DMA busy bit is up while it runs and the
+		// software polls it before de-halting the core. This is what loads the IRAM stub of
+		// __OSInitAudioSystem - the ARAM DMA that stages the same image at ARAM offset 0 only
+		// fills ARAM (dsp.md 4.7, "OS usage").
+		if (oldUserRom && (data & CDCR_RESETMOD) == 0 && Flipper::DSP->GetHaltBit())
+		{
+			CDCR |= CDCR_DSPDMA;
+			Flipper::DSP->BootstrapIrDma();
+			CDCR &= ~CDCR_DSPDMA;
+		}
 	}
 
 	static void read_cdcr(uint32_t addr, uint32_t* reg, void* ctx)
@@ -145,13 +159,10 @@ namespace DSP
 		dsp_ai.dmaTime = Core->GetTicks() + AIGetTime(32, dsp_ai.dmaRate);
 		dsp_ai.currentDmaAddr = (dsp_ai.madr_hi << 16) | dsp_ai.madr_lo;
 
-		// The thread may have parked itself while no DMA was armed; wake it for the first block.
-		dsp_ai.audioEvent.Signal();
 		if (dsp_ai.log)
 		{
 			Report(Channel::AI, "DMA started: %08X, %i bytes\n", dsp_ai.currentDmaAddr, dsp_ai.dcnt * 32);
 		}
-		dsp_ai.audioThread->Resume();
 	}
 
 	// Simulate AI FIFO
@@ -284,64 +295,50 @@ namespace DSP
 		return (CDCR & CDCR_RESETMOD) != 0;
 	}
 
-	// Update audio DMA thread
 	// Called by the CPU thread every Flipper tick step. The DMA asks for a 32-byte block every
-	// `AIGetTime(32, rate)` ticks (about 6750 at 48 kHz), so the thread can block between the blocks.
+	// `AIGetTime(32, rate)` ticks (about 6750 at 48 kHz), so every block that is due by `ticks` is
+	// handed to the mixer here, on the CPU thread.
+	//
+	// This used to be a device thread, woken from here: the block counter, the DMA pointer and the
+	// AIDINT request are all a function of the time base, so stepping them here does not change
+	// what the DMA does - but it does make *when* it does it a function of the time base too. A
+	// device thread raises AIDINT whenever the host happens to schedule it, and a guest that only
+	// samples its interrupt line at instruction boundaries then sees the interrupt at a different
+	// instruction from run to run.
 	void AITickSync(int64_t ticks)
 	{
-		if (dsp_ai.audioThread == nullptr)
-		{
-			return;
-		}
-
 		if (dsp_ai.dmaTime == (uint64_t)-1 || (uint64_t)ticks < dsp_ai.dmaTime)
 		{
 			return;
 		}
 
-		dsp_ai.audioEvent.Signal();
-	}
-
-	static void AIUpdate(void* Parameter)
-	{
-		// Block until the next DMA block is due (or the safety timeout expires, so that a missed
-		// wakeup cannot stall the audio). See AITickSync.
-		dsp_ai.audioEvent.Wait(2);
-
-		if (dsp_ai.dmaTime == (uint64_t)-1)
+		// Disabling AI-DMA parks the block counter: the ARM is kept, so a later enable restarts
+		// from the address registers (see write_len).
+		if ((dsp_ai.len & AID_EN) == 0)
 		{
-			// No DMA is armed, so there is nothing to feed: park the thread until AIStartDMA
-			// resumes it instead of spinning on the time base.
-			dsp_ai.audioThread->Suspend();
 			return;
 		}
 
-		if ((uint64_t)Core->GetTicks() >= dsp_ai.dmaTime)
+		while ((uint64_t)ticks >= dsp_ai.dmaTime)
 		{
 			if (dsp_ai.dcnt == 0)
 			{
-				if (dsp_ai.len & AID_EN)
+				// The whole segment has played: reload the block counter from the registers and
+				// tell the guest to renew the buffer.
+				dsp_ai.currentDmaAddr = (dsp_ai.madr_hi << 16) | dsp_ai.madr_lo;
+				dsp_ai.dcnt = dsp_ai.len & ~AID_EN;
+				AIDINT();
+
+				// A zero-length segment would otherwise spin here: the interrupt is the only
+				// thing the hardware does with it.
+				if (dsp_ai.dcnt == 0)
 				{
-					// Restart Dma and signal AID_INT
-					dsp_ai.currentDmaAddr = (dsp_ai.madr_hi << 16) | dsp_ai.madr_lo;
-					dsp_ai.dcnt = dsp_ai.len & ~AID_EN;
-					AIDINT();
-				}
-				else
-				{
-					dsp_ai.audioThread->Suspend();
+					break;
 				}
 			}
 			else
 			{
-				if (dsp_ai.len & AID_EN)
-				{
-					AIFeedMixer();
-				}
-				else
-				{
-					dsp_ai.audioThread->Suspend();
-				}
+				AIFeedMixer();
 			}
 		}
 	}
@@ -352,8 +349,6 @@ namespace DSP
 
 		// clear regs
 		dsp_ai.Reset();
-
-		dsp_ai.audioThread = EMUCreateThread(AIUpdate, true, nullptr, "AI");
 
 		dsp_ai.one_second = Core->OneSecond();
 		dsp_ai.dmaRate = 48000;			// The initial value of the bit 6 in AI CR is zero, which corresponds to 48 kHz
@@ -377,7 +372,6 @@ namespace DSP
 
 	void DspAIClose()
 	{
-		EMUJoinThread(dsp_ai.audioThread);
 		AIStopDMA();
 	}
 

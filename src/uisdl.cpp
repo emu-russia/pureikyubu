@@ -2814,11 +2814,24 @@ static int ui_main()
 	}
 
 	// The command line may ask to start the IPL right away (as if File -> Run Bootrom was clicked),
-	// or to run one specific file instead of waiting for the selector.
+	// or to run one specific file instead of waiting for the selector. `--ipl` together with a disk
+	// image starts the IPL *with that disk in the drive*: the boot ROM finds it on the DI and boots
+	// it by itself, which is what the real console does. Without an image the IPL is started on its
+	// own and takes the "no disk" path (or shows the console menu).
 
 	if (cmdline.ipl)
 	{
-		ui_load_bootrom();
+		if (cmdline.image.empty())
+		{
+			ui_load_bootrom();
+		}
+		else
+		{
+			CreateRenderTarget();
+			UI::Jdi->LoadFile(Util::WstringToString(cmdline.image));
+			OnMainWindowOpened(cmdline.image.c_str());
+			UI::Jdi->Run();
+		}
 	}
 	else if (!cmdline.image.empty())
 	{

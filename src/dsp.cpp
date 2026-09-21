@@ -12,8 +12,6 @@ namespace DSP
 
 	Dsp16::Dsp16()
 	{
-		dspThread = EMUCreateThread(DspThreadProc, true, this, "DspCore");
-
 		core = new DspCore(this);
 
 		JDI::Hub.AddNode(L"DSP_JDI_JSON", JdiSpecs::DspJdi, dsp_init_handlers);
@@ -21,49 +19,37 @@ namespace DSP
 
 	Dsp16::~Dsp16()
 	{
-		EMUJoinThread(dspThread);
 		delete core;
 
 		JDI::Hub.RemoveNode(L"DSP_JDI_JSON");
 	}
 
-	void Dsp16::DspThreadProc(void* Parameter)
-	{
-		Dsp16* dsp = (Dsp16*)Parameter;
-
-		// Block until the CPU thread says that a batch of DSP time is due (see DspCore::TickSync).
-		// The thread used to poll the shared time base in a tight loop, which cost far more than the
-		// DSP work itself (see the benchmark notes in `testing/gekko_bench`).
-		dsp->core->WaitForWork();
-
-		// Do DSP actions
-		dsp->core->Update();
-	}
-
+	// The DSP is stepped by the CPU thread, from `Flipper::Update`, in lock step with the Gekko
+	// time base: the core runs one instruction per `GekkoTicksPerDspInstruction` ticks (dsp.md
+	// section 1), so `Run`/`Suspend` only gate that stepping and take the anchor again - otherwise
+	// a core that was held for a while would come back owing the whole time it was held.
 	void Dsp16::Run()
 	{
-		if (!dspThread->IsRunning())
+		if (!running)
 		{
-			dspThread->Resume();
+			running = true;
 			if (logDspControlBits)
 			{
 				Report(Channel::DSP, "Run\n");
 			}
 			savedGekkoTicks = Core->GetTicks();
-			core->wakeTick = savedGekkoTicks;
-			core->workEvent.Signal();
 		}
 	}
 
 	void Dsp16::Suspend()
 	{
-		if (dspThread->IsRunning())
+		if (running)
 		{
 			if (logDspControlBits)
 			{
 				Report(Channel::DSP, "Suspend\n");
 			}
-			dspThread->Suspend();
+			running = false;
 		}
 	}
 
@@ -505,7 +491,7 @@ namespace DSP
 
 	bool Dsp16::GetHaltBit()
 	{
-		return !dspThread->IsRunning();
+		return !IsRunning();
 	}
 
 #pragma endregion "Flipper interface"

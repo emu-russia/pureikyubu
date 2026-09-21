@@ -46,9 +46,13 @@ namespace Flipper
 	void DiskInterface::DIOpenCover(void *ctx)
 	{
 		DiskInterface* di = (DiskInterface*)ctx;
-		// cover interrupt
-		di->DICVR |= DI_CVR_CVRINT;
-		di->DIUpdateInt();
+
+		// Opening the lid raises no interrupt: DICVR[CVRINT] is a cover-*close* interrupt (the
+		// hardware sets it on the open-to-closed transition only, see the correction note under
+		// the cover register in the disk-interface specification). Software sees the lid come up
+		// by reading DICVR[CVR]. Raising the close interrupt here told the guest the lid had just
+		// been shut while it was in fact open.
+		(void)di;
 	}
 
 	void DiskInterface::DICloseCover(void* ctx)
@@ -66,6 +70,16 @@ namespace Flipper
 	{
 		DiskInterface* di = (DiskInterface*)ctx;
 		di->DICR &= ~DI_CR_TSTART;
+
+		// The drive latches its sense code into DIIMMBUF as it raises DIERR, and that is where
+		// the SDK's error handler reads it (cbForStateGettingError reads 0xCC006020 directly,
+		// without sending Request Error first). Leaving the register as it was made every
+		// failure look the same - a drive with no disc in it included.
+		uint32_t err = DVD::DDU->GetLastError();
+		di->di.immbuf[0] = (err >> 24) & 0xFF;
+		di->di.immbuf[1] = (err >> 16) & 0xFF;
+		di->di.immbuf[2] = (err >> 8) & 0xFF;
+		di->di.immbuf[3] = err & 0xFF;
 
 		di->DISR |= DI_SR_DEINT;
 		di->DIUpdateInt();
@@ -268,6 +282,13 @@ namespace Flipper
 		else DISR &= ~DI_SR_BRKINTMSK;
 		if (data & DI_SR_TCINTMSK)  DISR |= DI_SR_TCINTMSK;
 		else DISR &= ~DI_SR_TCINTMSK;
+		// The device-error mask belongs here as well. Dropping it left the drive error unable to
+		// raise the interrupt at all: the guest unmasked it, the drive raised DIERR, DIUpdateInt
+		// looked at its own copy of the mask, found it clear and kept the PI line down - so the
+		// error was never delivered. The IPL waits for that interrupt to tell "no disc" from a
+		// disc it cannot read, and without it it gives up on the disc-error screen.
+		if (data & DI_SR_DEINTMSK) DISR |= DI_SR_DEINTMSK;
+		else DISR &= ~DI_SR_DEINTMSK;
 
 		// clear interrupts
 		if (data & DI_SR_BRKINT)

@@ -138,18 +138,33 @@ namespace DSP
 
 	}
 
-	void Dsp16::SpecialAramImemDma(uint8_t* ptr, size_t byteCount)
+	// The CPU-initiated bootstrap DSP-DMA (dsp.md section 4.7). After a hardware reset the core
+	// is halted, so nothing on the DSP side can start a DMA - that is why the block offers this
+	// one fixed-parameter download to the CPU: clearing CDCR[userom] (bit 11) from 1 to 0 copies
+	// 1 KB from main-memory byte address 0x0100_0000 into IRAM word 0, and de-halting the core
+	// then starts the stub at 0x0000. It is what actually loads the IRAM stub of the OS audio
+	// initialisation; the ordinary ARAM DMA that writes the same image to ARAM offset 0 only
+	// fills ARAM and must not touch IRAM (dsp.md section 4.7, "OS usage").
+	void Dsp16::BootstrapIrDma()
 	{
-		TraceMark(0xE000'0000u | (uint32_t)byteCount);
+		constexpr uint32_t BootstrapMmemAddr = 0x0100'0000;
+		constexpr size_t BootstrapSize = 0x400;
 
-		if (byteCount > DspCore::IRAM_SIZE)
+		TraceMark(0xE000'0000u | (uint32_t)BootstrapSize);
+
+		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(BootstrapMmemAddr, BootstrapSize);
+		if (ptr == nullptr)
 		{
-			Report(Channel::DSP, "Dsp16::SpecialAramImemDma: %zu bytes into an 0x%zX byte IRAM, clipped\n",
-				byteCount, DspCore::IRAM_SIZE);
-			byteCount = DspCore::IRAM_SIZE;
+			Report(Channel::DSP, "Dsp16::BootstrapIrDma: 0x%zX bytes at main memory 0x%08X are outside main memory\n",
+				BootstrapSize, BootstrapMmemAddr);
+			return;
 		}
 
-		memcpy(core->iram, ptr, byteCount);
+		memcpy(core->iram, ptr, BootstrapSize);
+
+		// The core is halted while the bootstrap runs; de-halting it starts the downloaded stub
+		// at IRAM word 0 (dsp.md section 4.7).
+		core->regs.pc = 0;
 
 		// The instruction memory changed behind the core's back, so any block compiled from it
 		// is stale. (The recompiler also verifies a block's words before running it.)
@@ -157,7 +172,8 @@ namespace DSP
 
 		if (logDspDma)
 		{
-			Report(Channel::DSP, "MMEM -> IRAM transfer %d bytes.\n", byteCount);
+			Report(Channel::DSP, "DSP-DMA by CPU: 0x%zX bytes from 0x%08X into IRAM word 0.\n",
+				BootstrapSize, BootstrapMmemAddr);
 		}
 	}
 

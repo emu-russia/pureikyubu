@@ -161,8 +161,8 @@ namespace Bench
 			Core->PrintOpcodeStats(25);
 		}
 
-		Debug::Report(Debug::Channel::Norm, "dsp instructions   : %llu (%llu wakes)\n",
-			(unsigned long long)st.dspInstrs, (unsigned long long)st.dspWakes);
+		Debug::Report(Debug::Channel::Norm, "dsp instructions   : %llu\n",
+			(unsigned long long)st.dspInstrs);
 		Debug::Report(Debug::Channel::Norm, "ai dma             : %llu feeds, %llu ints\n",
 			(unsigned long long)st.aiFeeds, (unsigned long long)st.aiInts);
 		Debug::Report(Debug::Channel::Norm, "vi interrupts      : %lld\n", (long long)bench_counter(Debug::PerfCounter::VIs));

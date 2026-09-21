@@ -557,28 +557,21 @@ namespace Flipper
 		void CP_OVF();
 		void CP_UVF();
 
-		static void CPThread(void* Param);
-
 		FifoProcessor* fifo = nullptr;	// Internal CP FIFO
 
 		CPHostRegs cpregs{};	// Mapped command processor registers
 		CPState cp{};			// Internal registers (for setting VCD/VAT, etc.)
 
-		Thread* cp_thread = nullptr;     // CP FIFO thread
 		size_t	tickPerFifo = 0;
-		int64_t	updateTbrValue = 0;
 
-		// The CP thread must not busy-wait on the CPU's time base: it is woken instead, every
-		// `FifoBatch` FIFO entries' worth of emulated ticks, through this event (see CPThread).
-		// `lastDrainTick` is the tick the thread last drained the FIFO at, so that the drain stays
-		// at the emulated CP rate even when the thread was not scheduled for a while.
-		static const size_t FifoBatch = 16;
-
-		Event fifoEvent;
+		//! The tick the FIFO was last drained at. The emulated CP consumes one FIFO entry per
+		//! `tickPerFifo` ticks, so the drain works out what it owes from the time that passed
+		//! since this anchor and moves it by the entries actually drained - nothing owed is ever
+		//! dropped, and the emulated CP rate does not depend on when the host got around to it.
 		int64_t lastDrainTick = 0;
 
-		//! Serializes the FIFO drains, so that the reader cannot be re-entered from a second
-		//! thread while it is walking the command stream.
+		//! Guards the FIFO walk. The CPU thread is the only drainer now, but the tests replay a
+		//! display list from their own thread, so the walk still has to be re-entrant-safe.
 		SpinLock fifoLock;
 
 		// Stats
@@ -644,8 +637,6 @@ namespace Flipper
 		/// Called by the CPU thread (through Flipper::Update) every Flipper tick step, so that the
 		/// CP thread is woken when the emulated CP has a batch of FIFO entries to consume.
 		/// </summary>
-		void TickSync(int64_t ticks);
-
 		void CPAbortFifo();
 
 		void ResetFrameStats();

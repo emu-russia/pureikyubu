@@ -167,5 +167,17 @@ namespace Flipper
 
 		//! The VI state, for the debug interface (`viregs` and the debugui2 "Video" panel).
 		const VIState& State() const { return vi; }
+
+		/// <summary>
+		/// The base of the frame the video interface scans out of main memory: the top field buffer
+		/// the title programmed (VI_TFBL). The bottom field of an interlaced frame is the next line
+		/// of the same buffer, so this is the whole XFB. The copy engine's display copy uses it to
+		/// place the rectangle it reads on the scan line the title copied it to.
+		/// </summary>
+		uint32_t XfbBase() const { return vi.tfbl; }
+
+		//! The base of the bottom field buffer (VI_BFBL). A title that copies a rectangle into the
+		//! second field of the frame it is scanning names this one instead of the top field base.
+		uint32_t XfbBottomBase() const { return vi.bfbl; }
 	};
 }

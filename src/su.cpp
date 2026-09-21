@@ -8,10 +8,10 @@ using namespace Debug;
 namespace GFX
 {
 
-	// The programmed scissor rectangle is in screen coordinates (the origin is the top left corner of
-	// the EFB, gfx-su.md 4.1) and carries the +342 bias of the SU datapath, while GL measures its
-	// scissor box from the bottom left corner, so the Y axis is flipped here. An empty rectangle is
-	// passed on as a zero-sized one, which is what GL uses to reject every fragment.
+	// The programmed scissor rectangle is in the coordinate space of the quad stream (gfx-su.md 4.1)
+	// and carries the bias of PE_QUAD_OFFSET that comes with it, while GL measures its scissor box
+	// from the bottom left corner, so the Y axis is flipped here. An empty rectangle is passed on as
+	// a zero-sized one, which is what GL uses to reject every fragment.
 	void SetupUnit::GL_SetScissor(int x, int y, int w, int h)
 	{
 		if (gfx == nullptr || !gfx->backend_started)
@@ -38,11 +38,17 @@ namespace GFX
 	// -------------------------------------------------------------------------------------------
 
 	// SU_SCIS0 holds the top left corner (sux, suy) and SU_SCIS1 the bottom right one (suw, suh), both
-	// biased by SU_SCISSOR_ORIGIN, so the rectangle is inclusive on both corners.
+	// biased by the origin of the quad stream, so the rectangle is inclusive on both corners.
 	void SetupUnit::Scissor(int* x, int* y, int* w, int* h) const
 	{
-		*x = (int)su.scis0.sux - SU_SCISSOR_ORIGIN;
-		*y = (int)su.scis0.suy - SU_SCISSOR_ORIGIN;
+		int ox = 0, oy = 0;
+		if (gfx != nullptr)
+		{
+			gfx->QuadOrigin(&ox, &oy);
+		}
+
+		*x = (int)su.scis0.sux - ox;
+		*y = (int)su.scis0.suy - oy;
 		*w = (int)su.scis1.suw - (int)su.scis0.sux + 1;
 		*h = (int)su.scis1.suh - (int)su.scis0.suy + 1;
 	}
@@ -62,10 +68,13 @@ namespace GFX
 	{
 		if (!su.scissorSet)
 		{
-			su.scis0.sux = SU_SCISSOR_ORIGIN;
-			su.scis0.suy = SU_SCISSOR_ORIGIN;
-			su.scis1.suw = SU_SCISSOR_ORIGIN + (unsigned)width - 1;
-			su.scis1.suh = SU_SCISSOR_ORIGIN + (unsigned)height - 1;
+			unsigned ox = 2 * SU_QUAD_OFFSET_RESET;
+			unsigned oy = 2 * SU_QUAD_OFFSET_RESET;
+
+			su.scis0.sux = ox;
+			su.scis0.suy = oy;
+			su.scis1.suw = ox + (unsigned)width - 1;
+			su.scis1.suh = oy + (unsigned)height - 1;
 		}
 
 		ApplyScissor();
@@ -264,9 +273,9 @@ namespace GFX
 
 	// The register reset state. Only the scissor rectangle has a value the backend depends on: the
 	// hardware scissor resets to "everything" (the GX API initialises it to the screen), and a
-	// rectangle left at register zero would be the 1x1 box at the internal origin (-342, -342),
-	// which rejects every fragment of a scene that never programs the scissor. The rectangle is
-	// therefore put at the whole render target here.
+	// rectangle left at register zero would be the 1x1 box at the origin of the quad stream, which
+	// rejects every fragment of a scene that never programs the scissor. The rectangle is therefore
+	// put at the whole render target here, around the origin the reset PE_QUAD_OFFSET defines.
 	void SetupUnit::Reset()
 	{
 		su = SUState{};
@@ -274,10 +283,13 @@ namespace GFX
 		unsigned w = (gfx != nullptr) ? (unsigned)gfx->scr_w : 640;
 		unsigned h = (gfx != nullptr) ? (unsigned)gfx->scr_h : 480;
 
-		su.scis0.sux = SU_SCISSOR_ORIGIN;
-		su.scis0.suy = SU_SCISSOR_ORIGIN;
-		su.scis1.suw = SU_SCISSOR_ORIGIN + w - 1;
-		su.scis1.suh = SU_SCISSOR_ORIGIN + h - 1;
+		unsigned ox = 2 * SU_QUAD_OFFSET_RESET;
+		unsigned oy = 2 * SU_QUAD_OFFSET_RESET;
+
+		su.scis0.sux = ox;
+		su.scis0.suy = oy;
+		su.scis1.suw = ox + w - 1;
+		su.scis1.suh = oy + h - 1;
 
 		ApplyScissor();
 
