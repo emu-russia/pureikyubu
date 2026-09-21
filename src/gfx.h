@@ -247,6 +247,12 @@ namespace GFX
 		bool frame_done = true;
 		bool frameReady = false;
 
+		//! The frame has been opened but its EFB has not been cleared yet: the clear waits for the
+		//! first primitive of the frame. A title copies the frame it has just finished into the XFB
+		//! - and clears the EFB in the same copy - before it draws anything (F-Zero GX does), and
+		//! that copy has to read the picture that is still in the EFB (see GL_DisplayCopy).
+		bool frame_clear_pending = false;
+
 		// The frame holds content that has not been handed to the display yet. A display copy only
 		// presents such a frame: the copy engine may be asked to write the XFB several times per
 		// frame (init sequences, two XFB buffers), and swapping for every copy would show the
@@ -266,17 +272,71 @@ namespace GFX
 #endif
 
 #ifdef GFX_OFFSCREEN
-		//! The offscreen target of the headless build: a window that is never shown, to hang a real
-		//! OpenGL context on, and a framebuffer the pipeline draws into, so that a frame can be
-		//! read back without anything appearing on the screen.
-		GLuint offscreenFbo = 0;
-		GLuint offscreenColor = 0;
-		GLuint offscreenDepth = 0;
-
+		//! The hidden window the headless build hangs its context on. It is never shown, and the
+		//! picture never appears on the screen.
 		void CreateOffscreenWindow();
-		bool CreateOffscreenTarget();
-		void DestroyOffscreenTarget();
 #endif
+
+		// -------------------------------------------------------------------------------------
+		// The framebuffers of the backend
+		//
+		// A console has three of them: the EFB inside the pixel engine, which the geometry is drawn
+		// into; the XFB in main memory, which the copy engine's display copy writes and the video
+		// interface scans out; and the encoder's output, which is what appears on the screen.
+		//
+		// The emulator keeps the first two in textures of their own and hands the third whatever the
+		// display is showing - the window's back buffer. They have to be separate: a title copies
+		// the EFB into the XFB *and keeps drawing into the EFB* (F-Zero GX copies the finished
+		// frame at the top of the next one), so a backend that draws the EFB into the buffer it
+		// presents with cannot show the XFB without wiping the EFB.
+		// -------------------------------------------------------------------------------------
+
+		GLuint efbFbo = 0;
+		GLuint efbColor = 0;
+		GLuint efbDepth = 0;
+
+		bool CreateEfbTarget();
+		void DestroyEfbTarget();
+
+		// -------------------------------------------------------------------------------------
+		// The XFB the copy engine writes (gfx-pe.md 5.6)
+		//
+		// A console has two frame buffers: the EFB inside the pixel engine, which the geometry is
+		// drawn into, and the XFB in main memory, which the video interface scans out. The copy
+		// engine's display copy is the bridge between the two, and they are independent: a title
+		// renders its frame in several chunks and hands each one over as it is finished, so at the
+		// end of the frame the EFB holds only the last chunk - the bootrom draws its picture in two
+		// of them (see the two-chunk note on PE_QUAD_OFFSET in PixelEngine::loadPEReg).
+		//
+		// The backend keeps the XFB in a colour buffer of its own instead of showing the EFB, which
+		// is what lets the display copy clear the EFB rectangle it read, the way the hardware does.
+		// The shader pipeline blits the rectangle into that buffer; the software pipeline writes a
+		// real XFB in main memory and never gets here (see PixelEngine::SoftDisplayCopy).
+		// -------------------------------------------------------------------------------------
+
+		GLuint xfbFbo = 0;
+		GLuint xfbColor = 0;
+
+		//! Whether a display copy has written the XFB since the frame was presented last. Until it
+		//! has, the frame the display shows is the EFB itself (a title that never copies out).
+		bool xfb_pending = false;
+
+		//! The address the display copies of the frame that is being drawn started at, and the
+		//! frame it belongs to. The base of the XFB the display scans is a frame behind the copies
+		//! that build the next picture, so the copies name their own buffer (see GL_DisplayCopy).
+		uint32_t xfb_base = 0;
+		int xfb_frame = -1;
+
+		//! The framebuffer the pipeline draws into: the EFB.
+		GLuint DrawFbo() const { return efbFbo; }
+
+		bool CreateXfbTarget();
+		void DestroyXfbTarget();
+
+		//! Hand the picture of the frame over to the display: the XFB a display copy wrote, or the
+		//! EFB of a title that never copies out. It goes to the window's back buffer (the headless
+		//! build keeps its hidden window's back buffer as the picture a frame dump reads).
+		void PresentFrame();
 
 		uint32_t scr_w = 640, scr_h = 480;
 
@@ -293,6 +353,9 @@ namespace GFX
 		void DumpRenderTarget();
 
 		void DumpFrame();
+
+		//! Clear the whole EFB with the PE clear values (the frame an emulator frame starts on).
+		void ClearFrameBuffer();
 
 		//! Restore the OpenGL state that the GFX registers are applied on top of.
 		void ApplyDefaultGLState();
@@ -316,8 +379,21 @@ namespace GFX
 		//! A full-frame display copy handed the finished EFB over to the display (PE_COPY_CMD.opcode).
 		void GPDisplayCopy();
 
+		//! A display copy (gfx-pe.md 5.6): the EFB rectangle becomes the XFB the video interface
+		//! scans out. `dstAddr` is the destination base and `stride` the destination line stride,
+		//! both straight out of the copy registers, so that the rectangle lands on the XFB line the
+		//! title copied it to. The rectangle is given in EFB pixels, the origin at the top left.
+		void GL_DisplayCopy(int srcX, int srcY, int w, int h, uint32_t dstAddr, int stride);
+
+		//! The origin of the incoming quad coordinate space, in EFB pixels. PE_QUAD_OFFSET
+		//! (gfx-pe.md 6.20) is programmed in quad units and the PE subtracts it from the quad stream
+		//! of the XF to address the EFB, so the origin of a title sits at twice the offset inside
+		//! that space. Both the XF viewport (TransformUnit::ApplyViewport) and the scissor rectangle
+		//! of the setup unit are programmed in it, which is why they follow the register.
+		void QuadOrigin(int* x, int* y) const;
+
 		//! A primitive was rasterized: the frame now holds content the display has not seen yet.
-		void GPFrameDrawn() { frame_dirty = true; }
+		void GPFrameDrawn();
 
 		void ResizeRenderTarget(size_t width, size_t height);
 

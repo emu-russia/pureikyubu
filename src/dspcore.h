@@ -507,20 +507,6 @@ namespace DSP
 		/// </summary>
 		void HoldMailbox();
 
-		// The DSP thread is woken through this event at the ticks where it has a batch of
-		// instructions' worth of time to execute (see TickSync), instead of polling the Gekko time
-		// base in a tight loop (see the benchmark notes in `testing/gekko_bench`).
-		Event workEvent;
-		int64_t wakeTick = 0;
-
-		/// <summary>
-		/// How many Gekko time base ticks one wakeup covers, i.e. `DspWakeTicks /
-		/// GekkoTicksPerDspInstruction` instructions. Waking up on every Flipper tick step would
-		/// mean roughly half a million scheduler wakeups per second, which costs more than the DSP
-		/// work itself.
-		/// </summary>
-		static const int64_t DspWakeTicks = 1000;
-
 		// The recompiler translates whole basic blocks and calls back into the interpreter for
 		// the parts it does not reimplement, so it needs the interpreter's private entry points
 		// and the addresses of the decoded-instruction handlers (see dspjit.cpp).
@@ -592,17 +578,6 @@ namespace DSP
 		/// wrote instruction memory.
 		/// </summary>
 		void InvalidateJit();
-
-		/// <summary>
-		/// Called by the CPU thread (through Flipper::Update) every Flipper tick step, so that the
-		/// DSP thread is woken once per `DspWakeTicks`.
-		/// </summary>
-		void TickSync(int64_t ticks);
-
-		/// <summary>
-		/// Block until the next batch of DSP time is due (see TickSync).
-		/// </summary>
-		void WaitForWork();
 
 		// Debug methods
 

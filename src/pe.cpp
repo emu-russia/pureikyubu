@@ -338,10 +338,10 @@ namespace GFX
 			// A copy and its clear belong together, in the order the stream asks for them: the copy
 			// reads the rectangle as it is, and a copy that asked for a clear turns the quads it
 			// read into the clear colour (gfx-pe.md 5.1, the RMW of the colour unit), so whatever
-			// follows sees the cleared EFB. See below for when the clear of each kind runs.
+			// follows sees the cleared EFB.
 			//
 			// The values are captured when the command arrives, because the game may reprogram the
-			// registers for its next copy before the clear runs.
+			// registers while the copy is still running.
 			case PE_COPY_CMD_ID:
 			{
 				pe.copy_cmd.bits = value;
@@ -357,33 +357,13 @@ namespace GFX
 					clear.y = (int)pe.copy_src_addr.y;
 					clear.w = (int)pe.copy_src_size.x + 1;
 					clear.h = (int)pe.copy_src_size.y + 1;
-
-					// The two kinds of copy clear differently. A texture copy prepares a render
-					// target the title is about to draw into: its clear runs below, over the
-					// rectangle it read, before those draws - a title that renders its frame in
-					// several passes through the copy engine loses the passes drawn before it if
-					// that clear wipes the whole buffer. A display copy presents the frame, and this
-					// backend shows the EFB where a console shows the XFB, so its clear covers the
-					// whole colour buffer and waits for the frame begin: running it here would wipe
-					// the picture that is about to be shown, and leaving any part of the buffer
-					// alone kept the previous frame in the lower half of the bootrom's splash.
-					if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY)
-					{
-						clear.full = true;
-
-						if (pending_clear_count < MaxPendingCopyClears)
-						{
-							pending_clears[pending_clear_count++] = clear;
-						}
-					}
 				}
 
 				// A display copy hands the finished EFB over to the video interface as the XFB
-				// (gfx-pe.md 5.6), so the full-frame ones are a frame boundary of their own. The
-				// backend displays the EFB instead of the XFB, so the picture has to be swapped
-				// here for the titles whose movie player presents through the copy engine and waits
-				// for the retrace without ever calling GXDrawDone (the SDK THP player does that; its
-				// frames stayed on an unpresented back buffer, issue #349).
+				// (gfx-pe.md 5.6), so the full-frame ones are a frame boundary of their own: that is
+				// what drives the titles whose movie player presents through the copy engine and
+				// waits for the retrace without ever calling GXDrawDone (the SDK THP player does
+				// that; its frames stayed on an unpresented back buffer, issue #349).
 				//
 				// A partial display copy is not a frame boundary: the bootrom and the 2D front ends
 				// write the picture in several passes (one copy per display-list buffer) and call
@@ -399,9 +379,17 @@ namespace GFX
 				{
 					// The display copy of the software pipeline is what the console really does: it
 					// converts the EFB rectangle into the packed YUV 4:2:2 XFB in main memory, which
-					// the video interface then scans out (gfx-pe.md 5.6). The GL backend has no XFB
-					// and shows the EFB instead, so it skips this.
+					// the video interface then scans out (gfx-pe.md 5.6).
 					SoftDisplayCopy();
+				}
+				else
+				{
+					// The shader pipeline hands the rectangle to the XFB the backend keeps for the
+					// display, which is what the picture is presented from (see gfx.h).
+					gfx->GL_DisplayCopy(
+						(int)pe.copy_src_addr.x, (int)pe.copy_src_addr.y,
+						(int)pe.copy_src_size.x + 1, (int)pe.copy_src_size.y + 1,
+						(uint32_t)pe.copy_dst_base[0].base << 5, (int)pe.copy_dst_stride.stride * 32);
 				}
 
 				if (pe.copy_cmd.opcode == PE_COPY_CMD_DISPLAY &&
@@ -410,13 +398,14 @@ namespace GFX
 					gfx->GPDisplayCopy();
 				}
 
-				// A texture copy's clear belongs to the copy itself and runs right here: it only
-				// prepares the EFB for the copies that follow, and it cannot disturb the frame a
-				// display copy presents. The clear of a *display* copy stays deferred to the frame
-				// begin: the backend shows the EFB in place of the XFB the hardware would have
-				// written first, so clearing it here would wipe the picture that is about to be
-				// shown (the bootrom screen went black that way).
-				if (pe.copy_cmd.clear && pe.copy_cmd.opcode == PE_COPY_CMD_TEXTURE)
+				// The clear belongs to the copy itself and runs right here, over the rectangle the
+				// copy read (gfx-pe.md 5.1, the RMW of the colour unit). It has to: the picture the
+				// copy hands over is already in the XFB by now, and the next pass of the title draws
+				// onto a cleared EFB. Deferring it to the frame begin - which is what the backend did
+				// while it presented the EFB in place of the XFB - left the rows two neighbouring
+				// chunks share drawn twice, and put the stale picture of the previous chunk under
+				// everything the next one did not draw (the two-chunk bootrom frame).
+				if (pe.copy_cmd.clear)
 				{
 					ApplyCopyClear(clear);
 				}
@@ -449,6 +438,18 @@ namespace GFX
 
 			case PE_QUAD_OFFSET_ID:
 				pe.quad_offset.bits = value;
+
+				// The offset is the origin of the quad stream of the XF in the coordinate space the
+				// title programs its scissor rectangle and its viewport in (gfx-pe.md 6.20), so both
+				// follow the register: a title that moves the picture by reprogramming it (the
+				// bootrom renders its frame in two chunks that way, the second one shifted so that
+				// the chunk lands at the top of the EFB) has to be clipped and mapped against the
+				// rectangle that belongs to the new origin.
+				if (gfx != nullptr)
+				{
+					gfx->su->RefreshScissor();
+					gfx->xf->RefreshViewport();
+				}
 				break;
 
 			default:
@@ -845,13 +846,13 @@ namespace GFX
 
 	void PixelEngine::ApplyCopyClear(const CopyClearState& clear)
 	{
-		// A texture copy's clear covers the rectangle the copy reads (gfx-pe.md 5.1): the copy engine
-		// turns every quad it reads into the clear colour and leaves the rest of the EFB as it was.
-		// A display copy's clear covers the whole buffer instead, because this backend shows the EFB
-		// where a console scans out the XFB the copy wrote (see CopyClearState::full).
+		// The clear covers the rectangle the copy reads (gfx-pe.md 5.1): the copy engine turns every
+		// quad it reads into the clear colour and leaves the rest of the EFB as it was. The two
+		// kinds of copy clear the same rectangle - what the display copy hands over is already in
+		// the XFB by the time its clear runs.
 		int x = clear.x, y = clear.y, w = clear.w, h = clear.h;
 
-		if (clear.full || w <= 0 || h <= 0)
+		if (w <= 0 || h <= 0)
 		{
 			x = 0; y = 0; w = (int)gfx->scr_w; h = (int)gfx->scr_h;
 		}
@@ -891,27 +892,10 @@ namespace GFX
 		glScissor(0, 0, (GLsizei)gfx->scr_w, (GLsizei)gfx->scr_h);
 	}
 
-	bool PixelEngine::ApplyPendingCopyClears()
-	{
-		if (pending_clear_count == 0)
-		{
-			return false;
-		}
-
-		for (size_t i = 0; i < pending_clear_count; i++)
-		{
-			ApplyCopyClear(pending_clears[i]);
-		}
-
-		pending_clear_count = 0;
-		return true;
-	}
-
 	void PixelEngine::Reset()
 	{
 		pe = PEState{};
 		peregs = PERegs{};
-		pending_clear_count = 0;
 
 		// The hardware reset values that the specification states (gfx-pe.md 6.5, 6.8, 6.20)
 		pe.field_mask.bits = 0x3;
@@ -919,7 +903,9 @@ namespace GFX
 		// PE_CMODE0 (the GX SDK does, in GXInit) would otherwise be unable to draw at all.
 		pe.cmode0.col_mask = 1;
 		pe.cmode0.alpha_mask = 1;
-		pe.quad_offset.bits = 0xAAAAAAAA;
+		// PE_QUAD_OFFSET resets to 0xAA/0xAA: screen pixel (340,340) is EFB pixel (0,0), so the
+		// origin the PE subtracts from the quad stream is (340,340) (gfx-pe.md 6.20).
+		pe.quad_offset.bits = (0xAAu << 10) | 0xAAu;
 		pe.token_int.bits = 0xFFFF;
 
 		frames = 0;
@@ -1028,14 +1014,9 @@ namespace GFX
 	{
 		SoftAlloc();
 
-		// A display copy asks for the EFB rectangle it read to be cleared: the clear prepares the
-		// frame *after* the copy, so it runs here and not when the copy command arrives (the copy
-		// has to hand its picture to the XFB first). See CopyClearState. When no copy asked for a
-		// clear, the frame is cleared with the PE clear values, exactly like the shader backend's
-		// frame begin does (GFXCore::GL_BeginFrame).
-		if (ApplyPendingCopyClears())
-			return;
-
+		// The EFB starts empty, cleared with the PE clear values, exactly like the shader backend's
+		// frame begin does (GFXCore::GL_BeginFrame). The clear a copy asks for is the copy engine's
+		// own and has already run with the copy itself.
 		uint32_t rgba = SoftPackEfbColor(pe.copy_clear_ar.red, pe.copy_clear_gb.green,
 			pe.copy_clear_gb.blue, pe.copy_clear_ar.alpha);
 

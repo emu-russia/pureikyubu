@@ -174,6 +174,7 @@ namespace GfxGallery
 	//! masks enabled.
 	inline void SetupDefaultPixelState(GfxTestMachine& m)
 	{
+		SetupQuadOffset(m);
 		m.BpLoad(PE_ZMODE_ID, 0);
 		m.BpLoad(PE_CMODE0_ID, (1u << 3) | (1u << 4));
 		m.BpLoad(PE_CMODE1_ID, 0);

@@ -174,12 +174,13 @@ namespace DVD
 		{
 			return dvd.mountedSdk->Read((uint8_t*)buffer, length);
 		}
-		else
-		{
-			memset(buffer, 0, length);        // fill by zeroes
-		}
 
-		return true;
+		// There is no disc in the drive. This has to fail rather than hand the guest a block
+		// of zeros: a zeroed block reads as a valid transfer of a disc whose header is empty,
+		// and the IPL answers that with the "disc could not be read" screen instead of the
+		// insert-disc animation. A failed read becomes a drive error, and the error code the
+		// drive reports through Request Error is what tells the SDK there is no disc.
+		return false;
 	}
 
 	long OpenFile(std::string& dvdfile)
@@ -1529,10 +1530,13 @@ void GCMSeek(int position)
 
 bool GCMRead(uint8_t*buf, size_t length)
 {
+	// No image is mounted, so there is no disc in the drive. This has to fail: handing back a
+	// block of zeros reads as a successful transfer of a disc whose contents are empty, and
+	// nothing above can tell "no disc" from "an empty disc". The failure turns into a DI drive
+	// error whose sense code says which of the two it was.
 	if (dvd.gcm_filename[0] == 0)
 	{
-		memset(buf, 0, length);        // fill by zeroes
-		return true;
+		return false;
 	}
 
 	// The seek value is a signed int and the value it was derived from is guest-controlled, so
@@ -1716,8 +1720,6 @@ namespace DVD
 
 	DduCore::DduCore()
 	{
-		dduThread = EMUCreateThread(DduThreadProc, true, this, "DvdData");
-		dvdAudioThread = EMUCreateThread(DvdAudioThreadProc, true, this, "DvdAudio");
 
 		dataCache = new uint8_t[dataCacheSize];
 		memset(dataCache, 0, dataCacheSize);
@@ -1748,8 +1750,6 @@ namespace DVD
 		}
 
 		TransferComplete();
-		EMUJoinThread(dduThread);
-		EMUJoinThread(dvdAudioThread);
 		delete[] dataCache;
 		delete[] streamingCache;
 	}
@@ -1758,8 +1758,10 @@ namespace DVD
 	{
 		// Execute command
 
+		// A new command deasserts the DIERR line, but the sense information stays latched until
+		// the host asks for it with Request Error (0xE0): that command exists to read back what
+		// went wrong, so clearing the code here would always answer "no error".
 		errorState = false;
-		errorCode = 0;
 
 		if (logCommands)
 		{
@@ -1831,10 +1833,18 @@ namespace DVD
 
 			// Request Error (DVDLowRequestError)	(IMM)
 			case 0xE0:
-				state = DduThreadState::ReadBogusData;
+				// The sense information the drive hands back here is what the SDK classifies
+				// the failure by (see cbForStateGettingError): announcing zeros made every
+				// failure - including a drive with no disc in it - look like an open cover.
+				immediateBuffer[0] = (errorCode >> 24) & 0xFF;
+				immediateBuffer[1] = (errorCode >> 16) & 0xFF;
+				immediateBuffer[2] = (errorCode >> 8) & 0xFF;
+				immediateBuffer[3] = errorCode & 0xFF;
+				immediateBufferPtr = 0;
+				state = DduThreadState::GetErrorCode;
 				if (log)
 				{
-					Report(Channel::DVD, "Request Error\n");
+					Report(Channel::DVD, "Request Error: %08X\n", errorCode);
 				}
 				break;
 
@@ -1951,197 +1961,197 @@ namespace DVD
 		commandPtr = 0;
 	}
 
-	void DduCore::DduThreadProc(void* Parameter)
+	void DduCore::PumpOnce()
 	{
-		DduCore* core = (DduCore*)Parameter;
-
-		// Wait Gekko ticks
-		if (!core->transferRateNoLimit)
+		if (busDir == DduBusDirection::HostToDdu)
 		{
-			int64_t ticks = Core->GetTicks();
-			if (ticks >= core->savedGekkoTicks)
+			switch (state)
 			{
-				core->savedGekkoTicks = ticks + core->dduTicksPerByte;
-			}
-			else
-			{
-				return;
-			}
-		}
+				case DduThreadState::WriteCommand:
+					if (commandPtr < sizeof(commandBuffer))
+					{
+						commandBuffer[commandPtr] = hostToDduCallback(transferContext);
+						stats.bytesWrite++;
+						commandPtr++;
+					}
 
-		// Until break or transfer completed
-		while (core->ddBusBusy)
+					if (commandPtr >= sizeof(commandBuffer))
+					{
+						ExecuteCommand();
+					}
+					break;
+
+				// Hidden debug commands are not supported yet
+
+				default:
+					DeviceError(0);
+					break;
+			}
+	}
+	else
+	{
+		switch (state)
 		{
-			if (core->busDir == DduBusDirection::HostToDdu)
-			{
-				switch (core->state)
+			case DduThreadState::ReadDvdData:
+				// Read-ahead new DVD data
+				if (dataCachePtr >= dataCacheSize)
 				{
-					case DduThreadState::WriteCommand:
-						if (core->commandPtr < sizeof(core->commandBuffer))
-						{
-							core->commandBuffer[core->commandPtr] = core->hostToDduCallback(core->transferContext);
-							core->stats.bytesWrite++;
-							core->commandPtr++;
-						}
+					Seek(seekVal);
+					size_t bytes = my_min(dataCacheSize, transactionSize);
+					bool readResult = Read(dataCache, bytes);
+					seekVal += (uint32_t)bytes;
+					transactionSize -= bytes;
 
-						if (core->commandPtr >= sizeof(core->commandBuffer))
-						{
-							core->ExecuteCommand();
-						}
-						break;
+					// A read that consumes the very last bytes of the disc leaves the read
+					// pointer exactly on the end, and that is not an error: the transfer
+					// succeeded. Only a read that advanced *past* the end (the requested range
+					// ran off the disc, and GCMRead clamped what it could deliver) is one. The
+					// old `>=` aborted the transfer of every command that ended on the last
+					// byte - F-Zero GX reads its last streaming block that way, got DIERR in
+					// the middle of it and stopped on the "refer to the Instruction Booklet"
+					// screen.
+					if (seekVal > DVD_SIZE || !readResult)
+					{
+						// With no disc in the drive the failure is "no disc", not a generic
+						// drive fault: the sense code is what the SDK's error handler uses to
+						// decide between the insert-disc animation and the error screen.
+						DeviceError(IsMounted() ? 0 : DVD_ERROR_NO_DISC);
+					}
 
-					// Hidden debug commands are not supported yet
-
-					default:
-						core->DeviceError(0);
-						break;
+					dataCachePtr = 0;
 				}
-			}
-			else
-			{
-				switch (core->state)
+
+				dduToHostCallback(dataCache[dataCachePtr], transferContext);
+				stats.bytesRead++;
+				dataCachePtr++;
+				break;
+
+			case DduThreadState::ReadBogusData:
+				dduToHostCallback(0, transferContext);
+				stats.bytesRead++;
+				break;
+
+			case DduThreadState::GetStreamEnable:
+			case DduThreadState::GetStreamOffset:
+			case DduThreadState::GetStreamBogus:
+				if (immediateBufferPtr < sizeof(immediateBuffer))
 				{
-					case DduThreadState::ReadDvdData:
-						// Read-ahead new DVD data
-						if (core->dataCachePtr >= dataCacheSize)
-						{
-							Seek(core->seekVal);
-							size_t bytes = my_min(dataCacheSize, core->transactionSize);
-							bool readResult = Read(core->dataCache, bytes);
-							core->seekVal += (uint32_t)bytes;
-							core->transactionSize -= bytes;
-
-							if (core->seekVal >= DVD_SIZE || !readResult)
-							{
-								core->DeviceError(0);
-							}
-
-							core->dataCachePtr = 0;
-						}
-
-						core->dduToHostCallback(core->dataCache[core->dataCachePtr], core->transferContext);
-						core->stats.bytesRead++;
-						core->dataCachePtr++;
-						break;
-
-					case DduThreadState::ReadBogusData:
-						core->dduToHostCallback(0, core->transferContext);
-						core->stats.bytesRead++;
-						break;
-
-					case DduThreadState::GetStreamEnable:
-					case DduThreadState::GetStreamOffset:
-					case DduThreadState::GetStreamBogus:
-						if (core->immediateBufferPtr < sizeof(core->immediateBuffer))
-						{
-							core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr], core->transferContext);
-							core->stats.bytesRead++;
-							core->immediateBufferPtr++;
-						}
-						else
-						{
-							core->DeviceError(0);
-						}
-						break;
-
-					case DduThreadState::Idle:
-						break;
-
-					default:
-						core->DeviceError(0);
-						break;
+					dduToHostCallback(immediateBuffer[immediateBufferPtr], transferContext);
+					stats.bytesRead++;
+					immediateBufferPtr++;
 				}
-			}
+				else
+				{
+					DeviceError(0);
+				}
+				break;
+
+			case DduThreadState::GetErrorCode:
+				// The sense answer is four bytes, but the host may take it with a DMA transfer of
+				// the command's length (the SDK's Request Error does): the drive clocks those four
+				// out and pads the rest of the block with zeros. Ending the transfer after four
+				// bytes instead left the DI still asking for data, which turned into a second,
+				// bogus device error - and the guest's error state machine then gave up entirely.
+				dduToHostCallback(immediateBufferPtr < (int)sizeof(immediateBuffer) ? immediateBuffer[immediateBufferPtr] : 0, transferContext);
+				immediateBufferPtr++;
+				stats.bytesRead++;
+				break;
+
+			case DduThreadState::Idle:
+				break;
+
+			default:
+				DeviceError(0);
+				break;
 		}
-
-		// Sleep until next transfer
-		core->dduThread->Suspend();
+	}
 	}
 
 	// Enabling AISCLK forces the DDU to issue samples out even if there are none (zeros goes to output).
 	void DduCore::EnableAudioStreamClock(bool enable)
 	{
+		streamClockEnabled = enable;
+
+		// The sample clock is restarted from now, so a stream that was off for a while does not
+		// come back owing every sample it missed.
 		if (enable)
 		{
-			dvdAudioThread->Resume();
-		}
-		else
-		{
-			dvdAudioThread->Suspend();
+			nextGekkoTicksToSample = Core->GetTicks() + TicksPerSample();
 		}
 	}
 
-	void DduCore::DvdAudioThreadProc(void* Parameter)
+	// One DVD-audio sample, due every `TicksPerSample` ticks, is emitted here, on the CPU
+	// thread, from `Flipper::Update`. This used to be a device thread, and it shared the global DVD
+	// read pointer with the DI data transfer: the two seeked and read the same drive state from
+	// two threads, so which of them got its bytes depended on the host scheduler. It also raised
+	// the audio interrupts whenever the host got around to it. Both are a function of the time
+	// base now, and both run on the same thread as the transfer they used to race with.
+	void DduCore::AudioTick(int64_t ticks)
 	{
-		uint16_t sample[2] = { 0, 0 };
-		DduCore* core = (DduCore*)Parameter;
-
-		// One sample per call, and the procedure returns. It must not loop inside: the ringleader
-		// holds the thread's own suspension mutex for as long as the procedure runs (see the notes
-		// on threads in utils.h), so a procedure that never returns can never be suspended - and
-		// the AI control register (AIControl -> EnableAudioStreamClock) writes that stop the
-		// stream clock would block on that mutex for ever.
+		if (!streamClockEnabled)
 		{
-			// If AISCLK is enabled but streaming is not enabled by the DDU command, DVD Audio will output only zeros.
+			return;
+		}
 
-			// If its time to send sample
-			int64_t ticks = Core->GetTicks();
-			if (ticks < core->nextGekkoTicksToSample)
-			{
-				return;
-			}
-			core->nextGekkoTicksToSample = ticks + core->TicksPerSample();
+		uint16_t sample[2] = { 0, 0 };
+
+		while (ticks >= nextGekkoTicksToSample)
+		{
+			nextGekkoTicksToSample += TicksPerSample();
+
+			// If AISCLK is enabled but streaming is not enabled by the DDU command, DVD Audio will
+			// output only zeros.
 
 			// Invalidate cache
-			if (core->streamEnabledByDduCommand)
+			if (streamEnabledByDduCommand)
 			{
-				if (core->streamingCachePtr >= streamCacheSize)
+				if (streamingCachePtr >= streamCacheSize)
 				{
-					core->streamingCachePtr = 0;
-					Seek(core->streamSeekVal);
-					bool readResult = Read(core->streamingCache, streamCacheSize);
+					streamingCachePtr = 0;
+					Seek(streamSeekVal);
+					bool readResult = Read(streamingCache, streamCacheSize);
 
-					if (core->log)
+					if (log)
 					{
-						//DBReport2(DbgChannel::DVD, "Streaming Seek: 0x%08X, Byte[0]: 0x%02X\n", core->streamSeekVal, core->streamingCache[0]);
+						//DBReport2(DbgChannel::DVD, "Streaming Seek: 0x%08X, Byte[0]: 0x%02X\n", streamSeekVal, streamingCache[0]);
 					}
 
 					//if (!readResult)
 					//{
-					//	core->DeviceError(0);
+					//	DeviceError(0);
 					//}
 
-					if (core->adpcmStreamDump && core->adpcmStreamFile)
+					if (adpcmStreamDump && adpcmStreamFile)
 					{
-						fwrite(core->streamingCache, 1, streamCacheSize, core->adpcmStreamFile);
+						fwrite(streamingCache, 1, streamCacheSize, adpcmStreamFile);
 					}
 				}
 			}
 
 			// From changing the playback frequency, the size of the ADPCM data does not change. The frequency of samples output to the outside changes.
 
-			if (core->streamEnabledByDduCommand)
+			if (streamEnabledByDduCommand)
 			{
-				if (core->pcmPlaybackCounter >= sizeof(core->pcmPlaybackBuffer))
+				if (pcmPlaybackCounter >= sizeof(pcmPlaybackBuffer))
 				{
 					// Decode next ADPCM chunk
-					DvdAudioDecode(&core->streamingCache[core->streamingCachePtr], core->pcmPlaybackBuffer);
+					DvdAudioDecode(&streamingCache[streamingCachePtr], pcmPlaybackBuffer);
 
-					if (core->decodedStreamDump && core->decodedStreamFile)
+					if (decodedStreamDump && decodedStreamFile)
 					{
-						fwrite(core->pcmPlaybackBuffer, 1, sizeof(core->pcmPlaybackBuffer), core->decodedStreamFile);
+						fwrite(pcmPlaybackBuffer, 1, sizeof(pcmPlaybackBuffer), decodedStreamFile);
 					}
 
-					core->streamingCachePtr += 32;
-					core->streamSeekVal += 32;
-					core->streamCount -= 32;
-					core->pcmPlaybackCounter = 0;
+					streamingCachePtr += 32;
+					streamSeekVal += 32;
+					streamCount -= 32;
+					pcmPlaybackCounter = 0;
 				}
 
-				uint8_t* rawPtr = (uint8_t *)core->pcmPlaybackBuffer + core->pcmPlaybackCounter;
+				uint8_t* rawPtr = (uint8_t *)pcmPlaybackBuffer + pcmPlaybackCounter;
 				sample[0] = *(uint16_t *)rawPtr;
 				sample[1] = *(uint16_t *)(rawPtr + 2);
-				core->pcmPlaybackCounter += 4;
+				pcmPlaybackCounter += 4;
 			}
 			else
 			{
@@ -2151,25 +2161,26 @@ namespace DVD
 
 			// Send sample
 
-			if (core->streamCallback)
+			if (streamCallback)
 			{
-				core->streamCallback(sample[0], sample[1], core->streamContext);
+				streamCallback(sample[0], sample[1], streamContext);
 			}
 
-			core->stats.sampleCounter++;
+			stats.sampleCounter++;
 
-			if (core->streamEnabledByDduCommand)
+			if (streamEnabledByDduCommand)
 			{
-				if (core->streamCount <= 0)
+				if (streamCount <= 0)
 				{
-					core->streamEnabledByDduCommand = false;
+					streamEnabledByDduCommand = false;
 
-					if (core->log)
+					if (log)
 					{
 						Report(Channel::DVD, "DVD streaming stopped by counter value reach zero\n");
 					}
 				}
 			}
+
 		}
 	}
 
@@ -2197,8 +2208,6 @@ namespace DVD
 	// Reset internal state. If you forget something, then it will come out later..
 	void DduCore::Reset()
 	{
-		dduThread->Suspend();
-		dvdAudioThread->Suspend();
 		ddBusBusy = false;
 		errorState = false;
 		commandPtr = 0;
@@ -2256,6 +2265,16 @@ namespace DVD
 		errorState = true;
 		errorCode = reason;
 		ddBusBusy = false;
+
+		// The failing command is over, so the next one has to start from its command phase.
+		// Leaving the state where the failure happened made the first pump of the *next*
+		// command fall into the data-phase default and raise a second, bogus device error
+		// before that command's own bytes were even read - the SDK's error state machine
+		// (which asks for the sense with Request Error right after a failure) gave up on that
+		// and reported a fatal drive error.
+		commandPtr = 0;
+		state = DduThreadState::WriteCommand;
+
 		if (errorCallback)
 		{
 			errorCallback(errorContext);
@@ -2274,7 +2293,28 @@ namespace DVD
 
 		savedGekkoTicks = Core->GetTicks() + dduTicksPerByte;
 
-		dduThread->Resume();
+		// The command phase switches the bus to the data phase from its own callback: that is a
+		// re-arm of the running transfer, not a new one. The pump already on the stack continues
+		// with the new direction.
+		if (pumping)
+		{
+			return;
+		}
+
+		// Run the whole transfer here, on the thread that programmed it (the CPU thread, from the
+		// DI control-register write). The DDU used to hand the transfer to a device thread, which
+		// made the transfer-complete interrupt - and the DMA into main memory - land at whatever
+		// instruction the guest had reached when that thread was scheduled. The movie player
+		// decodes in a loop that the interrupt can split anywhere, so the frame came out different
+		// from run to run. Running the transfer to completion before the guest executes its next
+		// instruction makes both a function of the guest stream, the way the SI, EXI and ARAM
+		// engines already work.
+		pumping = true;
+		while (ddBusBusy)
+		{
+			PumpOnce();
+		}
+		pumping = false;
 	}
 
 	void DduCore::TransferComplete()
@@ -2299,6 +2339,7 @@ namespace DVD
 			case DduThreadState::GetStreamEnable:
 			case DduThreadState::GetStreamOffset:
 			case DduThreadState::GetStreamBogus:
+			case DduThreadState::GetErrorCode:
 				state = DduThreadState::WriteCommand;
 				break;
 		}

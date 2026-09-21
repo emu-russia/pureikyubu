@@ -179,7 +179,7 @@ namespace DSP
 		friend DspInterpreter;
 		friend DspUnitTest::DspUnitTest;
 
-		Thread* dspThread = nullptr;
+		bool running = false;
 		static void DspThreadProc(void* Parameter);
 		uint64_t savedGekkoTicks = 0;
 
@@ -234,7 +234,7 @@ namespace DSP
 		~Dsp16();
 
 		void Run();
-		bool IsRunning() { return dspThread->IsRunning(); }
+		bool IsRunning() { return running; }
 		void Suspend();
 
 		// Memory engine
@@ -279,8 +279,13 @@ namespace DSP
 		uint16_t DspToCpuReadHi(bool ReadByDsp);
 		uint16_t DspToCpuReadLo(bool ReadByDsp);
 
-		// ARAM DMA has a special mode for copying data to IRAM (used exclusively in OSInitAudioSystem)
-		void SpecialAramImemDma(uint8_t* ptr, size_t byteCount);
+		//! CDCR[userom] (bit 11): the reset-vector select. It also arms the CPU-initiated
+		//! bootstrap DSP-DMA on its 1->0 edge (see dsp.md 4.2, 4.6, 4.7).
+		bool GetUserRom() { return (dsp_ai.cdcr & CDCR_RESETMOD) != 0; }
+
+		//! The CPU-initiated bootstrap DSP-DMA: the fixed 1 KB download from main-memory
+		//! 0x0100_0000 into IRAM word 0 that the CDCR[userom] 1->0 edge starts (dsp.md 4.7).
+		void BootstrapIrDma();
 
 #pragma endregion "Flipper interface"
 

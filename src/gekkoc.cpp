@@ -2208,7 +2208,9 @@ namespace Gekko
 	// rd = 0x0000 || MEM(ea+1, 1) || MEM(EA, 1)
 	void Interpreter::lhbrx()
 	{
-		uint32_t val;
+		// The read leaves the destination untouched when the physical address falls outside the
+		// cache, so `val` has to start defined: `Cache::Read*` does not write it on that path.
+		uint32_t val = 0;
 		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &val);
 		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &val);
 		if (core->exception) return;
@@ -2220,7 +2222,7 @@ namespace Gekko
 	// rd = MEM(ea+3, 1) || MEM(ea+2, 1) || MEM(ea+1, 1) || MEM(ea, 1)
 	void Interpreter::lwbrx()
 	{
-		uint32_t val;
+		uint32_t val = 0;
 		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &val);
 		else core->ReadWord(core->regs.gpr[info.paramBits[2]], &val);
 		if (core->exception) return;
@@ -2305,7 +2307,7 @@ namespace Gekko
 	{
 		int32_t rd = (int32_t)info.paramBits[0], n = ((int32_t)info.paramBits[2]) ? ((int32_t)info.paramBits[2]) : 32, i = 4;
 		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
-		uint32_t r = 0, val;
+		uint32_t r = 0, val = 0;
 
 		while (n > 0)
 		{
@@ -2355,7 +2357,7 @@ namespace Gekko
 	{
 		int32_t rd = (int32_t)info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 4;
 		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];
-		uint32_t r = 0, val;
+		uint32_t r = 0, val = 0;
 
 		while (n > 0)
 		{
@@ -3309,7 +3311,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			size_t i = info.paramBits[4];
-			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
+			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0 = 0, data1 = 0;
 			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
 			GEKKO_QUANT_TYPE type = LD_TYPE(i);
@@ -3411,7 +3413,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			size_t i = info.paramBits[4];
-			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
+			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0 = 0, data1 = 0;
 			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
 			GEKKO_QUANT_TYPE type = LD_TYPE(i);
@@ -3513,7 +3515,7 @@ namespace Gekko
 
 		if (core->regs.msr & MSR_FP)
 		{
-			uint32_t EA = info.Imm.Signed & 0xfff, data0, data1;
+			uint32_t EA = info.Imm.Signed & 0xfff, data0 = 0, data1 = 0;
 			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(info.paramBits[3]);
 			GEKKO_QUANT_TYPE type = LD_TYPE(info.paramBits[3]);
@@ -3568,7 +3570,7 @@ namespace Gekko
 
 		if (core->regs.msr & MSR_FP)
 		{
-			uint32_t EA = info.Imm.Signed & 0xfff, data0, data1;
+			uint32_t EA = info.Imm.Signed & 0xfff, data0 = 0, data1 = 0;
 			int32_t d = (int32_t)info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(info.paramBits[3]);
 			GEKKO_QUANT_TYPE type = LD_TYPE(info.paramBits[3]);

@@ -53,6 +53,13 @@ namespace pureikyubutest
 			m.BpLoad(PE_COPY_CLEAR_GB_ID, 0x00003456);
 
 			m.BeginFrame();
+
+			// The EFB is cleared with the first primitive of the frame, not when the frame opens:
+			// the commands that come first are the copy engine's, and the display copy of the frame
+			// that just ended takes its picture out of the EFB before the clear may wipe it (see
+			// GFXCore::GL_BeginFrame). The rasterizer asks for the clear here.
+			m.gfx->GPFrameDrawn();
+
 			uint8_t rgb[3];
 			m.ReadColorPixel(10, 10, rgb);
 

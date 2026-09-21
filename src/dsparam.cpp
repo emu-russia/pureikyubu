@@ -419,38 +419,22 @@ void DSPUpdateInt()
 	{
 		int type = aram.cnt >> 31;
 		int cnt = aram.cnt & 0x03FF'FFE0;
-		bool specialAramDspDma = aram.mmaddr == 0x0100'0000 && aram.araddr == 0;
 
 		// inform developer about aram transfers
 		if (aram.log)
 		{
 			if (type == RAM_TO_ARAM)
 			{
-				if (!specialAramDspDma)
-				{
-					Report(Channel::AR, "RAM copy %08X -> %08X (%i)\n", aram.mmaddr, aram.araddr, cnt);
-				}
+				Report(Channel::AR, "RAM copy %08X -> %08X (%i)\n", aram.mmaddr, aram.araddr, cnt);
 			}
 			else Report(Channel::AR, "ARAM copy %08X -> %08X (%i)\n", aram.araddr, aram.mmaddr, cnt);
 		}
 
-		// Special ARAM DMA (DSP Init)
-
-		if (specialAramDspDma)
-		{
-			// Transfer size multiplied by 4
-			cnt *= 4;
-
-			// Special ARAM DMA to IRAM
-
-			uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForDSP(aram.mmaddr);
-			Flipper::DSP->SpecialAramImemDma(ptr, cnt);
-
-			aram.cnt &= 0x80000000;     // clear dma counter
-			ARINT();                    // invoke aram TC interrupt
-			return;
-		}
-
+		// This is an ordinary ARAM transfer, even when the OS stages its audio stub at main
+		// memory 0x0100_0000 and ARAM offset 0: that one only fills ARAM. Loading the DSP IRAM
+		// is the separate CPU-initiated bootstrap DSP-DMA the CDCR[userom] edge starts
+		// (dsp.md 4.7), which write_cdcr runs on the DSP-DMA engine.
+		//
 		// The AR driver probes for an ARAM expansion module by moving test blocks to and from
 		// addresses at and beyond the 16 MB boundary. No expansion is installed on a retail
 		// console, so such a transfer reads zeros / discards the written data - but it still has

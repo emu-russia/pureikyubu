@@ -23,15 +23,6 @@ namespace DSP
 		int64_t     one_second;     // one CPU second in timer ticks
 		bool        log;            // Enable AI DMA log
 
-		Thread* audioThread;    // The main AI thread that receives samples from AI DMA FIFO.
-		// When FIFOs overflow - AudioThread Feed Mixer.
-
-		// The AI thread is woken through this event at the ticks where the next DMA block is due
-		// (see AITickSync). It used to poll the Gekko time base in a tight loop, which made every
-		// write of that time base transfer the cache line between the cores and cost far more than
-		// the DMA work itself (see the benchmark notes in `testing/gekko_bench`).
-		Event audioEvent;
-
 		/// <summary>
 		/// Put the AI DMA state back to its power-on value. This exists because the block used to be
 		/// cleared with a plain memset, which also wiped the Event above (a wait on a zeroed handle

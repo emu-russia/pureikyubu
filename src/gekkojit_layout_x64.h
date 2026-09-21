@@ -57,6 +57,10 @@ static_assert(FrameSize % 16 == 8, "rsp must be 16 byte aligned at the helper ca
 // it has already retired here.
 static const int32_t LoopBudgetSlot = ShadowSpace;
 static const int32_t LoopTicksSlot = ShadowSpace + 8;
+// How many ticks the block could still retire before the Flipper-side work is due, taken
+// at the block entry. A self-looping block leaves when its own ticks catch up with it, so
+// that the work - and every device register the loop may be polling - is up to date.
+static const int32_t DeadlineSlot = ShadowSpace + 16;
 
 // How many times a block may take its own back edge before it leaves and lets the
 // dispatcher re-enter it. Small enough that the deferred time base update stays within a
@@ -80,6 +84,13 @@ enum class JitExitKind : uint32_t
 	Normal = 0,			// pc is in regs.pc, a plain fallthrough
 	TakenBranch = 1,	// pc is the branch target, BranchCheck still has to run
 	Exception = 2,		// a helper already set regs.pc to the exception vector
+
+	// The self-loop ran out of budget or reached the Flipper deadline: pc is the head of the
+	// loop, which is where the branch that was taken last points - but the branch that would
+	// go back to it once more is one the guest has not executed. The block's `ticks` already
+	// account for every branch that *was* taken, so the only tick left to pay is the one
+	// BranchCheck gives (see Run).
+	BackEdge = 3,
 };
 
 struct JitExit
@@ -89,7 +100,9 @@ struct JitExit
 
 	// Taken branches the block retired on a back edge of its own, on top of `count`
 	// instructions. The interpreter ticks every taken branch twice, so Run() has to
-	// advance the time base by `count + ticks` (see emitBackEdge in gekkojit.cpp).
+	// advance the time base by `count + ticks` for the loop, plus Tick itself for the
+	// branch that ended the block when that branch is a TakenBranch - the branches the
+	// counter covers are the ones the guest already took (see emitBackEdge in gekkojit.cpp).
 	uint32_t ticks;
 };
 

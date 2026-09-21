@@ -1636,6 +1636,24 @@ void LoadFile(const std::wstring& filename)
 		throw "Cannot load file!";
 	}
 
+	// `--no-disc`: start with the drive lid open. The IPL takes its "no disk" path then (the
+	// insert-disc animation), and it is the state a real drive is in while the lid is up.
+	if (cmdline.noDisc)
+	{
+		DVD::DDU->OpenCover();
+	}
+
+	// `--ipl`: run the real boot ROM (the BS2) instead of the high level loader. With a disk
+	// image mounted the IPL finds it on the DI and starts it by itself, exactly like the real
+	// machine does when a disk is inserted; without one it shows the "no disk" path (or the
+	// console menu, with `--no-disc`). The high level loader is skipped because the IPL brings
+	// its own copy of it up (see bootrtc.cpp).
+	if (cmdline.ipl)
+	{
+		emu.bootrom = true;
+		entryPoint = PI_MEMSPACE_BOOTROM + 0x100;
+	}
+
 	static HWConfig config{};
 	EMUGetHwConfig(&config);
 
@@ -1652,8 +1670,9 @@ void LoadFile(const std::wstring& filename)
 		AutoloadMap(&config, filename, dvd, diskId);
 	}
 
-	// set entrypoint (for DVD, PC will set in apploader)
-	if (!dvd)
+	// set entrypoint (for DVD, PC will set in apploader - unless the IPL is doing the loading,
+	// in which case the boot ROM entry is where the machine starts)
+	if (!dvd || emu.bootrom)
 	{
 		Core->regs.pc = entryPoint;
 	}

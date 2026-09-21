@@ -113,6 +113,7 @@ namespace pureikyubutest
 		//! GXSetColorUpdate(GX_TRUE) / GXSetAlphaUpdate(GX_TRUE)).
 		void SetupDefaultPixelState(GfxTestMachine& m)
 		{
+			SetupQuadOffset(m);							// the screen origin the GX API programs
 			m.BpLoad(PE_ZMODE_ID, (1u << 4));			// the Z update mask, no depth test
 			m.BpLoad(PE_CMODE0_ID, (1u << 3) | (1u << 4));
 			m.BpLoad(PE_CMODE1_ID, 0);

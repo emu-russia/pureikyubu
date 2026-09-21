@@ -494,12 +494,10 @@ namespace GFX
 		size_t pe_done_num = 0;   // number of drawdone (PE_FINISH) events
 
 		//! The clear values of a PE_COPY_CMD that asked for one, captured when the command was
-		//! issued. A texture copy's clear runs with the copy; a display copy's clear runs at the
-		//! next frame begin (it prepares the EFB for the frame that follows the copy, and doing it
-		//! on arrival would wipe the frame that is still to be displayed). Capturing the values
-		//! matters because by then the game may already have programmed the registers for its next
-		//! copy: reading the live registers there used the wrong Z, which left the depth buffer of
-		//! Metroid Prime at Z=0 and made its LEQUAL depth test reject every draw (issue #349).
+		//! issued and applied as soon as the copy has read its rectangle. Capturing them matters
+		//! because the title may reprogram the registers while the copy runs: reading the live
+		//! registers used the wrong Z, which left the depth buffer of Metroid Prime at Z=0 and made
+		//! its LEQUAL depth test reject every draw (issue #349).
 		struct CopyClearState
 		{
 			PE_COPY_CLEAR_AR ar{};
@@ -509,22 +507,7 @@ namespace GFX
 			//! The rectangle the copy reads. The clear engine turns the quads it reads into the
 			//! clear colour and leaves the rest of the EFB alone (gfx-pe.md 5.1).
 			int x = 0, y = 0, w = 0, h = 0;
-
-			//! A display copy hands the frame over to the video interface, and this backend shows the
-			//! EFB where a console shows the XFB, so its clear has to cover the whole colour buffer:
-			//! whatever the copy does not read is still on screen, and leaving it there kept the
-			//! previous frame in the lower half of the bootrom's splash.
-			bool full = false;
 		};
-
-		//! The display copies of the frame that is being drawn each clear their own rectangle, and a
-		//! single frame can present in several of them: the bootrom writes its picture with three
-		//! copies per frame (one per field, their rectangles together covering the screen). They are
-		//! all kept until the frame is restarted - keeping only the last one cleared a two-row strip
-		//! and left the rest of the previous picture on the screen.
-		static const size_t MaxPendingCopyClears = 16;
-		CopyClearState pending_clears[MaxPendingCopyClears]{};
-		size_t pending_clear_count = 0;
 
 		PERegs peregs{};	// PE PI regs
 
@@ -590,8 +573,6 @@ namespace GFX
 		//! frame that follows the copy: doing it the moment the copy command arrives would wipe the
 		//! frame that is about to be displayed (the swap happens later, on PE_FINISH or on a
 		//! full-frame display copy). Returns false when nothing was pending.
-		bool ApplyPendingCopyClears();
-
 		PixelEngine(Flipper::Flipper* flipper, HWConfig *config, GFXCore *parent_gfx);
 		~PixelEngine();
 

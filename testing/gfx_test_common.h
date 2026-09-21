@@ -235,6 +235,19 @@ namespace GfxUnitTest
 	/// <summary>Run `fn` and fail the test when it reports a failure, with the message attached.</summary>
 	std::wstring Widen(const std::string& text);
 
+	/// <summary>
+	/// Program the screen origin the GX API programs at init: PE_QUAD_OFFSET = 0xAB/0xAB. The
+	/// pixel engine subtracts twice the offset from the quad stream of the XF to address the EFB
+	/// (gfx-pe.md 6.20), so the origin of the API's screen coordinates - the 342 that GXSetViewport
+	/// and GX_SetScissor add to every coordinate they are given - is exactly that value. A test
+	/// that programs screen coordinates the API way therefore has to program the offset the API
+	/// way: with the register at its documented reset (0xAA/0xAA) the origin is two pixels away.
+	/// </summary>
+	inline void SetupQuadOffset(GfxTestMachine& m)
+	{
+		m.BpLoad(PE_QUAD_OFFSET_ID, 0xABu | (0xABu << 10));
+	}
+
 	/// <summary>Directory the test report and the screenshots are written to.</summary>
 	std::string OutputDir(const std::string& subDir = "");
 

@@ -1078,9 +1078,8 @@ namespace GFX
 			return false;
 		}
 #elif defined(GFX_OFFSCREEN)
-		// Headless with a real driver: the context is created on a window that is never shown and
-		// the frame is drawn into a framebuffer of its own (see CreateOffscreenTarget). Nothing
-		// appears on the screen and no window is ever mapped.
+		// Headless with a real driver: the context is created on a window that is never shown, the
+		// frame is drawn into the framebuffer of the EFB, and nothing appears on the screen.
 		if (hwndMain == nullptr)
 		{
 			Report(Channel::GP, "GFX: no offscreen window to create the context on\n");
@@ -1156,12 +1155,33 @@ namespace GFX
 		// Texture objects can only be created once a context is current
 		tx->TexInit();
 
-#ifdef GFX_OFFSCREEN
-		if (!CreateOffscreenTarget())
+		// The EFB, the buffer the pipeline draws into (see the framebuffer note in gfx.h).
+		if (!CreateEfbTarget())
 		{
 			return false;
 		}
-#endif
+
+		// The buffer the copy engine's display copies write into (see the XFB note in gfx.h).
+		if (!CreateXfbTarget())
+		{
+			return false;
+		}
+
+		// The frame the emulator starts on is a cleared one: the EFB is only cleared when a frame
+		// draws (see CommandProcessor::DrawPrimitive), so a title whose first command is a display
+		// copy would otherwise read whatever the driver left in the target.
+		{
+			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+			glClearDepth(1.0);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, DrawFbo());
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, xfbFbo);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, DrawFbo());
+		}
 
 		ApplyDefaultGLState();
 
@@ -1246,6 +1266,8 @@ namespace GFX
 		tev->DisposePrograms();
 		tx->TexFree();
 		DisposeGeometryBuffers();
+		DestroyXfbTarget();
+		DestroyEfbTarget();
 
 		// The overlay owns GL objects of its own; they belong to the context that is going away.
 		OsdDispose();
@@ -1259,8 +1281,6 @@ namespace GFX
 		context = nullptr;
 #else
 #ifdef GFX_OFFSCREEN
-		DestroyOffscreenTarget();
-
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hglrc);
 		hglrc = 0;
@@ -1361,48 +1381,76 @@ namespace GFX
 	}
 
 	// init rendering (call before drawing FIFO primitives)
+	void GFXCore::ClearFrameBuffer()
+	{
+		// The clear covers the whole EFB: the scissor rectangle the title programmed clips its
+		// primitives, not the clear the frame begins on, and a clear that ran later in the frame
+		// (see GPFrameDrawn) would otherwise leave everything the scissor excludes untouched.
+		GLint scissor[4];
+		glGetIntegerv(GL_SCISSOR_BOX, scissor);
+		glDisable(GL_SCISSOR_TEST);
+
+		// The frame clear is the copy engine's clear, not a draw call: it must not be affected by
+		// the blending, logic op, write mask or depth state the previous scene left behind.
+		glDisable(GL_BLEND);
+		glDisable(GL_COLOR_LOGIC_OP);
+		glDisable(GL_DEPTH_TEST);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glDepthMask(GL_TRUE);
+
+		glClearColor(
+			(float)(pe->pe.copy_clear_ar.red / 255.0f),
+			(float)(pe->pe.copy_clear_gb.green / 255.0f),
+			(float)(pe->pe.copy_clear_gb.blue / 255.0f),
+			(float)(pe->pe.copy_clear_ar.alpha / 255.0f)
+		);
+
+		// The depth of this clear is the far plane, not the copy engine's clear value. The copy
+		// engine's clear value is the one a display copy applies to the rectangle it read, with the
+		// Z the title programmed (GX_MAX_Z24 in every SDK title). Clearing the depth with the reset
+		// value of PE_COPY_CLEAR_Z (0) would leave the buffer at the near plane, so every fragment
+		// of the first frame of a title would fail the compare and the frame would be lost: the
+		// light map of the indirect bump demos is rendered in exactly that frame, which is why it
+		// came out empty (issue #385).
+		glClearDepth(1.0);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+		glEnable(GL_SCISSOR_TEST);
+
+		// The clear bypassed the GL state the pixel engine registers describe, and it runs in the
+		// middle of the frame now (the first primitive asks for it), so that state is put back
+		// before the primitive that asked for the clear is drawn: the title programmed it for that
+		// primitive, and drawing it with the clear's state (no depth test, no blend, both masks on)
+		// renders it wrong.
+		pe->ApplyZMode();
+		pe->ApplyColorMode();
+	}
+
+	void GFXCore::GPFrameDrawn()
+	{
+		// The first primitive of the frame clears the EFB the frame started on (see GL_BeginFrame
+		// and GL_DisplayCopy: a display copy that comes first is the picture of the frame before).
+		if (frame_clear_pending)
+		{
+			ClearFrameBuffer();
+			frame_clear_pending = false;
+		}
+
+		frame_dirty = true;
+	}
+
 	void GFXCore::GL_BeginFrame()
 	{
 		if (frameReady) return;
 
-		glDrawBuffer(GL_BACK);
+		// The EFB is cleared with the first primitive of the frame, not here (GPFrameDrawn): the
+		// commands that come first are the copy engine's, and the display copy of the frame that
+		// just ended has to read the EFB before the clear wipes it. The state the registers describe
+		// is put back here all the same, so that the scene draws with it.
+		frame_clear_pending = true;
 
-		if (pe->ApplyPendingCopyClears())
-		{
-			// The display copies of the previous frame asked for their rectangles to be cleared. It
-			// is the copy engine's clear, so it restores the PE state itself.
-		}
-		else
-		{
-			// The frame clear is the copy engine's clear, not a draw call: it must not be affected by
-			// the blending, logic op, write mask or depth state the previous scene left behind.
-			glDisable(GL_BLEND);
-			glDisable(GL_COLOR_LOGIC_OP);
-			glDisable(GL_DEPTH_TEST);
-			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-			glDepthMask(GL_TRUE);
-
-			glClearColor(
-				(float)(pe->pe.copy_clear_ar.red / 255.0f),
-				(float)(pe->pe.copy_clear_gb.green / 255.0f),
-				(float)(pe->pe.copy_clear_gb.blue / 255.0f),
-				(float)(pe->pe.copy_clear_ar.alpha / 255.0f)
-			);
-
-			// The depth of this clear is the far plane, not the copy engine's clear value. The copy
-			// engine's clear is the one a display copy asks for, and it runs through the pending
-			// clears above with the Z the title programmed (GX_MAX_Z24 in every SDK title). This
-			// path only runs when no copy asked for a clear at all - the first frame of a title, for
-			// instance, whose PE_COPY_CLEAR_Z register still holds its reset value of 0. Clearing the
-			// depth to 0 leaves the buffer at the near plane, so every fragment of that frame fails
-			// the compare and the frame is lost: the light map of the indirect bump demos is
-			// rendered in exactly that frame, which is why it came out empty (issue #385).
-			glClearDepth(1.0);
-
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		}
-
-		// ... and the state the registers describe is put back, so that the scene draws with it.
 		pe->ApplyZMode();
 		pe->ApplyColorMode();
 
@@ -1415,6 +1463,10 @@ namespace GFX
 		if (!frameReady) return;
 
 		glFlush();
+
+		// The picture of the frame is handed over before anything is read back from it: the dump
+		// and the overlay both work on what the viewer sees (see PresentFrame).
+		PresentFrame();
 
 		if (dump_enabled)
 			DumpFrame();
@@ -1435,6 +1487,10 @@ namespace GFX
 #else
 		SwapBuffers(hdcgl);
 #endif
+
+		// The picture has been handed over; the pipeline draws into the EFB again from here on
+		// (PresentFrame left the window's back buffer bound, which is what the overlay painted on).
+		glBindFramebuffer(GL_FRAMEBUFFER, DrawFbo());
 
 		frameReady = false;
 		pe->frames++;
@@ -1569,8 +1625,7 @@ namespace GFX
 
 	// A full-frame display copy (PE_COPY_CMD.opcode = display) makes the finished EFB the XFB that
 	// the video interface scans out (gfx-pe.md 5.6), so it is the moment the frame becomes visible:
-	// the copy engine hands the picture over to the display. The backend displays the EFB itself
-	// instead of a real XFB, which is why the swap happens here.
+	// the copy engine hands the picture over to the display.
 	//
 	// This is what drives the titles whose movie player draws a frame, copies it to the XFB and
 	// waits for the retrace without ever calling GXDrawDone: without the swap their frames would
@@ -1595,6 +1650,204 @@ namespace GFX
 		frame_done = true;
 	}
 
+	// -------------------------------------------------------------------------------------------
+	// The XFB the copy engine writes (see the note in gfx.h)
+	// -------------------------------------------------------------------------------------------
+
+	void GFXCore::QuadOrigin(int* x, int* y) const
+	{
+		*x = 2 * (int)pe->pe.quad_offset.x;
+		*y = 2 * (int)pe->pe.quad_offset.y;
+	}
+
+	//! The colour buffer the display copies write into. It has the size of the render target: the
+	//! XFB holds the same number of scan lines as the EFB window the titles copy out of.
+	bool GFXCore::CreateXfbTarget()
+	{
+		glGenFramebuffers(1, &xfbFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, xfbFbo);
+
+		glGenTextures(1, &xfbColor);
+		glBindTexture(GL_TEXTURE_2D, xfbColor);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)scr_w, (GLsizei)scr_h, 0,
+			GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, xfbColor, 0);
+
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			Report(Channel::GP, "GFX: the XFB framebuffer is incomplete (0x%04X)\n", status);
+			DestroyXfbTarget();
+			return false;
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, DrawFbo());
+		return true;
+	}
+
+	void GFXCore::DestroyXfbTarget()
+	{
+		xfb_base = 0;
+		xfb_frame = -1;
+
+		if (xfbColor != 0)
+		{
+			glDeleteTextures(1, &xfbColor);
+			xfbColor = 0;
+		}
+
+		if (xfbFbo != 0)
+		{
+			glDeleteFramebuffers(1, &xfbFbo);
+			xfbFbo = 0;
+		}
+
+		xfb_pending = false;
+	}
+
+	//! The display copy of the shader pipeline (gfx-pe.md 5.6). The rectangle of the EFB becomes the
+	//! same rectangle of the XFB, at the destination line the copy registers name: the destination
+	//! base is an address in main memory, and the video interface scans the frame from the base it
+	//! was given (VI_TFBL), so the line is the distance between the two in strides.
+	void GFXCore::GL_DisplayCopy(int srcX, int srcY, int w, int h, uint32_t dstAddr, int stride)
+	{
+		if (SoftPipeline() || !backend_started || xfbFbo == 0)
+			return;
+
+		if (w <= 0 || h <= 0 || stride <= 0)
+			return;
+
+		// The line the rectangle belongs on is the distance between its destination and the base of
+		// the frame the display scans. The video interface is the authority on that base, but a
+		// title programs the display of the frame it has *just* copied - the base of a double
+		// buffered XFB is therefore a frame behind the copies that build the next picture - and the
+		// copies of one frame can even name both buffers (the bootrom writes its splash into the
+		// two of them while it initialises).
+		int dstLine = -1;
+
+		if (Flipper::HW != nullptr && Flipper::HW->vi != nullptr)
+		{
+			uint32_t vbase[2] = { Flipper::HW->vi->XfbBase(), Flipper::HW->vi->XfbBottomBase() };
+
+			for (int i = 0; i < 2 && dstLine < 0; i++)
+			{
+				if (vbase[i] == 0 || dstAddr < vbase[i])
+					continue;
+
+				int64_t line = ((int64_t)dstAddr - (int64_t)vbase[i]) / stride;
+
+				if (line + h <= (int64_t)scr_h)
+				{
+					dstLine = (int)line;
+				}
+			}
+		}
+
+		if (dstLine < 0)
+		{
+			// The frame the copies of this frame build: its first copy names the base of the buffer,
+			// and the copies that follow are lines away from it.
+			if (xfb_frame != gfx_frame_counter)
+			{
+				xfb_frame = gfx_frame_counter;
+				xfb_base = dstAddr;
+			}
+
+			int64_t offset = (int64_t)dstAddr - (int64_t)xfb_base;
+
+			if (offset < 0 || offset >= (int64_t)scr_h * stride)
+			{
+				// The rectangle goes to memory that is not part of the frame the display shows (the
+				// bootrom's third copy writes two scan lines of a small buffer of its own): the
+				// picture of the frame does not change, and putting it at the top of the XFB would
+				// tear it.
+				return;
+			}
+
+			int64_t line = offset / stride;
+
+			if (line + h <= (int64_t)scr_h)
+			{
+				dstLine = (int)line;
+			}
+			else
+			{
+				// The rectangle runs past the last line of the frame: the copy starts another
+				// buffer of the XFB (the two the bootrom writes its splash into), so it is the base
+				// from here on.
+				xfb_base = dstAddr;
+				dstLine = 0;
+			}
+		}
+
+		if (srcX < 0) { w += srcX; srcX = 0; }
+		if (srcY < 0) { h += srcY; srcY = 0; }
+		if (srcX + w > (int)scr_w) w = (int)scr_w - srcX;
+		if (srcY + h > (int)scr_h) h = (int)scr_h - srcY;
+		if (w <= 0 || h <= 0)
+			return;
+
+		// glBlitFramebuffer is subject to the scissor test, and the emulator keeps the title's
+		// scissor box enabled while the copy runs: the box is saved and restored around the blit.
+		GLint scissor[4];
+		glGetIntegerv(GL_SCISSOR_BOX, scissor);
+		glDisable(GL_SCISSOR_TEST);
+
+		// The render target measures its rows from the bottom, so the EFB row of a rectangle is the
+		// row `scr_h - y - h` of the GL box. Both rectangles are the same size, so the blit is a
+		// straight move of the picture to the line the copy asked for.
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, DrawFbo());
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, xfbFbo);
+
+		glBlitFramebuffer(
+			srcX, (GLint)scr_h - (srcY + h), srcX + w, (GLint)scr_h - srcY,
+			srcX, (GLint)scr_h - (dstLine + h), srcX + w, (GLint)scr_h - dstLine,
+			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glBindFramebuffer(GL_FRAMEBUFFER, DrawFbo());
+
+		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+		glEnable(GL_SCISSOR_TEST);
+
+		xfb_pending = true;
+	}
+
+	//! Hand the picture of the frame over to the display. What the display scans out is the XFB the
+	//! copy engine wrote; a title that never copies out (there is no XFB then) is shown through its
+	//! EFB, which is what the backend did for every title before the XFB existed.
+	//!
+	//! The picture goes to the window's back buffer - in the headless build that is the back buffer
+	//! of the hidden window, which is what a frame dump reads. The EFB is left alone: it is a
+	//! framebuffer of its own and the title keeps drawing into it.
+	void GFXCore::PresentFrame()
+	{
+		GLuint source = (xfb_pending && xfbFbo != 0) ? xfbFbo : DrawFbo();
+
+		if (source == 0)
+			return;
+
+		GLint scissor[4];
+		glGetIntegerv(GL_SCISSOR_BOX, scissor);
+		glDisable(GL_SCISSOR_TEST);
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, source);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+		glBlitFramebuffer(0, 0, (GLint)scr_w, (GLint)scr_h, 0, 0, (GLint)scr_w, (GLint)scr_h,
+			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+		glEnable(GL_SCISSOR_TEST);
+
+
+		// The frame dump and the overlay that follow work on the picture that was just presented.
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+		xfb_pending = false;
+	}
+
 	void GFXCore::ResizeRenderTarget(size_t width, size_t height)
 	{
 		if (SoftPipeline())
@@ -1614,9 +1867,13 @@ namespace GFX
 #ifdef GFX_OFFSCREEN
 			// The offscreen target has the size of the emulated render target, so a video mode
 			// change reallocates it. The attachments are recreated here, while nothing is drawing.
-			DestroyOffscreenTarget();
-			CreateOffscreenTarget();
+			DestroyEfbTarget();
+			CreateEfbTarget();
 #endif
+
+			// The XFB has the size of the render target as well.
+			DestroyXfbTarget();
+			CreateXfbTarget();
 
 			glViewport(0, 0, scr_w, scr_h);
 
@@ -1644,62 +1901,60 @@ namespace GFX
 			nullptr, nullptr, wc.hInstance, nullptr);
 	}
 
-	//! The framebuffer the pipeline draws into. The color attachment is a texture, which is what a
-	//! read-back of the frame (and a unit test of the pipeline) can look at without a window.
-	bool GFXCore::CreateOffscreenTarget()
-	{
-		glGenFramebuffers(1, &offscreenFbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, offscreenFbo);
+#endif // GFX_OFFSCREEN
 
-		glGenTextures(1, &offscreenColor);
-		glBindTexture(GL_TEXTURE_2D, offscreenColor);
+	//! The EFB: the framebuffer the pipeline draws into. The colour attachment is a texture, which
+	//! is what the copy engine's reads (a texture copy and a read-back of the frame) look at, and
+	//! it is separate from the buffer the picture is presented in (see the framebuffer note in
+	//! gfx.h): a title keeps drawing into the EFB after it has copied it out.
+	bool GFXCore::CreateEfbTarget()
+	{
+		glGenFramebuffers(1, &efbFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, efbFbo);
+
+		glGenTextures(1, &efbColor);
+		glBindTexture(GL_TEXTURE_2D, efbColor);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)scr_w, (GLsizei)scr_h, 0,
 			GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, offscreenColor, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, efbColor, 0);
 
-		glGenRenderbuffers(1, &offscreenDepth);
-		glBindRenderbuffer(GL_RENDERBUFFER, offscreenDepth);
+		glGenRenderbuffers(1, &efbDepth);
+		glBindRenderbuffer(GL_RENDERBUFFER, efbDepth);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, (GLsizei)scr_w, (GLsizei)scr_h);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, offscreenDepth);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, efbDepth);
 
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE)
 		{
-			Report(Channel::GP, "GFX: the offscreen framebuffer is incomplete (0x%04X)\n", status);
-			DestroyOffscreenTarget();
+			Report(Channel::GP, "GFX: the EFB framebuffer is incomplete (0x%04X)\n", status);
+			DestroyEfbTarget();
 			return false;
 		}
 
 		glViewport(0, 0, (GLsizei)scr_w, (GLsizei)scr_h);
-
-		Report(Channel::GP, "GFX: the offscreen backend is running (%ux%u, nothing is presented)\n",
-			scr_w, scr_h);
-
 		return true;
 	}
 
-	void GFXCore::DestroyOffscreenTarget()
+	void GFXCore::DestroyEfbTarget()
 	{
-		if (offscreenDepth != 0)
+		if (efbDepth != 0)
 		{
-			glDeleteRenderbuffers(1, &offscreenDepth);
-			offscreenDepth = 0;
+			glDeleteRenderbuffers(1, &efbDepth);
+			efbDepth = 0;
 		}
 
-		if (offscreenColor != 0)
+		if (efbColor != 0)
 		{
-			glDeleteTextures(1, &offscreenColor);
-			offscreenColor = 0;
+			glDeleteTextures(1, &efbColor);
+			efbColor = 0;
 		}
 
-		if (offscreenFbo != 0)
+		if (efbFbo != 0)
 		{
-			glDeleteFramebuffers(1, &offscreenFbo);
-			offscreenFbo = 0;
+			glDeleteFramebuffers(1, &efbFbo);
+			efbFbo = 0;
 		}
 	}
-
-#endif // GFX_OFFSCREEN
 }

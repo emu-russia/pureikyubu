@@ -301,7 +301,7 @@ namespace pureikyubutest
 		}
 
 		// The scissor has to default to the whole screen: a rectangle left at the register reset value
-		// would be the 1x1 box at the internal origin (-342, -342) and would reject every fragment of a
+		// would be the 1x1 box at the origin of the quad stream and would reject every fragment of a
 		// scene that never programs the scissor (see SetupUnit::Reset).
 		TEST_METHOD(Su_TheScissorDefaultsToTheWholeScreen)
 		{
@@ -329,12 +329,14 @@ namespace pureikyubutest
 			Assert::AreEqual(0x40, PixelGreen(m, EfbWidth - SafeMargin, EfbHeight - SafeMargin), L"the default scissor covers the bottom right");
 			Assert::AreEqual(0x40, PixelGreen(m, EfbWidth / 2, EfbHeight / 2), L"the default scissor covers the middle");
 
-			// The registers hold what GX_SetScissor(0, 0, 640, 480) would write
+			// The registers hold the whole screen around the origin of the quad stream, which is
+			// twice the reset PE_QUAD_OFFSET (0xAA/0xAA, gfx-pe.md 6.20). The GX API programs that
+			// offset to 0xAB/0xAB and then writes the same rectangle with 342 in every coordinate.
 			const GFX::SUState& su = m.gfx->su->State();
-			Assert::AreEqual<unsigned>(342, su.scis0.sux, L"reset sux");
-			Assert::AreEqual<unsigned>(342, su.scis0.suy, L"reset suy");
-			Assert::AreEqual<unsigned>(342 + EfbWidth - 1, su.scis1.suw, L"reset suw");
-			Assert::AreEqual<unsigned>(342 + EfbHeight - 1, su.scis1.suh, L"reset suh");
+			Assert::AreEqual<unsigned>(2 * 0xAA, su.scis0.sux, L"reset sux");
+			Assert::AreEqual<unsigned>(2 * 0xAA, su.scis0.suy, L"reset suy");
+			Assert::AreEqual<unsigned>(2 * 0xAA + EfbWidth - 1, su.scis1.suw, L"reset suw");
+			Assert::AreEqual<unsigned>(2 * 0xAA + EfbHeight - 1, su.scis1.suh, L"reset suh");
 		}
 
 		// The reset rectangle follows the render target when it changes size (a VI mode switch): the
@@ -346,12 +348,13 @@ namespace pureikyubutest
 
 			int x = 0, y = 0, w = 0, h = 0;
 
-			// The reset state at a smaller target
+			// The reset state at a smaller target, around the origin of the reset PE_QUAD_OFFSET
 			m.gfx->ResizeRenderTarget(320, 240);
 			m.gfx->su->Scissor(&x, &y, &w, &h);
 			int resetX = x, resetY = y, resetW = w, resetH = h;
 
-			// A rectangle the game programmed, at the small target
+			// A rectangle the game programmed, at the small target, in the coordinates of the API
+			SetupQuadOffset(m);
 			m.BpLoad(SU_SCIS0_ID, (10 + 342) | ((20 + 342) << 12));
 			m.BpLoad(SU_SCIS1_ID, (109 + 342) | ((119 + 342) << 12));
 

@@ -366,7 +366,12 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
             covered.insert((int)di.instr);
         }
 
-        uint32_t codePa = (codeBase + (uint32_t)it * 0x1000) & 0x03ff'ffff;
+        // Rotate through the 6 MB code area the fill above covers. The address used to be
+        // masked to 26 bits, which walked past the end of the 24 MB RAM after a few thousand
+        // iterations: the harness then wrote its program past its own RAM allocation (and the
+        // masked physical address no longer matched the pc it was executed at).
+        uint32_t codePage = (uint32_t)it % 0x600;
+        uint32_t codePa = 0x200000 + codePage * 0x1000;
         uint64_t initSeed = seed;			// both engines must start from the same state
 
         // Exception vectors: skip the faulting instruction and return, so that a
@@ -427,11 +432,22 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
                 for (int i = 0; i < 8; i++)
                     Core->regs.spr[(int)Gekko::SPR::GQRs + i] = (uint32_t)FuzzNext(s2);
             }
-            Core->regs.pc = codeBase + (uint32_t)it * 0x1000;
+            Core->regs.pc = codeBase + codePage * 0x1000;
             // Branches through LR/CTR must land inside the program.
             Core->regs.spr[(int)Gekko::SPR::LR] = Core->regs.pc + 4;
             Core->regs.spr[(int)Gekko::SPR::CTR] = Core->regs.pc + 4;
             Core->regs.tb.uval = 0;
+
+            // Exercise the maskable-interrupt path, which the plain run never reaches because
+            // MSR[EE] starts clear. The decrementer underflows within the program and the
+            // external line is asserted on some of the runs, so the exception entry, its
+            // SRR0/SRR1 and the point it is taken at are compared between the engines too.
+            if (getenv("BENCH_FUZZ_INT") != nullptr)
+            {
+                Core->regs.msr |= MSR_EE;
+                Core->regs.spr[(int)Gekko::SPR::DEC] = (uint32_t)(FuzzNext(s2) & 0x3F);
+                if ((int)it % 3 == 0) Core->AssertInterrupt();
+            }
         };
 
         if (setjmp(g_fuzzJmp))
@@ -461,8 +477,10 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
             if (it == traceIter) {
                 uint64_t fh = 1469598103934665603ull;
                 for (int g = 0; g < 32; g++) { fh ^= Core->regs.fpr[g].uval; fh *= 1099511628211ull; }
-                printf("  JIT  pc=%08X cr=%08X sr0=%08X ops=%lld fh=%016llX f13=%016llX\n", Core->regs.pc,
-                Core->regs.cr, Core->regs.spr[(int)Gekko::SPR::SRR0], (long long)Core->GetInstructionCounter(), (unsigned long long)fh,
+                uint64_t gh = 1469598103934665603ull;
+                for (int g = 0; g < 32; g++) { gh ^= Core->regs.gpr[g]; gh *= 1099511628211ull; }
+                printf("  JIT  pc=%08X cr=%08X sr0=%08X ops=%lld fh=%016llX gh=%016llX f13=%016llX\n", Core->regs.pc,
+                Core->regs.cr, Core->regs.spr[(int)Gekko::SPR::SRR0], (long long)Core->GetInstructionCounter(), (unsigned long long)fh, (unsigned long long)gh,
                 (unsigned long long)Core->regs.fpr[13].uval);
                 if (getenv("BENCH_FUZZ_DUMP") && Core->GetInstructionCounter() == atoi(getenv("BENCH_FUZZ_DUMP")))
                     for (int g = 0; g < 32; g++) printf("    J f%d=%016llX\n", g, (unsigned long long)Core->regs.fpr[g].uval);
@@ -487,8 +505,10 @@ static int RunFuzzer(uint8_t* ram, int iterations, int perProgram)
             if (it == traceIter) {
                 uint64_t fh = 1469598103934665603ull;
                 for (int g = 0; g < 32; g++) { fh ^= Core->regs.fpr[g].uval; fh *= 1099511628211ull; }
-                printf("  INT  pc=%08X cr=%08X sr0=%08X ops=%lld fh=%016llX f13=%016llX\n", Core->regs.pc,
-                Core->regs.cr, Core->regs.spr[(int)Gekko::SPR::SRR0], (long long)Core->GetInstructionCounter(), (unsigned long long)fh,
+                uint64_t gh = 1469598103934665603ull;
+                for (int g = 0; g < 32; g++) { gh ^= Core->regs.gpr[g]; gh *= 1099511628211ull; }
+                printf("  INT  pc=%08X cr=%08X sr0=%08X ops=%lld fh=%016llX gh=%016llX f13=%016llX\n", Core->regs.pc,
+                Core->regs.cr, Core->regs.spr[(int)Gekko::SPR::SRR0], (long long)Core->GetInstructionCounter(), (unsigned long long)fh, (unsigned long long)gh,
                 (unsigned long long)Core->regs.fpr[13].uval);
                 if (getenv("BENCH_FUZZ_DUMP") && Core->GetInstructionCounter() == atoi(getenv("BENCH_FUZZ_DUMP")))
                     for (int g = 0; g < 32; g++) printf("    I f%d=%016llX\n", g, (unsigned long long)Core->regs.fpr[g].uval);
