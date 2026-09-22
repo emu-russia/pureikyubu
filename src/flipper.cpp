@@ -63,10 +63,16 @@ namespace Flipper
 		Report(Channel::Norm, "\n");
 
 		gfx = new GFX::GFXCore(this, config);
-		PADOpen();
 
-		// open memory cards
-		MCOpen(config);
+		// The machine exists now, and a device that talks to it is handed the interfaces it was
+		// waiting for (a memory card is read through an EXI channel, and it goes into its slot here).
+		// The pool itself belongs to the emulator (see EMUCtor in main.cpp), not to the machine.
+		//
+		// The global pointer is set here, and not by whoever created the machine (which assigns it
+		// after this constructor returns), because a device reaches the machine through it while this
+		// one is still running.
+		HW = this;
+		Peripherals::Instance().MachineOpened();
 
 		JDI::Hub.AddNode(L"HW_JDI_JSON", JdiSpecs::HwJdi, hw_init_handlers);
 	}
@@ -76,6 +82,11 @@ namespace Flipper
 		JDI::Hub.RemoveNode(L"HW_JDI_JSON");
 
 		DSP->Suspend();
+
+		// The devices are unplugged from this machine (a memory card is flushed) while the
+		// interfaces they were talking to still exist: a card detaches from the EXI channel that
+		// holds it. The pool keeps them, and the next machine plugs them in again.
+		Peripherals::Instance().MachineClosed();
 
 		if (cp) {
 			delete cp;
@@ -116,14 +127,11 @@ namespace Flipper
 			delete Mixer;
 			Mixer = nullptr;
 		}
-		PADClose();
+
 		if (gfx) {
 			delete gfx;
 			gfx = nullptr;
 		}
-
-		// close memory cards
-		MCClose();
 	}
 
 	void Flipper::Update(int64_t ticks)

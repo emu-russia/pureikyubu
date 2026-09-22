@@ -52,6 +52,7 @@ set (PUREIKYUBU_CORE
 	src/bootrtc.cpp
 	src/bump.cpp
 	src/config.cpp
+	src/cont.cpp
 	src/cp.cpp
 	src/debug.cpp
 	src/di.cpp
@@ -95,6 +96,7 @@ set (PUREIKYUBU_CORE
 	src/os.cpp
 	src/osdebug.cpp
 	src/pe.cpp
+	src/peripherals.cpp
 	src/pi.cpp
 	src/ras.cpp
 	src/rvz.cpp
@@ -130,6 +132,7 @@ else ()
 	src/debugui2gl.cpp
 	src/padsdl.cpp
 	src/uisdl.cpp
+	src/uisettings.cpp
 	src/videosdl.cpp
 
 	# The integrated GBA emulator (issue #388). The core is self contained (see src/gba/Readme.md);

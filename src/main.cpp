@@ -493,27 +493,14 @@ void EMUGetHwConfig(HWConfig * config)
 	wcscpy (config->ansiFilename, GetConfigString(USER_ANSI, USER_HW));
 	wcscpy (config->sjisFilename, GetConfigString(USER_SJIS, USER_HW));
 
-	config->MemcardA_Connected = GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
-	config->MemcardB_Connected = GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
-	wcscpy (config->MemcardA_Filename, GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS));
-	wcscpy (config->MemcardB_Filename, GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS));
-	config->Memcard_SyncSave = GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
-
 	config->di_log = GetConfigBool(USER_DI_LOG, USER_HW);
 	config->si_log = GetConfigBool(USER_SI_LOG, USER_HW);
 	config->ai_log = GetConfigBool(USER_AI_LOG, USER_HW);
 	config->mi_log = GetConfigBool(USER_MI_LOG, USER_HW);
 	config->cp_log = GetConfigBool(USER_CP_LOG, USER_HW);
 
-	if (!Util::FileExists(config->MemcardA_Filename))
-	{
-		config->MemcardA_Connected = false;
-	}
-
-	if (!Util::FileExists(config->MemcardB_Filename))
-	{
-		config->MemcardB_Connected = false;
-	}
+	// The memory cards are not part of the machine configuration any more: a card is a device of
+	// the peripheral pool and the pool reads its own settings (see peripherals.h).
 
 	wcscpy (config->BootromFilename, GetConfigString(USER_BOOTROM, USER_HW));
 	wcscpy (config->DspDromFilename, GetConfigString(USER_DSP_DROM, USER_HW));
@@ -638,6 +625,13 @@ void EMUCtor()
 	DVD::InitSubsystem();
 	HLEInit();
 	Debug::g_PerfCounters = new Debug::PerfCounters();
+
+	// The peripherals of the console are not part of the machine: the pool of devices (and the
+	// configuration of every one of them) is what the settings window edits, and the window is
+	// usable with no game loaded. It is opened here, with the emulator, and a machine that is built
+	// later is what the devices are plugged into (see Flipper::Flipper).
+	Peripherals::Instance().Open();
+
 	emu.init = true;
 }
 
@@ -651,6 +645,10 @@ void EMUDtor()
 	// The server is shut down before the nodes it publishes go away, so that a client that is
 	// still connected cannot call into a half-destroyed debug interface.
 	Mcp::StopTransport();
+
+	// The pool of peripheral devices goes last: it is what the settings window edits, and it
+	// outlives every machine (see EMUCtor).
+	Peripherals::Instance().Close();
 
 	JDI::Hub.RemoveNode(L"MCP_JDI_JSON");
 	JDI::Hub.RemoveNode(L"EMU_JDI_JSON");

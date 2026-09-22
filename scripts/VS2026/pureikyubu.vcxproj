@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   The emulator (issue #421: it is the SDL build, the Win32 front end and its DirectSound/GDI/Win32
   back ends are gone, so "Debug" and "Release" are the only configurations there are, for both
@@ -40,6 +40,7 @@
     <ClInclude Include="..\..\src\bootrtc.h" />
     <ClInclude Include="..\..\src\bump.h" />
     <ClInclude Include="..\..\src\config.h" />
+    <ClInclude Include="..\..\src\cont.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\debug.h" />
     <ClInclude Include="..\..\src\debugui2.h" />
@@ -85,7 +86,6 @@
     <ClInclude Include="..\..\src\memcard.h" />
     <ClInclude Include="..\..\src\os.h" />
     <ClInclude Include="..\..\src\osdebug.h" />
-    <ClInclude Include="..\..\src\pad.h" />
     <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\pe.h" />
     <ClInclude Include="..\..\src\pi.h" />
@@ -100,6 +100,8 @@
     <ClInclude Include="..\..\src\tx.h" />
     <ClInclude Include="..\..\src\ui.h" />
     <ClInclude Include="..\..\src\uijdi.h" />
+    <ClInclude Include="..\..\src\peripherals.h" />
+    <ClInclude Include="..\..\src\uisettings.h" />
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\vi.h" />
@@ -113,6 +115,7 @@
     <ClCompile Include="..\..\src\bootrtc.cpp" />
     <ClCompile Include="..\..\src\bump.cpp" />
     <ClCompile Include="..\..\src\config.cpp" />
+    <ClCompile Include="..\..\src\cont.cpp" />
     <ClCompile Include="..\..\src\cp.cpp" />
     <ClCompile Include="..\..\src\debug.cpp" />
     <ClCompile Include="..\..\src\debugui2.cpp" />
@@ -173,6 +176,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\pe.cpp" />
+    <ClCompile Include="..\..\src\peripherals.cpp" />
     <ClCompile Include="..\..\src\pi.cpp" />
     <ClCompile Include="..\..\src\ras.cpp" />
     <ClCompile Include="..\..\src\si.cpp" />
@@ -184,6 +188,7 @@
     <ClCompile Include="..\..\src\uisdl.cpp" />
     <ClCompile Include="..\..\src\utils.cpp" />
     <ClCompile Include="..\..\src\vi.cpp" />
+    <ClCompile Include="..\..\src\uisettings.cpp" />
     <ClCompile Include="..\..\src\videosdl.cpp" />
     <ClCompile Include="..\..\src\xf.cpp" />
     <!-- The third-party sources have no precompiled header of their own. -->

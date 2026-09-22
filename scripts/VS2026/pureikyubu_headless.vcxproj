@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--
     The headless emulator (issue #382).
@@ -201,6 +201,7 @@
     <ClInclude Include="..\..\src\bootrtc.h" />
     <ClInclude Include="..\..\src\bump.h" />
     <ClInclude Include="..\..\src\config.h" />
+    <ClInclude Include="..\..\src\cont.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\debug.h" />
     <ClInclude Include="..\..\src\debugui2.h" />
@@ -245,7 +246,7 @@
     <ClInclude Include="..\..\src\memcard.h" />
     <ClInclude Include="..\..\src\os.h" />
     <ClInclude Include="..\..\src\osdebug.h" />
-    <ClInclude Include="..\..\src\pad.h" />
+    <ClInclude Include="..\..\src\peripherals.h" />
     <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\pe.h" />
     <ClInclude Include="..\..\src\pi.h" />
@@ -280,6 +281,7 @@
     <ClCompile Include="..\..\src\bootrtc.cpp" />
     <ClCompile Include="..\..\src\bump.cpp" />
     <ClCompile Include="..\..\src\config.cpp" />
+    <ClCompile Include="..\..\src\cont.cpp" />
     <ClCompile Include="..\..\src\cp.cpp" />
     <ClCompile Include="..\..\src\debug.cpp" />
     <ClCompile Include="..\..\src\di.cpp" />
@@ -336,6 +338,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\pe.cpp" />
+    <ClCompile Include="..\..\src\peripherals.cpp" />
     <ClCompile Include="..\..\src\pi.cpp" />
     <ClCompile Include="..\..\src\ras.cpp" />
     <ClCompile Include="..\..\src\si.cpp" />

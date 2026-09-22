@@ -20,6 +20,17 @@ is gone (issue #421), so there is one pair of files now.
 #include "pch.h"
 
 static SpinLock settingsLock;
+
+//! The lock of the settings document, released even when reading the document throws. A spin lock
+//! that a throw leaves held is never released (every later call spins on it forever), and the
+//! settings are read from the very beginning of the emulator's life, so the exception a broken
+//! settings file produces must not be able to do that.
+struct SettingsGuard
+{
+	SettingsGuard() { settingsLock.Lock(); }
+	~SettingsGuard() { settingsLock.Unlock(); }
+};
+
 static bool SettingsLoaded = false;
 static Json defaultSettings;		// singleton. Autodeleted at exit
 static Json settings;		// singleton. Autodeleted at exit
@@ -177,7 +188,7 @@ static void SaveSettings()
 
 wchar_t* GetConfigString(const char* var, const char* path)
 {
-	settingsLock.Lock();
+	SettingsGuard guard;
 
 	LoadSettings();
 
@@ -185,7 +196,6 @@ wchar_t* GetConfigString(const char* var, const char* path)
 
 	if (section == nullptr)
 	{
-		settingsLock.Unlock();
 		return EmptyConfigString;
 	}
 
@@ -198,18 +208,16 @@ wchar_t* GetConfigString(const char* var, const char* path)
 	if (value->type != Json::ValueType::String)
 	{
 		ReportConfigError(var, path);
-		settingsLock.Unlock();
 		return EmptyConfigString;
 	}
 
-	settingsLock.Unlock();
 
 	return value->value.AsString;
 }
 
 void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 {
-	settingsLock.Lock();
+	SettingsGuard guard;
 
 	LoadSettings();
 
@@ -217,7 +225,6 @@ void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 
 	if (section == nullptr)
 	{
-		settingsLock.Unlock();
 		return;
 	}
 
@@ -230,7 +237,6 @@ void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 	if (value->type != Json::ValueType::String)
 	{
 		ReportConfigError(var, path);
-		settingsLock.Unlock();
 		return;
 	}
 
@@ -238,12 +244,11 @@ void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 
 	SaveSettings();
 
-	settingsLock.Unlock();
 }
 
 int GetConfigInt(const char* var, const char* path)
 {
-	settingsLock.Lock();
+	SettingsGuard guard;
 
 	LoadSettings();
 
@@ -251,7 +256,6 @@ int GetConfigInt(const char* var, const char* path)
 
 	if (section == nullptr)
 	{
-		settingsLock.Unlock();
 		return 0;
 	}
 
@@ -264,18 +268,16 @@ int GetConfigInt(const char* var, const char* path)
 	if (value->type != Json::ValueType::Int)
 	{
 		ReportConfigError(var, path);
-		settingsLock.Unlock();
 		return 0;
 	}
 
-	settingsLock.Unlock();
 
 	return (int)value->value.AsInt;
 }
 
 void SetConfigInt(const char* var, int newVal, const char* path)
 {
-	settingsLock.Lock();
+	SettingsGuard guard;
 
 	LoadSettings();
 
@@ -283,7 +285,6 @@ void SetConfigInt(const char* var, int newVal, const char* path)
 
 	if (section == nullptr)
 	{
-		settingsLock.Unlock();
 		return;
 	}
 
@@ -296,7 +297,6 @@ void SetConfigInt(const char* var, int newVal, const char* path)
 	if (value->type != Json::ValueType::Int)
 	{
 		ReportConfigError(var, path);
-		settingsLock.Unlock();
 		return;
 	}
 
@@ -304,12 +304,11 @@ void SetConfigInt(const char* var, int newVal, const char* path)
 
 	SaveSettings();
 
-	settingsLock.Unlock();
 }
 
 bool GetConfigBool(const char* var, const char* path)
 {
-	settingsLock.Lock();
+	SettingsGuard guard;
 
 	LoadSettings();
 
@@ -317,7 +316,6 @@ bool GetConfigBool(const char* var, const char* path)
 
 	if (section == nullptr)
 	{
-		settingsLock.Unlock();
 		return false;
 	}
 
@@ -330,18 +328,237 @@ bool GetConfigBool(const char* var, const char* path)
 	if (value->type != Json::ValueType::Bool)
 	{
 		ReportConfigError(var, path);
-		settingsLock.Unlock();
 		return false;
 	}
 
-	settingsLock.Unlock();
 
 	return (int)value->value.AsBool;
 }
 
+// Whether the variable is there at all. The section is looked up directly instead of through
+// GetConfigSection: a caller that asks whether a setting exists does not want the missing-section
+// complaint of the getters, and the absence of the section is an answer to the question, not an
+// error.
+bool ConfigValueExists(const char* var, const char* path)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* root = GetSettingsRoot();
+	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+	Json::Value* value = nullptr;
+
+	if (section != nullptr && section->type == Json::ValueType::Object)
+	{
+		value = section->ByName(var);
+	}
+
+
+	return value != nullptr;
+}
+
+// ---------------------------------------------------------------------------
+// Arrays of objects
+
+// The section, the list and the entry a call is about. A list that is missing is created by a
+// setter (and only by a setter): an entry that is not there is what a device that has never been
+// configured looks like, so a getter must not bring it into being.
+static Json::Value* GetConfigArray(const char* var, const char* path)
+{
+	Json::Value* root = GetSettingsRoot();
+	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+
+	if (section == nullptr || section->type != Json::ValueType::Object)
+	{
+		return nullptr;
+	}
+
+	Json::Value* array = section->ByName(var);
+
+	return (array != nullptr && array->type == Json::ValueType::Array) ? array : nullptr;
+}
+
+// The entry `index` of the list. The list and the entries up to that one are made when `create` is
+// set: an entry whose member is written for the first time is what a device that is added to the
+// pool looks like, and it is also why the list can be longer than what a device has written so far.
+static Json::Value* GetConfigArrayEntry(const char* var, const char* path, int index, bool create)
+{
+	if (index < 0)
+	{
+		return nullptr;
+	}
+
+	Json::Value* array = GetConfigArray(var, path);
+
+	if (array == nullptr)
+	{
+		if (!create)
+		{
+			return nullptr;
+		}
+
+		Json::Value* root = GetSettingsRoot();
+		Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+
+		if (section == nullptr || section->type != Json::ValueType::Object)
+		{
+			return nullptr;
+		}
+
+		array = section->AddArray(var);
+	}
+
+	// An entry has no name of its own (it is an element of the list), so the walk is by position.
+	Json::Value* entry = nullptr;
+	int at = 0;
+
+	for (auto it = array->children.begin(); it != array->children.end(); ++it, ++at)
+	{
+		if (at == index)
+		{
+			entry = *it;
+			break;
+		}
+	}
+
+	if (entry != nullptr)
+	{
+		return (entry->type == Json::ValueType::Object) ? entry : nullptr;
+	}
+
+	if (!create)
+	{
+		return nullptr;
+	}
+
+	while (at <= index)
+	{
+		entry = array->AddObject(nullptr);
+		at++;
+	}
+
+	return entry;
+}
+
+int GetConfigArraySize(const char* var, const char* path)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* array = GetConfigArray(var, path);
+	int size = (array != nullptr) ? (int)array->children.size() : 0;
+
+
+	return size;
+}
+
+bool ConfigArrayValueExists(const char* var, const char* path, int index, const char* member)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* entry = GetConfigArrayEntry(var, path, index, false);
+	bool exists = (entry != nullptr) && entry->ByName(member) != nullptr;
+
+
+	return exists;
+}
+
+int GetConfigArrayInt(const char* var, const char* path, int index, const char* member, int def)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* entry = GetConfigArrayEntry(var, path, index, false);
+	Json::Value* value = (entry != nullptr) ? entry->ByName(member) : nullptr;
+
+	int result = (value != nullptr && value->type == Json::ValueType::Int) ? (int)value->value.AsInt : def;
+
+
+	return result;
+}
+
+const wchar_t* GetConfigArrayString(const char* var, const char* path, int index, const char* member)
+{
+	static wchar_t Empty[1] = { 0 };
+
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* entry = GetConfigArrayEntry(var, path, index, false);
+	Json::Value* value = (entry != nullptr) ? entry->ByName(member) : nullptr;
+
+	const wchar_t* result = Empty;
+
+	if (value != nullptr && value->type == Json::ValueType::String)
+	{
+		result = value->value.AsString;
+	}
+
+
+	return result;
+}
+
+void SetConfigArrayInt(const char* var, const char* path, int index, const char* member, int value)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* entry = GetConfigArrayEntry(var, path, index, true);
+	Json::Value* slot = (entry != nullptr) ? entry->ByName(member) : nullptr;
+
+	if (slot == nullptr && entry != nullptr)
+	{
+		slot = entry->AddInt(member, value);
+	}
+
+	if (slot == nullptr || slot->type != Json::ValueType::Int)
+	{
+		ReportConfigError(member, path);
+		return;
+	}
+
+	slot->value.AsInt = (uint64_t)value;
+
+	SaveSettings();
+
+}
+
+void SetConfigArrayString(const char* var, const char* path, int index, const char* member, const wchar_t* value)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* entry = GetConfigArrayEntry(var, path, index, true);
+	Json::Value* slot = (entry != nullptr) ? entry->ByName(member) : nullptr;
+
+	if (slot == nullptr && entry != nullptr)
+	{
+		slot = entry->AddString(member, value != nullptr ? value : L"");
+	}
+
+	if (slot == nullptr || slot->type != Json::ValueType::String)
+	{
+		ReportConfigError(member, path);
+		return;
+	}
+
+	slot->ReplaceString(value != nullptr ? value : L"");
+
+	SaveSettings();
+
+}
+
 void SetConfigBool(const char* var, bool newVal, const char* path)
 {
-	settingsLock.Lock();
+	SettingsGuard guard;
 
 	LoadSettings();
 
@@ -349,7 +566,6 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 
 	if (section == nullptr)
 	{
-		settingsLock.Unlock();
 		return;
 	}
 
@@ -362,7 +578,6 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 	if (value->type != Json::ValueType::Bool)
 	{
 		ReportConfigError(var, path);
-		settingsLock.Unlock();
 		return;
 	}
 
@@ -370,7 +585,6 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 
 	SaveSettings();
 
-	settingsLock.Unlock();
 }
 
 #pragma endregion "Config API"

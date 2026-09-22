@@ -59,6 +59,10 @@
 		"Memcard_SyncSave": false,
 		"MemcardA_Connected": false,
 		"MemcardB_Connected": false
+	},
+
+	"peripherals":
+	{
 	}
 	
 }

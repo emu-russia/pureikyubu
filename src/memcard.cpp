@@ -147,10 +147,6 @@ const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = {
 	0x01000000  //16777216 bytes , // Memory Card 2043
 };
 
-bool Memcard_Connected[2] = { false, false };
-bool SyncSave = false;
-bool MCOpened = false;
-
 Memcard memcard[2];
 
 static uint32_t MCCalculateOffset(uint32_t mc_address) {
@@ -166,7 +162,7 @@ static uint32_t MCCalculateOffset(uint32_t mc_address) {
 }
 
 static void MCSyncSave(Memcard* memcard, uint32_t offset, uint32_t size) {
-	if (SyncSave == true) // Bad idea!!
+	if (memcard->syncSave == true) // Bad idea!!
 	{
 		// The callers validate their window too, but a save must never fwrite outside
 		// the card image even if one of them forgets.
@@ -365,8 +361,7 @@ static void MCWakeUpProc(Memcard* memcard, EXIRegs* exi) {
 }
 
 /********************************************************************************************/
-void MCTransfer(void* ctx) {
-	Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)ctx;
+void MCTransfer(Flipper::ExternalInterface* exi) {
 	uint32_t auxdata, auxdma;
 	int auxbytes, i;
 	Memcard* auxmc;
@@ -545,65 +540,12 @@ void    MCUseFile(int cardnum, const wchar_t* path, bool connect) {
 }
 
 /*
- * Starts the memcard system and loads the saved settings.
- * If no settings are found, default memcards are created.
- * Then both memcards are connected (based on settings)
- */
-void MCOpen(HWConfig* config)
-{
-	Report(Channel::MC, "Memory cards\n");
-
-	MCOpened = true;
-	memset(memcard, 0, 2 * sizeof(Memcard));
-	memcard[MEMCARD_SLOTA].Command = MEMCARD_COMMAND_UNDEFINED;
-	memcard[MEMCARD_SLOTB].Command = MEMCARD_COMMAND_UNDEFINED;
-	memcard[MEMCARD_SLOTA].ready = true;
-	memcard[MEMCARD_SLOTB].ready = true;
-
-	/* load settings */
-	Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
-	Memcard_Connected[MEMCARD_SLOTB] = config->MemcardB_Connected;
-	wcscpy(memcard[MEMCARD_SLOTA].filename, config->MemcardA_Filename);
-	wcscpy(memcard[MEMCARD_SLOTB].filename, config->MemcardB_Filename);
-	SyncSave = config->Memcard_SyncSave;
-
-	if (!Util::FileExists(memcard[MEMCARD_SLOTA].filename))
-	{
-		Memcard_Connected[MEMCARD_SLOTA] = false;
-	}
-
-	if (!Util::FileExists(memcard[MEMCARD_SLOTB].filename))
-	{
-		Memcard_Connected[MEMCARD_SLOTB] = false;
-	}
-
-	MCConnect();
-}
-
-/*
- * Disconnects both Memcard. Closes the memcard system and saves the current settings
- */
-void MCClose() {
-	MCOpened = false;
-	MCDisconnect();
-}
-
-/*
- * Connects the choosen memcard
- *
- * cardnum = -1 for both (based on the Memcard_Connected setting)
+ * Connects the choosen memcard to the file it was pointed at
  */
 bool MCConnect(int cardnum) {
 	bool ret = true;
 	int i;
 	switch (cardnum) {
-		case -1:
-			if (Memcard_Connected[MEMCARD_SLOTA] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTA);
-			// Slot B is attempted even when slot A failed: `ret && MCConnect(...)`
-			// short-circuited and left a working slot B disconnected.
-			if (Memcard_Connected[MEMCARD_SLOTB] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTB) && ret;
-			return ret;
-			break;
 		case MEMCARD_SLOTA:
 		case MEMCARD_SLOTB:
 			if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum);
@@ -683,18 +625,10 @@ bool MCConnect(int cardnum) {
 
 /*
  * Saves the data from the memcard to disk and disconnects the choosen memcard
- *
- * cardnum = -1 for both
  */
 bool MCDisconnect(int cardnum) {
 	bool ret = true;
 	switch (cardnum) {
-		case -1:
-			// Both slots must be flushed: `a && b` short-circuits and would leave a
-			// slot B whose data was never written to disk.
-			ret = MCDisconnect(MEMCARD_SLOTA);
-			ret = MCDisconnect(MEMCARD_SLOTB) && ret;
-			break;
 		case MEMCARD_SLOTA:
 		case MEMCARD_SLOTB:
 			if (!memcard[cardnum].connected) break;
@@ -744,4 +678,205 @@ bool MCDisconnect(int cardnum) {
 			break;
 	}
 	return ret;
+}
+
+// ---------------------------------------------------------------------------
+// The memory card as a device of the peripheral pool
+//
+// The card is an EXI device of a card slot. It has no actuators - it is storage, not an input
+// device - and what the settings dialog edits about it is the file that holds the card image and
+// the policy of writing it back. The protocol itself is the code above, which the card device
+// simply hands to the EXI channel it is plugged into.
+
+namespace
+{
+	//! The properties of the card device, as the settings dialog numbers them.
+	enum
+	{
+		MC_PROP_FILE = 0,       //!< the file that holds the card image
+		MC_PROP_SYNC_SAVE,      //!< write through to the disk on every write
+		MC_PROP_SIZE,           //!< the size of the card in the file (read only)
+
+		MC_PROP_MAX
+	};
+
+	const PeriphProperty card_properties[MC_PROP_MAX] =
+	{
+		{ "Card file",     PERIPH_PROP_FILE, MC_PROP_FILE },
+		{ "Save policy",   PERIPH_PROP_BOOL, MC_PROP_SYNC_SAVE },
+		{ "Card",          PERIPH_PROP_INFO, MC_PROP_SIZE },
+	};
+}
+
+class MemoryCardDevice : public PeripheralDevice
+{
+	int             index = -1;
+	int             port = -1;          //!< PERIPH_PORT_SLOTA / SLOTB, -1: the card is out of its slot
+	std::wstring    file;
+	bool            syncSave = false;
+
+	//! The slot the card is in (see MEMCARD_SLOTA / MEMCARD_SLOTB).
+	int Slot() const { return port >= PERIPH_PORT_SLOTA ? port - PERIPH_PORT_SLOTA : -1; }
+
+public:
+	MemoryCardDevice(int index) : index(index) {}
+
+	uint32_t Type() override { return PERIPH_DEVICE_MEMCARD; }
+
+	// -----------------------------------------------------------------------
+
+	int PropertyCount() override { return MC_PROP_MAX; }
+
+	const PeriphProperty* Property(int index) override
+	{
+		return (index >= 0 && index < MC_PROP_MAX) ? &card_properties[index] : nullptr;
+	}
+
+	std::string GetProperty(int id) override
+	{
+		switch (id)
+		{
+			case MC_PROP_FILE:
+				return Util::WstringToString(file);
+
+			case MC_PROP_SYNC_SAVE:
+				return syncSave ? "1" : "0";
+
+			case MC_PROP_SIZE:
+			{
+				if (file.empty() || !Util::FileExists(file))
+				{
+					return "No card file";
+				}
+
+				// The five blocks of the card directory are not usable by a game.
+				size_t size = Util::FileSize(file);
+				int blocks = (int)(size / Memcard_BlockSize) - 5;
+				if (blocks < 0) blocks = 0;
+
+				char text[0x80];
+				sprintf(text, "%i usable blocks (%i Kb)", blocks, (int)(size / 1024));
+				return text;
+			}
+		}
+
+		return "";
+	}
+
+	void SetProperty(int id, const std::string& value) override
+	{
+		switch (id)
+		{
+			case MC_PROP_FILE:
+			{
+				if (Util::WstringToString(file) == value)
+				{
+					return;
+				}
+
+				file = Util::StringToWstring(value);
+				PeriphConfigSetString(index, "File", value);
+
+				// The card that is in the slot has to be replaced at once: the new image is what the
+				// guest reads from now on. MCUseFile flushes the old one first.
+				if (Slot() >= 0)
+				{
+					memcard[Slot()].syncSave = syncSave;
+					MCUseFile(Slot(), file.c_str(), true);
+				}
+				break;
+			}
+
+			case MC_PROP_SYNC_SAVE:
+			{
+				syncSave = value == "1" || value == "true";
+				PeriphConfigSetInt(index, "SyncSave", syncSave ? 1 : 0);
+
+				if (Slot() >= 0)
+				{
+					memcard[Slot()].syncSave = syncSave;
+				}
+				break;
+			}
+		}
+	}
+
+	// -----------------------------------------------------------------------
+
+	void LoadConfig(int index) override
+	{
+		this->index = index;
+
+		// A configuration written before the pool kept the two cards in the "memcards" section,
+		// under the name of the slot (see the comment at the top of peripherals.cpp).
+		const char* legacyFile = index == PERIPH_DEFAULT_SLOTB ? MemcardB_Filename_Key : MemcardA_Filename_Key;
+
+		file = Util::StringToWstring(PeriphConfigString(index, "File",
+			Util::WstringToString(GetConfigString(legacyFile, USER_MEMCARDS))));
+
+		syncSave = PeriphConfigInt(index, "SyncSave",
+			GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS) ? 1 : 0) != 0;
+	}
+
+	// -----------------------------------------------------------------------
+
+	void Attach(int port) override
+	{
+		this->port = port;
+
+		if (file.empty() || !Util::FileExists(file))
+		{
+			Report(Channel::MC, "No card file for %s\n", Peripherals::Instance().PortName(port));
+			return;
+		}
+
+		memcard[Slot()].syncSave = syncSave;
+
+		// The card is pointed at its file here, and it goes into the slot when there is a console to
+		// put it in: the pool of devices is built before the machine is (see Peripherals::Open and
+		// MachineOpened), so the machine it is plugged into may not exist yet.
+		MCUseFile(Slot(), file.c_str(), Flipper::HW != nullptr && Flipper::HW->exi != nullptr);
+	}
+
+	void Detach() override
+	{
+		if (Slot() >= 0)
+		{
+			MCDisconnect(Slot());
+		}
+
+		port = -1;
+	}
+
+	// -----------------------------------------------------------------------
+
+	void ExiTransfer(Flipper::ExternalInterface* exi) override
+	{
+		MCTransfer(exi);
+	}
+};
+
+// ---------------------------------------------------------------------------
+// The registration
+
+namespace
+{
+	PeripheralDevice* CreateMemoryCard(int index)
+	{
+		return new MemoryCardDevice(index);
+	}
+
+	//! The card registers its own factory with the peripheral subsystem, so that the pool can create
+	//! it. A build that does not compile this file (the unit test harness) has no memory cards.
+	struct MemcardRegistrar
+	{
+		MemcardRegistrar()
+		{
+			Peripherals::RegisterFactory(PERIPH_DEVICE_MEMCARD, "Memory Card",
+				"DOL-008 / DOL-014 / DOL-020, an EXI device of a card slot",
+				PERIPH_BUS_EXI, CreateMemoryCard);
+		}
+	};
+
+	MemcardRegistrar memcard_registrar;
 }
