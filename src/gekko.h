@@ -394,6 +394,7 @@ namespace Gekko
 		uint32_t addressTag;	// Physical page number (pa >> 12)
 		int WIMG;
 		uint32_t pc;		// PC value when the record was added to the TLB so that it can be tracked
+		bool changed;		// The PTE's Changed bit has been set through this entry (writes only)
 	};
 
 	class TLB
@@ -430,7 +431,16 @@ namespace Gekko
 			return true;
 		}
 
-		GEKKO_INLINE void Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG)
+		// Has the PTE of this page already had its Changed bit set through this entry?
+		GEKKO_INLINE bool IsChanged(uint32_t ea)
+		{
+			uint32_t page = ea >> 12;
+			const TLBEntry& entry = entries[page & IndexMask];
+
+			return entry.eaTag == page && entry.changed;
+		}
+
+		GEKKO_INLINE void Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG, bool changed = false)
 		{
 			TLBEntry& entry = entries[(ea >> 12) & IndexMask];
 
@@ -438,6 +448,7 @@ namespace Gekko
 			entry.addressTag = pa >> 12;
 			entry.WIMG = WIMG;
 			entry.pc = pc;
+			entry.changed = changed;
 		}
 
 		void Invalidate(uint32_t ea)
@@ -800,6 +811,30 @@ namespace Gekko
 		TLB dtlb;
 		TLB itlb;
 
+		// The window of the hashed page table (SDR1[HTABORG] .. + size). A guest store inside it
+		// rewrites a translation, and the cached ones must not survive that (see
+		// FlushTlbOnPteWrite below and UpdateHtabRange in gekko.cpp).
+		uint32_t htabOrg = 0;
+		uint32_t htabEnd = 0;
+
+		// A store into the hashed page table changes what a later walk of it returns, and the
+		// translation cache (dtlb/itlb) would keep handing out the mapping it cached earlier.
+		// Real Gekko hardware walks the table on every access, so software that rewrites the
+		// table - the Dolphin SDK's VM library swaps pages exactly that way - does not issue
+		// `tlbie` afterwards. Drop the cached translations when such a store arrives, otherwise
+		// the write lands in the physical page the address used to be mapped to and the new
+		// contents are lost (NFS Carbon's allocator poisons a block header, then reads back the
+		// value from before its own store, and the wild block size sends it past the end of its
+		// virtual heap).
+		GEKKO_INLINE void FlushTlbOnPteWrite(uint32_t pa)
+		{
+			if (pa >= htabOrg && pa < htabEnd)
+			{
+				dtlb.InvalidateAll();
+				itlb.InvalidateAll();
+			}
+		}
+
 		PrivilegedCause PrCause;
 
 		// Opcode stats
@@ -823,6 +858,10 @@ namespace Gekko
 		bool trace_locked_dma_regs = false;			// Log mtspr operation for DMAU/DMAL registers
 
 	public:
+
+		// Recompute the hashed page table window (SDR1). Called when the machine is reset and
+		// whenever the guest writes SDR1; FlushTlbOnPteWrite uses what it stores.
+		void UpdateHtabRange();
 
 		Cache* cache;
 		Cache* icache;
@@ -969,7 +1008,20 @@ namespace Gekko
 			uint32_t pa;
 			if (tlb->Exists(ea, pa, WIMG))
 			{
-				return pa;
+				// A store sets the PTE's Changed bit, and real hardware does that through the
+				// page table even when the translation is already known. The walk below is the
+				// only place the emulator updates the bit, so a write to a page whose bit has
+				// not been set through this entry has to take the walk once - the entry then
+				// remembers it and every later write stays on the fast path.
+				//
+				// The Dolphin SDK's VM library reads the bit back (the pager writes a page out
+				// only when it is changed): a set that never reached the table made the library
+				// drop the page's dirty contents, and NFS Carbon's allocator then read a block
+				// header from before its own store and walked off the end of its virtual heap.
+				if (type != MmuAccess::Write || tlb->IsChanged(ea))
+				{
+					return pa;
+				}
 			}
 
 			return EffectiveToPhysicalMmu(ea, type, WIMG);
