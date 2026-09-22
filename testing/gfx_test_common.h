@@ -226,6 +226,35 @@ namespace GfxUnitTest
 	int TestHaltCount();
 
 	// -------------------------------------------------------------------------------------------
+	// The host input of the machine under test (the double lives in gfx_test_support.cpp)
+	//
+	// The devices of the peripheral pool are driven by their bindings, and the bindings are
+	// resolved against the host input (see peripherals.h). A test that wants to press something
+	// binds a control to one of the host controls below and then says that the host reports it.
+	// -------------------------------------------------------------------------------------------
+
+	/// <summary>Forget everything the host input of the tests reports.</summary>
+	void TestHostClear();
+
+	/// <summary>The state of a host keyboard key (a scancode the test invents; any int will do).</summary>
+	void TestHostKey(int scancode, bool down);
+
+	/// <summary>Plug a host game controller in or out.</summary>
+	void TestHostGamepad(int pad, bool present);
+
+	/// <summary>The state of a host game controller button (a PERIPH_HOST_MAKE_BUTTON index).</summary>
+	void TestHostGamepadButton(int pad, int button, bool down);
+
+	/// <summary>The deflection of a host game controller axis (a PERIPH_HOST_MAKE_AXIS index).</summary>
+	void TestHostGamepadAxis(int pad, int axis, int value);
+
+	/// <summary>The last motor command a host game controller was given (PAD_MOTOR_*).</summary>
+	int TestHostRumble(int pad);
+
+	/// <summary>The key the default layout of a pad binds to its A control.</summary>
+	const int TestDefaultKey = 0x7000;
+
+	// -------------------------------------------------------------------------------------------
 	// Small helpers
 	// -------------------------------------------------------------------------------------------
 

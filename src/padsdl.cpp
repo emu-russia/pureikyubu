@@ -1,89 +1,82 @@
 /*
 
-GameCube controllers emulation backend (SDL2).
+SDL2 host input (the front end side of the peripheral subsystem).
 
-This is the only pad backend there is (issue #421 removed the Win32 one, pad.cpp). A pad can be
-driven by the keyboard (polled with SDL_GetKeyboardState) and by an SDL game controller, both at the
-same time.
+This is the only file of the emulator that talks to SDL about input. It implements `HostInput` (see
+peripherals.h), so the emulated devices - the standard controller of peripherals.cpp - never make an
+SDL call: the subsystem resolves their bindings against this backend and hands them the values of
+their actuators.
 
-The key bindings are stored in the configuration (Settings.json, "controllers" section) as SDL
-scancodes, and the game controller bindings as SDL game controller button or axis identifiers (see
-PAD_GCKEY_* in pad.h). The settings dialog is a part of the SDL UI and captures the SDL key and
-controller events (see the "Controller settings" section in uisdl.cpp).
+The backend owns the SDL game controllers and a snapshot of their state. The SDL objects belong to
+the thread that pumps the SDL events (the UI thread): `Update` opens and closes them and takes a
+plain snapshot, which is what the emulation thread reads. That keeps a controller from being closed
+while the emulation is reading it, and it is also why the rumble motor is a request that the next
+`Update` applies rather than a direct SDL call.
 
-The bindings are SDL scancodes (SDL_Scancode), not virtual-key codes, and the game controller
-bindings live next to them in the GCKEY_FOR_* variables of the same "controllers" section.
-
-The Nth SDL game controller that is currently connected drives the Nth pad, so a single gamepad
-always works with Port 1, two gamepads with Port 1 and Port 2, and so on.
-
-The backend consumer is the `si.cpp` module.
+The bindings are SDL scancodes for the keyboard and an SDL game controller button or axis for a
+game controller, both stored as one integer (see PERIPH_HOST_* in peripherals.h). The Nth connected
+game controller drives the pad in Port N, and that mapping is the subsystem's (see HostPadOf in
+peripherals.cpp); the backend only reports what is connected.
 
 */
 
-// PAD API for emulator
 #include "pch.h"
 
 using namespace Debug;
 
-// The names of the VKEY_FOR_* / GCKEY_FOR_* variables in the "controllers" section (in the enum order).
-static const char* vkey_suffix[VKEY_FOR_MAX] =
-{
-	"UP",
-	"DOWN",
-	"LEFT",
-	"RIGHT",
-	"XUP50",
-	"XUP100",
-	"XDOWN50",
-	"XDOWN100",
-	"XLEFT50",
-	"XLEFT100",
-	"XRIGHT50",
-	"XRIGHT100",
-	"CXUP",
-	"CXDOWN",
-	"CXLEFT",
-	"CXRIGHT",
-	"TRIGGERL",
-	"TRIGGERR",
-	"TRIGGERZ",
-	"A",
-	"B",
-	"X",
-	"Y",
-	"START",
-};
-
-static PADCONF pad[4];
+// An axis bound to a digital control is pressed at 50% of its travel.
+#define PAD_AXIS_PRESS_THRESHOLD    16384
 
 // ---------------------------------------------------------------------------
-// SDL game controllers
+// The snapshot of the SDL game controllers
 //
-// The SDL objects are owned by the thread that pumps the SDL events: PADUpdateControllers()
-// opens/closes the devices and stores a plain snapshot of their state, which is what the emulation
-// thread reads in PADReadButtons(). Keeping the SDL pointers on the event thread avoids closing a
-// controller while another thread is reading it.
-
-#define PAD_AXIS_PRESS_THRESHOLD    16384   // an axis bound to a digital control is pressed at 50%
+// The pointers to the SDL objects and the device list belong to the event thread; this structure is
+// what the emulation thread is allowed to see, and it is only ever read under the lock.
 
 struct PADGAMEPAD
 {
 	bool    present;
+	char    name[0x80];
 	Uint8   buttons[SDL_CONTROLLER_BUTTON_MAX];
 	Sint16  axes[SDL_CONTROLLER_AXIS_MAX];
 };
 
-static PADGAMEPAD pad_gamepads[4];
-static SpinLock pad_gamepads_lock;
-
-void PADUpdateControllers()
+//! The rumble command the emulation asked for and the next Update has to apply.
+struct PADRUMBLE
 {
-	static bool sdl_inited = false;
-	static SDL_GameController* devices[4] = { nullptr };
-	static SDL_JoystickID device_ids[4] = { 0 };
-	static SDL_JoystickID failed_ids[4] = { 0 };      // devices that could not be opened (do not retry every frame)
+	bool    dirty;
+	int     cmd;
+};
 
+class SdlHostInput : public HostInput
+{
+	static const int MaxPads = 4;
+
+	// The event thread side
+	SDL_GameController* devices[MaxPads] = { nullptr };
+	SDL_JoystickID      device_ids[MaxPads] = { 0 };
+	SDL_JoystickID      failed_ids[MaxPads] = { 0 };      // devices that could not be opened (do not retry every frame)
+	bool                sdl_inited = false;
+
+	// The shared side
+	PADGAMEPAD  snapshot[MaxPads];
+	PADRUMBLE   rumble[MaxPads];
+	SpinLock    snapshot_lock;
+
+public:
+	void Update() override;
+	bool KeyDown(int scancode) override;
+	int GamepadCount() override;
+	std::string GamepadName(int pad) override;
+	bool GamepadButton(int pad, int button) override;
+	int GamepadAxis(int pad, int axis) override;
+	std::string BindingName(int binding) override;
+	void DefaultBindings(uint32_t type, const char* actuator, int& keyboard, int& gamepad) override;
+	bool Rumble(int pad, int cmd) override;
+};
+
+void SdlHostInput::Update()
+{
 	if (!sdl_inited)
 	{
 		if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) < 0)
@@ -96,10 +89,10 @@ void PADUpdateControllers()
 	// The connected game controllers, in the SDL enumeration order
 
 	int numJoysticks = SDL_NumJoysticks();
-	int connected[4];
+	int connected[MaxPads];
 	int connectedCount = 0;
 
-	for (int i = 0; i < numJoysticks && connectedCount < 4; i++)
+	for (int i = 0; i < numJoysticks && connectedCount < MaxPads; i++)
 	{
 		if (SDL_IsGameController(i))
 		{
@@ -111,7 +104,7 @@ void PADUpdateControllers()
 	// A device is reopened when its position in the list changes, so that the pad assignment follows
 	// the order of the connected game controllers.
 
-	for (int slot = 0; slot < 4; slot++)
+	for (int slot = 0; slot < MaxPads; slot++)
 	{
 		SDL_JoystickID wanted = (slot < connectedCount) ? SDL_JoystickGetDeviceInstanceID(connected[slot]) : -1;
 
@@ -139,306 +132,294 @@ void PADUpdateControllers()
 		}
 	}
 
-	// Snapshot the state
+	// Apply the rumble the emulation asked for while the SDL objects are ours to touch.
 
-	PADGAMEPAD snapshot[4];
-	memset(snapshot, 0, sizeof(snapshot));
+	snapshot_lock.Lock();
 
-	for (int slot = 0; slot < 4; slot++)
+	for (int slot = 0; slot < MaxPads; slot++)
+	{
+		if (!rumble[slot].dirty)
+		{
+			continue;
+		}
+
+		rumble[slot].dirty = false;
+
+		if (devices[slot] == nullptr)
+		{
+			continue;
+		}
+
+		// "Stop hard" is the motor being braked; a host controller can only be told to stop.
+		Uint16 strength = (rumble[slot].cmd == PAD_MOTOR_RUMBLE) ? 0x8000 : 0;
+
+		// A duration of "forever": the motor runs until the emulation asks for something else.
+		if (SDL_GameControllerRumble(devices[slot], strength, strength, 0xffffffffu) < 0)
+		{
+			Report(Channel::SI, "Gamepad %i: cannot rumble (%s)\n", slot + 1, SDL_GetError());
+		}
+	}
+
+	snapshot_lock.Unlock();
+
+	// Take the snapshot the emulation thread reads.
+
+	PADGAMEPAD fresh[MaxPads];
+	memset(fresh, 0, sizeof(fresh));
+
+	for (int slot = 0; slot < MaxPads; slot++)
 	{
 		if (devices[slot] == nullptr)
 		{
 			continue;
 		}
 
-		snapshot[slot].present = true;
+		fresh[slot].present = true;
+
+		const char* name = SDL_GameControllerName(devices[slot]);
+		snprintf(fresh[slot].name, sizeof(fresh[slot].name), "%s", name != nullptr ? name : "?");
 
 		for (int b = 0; b < SDL_CONTROLLER_BUTTON_MAX; b++)
 		{
-			snapshot[slot].buttons[b] = SDL_GameControllerGetButton(devices[slot], (SDL_GameControllerButton)b);
+			fresh[slot].buttons[b] = SDL_GameControllerGetButton(devices[slot], (SDL_GameControllerButton)b);
 		}
 
 		for (int a = 0; a < SDL_CONTROLLER_AXIS_MAX; a++)
 		{
-			snapshot[slot].axes[a] = SDL_GameControllerGetAxis(devices[slot], (SDL_GameControllerAxis)a);
+			fresh[slot].axes[a] = SDL_GameControllerGetAxis(devices[slot], (SDL_GameControllerAxis)a);
 		}
 	}
 
-	pad_gamepads_lock.Lock();
-	memcpy(pad_gamepads, snapshot, sizeof(pad_gamepads));
-	pad_gamepads_lock.Unlock();
+	snapshot_lock.Lock();
+	memcpy(snapshot, fresh, sizeof(snapshot));
+	snapshot_lock.Unlock();
 }
 
-// ---------------------------------------------------------------------------
-// configuration
-
-void PADLoadConfig(int padToConfigure)
+bool SdlHostInput::KeyDown(int scancode)
 {
-	char parm[256] = { 0 };
-
-	if (padToConfigure < 0 || padToConfigure > 3)
-	{
-		return;
-	}
-
-	// Plugged or not
-	sprintf(parm, "PluggedIn_%i", padToConfigure);
-	pad[padToConfigure].plugged = GetConfigBool(parm, USER_PADS);
-
-	// Buttons
-	for (int i = 0; i < VKEY_FOR_MAX; i++)
-	{
-		sprintf(parm, "VKEY_FOR_%s_%i", vkey_suffix[i], padToConfigure);
-		pad[padToConfigure].vkeys[i] = GetConfigInt(parm, USER_PADS);
-
-		sprintf(parm, "GCKEY_FOR_%s_%i", vkey_suffix[i], padToConfigure);
-		pad[padToConfigure].gckeys[i] = GetConfigInt(parm, USER_PADS);
-	}
-}
-
-// ---------------------------------------------------------------------------
-// called when emulation started/stopped (pad controls)
-
-bool PADOpen()
-{
-	for (int i = 0; i < 4; i++)
-	{
-		PADLoadConfig(i);
-	}
-
-	return true;    // ok
-}
-
-void PADClose()
-{
-	pad[0].plugged =
-	pad[1].plugged =
-	pad[2].plugged =
-	pad[3].plugged = false;
-}
-
-// ---------------------------------------------------------------------------
-// process input
-
-#define THRESOLD    127
-#define STICK_INITIAL	0
-
-static void pad_reset_chan(PADState* state)
-{
-	memset(state, 0, sizeof(PADState));
-
-	// The analog control values can range from -127 to +127.
-	// The pad.a library further filters them by setting the lower cap to 15 and the upper cap to 87 for stick and 74 for cstick.
-	// But these are purely programmatic fiddles that don't concern us.
-
-	state->stickX = state->stickY = STICK_INITIAL;
-	state->substickX = state->substickY = STICK_INITIAL;
-}
-
-// A key binding is a scancode; 0 (SDL_SCANCODE_UNKNOWN) and -1 mean "not assigned".
-static bool pad_key_pressed(const Uint8* keys, int scancode)
-{
-	return scancode > 0 && scancode < SDL_NUM_SCANCODES && keys[scancode] != 0;
-}
-
-// A game controller button, or an axis deflected in the bound direction past the threshold.
-static bool pad_gc_pressed(const PADGAMEPAD* gp, int binding)
-{
-	if (!gp->present)
+	if (scancode <= 0 || scancode >= SDL_NUM_SCANCODES)
 	{
 		return false;
 	}
 
-	if (PAD_GCKEY_IS_BUTTON(binding))
-	{
-		int button = PAD_GCKEY_BUTTON(binding);
-		return button >= 0 && button < SDL_CONTROLLER_BUTTON_MAX && gp->buttons[button] != 0;
-	}
-
-	if (PAD_GCKEY_IS_AXIS(binding))
-	{
-		int axis = PAD_GCKEY_AXIS(binding);
-		if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX) return false;
-		int value = gp->axes[axis];
-		return PAD_GCKEY_AXIS_POS(binding) ? (value > PAD_AXIS_PRESS_THRESHOLD) : (value < -PAD_AXIS_PRESS_THRESHOLD);
-	}
-
-	return false;
-}
-
-// The magnitude (0...127) of the deflection of the axis bound to the control. The caller applies
-// the sign of the direction, the same way as for the keyboard bindings.
-static int pad_gc_stick(const PADGAMEPAD* gp, int binding)
-{
-	if (!gp->present || !PAD_GCKEY_IS_AXIS(binding))
-	{
-		return 0;
-	}
-
-	int axis = PAD_GCKEY_AXIS(binding);
-	if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
-	{
-		return 0;
-	}
-
-	int value = gp->axes[axis];
-	bool positive = PAD_GCKEY_AXIS_POS(binding);
-
-	if (positive && value <= 0) return 0;
-	if (!positive && value >= 0) return 0;
-
-	int scaled = (value < 0 ? -value : value) * 127 / 32767;
-	return scaled > 127 ? 127 : scaled;
-}
-
-// The value (0...255) of the game controller trigger bound to the control. The trigger axes are
-// unipolar (0...32767), so the direction of the binding is ignored.
-static int pad_gc_trigger(const PADGAMEPAD* gp, int binding)
-{
-	if (!gp->present || !PAD_GCKEY_IS_AXIS(binding))
-	{
-		return 0;
-	}
-
-	int axis = PAD_GCKEY_AXIS(binding);
-	if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
-	{
-		return 0;
-	}
-
-	int value = gp->axes[axis];
-	if (value <= 0)
-	{
-		return 0;
-	}
-
-	int scaled = value * 255 / 32767;
-	return scaled > 255 ? 255 : scaled;
-}
-
-// Both the 50% and the 100% binding of the same direction may be pressed at once,
-// so the sum is clamped instead of overflowing int8_t.
-static int8_t pad_stick_value(int value)
-{
-	if (value > 127) return 127;
-	if (value < -127) return -127;
-	return (int8_t)value;
-}
-
-// collect keyboard and gamepad buttons in PADState
-bool PADReadButtons(long padnum, PADState* state)
-{
-	uint16_t button = 0;
-	int stickX = 0, stickY = 0;
-	int substickX = 0, substickY = 0;
-	int triggerLeft = 0, triggerRight = 0;
-
-	pad_reset_chan(state);
-
-	if (padnum < 0 || padnum > 3) return false;
-
-	if (!pad[padnum].plugged) return false;
-
 	const Uint8* keys = SDL_GetKeyboardState(NULL);
-	if (keys == nullptr) return false;
 
-	PADGAMEPAD gp;
-	pad_gamepads_lock.Lock();
-	gp = pad_gamepads[padnum];
-	pad_gamepads_lock.Unlock();
-
-	PADCONF* conf = &pad[padnum];
-
-	auto key = [&](int vkey) { return pad_key_pressed(keys, conf->vkeys[vkey]); };
-	auto gc = [&](int vkey) { return pad_gc_pressed(&gp, conf->gckeys[vkey]); };
-	auto pressed = [&](int vkey) { return key(vkey) || gc(vkey); };
-
-	//
-	// ===== PAD n =====
-	//
-
-	if (pressed(VKEY_FOR_UP)) button |= PAD_BUTTON_UP;
-	if (pressed(VKEY_FOR_DOWN)) button |= PAD_BUTTON_DOWN;
-	if (pressed(VKEY_FOR_LEFT)) button |= PAD_BUTTON_LEFT;
-	if (pressed(VKEY_FOR_RIGHT)) button |= PAD_BUTTON_RIGHT;
-
-	if (pressed(VKEY_FOR_A)) button |= PAD_BUTTON_A;
-	if (pressed(VKEY_FOR_B)) button |= PAD_BUTTON_B;
-	if (pressed(VKEY_FOR_X)) button |= PAD_BUTTON_X;
-	if (pressed(VKEY_FOR_Y)) button |= PAD_BUTTON_Y;
-	if (pressed(VKEY_FOR_START)) button |= PAD_BUTTON_START;
-
-	// Note : digital L and R are only set when its analog key is pressed all the way down;
-	// this plugin is only supporting the fact, that L/R are pressed.
-
-	if (pressed(VKEY_FOR_TRIGGERL))
-	{
-		button |= PAD_TRIGGER_L;
-		triggerLeft = 255;
-	}
-	if (pressed(VKEY_FOR_TRIGGERR))
-	{
-		button |= PAD_TRIGGER_R;
-		triggerRight = 255;
-	}
-
-	if (pressed(VKEY_FOR_TRIGGERZ))
-	{
-		button |= PAD_TRIGGER_Z;
-	}
-
-	// The analog L/R triggers are the only controls with an analog value.
-
-	int analog = pad_gc_trigger(&gp, conf->gckeys[VKEY_FOR_TRIGGERL]);
-	if (analog > triggerLeft) triggerLeft = analog;
-
-	analog = pad_gc_trigger(&gp, conf->gckeys[VKEY_FOR_TRIGGERR]);
-	if (analog > triggerRight) triggerRight = analog;
-
-	// The main stick: the keyboard binds the 50%/100% keys, the gamepad binds the stick axes.
-	// The 50% and the 100% controls of a direction may share the same axis, so the largest value wins.
-
-	if (key(VKEY_FOR_XUP50))    stickY += THRESOLD / 2;
-	if (key(VKEY_FOR_XUP100))   stickY += THRESOLD;
-	if (key(VKEY_FOR_XDOWN50))  stickY += -THRESOLD / 2;
-	if (key(VKEY_FOR_XDOWN100)) stickY += -THRESOLD;
-	if (key(VKEY_FOR_XRIGHT50))  stickX += THRESOLD / 2;
-	if (key(VKEY_FOR_XRIGHT100)) stickX += THRESOLD;
-	if (key(VKEY_FOR_XLEFT50))   stickX += -THRESOLD / 2;
-	if (key(VKEY_FOR_XLEFT100))  stickX += -THRESOLD;
-
-	stickY += my_max(pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XUP50]), pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XUP100]));
-	stickY -= my_max(pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XDOWN50]), pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XDOWN100]));
-	stickX += my_max(pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XRIGHT50]), pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XRIGHT100]));
-	stickX -= my_max(pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XLEFT50]), pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_XLEFT100]));
-
-	// The C stick
-
-	if (key(VKEY_FOR_CXUP))    substickY += THRESOLD;
-	if (key(VKEY_FOR_CXDOWN))  substickY += -THRESOLD;
-	if (key(VKEY_FOR_CXRIGHT)) substickX += THRESOLD;
-	if (key(VKEY_FOR_CXLEFT))  substickX += -THRESOLD;
-
-	substickY += pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_CXUP]);
-	substickY -= pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_CXDOWN]);
-	substickX += pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_CXRIGHT]);
-	substickX -= pad_gc_stick(&gp, conf->gckeys[VKEY_FOR_CXLEFT]);
-
-	state->stickX = pad_stick_value(stickX);
-	state->stickY = pad_stick_value(stickY);
-	state->substickX = pad_stick_value(substickX);
-	state->substickY = pad_stick_value(substickY);
-	state->triggerLeft = (uint8_t)triggerLeft;
-	state->triggerRight = (uint8_t)triggerRight;
-
-	state->button = button;
-
-	return true;
+	return keys != nullptr && keys[scancode] != 0;
 }
 
-// controller motor. 0 returned, if rumble is not supported by PAD.
-// see one of PAD_MOTOR* for allowed commands.
-bool PADSetRumble(long padnum, long cmd)
+int SdlHostInput::GamepadCount()
 {
-	return false;
+	snapshot_lock.Lock();
+
+	int count = 0;
+
+	for (int i = 0; i < MaxPads; i++)
+	{
+		if (snapshot[i].present)
+		{
+			count++;
+		}
+	}
+
+	snapshot_lock.Unlock();
+
+	return count;
+}
+
+std::string SdlHostInput::GamepadName(int pad)
+{
+	if (pad < 0 || pad >= MaxPads)
+	{
+		return "";
+	}
+
+	snapshot_lock.Lock();
+	std::string name = snapshot[pad].present ? snapshot[pad].name : "";
+	snapshot_lock.Unlock();
+
+	return name;
+}
+
+bool SdlHostInput::GamepadButton(int pad, int button)
+{
+	if (pad < 0 || pad >= MaxPads || button < 0 || button >= SDL_CONTROLLER_BUTTON_MAX)
+	{
+		return false;
+	}
+
+	snapshot_lock.Lock();
+	bool pressed = snapshot[pad].present && snapshot[pad].buttons[button] != 0;
+	snapshot_lock.Unlock();
+
+	return pressed;
+}
+
+int SdlHostInput::GamepadAxis(int pad, int axis)
+{
+	if (pad < 0 || pad >= MaxPads || axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
+	{
+		return 0;
+	}
+
+	snapshot_lock.Lock();
+	int value = snapshot[pad].present ? snapshot[pad].axes[axis] : 0;
+	snapshot_lock.Unlock();
+
+	return value;
+}
+
+bool SdlHostInput::Rumble(int pad, int cmd)
+{
+	if (pad < 0 || pad >= MaxPads)
+	{
+		return false;
+	}
+
+	snapshot_lock.Lock();
+	bool present = snapshot[pad].present;
+	rumble[pad].cmd = cmd;
+	rumble[pad].dirty = true;
+	snapshot_lock.Unlock();
+
+	return present;
+}
+
+// ---------------------------------------------------------------------------
+// The names of the bindings
+
+static const char* gamepad_button_name[SDL_CONTROLLER_BUTTON_MAX] =
+{
+	"A", "B", "X", "Y", "Back", "Guide", "Start", "L Stick", "R Stick",
+	"L Shoulder", "R Shoulder", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
+	"Misc", "Paddle 1", "Paddle 2", "Paddle 3", "Paddle 4", "Touchpad",
+};
+
+static const char* gamepad_axis_name[SDL_CONTROLLER_AXIS_MAX] =
+{
+	"L Stick X", "L Stick Y", "R Stick X", "R Stick Y", "L Trigger", "R Trigger",
+};
+
+std::string SdlHostInput::BindingName(int binding)
+{
+	if (PERIPH_HOST_IS_BUTTON(binding))
+	{
+		int button = PERIPH_HOST_BUTTON(binding);
+
+		if (button < 0 || button >= SDL_CONTROLLER_BUTTON_MAX)
+		{
+			return "?";
+		}
+
+		return gamepad_button_name[button];
+	}
+
+	if (PERIPH_HOST_IS_AXIS(binding))
+	{
+		int axis = PERIPH_HOST_AXIS(binding);
+
+		if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
+		{
+			return "?";
+		}
+
+		return std::string(gamepad_axis_name[axis]) + (PERIPH_HOST_AXIS_POS(binding) ? " +" : " -");
+	}
+
+	if (binding <= 0 || binding >= SDL_NUM_SCANCODES)
+	{
+		return "...";
+	}
+
+	const char* name = SDL_GetScancodeName((SDL_Scancode)binding);
+
+	return (name && *name) ? name : "?";
+}
+
+// ---------------------------------------------------------------------------
+// The default bindings of a pad
+//
+// The usual Xbox-style layout: the main stick on the left stick, the C stick on the right stick and
+// the L/R triggers on the analog triggers. The keys are the ones a GameCube pad has always had.
+
+struct PadDefault
+{
+	const char* id;         //!< the PeriphActuator::id of the control
+	int         keyboard;   //!< an SDL scancode
+	int         gamepad;    //!< a PERIPH_HOST_* control
+};
+
+static const PadDefault pad_defaults[] =
+{
+	{ "UP",        SDL_SCANCODE_HOME,       PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP) },
+	{ "DOWN",      SDL_SCANCODE_END,        PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN) },
+	{ "LEFT",      SDL_SCANCODE_DELETE,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT) },
+	{ "RIGHT",     SDL_SCANCODE_PAGEDOWN,   PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) },
+	{ "XUP50",     0,                       0 },
+	{ "XUP100",    SDL_SCANCODE_UP,         PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, false) },
+	{ "XDOWN50",   0,                       0 },
+	{ "XDOWN100",  SDL_SCANCODE_DOWN,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, true) },
+	{ "XLEFT50",   0,                       0 },
+	{ "XLEFT100",  SDL_SCANCODE_LEFT,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, false) },
+	{ "XRIGHT50",  0,                       0 },
+	{ "XRIGHT100", SDL_SCANCODE_RIGHT,      PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, true) },
+	{ "CXUP",      SDL_SCANCODE_KP_8,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, false) },
+	{ "CXDOWN",    SDL_SCANCODE_KP_2,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, true) },
+	{ "CXLEFT",    SDL_SCANCODE_KP_4,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, false) },
+	{ "CXRIGHT",   SDL_SCANCODE_KP_6,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, true) },
+	{ "TRIGGERL",  SDL_SCANCODE_Q,          PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERLEFT, true) },
+	{ "TRIGGERR",  SDL_SCANCODE_W,          PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, true) },
+	{ "TRIGGERZ",  SDL_SCANCODE_E,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) },
+	{ "A",         SDL_SCANCODE_X,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A) },
+	{ "B",         SDL_SCANCODE_Z,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B) },
+	{ "X",         SDL_SCANCODE_S,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_X) },
+	{ "Y",         SDL_SCANCODE_A,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_Y) },
+	{ "START",     SDL_SCANCODE_RETURN,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
+};
+
+void SdlHostInput::DefaultBindings(uint32_t type, const char* actuator, int& keyboard, int& gamepad)
+{
+	keyboard = 0;
+	gamepad = 0;
+
+	// The default layout of a pad; the other models will have their own (there is one device model
+	// per bus for now, and a memory card has no actuators at all).
+	if (type != PERIPH_DEVICE_STANDARD_PAD || actuator == nullptr)
+	{
+		return;
+	}
+
+	for (const auto& def : pad_defaults)
+	{
+		if (strcmp(def.id, actuator) == 0)
+		{
+			keyboard = def.keyboard;
+			gamepad = def.gamepad;
+			return;
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// The backend of this build
+
+static SdlHostInput* sdl_host_input = nullptr;
+
+HostInput* HostInputCreate()
+{
+	sdl_host_input = new SdlHostInput();
+	return sdl_host_input;
+}
+
+void HostInputDestroy()
+{
+	delete sdl_host_input;
+	sdl_host_input = nullptr;
+}
+
+void HostInputUpdate()
+{
+	if (sdl_host_input != nullptr)
+	{
+		sdl_host_input->Update();
+	}
 }

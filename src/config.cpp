@@ -339,6 +339,30 @@ bool GetConfigBool(const char* var, const char* path)
 	return (int)value->value.AsBool;
 }
 
+// Whether the variable is there at all. The section is looked up directly instead of through
+// GetConfigSection: a caller that asks whether a setting exists does not want the missing-section
+// complaint of the getters, and the absence of the section is an answer to the question, not an
+// error.
+bool ConfigValueExists(const char* var, const char* path)
+{
+	settingsLock.Lock();
+
+	LoadSettings();
+
+	Json::Value* root = GetSettingsRoot();
+	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+	Json::Value* value = nullptr;
+
+	if (section != nullptr && section->type == Json::ValueType::Object)
+	{
+		value = section->ByName(var);
+	}
+
+	settingsLock.Unlock();
+
+	return value != nullptr;
+}
+
 void SetConfigBool(const char* var, bool newVal, const char* path)
 {
 	settingsLock.Lock();

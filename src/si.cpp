@@ -1,4 +1,9 @@
-// SI - serial interface (only GC "Spec5" controllers atm, by PAD plugin calls).
+// SI - serial interface.
+//
+// The SI is the block that frames the four controller sockets. What is plugged into a socket is a
+// device of the peripheral pool (see peripherals.h): the automatic poll asks the device for the
+// state of its controls, and a communication transfer hands the device the command bytes of the
+// channel and takes its answer back.
 #include "pch.h"
 
 // IMPORTANT : transfer will never be aborted by communication error, 
@@ -15,7 +20,7 @@
 	| OUT |
 	|-----| <
 	| INH |  |     ----------       --------------------
-	|-----|  |----| PADState |<----| PC device (plugin) |
+	|-----|  |----| PADState |<----| peripheral device  |
 	| INL |  |     ----------       --------------------
 	 -----  <
 /*/
@@ -30,55 +35,13 @@ namespace Flipper
 
 	//
 	// command data are sending via communication buffer,
-	// we are parsing command opcode and forming response 
+	// the device of the channel parses the command opcode and forms the response
 	// data packet, written back to the communication buffer
 	//
 
 	void SerialInterface::SICommand(int chan, int outlen, int inlen, uint8_t* ptr)
 	{
-		uint8_t  cmd = ptr[0];
-
-		switch (cmd)
-		{
-			// get device type and status
-			case 0x00:
-			{
-				// 0 : use sub-type
-				// 2 : n64 mouse
-				// 5 : n64 controller
-				// 9 : default gc controller
-				ptr[0] = 9;
-				ptr[1] = 0;     // sub-type
-				ptr[2] = 0;     // always 0 ?
-				break;
-			}
-
-			// HACK : use it for first time
-			case 0x40:
-			case 0x42:
-				return;
-
-				// unknown, freeloader uses it, when booting
-				// case 0x40:
-
-				// read origins
-			case 0x41:
-				ptr[0] = 0x41;
-				ptr[1] = 0;
-				ptr[2] = ptr[3] = ptr[4] = ptr[5] = 0x80;
-				ptr[6] = ptr[7] = 0x1f;
-				break;
-
-				// calibrate
-				//case 0x42:
-
-			default:
-			{
-				Debug::Halt(
-					"Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
-					chan, cmd, SI_COMCSR_OUTLEN(SI_COMCSR_REG), SI_COMCSR_INLEN(SI_COMCSR_REG));
-			}
-		}
+		Peripherals::Instance().TransferSI(chan, outlen, inlen, ptr);
 	}
 
 	void SerialInterface::SIClearInterrupt()
@@ -111,9 +74,9 @@ namespace Flipper
 		SI_SR_REG |= mask;
 
 		// control motor
-		if (si.out[chan] == 0x00400000) PADSetRumble(chan, PAD_MOTOR_STOP);
-		else if (si.out[chan] == 0x00400001) PADSetRumble(chan, PAD_MOTOR_RUMBLE);
-		else if (si.out[chan] == 0x00400002) PADSetRumble(chan, PAD_MOTOR_STOP_HARD);
+		if (si.out[chan] == 0x00400000) Peripherals::Instance().SetMotorSI(chan, PAD_MOTOR_STOP);
+		else if (si.out[chan] == 0x00400001) Peripherals::Instance().SetMotorSI(chan, PAD_MOTOR_RUMBLE);
+		else if (si.out[chan] == 0x00400002) Peripherals::Instance().SetMotorSI(chan, PAD_MOTOR_STOP_HARD);
 	}
 
 	/* ******* CHAN 0 ******* */
@@ -465,58 +428,19 @@ namespace Flipper
 		si.pollLineBase = line;
 		si.pollsThisFrame++;
 
-		if (SI_POLL_REG & SI_POLL_EN0)
+		// Every enabled channel is polled. The device that is plugged into it refreshes the state of
+		// its controls, and a channel whose device answers raises its read-status flag.
+		for (int chan = 0; chan < 4; chan++)
 		{
-			// update pad input buffer
-			bool connected = false;
-			connected = PADReadButtons(0, &si.pad[0]);
-
-			// set RDST flag
-			if (connected)
+			if ((SI_POLL_REG & (SI_POLL_EN0 >> chan)) == 0)
 			{
-				SI_SR_REG |= SI_SR_RDST0;
-				SI_COMCSR_REG |= SI_COMCSR_RDSTINT;
+				continue;
 			}
-		}
 
-		if (SI_POLL_REG & SI_POLL_EN1)
-		{
 			// update pad input buffer
-			bool connected = false;
-			connected = PADReadButtons(1, &si.pad[1]);
-
-			// set RDST flag
-			if (connected)
+			if (Peripherals::Instance().PollSI(chan, &si.pad[chan]))
 			{
-				SI_SR_REG |= SI_SR_RDST1;
-				SI_COMCSR_REG |= SI_COMCSR_RDSTINT;
-			}
-		}
-
-		if (SI_POLL_REG & SI_POLL_EN2)
-		{
-			// update pad input buffer
-			bool connected = false;
-			connected = PADReadButtons(2, &si.pad[2]);
-
-			// set RDST flag
-			if (connected)
-			{
-				SI_SR_REG |= SI_SR_RDST2;
-				SI_COMCSR_REG |= SI_COMCSR_RDSTINT;
-			}
-		}
-
-		if (SI_POLL_REG & SI_POLL_EN3)
-		{
-			// update pad input buffer
-			bool connected = false;
-			connected = PADReadButtons(3, &si.pad[3]);
-
-			// set RDST flag
-			if (connected)
-			{
-				SI_SR_REG |= SI_SR_RDST3;
+				SI_SR_REG |= (SI_SR_RDST0 >> (chan * 8));
 				SI_COMCSR_REG |= SI_COMCSR_RDSTINT;
 			}
 		}
@@ -575,7 +499,7 @@ namespace Flipper
 
 		// set rumble flags
 		for (int i = 0; i < 4; i++) {
-			si.rumble[i] = PADSetRumble(i, PAD_MOTOR_STOP);
+			si.rumble[i] = Peripherals::Instance().SetMotorSI(i, PAD_MOTOR_STOP);
 		}
 
 		// joypads in/out command buffer

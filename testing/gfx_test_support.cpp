@@ -246,6 +246,16 @@ namespace GfxUnitTest
 		// The CP owns the CPU-visible graphics registers and the display-list FIFO; the tests drive
 		// it through the PI register window (PIRegWrite), exactly like the CPU does.
 		flipper->cp = new Flipper::CommandProcessor(flipper, &config);
+
+		// The peripherals of the machine: the pool holds the four controller sockets, and a pad is
+		// plugged into every one of them (see the peripheral subsystem doubles below).
+		Peripherals::Instance().Open();
+
+		for (int chan = 0; chan < 4; chan++)
+		{
+			Peripherals::Instance().Attach(chan, PERIPH_PORT_SI(chan));
+		}
+
 		serialInterface = new Flipper::SerialInterface(flipper, &config);
 		flipper->si = serialInterface;
 
@@ -277,10 +287,13 @@ namespace GfxUnitTest
 		delete flipper->cp;
 		flipper->cp = nullptr;
 
+		// The devices of the pool are unplugged while the bus they are plugged into still exists: a
+		// memory card detaches from its EXI channel here.
+		Peripherals::Instance().Close();
+
 		delete serialInterface;
 		serialInterface = nullptr;
 		if (flipper != nullptr) flipper->si = nullptr;
-
 
 		Flipper::HW = nullptr;
 		Core = nullptr;
@@ -844,26 +857,187 @@ namespace Flipper
 }
 
 // -------------------------------------------------------------------------------------------
-// Controller doubles. The SI reads the pad through the PAD plugin interface; the unit tests
-// answer with a neutral pad on every channel, so a test can tell "the channel was polled" from
-// "the channel was skipped" by looking at the read-status bits alone.
+// The peripheral subsystem of the machine under test.
+//
+// The SI reads the state of a controller from the device that is plugged into the channel (see
+// peripherals.h), so the machine plugs a standard controller into every socket. Nothing drives
+// their actuators - a unit test has no host input - so a test sees the neutral pad the plug-in
+// double used to answer with (no buttons, the sticks centred, the triggers released), and it can
+// tell "the channel was polled" from "the channel was skipped" by the read-status bits alone.
 // -------------------------------------------------------------------------------------------
 
-bool PADReadButtons(long padnum, PADState* state)
+namespace
 {
-	if (padnum < 0 || padnum > 3 || state == nullptr)
-	{
-		return false;
-	}
+	//! The host input of the unit tests. Nothing is pressed until a test says so (see the
+	//! TestHost* calls in gfx_test_common.h), which is what makes a test see the neutral pad.
+	//! The host game controllers a test can drive (a pad is driven by the controller of its port).
+	const int TestHostPads = 4;
 
-	// A neutral pad: no buttons, sticks centred and the triggers released.
-	*state = PADState{};
-	return true;
+	//! The key the default layout of a pad binds to A (see TestHostInput::DefaultBindings).
+	const int TestDefaultKey = 0x7000;
+
+	class TestHostInput : public HostInput
+	{
+	public:
+		bool present[TestHostPads] = { false };
+		std::map<int, bool> keys;
+		std::map<int, bool> buttons;
+		std::map<int, int> axes;
+
+		//! The last motor command every host game controller was given (PAD_MOTOR_STOP when it was
+		//! never given one).
+		int rumble[TestHostPads] = { PAD_MOTOR_STOP, PAD_MOTOR_STOP, PAD_MOTOR_STOP, PAD_MOTOR_STOP };
+
+		bool KeyDown(int scancode) override
+		{
+			auto it = keys.find(scancode);
+			return it != keys.end() && it->second;
+		}
+
+		int GamepadCount() override
+		{
+			int count = 0;
+
+			for (int i = 0; i < TestHostPads; i++)
+			{
+				if (present[i]) count++;
+			}
+
+			return count;
+		}
+
+		std::string GamepadName(int pad) override
+		{
+			return present[pad] ? "Test Pad" : "";
+		}
+
+		bool GamepadButton(int pad, int button) override
+		{
+			auto it = buttons.find(pad * 0x100 + button);
+			return it != buttons.end() && it->second;
+		}
+
+		int GamepadAxis(int pad, int axis) override
+		{
+			auto it = axes.find(pad * 0x100 + axis);
+			return it == axes.end() ? 0 : it->second;
+		}
+
+		bool Rumble(int pad, int cmd) override
+		{
+			if (pad < 0 || pad >= TestHostPads)
+			{
+				return false;
+			}
+
+			rumble[pad] = cmd;
+			return true;
+		}
+
+		//! The minimal default layout of a pad: the game controller control of A and of the right
+		//! direction of the main stick for every pad, and the key of A as well - which is what the
+		//! rule of StandardPad::LoadConfig is: the keys belong to the first pad of the pool only.
+		void DefaultBindings(uint32_t deviceType, const char* actuator, int& keyboard, int& gamepad) override
+		{
+			keyboard = 0;
+			gamepad = 0;
+
+			if (deviceType != PERIPH_DEVICE_STANDARD_PAD || actuator == nullptr)
+			{
+				return;
+			}
+
+			if (strcmp(actuator, "A") == 0)
+			{
+				keyboard = TestDefaultKey;
+				gamepad = PERIPH_HOST_MAKE_BUTTON(0);
+			}
+			else if (strcmp(actuator, "XRIGHT100") == 0)
+			{
+				gamepad = PERIPH_HOST_MAKE_AXIS(0, true);
+			}
+		}
+	};
+
+	TestHostInput* test_host_input = nullptr;
 }
 
-bool PADSetRumble(long padnum, long cmd)
+HostInput* HostInputCreate()
 {
-	return true;
+	test_host_input = new TestHostInput();
+	return test_host_input;
+}
+
+void HostInputDestroy()
+{
+	delete test_host_input;
+	test_host_input = nullptr;
+}
+
+void HostInputUpdate()
+{
+}
+
+namespace GfxUnitTest
+{
+	void TestHostClear()
+	{
+		if (test_host_input == nullptr)
+		{
+			return;
+		}
+
+		test_host_input->keys.clear();
+		test_host_input->buttons.clear();
+		test_host_input->axes.clear();
+
+		for (int i = 0; i < TestHostPads; i++)
+		{
+			test_host_input->present[i] = false;
+		}
+	}
+
+	void TestHostKey(int scancode, bool down)
+	{
+		if (test_host_input != nullptr)
+		{
+			test_host_input->keys[scancode] = down;
+		}
+	}
+
+	void TestHostGamepad(int pad, bool present)
+	{
+		if (test_host_input != nullptr && pad >= 0 && pad < TestHostPads)
+		{
+			test_host_input->present[pad] = present;
+		}
+	}
+
+	void TestHostGamepadButton(int pad, int button, bool down)
+	{
+		if (test_host_input != nullptr)
+		{
+			test_host_input->buttons[pad * 0x100 + button] = down;
+		}
+	}
+
+	void TestHostGamepadAxis(int pad, int axis, int value)
+	{
+		if (test_host_input != nullptr)
+		{
+			test_host_input->axes[pad * 0x100 + axis] = value;
+		}
+	}
+
+	int TestHostRumble(int pad)
+	{
+		if (test_host_input == nullptr || pad < 0 || pad >= TestHostPads)
+		{
+			return PAD_MOTOR_STOP;
+		}
+
+		return test_host_input->rumble[pad];
+	}
 }
 
 // -------------------------------------------------------------------------------------------
@@ -873,17 +1047,64 @@ bool PADSetRumble(long padnum, long cmd)
 // -------------------------------------------------------------------------------------------
 
 static std::map<std::string, int> gfxTestConfigInts;
+static std::map<std::string, bool> gfxTestConfigBools;
+static std::map<std::string, std::wstring> gfxTestConfigStrings;
+
+static const char* TestConfigKey(const char* var)
+{
+	return var != nullptr ? var : "";
+}
 
 int GetConfigInt(const char* var, const char* path)
 {
-	auto it = gfxTestConfigInts.find(var != nullptr ? var : "");
+	auto it = gfxTestConfigInts.find(TestConfigKey(var));
 	return (it == gfxTestConfigInts.end()) ? 0 : it->second;
 }
 
 void SetConfigInt(const char* var, int newVal, const char* path)
 {
-	if (var != nullptr)
-		gfxTestConfigInts[var] = newVal;
+	gfxTestConfigInts[TestConfigKey(var)] = newVal;
+}
+
+bool GetConfigBool(const char* var, const char* path)
+{
+	auto it = gfxTestConfigBools.find(TestConfigKey(var));
+	return (it == gfxTestConfigBools.end()) ? false : it->second;
+}
+
+void SetConfigBool(const char* var, bool newVal, const char* path)
+{
+	gfxTestConfigBools[TestConfigKey(var)] = newVal;
+}
+
+wchar_t* GetConfigString(const char* var, const char* path)
+{
+	static std::wstring empty;
+
+	auto it = gfxTestConfigStrings.find(TestConfigKey(var));
+
+	if (it == gfxTestConfigStrings.end())
+	{
+		return const_cast<wchar_t*>(empty.c_str());
+	}
+
+	return const_cast<wchar_t*>(it->second.c_str());
+}
+
+void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
+{
+	gfxTestConfigStrings[TestConfigKey(var)] = newVal != nullptr ? newVal : L"";
+}
+
+// Whether the variable is there at all. A device of the peripheral pool asks this before it falls
+// back to the name a configuration that predates the pool used (see peripherals.cpp).
+bool ConfigValueExists(const char* var, const char* path)
+{
+	std::string key = TestConfigKey(var);
+
+	return gfxTestConfigInts.count(key) != 0 ||
+		gfxTestConfigBools.count(key) != 0 ||
+		gfxTestConfigStrings.count(key) != 0;
 }
 
 // -------------------------------------------------------------------------------------------

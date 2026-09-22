@@ -72,13 +72,6 @@ struct HWConfig
 	// SI
 	bool		si_log;
 
-	// MC
-	bool        MemcardA_Connected;
-	bool        MemcardB_Connected;
-	wchar_t     MemcardA_Filename[0x1000];
-	wchar_t     MemcardB_Filename[0x1000];
-	bool        Memcard_SyncSave;
-
 	wchar_t     BootromFilename[0x1000];
 	wchar_t     DspDromFilename[0x1000];
 	wchar_t     DspIromFilename[0x1000];

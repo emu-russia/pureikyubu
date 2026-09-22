@@ -62,10 +62,15 @@ using namespace Debug;
 namespace Flipper
 {
 	// EXI transfer bindings
+	//
+	// The device of a channel is the one that is plugged into the matching port of the peripheral
+	// pool: a memory card in a card slot (see peripherals.h). The devices that are part of the
+	// console itself - the boot ROM / RTC / SRAM chip on CS1B and the AD16 debugger of channel 2 -
+	// are not peripherals and stay here.
 	static EXITransferCallback exi_cb[3][3] = {
-		{ MCTransfer					, MXTransfer						, ExternalInterface::UnknownTransfer },
-		{ MCTransfer					, ExternalInterface::UnknownTransfer, ExternalInterface::UnknownTransfer },
-		{ ExternalInterface::ADTransfer , ExternalInterface::UnknownTransfer, ExternalInterface::UnknownTransfer }
+		{ ExternalInterface::CardTransferA	, MXTransfer						, ExternalInterface::UnknownTransfer },
+		{ ExternalInterface::CardTransferB	, ExternalInterface::UnknownTransfer, ExternalInterface::UnknownTransfer },
+		{ ExternalInterface::ADTransfer		, ExternalInterface::UnknownTransfer, ExternalInterface::UnknownTransfer }
 	};
 
 
@@ -136,6 +141,18 @@ namespace Flipper
 		{
 			Report(Channel::EXI, "unknown transfer (channel:%i, device:%i)\n", exi->exi.chan, exi->exi.sel);
 		}
+	}
+
+	// The transfer of a memory card: the card that is plugged into the slot of the channel runs its
+	// side of the protocol (see MemoryCardDevice in memcard.cpp).
+	void ExternalInterface::CardTransferA(void* ctx)
+	{
+		Peripherals::Instance().TransferEXI(0, 0, (ExternalInterface*)ctx);
+	}
+
+	void ExternalInterface::CardTransferB(void* ctx)
+	{
+		Peripherals::Instance().TransferEXI(1, 0, (ExternalInterface*)ctx);
 	}
 
 	// AD16 device transfer (EXI device 2:0)

@@ -21,6 +21,10 @@ namespace Flipper
 
 		Mixer = new AudioMixer(config);
 
+		// The peripherals of the console come before the interfaces they are plugged into: the SI of
+		// a controller socket and the EXI of a memory card slot ask the device pool who is there.
+		Peripherals::Instance().Open();
+
 		pi = new ProcessorInterface(this, config);
 		mem = new MemoryInterface(this, config);
 		vi = new VideoInterface(this, config);
@@ -63,10 +67,6 @@ namespace Flipper
 		Report(Channel::Norm, "\n");
 
 		gfx = new GFX::GFXCore(this, config);
-		PADOpen();
-
-		// open memory cards
-		MCOpen(config);
 
 		JDI::Hub.AddNode(L"HW_JDI_JSON", JdiSpecs::HwJdi, hw_init_handlers);
 	}
@@ -76,6 +76,10 @@ namespace Flipper
 		JDI::Hub.RemoveNode(L"HW_JDI_JSON");
 
 		DSP->Suspend();
+
+		// Unplug the peripherals (a memory card is flushed) while the interfaces they are plugged
+		// into still exist: a card detaches from the EXI channel that holds it.
+		Peripherals::Instance().Close();
 
 		if (cp) {
 			delete cp;
@@ -116,14 +120,11 @@ namespace Flipper
 			delete Mixer;
 			Mixer = nullptr;
 		}
-		PADClose();
+
 		if (gfx) {
 			delete gfx;
 			gfx = nullptr;
 		}
-
-		// close memory cards
-		MCClose();
 	}
 
 	void Flipper::Update(int64_t ticks)

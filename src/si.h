@@ -97,9 +97,9 @@ namespace Flipper
 		volatile uint32_t            exilk;          // EXILK dummy
 		uint8_t             combuf[128 + 32]; // communication buffer (+ overrun protection)
 
-		PADState            pad[4];         // PAD state (inbuf replacement)
+		PADState            pad[4];         // PAD state (inbuf replacement), filled from the device pool
 		bool                rumble[4];      // rumble support flags for every controller
-		// filled when SI is inited, by checking PADSetRumble
+		// filled when SI is inited, by checking the motor of the pad of every channel
 		bool                log;            // do debugger log output
 		// The poll schedule (serial-interface.md 5.1) is counted in video lines, not CPU ticks.
 		uint32_t            lastPollLine;   // line counter value at the previous poll evaluation

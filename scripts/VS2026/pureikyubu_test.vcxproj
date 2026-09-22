@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -58,6 +58,7 @@
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <ClCompile Include="..\..\testing\security_test.cpp" />
     <ClCompile Include="..\..\testing\jdi_utf8_test.cpp" />
+      <ClCompile Include="..\..\testing\peripherals_test.cpp" />
     <ClCompile Include="..\..\testing\mcp_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
@@ -83,6 +84,7 @@
     <ClCompile Include="..\..\src\dspdma.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\src\peripherals.cpp" />
     <ClCompile Include="..\..\src\si.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -177,6 +179,7 @@
     <ClInclude Include="..\..\src\dspdisasm.h" />
     <ClInclude Include="..\..\src\dspdma.h" />
     <ClInclude Include="..\..\src\pch.h" />
+    <ClInclude Include="..\..\src\peripherals.h" />
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\hwprof.h" />

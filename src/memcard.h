@@ -42,6 +42,7 @@ struct Memcard {
 	uint32_t size;           // size of the memcard in bytes
 	uint8_t* data;          // pointer to the memcard raw data (stored in little endian order)
 	bool connected;     // indicates if the memcard is actually 'connected', meaning all data in the structure is valid
+	bool syncSave;      // every write goes to the disk at once, instead of the image being flushed on disconnect
 	uint16_t ID;             // manufacturer and device code
 	uint8_t status;          // current status
 
@@ -77,24 +78,12 @@ struct MCCommand {
 #define Num_Memcard_ValidSizes 6
 extern const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes];
 
-/* defines if the memcard should be tried to connect, (not if the memcard is actually connected!!) */
-extern bool Memcard_Connected[2];
-
-/*
- * if SyncSave is TRUE, all write operations on the memcard will be instantaneusly saved to disk
- * if not, the memcard will only be saved to disk when it is disconnected
- */
-extern bool SyncSave;
-
 /* Memcards vars */
 extern Memcard memcard[2];
 
-/* defines if the Memcard system has been opened */
-extern bool MCOpened;
-
 /***************************************************************/
 
-void MCTransfer(void* ctx);
+void MCTransfer(Flipper::ExternalInterface* exi);
 
 /*
  * Checks if the memcard is connected.
@@ -114,34 +103,22 @@ bool    MCIsConnected(int cardnum);
 bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id);
 
 /*
- * Sets the memcard to use the specified file. If the memcard is connected,
+ * Sets the memcard of a slot to use the specified file. If the memcard is connected,
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
+ *
+ * The card itself is a device of the peripheral pool (see MemoryCardDevice in memcard.cpp), which
+ * is what decides when a slot holds a card and what file it holds; these calls are the protocol
+ * side of it.
  */
 void    MCUseFile(int cardnum, const wchar_t* path, bool connect);
 
 /*
- * Starts the memcard system and loads the saved settings.
- * If no settings are found, default memcards are created.
- * Then both memcards are connected (based on settings)
+ * Connects the choosen memcard to the file it was pointed at
  */
-void    MCOpen(HWConfig* config);
-
-/*
- * Disconnects both Memcard. Closes the memcard system and saves the current settings
- */
-void    MCClose();
-
-/*
- * Connects the choosen memcard
- *
- * cardnum = -1 for both (based on the Memcard_Connected setting)
- */
-bool    MCConnect(int cardnum = -1);
+bool    MCConnect(int cardnum);
 
 /*
  * Saves the data from the memcard to disk and disconnects the choosen memcard
- *
- * cardnum = -1 for both
  */
-bool    MCDisconnect(int cardnum = -1);
+bool    MCDisconnect(int cardnum);

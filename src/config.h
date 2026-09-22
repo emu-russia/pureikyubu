@@ -18,6 +18,7 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 #define USER_HW			"hardware"
 #define USER_HLE		"hle"
 #define USER_MEMCARDS	"memcards"
+#define USER_PERIPH		"peripherals"   // the device pool (see peripherals.h)
 
 // Loader section variables
 #define USER_MAKEMAP "MAKEMAP"			// 1: make map file, if missing (find symbols)
@@ -60,3 +61,9 @@ int GetConfigInt(const char* var, const char* path);
 void SetConfigInt(const char* var, int newVal, const char* path);
 bool GetConfigBool(const char* var, const char* path);
 void SetConfigBool(const char* var, bool newVal, const char* path);
+
+// Whether the variable is there at all. The getters above cannot say: they answer a variable that
+// is not there with its default and create it with that value, which is what makes them usable
+// everywhere in the emulator, but a caller that has to tell a configuration written before a
+// setting existed from one that holds its default needs this (see peripherals.cpp).
+bool ConfigValueExists(const char* var, const char* path);

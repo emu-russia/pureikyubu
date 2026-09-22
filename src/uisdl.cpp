@@ -11,6 +11,7 @@
 #include <memory>
 #include "res/pureikyubu_icon.h"
 #include "bench.h"
+#include "uisettings.h"
 
 static bool ui_active = false;
 static bool show_demo_window = false;
@@ -23,24 +24,17 @@ static bool draw_message_box = false;
 static std::string error_text;
 static std::string message_text;
 static ImGui::FileBrowser fileOpenDialog(ImGuiFileBrowserFlags_CloseOnEsc);
-static ImGui::FileBrowser fileSaveDialog(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_EnterNewFilename);
 static ImGui::FileBrowser chooseDirectoryDialog(ImGuiFileBrowserFlags_SelectDirectory);
 static bool draw_about_box = false;
 static bool ui_insert_dvd_menu_item_enabled = false;
 
+/* What a file the front end's browsers returned is for. The browsers of the settings window (a card
+   image, a firmware image, a directory the selector scans) are the window's own, see uisettings.cpp. */
 enum class FileReaction
 {
 	None = 0,
 	OpenFile_LoadFile,
 	ChooseDirectory_MountSdk,
-	ChooseDirectory_SelectorPath,
-	ChooseDirectory_SettingsPath,
-	OpenFile_Bootrom,
-	OpenFile_DROM,
-	OpenFile_IROM,
-	OpenFile_MemcardA,
-	OpenFile_MemcardB,
-	SaveFile_MemcardNew,
 	ChooseFile_DVDImage,
 };
 static FileReaction file_reaction = FileReaction::None;
@@ -48,8 +42,6 @@ static FileReaction file_reaction = FileReaction::None;
 /* The type filters of the file browser, per dialog. */
 static const std::vector<std::string> selector_file_filters = { ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" };
 static const std::vector<std::string> dvd_image_filters = { ".gcm", ".iso", ".rvz", ".*" };
-static const std::vector<std::string> memcard_file_filters = { ".mci", ".*" };
-static const std::vector<std::string> any_file_filters = { ".*" };
 
 /* Open the file browser for one reaction of the UI. The title and the filter belong to the dialog
    that asked for it, because one browser serves them all. */
@@ -59,14 +51,6 @@ static void open_file_dialog(FileReaction reaction, const char* title, const std
 	fileOpenDialog.SetTitle(title);
 	fileOpenDialog.SetTypeFilters(filters);
 	fileOpenDialog.Open();
-}
-
-static void open_save_dialog(FileReaction reaction, const char* title, const std::vector<std::string>& filters)
-{
-	file_reaction = reaction;
-	fileSaveDialog.SetTitle(title);
-	fileSaveDialog.SetTypeFilters(filters);
-	fileSaveDialog.Open();
 }
 
 static uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars)
@@ -437,6 +421,35 @@ static void AddSelectorPath(const std::wstring& fullPath)
 	UI::Jdi->SetConfigString(USER_PATH, Util::WstringToString(old.empty() ? path : (old + L";" + path)), USER_UI);
 
 	usel.paths.push_back(path);
+	usel.needUpdate = true;
+}
+
+/* Take a path out of the PATH user variable (the "Remove" of the selector settings) */
+static void RemoveSelectorPath(const std::wstring& fullPath)
+{
+	load_path();
+
+	auto forgotten = canonical_path(fullPath);
+	std::wstring kept;
+
+	for (auto& path : usel.paths)
+	{
+		if (canonical_path(path) == forgotten)
+		{
+			continue;
+		}
+
+		if (!kept.empty())
+		{
+			kept += L';';
+		}
+
+		kept += path;
+	}
+
+	UI::Jdi->SetConfigString(USER_PATH, Util::WstringToString(kept), USER_UI);
+
+	load_path();
 	usel.needUpdate = true;
 }
 
@@ -903,1120 +916,59 @@ static void update_selector()
 	selector_select_by_name(Util::StringToWstring(UI::Jdi->GetConfigString(USER_LASTFILE, USER_UI)));
 }
 
-/* Options -> Selector */
-static void ui_selector_menu()
+// ---------------------------------------------------------------------------
+// The game selector, as the settings window sees it
+//
+// The "General" page of the settings window (uisettings.cpp) edits the view of the selector, and
+// the selector itself is here. The page is what the user drives; these calls are what keeps the two
+// in step - they are the whole interface between the window and the selector.
+
+SelectorSettings SelectorGetSettings()
 {
-	if (!ImGui::BeginMenu("Selector"))
-	{
-		return;
-	}
+	SelectorSettings settings;
 
-	if (ImGui::MenuItem("Enable Selector", NULL, usel.active))
-	{
-		usel.active = !usel.active;
-		UI::Jdi->SetConfigBool(USER_SELECTOR, usel.active, USER_UI);
-		usel.needUpdate = true;
-	}
+	settings.active = usel.active;
+	settings.smallIcons = usel.smallIcons;
+	settings.sortBy = usel.sortBy;
+	settings.paths = usel.paths;
 
-	if (ImGui::MenuItem("Refresh", NULL, false, usel.active))
-	{
-		usel.needUpdate = true;
-	}
-
-	ImGui::Separator();
-
-	if (ImGui::MenuItem("Small Icons", NULL, usel.smallIcons, usel.active))
-	{
-		usel.smallIcons = !usel.smallIcons;
-		UI::Jdi->SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
-	}
-
-	if (ImGui::BeginMenu("Sort by", usel.active))
-	{
-		if (ImGui::MenuItem("Default", NULL, usel.sortBy == SELECTOR_SORT::Default)) sort_selector(SELECTOR_SORT::Default);
-		if (ImGui::MenuItem("Filename", NULL, usel.sortBy == SELECTOR_SORT::Filename)) sort_selector(SELECTOR_SORT::Filename);
-		if (ImGui::MenuItem("Title", NULL, usel.sortBy == SELECTOR_SORT::Title)) sort_selector(SELECTOR_SORT::Title);
-		if (ImGui::MenuItem("Size", NULL, usel.sortBy == SELECTOR_SORT::Size)) sort_selector(SELECTOR_SORT::Size);
-		if (ImGui::MenuItem("Game ID", NULL, usel.sortBy == SELECTOR_SORT::ID)) sort_selector(SELECTOR_SORT::ID);
-		if (ImGui::MenuItem("Comment", NULL, usel.sortBy == SELECTOR_SORT::Comment)) sort_selector(SELECTOR_SORT::Comment);
-		ImGui::Separator();
-		if (ImGui::MenuItem("Unsorted", NULL, usel.sortBy == SELECTOR_SORT::Unsorted)) sort_selector(SELECTOR_SORT::Unsorted);
-		ImGui::EndMenu();
-	}
-
-	if (ImGui::BeginMenu("File Filter", usel.active))
-	{
-		uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
-
-#define SELECTOR_FILTER_ITEM(label, mask)                                                       \
-		if (ImGui::MenuItem(label, NULL, (filter & mask) != 0))                                 \
-		{                                                                                       \
-			filter ^= mask;                                                                     \
-			UI::Jdi->SetConfigInt(USER_FILTER, (int)filter, USER_UI);                           \
-			usel.needUpdate = true;                                                             \
-		}
-
-		SELECTOR_FILTER_ITEM("*.dol", 0xff000000);
-		SELECTOR_FILTER_ITEM("*.elf", 0x00ff0000);
-		SELECTOR_FILTER_ITEM("*.gcm, *.rvz", 0x0000ff00);
-		SELECTOR_FILTER_ITEM("*.iso", 0x000000ff);
-
-#undef SELECTOR_FILTER_ITEM
-
-		ImGui::EndMenu();
-	}
-
-	ImGui::Separator();
-
-	if (ImGui::MenuItem("Add Directory...", NULL, false, usel.active))
-	{
-		file_reaction = FileReaction::ChooseDirectory_SelectorPath;
-		chooseDirectoryDialog.Open();
-	}
-
-	ImGui::EndMenu();
+	return settings;
 }
 
-
-
-
-/*
-
-# Controller settings
-
-The controller settings dialog: plug the pad, assign a keyboard key and/or a gamepad button or axis
-to every GameCube controller control, or clear/restore the bindings. Every control has two bindings,
-so the keyboard and the gamepad can be used at the same time.
-
-Clicking a binding button arms the capture, and the next input becomes the new binding (Esc cancels
-it): a key of the main window for the keyboard column (the modifier keys
-and the F1-F12 keys are skipped, because they cannot be bound), or an SDL
-game controller button or a stick/trigger deflection for the gamepad column. The captured events
-are not passed to ImGui, so they cannot also move the selector cursor or navigate the UI.
-
-The dialog edits a copy of the PADCONF of the selected pad. OK writes it to the configuration
-("controllers" section) and makes the backend reread it; Cancel drops the copy.
-
-*/
-
-/* The names of the VKEY_FOR_* (keyboard) and GCKEY_FOR_* (gamepad) configuration variables, in the enum order */
-static const char* pad_binding_suffix[VKEY_FOR_MAX] =
+void SelectorSetSettings(const SelectorSettings& settings)
 {
-	"UP", "DOWN", "LEFT", "RIGHT",
-	"XUP50", "XUP100", "XDOWN50", "XDOWN100",
-	"XLEFT50", "XLEFT100", "XRIGHT50", "XRIGHT100",
-	"CXUP", "CXDOWN", "CXLEFT", "CXRIGHT",
-	"TRIGGERL", "TRIGGERR", "TRIGGERZ",
-	"A", "B", "X", "Y", "START",
-};
+	usel.active = settings.active;
+	UI::Jdi->SetConfigBool(USER_SELECTOR, usel.active, USER_UI);
 
-/* The rows of the dialog, in the display order */
-static const char* pad_binding_label[VKEY_FOR_MAX] =
-{
-	"Up", "Down", "Left", "Right",
-	"Up 50%", "Up 100%", "Down 50%", "Down 100%",
-	"Left 50%", "Left 100%", "Right 50%", "Right 100%",
-	"C Up", "C Down", "C Left", "C Right",
-	"L", "R", "Z", "A", "B", "X", "Y", "Start",
-};
+	usel.smallIcons = settings.smallIcons;
+	UI::Jdi->SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
 
-static const int pad_digital_bindings[] =
-{
-	VKEY_FOR_UP, VKEY_FOR_DOWN, VKEY_FOR_LEFT, VKEY_FOR_RIGHT,
-	VKEY_FOR_A, VKEY_FOR_B, VKEY_FOR_X, VKEY_FOR_Y,
-	VKEY_FOR_START, VKEY_FOR_TRIGGERL, VKEY_FOR_TRIGGERR, VKEY_FOR_TRIGGERZ,
-};
-
-static const int pad_stick_bindings[] =
-{
-	VKEY_FOR_XUP50, VKEY_FOR_XUP100, VKEY_FOR_XDOWN50, VKEY_FOR_XDOWN100,
-	VKEY_FOR_XLEFT50, VKEY_FOR_XLEFT100, VKEY_FOR_XRIGHT50, VKEY_FOR_XRIGHT100,
-};
-
-static const int pad_substick_bindings[] =
-{
-	VKEY_FOR_CXUP, VKEY_FOR_CXDOWN, VKEY_FOR_CXLEFT, VKEY_FOR_CXRIGHT,
-};
-
-/* The default keyboard bindings of the first pad, as SDL scancodes */
-static const int pad_default_vkeys[VKEY_FOR_MAX] =
-{
-	SDL_SCANCODE_HOME,      // Up
-	SDL_SCANCODE_END,       // Down
-	SDL_SCANCODE_DELETE,    // Left
-	SDL_SCANCODE_PAGEDOWN,  // Right
-	0,                      // Up 50%
-	SDL_SCANCODE_UP,        // Up 100%
-	0,                      // Down 50%
-	SDL_SCANCODE_DOWN,      // Down 100%
-	0,                      // Left 50%
-	SDL_SCANCODE_LEFT,      // Left 100%
-	0,                      // Right 50%
-	SDL_SCANCODE_RIGHT,     // Right 100%
-	SDL_SCANCODE_KP_8,      // C Up
-	SDL_SCANCODE_KP_2,      // C Down
-	SDL_SCANCODE_KP_4,      // C Left
-	SDL_SCANCODE_KP_6,      // C Right
-	SDL_SCANCODE_Q,         // L
-	SDL_SCANCODE_W,         // R
-	SDL_SCANCODE_E,         // Z
-	SDL_SCANCODE_X,         // A
-	SDL_SCANCODE_Z,         // B
-	SDL_SCANCODE_S,         // X
-	SDL_SCANCODE_A,         // Y
-	SDL_SCANCODE_RETURN,    // Start
-};
-
-/* The default gamepad bindings (the usual Xbox-style layout): the main stick is mapped to the
-   left stick, the C stick to the right stick, and the L/R triggers to the analog triggers. */
-static const int pad_default_gckeys[VKEY_FOR_MAX] =
-{
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP),           // Up
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN),         // Down
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT),         // Left
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT),        // Right
-	0,                                                              // Up 50%
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, false),          // Up 100%
-	0,                                                              // Down 50%
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, true),           // Down 100%
-	0,                                                              // Left 50%
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, false),          // Left 100%
-	0,                                                              // Right 50%
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, true),           // Right 100%
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, false),         // C Up
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, true),          // C Down
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, false),         // C Left
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, true),          // C Right
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERLEFT, true),     // L
-	PAD_GCKEY_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, true),    // R
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER),     // Z
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A),                 // A
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B),                 // B
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_X),                 // X
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_Y),                 // Y
-	PAD_GCKEY_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START),             // Start
-};
-
-/* The gamepad bindings offered by the dialog, for the buttons without a friendly name */
-static const char* pad_gamepad_button_name[SDL_CONTROLLER_BUTTON_MAX] =
-{
-	"A", "B", "X", "Y", "Back", "Guide", "Start", "L Stick", "R Stick",
-	"L Shoulder", "R Shoulder", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
-	"Misc", "Paddle 1", "Paddle 2", "Paddle 3", "Paddle 4", "Touchpad",
-};
-
-static const char* pad_gamepad_axis_name[SDL_CONTROLLER_AXIS_MAX] =
-{
-	"L Stick X", "L Stick Y", "R Stick X", "R Stick Y", "L Trigger", "R Trigger",
-};
-
-/* The axis capture ignores the stick noise */
-#define PAD_CAPTURE_AXIS_THRESHOLD  16384
-
-/* Dialog state */
-
-static bool     pad_dialog_open = false;
-static int      pad_dialog_num = 0;                 // the pad being configured
-static PADCONF  pad_dialog_config;                  // the edited copy of the pad configuration
-
-/* Key/gamepad capture, armed by a binding button and fed by the SDL event loop (see ui_main) */
-
-static int      pad_capture_target = -1;            // the VKEY_FOR_* that waits for an input
-static bool     pad_capture_gamepad = false;        // true: wait for a gamepad event, false: for a key
-static bool     pad_capture_active = false;
-static bool     pad_capture_done = false;
-static int      pad_captured_binding = 0;
-
-/* The keys the dialog skips, because they cannot be bound */
-static bool pad_capture_ignored(SDL_Scancode scancode)
-{
-	switch (scancode)
+	if (usel.sortBy != settings.sortBy)
 	{
-		case SDL_SCANCODE_LSHIFT:
-		case SDL_SCANCODE_RSHIFT:
-		case SDL_SCANCODE_LCTRL:
-		case SDL_SCANCODE_RCTRL:
-		case SDL_SCANCODE_LALT:
-		case SDL_SCANCODE_RALT:
-		case SDL_SCANCODE_LGUI:
-		case SDL_SCANCODE_RGUI:
-		case SDL_SCANCODE_MODE:
-			return true;
-		default:
-			return scancode >= SDL_SCANCODE_F1 && scancode <= SDL_SCANCODE_F12;
-	}
-}
-
-/* Load the pad configuration into the dialog (see PADLoadConfig in padsdl.cpp) */
-static void pad_dialog_load(int padnum)
-{
-	char parm[256];
-
-	pad_dialog_num = padnum;
-
-	sprintf(parm, "PluggedIn_%i", padnum);
-	pad_dialog_config.plugged = UI::Jdi->GetConfigBool(parm, USER_PADS);
-
-	for (int i = 0; i < VKEY_FOR_MAX; i++)
-	{
-		sprintf(parm, "VKEY_FOR_%s_%i", pad_binding_suffix[i], padnum);
-		pad_dialog_config.vkeys[i] = UI::Jdi->GetConfigInt(parm, USER_PADS);
-
-		sprintf(parm, "GCKEY_FOR_%s_%i", pad_binding_suffix[i], padnum);
-		pad_dialog_config.gckeys[i] = UI::Jdi->GetConfigInt(parm, USER_PADS);
-	}
-}
-
-/* Write the dialog configuration back and make the backend reread it */
-static void pad_dialog_save()
-{
-	char parm[256];
-
-	sprintf(parm, "PluggedIn_%i", pad_dialog_num);
-	UI::Jdi->SetConfigBool(parm, pad_dialog_config.plugged, USER_PADS);
-
-	for (int i = 0; i < VKEY_FOR_MAX; i++)
-	{
-		sprintf(parm, "VKEY_FOR_%s_%i", pad_binding_suffix[i], pad_dialog_num);
-		UI::Jdi->SetConfigInt(parm, pad_dialog_config.vkeys[i], USER_PADS);
-
-		sprintf(parm, "GCKEY_FOR_%s_%i", pad_binding_suffix[i], pad_dialog_num);
-		UI::Jdi->SetConfigInt(parm, pad_dialog_config.gckeys[i], USER_PADS);
-	}
-
-	PADLoadConfig(pad_dialog_num);
-}
-
-static void pad_dialog_abort_capture()
-{
-	pad_capture_target = -1;
-	pad_capture_gamepad = false;
-	pad_capture_active = false;
-	pad_capture_done = false;
-}
-
-static void pad_dialog_open_for(int padnum)
-{
-	pad_dialog_abort_capture();
-	pad_dialog_load(padnum);
-	pad_dialog_open = true;
-}
-
-static void pad_dialog_close()
-{
-	pad_dialog_abort_capture();
-	pad_dialog_open = false;
-}
-
-/* Unplug the pad and drop all the bindings */
-static void pad_dialog_clear()
-{
-	pad_dialog_config.plugged = false;
-
-	for (int i = 0; i < VKEY_FOR_MAX; i++)
-	{
-		pad_dialog_config.vkeys[i] = 0;
-		pad_dialog_config.gckeys[i] = 0;
-	}
-}
-
-/* Restore the default bindings. The gamepad is per port, so every
-   port gets the standard gamepad mapping. The keyboard defaults are the same for every port, so
-   they are only applied to the first pad (otherwise all the pads would react to the same keys). */
-static void pad_dialog_default()
-{
-	for (int i = 0; i < VKEY_FOR_MAX; i++)
-	{
-		pad_dialog_config.gckeys[i] = pad_default_gckeys[i];
-
-		if (pad_dialog_num == 0)
-		{
-			pad_dialog_config.vkeys[i] = pad_default_vkeys[i];
-		}
-	}
-}
-
-/* The name of the key bound to the control, or "..." when the binding is not assigned */
-static std::string pad_binding_name(int scancode)
-{
-	if (scancode <= 0 || scancode >= SDL_NUM_SCANCODES)
-	{
-		return "...";
-	}
-
-	const char* name = SDL_GetScancodeName((SDL_Scancode)scancode);
-
-	return (name && *name) ? name : "?";
-}
-
-/* The name of the game controller button or axis bound to the control */
-static std::string pad_gamepad_binding_name(int binding)
-{
-	if (PAD_GCKEY_IS_BUTTON(binding))
-	{
-		int button = PAD_GCKEY_BUTTON(binding);
-
-		if (button < 0 || button >= SDL_CONTROLLER_BUTTON_MAX)
-		{
-			return "?";
-		}
-
-		return pad_gamepad_button_name[button];
-	}
-
-	if (PAD_GCKEY_IS_AXIS(binding))
-	{
-		int axis = PAD_GCKEY_AXIS(binding);
-
-		if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
-		{
-			return "?";
-		}
-
-		return std::string(pad_gamepad_axis_name[axis]) + (PAD_GCKEY_AXIS_POS(binding) ? " +" : " -");
-	}
-
-	return "...";
-}
-
-/* A binding button: the keyboard one or the gamepad one of the control */
-static void pad_dialog_binding_button(int vkey, bool gamepad)
-{
-	// The button label (and with it the button id) changes, so push a stable id
-	ImGui::PushID(vkey * 2 + (gamepad ? 1 : 0));
-
-	std::string name;
-
-	if (pad_capture_active && pad_capture_target == vkey && pad_capture_gamepad == gamepad)
-	{
-		name = "?";
-	}
-	else
-	{
-		name = gamepad
-			? pad_gamepad_binding_name(pad_dialog_config.gckeys[vkey])
-			: pad_binding_name(pad_dialog_config.vkeys[vkey]);
-	}
-
-	ImGui::BeginDisabled(!pad_dialog_config.plugged);
-	if (ImGui::Button(name.c_str(), ImVec2(110, 0)))
-	{
-		pad_capture_target = vkey;
-		pad_capture_gamepad = gamepad;
-		pad_capture_active = true;
-		pad_capture_done = false;
-	}
-	ImGui::EndDisabled();
-
-	ImGui::PopID();
-}
-
-/* A group of binding rows (Control | Keyboard | Gamepad). The table auto-fits its content, so that
-   the groups can be placed side by side. */
-static void pad_dialog_bindings(const char* id, const int* bindings, int count)
-{
-	if (!ImGui::BeginTable(id, 3, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX))
-	{
-		return;
-	}
-
-	ImGui::TableSetupColumn("Control");
-	ImGui::TableSetupColumn("Keyboard");
-	ImGui::TableSetupColumn("Gamepad");
-	ImGui::TableHeadersRow();
-
-	for (int i = 0; i < count; i++)
-	{
-		int vkey = bindings[i];
-
-		ImGui::TableNextRow();
-
-		ImGui::TableSetColumnIndex(0);
-		ImGui::TextUnformatted(pad_binding_label[vkey]);
-
-		ImGui::TableSetColumnIndex(1);
-		pad_dialog_binding_button(vkey, false);
-
-		ImGui::TableSetColumnIndex(2);
-		pad_dialog_binding_button(vkey, true);
-	}
-
-	ImGui::EndTable();
-}
-
-static void ui_pad_settings()
-{
-	if (!pad_dialog_open)
-	{
-		return;
-	}
-
-	// Apply the binding captured by the SDL event loop
-
-	if (pad_capture_done)
-	{
-		if (pad_capture_target >= 0 && pad_capture_target < VKEY_FOR_MAX)
-		{
-			if (pad_capture_gamepad)
-			{
-				pad_dialog_config.gckeys[pad_capture_target] = pad_captured_binding;
-			}
-			else
-			{
-				pad_dialog_config.vkeys[pad_capture_target] = pad_captured_binding;
-			}
-		}
-
-		pad_capture_target = -1;
-		pad_capture_done = false;
-	}
-
-	char title[0x40];
-	sprintf(title, "Configure Controller %i", pad_dialog_num + 1);
-
-	// Buttons on the left, the Control Stick with the C Stick under it on the right. The window
-	// auto-fits its content, so there is no empty space around the controls.
-	bool open = true;
-
-	if (ImGui::Begin(title, &open, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Checkbox("Plugged in", &pad_dialog_config.plugged);
-
-		// The backend maps the connected game controllers to the ports in the order they are reported by SDL
-		ImGui::TextDisabled("Connected gamepads drive Port 1, Port 2, ... in order");
-
-		ImGui::Separator();
-
-		ImGui::BeginGroup();
-		ImGui::TextUnformatted("Buttons");
-		pad_dialog_bindings("pad_buttons", pad_digital_bindings, sizeof(pad_digital_bindings) / sizeof(pad_digital_bindings[0]));
-		ImGui::EndGroup();
-
-		ImGui::SameLine(0, 24);
-
-		ImGui::BeginGroup();
-		ImGui::TextUnformatted("Control Stick");
-		pad_dialog_bindings("pad_stick", pad_stick_bindings, sizeof(pad_stick_bindings) / sizeof(pad_stick_bindings[0]));
-		ImGui::Dummy(ImVec2(0, 6));
-		ImGui::TextUnformatted("C Stick");
-		pad_dialog_bindings("pad_substick", pad_substick_bindings, sizeof(pad_substick_bindings) / sizeof(pad_substick_bindings[0]));
-		ImGui::EndGroup();
-
-		ImGui::Separator();
-
-		if (pad_capture_active)
-		{
-			ImGui::TextUnformatted(pad_capture_gamepad
-				? "Press a gamepad button or move an axis (Esc to cancel)"
-				: "Press a key (Esc to cancel)");
-		}
-
-		if (ImGui::Button("Clear", ImVec2(65, 0)))
-		{
-			pad_dialog_clear();
-		}
-
-		ImGui::SameLine();
-
-		// Gamepads are per port, so every port can get the standard gamepad mapping. The keyboard
-		// part of the defaults is only applied to the first pad (see pad_dialog_default).
-		if (ImGui::Button("Default", ImVec2(65, 0)))
-		{
-			pad_dialog_default();
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("OK", ImVec2(65, 0)))
-		{
-			pad_dialog_save();
-			pad_dialog_close();
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel", ImVec2(65, 0)))
-		{
-			pad_dialog_close();
-		}
-	}
-
-	ImGui::End();
-
-	if (!open)
-	{
-		pad_dialog_close();
-	}
-}
-
-
-
-
-/*
-
-# Settings
-
-The settings of the emulator, shown as one window with a tab bar.
-
-"GUI/Selector" is the list of directories the selector scans (the PATH user variable) and the file
-filter (the FILTER user variable, one bit per extension).
-"GCN Hardware" is the emulated console version and the three firmware images (the Bootrom
-and the DSP DROM/IROM).
-
-The directories, the console version and the firmware are edited as a copy and written to the
-configuration by Apply (or OK); Cancel drops the copy. "Add..." picks a directory with the same
-browser the "Selector -> Add Directory..." menu item uses and puts it into the copy
-(FileReaction::ChooseDirectory_SettingsPath). The file filter is a view option, so it takes effect
-at once - the "Selector -> File Filter" menu writes the same variable.
-
-*/
-
-struct SettingsConsoleVersion
-{
-	uint32_t	ver;
-	const char* info;
-};
-
-/* The console versions the dialog offers (see YAGCD) */
-static const SettingsConsoleVersion settings_console_version[] =
-{
-	{ 0x00000001, "0x00000001: Retail 1" },
-	{ 0x00000002, "0x00000002: HW2 production board" },
-	{ 0x00000003, "0x00000003: The latest production board" },
-	{ 0x10000004, "0x10000004: 1st Devkit HW" },
-	{ 0x10000005, "0x10000005: 2nd Devkit HW" },
-	{ 0x10000006, "0x10000006: The latest Devkit HW" },
-};
-
-static const int settings_console_known = (int)(sizeof(settings_console_version) / sizeof(settings_console_version[0]));
-
-static bool settings_open = false;
-static std::vector<std::wstring> settings_paths;	// the edited copy of the PATH list
-static int settings_path_selected = -1;				// the selected entry of the list, -1: none
-static int settings_console = -1;					// the index of the configured version in the table, -1: other
-static uint32_t settings_console_other = 1;			// the version the "User defined" entry stands for
-static std::wstring settings_bootrom;				// the edited copies of the firmware paths
-static std::wstring settings_dsp_drom;
-static std::wstring settings_dsp_irom;
-
-/* The "User defined" entry of the console version combo: a value that is not in the table (a hand
-   edited configuration) is still shown, and picking that entry keeps it. */
-static const char* settings_console_other_label()
-{
-	static char label[0x40];
-	sprintf(label, "0x%08X: User defined", settings_console_other);
-	return label;
-}
-
-/* Fill the dialog from the configuration */
-static void settings_dialog_load()
-{
-	load_path();
-	settings_paths = usel.paths;
-	settings_path_selected = -1;
-
-	settings_console_other = (uint32_t)UI::Jdi->GetConfigInt(USER_CONSOLE, USER_HW);
-	settings_console = -1;
-
-	for (int i = 0; i < settings_console_known; i++)
-	{
-		if (settings_console_version[i].ver == settings_console_other)
-		{
-			settings_console = i;
-			break;
-		}
-	}
-
-	settings_bootrom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_BOOTROM, USER_HW));
-	settings_dsp_drom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_DROM, USER_HW));
-	settings_dsp_irom = Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_IROM, USER_HW));
-}
-
-/* Write the dialog back to the configuration */
-static void settings_dialog_apply()
-{
-	UI::Jdi->SetConfigInt(USER_CONSOLE,
-		(int)(settings_console >= 0 ? settings_console_version[settings_console].ver : settings_console_other), USER_HW);
-
-	UI::Jdi->SetConfigString(USER_BOOTROM, Util::WstringToString(settings_bootrom), USER_HW);
-	UI::Jdi->SetConfigString(USER_DSP_DROM, Util::WstringToString(settings_dsp_drom), USER_HW);
-	UI::Jdi->SetConfigString(USER_DSP_IROM, Util::WstringToString(settings_dsp_irom), USER_HW);
-
-	// The directories are inserted one by one, the way SaveSettings does it: PATH is a ';' separated
-	// list and AddSelectorPath is what keeps it unique and canonical.
-	usel.paths.clear();
-	UI::Jdi->SetConfigString(USER_PATH, "", USER_UI);
-
-	for (const auto& path : settings_paths)
-	{
-		AddSelectorPath(path);
+		sort_selector(settings.sortBy);
 	}
 
 	usel.needUpdate = true;
 }
 
-static void settings_dialog_open()
+void SelectorAddPath(const std::wstring& path)
 {
-	settings_dialog_load();
-	settings_open = true;
+	AddSelectorPath(path);
 }
 
-/* One file filter checkbox of the "GUI/Selector" page. The four extensions are the four bits of the
-   FILTER variable and the four items of the "Selector -> File Filter" menu. */
-static void settings_filter_item(const char* label, uint32_t mask)
+void SelectorRemovePath(const std::wstring& path)
 {
-	uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
-	bool enabled = (filter & mask) != 0;
-
-	if (ImGui::Checkbox(label, &enabled))
-	{
-		filter = enabled ? (filter | mask) : (filter & ~mask);
-		UI::Jdi->SetConfigInt(USER_FILTER, (int)filter, USER_UI);
-		usel.needUpdate = true;
-	}
+	RemoveSelectorPath(path);
 }
 
-/* The "GUI/Selector" page: the directories and the file filter (IDD_SETTINGS_GUI) */
-static void settings_page_gui()
+void SelectorRescan()
 {
-	ImGui::TextUnformatted("Directories the selector scans for executables and disk images:");
-	ImGui::TextDisabled("A newly loaded file adds its own directory to this list");
-
-	ImGui::BeginChild("settings_paths", ImVec2(0, 140), true);
-
-	for (int i = 0; i < (int)settings_paths.size(); i++)
-	{
-		ImGui::PushID(i);
-
-		if (ImGui::Selectable(Util::WstringToString(settings_paths[i]).c_str(), settings_path_selected == i))
-		{
-			settings_path_selected = i;
-		}
-
-		ImGui::PopID();
-	}
-
-	ImGui::EndChild();
-
-	if (ImGui::Button("Add...", ImVec2(90, 0)))
-	{
-		file_reaction = FileReaction::ChooseDirectory_SettingsPath;
-		chooseDirectoryDialog.Open();
-	}
-
-	ImGui::SameLine();
-
-	if (ImGui::Button("Remove", ImVec2(90, 0)) &&
-		settings_path_selected >= 0 && settings_path_selected < (int)settings_paths.size())
-	{
-		settings_paths.erase(settings_paths.begin() + settings_path_selected);
-		settings_path_selected = -1;
-	}
-
-	ImGui::Separator();
-
-	// The filter is written at once, exactly like the same four items of the "Selector" menu: it is
-	// the way the selector view is set up, not a setting of the emulated machine.
-	ImGui::TextUnformatted("File filter:");
-
-	settings_filter_item("*.dol", 0xff000000);
-	settings_filter_item("*.elf", 0x00ff0000);
-	settings_filter_item("*.gcm, *.rvz", 0x0000ff00);
-	settings_filter_item("*.iso", 0x000000ff);
-}
-
-/* One firmware file of the "GCN Hardware" page: a read only path and the button that picks it */
-static void settings_firmware_row(const char* label, std::wstring& path, FileReaction reaction, const char* title)
-{
-	std::string text = Util::WstringToString(path);
-	char buf[0x400];
-	snprintf(buf, sizeof(buf), "%s", text.c_str());
-
-	ImGui::PushID(label);
-
-	ImGui::TextUnformatted(label);
-	ImGui::SetNextItemWidth(-110);
-	ImGui::InputText("##path", buf, sizeof(buf), ImGuiInputTextFlags_ReadOnly);
-	ImGui::SameLine();
-
-	if (ImGui::Button("Choose...", ImVec2(100, 0)))
-	{
-		open_file_dialog(reaction, title, any_file_filters);
-	}
-
-	ImGui::PopID();
-}
-
-/* The "GCN Hardware" page: the console version and the firmware (IDD_SETTINGS_HW) */
-static void settings_page_hw()
-{
-	ImGui::TextUnformatted("Console version:");
-
-	const char* preview = (settings_console >= 0)
-		? settings_console_version[settings_console].info
-		: settings_console_other_label();
-
-	ImGui::SetNextItemWidth(-1);
-
-	if (ImGui::BeginCombo("##console_version", preview))
-	{
-		for (int i = 0; i < settings_console_known; i++)
-		{
-			if (ImGui::Selectable(settings_console_version[i].info, settings_console == i))
-			{
-				settings_console = i;
-			}
-		}
-
-		if (settings_console < 0)
-		{
-			// The entry is only shown when the configuration holds a version the table does not
-			// have; picking it keeps that value.
-			ImGui::Selectable(settings_console_other_label(), true);
-		}
-
-		ImGui::EndCombo();
-	}
-
-	ImGui::TextDisabled("Use the latest production board for most cases. Use the latest Devkit HW for\ndebug purposes (to see OS reports in the debugger).");
-
-	ImGui::Separator();
-
-	settings_firmware_row("Bootrom file:", settings_bootrom, FileReaction::OpenFile_Bootrom, "Choose Bootrom");
-	ImGui::Separator();
-	settings_firmware_row("DSP DROM file:", settings_dsp_drom, FileReaction::OpenFile_DROM, "Choose DSP DROM");
-	ImGui::Separator();
-	settings_firmware_row("DSP IROM file:", settings_dsp_irom, FileReaction::OpenFile_IROM, "Choose DSP IROM");
-}
-
-static void ui_settings()
-{
-	if (!settings_open)
-	{
-		return;
-	}
-
-	ImGui::SetNextWindowSize(ImVec2(560, 440), ImGuiCond_FirstUseEver);
-
-	bool open = true;
-
-	if (ImGui::Begin("Configure " APPNAME_A, &open))
-	{
-		if (ImGui::BeginTabBar("settings_tabs"))
-		{
-			if (ImGui::BeginTabItem("GUI/Selector"))
-			{
-				settings_page_gui();
-				ImGui::EndTabItem();
-			}
-
-			if (ImGui::BeginTabItem("GCN Hardware"))
-			{
-				settings_page_hw();
-				ImGui::EndTabItem();
-			}
-
-			ImGui::EndTabBar();
-		}
-
-		ImGui::Separator();
-
-		if (ImGui::Button("OK", ImVec2(80, 0)))
-		{
-			settings_dialog_apply();
-			settings_open = false;
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Apply", ImVec2(80, 0)))
-		{
-			settings_dialog_apply();
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel", ImVec2(80, 0)))
-		{
-			settings_open = false;
-		}
-	}
-
-	ImGui::End();
-
-	if (!open)
-	{
-		settings_open = false;
-	}
+	usel.needUpdate = true;
 }
 
 
 
-/*
 
-# Memory cards
-
-The memory card settings: one window per slot, opened by "Options -> Memcards -> Slot A/B".
-
-The settings of both slots live in the "memcards" section of the configuration (see memcard.cpp):
-whether the card is connected, whether every write goes to the disk at once (SyncSave) or the card is
-flushed when it is disconnected, and the file that holds the card data. The file of a new card is
-made by "Create New...", which asks for one of the six sizes the hardware has
-(MCCreateMemcardFile), and "Choose file..." points the slot at a card that already exists.
-
-OK applies the change to an open memcard system as well (MCUseFile), so that the card is replaced
-(flushed first) or connected without a restart.
-
-*/
-
-static bool         memcard_dialog_open = false;
-static int          memcard_dialog_slot = MEMCARD_SLOTA;	// the slot being configured
-static bool         memcard_dialog_connected = false;		// the edited copy of the slot settings
-static bool         memcard_dialog_sync_save = false;
-static std::wstring memcard_dialog_filename;				// the full path of the card file
-
-/* "Create New..." is two steps: the browser picks the path, then the size popup asks for the size */
-static std::wstring memcard_dialog_new_filename;			// the path the browser returned
-static bool         memcard_dialog_size_popup = false;
-static int          memcard_dialog_size = 0;				// the selected entry of Memcard_ValidSizes
-
-static const char* memcard_connected_key(int slot)
-{
-	return slot == MEMCARD_SLOTA ? MemcardA_Connected_Key : MemcardB_Connected_Key;
-}
-
-static const char* memcard_filename_key(int slot)
-{
-	return slot == MEMCARD_SLOTA ? MemcardA_Filename_Key : MemcardB_Filename_Key;
-}
-
-/* Fill the dialog from the configuration (the WM_INITDIALOG of MemcardSettingsProc) */
-static void memcard_dialog_load(int slot)
-{
-	memcard_dialog_slot = slot;
-	memcard_dialog_sync_save = UI::Jdi->GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
-	memcard_dialog_connected = UI::Jdi->GetConfigBool(memcard_connected_key(slot), USER_MEMCARDS);
-	memcard_dialog_filename = Util::StringToWstring(UI::Jdi->GetConfigString(memcard_filename_key(slot), USER_MEMCARDS));
-
-	// A card whose file is missing cannot be connected
-	if (!Util::FileExists(memcard_dialog_filename))
-	{
-		memcard_dialog_connected = false;
-	}
-
-	memcard_dialog_size_popup = false;
-	memcard_dialog_size = 0;
-}
-
-static void memcard_dialog_open_for(int slot)
-{
-	memcard_dialog_load(slot);
-	memcard_dialog_open = true;
-}
-
-/* Write the dialog back (the IDOK of MemcardSettingsProc) */
-static void memcard_dialog_save()
-{
-	UI::Jdi->SetConfigBool(Memcard_SyncSave_Key, memcard_dialog_sync_save, USER_MEMCARDS);
-	UI::Jdi->SetConfigBool(memcard_connected_key(memcard_dialog_slot), memcard_dialog_connected, USER_MEMCARDS);
-	UI::Jdi->SetConfigString(memcard_filename_key(memcard_dialog_slot),
-		Util::WstringToString(memcard_dialog_filename), USER_MEMCARDS);
-
-	// The dialog owns the live state as well: the save policy is a global of memcard.cpp and the
-	// card of a memcard system that is already open is re-pointed
-	// at the new file at once. Without an open system the configuration above is what MCOpen reads
-	// at the next boot.
-	SyncSave = memcard_dialog_sync_save;
-	Memcard_Connected[memcard_dialog_slot] = memcard_dialog_connected;
-
-	if (MCOpened)
-	{
-		MCUseFile(memcard_dialog_slot, memcard_dialog_filename.c_str(), memcard_dialog_connected);
-	}
-}
-
-/* "Size: 251 usable blocks (2048 Kb)", or "Not connected" when there is no card file */
-static std::string memcard_size_text()
-{
-	if (!Util::FileExists(memcard_dialog_filename))
-	{
-		return "Not connected";
-	}
-
-	size_t size = Util::FileSize(memcard_dialog_filename);
-
-	// The five blocks of the card directory are not usable by a game
-	int blocks = (int)(size / Memcard_BlockSize) - 5;
-	if (blocks < 0)
-	{
-		blocks = 0;
-	}
-
-	char buf[0x80];
-	sprintf(buf, "Size: %i usable blocks (%i Kb)", blocks, (int)(size / 1024));
-	return buf;
-}
-
-/* The six card sizes, as the "Choose Memcard Size" dialog lists them (MemcardChooseSizeProc). The
-   order is the order of Memcard_ValidSizes, so the entry index is the index of the size. */
-static const std::vector<std::string>& memcard_size_labels()
-{
-	static std::vector<std::string> labels;
-
-	if (labels.empty())
-	{
-		for (int i = 0; i < Num_Memcard_ValidSizes; i++)
-		{
-			char buf[0x40];
-			sprintf(buf, "%i blocks (%i Kb)",
-				(int)(Memcard_ValidSizes[i] / Memcard_BlockSize), (int)(Memcard_ValidSizes[i] / 1024));
-			labels.push_back(buf);
-		}
-	}
-
-	return labels;
-}
-
-/* Create the card file of the chosen size and point the slot at it (MCCreateMemcardFile) */
-static void memcard_dialog_create_new()
-{
-	uint32_t size = Memcard_ValidSizes[memcard_dialog_size];
-
-	// The id is the size in megabits (see MEMCARD_ID_*)
-	if (!MCCreateMemcardFile(memcard_dialog_new_filename.c_str(), (uint16_t)(size >> 17)))
-	{
-		// The reason is in the log (MCCreateMemcardFile reports it); the box is what the user sees.
-		error_text = "Cannot create the memcard file:\n" + Util::WstringToString(memcard_dialog_new_filename);
-		draw_error_box = true;
-		return;
-	}
-
-	memcard_dialog_filename = memcard_dialog_new_filename;
-	memcard_dialog_connected = true;    // a card that was just created is meant to be used
-}
-
-/* The size of a new card, asked after the file browser returned the path */
-static void memcard_size_popup()
-{
-	if (memcard_dialog_size_popup)
-	{
-		ImGui::OpenPopup("Choose Memcard Size");
-	}
-
-	if (!ImGui::BeginPopupModal("Choose Memcard Size", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		return;
-	}
-
-	std::vector<const char*> items;
-	for (const auto& label : memcard_size_labels())
-	{
-		items.push_back(label.c_str());
-	}
-
-	ImGui::SetNextItemWidth(200);
-	ImGui::Combo("##memcard_size", &memcard_dialog_size, items.data(), (int)items.size());
-
-	if (ImGui::Button("OK", ImVec2(80, 0)))
-	{
-		memcard_dialog_create_new();
-		memcard_dialog_size_popup = false;
-		ImGui::CloseCurrentPopup();
-	}
-
-	ImGui::SameLine();
-
-	if (ImGui::Button("Cancel", ImVec2(80, 0)))
-	{
-		memcard_dialog_size_popup = false;
-		ImGui::CloseCurrentPopup();
-	}
-
-	ImGui::EndPopup();
-}
-
-static void ui_memcard_settings()
-{
-	if (!memcard_dialog_open)
-	{
-		return;
-	}
-
-	char title[0x40];
-	sprintf(title, "Memcard %c Settings", memcard_dialog_slot == MEMCARD_SLOTA ? 'A' : 'B');
-
-	bool open = true;
-
-	if (ImGui::Begin(title, &open, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::Checkbox("Memcard is connected", &memcard_dialog_connected);
-
-		ImGui::Separator();
-
-		ImGui::TextUnformatted("Save to disk:");
-
-		if (ImGui::RadioButton("when disconnecting the memcard", !memcard_dialog_sync_save))
-		{
-			memcard_dialog_sync_save = false;
-		}
-
-		if (ImGui::RadioButton("when writing to the memcard", memcard_dialog_sync_save))
-		{
-			memcard_dialog_sync_save = true;
-		}
-
-		ImGui::Separator();
-
-		ImGui::TextUnformatted("File:");
-
-		std::string filename = Util::WstringToString(memcard_dialog_filename);
-		char buf[0x400];
-		snprintf(buf, sizeof(buf), "%s", filename.c_str());
-
-		ImGui::SetNextItemWidth(420);
-		ImGui::InputText("##memcard_file", buf, sizeof(buf), ImGuiInputTextFlags_ReadOnly);
-
-		if (ImGui::Button("Choose file...", ImVec2(120, 0)))
-		{
-			open_file_dialog(
-				memcard_dialog_slot == MEMCARD_SLOTA ? FileReaction::OpenFile_MemcardA : FileReaction::OpenFile_MemcardB,
-				"Choose Memcard File", memcard_file_filters);
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Create New...", ImVec2(120, 0)))
-		{
-			open_save_dialog(FileReaction::SaveFile_MemcardNew, "Create Memcard File", memcard_file_filters);
-		}
-
-		ImGui::TextUnformatted(memcard_size_text().c_str());
-
-		ImGui::Separator();
-
-		if (ImGui::Button("OK", ImVec2(80, 0)))
-		{
-			memcard_dialog_save();
-			memcard_dialog_open = false;
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel", ImVec2(80, 0)))
-		{
-			memcard_dialog_open = false;
-		}
-
-		memcard_size_popup();
-	}
-
-	ImGui::End();
-
-	if (!open)
-	{
-		memcard_dialog_open = false;
-	}
-}
 
 
 
@@ -2454,38 +1406,12 @@ static void ui_main_menu()
 
 		if (ImGui::BeginMenu("Options"))
 		{
+			// Every setting of the emulator, and every device of the console, is in this one window
+			// (see the "Settings" section): the menu does not carry a dialog of its own any more, and
+			// what it used to carry - the pads, the memory cards and the selector view - is a page
+			// of it.
 			if (ImGui::MenuItem("Settings...", NULL)) {
-				settings_dialog_open();
-			}
-			ui_selector_menu();
-			ImGui::Separator();
-			if (ImGui::BeginMenu("Controllers"))
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					char label[0x20];
-					sprintf(label, "Port %i", i + 1);
-
-					if (ImGui::MenuItem(label, NULL, pad_dialog_open && pad_dialog_num == i))
-					{
-						pad_dialog_open_for(i);
-					}
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Memcards"))
-			{
-				if (ImGui::MenuItem("Slot A", NULL, memcard_dialog_open && memcard_dialog_slot == MEMCARD_SLOTA))
-				{
-					memcard_dialog_open_for(MEMCARD_SLOTA);
-				}
-
-				if (ImGui::MenuItem("Slot B", NULL, memcard_dialog_open && memcard_dialog_slot == MEMCARD_SLOTB))
-				{
-					memcard_dialog_open_for(MEMCARD_SLOTB);
-				}
-
-				ImGui::EndMenu();
+				UiSettingsOpen();
 			}
 			ImGui::EndMenu();
 		}
@@ -2758,8 +1684,8 @@ static int ui_main()
 
 	// Start the user interface
 
-	// The file browser titles and type filters are set by open_file_dialog / open_save_dialog, so
-	// that every dialog gets the ones that belong to it; only the directory browser is fixed.
+	// The file browser titles and type filters are set by open_file_dialog, so that every dialog
+	// gets the ones that belong to it; only the directory browser is fixed.
 	chooseDirectoryDialog.SetTitle("Choose Directory");
 
 	// Selector state (see the "Game selector" section)
@@ -2889,64 +1815,19 @@ static int ui_main()
 
 			// File -> Reopen (F3): reload the image that was loaded last. The menu item is the
 			// primary way in, this is the shortcut for it.
-			if (forMainWindow && !emu_running && !pad_capture_active &&
+			if (forMainWindow && !emu_running && !UiSettingsCaptureActive() &&
 				event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_F3)
 			{
 				reopen_last_file();
 			}
 
-			// The controller settings dialog captures the next key press or gamepad event as the
-			// new binding. The captured events must not reach ImGui, otherwise they would also
-			// move the selector cursor, trigger a menu item or navigate the UI.
-			if (pad_capture_active && !pad_capture_done)
+			// The settings window captures the next key press or game controller event as the
+			// binding of a control (see uisettings.cpp). The captured event must not reach ImGui,
+			// otherwise it would also move the selector cursor, trigger a menu item or navigate the
+			// interface.
+			if (UiSettingsSdlEvent(event, mainWindowID))
 			{
-				if (event.type == SDL_KEYDOWN && event.key.windowID == mainWindowID)
-				{
-					SDL_Scancode scancode = event.key.keysym.scancode;
-
-					if (scancode == SDL_SCANCODE_ESCAPE)
-					{
-						pad_captured_binding = 0;       // Esc cancels the capture
-						pad_capture_done = true;
-						pad_capture_active = false;
-					}
-					else if (!pad_capture_gamepad && !pad_capture_ignored(scancode))
-					{
-						pad_captured_binding = (int)scancode;
-						pad_capture_done = true;
-						pad_capture_active = false;
-					}
-
-					forMainWindow = false;
-				}
-				else if (pad_capture_gamepad && event.type == SDL_CONTROLLERBUTTONDOWN)
-				{
-					if (event.cbutton.button >= 0 && event.cbutton.button < SDL_CONTROLLER_BUTTON_MAX)
-					{
-						pad_captured_binding = PAD_GCKEY_MAKE_BUTTON(event.cbutton.button);
-						pad_capture_done = true;
-						pad_capture_active = false;
-					}
-
-					forMainWindow = false;
-				}
-				else if (pad_capture_gamepad && event.type == SDL_CONTROLLERAXISMOTION)
-				{
-					if (event.caxis.axis >= 0 && event.caxis.axis < SDL_CONTROLLER_AXIS_MAX &&
-						(event.caxis.value >= PAD_CAPTURE_AXIS_THRESHOLD || event.caxis.value <= -PAD_CAPTURE_AXIS_THRESHOLD))
-					{
-						pad_captured_binding = PAD_GCKEY_MAKE_AXIS(event.caxis.axis, event.caxis.value > 0);
-						pad_capture_done = true;
-						pad_capture_active = false;
-					}
-
-					forMainWindow = false;
-				}
-				else if (event.type == SDL_CONTROLLERBUTTONDOWN || event.type == SDL_CONTROLLERAXISMOTION)
-				{
-					// No gamepad event may navigate the UI while a binding waits for a key
-					forMainWindow = false;
-				}
+				forMainWindow = false;
 			}
 
 			if (forMainWindow)
@@ -2960,9 +1841,10 @@ static int ui_main()
 				ui_active = false;
 		}
 
-		// Keep the SDL game controllers of the pads open, and their cached state fresh. The events
-		// pumped above have the device list up to date (see PADUpdateControllers in padsdl.cpp).
-		PADUpdateControllers();
+		// Keep the host game controllers open, and their cached state fresh, for the peripheral
+		// devices that are driven by them (see padsdl.cpp). The events pumped above have the device
+		// list up to date.
+		HostInputUpdate();
 
 		// The release of a pressed button can be delivered to another window or to another
 		// application, so do not leave the mouse captured by the main window when it is not active.
@@ -2998,9 +1880,7 @@ static int ui_main()
 		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 		ui_main_window();
 
-		ui_pad_settings();
-		ui_settings();
-		ui_memcard_settings();
+		UiSettingsFrame();
 
 		if (show_demo_window) {
 			ImGui::ShowDemoWindow(&show_demo_window);
@@ -3032,46 +1912,13 @@ static int ui_main()
 						UI::Jdi->DvdCloseCover();
 					}
 					break;
-
-				// The firmware images of the settings dialog
-				case FileReaction::OpenFile_Bootrom:
-					settings_bootrom = Util::StringToWstring(name);
-					break;
-
-				case FileReaction::OpenFile_DROM:
-					settings_dsp_drom = Util::StringToWstring(name);
-					break;
-
-				case FileReaction::OpenFile_IROM:
-					settings_dsp_irom = Util::StringToWstring(name);
-					break;
-
-				// The file of a memory card that already exists (the slot decides which one)
-				case FileReaction::OpenFile_MemcardA:
-				case FileReaction::OpenFile_MemcardB:
-					memcard_dialog_filename = Util::StringToWstring(name);
-					break;
 			}
 
 			file_reaction = FileReaction::None;
 		}
 
-		fileSaveDialog.Display();
-		if (fileSaveDialog.HasSelected())
-		{
-			auto name = fileSaveDialog.GetSelected().string();
-			fileSaveDialog.ClearSelected();
-
-			// The file of a new memory card: the path is known, the size is still to be asked
-			if (file_reaction == FileReaction::SaveFile_MemcardNew && !name.empty())
-			{
-				memcard_dialog_new_filename = Util::StringToWstring(name);
-				memcard_dialog_size = 0;
-				memcard_dialog_size_popup = true;
-			}
-
-			file_reaction = FileReaction::None;
-		}
+		// The directory browser of the front end picks the Dolphin SDK folder; the directories the
+		// selector scans are picked by the browser of the settings window (see uisettings.cpp).
 
 		chooseDirectoryDialog.Display();
 		if (chooseDirectoryDialog.HasSelected())
@@ -3079,40 +1926,11 @@ static int ui_main()
 			auto name = chooseDirectoryDialog.GetSelected().string();
 			chooseDirectoryDialog.ClearSelected();
 
-			if (file_reaction == FileReaction::ChooseDirectory_SelectorPath && !name.empty())
-			{
-				AddSelectorPath(Util::StringToWstring(name));
-			}
-
 			// Dolphin SDK folder as a virtual disk (the same thing `MountSDK` does from the
 			// command line). The path is UTF-8 already, as JDI wants it.
 			if (file_reaction == FileReaction::ChooseDirectory_MountSdk && !name.empty())
 			{
 				UI::Jdi->DvdMountSDK(name);
-			}
-
-			// A directory that is being added to the settings dialog goes into the edited copy, not
-			// into the configuration: Apply is what writes it (see settings_dialog_apply).
-			if (file_reaction == FileReaction::ChooseDirectory_SettingsPath && !name.empty())
-			{
-				auto path = Util::StringToWstring(name);
-				fix_path(path);
-
-				bool present = false;
-				for (const auto& existing : settings_paths)
-				{
-					if (canonical_path(existing) == canonical_path(path))
-					{
-						present = true;
-						break;
-					}
-				}
-
-				if (!present)
-				{
-					settings_paths.push_back(path);
-					settings_path_selected = (int)settings_paths.size() - 1;
-				}
 			}
 
 			file_reaction = FileReaction::None;

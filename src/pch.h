@@ -110,7 +110,7 @@
 #include "bootrtc.h"
 #include "exi.h"
 #include "memcard.h"
-#include "pad.h"
+#include "peripherals.h"
 #include "si.h"
 #include "flipperdebug.h"
 
