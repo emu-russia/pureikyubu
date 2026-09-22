@@ -4246,6 +4246,7 @@ namespace Gekko
 
 				core->dtlb.InvalidateAll();
 				core->itlb.InvalidateAll();
+				core->UpdateHtabRange();
 			}
 			break;
 

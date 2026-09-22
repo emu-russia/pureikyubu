@@ -126,6 +126,20 @@ namespace Gekko
 		cache->Enable(false);
 		icache->Reset();
 		icache->Enable(false);
+
+		UpdateHtabRange();
+	}
+
+	// The hashed page table window (SDR1[HTABORG] and the size HTABMASK describes). The
+	// translation cache has to be dropped when the guest stores inside it: see FlushTlbOnPteWrite.
+	void GekkoCore::UpdateHtabRange()
+	{
+		uint32_t sdr1 = regs.spr[(int)SPR::SDR1];
+
+		htabOrg = sdr1 & 0xffff0000;
+
+		uint64_t end = (uint64_t)htabOrg + ((uint64_t)(sdr1 & 0x1ff) + 1) * 0x10000;
+		htabEnd = (end > 0xffffffffULL) ? 0xffffffffu : (uint32_t)end;
 	}
 
 	// Modify CPU counters
@@ -388,6 +402,8 @@ namespace Gekko
 			return;
 		}
 
+		FlushTlbOnPteWrite(pa);
+
 		if (RESERVE && pa == RESERVE_ADDR)
 		{
 			RESERVE = false;
@@ -453,6 +469,8 @@ namespace Gekko
 			return;
 		}
 
+		FlushTlbOnPteWrite(pa);
+
 		if (RESERVE && pa == RESERVE_ADDR)
 		{
 			RESERVE = false;
@@ -517,6 +535,8 @@ namespace Gekko
 			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
+
+		FlushTlbOnPteWrite(pa);
 
 		if (RESERVE && pa == RESERVE_ADDR)
 		{
@@ -584,6 +604,8 @@ namespace Gekko
 			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
+
+		FlushTlbOnPteWrite(pa);
 
 		if (RESERVE && pa == RESERVE_ADDR)
 		{
@@ -1527,6 +1549,7 @@ namespace Gekko
 {
 	void GatherBuffer::Reset()
 	{
+
 		memset(fifo, 0, sizeof(fifo));
 		readPtr = 0;
 		writePtr = 0;
@@ -1658,7 +1681,11 @@ namespace Gekko
 	// re-programmed (which discards it). Software that must deliver a partial block has to pad it.
 	bool GatherBuffer::NotEmpty()
 	{
-		return readPtr != writePtr;
+		// EXPERIMENT (NFS Carbon black screen): report the pipe as "not empty" only while at
+		// least half of the buffer is occupied, instead of on any pending byte. The SDK's
+		// GXFlush waits for this bit to clear and its command stream leaves a partial 32 byte
+		// block behind, so with the hardware-accurate "any byte" answer the wait never ends.
+		return GatherSize() >= (sizeof(fifo) / 2);
 	}
 }
 
