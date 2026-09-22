@@ -215,6 +215,17 @@ namespace Gekko
 		regs.spr[Gekko::SPR::SRR0] = regs.pc;
 		regs.spr[Gekko::SPR::SRR1] = regs.msr;
 
+		// A page-fault handler rewrites the hashed page table (the VM library's
+		// swap-in evicts one page and maps the faulting one), so any cached page
+		// translation may now be stale. Real hardware walks the page table on every
+		// access and has no translation cache, so the VM library does not issue tlbie
+		// after those writes; flush the emulator's translation cache here instead.
+		if (code == Exception::EXCEPTION_ISI || code == Exception::EXCEPTION_DSI)
+		{
+			dtlb.InvalidateAll();
+			itlb.InvalidateAll();
+		}
+
 		// Special processing for MMU
 		if (code == Exception::EXCEPTION_ISI)
 		{
