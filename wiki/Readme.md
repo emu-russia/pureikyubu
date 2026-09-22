@@ -13,3 +13,8 @@ GameCube:
 Flipper:
 
 ![Flipper_ASIC_Block_Diagram](/wiki/imgstore/emu/Flipper_ASIC_Block_Diagram.png)
+
+DSP:
+
+* [DSP DROM](dsp_drom.md) — analysis of the 4 KiB DSP data ROM (`build/Data/dsp_drom.bin`):
+  its palindromic quad tables, the interleaved lane structure and what the statistics say.
