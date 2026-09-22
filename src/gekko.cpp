@@ -1681,7 +1681,11 @@ namespace Gekko
 	// re-programmed (which discards it). Software that must deliver a partial block has to pad it.
 	bool GatherBuffer::NotEmpty()
 	{
-		return readPtr != writePtr;
+		// EXPERIMENT (NFS Carbon black screen): report the pipe as "not empty" only while at
+		// least half of the buffer is occupied, instead of on any pending byte. The SDK's
+		// GXFlush waits for this bit to clear and its command stream leaves a partial 32 byte
+		// block behind, so with the hardware-accurate "any byte" answer the wait never ends.
+		return GatherSize() >= (sizeof(fifo) / 2);
 	}
 }
 
