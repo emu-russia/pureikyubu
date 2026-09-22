@@ -122,6 +122,7 @@
       The GFX pipeline itself: the command processor, the pipeline root (GFXCore) and every
       pipeline block. testing/gfx_test_support.cpp supplies the surrounding Flipper devices.
     -->
+    <ClCompile Include="..\..\src\cont.cpp" />
     <ClCompile Include="..\..\src\cp.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -185,6 +186,7 @@
     <ClInclude Include="..\..\src\hwprof.h" />
     <ClInclude Include="..\..\src\mcp.h" />
     <ClInclude Include="..\..\src\gfx.h" />
+    <ClInclude Include="..\..\src\cont.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\xf.h" />
     <ClInclude Include="..\..\src\su.h" />

@@ -11,12 +11,14 @@ the controller's answer bytes, `padsdl.cpp` knew both the SDL side and the way a
 `memcard.cpp` mixed the card format with the EXI lifecycle, and the configuration of a device was
 kept wherever its consumer was.
 
-This module is the single place where a peripheral device lives:
+This module is the subsystem: the pool of devices, the ports they are plugged into, the bindings
+that drive them and the dispatch of the emulation to the device of a port. What it does not contain
+is a device:
 
   * a device is identified by its **DeviceID** (`PERIPH_DEVICE_*`), which fully defines its model
     and its implementation;
   * the devices the user has are kept in a **pool**; each one carries its own name, its own settings
-    and the port it is plugged into, and the settings dialog edits them one by one;
+    and the port it is plugged into, and the settings window edits them one by one;
   * a device publishes its **actuators** - the controls the host drives - and the host binds a
     keyboard key and a game controller button or axis to each of them;
   * the emulation calls the device: the SI poll asks the pad on a channel for its state, an EXI
@@ -28,10 +30,12 @@ headless build) and by the unit tests, and the bindings are resolved against it.
 the backend used to lack: the SDL calls are on one side of the interface, the emulated device on the
 other.
 
-The device implementations live next to the hardware they speak to: the standard controller is here,
-because it is small and it is the model the rest of the module is built around; the memory card is
-in `memcard.cpp`, with the card format and the flash protocol it already owned, and registers its
-factory with `RegisterFactory` so that the pool can create it.
+A device implementation lives next to the hardware it speaks to and registers its factory with
+`RegisterFactory` from a constructor of its own, so that a build which does not compile it simply
+has no such devices:
+
+  * the standard controller is `cont.cpp` (with `cont.h`, which names its actuators);
+  * the memory card is `memcard.cpp`, with the card format and the flash protocol it already owned.
 
 */
 
@@ -306,15 +310,20 @@ public:
 // ---------------------------------------------------------------------------
 // The device configuration
 //
-// Every device of the pool owns the variables `Device<i>_<name>` of the "peripherals" section
-// ("Device0_Type", "Device0_Port", "Device3_VKEY_FOR_A"). The helpers below are what a device
-// implementation uses to read and write them, so that the naming of a variable only exists here.
+// Every device of the pool owns the variables of its own element of the pool (the "Devices" array of
+// the "peripherals" section, see config.h): "Type" is its model, "Name" the name the user gave it,
+// "Port" the port it is plugged into, and whatever else the device itself keeps ("VKEY_FOR_A",
+// "File"). The helpers below are what a device implementation uses to read and write them.
 
-std::string PeriphConfigKey(int index, const char* name);
+bool PeriphConfigExists(int index, const char* name);
 int PeriphConfigInt(int index, const char* name, int def);
 void PeriphConfigSetInt(int index, const char* name, int value);
 std::string PeriphConfigString(int index, const char* name, const std::string& def);
 void PeriphConfigSetString(int index, const char* name, const std::string& value);
+
+//! The host game controller a pad in a port is driven by: the host game controller the host reports
+//! under the number of its socket (see the device implementations, which use it for the motor).
+int HostPadOfPort(int port);
 
 //! The host input of this build. The back end is compiled into the front end (padsdl.cpp in the
 //! SDL one, padnull.cpp in the headless one), so the peripheral subsystem creates it when it is
@@ -324,6 +333,10 @@ void HostInputDestroy();
 
 // ---------------------------------------------------------------------------
 // The subsystem
+
+//! The list of the devices of the pool in the "peripherals" section of the configuration (see the
+//! array accessors in config.h). One entry per device, in the order the pool has them.
+#define PERIPH_DEVICES  "Devices"
 
 //! The pool holds a fixed number of devices and never destroys one while the emulator runs (the
 //! settings dialog reconfigures a device in place), so a device the emulation thread has just asked
@@ -372,12 +385,22 @@ class Peripherals
 public:
 	static Peripherals& Instance();
 
-	//! Build the pool from the configuration and plug the devices in. The emulator calls it once,
-	//! when the machine is created.
+	//! Build the pool from the configuration and plug the devices into the ports the configuration
+	//! gives them. The emulator calls it once, when it starts (not when a machine is created: the
+	//! settings window edits the pool with no game loaded).
 	void Open();
 
 	//! Unplug every device (a memory card is flushed and closed) and drop the pool.
 	void Close();
+
+	//! The machine the devices are plugged into has been built: a device that talks to it (a memory
+	//! card, which is read through an EXI channel) arms itself here. The machine calls it once its
+	//! own interfaces exist.
+	void MachineOpened();
+
+	//! The machine is being taken apart: the devices are unplugged from it (a card flushes the file
+	//! it was writing), and the pool keeps them and the ports they are in.
+	void MachineClosed();
 
 	// -----------------------------------------------------------------------
 	// The pool
@@ -399,9 +422,21 @@ public:
 	//! Put the model's default host bindings into every actuator of a device (see
 	//! HostInput::DefaultBindings). `keyboard` is the caller's: the keyboard defaults belong to the
 	//! first device of a kind, because one set of keys cannot drive the pads of four ports at once.
+	//!
+	//! The application does not write the device back: this is the layout a device that has never
+	//! been configured gets while the pool is built, and building the pool must not change the
+	//! configuration.
+	void ApplyDefaultBindings(int index, bool keyboard);
+
+	//! The same, written back to the configuration (the "Defaults" button of the settings window).
+	//! A caller that means "this device, whatever it takes" passes true for `keyboard`.
 	void DefaultBindings(int index, bool keyboard);
 
-	//! Drop every binding of a device.
+	//! Bind one actuator of a device to a host control and write it back (what the capture of the
+	//! settings window does when the input arrives).
+	void SetBinding(int index, int actuator, bool gamepad, int binding);
+
+	//! Drop every binding of a device and write it back.
 	void ClearBindings(int index);
 
 	//! Whether a device is the first one of its model in the pool. The keyboard defaults belong to

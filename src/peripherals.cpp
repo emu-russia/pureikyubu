@@ -2,31 +2,48 @@
 
 # Peripheral devices
 
-This is the implementation of the subsystem `peripherals.h` declares. Two things live here: the
-pool of devices (what is in it, what is plugged where, what the settings dialog edits) and the
-implementation of the standard controller, which is the device the emulator is built around.
+This is the implementation of the subsystem `peripherals.h` declares: the pool of devices (what is
+in it, what is plugged where, what the settings window edits) and the dispatch of the emulation to
+the device that is plugged into a port. The devices themselves live in their own modules - the
+standard controller in cont.cpp, the memory card in memcard.cpp - and register the factory that
+creates them.
 
 ## The pool and the configuration
 
-The pool is the list of the devices the user has. Every device owns the variables `Device<i>_*` of
-the "peripherals" section of the configuration: its model (`Device0_Type`), the name the user gave
-it (`Device0_Name`), the port it is plugged into (`Device0_Port`) and whatever its own settings are
-(a pad keeps its bindings there, a memory card keeps its file there).
+The pool is the list of the devices the user has, and it is the "Devices" list of the "peripherals"
+section of the configuration: one entry per device, in the order the pool has them, which is why a
+device is addressed by its index and not by a number in the name of a variable (see config.h). An
+entry holds the model of the device ("Type"), the name the user gave it ("Name"), the port it is
+plugged into ("Port") and whatever the device keeps of its own (a pad keeps its bindings there, a
+memory card its file).
 
-A configuration that was written before the pool existed has no `Device<i>_*` variables at all.
-Such a configuration is not migrated: it is *read* through the old names, so that the emulator
-comes up with the same controllers and the same cards as the build that wrote it. The four sockets
-are then `PluggedIn_<n>` from the "controllers" section, the bindings are `VKEY_FOR_*_<n>`, and the
-two card slots are `MemcardA_*` / `MemcardB_*` from "memcards". The first time the settings dialog
-writes a device's own setting, the new name is what is stored, and the old one is left alone.
+An entry whose "Type" is not there is a device slot that was never configured, and the slot of one
+of the console's ports holds the device that port is meant for. An entry whose "Type" is 0 is a
+device that was taken out of the pool: its slot stays empty (so that the index of every other
+device, and of the variables of its configuration, does not change) and the next device that is
+added takes it.
 
-## The pool is stable while the emulator runs
+A configuration that was written before the pool existed has none of this. Such a configuration is
+not migrated: it is *read* through the old names, so that the emulator comes up with the same
+controllers and the same cards as the build that wrote it. The four sockets are then
+`PluggedIn_<n>` from the "controllers" section, the bindings are `VKEY_FOR_*_<n>`, and the two card
+slots are `MemcardA_*` / `MemcardB_*` from "memcards".
+
+## The pool lives as long as the emulator does
+
+The pool is opened when the emulator starts and closed when it is shut down, not with the machine:
+the settings window can be used with no game loaded, and what it edits is the pool (a device is
+plugged into a port of the console, which exists whether or not a machine is running). The machine
+only matters to a memory card, which is an EXI device: it connects to the channel of the machine
+that reads it, so the pool is told when a machine appears and when one goes away (MachineOpened /
+MachineClosed).
+
+## A device is never destroyed while the emulator runs
 
 The emulation thread takes a device out of the pool (to poll a pad, to run a card transfer) while
-the settings dialog may be reconfiguring it. A device is therefore never destroyed while the
-emulator is running: removing one marks its slot unused, and the next device that is added reuses
-the slot. The pool is dropped in one piece by `Close`, which the emulator calls when it takes the
-machine apart, with no emulation running.
+the settings window may be reconfiguring it, so a device is never destroyed before the pool itself
+is closed in one piece. A device that is removed from the pool is kept alive (and its slot is marked
+empty) until then.
 
 */
 
@@ -36,46 +53,35 @@ using namespace Debug;
 
 // ---------------------------------------------------------------------------
 // The device configuration
+//
+// Every device of the pool owns the variables of its own entry of the list (see config.h), so a
+// device implementation names a variable by its own name ("Type", "VKEY_FOR_A") and nothing else.
 
-std::string PeriphConfigKey(int index, const char* name)
+bool PeriphConfigExists(int index, const char* name)
 {
-	char key[0x80];
-	sprintf(key, "Device%i_%s", index, name);
-	return key;
+	return ConfigArrayValueExists(PERIPH_DEVICES, USER_PERIPH, index, name);
 }
 
 int PeriphConfigInt(int index, const char* name, int def)
 {
-	std::string key = PeriphConfigKey(index, name);
-
-	if (!ConfigValueExists(key.c_str(), USER_PERIPH))
-	{
-		return def;
-	}
-
-	return GetConfigInt(key.c_str(), USER_PERIPH);
+	return GetConfigArrayInt(PERIPH_DEVICES, USER_PERIPH, index, name, def);
 }
 
 void PeriphConfigSetInt(int index, const char* name, int value)
 {
-	SetConfigInt(PeriphConfigKey(index, name).c_str(), value, USER_PERIPH);
+	SetConfigArrayInt(PERIPH_DEVICES, USER_PERIPH, index, name, value);
 }
 
 std::string PeriphConfigString(int index, const char* name, const std::string& def)
 {
-	std::string key = PeriphConfigKey(index, name);
+	const wchar_t* value = GetConfigArrayString(PERIPH_DEVICES, USER_PERIPH, index, name);
 
-	if (!ConfigValueExists(key.c_str(), USER_PERIPH))
-	{
-		return def;
-	}
-
-	return Util::WstringToString(GetConfigString(key.c_str(), USER_PERIPH));
+	return (*value != 0) ? Util::WstringToString(value) : def;
 }
 
 void PeriphConfigSetString(int index, const char* name, const std::string& value)
 {
-	SetConfigString(PeriphConfigKey(index, name).c_str(), Util::StringToWstring(value).c_str(), USER_PERIPH);
+	SetConfigArrayString(PERIPH_DEVICES, USER_PERIPH, index, name, Util::StringToWstring(value).c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -165,18 +171,6 @@ namespace
 		{ "Memory Card Slot B", PERIPH_BUS_EXI, PERIPH_DEVICE_MEMCARD },
 	};
 
-	//! The host game controller a pad is driven by: the game controller the host reports as the Nth
-	//! drives the pad in Port N, which is what the backend has always done.
-	int HostPadOf(int port)
-	{
-		if (port >= PERIPH_PORT_SI0 && port <= PERIPH_PORT_SI3)
-		{
-			return port - PERIPH_PORT_SI0;
-		}
-
-		return 0;
-	}
-
 	//! The port of a device of the default pool in a configuration that predates the pool. The old
 	//! format kept the state of the four sockets in "controllers" and the two card slots in
 	//! "memcards" (see the comment at the top of the file).
@@ -239,6 +233,18 @@ namespace
 
 // ---------------------------------------------------------------------------
 // The peripheral subsystem
+
+//! The host game controller a pad in a port is driven by: the host game controller the host reports
+//! under the number of its socket, which is what the SDL backend has always done.
+int HostPadOfPort(int port)
+{
+	if (port >= PERIPH_PORT_SI0 && port <= PERIPH_PORT_SI3)
+	{
+		return port - PERIPH_PORT_SI0;
+	}
+
+	return 0;
+}
 
 Peripherals& Peripherals::Instance()
 {
@@ -343,40 +349,50 @@ PeripheralDevice* Peripherals::CreateDevice(uint32_t type, int index)
 
 void Peripherals::Open()
 {
+	if (opened)
+	{
+		return;
+	}
+
 	Report(Channel::SI, "Peripheral devices\n");
 
 	host = HostInputCreate();
 	opened = true;
 
+	// A configuration that has never seen the pool has no list at all, and then the console comes up
+	// with the device every port is meant for: the four sockets and the two card slots.
 	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
 	{
 		ports[i] = -1;
 
-		// What the pool of this console holds. A configuration that has never seen the pool has no
-		// "Device<i>_Type" at all, and then the slot holds the device its port is meant for: the
-		// first six slots are the four sockets and the two card slots.
-		uint32_t type = (uint32_t)PeriphConfigInt(i, "Type",
-			i < PERIPH_PORT_MAX ? (int)DefaultModelOfPort(i) : PERIPH_DEVICE_NONE);
+		uint32_t type = PERIPH_DEVICE_NONE;
+
+		if (ConfigArrayValueExists(PERIPH_DEVICES, USER_PERIPH, i, "Type"))
+		{
+			type = (uint32_t)PeriphConfigInt(i, "Type", PERIPH_DEVICE_NONE);
+		}
+		else if (i < PERIPH_PORT_MAX)
+		{
+			type = DefaultModelOfPort(i);
+		}
 
 		if (type == PERIPH_DEVICE_NONE)
 		{
-			continue;
+			continue;       // a slot of the pool that holds no device
 		}
 
-		devices[i] = CreateDevice(type, i);
-
-		if (devices[i] == nullptr)
+		if (CreateDevice(type, i) == nullptr)
 		{
 			continue;
 		}
 
 		names[i] = PeriphConfigString(i, "Name", ModelName(type));
+
 		// The port is read after the device exists, so that a configuration that predates the pool
 		// is asked for the old name only when the new one is not there (see LegacyPort). The
 		// configuration is not written back here: building the pool from it must not change it.
-		std::string portKey = PeriphConfigKey(i, "Port");
-		int port = ConfigValueExists(portKey.c_str(), USER_PERIPH)
-			? GetConfigInt(portKey.c_str(), USER_PERIPH)
+		int port = ConfigArrayValueExists(PERIPH_DEVICES, USER_PERIPH, i, "Port")
+			? PeriphConfigInt(i, "Port", -1)
 			: LegacyPort(i);
 
 		if (port >= 0 && port < PERIPH_PORT_MAX)
@@ -393,18 +409,12 @@ void Peripherals::Close()
 		return;
 	}
 
+	MachineClosed();
+
 	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
 	{
-		if (devices[i] != nullptr)
-		{
-			if (ports[i] >= 0)
-			{
-				devices[i]->Detach();
-			}
-
-			delete devices[i];
-			devices[i] = nullptr;
-		}
+		delete devices[i];
+		devices[i] = nullptr;
 
 		ports[i] = -1;
 		names[i].clear();
@@ -420,6 +430,45 @@ void Peripherals::Close()
 	HostInputDestroy();
 	host = nullptr;
 	opened = false;
+}
+
+void Peripherals::MachineOpened()
+{
+	lock.Lock();
+
+	int attached[PERIPH_MAX_DEVICES];
+	int count = 0;
+
+	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+	{
+		if (devices[i] != nullptr && ports[i] >= 0)
+		{
+			attached[count++] = i;
+		}
+	}
+
+	lock.Unlock();
+
+	// A device is plugged into a socket of the console, and the console has just been built: a
+	// memory card goes into its slot here (it is an EXI device and needs the console to talk to).
+	for (int i = 0; i < count; i++)
+	{
+		devices[attached[i]]->Attach(ports[attached[i]]);
+	}
+}
+
+void Peripherals::MachineClosed()
+{
+	// The console is being taken apart, so the devices that were plugged into it are unplugged (a
+	// card flushes the file it was writing to). The pool keeps them and the ports they are in: only
+	// the machine they were talking to is gone.
+	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+	{
+		if (devices[i] != nullptr && ports[i] >= 0)
+		{
+			devices[i]->Detach();
+		}
+	}
 }
 
 PeripheralDevice* Peripherals::Device(int index)
@@ -471,7 +520,12 @@ int Peripherals::AddDevice(uint32_t type)
 	names[index] = ModelName(type);
 	lock.Unlock();
 
+	// The device is written to the configuration as it is added, name and settings together, so that
+	// the pool of the next run has it (a device that is only in the memory of this run is not a
+	// device the user has).
 	PeriphConfigSetInt(index, "Type", (int)type);
+	PeriphConfigSetString(index, "Name", names[index]);
+	device->SaveConfig(index);
 
 	return index;
 }
@@ -674,7 +728,7 @@ void Peripherals::Detach(int index)
 	}
 }
 
-void Peripherals::DefaultBindings(int index, bool keyboard)
+void Peripherals::ApplyDefaultBindings(int index, bool keyboard)
 {
 	PeripheralDevice* device = Device(index);
 
@@ -705,6 +759,46 @@ void Peripherals::DefaultBindings(int index, bool keyboard)
 	}
 }
 
+void Peripherals::DefaultBindings(int index, bool keyboard)
+{
+	ApplyDefaultBindings(index, keyboard);
+
+	PeripheralDevice* device = Device(index);
+
+	if (device != nullptr)
+	{
+		device->SaveConfig(index);
+	}
+}
+
+void Peripherals::SetBinding(int index, int actuator, bool gamepad, int binding)
+{
+	PeripheralDevice* device = Device(index);
+
+	if (device == nullptr)
+	{
+		return;
+	}
+
+	PeriphBindings* bindings = device->ActuatorBindings(actuator);
+
+	if (bindings == nullptr)
+	{
+		return;
+	}
+
+	if (gamepad)
+	{
+		bindings->gamepad = binding;
+	}
+	else
+	{
+		bindings->keyboard = binding;
+	}
+
+	device->SaveConfig(index);
+}
+
 void Peripherals::ClearBindings(int index)
 {
 	PeripheralDevice* device = Device(index);
@@ -724,6 +818,8 @@ void Peripherals::ClearBindings(int index)
 			bindings->gamepad = 0;
 		}
 	}
+
+	device->SaveConfig(index);
 }
 
 bool Peripherals::FirstOfModel(int index)
@@ -764,7 +860,7 @@ bool Peripherals::PollSI(int chan, PADState* state)
 
 	// The bindings are resolved here, on the emulation thread: the device is handed the value of
 	// every actuator and turns them into its protocol by itself.
-	int pad = HostPadOf(port);
+	int pad = HostPadOfPort(port);
 
 	for (int i = 0; i < device->ActuatorCount(); i++)
 	{
@@ -839,364 +935,3 @@ bool Peripherals::SetMotorSI(int chan, int cmd)
 
 	return device->SetMotor(cmd);
 }
-
-// ---------------------------------------------------------------------------
-// The standard controller (DOL-003)
-//
-// The pad is a Joybus device: the console polls it, and the pad answers with its buttons and its six
-// analog channels. What the guest library sees is the emulator's PADState, and the SI register file
-// packs it into the input buffer registers the way the hardware does (see si.cpp).
-//
-// The actuators are the controls the host drives. A keyboard key can only say "pressed", so the two
-// sticks publish the half and the full deflection of every direction as separate controls: that is
-// what gives a key-driven stick its magnitude. A game controller drives the same controls with its
-// buttons and its axes, and its axis deflection is scaled into the range of the control.
-
-namespace
-{
-	enum
-	{
-		ACT_UP = 0,
-		ACT_DOWN,
-		ACT_LEFT,
-		ACT_RIGHT,
-		ACT_XUP50,
-		ACT_XUP100,
-		ACT_XDOWN50,
-		ACT_XDOWN100,
-		ACT_XLEFT50,
-		ACT_XLEFT100,
-		ACT_XRIGHT50,
-		ACT_XRIGHT100,
-		ACT_CXUP,
-		ACT_CXDOWN,
-		ACT_CXLEFT,
-		ACT_CXRIGHT,
-		ACT_TRIGGERL,
-		ACT_TRIGGERR,
-		ACT_TRIGGERZ,
-		ACT_A,
-		ACT_B,
-		ACT_X,
-		ACT_Y,
-		ACT_START,
-
-		ACT_MAX
-	};
-
-	//! The analog controls swing the full scale of a keyboard-driven direction and half of it for
-	//! the "50%" controls; the two triggers have the range of the analog channel of the pad.
-	constexpr int ACT_FULL = 127;
-	constexpr int ACT_HALF = 63;
-	constexpr int ACT_TRIG = 255;
-
-	const PeriphActuator pad_actuators[ACT_MAX] =
-	{
-		{ "Buttons",       "Up",          "UP",        1 },
-		{ "Buttons",       "Down",        "DOWN",      1 },
-		{ "Buttons",       "Left",        "LEFT",      1 },
-		{ "Buttons",       "Right",       "RIGHT",     1 },
-		{ "Control Stick", "Up 50%",      "XUP50",     ACT_HALF },
-		{ "Control Stick", "Up 100%",     "XUP100",    ACT_FULL },
-		{ "Control Stick", "Down 50%",    "XDOWN50",   ACT_HALF },
-		{ "Control Stick", "Down 100%",   "XDOWN100",  ACT_FULL },
-		{ "Control Stick", "Left 50%",    "XLEFT50",   ACT_HALF },
-		{ "Control Stick", "Left 100%",   "XLEFT100",  ACT_FULL },
-		{ "Control Stick", "Right 50%",   "XRIGHT50",  ACT_HALF },
-		{ "Control Stick", "Right 100%",  "XRIGHT100", ACT_FULL },
-		{ "C Stick",       "C Up",        "CXUP",      ACT_FULL },
-		{ "C Stick",       "C Down",      "CXDOWN",    ACT_FULL },
-		{ "C Stick",       "C Left",      "CXLEFT",    ACT_FULL },
-		{ "C Stick",       "C Right",     "CXRIGHT",   ACT_FULL },
-		{ "Triggers",      "L",           "TRIGGERL",  ACT_TRIG },
-		{ "Triggers",      "R",           "TRIGGERR",  ACT_TRIG },
-		{ "Triggers",      "Z",           "TRIGGERZ",  1 },
-		{ "Buttons",       "A",           "A",         1 },
-		{ "Buttons",       "B",           "B",         1 },
-		{ "Buttons",       "X",           "X",         1 },
-		{ "Buttons",       "Y",           "Y",         1 },
-		{ "Buttons",       "Start",       "START",     1 },
-	};
-
-	//! The configuration variable of a binding of a pad. A configuration that predates the pool
-	//! keeps the bindings of a socket under the old name (`VKEY_FOR_A_0` for the first pad).
-	int LoadBinding(int index, const char* kind, const char* suffix, bool& found)
-	{
-		char key[0x80];
-
-		sprintf(key, "Device%i_%s_FOR_%s", index, kind, suffix);
-
-		if (ConfigValueExists(key, USER_PERIPH))
-		{
-			found = true;
-			return GetConfigInt(key, USER_PERIPH);
-		}
-
-		sprintf(key, "%s_FOR_%s_%i", kind, suffix, index);
-
-		if (ConfigValueExists(key, USER_PADS))
-		{
-			found = true;
-			return GetConfigInt(key, USER_PADS);
-		}
-
-		found = false;
-		return 0;
-	}
-
-	void SaveBinding(int index, const char* kind, const char* suffix, int value)
-	{
-		char key[0x80];
-		sprintf(key, "Device%i_%s_FOR_%s", index, kind, suffix);
-		SetConfigInt(key, value, USER_PERIPH);
-	}
-}
-
-//! The standard controller, DOL-003.
-class StandardPad : public PeripheralDevice
-{
-	int             index = -1;                     //!< the pool index (names the configuration)
-	int             port = -1;
-	int             state[ACT_MAX] = { 0 };         //!< the value of every actuator
-	PeriphBindings  bindings[ACT_MAX];
-	int             motor = PAD_MOTOR_STOP;
-
-	//! The value of a control, as the host drives it.
-	int Act(int actuator) const { return state[actuator]; }
-
-	//! The pressure of a direction of a stick: the half and the full control of the same direction
-	//! may both be driven at once, and the larger of the two is what the stick sees.
-	int Dir(int half, int full) const { return my_max(state[half], state[full]); }
-
-	//! One axis of a stick from the two directions that drive it. The actuator keeps the deviation
-	//! from the middle of the channel, which is what the guest reads (see si.cpp).
-	static int8_t StickAxis(int negative, int positive)
-	{
-		int value = positive - negative;
-
-		if (value > 127) value = 127;
-		if (value < -127) value = -127;
-
-		return (int8_t)value;
-	}
-
-public:
-	StandardPad(int index) : index(index)
-	{
-		for (int i = 0; i < ACT_MAX; i++)
-		{
-			bindings[i].keyboard = 0;
-			bindings[i].gamepad = 0;
-		}
-	}
-
-	uint32_t Type() override { return PERIPH_DEVICE_STANDARD_PAD; }
-
-	int ActuatorCount() override { return ACT_MAX; }
-	const PeriphActuator* Actuator(int index) override
-	{
-		return (index >= 0 && index < ACT_MAX) ? &pad_actuators[index] : nullptr;
-	}
-	PeriphBindings* ActuatorBindings(int index) override
-	{
-		return (index >= 0 && index < ACT_MAX) ? &bindings[index] : nullptr;
-	}
-
-	void SetState(int actuator, int value) override
-	{
-		if (actuator >= 0 && actuator < ACT_MAX)
-		{
-			if (value < 0) value = 0;
-			if (value > pad_actuators[actuator].max) value = pad_actuators[actuator].max;
-
-			state[actuator] = value;
-		}
-	}
-
-	// -----------------------------------------------------------------------
-
-	void LoadConfig(int index) override
-	{
-		this->index = index;
-
-		bool configured = false;
-
-		for (int i = 0; i < ACT_MAX; i++)
-		{
-			bool found = false;
-
-			bindings[i].keyboard = LoadBinding(index, "VKEY", pad_actuators[i].id, found);
-			configured |= found;
-
-			bindings[i].gamepad = LoadBinding(index, "GCKEY", pad_actuators[i].id, found);
-			configured |= found;
-		}
-
-		// A pad that has never been configured gets the standard layout of its model right away, so
-		// that a pad which is plugged into a socket works without a trip to the settings dialog. The
-		// keyboard half of it only goes to the first pad of the pool (see FirstOfModel).
-		if (!configured)
-		{
-			Peripherals::Instance().DefaultBindings(index, Peripherals::Instance().FirstOfModel(index));
-		}
-	}
-
-	void SaveConfig(int index) override
-	{
-		for (int i = 0; i < ACT_MAX; i++)
-		{
-			SaveBinding(index, "VKEY", pad_actuators[i].id, bindings[i].keyboard);
-			SaveBinding(index, "GCKEY", pad_actuators[i].id, bindings[i].gamepad);
-		}
-	}
-
-	void Attach(int port) override
-	{
-		this->port = port;
-	}
-
-	void Detach() override
-	{
-		// A motor that is still running must be stopped on the host when the pad is unplugged.
-		HostInput* host = Peripherals::Instance().Host();
-
-		if (motor != PAD_MOTOR_STOP && host != nullptr)
-		{
-			host->Rumble(HostPadOf(port), PAD_MOTOR_STOP);
-		}
-
-		motor = PAD_MOTOR_STOP;
-		port = -1;
-	}
-
-	// -----------------------------------------------------------------------
-
-	//! The answer to the Joybus command set (standard-controller.md 3).
-	void Transfer(int outlen, int inlen, uint8_t* buf) override
-	{
-		uint8_t cmd = buf[0];
-
-		switch (cmd)
-		{
-			// Get type and status
-			case 0x00:
-			{
-				// 0 : use sub-type
-				// 2 : n64 mouse
-				// 5 : n64 controller
-				// 9 : default gc controller
-				buf[0] = 9;
-				buf[1] = 0;         // sub-type
-				buf[2] = (uint8_t)(motor << 4);     // STAT: the latched motor state is bits 5:4
-				break;
-			}
-
-			// The standard poll: the data the guest reads comes from the poll (see Poll), so a
-			// communication transfer of it has nothing to answer.
-			case 0x40:
-			case 0x42:
-				return;
-
-			// Read the calibration origins
-			case 0x41:
-			{
-				buf[0] = 0x41;
-				buf[1] = 0;
-				buf[2] = buf[3] = buf[4] = buf[5] = 0x80;
-				buf[6] = buf[7] = 0x1f;
-				break;
-			}
-
-			default:
-			{
-				Debug::Halt(
-					"Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
-					port >= PERIPH_PORT_SI0 ? port - PERIPH_PORT_SI0 : 0, cmd, outlen, inlen);
-			}
-		}
-	}
-
-	//! The state the guest polls: the buttons and the six analog channels.
-	bool Poll(PADState* pad) override
-	{
-		memset(pad, 0, sizeof(PADState));
-
-		uint16_t button = 0;
-
-		if (Act(ACT_UP)) button |= PAD_BUTTON_UP;
-		if (Act(ACT_DOWN)) button |= PAD_BUTTON_DOWN;
-		if (Act(ACT_LEFT)) button |= PAD_BUTTON_LEFT;
-		if (Act(ACT_RIGHT)) button |= PAD_BUTTON_RIGHT;
-
-		if (Act(ACT_A)) button |= PAD_BUTTON_A;
-		if (Act(ACT_B)) button |= PAD_BUTTON_B;
-		if (Act(ACT_X)) button |= PAD_BUTTON_X;
-		if (Act(ACT_Y)) button |= PAD_BUTTON_Y;
-		if (Act(ACT_START)) button |= PAD_BUTTON_START;
-
-		// The digital L and R are only reported when their analog control is pressed all the way
-		// down, which is what the pad does.
-		if (Act(ACT_TRIGGERL) > 0)
-		{
-			button |= PAD_TRIGGER_L;
-		}
-
-		if (Act(ACT_TRIGGERR) > 0)
-		{
-			button |= PAD_TRIGGER_R;
-		}
-
-		if (Act(ACT_TRIGGERZ))
-		{
-			button |= PAD_TRIGGER_Z;
-		}
-
-		pad->button = button;
-
-		pad->stickX = StickAxis(Dir(ACT_XLEFT50, ACT_XLEFT100), Dir(ACT_XRIGHT50, ACT_XRIGHT100));
-		pad->stickY = StickAxis(Dir(ACT_XDOWN50, ACT_XDOWN100), Dir(ACT_XUP50, ACT_XUP100));
-		pad->substickX = StickAxis(state[ACT_CXLEFT], state[ACT_CXRIGHT]);
-		pad->substickY = StickAxis(state[ACT_CXDOWN], state[ACT_CXUP]);
-		pad->triggerLeft = (uint8_t)Act(ACT_TRIGGERL);
-		pad->triggerRight = (uint8_t)Act(ACT_TRIGGERR);
-
-		return true;
-	}
-
-	bool SetMotor(int cmd) override
-	{
-		HostInput* host = Peripherals::Instance().Host();
-
-		if (host == nullptr)
-		{
-			return false;
-		}
-
-		motor = cmd;
-
-		return host->Rumble(HostPadOf(port), cmd);
-	}
-};
-
-// ---------------------------------------------------------------------------
-// The built in models
-
-namespace
-{
-	PeripheralDevice* CreateStandardPad(int index)
-	{
-		return new StandardPad(index);
-	}
-}
-
-//! The models this module implements. The devices of the other modules register themselves (see
-//! memcard.cpp), which is why this runs when the pool is first built rather than at load time.
-static struct PeriphBuiltinModels
-{
-	PeriphBuiltinModels()
-	{
-		Peripherals::RegisterFactory(PERIPH_DEVICE_STANDARD_PAD,
-			"Standard Controller", "DOL-003, the pad on one of the four SI sockets",
-			PERIPH_BUS_SI, CreateStandardPad);
-	}
-} periph_builtin_models;

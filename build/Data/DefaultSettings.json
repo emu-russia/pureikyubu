@@ -63,18 +63,6 @@
 
 	"peripherals":
 	{
-		"Device0_Type": 65537,
-		"Device0_Name": "Controller 1",
-		"Device1_Type": 65537,
-		"Device1_Name": "Controller 2",
-		"Device2_Type": 65537,
-		"Device2_Name": "Controller 3",
-		"Device3_Type": 65537,
-		"Device3_Name": "Controller 4",
-		"Device4_Type": 131073,
-		"Device4_Name": "Memory Card A",
-		"Device5_Type": 131073,
-		"Device5_Name": "Memory Card B"
 	}
 	
 }

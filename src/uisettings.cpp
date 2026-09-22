@@ -678,11 +678,9 @@ static void settings_page_devices(int bus)
 
 		if (index >= 0)
 		{
-			// A device that is added gets the standard bindings of its model right away; the keyboard
-			// ones only when it is the first of its kind (see Peripherals::DefaultBindings).
-			pool.DefaultBindings(index, pool.FirstOfModel(index));
-			pool.Device(index)->SaveConfig(index);
-
+			// The device, its name and its settings are in the pool and in the configuration now
+			// (see Peripherals::AddDevice); its bindings are the standard layout of its model and
+			// saved with it.
 			periph_selected = index;
 			selected = pool.Device(index);
 		}
@@ -829,8 +827,10 @@ static void settings_page_devices(int bus)
 
 		if (ImGui::Button("Defaults", ImVec2(80, 0)))
 		{
-			pool.DefaultBindings(periph_selected, pool.FirstOfModel(periph_selected));
-			selected->SaveConfig(periph_selected);
+			// The button means "this device": both the keys and the game controller, even when it is
+			// not the first pad of the pool (the automatic layout keeps that rule, see
+			// ContPad::LoadConfig).
+			pool.DefaultBindings(periph_selected, true);
 		}
 
 		ImGui::SameLine();
@@ -838,7 +838,6 @@ static void settings_page_devices(int bus)
 		if (ImGui::Button("Clear", ImVec2(80, 0)))
 		{
 			pool.ClearBindings(periph_selected);
-			selected->SaveConfig(periph_selected);
 		}
 
 		if (pad_capture_active)
@@ -1121,26 +1120,8 @@ void UiSettingsFrame()
 	// Apply the binding the event loop captured
 	if (pad_capture_done)
 	{
-		PeripheralDevice* device = Peripherals::Instance().Device(pad_capture_device);
-
-		if (device != nullptr && pad_capture_actuator >= 0)
-		{
-			PeriphBindings* bindings = device->ActuatorBindings(pad_capture_actuator);
-
-			if (bindings != nullptr)
-			{
-				if (pad_capture_gamepad)
-				{
-					bindings->gamepad = pad_captured_binding;
-				}
-				else
-				{
-					bindings->keyboard = pad_captured_binding;
-				}
-
-				device->SaveConfig(pad_capture_device);
-			}
-		}
+		Peripherals::Instance().SetBinding(pad_capture_device, pad_capture_actuator,
+			pad_capture_gamepad, pad_captured_binding);
 
 		pad_capture_abort();
 	}

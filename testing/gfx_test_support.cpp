@@ -247,14 +247,18 @@ namespace GfxUnitTest
 		// it through the PI register window (PIRegWrite), exactly like the CPU does.
 		flipper->cp = new Flipper::CommandProcessor(flipper, &config);
 
-		// The peripherals of the machine: the pool holds the four controller sockets, and a pad is
-		// plugged into every one of them (see the peripheral subsystem doubles below).
+		// The peripherals of the machine. In the emulator the pool is opened once, with the emulator
+		// itself (see EMUCtor); a test machine has no emulator around it, so it opens the pool here.
+		// The four controller sockets then get a pad each, which is what the PAD plug-in double used
+		// to answer with (see the peripheral subsystem doubles below).
 		Peripherals::Instance().Open();
 
 		for (int chan = 0; chan < 4; chan++)
 		{
 			Peripherals::Instance().Attach(chan, PERIPH_PORT_SI(chan));
 		}
+
+		Peripherals::Instance().MachineOpened();
 
 		serialInterface = new Flipper::SerialInterface(flipper, &config);
 		flipper->si = serialInterface;
@@ -288,8 +292,9 @@ namespace GfxUnitTest
 		flipper->cp = nullptr;
 
 		// The devices of the pool are unplugged while the bus they are plugged into still exists: a
-		// memory card detaches from its EXI channel here.
-		Peripherals::Instance().Close();
+		// memory card detaches from its EXI channel here. The pool itself is the emulator's and is
+		// left open for the next machine.
+		Peripherals::Instance().MachineClosed();
 
 		delete serialInterface;
 		serialInterface = nullptr;
@@ -1105,6 +1110,86 @@ bool ConfigValueExists(const char* var, const char* path)
 	return gfxTestConfigInts.count(key) != 0 ||
 		gfxTestConfigBools.count(key) != 0 ||
 		gfxTestConfigStrings.count(key) != 0;
+}
+
+// -------------------------------------------------------------------------------------------
+// The lists of objects of the settings double (the peripheral pool is one, see config.h). A member
+// of an entry is keyed by the list, the entry and the member, and the double keeps the length of
+// every list it has seen, which is what a device that has never been configured looks like to the
+// pool: a list that does not have its entry.
+// -------------------------------------------------------------------------------------------
+
+static std::map<std::string, int> gfxTestArrayInts;
+static std::map<std::string, std::wstring> gfxTestArrayStrings;
+static std::map<std::string, int> gfxTestArraySizes;
+
+static std::string TestArrayKey(const char* var, const char* path, int index, const char* member)
+{
+	std::string key = path != nullptr ? path : "";
+	key += '/';
+	key += TestConfigKey(var);
+	key += '/';
+	key += std::to_string(index);
+	key += '/';
+	key += member != nullptr ? member : "";
+	return key;
+}
+
+static std::string TestArrayListKey(const char* var, const char* path)
+{
+	std::string key = path != nullptr ? path : "";
+	key += '/';
+	key += TestConfigKey(var);
+	return key;
+}
+
+int GetConfigArraySize(const char* var, const char* path)
+{
+	auto it = gfxTestArraySizes.find(TestArrayListKey(var, path));
+	return (it == gfxTestArraySizes.end()) ? 0 : it->second;
+}
+
+bool ConfigArrayValueExists(const char* var, const char* path, int index, const char* member)
+{
+	std::string key = TestArrayKey(var, path, index, member);
+
+	return gfxTestArrayInts.count(key) != 0 || gfxTestArrayStrings.count(key) != 0;
+}
+
+int GetConfigArrayInt(const char* var, const char* path, int index, const char* member, int def)
+{
+	auto it = gfxTestArrayInts.find(TestArrayKey(var, path, index, member));
+	return (it == gfxTestArrayInts.end()) ? def : it->second;
+}
+
+const wchar_t* GetConfigArrayString(const char* var, const char* path, int index, const char* member)
+{
+	static std::wstring empty;
+
+	auto it = gfxTestArrayStrings.find(TestArrayKey(var, path, index, member));
+
+	if (it == gfxTestArrayStrings.end())
+	{
+		return empty.c_str();
+	}
+
+	return it->second.c_str();
+}
+
+void SetConfigArrayInt(const char* var, const char* path, int index, const char* member, int value)
+{
+	gfxTestArrayInts[TestArrayKey(var, path, index, member)] = value;
+
+	int& size = gfxTestArraySizes[TestArrayListKey(var, path)];
+	if (size <= index) size = index + 1;
+}
+
+void SetConfigArrayString(const char* var, const char* path, int index, const char* member, const wchar_t* value)
+{
+	gfxTestArrayStrings[TestArrayKey(var, path, index, member)] = value != nullptr ? value : L"";
+
+	int& size = gfxTestArraySizes[TestArrayListKey(var, path)];
+	if (size <= index) size = index + 1;
 }
 
 // -------------------------------------------------------------------------------------------

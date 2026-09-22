@@ -714,7 +714,6 @@ class MemoryCardDevice : public PeripheralDevice
 	int             port = -1;          //!< PERIPH_PORT_SLOTA / SLOTB, -1: the card is out of its slot
 	std::wstring    file;
 	bool            syncSave = false;
-	bool            connectTried = false;   //!< the card was already handed to its slot once
 
 	//! The slot the card is in (see MEMCARD_SLOTA / MEMCARD_SLOTB).
 	int Slot() const { return port >= PERIPH_PORT_SLOTA ? port - PERIPH_PORT_SLOTA : -1; }
@@ -824,7 +823,6 @@ public:
 	void Attach(int port) override
 	{
 		this->port = port;
-		connectTried = false;
 
 		if (file.empty() || !Util::FileExists(file))
 		{
@@ -832,11 +830,12 @@ public:
 			return;
 		}
 
-		// The card is pointed at its file here but it goes in when the guest first talks to the slot
-		// (see ExiTransfer): the pool is built while the machine is still being put together, and a
-		// card that connects to the EXI channel of a half built console has nothing to connect to.
 		memcard[Slot()].syncSave = syncSave;
-		MCUseFile(Slot(), file.c_str(), false);
+
+		// The card is pointed at its file here, and it goes into the slot when there is a console to
+		// put it in: the pool of devices is built before the machine is (see Peripherals::Open and
+		// MachineOpened), so the machine it is plugged into may not exist yet.
+		MCUseFile(Slot(), file.c_str(), Flipper::HW != nullptr && Flipper::HW->exi != nullptr);
 	}
 
 	void Detach() override
@@ -847,23 +846,12 @@ public:
 		}
 
 		port = -1;
-		connectTried = false;
 	}
 
 	// -----------------------------------------------------------------------
 
 	void ExiTransfer(Flipper::ExternalInterface* exi) override
 	{
-		// The card goes in the first time the guest addresses the slot. That is also when the OS is
-		// told about it: a card that was in the slot from power-on does not raise the insertion
-		// interrupt the OS watches for, but the probe of a card that is not there is a transfer too,
-		// so the answer of the probe is what decides what the guest sees.
-		if (Slot() >= 0 && !memcard[Slot()].connected && !connectTried)
-		{
-			connectTried = true;
-			MCConnect(Slot());      // it reports a file it cannot open by itself
-		}
-
 		MCTransfer(exi);
 	}
 };

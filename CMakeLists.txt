@@ -52,6 +52,7 @@ set (PUREIKYUBU_CORE
 	src/bootrtc.cpp
 	src/bump.cpp
 	src/config.cpp
+	src/cont.cpp
 	src/cp.cpp
 	src/debug.cpp
 	src/di.cpp

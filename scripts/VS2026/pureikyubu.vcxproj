@@ -40,6 +40,7 @@
     <ClInclude Include="..\..\src\bootrtc.h" />
     <ClInclude Include="..\..\src\bump.h" />
     <ClInclude Include="..\..\src\config.h" />
+    <ClInclude Include="..\..\src\cont.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\debug.h" />
     <ClInclude Include="..\..\src\debugui2.h" />
@@ -114,6 +115,7 @@
     <ClCompile Include="..\..\src\bootrtc.cpp" />
     <ClCompile Include="..\..\src\bump.cpp" />
     <ClCompile Include="..\..\src\config.cpp" />
+    <ClCompile Include="..\..\src\cont.cpp" />
     <ClCompile Include="..\..\src\cp.cpp" />
     <ClCompile Include="..\..\src\debug.cpp" />
     <ClCompile Include="..\..\src\debugui2.cpp" />

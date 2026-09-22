@@ -625,6 +625,13 @@ void EMUCtor()
 	DVD::InitSubsystem();
 	HLEInit();
 	Debug::g_PerfCounters = new Debug::PerfCounters();
+
+	// The peripherals of the console are not part of the machine: the pool of devices (and the
+	// configuration of every one of them) is what the settings window edits, and the window is
+	// usable with no game loaded. It is opened here, with the emulator, and a machine that is built
+	// later is what the devices are plugged into (see Flipper::Flipper).
+	Peripherals::Instance().Open();
+
 	emu.init = true;
 }
 
@@ -638,6 +645,10 @@ void EMUDtor()
 	// The server is shut down before the nodes it publishes go away, so that a client that is
 	// still connected cannot call into a half-destroyed debug interface.
 	Mcp::StopTransport();
+
+	// The pool of peripheral devices goes last: it is what the settings window edits, and it
+	// outlives every machine (see EMUCtor).
+	Peripherals::Instance().Close();
 
 	JDI::Hub.RemoveNode(L"MCP_JDI_JSON");
 	JDI::Hub.RemoveNode(L"EMU_JDI_JSON");

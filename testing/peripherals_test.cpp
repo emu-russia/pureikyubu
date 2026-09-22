@@ -13,6 +13,7 @@
 
 #include "pch.h"
 #include "gfx_test_common.h"
+#include "../src/cont.h"
 
 using namespace GfxUnitTest;
 
@@ -243,6 +244,65 @@ namespace pureikyubutest
 			pool.ClearBindings(index);
 			Assert::AreEqual(0, pad->ActuatorBindings(a)->keyboard, L"the bindings were dropped");
 			Assert::AreEqual(0, pad->ActuatorBindings(a)->gamepad, L"both of them");
+
+			pool.RemoveDevice(index);
+		}
+
+		// The pool is what the settings window edits, and it is the configuration: a device that is
+		// added, the name it is given and its bindings are all there after the emulator was closed
+		// and started again (which is what the settings window of a later run reads).
+		TEST_METHOD(Peripherals_ThePoolSurvivesARestart)
+		{
+			GfxTestMachine& m = M();
+			Peripherals& pool = Peripherals::Instance();
+
+			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
+			Assert::IsTrue(index >= 0, L"the pool takes another pad");
+
+			pool.SetName(index, "Test Pad");
+
+			PeripheralDevice* pad = pool.Device(index);
+			int a = ActuatorOf(pad, "A");
+			pool.SetBinding(index, a, false, 0x1234);       // as the capture of the settings window does it
+			Assert::IsTrue(ActuatorOf(pad, "A") == PAD_ACT_A, L"the actuators are in the order of cont.h");
+
+			// The emulator is closed and started again.
+			pool.Close();
+			pool.Open();
+
+			PeripheralDevice* again = pool.Device(index);
+			Assert::IsNotNull(again, L"the added pad is in the pool again");
+			Assert::IsTrue(pool.Name(index) == "Test Pad", L"with the name it was given");
+			Assert::AreEqual(0x1234, again->ActuatorBindings(ActuatorOf(again, "A"))->keyboard,
+				L"and with the binding it was given");
+
+			pool.RemoveDevice(index);
+		}
+
+		// "Defaults" of the settings window means "this device": both the keys and the game controller,
+		// even for a pad that is not the first one of the pool.
+		TEST_METHOD(Peripherals_TheDefaultsButtonFillsEveryControl)
+		{
+			M();
+			Peripherals& pool = Peripherals::Instance();
+
+			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
+			PeripheralDevice* pad = pool.Device(index);
+
+			pool.ClearBindings(index);
+			pool.DefaultBindings(index, true);
+
+			int a = ActuatorOf(pad, "A");
+			Assert::AreEqual(PERIPH_HOST_MAKE_BUTTON(0), pad->ActuatorBindings(a)->gamepad, L"the game controller of A");
+			Assert::AreEqual(TestDefaultKey, pad->ActuatorBindings(a)->keyboard, L"and its key");
+
+			// The device's own settings were written back with it.
+			int keyboard = pad->ActuatorBindings(a)->keyboard;
+			pool.Close();
+			pool.Open();
+
+			Assert::AreEqual(keyboard, pool.Device(index)->ActuatorBindings(ActuatorOf(pool.Device(index), "A"))->keyboard,
+				L"the defaults are in the configuration");
 
 			pool.RemoveDevice(index);
 		}

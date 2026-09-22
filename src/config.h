@@ -67,3 +67,37 @@ void SetConfigBool(const char* var, bool newVal, const char* path);
 // everywhere in the emulator, but a caller that has to tell a configuration written before a
 // setting existed from one that holds its default needs this (see peripherals.cpp).
 bool ConfigValueExists(const char* var, const char* path);
+
+// ---------------------------------------------------------------------------
+// Arrays of objects
+//
+// A section can hold a list of objects, one object per entry, so that an entry is addressed by its
+// place in the list instead of by a number in the name of a variable:
+//
+//   "peripherals":
+//   {
+//       "Devices":
+//       [
+//           { "Type": 65537, "Name": "Controller 1", "VKEY_FOR_A": 27 },
+//           { "Type": 131073, "Name": "Memory Card A", "File": "Data/card.mci" }
+//       ]
+//   }
+//
+// This is the storage of the peripheral pool (see peripherals.h). A member that is written to an
+// entry that is not there yet creates the list, the entry and the member, so that a device which is
+// configured for the first time writes itself into the pool.
+
+//! How many entries the list has (0 when there is no such list).
+int GetConfigArraySize(const char* var, const char* path);
+
+//! Whether an entry has that member.
+bool ConfigArrayValueExists(const char* var, const char* path, int index, const char* member);
+
+//! The value of a member of an entry, or `def` when it is not there.
+int GetConfigArrayInt(const char* var, const char* path, int index, const char* member, int def);
+
+//! The value of a member of an entry as text (an empty string when it is not there).
+const wchar_t* GetConfigArrayString(const char* var, const char* path, int index, const char* member);
+
+void SetConfigArrayInt(const char* var, const char* path, int index, const char* member, int value);
+void SetConfigArrayString(const char* var, const char* path, int index, const char* member, const wchar_t* value);
