@@ -1501,6 +1501,20 @@ Json::Value* Json::Value::Replace(Value* _parent, Value* other)
 	switch (other->type)
 	{
 		case ValueType::Array:
+			// The list of the file replaces the list that was there (see the comment above).
+			while (!child->children.empty())
+			{
+				Value* entry = child->children.front();
+				child->children.pop_front();
+				delete entry;
+			}
+
+			for (auto it = other->children.begin(); it != other->children.end(); ++it)
+			{
+				child->children.push_back(Add(child, *it));
+			}
+			break;
+
 		case ValueType::Object:
 			for (auto it = other->children.begin(); it != other->children.end(); ++it)
 			{
@@ -1563,6 +1577,21 @@ Json::Value* Json::Value::ByType(const ValueType byType)
 		}
 	}
 	return nullptr;
+}
+
+bool Json::Value::Remove(Value* child)
+{
+	for (auto it = children.begin(); it != children.end(); ++it)
+	{
+		if (*it == child)
+		{
+			children.erase(it);
+			delete child;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void Json::Serialize(void* text, size_t maxTextSize, size_t& actualTextSize)

@@ -238,6 +238,10 @@ public:
 		Value* ByName(const char* byName);
 		Value* ByType(const ValueType byType);
 
+		//! Take a member (or a list entry) out of this value and delete it. Returns true when it was
+		//! there.
+		bool Remove(Value* child);
+
 		void SetName(const char* newName)
 		{
 			if (name != nullptr)

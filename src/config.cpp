@@ -156,6 +156,18 @@ static void LoadSettings()
 		}
 	}
 
+	// The sections of the builds before the peripheral device pool: the pads and the memory cards had
+	// their settings in them, and this one keeps them in the pool (see peripherals.h). They are not
+	// read any more and they are dropped from the document here, so that the file this build writes
+	// does not carry them along.
+	Json::Value* root = GetSettingsRoot();
+
+	if (root != nullptr)
+	{
+		root->Remove(root->ByName(USER_PADS_OBSOLETE));
+		root->Remove(root->ByName(USER_MEMCARDS_OBSOLETE));
+	}
+
 	SettingsLoaded = true;
 }
 
@@ -359,12 +371,12 @@ bool ConfigValueExists(const char* var, const char* path)
 }
 
 // ---------------------------------------------------------------------------
-// Arrays of objects
+// Lists of objects
 
-// The section, the list and the entry a call is about. A list that is missing is created by a
-// setter (and only by a setter): an entry that is not there is what a device that has never been
-// configured looks like, so a getter must not bring it into being.
-static Json::Value* GetConfigArray(const char* var, const char* path)
+// The list, the entry and the member a call is about. A list that is missing is created by the
+// caller that appends to it, and never by a getter (an entry that is not there is what something
+// that was never configured looks like).
+static Json::Value* GetConfigList(const char* var, const char* path)
 {
 	Json::Value* root = GetSettingsRoot();
 	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
@@ -374,115 +386,154 @@ static Json::Value* GetConfigArray(const char* var, const char* path)
 		return nullptr;
 	}
 
-	Json::Value* array = section->ByName(var);
+	Json::Value* list = section->ByName(var);
 
-	return (array != nullptr && array->type == Json::ValueType::Array) ? array : nullptr;
+	return (list != nullptr && list->type == Json::ValueType::Array) ? list : nullptr;
 }
 
-// The entry `index` of the list. The list and the entries up to that one are made when `create` is
-// set: an entry whose member is written for the first time is what a device that is added to the
-// pool looks like, and it is also why the list can be longer than what a device has written so far.
-static Json::Value* GetConfigArrayEntry(const char* var, const char* path, int index, bool create)
+int ConfigListSize(const char* var, const char* path)
 {
-	if (index < 0)
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* list = GetConfigList(var, path);
+
+	return (list != nullptr) ? (int)list->children.size() : 0;
+}
+
+ConfigEntry* ConfigListAt(const char* var, const char* path, int at)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* list = GetConfigList(var, path);
+
+	if (list == nullptr || at < 0)
 	{
 		return nullptr;
 	}
 
-	Json::Value* array = GetConfigArray(var, path);
+	int i = 0;
 
-	if (array == nullptr)
+	for (auto it = list->children.begin(); it != list->children.end(); ++it, ++i)
 	{
-		if (!create)
+		if (i == at)
 		{
-			return nullptr;
-		}
-
-		Json::Value* root = GetSettingsRoot();
-		Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
-
-		if (section == nullptr || section->type != Json::ValueType::Object)
-		{
-			return nullptr;
-		}
-
-		array = section->AddArray(var);
-	}
-
-	// An entry has no name of its own (it is an element of the list), so the walk is by position.
-	Json::Value* entry = nullptr;
-	int at = 0;
-
-	for (auto it = array->children.begin(); it != array->children.end(); ++it, ++at)
-	{
-		if (at == index)
-		{
-			entry = *it;
-			break;
+			return ((*it)->type == Json::ValueType::Object) ? (ConfigEntry*)*it : nullptr;
 		}
 	}
 
-	if (entry != nullptr)
-	{
-		return (entry->type == Json::ValueType::Object) ? entry : nullptr;
-	}
+	return nullptr;
+}
 
-	if (!create)
+ConfigEntry* ConfigListAppend(const char* var, const char* path)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* root = GetSettingsRoot();
+	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+
+	if (section == nullptr || section->type != Json::ValueType::Object)
 	{
+		ReportConfigError(var, path);
 		return nullptr;
 	}
 
-	while (at <= index)
+	Json::Value* list = section->ByName(var);
+
+	if (list == nullptr)
 	{
-		entry = array->AddObject(nullptr);
-		at++;
+		list = section->AddArray(var);
 	}
 
-	return entry;
+	if (list->type != Json::ValueType::Array)
+	{
+		ReportConfigError(var, path);
+		return nullptr;
+	}
+
+	// An entry has no name of its own (it is an element of the list).
+	return (ConfigEntry*)list->AddObject(nullptr);
 }
 
-int GetConfigArraySize(const char* var, const char* path)
+void ConfigListRemove(const char* var, const char* path, ConfigEntry* entry)
 {
 	SettingsGuard guard;
 
 	LoadSettings();
 
-	Json::Value* array = GetConfigArray(var, path);
-	int size = (array != nullptr) ? (int)array->children.size() : 0;
+	Json::Value* list = GetConfigList(var, path);
 
+	if (list == nullptr || entry == nullptr)
+	{
+		return;
+	}
 
-	return size;
+	if (list->Remove((Json::Value*)entry))
+	{
+		SaveSettings();
+	}
 }
 
-bool ConfigArrayValueExists(const char* var, const char* path, int index, const char* member)
+bool ConfigEntryValueExists(const ConfigEntry* entry, const char* member)
 {
 	SettingsGuard guard;
 
 	LoadSettings();
 
-	Json::Value* entry = GetConfigArrayEntry(var, path, index, false);
-	bool exists = (entry != nullptr) && entry->ByName(member) != nullptr;
+	Json::Value* object = (Json::Value*)entry;
 
-
-	return exists;
+	return object != nullptr && object->ByName(member) != nullptr;
 }
 
-int GetConfigArrayInt(const char* var, const char* path, int index, const char* member, int def)
+int GetConfigEntryInt(const ConfigEntry* entry, const char* member, int def)
 {
 	SettingsGuard guard;
 
 	LoadSettings();
 
-	Json::Value* entry = GetConfigArrayEntry(var, path, index, false);
-	Json::Value* value = (entry != nullptr) ? entry->ByName(member) : nullptr;
+	Json::Value* object = (Json::Value*)entry;
+	Json::Value* value = (object != nullptr) ? object->ByName(member) : nullptr;
 
-	int result = (value != nullptr && value->type == Json::ValueType::Int) ? (int)value->value.AsInt : def;
-
-
-	return result;
+	return (value != nullptr && value->type == Json::ValueType::Int) ? (int)value->value.AsInt : def;
 }
 
-const wchar_t* GetConfigArrayString(const char* var, const char* path, int index, const char* member)
+void SetConfigEntryInt(ConfigEntry* entry, const char* member, int value)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* object = (Json::Value*)entry;
+
+	if (object == nullptr)
+	{
+		return;
+	}
+
+	Json::Value* slot = object->ByName(member);
+
+	if (slot == nullptr)
+	{
+		slot = object->AddInt(member, value);
+	}
+
+	if (slot->type != Json::ValueType::Int)
+	{
+		ReportConfigError(member, nullptr);
+		return;
+	}
+
+	slot->value.AsInt = (uint64_t)value;
+
+	SaveSettings();
+}
+
+const wchar_t* GetConfigEntryString(const ConfigEntry* entry, const char* member)
 {
 	static wchar_t Empty[1] = { 0 };
 
@@ -490,70 +541,90 @@ const wchar_t* GetConfigArrayString(const char* var, const char* path, int index
 
 	LoadSettings();
 
-	Json::Value* entry = GetConfigArrayEntry(var, path, index, false);
-	Json::Value* value = (entry != nullptr) ? entry->ByName(member) : nullptr;
+	Json::Value* object = (Json::Value*)entry;
+	Json::Value* value = (object != nullptr) ? object->ByName(member) : nullptr;
 
-	const wchar_t* result = Empty;
-
-	if (value != nullptr && value->type == Json::ValueType::String)
+	if (value == nullptr || value->type != Json::ValueType::String)
 	{
-		result = value->value.AsString;
+		return Empty;
 	}
 
-
-	return result;
+	return value->value.AsString;
 }
 
-void SetConfigArrayInt(const char* var, const char* path, int index, const char* member, int value)
+void SetConfigEntryString(ConfigEntry* entry, const char* member, const wchar_t* value)
 {
 	SettingsGuard guard;
 
 	LoadSettings();
 
-	Json::Value* entry = GetConfigArrayEntry(var, path, index, true);
-	Json::Value* slot = (entry != nullptr) ? entry->ByName(member) : nullptr;
+	Json::Value* object = (Json::Value*)entry;
 
-	if (slot == nullptr && entry != nullptr)
+	if (object == nullptr)
 	{
-		slot = entry->AddInt(member, value);
-	}
-
-	if (slot == nullptr || slot->type != Json::ValueType::Int)
-	{
-		ReportConfigError(member, path);
 		return;
 	}
 
-	slot->value.AsInt = (uint64_t)value;
+	Json::Value* slot = object->ByName(member);
 
-	SaveSettings();
-
-}
-
-void SetConfigArrayString(const char* var, const char* path, int index, const char* member, const wchar_t* value)
-{
-	SettingsGuard guard;
-
-	LoadSettings();
-
-	Json::Value* entry = GetConfigArrayEntry(var, path, index, true);
-	Json::Value* slot = (entry != nullptr) ? entry->ByName(member) : nullptr;
-
-	if (slot == nullptr && entry != nullptr)
+	if (slot == nullptr)
 	{
-		slot = entry->AddString(member, value != nullptr ? value : L"");
+		slot = object->AddString(member, value != nullptr ? value : L"");
 	}
 
-	if (slot == nullptr || slot->type != Json::ValueType::String)
+	if (slot->type != Json::ValueType::String)
 	{
-		ReportConfigError(member, path);
+		ReportConfigError(member, nullptr);
 		return;
 	}
 
 	slot->ReplaceString(value != nullptr ? value : L"");
 
 	SaveSettings();
+}
 
+
+void ConfigSectionKeepOnly(const char* path, const char* keep)
+{
+	SettingsGuard guard;
+
+	LoadSettings();
+
+	Json::Value* root = GetSettingsRoot();
+	Json::Value* section = (root != nullptr) ? root->ByName(path) : nullptr;
+
+	if (section == nullptr || section->type != Json::ValueType::Object)
+	{
+		return;
+	}
+
+	// The members are collected first: taking one out while walking the list of them would walk into
+	// the one that follows it.
+	std::vector<Json::Value*> obsolete;
+
+	for (auto it = section->children.begin(); it != section->children.end(); ++it)
+	{
+		Json::Value* value = *it;
+
+		if (value->name == nullptr || strcmp(value->name, keep) == 0)
+		{
+			continue;
+		}
+
+		obsolete.push_back(value);
+	}
+
+	if (obsolete.empty())
+	{
+		return;
+	}
+
+	for (auto value : obsolete)
+	{
+		section->Remove(value);
+	}
+
+	SaveSettings();
 }
 
 void SetConfigBool(const char* var, bool newVal, const char* path)
@@ -584,7 +655,4 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 	value->value.AsBool = newVal;
 
 	SaveSettings();
-
 }
-
-#pragma endregion "Config API"

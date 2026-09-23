@@ -47,45 +47,32 @@ static const PeriphActuator pad_actuators[PAD_ACT_MAX] =
 // ---------------------------------------------------------------------------
 // The configuration of a pad
 //
-// A binding is one variable per host control ("VKEY_FOR_A" is the key of A, "GCKEY_FOR_A" the game
-// controller control of it), and the device index is the position of the device in the pool, which
-// is the name of the variables of that device (see peripherals.h).
-//
-// A configuration that was written before the device pool existed keeps the bindings of a socket
-// under the name of the socket ("VKEY_FOR_A_0" for the first one), which is where a pad that has no
-// binding of its own looks for one.
+// A binding is one member per host control ("VKEY_FOR_A" is the key of A, "GCKEY_FOR_A" the game
+// controller control of it) of the entry the pool gave this device (see config.h), so a pad that is
+// added is the only one the settings belong to.
 
 namespace
 {
-	int LoadBinding(int index, const char* kind, const char* suffix, bool& found)
+	int LoadBinding(const ConfigEntry* config, const char* kind, const char* suffix, bool& found)
 	{
 		char key[0x80];
-
 		sprintf(key, "%s_FOR_%s", kind, suffix);
 
-		if (PeriphConfigExists(index, key))
+		if (!ConfigEntryValueExists(config, key))
 		{
-			found = true;
-			return PeriphConfigInt(index, key, 0);
+			found = false;
+			return 0;
 		}
 
-		sprintf(key, "%s_FOR_%s_%i", kind, suffix, index);
-
-		if (ConfigValueExists(key, USER_PADS))
-		{
-			found = true;
-			return GetConfigInt(key, USER_PADS);
-		}
-
-		found = false;
-		return 0;
+		found = true;
+		return GetConfigEntryInt(config, key, 0);
 	}
 
-	void SaveBinding(int index, const char* kind, const char* suffix, int value)
+	void SaveBinding(ConfigEntry* config, const char* kind, const char* suffix, int value)
 	{
 		char key[0x80];
 		sprintf(key, "%s_FOR_%s", kind, suffix);
-		PeriphConfigSetInt(index, key, value);
+		SetConfigEntryInt(config, key, value);
 	}
 }
 
@@ -94,7 +81,6 @@ namespace
 
 class ContPad : public PeripheralDevice
 {
-	int             index = -1;                     //!< the pool index (names the configuration)
 	int             port = -1;
 	int             state[PAD_ACT_MAX] = { 0 };     //!< the value of every actuator
 	PeriphBindings  bindings[PAD_ACT_MAX];
@@ -120,7 +106,7 @@ class ContPad : public PeripheralDevice
 	}
 
 public:
-	ContPad(int index) : index(index)
+	ContPad()
 	{
 		for (int i = 0; i < PAD_ACT_MAX; i++)
 		{
@@ -154,20 +140,18 @@ public:
 
 	// -----------------------------------------------------------------------
 
-	void LoadConfig(int index) override
+	void LoadConfig() override
 	{
-		this->index = index;
-
 		bool configured = false;
 
 		for (int i = 0; i < PAD_ACT_MAX; i++)
 		{
 			bool found = false;
 
-			bindings[i].keyboard = LoadBinding(index, "VKEY", pad_actuators[i].id, found);
+			bindings[i].keyboard = LoadBinding(config, "VKEY", pad_actuators[i].id, found);
 			configured |= found;
 
-			bindings[i].gamepad = LoadBinding(index, "GCKEY", pad_actuators[i].id, found);
+			bindings[i].gamepad = LoadBinding(config, "GCKEY", pad_actuators[i].id, found);
 			configured |= found;
 		}
 
@@ -178,16 +162,17 @@ public:
 		// layout is what this run uses, and building the pool must not change the configuration.
 		if (!configured)
 		{
-			Peripherals::Instance().ApplyDefaultBindings(index, Peripherals::Instance().FirstOfModel(index));
+			Peripherals& pool = Peripherals::Instance();
+			pool.ApplyDefaultBindings(this, pool.FirstOfModel(this));
 		}
 	}
 
-	void SaveConfig(int index) override
+	void SaveConfig() override
 	{
 		for (int i = 0; i < PAD_ACT_MAX; i++)
 		{
-			SaveBinding(index, "VKEY", pad_actuators[i].id, bindings[i].keyboard);
-			SaveBinding(index, "GCKEY", pad_actuators[i].id, bindings[i].gamepad);
+			SaveBinding(config, "VKEY", pad_actuators[i].id, bindings[i].keyboard);
+			SaveBinding(config, "GCKEY", pad_actuators[i].id, bindings[i].gamepad);
 		}
 	}
 
@@ -324,9 +309,9 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateStandardPad(int index)
+	PeripheralDevice* CreateStandardPad()
 	{
-		return new ContPad(index);
+		return new ContPad();
 	}
 
 	//! The pad registers its own factory with the peripheral subsystem, so that the pool can create

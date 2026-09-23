@@ -830,14 +830,14 @@ static void settings_page_devices(int bus)
 			// The button means "this device": both the keys and the game controller, even when it is
 			// not the first pad of the pool (the automatic layout keeps that rule, see
 			// ContPad::LoadConfig).
-			pool.DefaultBindings(periph_selected, true);
+			pool.DefaultBindings(selected, true);
 		}
 
 		ImGui::SameLine();
 
 		if (ImGui::Button("Clear", ImVec2(80, 0)))
 		{
-			pool.ClearBindings(periph_selected);
+			pool.ClearBindings(selected);
 		}
 
 		if (pad_capture_active)
@@ -1120,8 +1120,8 @@ void UiSettingsFrame()
 	// Apply the binding the event loop captured
 	if (pad_capture_done)
 	{
-		Peripherals::Instance().SetBinding(pad_capture_device, pad_capture_actuator,
-			pad_capture_gamepad, pad_captured_binding);
+		Peripherals::Instance().SetBinding(Peripherals::Instance().Device(pad_capture_device),
+			pad_capture_actuator, pad_capture_gamepad, pad_captured_binding);
 
 		pad_capture_abort();
 	}
