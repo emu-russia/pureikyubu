@@ -189,11 +189,22 @@ struct PeriphProperty
 
 class PeripheralDevice
 {
+protected:
+	//! The entry of the pool list that holds the settings of this device (see config.h). The pool
+	//! sets it when the device is created and clears it when the device leaves the pool, so a device
+	//! implementation reads and writes its own settings through it and never sees the document they
+	//! live in.
+	ConfigEntry* config = nullptr;
+
 public:
 	virtual ~PeripheralDevice() {}
 
 	//! The DeviceID of the model.
 	virtual uint32_t Type() = 0;
+
+	//! The configuration of the device, for the pool and for the device itself.
+	ConfigEntry* Config() const { return config; }
+	void SetConfig(ConfigEntry* entry) { config = entry; }
 
 	// -----------------------------------------------------------------------
 	// Actuators (what the host drives)
@@ -223,11 +234,11 @@ public:
 	// -----------------------------------------------------------------------
 	// Configuration
 
-	//! Read the device's own settings (the pool index names the configuration variables).
-	virtual void LoadConfig(int index) {}
+	//! Read the device's own settings from its entry. Called by the pool when the device is created.
+	virtual void LoadConfig() {}
 
-	//! Write the device's own settings back.
-	virtual void SaveConfig(int index) {}
+	//! Write the device's own settings back (the pool does it when the user edits one of them).
+	virtual void SaveConfig() {}
 
 	// -----------------------------------------------------------------------
 	// The port
@@ -310,16 +321,11 @@ public:
 // ---------------------------------------------------------------------------
 // The device configuration
 //
-// Every device of the pool owns the variables of its own element of the pool (the "Devices" array of
-// the "peripherals" section, see config.h): "Type" is its model, "Name" the name the user gave it,
-// "Port" the port it is plugged into, and whatever else the device itself keeps ("VKEY_FOR_A",
-// "File"). The helpers below are what a device implementation uses to read and write them.
-
-bool PeriphConfigExists(int index, const char* name);
-int PeriphConfigInt(int index, const char* name, int def);
-void PeriphConfigSetInt(int index, const char* name, int value);
-std::string PeriphConfigString(int index, const char* name, const std::string& def);
-void PeriphConfigSetString(int index, const char* name, const std::string& value);
+// Every device of the pool owns the settings of its own entry of the list (see "the configuration"
+// in the module comment): "Type" is its model, "Name" the name the user gave it, "Port" the port it
+// is plugged into, and whatever else the device itself keeps ("VKEY_FOR_A", "File"). A device reads
+// and writes them through the entry accessors of config.h and the entry of the device, so nothing
+// outside this subsystem names a setting of a device.
 
 //! The host game controller a pad in a port is driven by: the host game controller the host reports
 //! under the number of its socket (see the device implementations, which use it for the motor).
@@ -334,35 +340,29 @@ void HostInputDestroy();
 // ---------------------------------------------------------------------------
 // The subsystem
 
-//! The list of the devices of the pool in the "peripherals" section of the configuration (see the
-//! array accessors in config.h). One entry per device, in the order the pool has them.
+//! The list of the devices of the pool, in the "peripherals" section of the configuration (see the
+//! list accessors in config.h). One entry per device, in the order the pool has them - the order the
+//! settings window shows them in, and nothing else: a device is what its entry says, not where the
+//! entry happens to be.
 #define PERIPH_DEVICES  "Devices"
 
-//! The pool holds a fixed number of devices and never destroys one while the emulator runs (the
-//! settings dialog reconfigures a device in place), so a device the emulation thread has just asked
-//! for stays valid until the emulator is closed. A device that is removed is marked unused and
-//! reused by the next one that is added.
+//! How many devices the console may have in its pool.
 #define PERIPH_MAX_DEVICES      16
-
-//! The pool the emulator starts with: the four controller sockets and the two memory card slots,
-//! each with the default device of its port (see DefaultModelOfPort).
-#define PERIPH_DEFAULT_SLOTA    4
-#define PERIPH_DEFAULT_SLOTB    5
 
 class Peripherals
 {
-	//! The devices of the pool.
-	PeripheralDevice* devices[PERIPH_MAX_DEVICES] = { nullptr };
+	//! The devices of the pool, in the order of the list of the configuration.
+	std::vector<PeripheralDevice*> devices;
+
+	//! The port of every device (-1: not plugged in).
+	std::vector<int> ports;
+
+	//! The names the user gave the devices (empty: the model name).
+	std::vector<std::string> names;
 
 	//! The devices that were removed from the pool while the emulator was running. Their object is
 	//! kept alive (a thread may have just taken it out of the pool) and destroyed with the pool.
 	std::vector<PeripheralDevice*> retired;
-
-	//! The port of every device (-1: not plugged in).
-	int ports[PERIPH_MAX_DEVICES];
-
-	//! The names the user gave the devices (empty: the model name).
-	std::string names[PERIPH_MAX_DEVICES];
 
 	SpinLock lock;
 
@@ -370,17 +370,22 @@ class Peripherals
 
 	bool opened = false;
 
-	PeripheralDevice* CreateDevice(uint32_t type, int index);
+	//! Create one device of a model and give it its entry of the pool list.
+	PeripheralDevice* CreateDevice(uint32_t type, ConfigEntry* entry);
 
 	//! The index of the device in a port (-1: the port is empty).
 	int DeviceIndexOnPort(int port);
 
+	//! The index of a device in the pool (-1 when it is not there).
+	int DeviceIndexOf(PeripheralDevice* device);
+
 	//! Plug a device in without writing the configuration (used while the pool is built from it).
 	void Plug(int index, int port);
 
-	//! Keep the "controllers" / "memcards" variables of a device in step, so that a configuration
-	//! written by this build is still understood by a build that predates the pool.
-	void WriteLegacyPort(int index, int port);
+	//! The devices that are plugged in, as (device, port) pairs, without the lock being held while
+	//! the caller uses them (the device may do file I/O, and the emulation thread takes the lock for
+	//! a lookup only).
+	void AttachedDevices(std::vector<std::pair<PeripheralDevice*, int>>& attached);
 
 public:
 	static Peripherals& Instance();
@@ -405,14 +410,19 @@ public:
 	// -----------------------------------------------------------------------
 	// The pool
 
-	//! The device of a pool index, or nullptr when the slot is unused.
+	//! How many devices the pool holds.
+	int Count();
+
+	//! The device of a pool index, or nullptr. The index is a position in the list the settings
+	//! window shows; the device itself is its own entry of the configuration.
 	PeripheralDevice* Device(int index);
 
 	//! Add a device of the given model. Returns its pool index, or -1 when the pool is full or the
-	//! model is unknown to this build.
+	//! model is unknown to this build. The device, its name and its settings are written to the
+	//! configuration here: a device that is not in the list is not a device the user has.
 	int AddDevice(uint32_t type);
 
-	//! Take a device out of the pool (a card is detached, so it is flushed).
+	//! Take a device out of the pool, with the settings it holds.
 	void RemoveDevice(int index);
 
 	//! The name of a device as the settings dialog shows it.
@@ -426,22 +436,22 @@ public:
 	//! The application does not write the device back: this is the layout a device that has never
 	//! been configured gets while the pool is built, and building the pool must not change the
 	//! configuration.
-	void ApplyDefaultBindings(int index, bool keyboard);
+	void ApplyDefaultBindings(PeripheralDevice* device, bool keyboard);
 
 	//! The same, written back to the configuration (the "Defaults" button of the settings window).
 	//! A caller that means "this device, whatever it takes" passes true for `keyboard`.
-	void DefaultBindings(int index, bool keyboard);
+	void DefaultBindings(PeripheralDevice* device, bool keyboard);
 
 	//! Bind one actuator of a device to a host control and write it back (what the capture of the
 	//! settings window does when the input arrives).
-	void SetBinding(int index, int actuator, bool gamepad, int binding);
+	void SetBinding(PeripheralDevice* device, int actuator, bool gamepad, int binding);
 
 	//! Drop every binding of a device and write it back.
-	void ClearBindings(int index);
+	void ClearBindings(PeripheralDevice* device);
 
 	//! Whether a device is the first one of its model in the pool. The keyboard defaults belong to
 	//! it: one set of keys cannot drive the pads of four sockets at once.
-	bool FirstOfModel(int index);
+	bool FirstOfModel(PeripheralDevice* device);
 
 	// -----------------------------------------------------------------------
 	// The ports
@@ -472,7 +482,7 @@ public:
 	// The models
 
 	//! Register a device model. Called by the module that implements the device.
-	static void RegisterFactory(uint32_t type, const char* name, const char* info, int bus, PeripheralDevice* (*factory)(int index));
+	static void RegisterFactory(uint32_t type, const char* name, const char* info, int bus, PeripheralDevice* (*factory)());
 
 	//! The name of a model ("Standard Controller"), or nullptr when this build has no such device.
 	static const char* ModelName(uint32_t type);

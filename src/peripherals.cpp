@@ -11,78 +11,35 @@ creates them.
 ## The pool and the configuration
 
 The pool is the list of the devices the user has, and it is the "Devices" list of the "peripherals"
-section of the configuration: one entry per device, in the order the pool has them, which is why a
-device is addressed by its index and not by a number in the name of a variable (see config.h). An
-entry holds the model of the device ("Type"), the name the user gave it ("Name"), the port it is
-plugged into ("Port") and whatever the device keeps of its own (a pad keeps its bindings there, a
-memory card its file).
+section of the configuration: one entry per device, in the order the settings window shows them
+(see the list accessors in config.h). Every device owns the settings of its own entry - its model
+("Type"), the name the user gave it ("Name"), the port it is plugged into ("Port") and whatever the
+device keeps of its own (a pad its bindings, a memory card its file) - and it holds the entry, not
+its position: a device that is taken out of the pool takes its settings with it and leaves no hole
+behind, so nothing that is stored next to a device can end up belonging to another one.
 
-An entry whose "Type" is not there is a device slot that was never configured, and the slot of one
-of the console's ports holds the device that port is meant for. An entry whose "Type" is 0 is a
-device that was taken out of the pool: its slot stays empty (so that the index of every other
-device, and of the variables of its configuration, does not change) and the next device that is
-added takes it.
-
-A configuration that was written before the pool existed has none of this. Such a configuration is
-not migrated: it is *read* through the old names, so that the emulator comes up with the same
-controllers and the same cards as the build that wrote it. The four sockets are then
-`PluggedIn_<n>` from the "controllers" section, the bindings are `VKEY_FOR_*_<n>`, and the two card
-slots are `MemcardA_*` / `MemcardB_*` from "memcards".
+The pool of a fresh console is what `DefaultSettings.json` ships: the four controller sockets and
+the two memory card slots, each with the device that port is meant for, and none of them plugged in.
 
 ## The pool lives as long as the emulator does
 
 The pool is opened when the emulator starts and closed when it is shut down, not with the machine:
 the settings window can be used with no game loaded, and what it edits is the pool (a device is
 plugged into a port of the console, which exists whether or not a machine is running). The machine
-only matters to a memory card, which is an EXI device: it connects to the channel of the machine
-that reads it, so the pool is told when a machine appears and when one goes away (MachineOpened /
-MachineClosed).
+only matters to a memory card, which is an EXI device: it goes into its slot when a machine appears
+and is taken out (and flushed) when one goes away (MachineOpened / MachineClosed).
 
 ## A device is never destroyed while the emulator runs
 
 The emulation thread takes a device out of the pool (to poll a pad, to run a card transfer) while
-the settings window may be reconfiguring it, so a device is never destroyed before the pool itself
-is closed in one piece. A device that is removed from the pool is kept alive (and its slot is marked
-empty) until then.
+the settings window may be reconfiguring it, so a device that is removed from the pool is detached
+and kept alive (with the settings it was using) until the pool itself is closed in one piece.
 
 */
 
 #include "pch.h"
 
 using namespace Debug;
-
-// ---------------------------------------------------------------------------
-// The device configuration
-//
-// Every device of the pool owns the variables of its own entry of the list (see config.h), so a
-// device implementation names a variable by its own name ("Type", "VKEY_FOR_A") and nothing else.
-
-bool PeriphConfigExists(int index, const char* name)
-{
-	return ConfigArrayValueExists(PERIPH_DEVICES, USER_PERIPH, index, name);
-}
-
-int PeriphConfigInt(int index, const char* name, int def)
-{
-	return GetConfigArrayInt(PERIPH_DEVICES, USER_PERIPH, index, name, def);
-}
-
-void PeriphConfigSetInt(int index, const char* name, int value)
-{
-	SetConfigArrayInt(PERIPH_DEVICES, USER_PERIPH, index, name, value);
-}
-
-std::string PeriphConfigString(int index, const char* name, const std::string& def)
-{
-	const wchar_t* value = GetConfigArrayString(PERIPH_DEVICES, USER_PERIPH, index, name);
-
-	return (*value != 0) ? Util::WstringToString(value) : def;
-}
-
-void PeriphConfigSetString(int index, const char* name, const std::string& value)
-{
-	SetConfigArrayString(PERIPH_DEVICES, USER_PERIPH, index, name, Util::StringToWstring(value).c_str());
-}
 
 // ---------------------------------------------------------------------------
 // The device models
@@ -100,7 +57,7 @@ namespace
 		const char* name;
 		const char* info;
 		int         bus;
-		PeripheralDevice* (*factory)(int index);
+		PeripheralDevice* (*factory)();
 	};
 
 	std::vector<PeriphModel>& Models()
@@ -171,31 +128,6 @@ namespace
 		{ "Memory Card Slot B", PERIPH_BUS_EXI, PERIPH_DEVICE_MEMCARD },
 	};
 
-	//! The port of a device of the default pool in a configuration that predates the pool. The old
-	//! format kept the state of the four sockets in "controllers" and the two card slots in
-	//! "memcards" (see the comment at the top of the file).
-	int LegacyPort(int index)
-	{
-		if (index >= PERIPH_PORT_SI0 && index <= PERIPH_PORT_SI3)
-		{
-			char key[0x40];
-			sprintf(key, "PluggedIn_%i", index);
-			return GetConfigBool(key, USER_PADS) ? index : -1;
-		}
-
-		if (index == PERIPH_DEFAULT_SLOTA)
-		{
-			return GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS) ? PERIPH_PORT_SLOTA : -1;
-		}
-
-		if (index == PERIPH_DEFAULT_SLOTB)
-		{
-			return GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS) ? PERIPH_PORT_SLOTB : -1;
-		}
-
-		return -1;
-	}
-
 	//! The value of one host control bound to an actuator. A button (the keyboard is one too) gives
 	//! the actuator its full value, an axis gives its deflection scaled into the actuator's range,
 	//! in the direction the binding was captured with.
@@ -253,7 +185,7 @@ Peripherals& Peripherals::Instance()
 }
 
 void Peripherals::RegisterFactory(uint32_t type, const char* name, const char* info, int bus,
-	PeripheralDevice* (*factory)(int index))
+	PeripheralDevice* (*factory)())
 {
 	for (auto& model : Models())
 	{
@@ -316,34 +248,6 @@ HostInput* Peripherals::Host()
 	return host;
 }
 
-PeripheralDevice* Peripherals::CreateDevice(uint32_t type, int index)
-{
-	const PeriphModel* model = FindModel(type);
-
-	if (model == nullptr || model->factory == nullptr)
-	{
-		Report(Channel::SI, "Peripheral device %08X is not supported by this build\n", type);
-		return nullptr;
-	}
-
-	PeripheralDevice* device = model->factory(index);
-
-	if (device == nullptr)
-	{
-		return nullptr;
-	}
-
-	// The pool slot is filled before the device reads its own settings: a device that has never been
-	// configured asks the pool for the default bindings of its model (see StandardPad::LoadConfig).
-	lock.Lock();
-	devices[index] = device;
-	lock.Unlock();
-
-	device->LoadConfig(index);
-
-	return device;
-}
-
 // ---------------------------------------------------------------------------
 // The pool
 
@@ -359,45 +263,44 @@ void Peripherals::Open()
 	host = HostInputCreate();
 	opened = true;
 
-	// A configuration that has never seen the pool has no list at all, and then the console comes up
-	// with the device every port is meant for: the four sockets and the two card slots.
-	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+	// The pool is what the list holds, and nothing else: a configuration that was written before the
+	// devices were one list kept them in variables of the section ("Device3_Name",
+	// "Device3_VKEY_FOR_A"), and those are dropped here so that they do not travel along.
+	ConfigSectionKeepOnly(USER_PERIPH, PERIPH_DEVICES);
+
+	// The pool is the list of the configuration: every entry of it is one device (see the module
+	// comment), and a fresh console finds the four sockets and the two card slots there because that
+	// is what the shipped defaults say.
+	int count = ConfigListSize(PERIPH_DEVICES, USER_PERIPH);
+
+	for (int at = 0; at < count && at < PERIPH_MAX_DEVICES; at++)
 	{
-		ports[i] = -1;
+		ConfigEntry* entry = ConfigListAt(PERIPH_DEVICES, USER_PERIPH, at);
 
-		uint32_t type = PERIPH_DEVICE_NONE;
-
-		if (ConfigArrayValueExists(PERIPH_DEVICES, USER_PERIPH, i, "Type"))
-		{
-			type = (uint32_t)PeriphConfigInt(i, "Type", PERIPH_DEVICE_NONE);
-		}
-		else if (i < PERIPH_PORT_MAX)
-		{
-			type = DefaultModelOfPort(i);
-		}
-
-		if (type == PERIPH_DEVICE_NONE)
-		{
-			continue;       // a slot of the pool that holds no device
-		}
-
-		if (CreateDevice(type, i) == nullptr)
+		if (entry == nullptr)
 		{
 			continue;
 		}
 
-		names[i] = PeriphConfigString(i, "Name", ModelName(type));
+		uint32_t type = (uint32_t)GetConfigEntryInt(entry, "Type", PERIPH_DEVICE_NONE);
 
-		// The port is read after the device exists, so that a configuration that predates the pool
-		// is asked for the old name only when the new one is not there (see LegacyPort). The
-		// configuration is not written back here: building the pool from it must not change it.
-		int port = ConfigArrayValueExists(PERIPH_DEVICES, USER_PERIPH, i, "Port")
-			? PeriphConfigInt(i, "Port", -1)
-			: LegacyPort(i);
+		if (type == PERIPH_DEVICE_NONE)
+		{
+			continue;       // an entry of the list that names no model is not a device
+		}
+
+		PeripheralDevice* device = CreateDevice(type, entry);
+
+		if (device == nullptr)
+		{
+			continue;
+		}
+
+		int port = GetConfigEntryInt(entry, "Port", -1);
 
 		if (port >= 0 && port < PERIPH_PORT_MAX)
 		{
-			Plug(i, port);
+			Plug(DeviceIndexOf(device), port);
 		}
 	}
 }
@@ -411,14 +314,9 @@ void Peripherals::Close()
 
 	MachineClosed();
 
-	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
-	{
-		delete devices[i];
-		devices[i] = nullptr;
-
-		ports[i] = -1;
-		names[i].clear();
-	}
+	devices.clear();
+	ports.clear();
+	names.clear();
 
 	for (auto device : retired)
 	{
@@ -434,190 +332,106 @@ void Peripherals::Close()
 
 void Peripherals::MachineOpened()
 {
-	lock.Lock();
+	std::vector<std::pair<PeripheralDevice*, int>> attached;
+	AttachedDevices(attached);
 
-	int attached[PERIPH_MAX_DEVICES];
-	int count = 0;
-
-	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+	// The console exists now, so a device that talks to it goes into its socket: a memory card is an
+	// EXI device and needs a console to talk to (see MemoryCardDevice::Attach).
+	for (auto& plugged : attached)
 	{
-		if (devices[i] != nullptr && ports[i] >= 0)
-		{
-			attached[count++] = i;
-		}
-	}
-
-	lock.Unlock();
-
-	// A device is plugged into a socket of the console, and the console has just been built: a
-	// memory card goes into its slot here (it is an EXI device and needs the console to talk to).
-	for (int i = 0; i < count; i++)
-	{
-		devices[attached[i]]->Attach(ports[attached[i]]);
+		plugged.first->Attach(plugged.second);
 	}
 }
 
 void Peripherals::MachineClosed()
 {
-	// The console is being taken apart, so the devices that were plugged into it are unplugged (a
-	// card flushes the file it was writing to). The pool keeps them and the ports they are in: only
-	// the machine they were talking to is gone.
-	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+	std::vector<std::pair<PeripheralDevice*, int>> attached;
+	AttachedDevices(attached);
+
+	// The console is being taken apart: the devices are unplugged from it (a card flushes the file it
+	// was writing to). The pool keeps them and the ports they are in.
+	for (auto& plugged : attached)
 	{
-		if (devices[i] != nullptr && ports[i] >= 0)
-		{
-			devices[i]->Detach();
-		}
+		plugged.first->Detach();
 	}
 }
 
-PeripheralDevice* Peripherals::Device(int index)
+void Peripherals::AttachedDevices(std::vector<std::pair<PeripheralDevice*, int>>& attached)
 {
-	if (index < 0 || index >= PERIPH_MAX_DEVICES)
+	attached.clear();
+
+	lock.Lock();
+
+	for (size_t i = 0; i < devices.size(); i++)
+	{
+		if (ports[i] >= 0)
+		{
+			attached.push_back(std::make_pair(devices[i], ports[i]));
+		}
+	}
+
+	lock.Unlock();
+}
+
+int Peripherals::Count()
+{
+	lock.Lock();
+	int count = (int)devices.size();
+	lock.Unlock();
+
+	return count;
+}
+
+PeripheralDevice* Peripherals::CreateDevice(uint32_t type, ConfigEntry* entry)
+{
+	const PeriphModel* model = FindModel(type);
+
+	if (model == nullptr || model->factory == nullptr)
+	{
+		Report(Channel::SI, "Peripheral device %08X is not supported by this build\n", type);
+		return nullptr;
+	}
+
+	PeripheralDevice* device = model->factory();
+
+	if (device == nullptr)
 	{
 		return nullptr;
 	}
 
+	device->SetConfig(entry);
+
+	// The device joins the pool before it reads its settings: the layout of one that was never
+	// configured depends on the devices that are already there (see ContPad::LoadConfig).
+	std::string name = Util::WstringToString(GetConfigEntryString(entry, "Name"));
+
+	if (name.empty())
+	{
+		name = ModelName(type);
+	}
+
 	lock.Lock();
-	PeripheralDevice* device = devices[index];
+	devices.push_back(device);
+	ports.push_back(-1);
+	names.push_back(name);
 	lock.Unlock();
+
+	device->LoadConfig();
 
 	return device;
 }
 
-int Peripherals::AddDevice(uint32_t type)
+int Peripherals::DeviceIndexOf(PeripheralDevice* device)
 {
-	lock.Lock();
-
-	int index = -1;
-
-	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
-	{
-		if (devices[i] == nullptr)
-		{
-			index = i;
-			break;
-		}
-	}
-
-	lock.Unlock();
-
-	if (index < 0)
-	{
-		Report(Channel::SI, "The peripheral pool is full\n");
-		return -1;
-	}
-
-	PeripheralDevice* device = CreateDevice(type, index);
-
-	if (device == nullptr)
-	{
-		return -1;
-	}
-
-	lock.Lock();
-	ports[index] = -1;
-	names[index] = ModelName(type);
-	lock.Unlock();
-
-	// The device is written to the configuration as it is added, name and settings together, so that
-	// the pool of the next run has it (a device that is only in the memory of this run is not a
-	// device the user has).
-	PeriphConfigSetInt(index, "Type", (int)type);
-	PeriphConfigSetString(index, "Name", names[index]);
-	device->SaveConfig(index);
-
-	return index;
-}
-
-void Peripherals::RemoveDevice(int index)
-{
-	if (index < 0 || index >= PERIPH_MAX_DEVICES)
-	{
-		return;
-	}
-
-	Detach(index);
-
-	lock.Lock();
-	PeripheralDevice* device = devices[index];
-	devices[index] = nullptr;
-	names[index].clear();
-	lock.Unlock();
-
-	// The device object outlives its pool entry for as long as the emulator runs: a thread may have
-	// just taken it out of the pool. It is destroyed with the pool, in Close.
-	if (device != nullptr)
-	{
-		retired.push_back(device);
-	}
-
-	PeriphConfigSetInt(index, "Type", PERIPH_DEVICE_NONE);
-}
-
-std::string Peripherals::Name(int index)
-{
-	if (index < 0 || index >= PERIPH_MAX_DEVICES)
-	{
-		return "";
-	}
-
-	lock.Lock();
-	std::string name = names[index];
-	lock.Unlock();
-
-	return name;
-}
-
-void Peripherals::SetName(int index, const std::string& name)
-{
-	if (index < 0 || index >= PERIPH_MAX_DEVICES)
-	{
-		return;
-	}
-
-	lock.Lock();
-	names[index] = name;
-	lock.Unlock();
-
-	PeriphConfigSetString(index, "Name", name);
-}
-
-int Peripherals::PortOf(int index)
-{
-	if (index < 0 || index >= PERIPH_MAX_DEVICES)
-	{
-		return -1;
-	}
-
-	lock.Lock();
-	int port = ports[index];
-	lock.Unlock();
-
-	return port;
-}
-
-PeripheralDevice* Peripherals::DeviceOnPort(int port)
-{
-	return Device(DeviceIndexOnPort(port));
-}
-
-int Peripherals::DeviceIndexOnPort(int port)
-{
-	if (port < 0 || port >= PERIPH_PORT_MAX)
-	{
-		return -1;
-	}
-
 	lock.Lock();
 
 	int found = -1;
 
-	for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+	for (size_t i = 0; i < devices.size(); i++)
 	{
-		if (devices[i] != nullptr && ports[i] == port)
+		if (devices[i] == device)
 		{
-			found = i;
+			found = (int)i;
 			break;
 		}
 	}
@@ -627,111 +441,106 @@ int Peripherals::DeviceIndexOnPort(int port)
 	return found;
 }
 
-void Peripherals::Plug(int index, int port)
+PeripheralDevice* Peripherals::Device(int index)
 {
 	lock.Lock();
-	ports[index] = port;
+
+	PeripheralDevice* device = (index >= 0 && index < (int)devices.size()) ? devices[index] : nullptr;
+
 	lock.Unlock();
 
-	devices[index]->Attach(port);
+	return device;
 }
 
-void Peripherals::WriteLegacyPort(int index, int port)
+int Peripherals::AddDevice(uint32_t type)
 {
-	char key[0x40];
-
-	// The four sockets used to be a fixed pad per socket, so an older build can only be told that a
-	// pad is in the socket that matches its number.
-	if (index >= PERIPH_PORT_SI0 && index <= PERIPH_PORT_SI3)
+	if (Count() >= PERIPH_MAX_DEVICES)
 	{
-		sprintf(key, "PluggedIn_%i", index);
-		SetConfigBool(key, port == index, USER_PADS);
-		return;
+		Report(Channel::SI, "The peripheral pool is full\n");
+		return -1;
 	}
 
-	if (index == PERIPH_DEFAULT_SLOTA)
+	// The device is written to the configuration as it is added, so that the next run finds it: the
+	// entry first (a device is the settings of its entry), then the settings the model starts with.
+	ConfigEntry* entry = ConfigListAppend(PERIPH_DEVICES, USER_PERIPH);
+
+	if (entry == nullptr)
 	{
-		SetConfigBool(MemcardA_Connected_Key, port == PERIPH_PORT_SLOTA, USER_MEMCARDS);
-		return;
+		return -1;
 	}
 
-	if (index == PERIPH_DEFAULT_SLOTB)
+	SetConfigEntryInt(entry, "Type", (int)type);
+
+	PeripheralDevice* device = CreateDevice(type, entry);
+
+	if (device == nullptr)
 	{
-		SetConfigBool(MemcardB_Connected_Key, port == PERIPH_PORT_SLOTB, USER_MEMCARDS);
-		return;
+		ConfigListRemove(PERIPH_DEVICES, USER_PERIPH, entry);
+		return -1;
 	}
+
+	SetConfigEntryString(entry, "Name", Util::StringToWstring(names.back()).c_str());
+
+	// The defaults of the model are what the entry holds from now on.
+	device->SaveConfig();
+
+	return DeviceIndexOf(device);
 }
 
-bool Peripherals::Attach(int index, int port)
+void Peripherals::RemoveDevice(int index)
 {
-	if (index < 0 || index >= PERIPH_MAX_DEVICES || port < 0 || port >= PERIPH_PORT_MAX)
-	{
-		return false;
-	}
-
 	PeripheralDevice* device = Device(index);
 
 	if (device == nullptr)
 	{
-		return false;
-	}
-
-	// A device belongs to a bus: a pad cannot be plugged into a card slot.
-	PeripheralDevice* existing = DeviceOnPort(port);
-
-	if (existing != nullptr && existing != device)
-	{
-		Report(Channel::SI, "%s already holds a device\n", PortName(port));
-		return false;
-	}
-
-	if (ModelBusOf(device->Type()) != PortBus(port))
-	{
-		Report(Channel::SI, "%s is not a %s port\n", PortName(port), BusName(PortBus(port)));
-		return false;
+		return;
 	}
 
 	Detach(index);
-	Plug(index, port);
-
-	PeriphConfigSetInt(index, "Port", port);
-	WriteLegacyPort(index, port);
-
-	return true;
-}
-
-void Peripherals::Detach(int index)
-{
-	if (index < 0 || index >= PERIPH_MAX_DEVICES)
-	{
-		return;
-	}
-
-	PeripheralDevice* device = Device(index);
 
 	lock.Lock();
-	int port = ports[index];
-	ports[index] = -1;
+	devices.erase(devices.begin() + index);
+	ports.erase(ports.begin() + index);
+	names.erase(names.begin() + index);
 	lock.Unlock();
 
-	if (port < 0)
+	// The entry of the device leaves the list with it: a device is its own settings, and the ones
+	// that follow it are not disturbed (they are entries of their own, not positions).
+	ConfigListRemove(PERIPH_DEVICES, USER_PERIPH, device->Config());
+	device->SetConfig(nullptr);
+
+	// The object outlives its entry for as long as the emulator runs: a thread may have just taken
+	// it out of the pool. It is destroyed with the pool, in Close.
+	retired.push_back(device);
+}
+
+std::string Peripherals::Name(int index)
+{
+	lock.Lock();
+	std::string name = (index >= 0 && index < (int)names.size()) ? names[index] : "";
+	lock.Unlock();
+
+	return name;
+}
+
+void Peripherals::SetName(int index, const std::string& name)
+{
+	PeripheralDevice* device = Device(index);
+
+	if (device == nullptr || device->Config() == nullptr)
 	{
 		return;
 	}
 
-	PeriphConfigSetInt(index, "Port", -1);
-	WriteLegacyPort(index, -1);
+	lock.Lock();
+	names[index] = name;
+	lock.Unlock();
 
-	if (device != nullptr)
-	{
-		device->Detach();
-	}
+	SetConfigEntryString(device->Config(), "Name", Util::StringToWstring(name).c_str());
 }
 
-void Peripherals::ApplyDefaultBindings(int index, bool keyboard)
+void Peripherals::ApplyDefaultBindings(PeripheralDevice* device, bool keyboard)
 {
-	PeripheralDevice* device = Device(index);
-
 	if (device == nullptr || host == nullptr)
 	{
 		return;
@@ -759,22 +568,18 @@ void Peripherals::ApplyDefaultBindings(int index, bool keyboard)
 	}
 }
 
-void Peripherals::DefaultBindings(int index, bool keyboard)
+void Peripherals::DefaultBindings(PeripheralDevice* device, bool keyboard)
 {
-	ApplyDefaultBindings(index, keyboard);
-
-	PeripheralDevice* device = Device(index);
+	ApplyDefaultBindings(device, keyboard);
 
 	if (device != nullptr)
 	{
-		device->SaveConfig(index);
+		device->SaveConfig();
 	}
 }
 
-void Peripherals::SetBinding(int index, int actuator, bool gamepad, int binding)
+void Peripherals::SetBinding(PeripheralDevice* device, int actuator, bool gamepad, int binding)
 {
-	PeripheralDevice* device = Device(index);
-
 	if (device == nullptr)
 	{
 		return;
@@ -796,13 +601,11 @@ void Peripherals::SetBinding(int index, int actuator, bool gamepad, int binding)
 		bindings->keyboard = binding;
 	}
 
-	device->SaveConfig(index);
+	device->SaveConfig();
 }
 
-void Peripherals::ClearBindings(int index)
+void Peripherals::ClearBindings(PeripheralDevice* device)
 {
-	PeripheralDevice* device = Device(index);
-
 	if (device == nullptr)
 	{
 		return;
@@ -819,39 +622,168 @@ void Peripherals::ClearBindings(int index)
 		}
 	}
 
-	device->SaveConfig(index);
+	device->SaveConfig();
 }
 
-bool Peripherals::FirstOfModel(int index)
+bool Peripherals::FirstOfModel(PeripheralDevice* device)
 {
-	PeripheralDevice* device = Device(index);
-
 	if (device == nullptr)
 	{
 		return false;
 	}
 
-	for (int i = 0; i < index; i++)
-	{
-		PeripheralDevice* other = Device(i);
+	lock.Lock();
 
-		if (other != nullptr && other->Type() == device->Type())
+	bool first = true;
+
+	for (size_t i = 0; i < devices.size(); i++)
+	{
+		if (devices[i] == device)
 		{
-			return false;
+			break;
+		}
+
+		if (devices[i] != nullptr && devices[i]->Type() == device->Type())
+		{
+			first = false;
+			break;
 		}
 	}
+
+	lock.Unlock();
+
+	return first;
+}
+
+// ---------------------------------------------------------------------------
+// The ports
+
+int Peripherals::DeviceIndexOnPort(int port)
+{
+	if (port < 0 || port >= PERIPH_PORT_MAX)
+	{
+		return -1;
+	}
+
+	lock.Lock();
+
+	int found = -1;
+
+	for (size_t i = 0; i < devices.size(); i++)
+	{
+		if (ports[i] == port)
+		{
+			found = (int)i;
+			break;
+		}
+	}
+
+	lock.Unlock();
+
+	return found;
+}
+
+void Peripherals::Plug(int index, int port)
+{
+	lock.Lock();
+
+	if (index >= 0 && index < (int)devices.size())
+	{
+		ports[index] = port;
+	}
+
+	lock.Unlock();
+
+	PeripheralDevice* device = Device(index);
+
+	if (device != nullptr)
+	{
+		device->Attach(port);
+	}
+}
+
+PeripheralDevice* Peripherals::DeviceOnPort(int port)
+{
+	return Device(DeviceIndexOnPort(port));
+}
+
+bool Peripherals::Attach(int index, int port)
+{
+	PeripheralDevice* device = Device(index);
+
+	if (device == nullptr || port < 0 || port >= PERIPH_PORT_MAX)
+	{
+		return false;
+	}
+
+	// A device belongs to a bus: a pad cannot be plugged into a card slot.
+	PeripheralDevice* existing = DeviceOnPort(port);
+
+	if (existing != nullptr && existing != device)
+	{
+		Report(Channel::SI, "%s already holds a device\n", PortName(port));
+		return false;
+	}
+
+	if (ModelBusOf(device->Type()) != PortBus(port))
+	{
+		Report(Channel::SI, "%s is not a %s port\n", PortName(port), BusName(PortBus(port)));
+		return false;
+	}
+
+	Detach(index);
+	Plug(index, port);
+
+	SetConfigEntryInt(device->Config(), "Port", port);
 
 	return true;
 }
 
+void Peripherals::Detach(int index)
+{
+	PeripheralDevice* device = Device(index);
+
+	if (device == nullptr)
+	{
+		return;
+	}
+
+	lock.Lock();
+	int port = (index >= 0 && index < (int)ports.size()) ? ports[index] : -1;
+	if (index >= 0 && index < (int)ports.size())
+	{
+		ports[index] = -1;
+	}
+	lock.Unlock();
+
+	if (port < 0)
+	{
+		return;
+	}
+
+	if (device->Config() != nullptr)
+	{
+		SetConfigEntryInt(device->Config(), "Port", -1);
+	}
+
+	device->Detach();
+}
+
+int Peripherals::PortOf(int index)
+{
+	lock.Lock();
+	int port = (index >= 0 && index < (int)ports.size()) ? ports[index] : -1;
+	lock.Unlock();
+
+	return port;
+}
+
 // ---------------------------------------------------------------------------
-// The emulation side
+// The emulation
 
 bool Peripherals::PollSI(int chan, PADState* state)
 {
-	int port = PERIPH_PORT_SI(chan);
-	int index = DeviceIndexOnPort(port);
-	PeripheralDevice* device = Device(index);
+	PeripheralDevice* device = DeviceOnPort(PERIPH_PORT_SI(chan));
 
 	if (device == nullptr)
 	{
@@ -860,7 +792,7 @@ bool Peripherals::PollSI(int chan, PADState* state)
 
 	// The bindings are resolved here, on the emulation thread: the device is handed the value of
 	// every actuator and turns them into its protocol by itself.
-	int pad = HostPadOfPort(port);
+	int pad = HostPadOfPort(PERIPH_PORT_SI(chan));
 
 	for (int i = 0; i < device->ActuatorCount(); i++)
 	{

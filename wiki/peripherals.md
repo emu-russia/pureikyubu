@@ -13,7 +13,7 @@ peripheral lives, and `uisettings.cpp` is the single place its settings are edit
 |---|---|
 | **DeviceID** | What a device model is, in one number: `0x00010001` is the standard controller (DOL-003), `0x00020001` is a memory card. A model is registered by the module that implements it (`Peripherals::RegisterFactory`), so the subsystem does not know what a pad or a card is, and a build that does not compile that module simply has no such devices |
 | **Port** | A socket of the console: the four SI channels, the two memory card slots. A port belongs to a bus (SI or EXI), and a device can only be plugged into a port of its own bus |
-| **Pool** | The devices the user has, in the order the configuration lists them. Every device owns the variables of its own entry: its model, its name, the port it is plugged into and its own settings |
+| **Pool** | The devices the user has, which is the list the configuration holds. Every device owns the settings of its own entry: its model, its name, the port it is plugged into and whatever else the model keeps |
 | **Actuator** | One control of a device (`PAD_ACT_*` in cont.h for a pad). A device publishes its actuators and the settings window draws one row per actuator |
 | **Binding** | What drives an actuator: a keyboard key and a host game controller button or axis |
 | **HostInput** | The host side of the bindings, and the host controls a device drives back (the rumble motor). Implemented by the front end (`padsdl.cpp` over SDL2, `padnull.cpp` for the headless build) and by the unit tests |
@@ -42,33 +42,35 @@ the backend used to lack.
 
 ## The configuration
 
-The pool is the `Devices` list of the `peripherals` section: one entry per device, in the order the
-pool has them, which is why a device is addressed by its index and not by a number in the name of a
-variable (see the array accessors in `config.h`).
+The pool is the `Devices` list of the `peripherals` section: one entry per device, and the entry is
+what holds the settings of that device. What a device keeps is its entry - a handle of its own
+object - and not its position in the list, so a device that is taken out of the pool takes its
+settings with it: the list is a list, not a table with holes, and nothing that is stored next to a
+device can end up belonging to another one (see the list accessors in `config.h`).
 
 ```json
 "peripherals":
 {
     "Devices":
     [
-        { },
-        { "Type": 65537, "Name": "Controller 1", "Port": 0, "VKEY_FOR_A": 27, "GCKEY_FOR_A": 65536 }
+        { "Type": 65537, "Name": "Controller 1", "Port": 0, "VKEY_FOR_A": 27, "GCKEY_FOR_A": 65536 },
+        { "Type": 131073, "Name": "Memory Card A", "File": "Data/card.mci" }
     ]
 }
 ```
 
-* an entry **without** `Type` is a slot that was never configured, and the slot of one of the
-  console's ports holds the device that port is meant for. That is why a fresh configuration needs
-  no list at all: the console comes up with four pads and two cards, and the list appears the first
-  time the user changes something;
-* an entry whose `Type` is `0` is a device that was taken out of the pool. Its slot stays empty, so
-  that the index of every other device (and of the variables of its configuration) does not change;
-* a configuration written before the pool existed is not migrated: it is *read* through the old
-  names, so that the emulator comes up with the same controllers and cards as the build that wrote
-  it. The four sockets are then `PluggedIn_<n>` from the `controllers` section, their bindings are
-  `VKEY_FOR_*_<n>` / `GCKEY_FOR_*_<n>`, and the card slots are `MemcardA_*` / `MemcardB_*` from
-  `memcards`. `Attach`/`Detach` keeps those in step as well, so a configuration this build writes is
-  still understood by a build that predates the pool.
+The pool of a fresh console is what `DefaultSettings.json` ships - the four sockets and the two card
+slots, each with the device that port is meant for, and none of them plugged in - and the settings
+window edits that list. `Type` is the model (see DeviceID above), `Name` is the name the user gave
+the device, `Port` is the socket it is plugged into, and everything else belongs to the device the
+model registered: a pad keeps its bindings there (`VKEY_FOR_A`, `GCKEY_FOR_A`), a memory card its
+file (`File`) and its save policy.
+
+The pads and the memory cards used to keep their settings in sections of their own (`controllers`
+with `PluggedIn_<n>` / `VKEY_FOR_*_<n>`, `memcards` with `MemcardA_*`), from the builds before the
+pool. Nothing reads them any more: they are dropped from the document when the settings are read
+(and so are the variables a device of the pool used to be named by, `Device3_Name`), so that a
+configuration this build writes does not carry them along.
 
 ## The lifetime
 
@@ -85,8 +87,8 @@ so the next machine finds them where the user put them.
 
 A device is never destroyed while the emulator runs: the emulation thread takes one out of the pool
 (to poll a pad, to run a card transfer) while the settings window may be reconfiguring it. A device
-that is removed from the pool is kept alive (with its slot marked empty) until the pool itself is
-closed in one piece.
+that is removed from the pool is detached, taken out of the list with its settings, and kept alive
+until the pool itself is closed in one piece.
 
 ## The settings window
 

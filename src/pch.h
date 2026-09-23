@@ -108,6 +108,7 @@
 #include "mem.h"
 #include "di.h"
 #include "bootrtc.h"
+#include "config.h"
 #include "exi.h"
 #include "memcard.h"
 #include "peripherals.h"
@@ -130,7 +131,6 @@ namespace Flipper
 #include "hwosd.h"
 #include "debugui2.h"
 
-#include "config.h"
 #include "main.h"
 #include "uijdi.h"
 #include "ui.h"

@@ -46,23 +46,17 @@
 		"HLEMTX": false
 	},
 
-	"controllers":
-	{
-		"PluggedIn_0": false,
-		"PluggedIn_1": false,
-		"PluggedIn_2": false,
-		"PluggedIn_3": false
-	},
-
-	"memcards":
-	{
-		"Memcard_SyncSave": false,
-		"MemcardA_Connected": false,
-		"MemcardB_Connected": false
-	},
-
 	"peripherals":
 	{
+		"Devices":
+		[
+			{ "Type": 65537, "Name": "Controller 1" },
+			{ "Type": 65537, "Name": "Controller 2" },
+			{ "Type": 65537, "Name": "Controller 3" },
+			{ "Type": 65537, "Name": "Controller 4" },
+			{ "Type": 131073, "Name": "Memory Card A" },
+			{ "Type": 131073, "Name": "Memory Card B" }
+		]
 	}
 	
 }

@@ -710,7 +710,6 @@ namespace
 
 class MemoryCardDevice : public PeripheralDevice
 {
-	int             index = -1;
 	int             port = -1;          //!< PERIPH_PORT_SLOTA / SLOTB, -1: the card is out of its slot
 	std::wstring    file;
 	bool            syncSave = false;
@@ -719,7 +718,7 @@ class MemoryCardDevice : public PeripheralDevice
 	int Slot() const { return port >= PERIPH_PORT_SLOTA ? port - PERIPH_PORT_SLOTA : -1; }
 
 public:
-	MemoryCardDevice(int index) : index(index) {}
+	MemoryCardDevice() {}
 
 	uint32_t Type() override { return PERIPH_DEVICE_MEMCARD; }
 
@@ -775,7 +774,7 @@ public:
 				}
 
 				file = Util::StringToWstring(value);
-				PeriphConfigSetString(index, "File", value);
+				SetConfigEntryString(config, "File", file.c_str());
 
 				// The card that is in the slot has to be replaced at once: the new image is what the
 				// guest reads from now on. MCUseFile flushes the old one first.
@@ -790,7 +789,7 @@ public:
 			case MC_PROP_SYNC_SAVE:
 			{
 				syncSave = value == "1" || value == "true";
-				PeriphConfigSetInt(index, "SyncSave", syncSave ? 1 : 0);
+				SetConfigEntryInt(config, "SyncSave", syncSave ? 1 : 0);
 
 				if (Slot() >= 0)
 				{
@@ -803,19 +802,10 @@ public:
 
 	// -----------------------------------------------------------------------
 
-	void LoadConfig(int index) override
+	void LoadConfig() override
 	{
-		this->index = index;
-
-		// A configuration written before the pool kept the two cards in the "memcards" section,
-		// under the name of the slot (see the comment at the top of peripherals.cpp).
-		const char* legacyFile = index == PERIPH_DEFAULT_SLOTB ? MemcardB_Filename_Key : MemcardA_Filename_Key;
-
-		file = Util::StringToWstring(PeriphConfigString(index, "File",
-			Util::WstringToString(GetConfigString(legacyFile, USER_MEMCARDS))));
-
-		syncSave = PeriphConfigInt(index, "SyncSave",
-			GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS) ? 1 : 0) != 0;
+		file = GetConfigEntryString(config, "File");
+		syncSave = GetConfigEntryInt(config, "SyncSave", 0) != 0;
 	}
 
 	// -----------------------------------------------------------------------
@@ -861,9 +851,9 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateMemoryCard(int index)
+	PeripheralDevice* CreateMemoryCard()
 	{
-		return new MemoryCardDevice(index);
+		return new MemoryCardDevice();
 	}
 
 	//! The card registers its own factory with the peripheral subsystem, so that the pool can create

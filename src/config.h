@@ -12,13 +12,17 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 
 // Sections
 #define USER_UI "ui"
-#define USER_PADS "controllers"
 #define USER_LOADER		"loader"
 #define USER_CORE		"core"
 #define USER_HW			"hardware"
 #define USER_HLE		"hle"
-#define USER_MEMCARDS	"memcards"
 #define USER_PERIPH		"peripherals"   // the device pool (see peripherals.h)
+
+// The sections the pads and the memory cards had their settings in before the device pool. Nothing
+// reads them any more; they are named here because the settings that are read drop them from the
+// document (see config.cpp), so that a configuration this build writes does not carry them along.
+#define USER_PADS_OBSOLETE      "controllers"
+#define USER_MEMCARDS_OBSOLETE  "memcards"
 
 // Loader section variables
 #define USER_MAKEMAP "MAKEMAP"			// 1: make map file, if missing (find symbols)
@@ -47,13 +51,6 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 #define USER_MI_LOG "MI_LOG"
 #define USER_CP_LOG "CP_LOG"
 
-// MC: Names of the keys used to store to configuration
-#define MemcardA_Connected_Key "MemcardA_Connected"
-#define MemcardB_Connected_Key "MemcardB_Connected"
-#define MemcardA_Filename_Key "MemcardA_Filename"
-#define MemcardB_Filename_Key "MemcardB_Filename"
-#define Memcard_SyncSave_Key "Memcard_SyncSave"
-
 // User variables API
 wchar_t* GetConfigString(const char* var, const char* path);
 void SetConfigString(const char* var, const wchar_t* newVal, const char* path);
@@ -69,10 +66,9 @@ void SetConfigBool(const char* var, bool newVal, const char* path);
 bool ConfigValueExists(const char* var, const char* path);
 
 // ---------------------------------------------------------------------------
-// Arrays of objects
+// Lists of objects
 //
-// A section can hold a list of objects, one object per entry, so that an entry is addressed by its
-// place in the list instead of by a number in the name of a variable:
+// A section can hold a list of objects, one object per entry:
 //
 //   "peripherals":
 //   {
@@ -83,21 +79,33 @@ bool ConfigValueExists(const char* var, const char* path);
 //       ]
 //   }
 //
-// This is the storage of the peripheral pool (see peripherals.h). A member that is written to an
-// entry that is not there yet creates the list, the entry and the member, so that a device which is
-// configured for the first time writes itself into the pool.
+// This is how the pool of peripheral devices is stored (see peripherals.h). What a module keeps is
+// the *entry* - a handle of its own object - and not its position in the list, so an entry can be
+// added or taken out without disturbing the others: the list is a list, not a table with holes.
+
+//! An entry of such a list. What a module does with it is to pass it back to the accessors below.
+struct ConfigEntry;
 
 //! How many entries the list has (0 when there is no such list).
-int GetConfigArraySize(const char* var, const char* path);
+int ConfigListSize(const char* var, const char* path);
 
-//! Whether an entry has that member.
-bool ConfigArrayValueExists(const char* var, const char* path, int index, const char* member);
+//! The entry at t, or nullptr when the list is shorter.
+ConfigEntry* ConfigListAt(const char* var, const char* path, int at);
 
-//! The value of a member of an entry, or `def` when it is not there.
-int GetConfigArrayInt(const char* var, const char* path, int index, const char* member, int def);
+//! Append an entry to the list (the list itself is created when it is not there yet).
+ConfigEntry* ConfigListAppend(const char* var, const char* path);
 
-//! The value of a member of an entry as text (an empty string when it is not there).
-const wchar_t* GetConfigArrayString(const char* var, const char* path, int index, const char* member);
+//! Take an entry out of the list, with the settings it holds.
+void ConfigListRemove(const char* var, const char* path, ConfigEntry* entry);
 
-void SetConfigArrayInt(const char* var, const char* path, int index, const char* member, int value);
-void SetConfigArrayString(const char* var, const char* path, int index, const char* member, const wchar_t* value);
+//! The settings of an entry. A member that is written to an entry that does not have it is added.
+bool ConfigEntryValueExists(const ConfigEntry* entry, const char* member);
+int GetConfigEntryInt(const ConfigEntry* entry, const char* member, int def);
+void SetConfigEntryInt(ConfigEntry* entry, const char* member, int value);
+const wchar_t* GetConfigEntryString(const ConfigEntry* entry, const char* member);
+void SetConfigEntryString(ConfigEntry* entry, const char* member, const wchar_t* value);
+
+//! Drop every variable of a section except `keep`. A module whose settings used to be kept in
+//! variables of their own calls it once, so that a configuration written by a build before it does
+//! not carry them along (see peripherals.cpp).
+void ConfigSectionKeepOnly(const char* path, const char* keep);

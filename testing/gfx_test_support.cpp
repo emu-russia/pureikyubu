@@ -248,14 +248,15 @@ namespace GfxUnitTest
 		flipper->cp = new Flipper::CommandProcessor(flipper, &config);
 
 		// The peripherals of the machine. In the emulator the pool is opened once, with the emulator
-		// itself (see EMUCtor); a test machine has no emulator around it, so it opens the pool here.
-		// The four controller sockets then get a pad each, which is what the PAD plug-in double used
-		// to answer with (see the peripheral subsystem doubles below).
+		// itself (see EMUCtor), and its devices are the ones the configuration lists; a test machine
+		// has no settings file, so it opens the pool here and adds a pad per socket, which is what
+		// the PAD plug-in double used to answer with (see the peripheral subsystem doubles below).
 		Peripherals::Instance().Open();
 
 		for (int chan = 0; chan < 4; chan++)
 		{
-			Peripherals::Instance().Attach(chan, PERIPH_PORT_SI(chan));
+			int pad = Peripherals::Instance().AddDevice(PERIPH_DEVICE_STANDARD_PAD);
+			Peripherals::Instance().Attach(pad, PERIPH_PORT_SI(chan));
 		}
 
 		Peripherals::Instance().MachineOpened();
@@ -1113,29 +1114,20 @@ bool ConfigValueExists(const char* var, const char* path)
 }
 
 // -------------------------------------------------------------------------------------------
-// The lists of objects of the settings double (the peripheral pool is one, see config.h). A member
-// of an entry is keyed by the list, the entry and the member, and the double keeps the length of
-// every list it has seen, which is what a device that has never been configured looks like to the
-// pool: a list that does not have its entry.
+// The lists of objects of the settings double (the peripheral pool is one, see config.h). An entry
+// is a small object of its own and what a caller does with it is to pass it back, so a test that
+// adds a device and a test that takes one out see the list the way the emulator does.
 // -------------------------------------------------------------------------------------------
 
-static std::map<std::string, int> gfxTestArrayInts;
-static std::map<std::string, std::wstring> gfxTestArrayStrings;
-static std::map<std::string, int> gfxTestArraySizes;
-
-static std::string TestArrayKey(const char* var, const char* path, int index, const char* member)
+struct TestConfigEntry
 {
-	std::string key = path != nullptr ? path : "";
-	key += '/';
-	key += TestConfigKey(var);
-	key += '/';
-	key += std::to_string(index);
-	key += '/';
-	key += member != nullptr ? member : "";
-	return key;
-}
+	std::map<std::string, int> ints;
+	std::map<std::string, std::wstring> strings;
+};
 
-static std::string TestArrayListKey(const char* var, const char* path)
+static std::map<std::string, std::vector<std::unique_ptr<TestConfigEntry>>> gfxTestLists;
+
+static std::string TestListKey(const char* var, const char* path)
 {
 	std::string key = path != nullptr ? path : "";
 	key += '/';
@@ -1143,53 +1135,118 @@ static std::string TestArrayListKey(const char* var, const char* path)
 	return key;
 }
 
-int GetConfigArraySize(const char* var, const char* path)
+int ConfigListSize(const char* var, const char* path)
 {
-	auto it = gfxTestArraySizes.find(TestArrayListKey(var, path));
-	return (it == gfxTestArraySizes.end()) ? 0 : it->second;
+	auto it = gfxTestLists.find(TestListKey(var, path));
+	return (it == gfxTestLists.end()) ? 0 : (int)it->second.size();
 }
 
-bool ConfigArrayValueExists(const char* var, const char* path, int index, const char* member)
+ConfigEntry* ConfigListAt(const char* var, const char* path, int at)
 {
-	std::string key = TestArrayKey(var, path, index, member);
+	auto it = gfxTestLists.find(TestListKey(var, path));
 
-	return gfxTestArrayInts.count(key) != 0 || gfxTestArrayStrings.count(key) != 0;
+	if (it == gfxTestLists.end() || at < 0 || at >= (int)it->second.size())
+	{
+		return nullptr;
+	}
+
+	return (ConfigEntry*)it->second[at].get();
 }
 
-int GetConfigArrayInt(const char* var, const char* path, int index, const char* member, int def)
+ConfigEntry* ConfigListAppend(const char* var, const char* path)
 {
-	auto it = gfxTestArrayInts.find(TestArrayKey(var, path, index, member));
-	return (it == gfxTestArrayInts.end()) ? def : it->second;
+	auto& list = gfxTestLists[TestListKey(var, path)];
+	list.push_back(std::make_unique<TestConfigEntry>());
+	return (ConfigEntry*)list.back().get();
 }
 
-const wchar_t* GetConfigArrayString(const char* var, const char* path, int index, const char* member)
+void ConfigListRemove(const char* var, const char* path, ConfigEntry* entry)
+{
+	auto it = gfxTestLists.find(TestListKey(var, path));
+
+	if (it == gfxTestLists.end() || entry == nullptr)
+	{
+		return;
+	}
+
+	auto& list = it->second;
+
+	for (auto at = list.begin(); at != list.end(); ++at)
+	{
+		if ((ConfigEntry*)at->get() == entry)
+		{
+			list.erase(at);
+			return;
+		}
+	}
+}
+
+bool ConfigEntryValueExists(const ConfigEntry* entry, const char* member)
+{
+	const TestConfigEntry* object = (const TestConfigEntry*)entry;
+
+	if (object == nullptr)
+	{
+		return false;
+	}
+
+	std::string key = TestConfigKey(member);
+
+	return object->ints.count(key) != 0 || object->strings.count(key) != 0;
+}
+
+int GetConfigEntryInt(const ConfigEntry* entry, const char* member, int def)
+{
+	const TestConfigEntry* object = (const TestConfigEntry*)entry;
+
+	if (object == nullptr)
+	{
+		return def;
+	}
+
+	auto it = object->ints.find(TestConfigKey(member));
+	return (it == object->ints.end()) ? def : it->second;
+}
+
+void SetConfigEntryInt(ConfigEntry* entry, const char* member, int value)
+{
+	TestConfigEntry* object = (TestConfigEntry*)entry;
+
+	if (object != nullptr)
+	{
+		object->ints[TestConfigKey(member)] = value;
+	}
+}
+
+const wchar_t* GetConfigEntryString(const ConfigEntry* entry, const char* member)
 {
 	static std::wstring empty;
 
-	auto it = gfxTestArrayStrings.find(TestArrayKey(var, path, index, member));
+	const TestConfigEntry* object = (const TestConfigEntry*)entry;
 
-	if (it == gfxTestArrayStrings.end())
+	if (object == nullptr)
 	{
 		return empty.c_str();
 	}
 
-	return it->second.c_str();
+	auto it = object->strings.find(TestConfigKey(member));
+	return (it == object->strings.end()) ? empty.c_str() : it->second.c_str();
 }
 
-void SetConfigArrayInt(const char* var, const char* path, int index, const char* member, int value)
+void SetConfigEntryString(ConfigEntry* entry, const char* member, const wchar_t* value)
 {
-	gfxTestArrayInts[TestArrayKey(var, path, index, member)] = value;
+	TestConfigEntry* object = (TestConfigEntry*)entry;
 
-	int& size = gfxTestArraySizes[TestArrayListKey(var, path)];
-	if (size <= index) size = index + 1;
+	if (object != nullptr)
+	{
+		object->strings[TestConfigKey(member)] = value != nullptr ? value : L"";
+	}
 }
 
-void SetConfigArrayString(const char* var, const char* path, int index, const char* member, const wchar_t* value)
+void ConfigSectionKeepOnly(const char* path, const char* keep)
 {
-	gfxTestArrayStrings[TestArrayKey(var, path, index, member)] = value != nullptr ? value : L"";
-
-	int& size = gfxTestArraySizes[TestArrayListKey(var, path)];
-	if (size <= index) size = index + 1;
+	// The settings of a unit test are what the test itself puts there, and the peripheral pool of the
+	// machine under test is the list the machine adds its pads to: there is nothing to clean up.
 }
 
 // -------------------------------------------------------------------------------------------

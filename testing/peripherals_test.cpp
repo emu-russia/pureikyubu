@@ -142,11 +142,10 @@ namespace pureikyubutest
 		// The pool
 		// =========================================================================================
 
-		// The console comes with the device every port is meant for: a standard controller in each
-		// of the four sockets. (The unit test harness does not compile the memory card - a card
-		// registers itself with the pool from memcard.cpp, which is not part of it - so the two
-		// card slots are not checked here.)
-		TEST_METHOD(Peripherals_DefaultPoolHoldsTheDeviceOfEveryPort)
+		// The pool of the test machine is a standard controller in each of the four sockets. (The
+		// harness does not compile the memory card - a card registers itself with the pool from
+		// memcard.cpp, which is not part of it - so the two card slots are not checked here.)
+		TEST_METHOD(Peripherals_EveryControllerPortHoldsAPad)
 		{
 			M();
 			Peripherals& pool = Peripherals::Instance();
@@ -238,10 +237,10 @@ namespace pureikyubutest
 			Assert::AreEqual(0, pad->ActuatorBindings(a)->keyboard, L"the next pad has no key of its own");
 
 			// As the first pad of its model it gets the key too.
-			pool.DefaultBindings(index, true);
+			pool.DefaultBindings(pad, true);
 			Assert::AreEqual(TestDefaultKey, pad->ActuatorBindings(a)->keyboard, L"the key of the first pad");
 
-			pool.ClearBindings(index);
+			pool.ClearBindings(pad);
 			Assert::AreEqual(0, pad->ActuatorBindings(a)->keyboard, L"the bindings were dropped");
 			Assert::AreEqual(0, pad->ActuatorBindings(a)->gamepad, L"both of them");
 
@@ -263,7 +262,7 @@ namespace pureikyubutest
 
 			PeripheralDevice* pad = pool.Device(index);
 			int a = ActuatorOf(pad, "A");
-			pool.SetBinding(index, a, false, 0x1234);       // as the capture of the settings window does it
+			pool.SetBinding(pad, a, false, 0x1234);       // as the capture of the settings window does it
 			Assert::IsTrue(ActuatorOf(pad, "A") == PAD_ACT_A, L"the actuators are in the order of cont.h");
 
 			// The emulator is closed and started again.
@@ -289,8 +288,8 @@ namespace pureikyubutest
 			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
 			PeripheralDevice* pad = pool.Device(index);
 
-			pool.ClearBindings(index);
-			pool.DefaultBindings(index, true);
+			pool.ClearBindings(pad);
+			pool.DefaultBindings(pad, true);
 
 			int a = ActuatorOf(pad, "A");
 			Assert::AreEqual(PERIPH_HOST_MAKE_BUTTON(0), pad->ActuatorBindings(a)->gamepad, L"the game controller of A");
