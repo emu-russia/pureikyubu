@@ -59,9 +59,9 @@ namespace GFX
 
 			switch (kind)
 			{
-				case 0: m.a.bits = value; break;
-				case 1: m.b.bits = value; break;
-				default: m.c.bits = value; break;
+				case 0: m.a.bits = MergeBpWriteMask(m.a.bits, value, mask); break;
+				case 1: m.b.bits = MergeBpWriteMask(m.b.bits, value, mask); break;
+				default: m.c.bits = MergeBpWriteMask(m.c.bits, value, mask); break;
 			}
 			return;
 		}
@@ -74,7 +74,7 @@ namespace GFX
 
 		if (index == BUMP_IMASK_ID)
 		{
-			bump.imask.bits = value;
+			bump.imask.bits = MergeBpWriteMask(bump.imask.bits, value, mask);
 			return;
 		}
 
@@ -84,7 +84,8 @@ namespace GFX
 
 		if (index >= BUMP_CMD_ID && index < (BUMP_CMD_ID + 16))
 		{
-			bump.cmd[index - BUMP_CMD_ID].bits = value;
+			BumpCommand& cmd = bump.cmd[index - BUMP_CMD_ID];
+			cmd.bits = MergeBpWriteMask(cmd.bits, value, mask);
 			return;
 		}
 

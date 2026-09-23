@@ -1432,9 +1432,24 @@ namespace GFX
 	{
 		// The first primitive of the frame clears the EFB the frame started on (see GL_BeginFrame
 		// and GL_DisplayCopy: a display copy that comes first is the picture of the frame before).
+		//
+		// The software pipeline reaches this the same way the shader one does (Rasterizer::RAS_End
+		// for the shader path, SetupUnit::SoftEndPrimitive for the software one): the clear of its
+		// own EFB array belongs here as well, and for the same reason. Clearing it where the frame
+		// begins instead left the display copy of the frame that had just been drawn reading an EFB
+		// that was already blank, and the console showed black (Zelda: The Wind Waker's title
+		// screen in the software pipeline).
 		if (frame_clear_pending)
 		{
-			ClearFrameBuffer();
+			if (SoftPipeline())
+			{
+				pe->SoftBeginFrame();
+			}
+			else
+			{
+				ClearFrameBuffer();
+			}
+
 			frame_clear_pending = false;
 		}
 
@@ -1531,12 +1546,13 @@ namespace GFX
 	{
 		if (SoftPipeline())
 		{
-			// The software pipeline has no frame buffer to open and no GL state to program: the
-			// copy engine's clear (and the clears the display copies of the previous frame asked
-			// for) is all a frame needs, and the picture leaves through the XFB.
+			// The software pipeline has no frame buffer to open and no GL state to program, and its
+			// EFB is cleared by the first primitive of the frame (GPFrameDrawn) for the same reason
+			// the shader backend defers its clear: the copy engine's display copy of the frame that
+			// just ended still has to read the EFB. This call only opens the frame.
 			if (frame_done)
 			{
-				pe->SoftBeginFrame();
+				frame_clear_pending = true;
 				frame_done = false;
 			}
 			return;

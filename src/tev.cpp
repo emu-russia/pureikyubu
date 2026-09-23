@@ -1082,89 +1082,89 @@ void main()
 		return ((value & 0x800000) != 0) && ((value & 0x800) == 0);
 	}
 
-	static void TEVLoadRegisterL(TEV_RegisterL* colour, TEV_KonstRegisterL* konst, uint32_t value)
+	static void TEVLoadRegisterL(TEV_RegisterL* colour, TEV_KonstRegisterL* konst, uint32_t value, uint32_t mask)
 	{
 		if (TEVIsKonstForm(value))
 		{
 			konst->r = value & 0xFF;
 			konst->a = (value >> 12) & 0xFF;
 		}
-		else colour->bits = value;
+		else colour->bits = MergeBpWriteMask(colour->bits, value, mask);
 	}
 
-	static void TEVLoadRegisterH(TEV_RegisterH* colour, TEV_KonstRegisterH* konst, uint32_t value)
+	static void TEVLoadRegisterH(TEV_RegisterH* colour, TEV_KonstRegisterH* konst, uint32_t value, uint32_t mask)
 	{
 		if (TEVIsKonstForm(value))
 		{
 			konst->b = value & 0xFF;
 			konst->g = (value >> 12) & 0xFF;
 		}
-		else colour->bits = value;
+		else colour->bits = MergeBpWriteMask(colour->bits, value, mask);
 	}
 
 	void TextureEnvironmentUnit::loadTEVReg(size_t index, uint32_t value, uint32_t mask)
 	{
 		switch (index)
 		{
-			case TEV_COLOR_ENV_0_ID: tev.color_env[0].bits = value; break;
-			case TEV_ALPHA_ENV_0_ID: tev.alpha_env[0].bits = value; break;
-			case TEV_COLOR_ENV_1_ID: tev.color_env[1].bits = value; break;
-			case TEV_ALPHA_ENV_1_ID: tev.alpha_env[1].bits = value; break;
-			case TEV_COLOR_ENV_2_ID: tev.color_env[2].bits = value; break;
-			case TEV_ALPHA_ENV_2_ID: tev.alpha_env[2].bits = value; break;
-			case TEV_COLOR_ENV_3_ID: tev.color_env[3].bits = value; break;
-			case TEV_ALPHA_ENV_3_ID: tev.alpha_env[3].bits = value; break;
-			case TEV_COLOR_ENV_4_ID: tev.color_env[4].bits = value; break;
-			case TEV_ALPHA_ENV_4_ID: tev.alpha_env[4].bits = value; break;
-			case TEV_COLOR_ENV_5_ID: tev.color_env[5].bits = value; break;
-			case TEV_ALPHA_ENV_5_ID: tev.alpha_env[5].bits = value; break;
-			case TEV_COLOR_ENV_6_ID: tev.color_env[6].bits = value; break;
-			case TEV_ALPHA_ENV_6_ID: tev.alpha_env[6].bits = value; break;
-			case TEV_COLOR_ENV_7_ID: tev.color_env[7].bits = value; break;
-			case TEV_ALPHA_ENV_7_ID: tev.alpha_env[7].bits = value; break;
-			case TEV_COLOR_ENV_8_ID: tev.color_env[8].bits = value; break;
-			case TEV_ALPHA_ENV_8_ID: tev.alpha_env[8].bits = value; break;
-			case TEV_COLOR_ENV_9_ID: tev.color_env[9].bits = value; break;
-			case TEV_ALPHA_ENV_9_ID: tev.alpha_env[9].bits = value; break;
-			case TEV_COLOR_ENV_A_ID: tev.color_env[0xa].bits = value; break;
-			case TEV_ALPHA_ENV_A_ID: tev.alpha_env[0xa].bits = value; break;
-			case TEV_COLOR_ENV_B_ID: tev.color_env[0xb].bits = value; break;
-			case TEV_ALPHA_ENV_B_ID: tev.alpha_env[0xb].bits = value; break;
-			case TEV_COLOR_ENV_C_ID: tev.color_env[0xc].bits = value; break;
-			case TEV_ALPHA_ENV_C_ID: tev.alpha_env[0xc].bits = value; break;
-			case TEV_COLOR_ENV_D_ID: tev.color_env[0xd].bits = value; break;
-			case TEV_ALPHA_ENV_D_ID: tev.alpha_env[0xd].bits = value; break;
-			case TEV_COLOR_ENV_E_ID: tev.color_env[0xe].bits = value; break;
-			case TEV_ALPHA_ENV_E_ID: tev.alpha_env[0xe].bits = value; break;
-			case TEV_COLOR_ENV_F_ID: tev.color_env[0xf].bits = value; break;
-			case TEV_ALPHA_ENV_F_ID: tev.alpha_env[0xf].bits = value; break;
+			case TEV_COLOR_ENV_0_ID: tev.color_env[0].bits = MergeBpWriteMask(tev.color_env[0].bits, value, mask); break;
+			case TEV_ALPHA_ENV_0_ID: tev.alpha_env[0].bits = MergeBpWriteMask(tev.alpha_env[0].bits, value, mask); break;
+			case TEV_COLOR_ENV_1_ID: tev.color_env[1].bits = MergeBpWriteMask(tev.color_env[1].bits, value, mask); break;
+			case TEV_ALPHA_ENV_1_ID: tev.alpha_env[1].bits = MergeBpWriteMask(tev.alpha_env[1].bits, value, mask); break;
+			case TEV_COLOR_ENV_2_ID: tev.color_env[2].bits = MergeBpWriteMask(tev.color_env[2].bits, value, mask); break;
+			case TEV_ALPHA_ENV_2_ID: tev.alpha_env[2].bits = MergeBpWriteMask(tev.alpha_env[2].bits, value, mask); break;
+			case TEV_COLOR_ENV_3_ID: tev.color_env[3].bits = MergeBpWriteMask(tev.color_env[3].bits, value, mask); break;
+			case TEV_ALPHA_ENV_3_ID: tev.alpha_env[3].bits = MergeBpWriteMask(tev.alpha_env[3].bits, value, mask); break;
+			case TEV_COLOR_ENV_4_ID: tev.color_env[4].bits = MergeBpWriteMask(tev.color_env[4].bits, value, mask); break;
+			case TEV_ALPHA_ENV_4_ID: tev.alpha_env[4].bits = MergeBpWriteMask(tev.alpha_env[4].bits, value, mask); break;
+			case TEV_COLOR_ENV_5_ID: tev.color_env[5].bits = MergeBpWriteMask(tev.color_env[5].bits, value, mask); break;
+			case TEV_ALPHA_ENV_5_ID: tev.alpha_env[5].bits = MergeBpWriteMask(tev.alpha_env[5].bits, value, mask); break;
+			case TEV_COLOR_ENV_6_ID: tev.color_env[6].bits = MergeBpWriteMask(tev.color_env[6].bits, value, mask); break;
+			case TEV_ALPHA_ENV_6_ID: tev.alpha_env[6].bits = MergeBpWriteMask(tev.alpha_env[6].bits, value, mask); break;
+			case TEV_COLOR_ENV_7_ID: tev.color_env[7].bits = MergeBpWriteMask(tev.color_env[7].bits, value, mask); break;
+			case TEV_ALPHA_ENV_7_ID: tev.alpha_env[7].bits = MergeBpWriteMask(tev.alpha_env[7].bits, value, mask); break;
+			case TEV_COLOR_ENV_8_ID: tev.color_env[8].bits = MergeBpWriteMask(tev.color_env[8].bits, value, mask); break;
+			case TEV_ALPHA_ENV_8_ID: tev.alpha_env[8].bits = MergeBpWriteMask(tev.alpha_env[8].bits, value, mask); break;
+			case TEV_COLOR_ENV_9_ID: tev.color_env[9].bits = MergeBpWriteMask(tev.color_env[9].bits, value, mask); break;
+			case TEV_ALPHA_ENV_9_ID: tev.alpha_env[9].bits = MergeBpWriteMask(tev.alpha_env[9].bits, value, mask); break;
+			case TEV_COLOR_ENV_A_ID: tev.color_env[0xa].bits = MergeBpWriteMask(tev.color_env[0xa].bits, value, mask); break;
+			case TEV_ALPHA_ENV_A_ID: tev.alpha_env[0xa].bits = MergeBpWriteMask(tev.alpha_env[0xa].bits, value, mask); break;
+			case TEV_COLOR_ENV_B_ID: tev.color_env[0xb].bits = MergeBpWriteMask(tev.color_env[0xb].bits, value, mask); break;
+			case TEV_ALPHA_ENV_B_ID: tev.alpha_env[0xb].bits = MergeBpWriteMask(tev.alpha_env[0xb].bits, value, mask); break;
+			case TEV_COLOR_ENV_C_ID: tev.color_env[0xc].bits = MergeBpWriteMask(tev.color_env[0xc].bits, value, mask); break;
+			case TEV_ALPHA_ENV_C_ID: tev.alpha_env[0xc].bits = MergeBpWriteMask(tev.alpha_env[0xc].bits, value, mask); break;
+			case TEV_COLOR_ENV_D_ID: tev.color_env[0xd].bits = MergeBpWriteMask(tev.color_env[0xd].bits, value, mask); break;
+			case TEV_ALPHA_ENV_D_ID: tev.alpha_env[0xd].bits = MergeBpWriteMask(tev.alpha_env[0xd].bits, value, mask); break;
+			case TEV_COLOR_ENV_E_ID: tev.color_env[0xe].bits = MergeBpWriteMask(tev.color_env[0xe].bits, value, mask); break;
+			case TEV_ALPHA_ENV_E_ID: tev.alpha_env[0xe].bits = MergeBpWriteMask(tev.alpha_env[0xe].bits, value, mask); break;
+			case TEV_COLOR_ENV_F_ID: tev.color_env[0xf].bits = MergeBpWriteMask(tev.color_env[0xf].bits, value, mask); break;
+			case TEV_ALPHA_ENV_F_ID: tev.alpha_env[0xf].bits = MergeBpWriteMask(tev.alpha_env[0xf].bits, value, mask); break;
 
 			// The colour registers and the Rev B K constants share the register ids; the RTL routes
 			// the write by the tag bit of the payload: bit 23 set with bit 11 clear means the 8-bit
 			// K form, everything else is the original 11-bit colour form (gfx-tev.md 4.4). The two
 			// forms are separate storages, so a K write does not disturb the colour registers.
-			case TEV_REGISTERL_0_ID: TEVLoadRegisterL(&tev.regl[0], &tev.kregl[0], value); break;
-			case TEV_REGISTERH_0_ID: TEVLoadRegisterH(&tev.regh[0], &tev.kregh[0], value); break;
-			case TEV_REGISTERL_1_ID: TEVLoadRegisterL(&tev.regl[1], &tev.kregl[1], value); break;
-			case TEV_REGISTERH_1_ID: TEVLoadRegisterH(&tev.regh[1], &tev.kregh[1], value); break;
-			case TEV_REGISTERL_2_ID: TEVLoadRegisterL(&tev.regl[2], &tev.kregl[2], value); break;
-			case TEV_REGISTERH_2_ID: TEVLoadRegisterH(&tev.regh[2], &tev.kregh[2], value); break;
-			case TEV_REGISTERL_3_ID: TEVLoadRegisterL(&tev.regl[3], &tev.kregl[3], value); break;
-			case TEV_REGISTERH_3_ID: TEVLoadRegisterH(&tev.regh[3], &tev.kregh[3], value); break;
-			case TEV_RANGE_ADJ_C_ID: tev.rangeadj_control.bits = value; break;
-			case TEV_RANGE_ADJ_0_ID: tev.range_adj[0].bits = value; break;
-			case TEV_RANGE_ADJ_1_ID: tev.range_adj[1].bits = value; break;
-			case TEV_RANGE_ADJ_2_ID: tev.range_adj[2].bits = value; break;
-			case TEV_RANGE_ADJ_3_ID: tev.range_adj[3].bits = value; break;
-			case TEV_RANGE_ADJ_4_ID: tev.range_adj[4].bits = value; break;
-			case TEV_FOG_PARAM_0_ID: tev.fog_param0.bits = value; break;
-			case TEV_FOG_PARAM_1_ID: tev.fog_param1.bits = value; break;
-			case TEV_FOG_PARAM_2_ID: tev.fog_param2.bits = value; break;
-			case TEV_FOG_PARAM_3_ID: tev.fog_param3.bits = value; break;
-			case TEV_FOG_COLOR_ID: tev.fog_color.bits = value; break;
-			case TEV_ALPHAFUNC_ID: tev.alpha_func.bits = value; break;
-			case TEV_Z_ENV_0_ID: tev.zenv0.bits = value; break;
-			case TEV_Z_ENV_1_ID: tev.zenv1.bits = value; break;
+			case TEV_REGISTERL_0_ID: TEVLoadRegisterL(&tev.regl[0], &tev.kregl[0], value, mask); break;
+			case TEV_REGISTERH_0_ID: TEVLoadRegisterH(&tev.regh[0], &tev.kregh[0], value, mask); break;
+			case TEV_REGISTERL_1_ID: TEVLoadRegisterL(&tev.regl[1], &tev.kregl[1], value, mask); break;
+			case TEV_REGISTERH_1_ID: TEVLoadRegisterH(&tev.regh[1], &tev.kregh[1], value, mask); break;
+			case TEV_REGISTERL_2_ID: TEVLoadRegisterL(&tev.regl[2], &tev.kregl[2], value, mask); break;
+			case TEV_REGISTERH_2_ID: TEVLoadRegisterH(&tev.regh[2], &tev.kregh[2], value, mask); break;
+			case TEV_REGISTERL_3_ID: TEVLoadRegisterL(&tev.regl[3], &tev.kregl[3], value, mask); break;
+			case TEV_REGISTERH_3_ID: TEVLoadRegisterH(&tev.regh[3], &tev.kregh[3], value, mask); break;
+			case TEV_RANGE_ADJ_C_ID: tev.rangeadj_control.bits = MergeBpWriteMask(tev.rangeadj_control.bits, value, mask); break;
+			case TEV_RANGE_ADJ_0_ID: tev.range_adj[0].bits = MergeBpWriteMask(tev.range_adj[0].bits, value, mask); break;
+			case TEV_RANGE_ADJ_1_ID: tev.range_adj[1].bits = MergeBpWriteMask(tev.range_adj[1].bits, value, mask); break;
+			case TEV_RANGE_ADJ_2_ID: tev.range_adj[2].bits = MergeBpWriteMask(tev.range_adj[2].bits, value, mask); break;
+			case TEV_RANGE_ADJ_3_ID: tev.range_adj[3].bits = MergeBpWriteMask(tev.range_adj[3].bits, value, mask); break;
+			case TEV_RANGE_ADJ_4_ID: tev.range_adj[4].bits = MergeBpWriteMask(tev.range_adj[4].bits, value, mask); break;
+			case TEV_FOG_PARAM_0_ID: tev.fog_param0.bits = MergeBpWriteMask(tev.fog_param0.bits, value, mask); break;
+			case TEV_FOG_PARAM_1_ID: tev.fog_param1.bits = MergeBpWriteMask(tev.fog_param1.bits, value, mask); break;
+			case TEV_FOG_PARAM_2_ID: tev.fog_param2.bits = MergeBpWriteMask(tev.fog_param2.bits, value, mask); break;
+			case TEV_FOG_PARAM_3_ID: tev.fog_param3.bits = MergeBpWriteMask(tev.fog_param3.bits, value, mask); break;
+			case TEV_FOG_COLOR_ID: tev.fog_color.bits = MergeBpWriteMask(tev.fog_color.bits, value, mask); break;
+			case TEV_ALPHAFUNC_ID: tev.alpha_func.bits = MergeBpWriteMask(tev.alpha_func.bits, value, mask); break;
+			case TEV_Z_ENV_0_ID: tev.zenv0.bits = MergeBpWriteMask(tev.zenv0.bits, value, mask); break;
+			case TEV_Z_ENV_1_ID: tev.zenv1.bits = MergeBpWriteMask(tev.zenv1.bits, value, mask); break;
 			case TEV_KSEL_0_ID: tev.ksel[0].bits = MergeBpWriteMask(tev.ksel[0].bits, value, mask); break;
 			case TEV_KSEL_1_ID: tev.ksel[1].bits = MergeBpWriteMask(tev.ksel[1].bits, value, mask); break;
 			case TEV_KSEL_2_ID: tev.ksel[2].bits = MergeBpWriteMask(tev.ksel[2].bits, value, mask); break;

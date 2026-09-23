@@ -301,6 +301,13 @@ namespace pureikyubutest
 
 			m.BeginFrame();
 
+			// The EFB of the software pipeline is cleared by the first primitive of the frame, not
+			// by the frame begin itself: the copy engine's display copy of the frame that just
+			// ended still has to read it (GFXCore::GPFrameDrawn). A rectangle in the corner is what
+			// opens this frame, and the pixel the clear is read from is away from it.
+			SetupRasterStage0(m);
+			DrawPixelRect(m, 0.0f, 0.0f, 4.0f, 4.0f, Color(255, 255, 255));
+
 			uint8_t pixel[4] = { 0 };
 			ReadEfbPixel(m, 320, 240, pixel);
 

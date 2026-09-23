@@ -395,6 +395,32 @@ namespace pureikyubutest
 			Assert::AreEqual<int>(0xff, rgb[0], L"the colour write must be enabled again");
 		}
 
+		// The GX library shares CMODE0 between two features: GXSetColorUpdate/GXSetAlphaUpdate write
+		// the two update bits, and the blend/dither/logic write of GXSetBlendMode and friends writes
+		// everything else through the BP write mask 0x1FE7, which holds the two update bits out. A
+		// masked write that replaced the whole register turned the colour write off, and every
+		// primitive drawn after a blend change painted nothing at all - which is how the sky of
+		// Zelda: The Wind Waker's title screen came out black.
+		TEST_METHOD(Pe_AMaskedWriteKeepsTheColourAndAlphaUpdateBits)
+		{
+			GfxTestMachine& m = M();
+
+			m.BpLoad(PE_CMODE0_ID, (1u << 2) | (1u << 3) | (1u << 4));		// dither, colour and alpha update on
+			m.BpLoadMasked(PE_CMODE0_ID, 0x3104, 0x1FE7);					// the blend write of the library
+
+			const GFX::PE_CMODE0& cmode0 = m.gfx->pe->State().cmode0;
+
+			// The mask holds bits 3 and 4 out (the two update bits), so they keep what they held
+			// while every bit it names comes from the write. Bit 13, the high bit of the logic mode,
+			// is held out as well, which is what the mask the library writes says.
+			Assert::AreEqual<unsigned>(1, cmode0.col_mask, L"col_mask survives the masked write");
+			Assert::AreEqual<unsigned>(1, cmode0.alpha_mask, L"alpha_mask survives the masked write");
+			Assert::AreEqual<unsigned>(0, cmode0.blend_en, L"blend_en comes from the masked write");
+			Assert::AreEqual<unsigned>(1, cmode0.dither_en, L"dither_en comes from the masked write");
+			Assert::AreEqual<unsigned>(0x1104u, cmode0.bits & 0x1FE7u, L"the bits the mask names come from the write");
+			Assert::AreEqual<unsigned>(0x18u, cmode0.bits & ~0x1FE7u & 0xFFFFFFu, L"the bits it leaves out keep their value");
+		}
+
 		// The frame clear is the copy engine's clear, so the write mask left behind by the previous
 		// scene must not stop it (a hardware clear writes the EFB regardless of the colour mask).
 		TEST_METHOD(Pe_TheFrameClearIgnoresTheColorWriteMask)

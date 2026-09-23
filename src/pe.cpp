@@ -230,19 +230,28 @@ namespace GFX
 		switch (index)
 		{
 			// Pixel Engine block
+			//
+			// Every register below keeps the bits the BP write mask (register 0xFE) leaves out: the
+			// GX library limits the write on purpose for the registers whose payload is shared by two
+			// features, and the payload it does not write is not zero. CMODE0 is the one that bites:
+			// the blend/dither/logic write of the library is masked with 0x1FE7, which holds out
+			// COLOR_UPDATE and ALPHA_UPDATE - the write behind GXSetColorUpdate/GXSetAlphaUpdate -
+			// so a masked write that overwrote them turned every following primitive into a draw
+			// that writes no colour at all (the black sky of Zelda: The Wind Waker, and every other
+			// primitive of a frame that programs its blending between two colour updates).
 
 			case PE_ZMODE_ID:
-				pe.zmode.bits = value;
+				pe.zmode.bits = MergeBpWriteMask(pe.zmode.bits, value, mask);
 				ApplyZMode();
 				break;
 
 			case PE_CMODE0_ID:
-				pe.cmode0.bits = value;
+				pe.cmode0.bits = MergeBpWriteMask(pe.cmode0.bits, value, mask);
 				ApplyColorMode();
 				break;
 
 			case PE_CMODE1_ID:
-				pe.cmode1.bits = value;
+				pe.cmode1.bits = MergeBpWriteMask(pe.cmode1.bits, value, mask);
 				ApplyColorMode();
 				break;
 
@@ -250,11 +259,11 @@ namespace GFX
 			// backend: the render target is always the RGBA8 colour buffer with a 24-bit depth buffer,
 			// which is what the uncompressed ("none") pixel types describe.
 			case PE_CONTROL_ID:
-				pe.control.bits = value;
+				pe.control.bits = MergeBpWriteMask(pe.control.bits, value, mask);
 				break;
 
 			case PE_FIELD_MASK_ID:
-				pe.field_mask.bits = value;
+				pe.field_mask.bits = MergeBpWriteMask(pe.field_mask.bits, value, mask);
 				break;
 
 			// draw done
@@ -270,7 +279,7 @@ namespace GFX
 
 			// token
 			case PE_TOKEN_INT_ID:
-				pe.token_int.bits = value;
+				pe.token_int.bits = MergeBpWriteMask(pe.token_int.bits, value, mask);
 				break;
 
 			// draw sync token
@@ -285,7 +294,7 @@ namespace GFX
 			// presented; the token only raises its interrupt.
 			case PE_TOKEN_ID:
 			{
-				pe.token.bits = value;
+				pe.token.bits = MergeBpWriteMask(pe.token.bits, value, mask);
 				if (pe.token.token == pe.token_int.token)
 				{
 					PE_TOKEN_INT();
@@ -294,43 +303,43 @@ namespace GFX
 			break;
 
 			case PE_REFRESH_ID:
-				pe.refresh.bits = value;
+				pe.refresh.bits = MergeBpWriteMask(pe.refresh.bits, value, mask);
 				break;
 
 			case PE_COPY_SRC_ADDR_ID:
-				pe.copy_src_addr.bits = value;
+				pe.copy_src_addr.bits = MergeBpWriteMask(pe.copy_src_addr.bits, value, mask);
 				break;
 
 			case PE_COPY_SRC_SIZE_ID:
-				pe.copy_src_size.bits = value;
+				pe.copy_src_size.bits = MergeBpWriteMask(pe.copy_src_size.bits, value, mask);
 				break;
 
 			case PE_COPY_DST_BASE0_ID:
-				pe.copy_dst_base[0].bits = value;
+				pe.copy_dst_base[0].bits = MergeBpWriteMask(pe.copy_dst_base[0].bits, value, mask);
 				break;
 
 			case PE_COPY_DST_BASE1_ID:
-				pe.copy_dst_base[1].bits = value;
+				pe.copy_dst_base[1].bits = MergeBpWriteMask(pe.copy_dst_base[1].bits, value, mask);
 				break;
 
 			case PE_COPY_DST_STRIDE_ID:
-				pe.copy_dst_stride.bits = value;
+				pe.copy_dst_stride.bits = MergeBpWriteMask(pe.copy_dst_stride.bits, value, mask);
 				break;
 
 			case PE_COPY_SCALE_ID:
-				pe.copy_scale.bits = value;
+				pe.copy_scale.bits = MergeBpWriteMask(pe.copy_scale.bits, value, mask);
 				break;
 
 			case PE_COPY_CLEAR_AR_ID:
-				pe.copy_clear_ar.bits = value;
+				pe.copy_clear_ar.bits = MergeBpWriteMask(pe.copy_clear_ar.bits, value, mask);
 				break;
 
 			case PE_COPY_CLEAR_GB_ID:
-				pe.copy_clear_gb.bits = value;
+				pe.copy_clear_gb.bits = MergeBpWriteMask(pe.copy_clear_gb.bits, value, mask);
 				break;
 
 			case PE_COPY_CLEAR_Z_ID:
-				pe.copy_clear_z.bits = value;
+				pe.copy_clear_z.bits = MergeBpWriteMask(pe.copy_clear_z.bits, value, mask);
 				break;
 
 			// The copy command is the trigger of the whole copy engine.
@@ -413,31 +422,31 @@ namespace GFX
 			}
 
 			case PE_COPY_VFILTER0_ID:
-				pe.vfilter_0.bits = value;
+				pe.vfilter_0.bits = MergeBpWriteMask(pe.vfilter_0.bits, value, mask);
 				break;
 
 			case PE_COPY_VFILTER1_ID:
-				pe.vfilter_1.bits = value;
+				pe.vfilter_1.bits = MergeBpWriteMask(pe.vfilter_1.bits, value, mask);
 				break;
 
 			case PE_XBOUND_ID:
-				pe.xbound.bits = value;
+				pe.xbound.bits = MergeBpWriteMask(pe.xbound.bits, value, mask);
 				break;
 
 			case PE_YBOUND_ID:
-				pe.ybound.bits = value;
+				pe.ybound.bits = MergeBpWriteMask(pe.ybound.bits, value, mask);
 				break;
 
 			case PE_PERFMODE_ID:
-				pe.perfmode.bits = value;
+				pe.perfmode.bits = MergeBpWriteMask(pe.perfmode.bits, value, mask);
 				break;
 
 			case PE_CHICKEN_ID:
-				pe.chicken.bits = value;
+				pe.chicken.bits = MergeBpWriteMask(pe.chicken.bits, value, mask);
 				break;
 
 			case PE_QUAD_OFFSET_ID:
-				pe.quad_offset.bits = value;
+				pe.quad_offset.bits = MergeBpWriteMask(pe.quad_offset.bits, value, mask);
 
 				// The offset is the origin of the quad stream of the XF in the coordinate space the
 				// title programs its scissor rectangle and its viewport in (gfx-pe.md 6.20), so both

@@ -1053,30 +1053,36 @@ namespace GFX
 		{
 			TexMap* m = &texMap[id];
 
+			// The map registers honour a BP write mask like every other register of the file (see
+			// MergeBpWriteMask).
 			switch (kind)
 			{
 				case 0:
+				{
 					// GXLoadTexObj programs the mode on every draw, and the sampler parameters
 					// (which may rebuild the mip chain) only change with the value.
-					if (tx.texmode0[id].bits != value)
+					uint32_t merged = MergeBpWriteMask(tx.texmode0[id].bits, value, mask);
+
+					if (tx.texmode0[id].bits != merged)
 					{
-						tx.texmode0[id].bits = value;
+						tx.texmode0[id].bits = merged;
 						m->paramsDirty = true;
 					}
-					break;
-				case 1: tx.texmode1[id].bits = value; break;
+				}
+				break;
+				case 1: tx.texmode1[id].bits = MergeBpWriteMask(tx.texmode1[id].bits, value, mask); break;
 				case 2:
-					tx.teximg0[id].bits = value;
+					tx.teximg0[id].bits = MergeBpWriteMask(tx.teximg0[id].bits, value, mask);
 					// The format or the size changed: the image has to be decoded again
 					if (m->keyFmt != (int)tx.teximg0[id].fmt ||
 						m->keyWidth != (int)(tx.teximg0[id].width + 1) ||
 						m->keyHeight != (int)(tx.teximg0[id].height + 1))
 						m->dirty = true;
 					break;
-				case 3: tx.teximg1[id].bits = value; break;
-				case 4: tx.teximg2[id].bits = value; break;
+				case 3: tx.teximg1[id].bits = MergeBpWriteMask(tx.teximg1[id].bits, value, mask); break;
+				case 4: tx.teximg2[id].bits = MergeBpWriteMask(tx.teximg2[id].bits, value, mask); break;
 				case 5:
-					tx.teximg3[id].bits = value;
+					tx.teximg3[id].bits = MergeBpWriteMask(tx.teximg3[id].bits, value, mask);
 					// The texture base may point at new data even if the address is unchanged, and
 					// a title may edit the texels in place, so the map has to be looked at again.
 					// DecodeTexture compares the description and the texture bytes and keeps the
@@ -1084,7 +1090,7 @@ namespace GFX
 					m->dirty = true;
 					break;
 				case 6:
-					tx.settlut[id].bits = value;
+					tx.settlut[id].bits = MergeBpWriteMask(tx.settlut[id].bits, value, mask);
 					m->dirty = true;
 					break;
 			}
@@ -1106,7 +1112,8 @@ namespace GFX
 			case TX_LOADBLOCK2_ID:
 			case TX_LOADBLOCK3_ID:
 			{
-				tx.loadblock[index - TX_LOADBLOCK0_ID] = value;
+				uint32_t& reg = tx.loadblock[index - TX_LOADBLOCK0_ID];
+				reg = MergeBpWriteMask(reg, value, mask);
 
 				// The software pipeline owns a real TMEM: the explicit load streamed by these
 				// registers is what fills it (gfx-tc.md 3.6). `TX_LOADBLOCK3` carries the count
@@ -1126,7 +1133,7 @@ namespace GFX
 			}
 
 			case TX_INVTAGS_ID:
-				tx.invtags = value;
+				tx.invtags = MergeBpWriteMask(tx.invtags, value, mask);
 				// The hardware's "the texture bytes changed" command (GXInvalidateTexAll). The
 				// backend decodes from main memory on demand and otherwise keeps the decoded image,
 				// so every map has to be decoded again.
@@ -1135,26 +1142,26 @@ namespace GFX
 				return;
 
 			case TX_PERFMODE_ID:
-				tx.perfmode = value;
+				tx.perfmode = MergeBpWriteMask(tx.perfmode, value, mask);
 				return;
 
 			case TX_MISC_ID:
-				tx.misc = value;
+				tx.misc = MergeBpWriteMask(tx.misc, value, mask);
 				return;
 
 			case TX_REFRESH_ID:
-				tx.refresh = value;
+				tx.refresh = MergeBpWriteMask(tx.refresh, value, mask);
 				return;
 
 			case TX_LOADTLUT0_ID:
-				tx.loadtlut0.bits = value;
+				tx.loadtlut0.bits = MergeBpWriteMask(tx.loadtlut0.bits, value, mask);
 				LoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem << 9, tx.loadtlut1.count);
 				if (gfx != nullptr && gfx->SoftPipeline())
 					SoftLoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem, tx.loadtlut1.count);
 				return;
 
 			case TX_LOADTLUT1_ID:
-				tx.loadtlut1.bits = value;
+				tx.loadtlut1.bits = MergeBpWriteMask(tx.loadtlut1.bits, value, mask);
 				LoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem << 9, tx.loadtlut1.count);
 				if (gfx != nullptr && gfx->SoftPipeline())
 					SoftLoadTlut(tx.loadtlut0.base << 5, tx.loadtlut1.tmem, tx.loadtlut1.count);

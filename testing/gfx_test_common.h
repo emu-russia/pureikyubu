@@ -110,6 +110,14 @@ namespace GfxUnitTest
 		/// <summary>A bypass (BP) register load, index = 0x00..0xFF.</summary>
 		void BpLoad(unsigned index, uint32_t value);
 
+		/// <summary>
+		/// A bypass register load limited by a BP write mask (register 0xFE): the bits the mask
+		/// leaves out keep the value the register already holds. The command processor hands the
+		/// mask down the bypass chain with the write (see MergeBpWriteMask), which is what this
+		/// helper passes to the blocks.
+		/// </summary>
+		void BpLoadMasked(unsigned index, uint32_t value, uint32_t mask);
+
 		/// <summary>A single-word XF register write (0x0000..0x1057).</summary>
 		void XfLoad(unsigned index, uint32_t value);
 

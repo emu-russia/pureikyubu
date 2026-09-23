@@ -369,6 +369,12 @@ namespace GfxUnitTest
 		gfx->xf->CPSuCommand(index, value);
 	}
 
+	void GfxTestMachine::BpLoadMasked(unsigned index, uint32_t value, uint32_t mask)
+	{
+		Assert::IsTrue(started, L"the GFX test machine is not running");
+		gfx->xf->CPSuCommand(index, value, mask);
+	}
+
 	void GfxTestMachine::XfLoad(unsigned index, uint32_t value)
 	{
 		Assert::IsTrue(started, L"the GFX test machine is not running");
