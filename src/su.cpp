@@ -138,18 +138,22 @@ namespace GFX
 			break;
 
 			// I don't see any use for MSLOC yet, I added it to avoid spamming with warnings
+			//
+			// Every register of the block keeps the bits a BP write mask (0xFE) leaves out: the GX
+			// library limits a write when two features share the payload of one register (see
+			// MergeBpWriteMask and the note in PixelEngine::loadPEReg).
 
 			case GEN_MSLOC0_ID:
-				gfx->msloc[0].bits = value;
+				gfx->msloc[0].bits = MergeBpWriteMask(gfx->msloc[0].bits, value, mask);
 				break;
 			case GEN_MSLOC1_ID:
-				gfx->msloc[1].bits = value;
+				gfx->msloc[1].bits = MergeBpWriteMask(gfx->msloc[1].bits, value, mask);
 				break;
 			case GEN_MSLOC2_ID:
-				gfx->msloc[2].bits = value;
+				gfx->msloc[2].bits = MergeBpWriteMask(gfx->msloc[2].bits, value, mask);
 				break;
 			case GEN_MSLOC3_ID:
-				gfx->msloc[3].bits = value;
+				gfx->msloc[3].bits = MergeBpWriteMask(gfx->msloc[3].bits, value, mask);
 				break;
 
 			//
@@ -158,7 +162,7 @@ namespace GFX
 
 			case SU_SCIS0_ID:
 			{
-				su.scis0.bits = value;
+				su.scis0.bits = MergeBpWriteMask(su.scis0.bits, value, mask);
 				su.scissorSet = true;
 
 				//GFXError("scissor (%i, %i)-(%i, %i)", x, y, w, h);
@@ -168,7 +172,7 @@ namespace GFX
 
 			case SU_SCIS1_ID:
 			{
-				su.scis1.bits = value;
+				su.scis1.bits = MergeBpWriteMask(su.scis1.bits, value, mask);
 				su.scissorSet = true;
 
 				//GFXError("scissor (%i, %i)-(%i, %i)", x, y, w, h);
@@ -187,7 +191,7 @@ namespace GFX
 			//
 
 			case SU_LPSIZE_ID:
-				su.lpsize.bits = value;
+				su.lpsize.bits = MergeBpWriteMask(su.lpsize.bits, value, mask);
 				break;
 
 			//
@@ -205,7 +209,7 @@ namespace GFX
 			case SU_SSIZE7_ID:
 			{
 				size_t num = (index - SU_SSIZE0_ID) >> 1;
-				su.ssize[num].bits = value;
+				su.ssize[num].bits = MergeBpWriteMask(su.ssize[num].bits, value, mask);
 				su.ssizeSet[num] = true;
 			}
 			break;
@@ -220,7 +224,7 @@ namespace GFX
 			case SU_TSIZE7_ID:
 			{
 				size_t num = (index - SU_TSIZE0_ID) >> 1;
-				su.tsize[num].bits = value;
+				su.tsize[num].bits = MergeBpWriteMask(su.tsize[num].bits, value, mask);
 				su.tsizeSet[num] = true;
 			}
 			break;
@@ -628,6 +632,12 @@ namespace GFX
 		const size_t n = soft_vertices.size();
 		if (n == 0)
 			return;
+
+		// The frame now holds content: the display copy that closes it presents this picture. The
+		// shader pipeline does the same from Rasterizer::RAS_End, which the software one never
+		// reaches; the call is also what clears the software EFB for the first primitive of a frame
+		// (see GFXCore::GPFrameDrawn).
+		gfx->GPFrameDrawn();
 
 		switch (soft_prim)
 		{

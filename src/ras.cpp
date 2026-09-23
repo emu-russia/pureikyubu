@@ -471,9 +471,9 @@ namespace GFX
 			// the GL backend: the counter events and the break control have no host equivalent.
 			case RAS1_PERF_ID: break;
 
-			case RAS1_SS0_ID: ss[0].bits = value; break;
-			case RAS1_SS1_ID: ss[1].bits = value; break;
-			case RAS1_IREF_ID: iref = value; break;
+			case RAS1_SS0_ID: ss[0].bits = MergeBpWriteMask(ss[0].bits, value, mask); break;
+			case RAS1_SS1_ID: ss[1].bits = MergeBpWriteMask(ss[1].bits, value, mask); break;
+			case RAS1_IREF_ID: iref = MergeBpWriteMask(iref, value, mask); break;
 
 			case RAS1_TREF0_ID:
 			case RAS1_TREF1_ID:
@@ -483,8 +483,11 @@ namespace GFX
 			case RAS1_TREF5_ID:
 			case RAS1_TREF6_ID:
 			case RAS1_TREF7_ID:
-				tref[index - RAS1_TREF0_ID].bits = value;
-				break;
+			{
+				RAS1_TREF& reg = tref[index - RAS1_TREF0_ID];
+				reg.bits = MergeBpWriteMask(reg.bits, value, mask);
+			}
+			break;
 
 			default:
 				gfx->pe->loadPEReg(index, value, mask);

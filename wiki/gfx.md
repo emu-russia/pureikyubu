@@ -33,6 +33,17 @@ read is answered by the XF out of its own register state and latched in `CP_XF_D
 where the CPU sees it. The CP does not reach past the XF: the vertex stream leaves the XF towards the SU,
 which drives the rasterizers.
 
+Every bypass (BP) register word the CP writes is subject to the write mask of register `0xFE`: the mask is
+consumed by the very next BP write, and the bits it leaves out keep the value the register already holds
+(`MergeBpWriteMask`, `CommandProcessor::BpRegWrite`). The GX/GD library uses the mask for the registers
+whose payload is shared between two features: `GEN_MODE` (the cull mode against the rest of the register),
+`CMODE0` (the colour and alpha update bits of `GXSetColorUpdate`/`GXSetAlphaUpdate` against the blend,
+dither and logic write of `GXSetBlendMode` and friends, mask `0x1FE7`) and the TEV `KSEL`/K-constant
+registers. The CP hands the mask down the bypass chain with the write, so every block merges it into its
+own register; a block that replaced the whole register instead made the masked write visible to the
+picture, which is what turned the sky of Zelda: The Wind Waker's title screen black (the blend write of
+the library carried the colour update bits away, and everything drawn after it wrote no colour at all).
+
 ### XF (vertex shader)
 
 - geometry (modelview) and texture matrix multiplies against the matrix RAM (`matrixMem`, 64 rows x 4 words) and
