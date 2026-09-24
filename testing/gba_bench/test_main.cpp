@@ -255,8 +255,14 @@ namespace
 		std::string disasmFile;		// --disasm-arm/--disasm-thumb/--disasm-gb
 		std::string disasmKind;		// "arm", "thumb" or "gb"
 		std::string gbBios;			// --gb-bios: the Game Boy's own boot ROM
+		std::string stateFile;		// --state: a save state to start the machine from
 		uint32_t disasmOffset = 0;
 		int disasmCount = 0;
+		uint32_t peekAddress = 0;	// --peek: where the memory dump starts
+		int peekWords = 0;			// --peek: how many 32-bit words to print
+		std::string dumpFile;		// --dump: a raw copy of a memory range, for the disassembler
+		uint32_t dumpAddress = 0;
+		int dumpLength = 0;
 		int trace = 0;				// --trace: how many instructions of the last frame to keep
 		int frames = 60;
 		int pngEvery = 0;
@@ -373,6 +379,7 @@ namespace
 		bool halted = false;
 		int size = 2;
 		std::string text;
+		uint32_t regs[16] = { 0 };
 	};
 
 	/// <summary>Run the last frame of the machine one instruction at a time, keeping the last
@@ -396,6 +403,9 @@ namespace
 			entry.halted = system.Cpu().Halted();
 			entry.text = entry.halted ? std::string("halted (waiting for IE & IF)") :
 				Disassemble(memory, entry.pc, entry.thumb, &entry.size);
+
+			for (int i = 0; i < 16; i++)
+				entry.regs[i] = system.Cpu().Reg(i);
 
 			// A halted core is stepped (the bus still advances) but recorded once: otherwise a
 			// program that waits out a whole frame fills the trace with one address.
@@ -433,8 +443,22 @@ namespace
 			}
 
 			printf("  %08X: %-28s r0=%08X r1=%08X r2=%08X r3=%08X\n", (unsigned)entry.pc,
-				entry.text.c_str(), (unsigned)system.Cpu().Reg(0), (unsigned)system.Cpu().Reg(1),
-				(unsigned)system.Cpu().Reg(2), (unsigned)system.Cpu().Reg(3));
+				entry.text.c_str(), (unsigned)entry.regs[0], (unsigned)entry.regs[1],
+				(unsigned)entry.regs[2], (unsigned)entry.regs[3]);
+		}
+
+		// The whole register file of the last traced instruction: a stuck program usually keeps
+		// its counters and its pointers in r4-r11, and those are what say what it is waiting for.
+		if (!trace.empty())
+		{
+			const uint32_t* r = trace.back().regs;
+
+			printf("harness: registers r0=%08X r1=%08X r2=%08X r3=%08X r4=%08X r5=%08X r6=%08X r7=%08X\n",
+				(unsigned)r[0], (unsigned)r[1], (unsigned)r[2], (unsigned)r[3],
+				(unsigned)r[4], (unsigned)r[5], (unsigned)r[6], (unsigned)r[7]);
+			printf("harness:           r8=%08X r9=%08X r10=%08X r11=%08X r12=%08X sp=%08X lr=%08X\n",
+				(unsigned)r[8], (unsigned)r[9], (unsigned)r[10], (unsigned)r[11],
+				(unsigned)r[12], (unsigned)r[13], (unsigned)r[14]);
 		}
 
 		printf("harness: cpu at %08X, cpsr %08X (%s), IE %04X IF %04X IME %i, DISPSTAT %04X\n",
@@ -496,6 +520,22 @@ namespace
 
 		system.Reset();
 		system.SetPressedKeys(options.keys);
+
+		// `--state <file>`: run on from an image a user took while the game was stuck. The state
+		// is loaded *after* the cartridge, because a state belongs to the ROM it was taken from
+		// and the machine has to know which one that is before it can accept the image.
+		if (!options.stateFile.empty())
+		{
+			std::string stateError;
+
+			if (!system.LoadStateFile(options.stateFile, &stateError))
+			{
+				printf("harness: cannot load the save state: %s\n", stateError.c_str());
+				return 2;
+			}
+
+			printf("harness: started from the save state %s\n", options.stateFile.c_str());
+		}
 
 		printf("harness: %s\n", system.Describe().c_str());
 
@@ -575,6 +615,51 @@ namespace
 				(cycles / seconds) / 1e6, (cycles / seconds) / (double)CyclesPerSecond);
 		}
 
+		// `--peek <address> <words>`: what the machine's memory holds when the run ends, which is
+		// how the counters a stuck program is polling are read without a debugger attached.
+		if (options.peekWords > 0)
+		{
+			printf("harness: memory at %08X, %i word(s):\n", (unsigned)options.peekAddress,
+				options.peekWords);
+
+			for (int i = 0; i < options.peekWords; i++)
+			{
+				uint32_t address = options.peekAddress + (uint32_t)i * 4;
+
+				if ((i % 8) == 0)
+					printf("  %08X:", (unsigned)address);
+
+				printf(" %08X", (unsigned)system.Bus().Read32(address));
+
+				if ((i % 8) == 7 || i == options.peekWords - 1)
+					printf("\n");
+			}
+		}
+
+		// `--dump <address> <bytes> <file>`: the same memory as a raw file, so a routine the game
+		// copied into RAM can be listed with the standalone disassembler.
+		if (!options.dumpFile.empty() && options.dumpLength > 0)
+		{
+			FILE* file = fopen(options.dumpFile.c_str(), "wb");
+
+			if (file == nullptr)
+			{
+				printf("harness: cannot write %s\n", options.dumpFile.c_str());
+			}
+			else
+			{
+				for (int i = 0; i < options.dumpLength; i++)
+				{
+					uint8_t byte = system.Bus().Read8(options.dumpAddress + (uint32_t)i);
+					fwrite(&byte, 1, 1, file);
+				}
+
+				fclose(file);
+				printf("harness: wrote %i byte(s) of %08X into %s\n", options.dumpLength,
+					(unsigned)options.dumpAddress, options.dumpFile.c_str());
+			}
+		}
+
 		std::string error;
 		system.SaveBattery(&error);
 
@@ -610,6 +695,19 @@ namespace
 		}
 
 		system.Reset();
+
+		if (!options.stateFile.empty())
+		{
+			std::string stateError;
+
+			if (!system.LoadStateFile(options.stateFile, &stateError))
+			{
+				printf("gb harness: cannot load the save state: %s\n", stateError.c_str());
+				return 2;
+			}
+
+			printf("gb harness: started from the save state %s\n", options.stateFile.c_str());
+		}
 
 		printf("gb harness: %s\n", system.Describe().c_str());
 
@@ -781,6 +879,12 @@ namespace
 			"  --keys <mask>     hold the keys named by the bits (see gba_keypad.h; with --gb the\n"
 			"                    mask is the GbButton one of gb_bus.h - 0x10 = A, 0x80 = Start)\n"
 			"  --bios <file>     use a real BIOS image instead of the built-in one\n"
+			"  --state <file>    start the machine from a save state (a `.st<n>` image) instead of\n"
+			"                    from a reset, which is what reproduces a report of a stuck game\n"
+			"  --peek <a> <n>    print `n` 32-bit words of the machine's memory from address `a`\n"
+			"                    when the run ends (the state a stuck program left behind)\n"
+			"  --dump <a> <n> <f>  write `n` bytes of that memory from `a` into the raw file `f`,\n"
+			"                    which `--disasm-arm`/`--disasm-thumb` can then list\n"
 			"  --wav <file>      record what the sound hardware produces into a WAV file\n"
 			"  --rate N          mix at N Hz instead of the machine's own default\n"
 			"  --trace N         step the last frame instruction by instruction and print the last N\n"
@@ -877,6 +981,21 @@ int main(int argc, char** argv)
 			else if (arg == "--png-every") options.pngEvery = atoi(next("--png-every").c_str());
 			else if (arg == "--keys") options.keys = (uint16_t)strtoul(next("--keys").c_str(), nullptr, 0);
 			else if (arg == "--bios") options.bios = next("--bios");
+			else if (arg == "--state") options.stateFile = next("--state");
+			else if (arg == "--peek")
+			{
+				options.peekAddress = (uint32_t)strtoul(next("--peek").c_str(), nullptr, 0);
+				options.peekWords = (int)strtoul(next("--peek").c_str(), nullptr, 0);
+			}
+			else if (arg == "--dump")
+			{
+				// --dump <address> <bytes> <file>: the same memory the `--peek` prints, as a raw
+				// file - which is what makes a routine the machine copied into RAM readable with
+				// `--disasm-arm <file> <address> <count>`.
+				options.dumpAddress = (uint32_t)strtoul(next("--dump").c_str(), nullptr, 0);
+				options.dumpLength = (int)strtoul(next("--dump").c_str(), nullptr, 0);
+				options.dumpFile = next("--dump");
+			}
 			else if (arg == "--wav") options.wavPath = next("--wav");
 			else if (arg == "--demo") options.demo = true;
 			else if (arg == "--gb") options.gb = true;

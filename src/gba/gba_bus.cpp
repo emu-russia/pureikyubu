@@ -827,8 +827,15 @@ namespace GBA
 		{
 			uint16_t value = ppu.Read16(offset & ~1u, (uint16_t)openBus);
 
-			// GREENSWP (0x04000004) mirrors its low byte into both lanes.
-			if ((offset & ~1u) == 0x004)
+			// GREENSWP (0x04000002) mirrors its low byte into both lanes, so a byte read of either
+			// of its two bytes answers the bit it holds. Every *other* display register answers the
+			// lane the CPU addressed. DISPSTAT above all: its high byte is the V-Count setting and
+			// its low byte the IRQ enables, and a program that touches one of them by byte expects
+			// the other to keep its value (Castlevania: Circle of the Moon drives its raster
+			// effects that way, and a mirrored lane there silently switches its V-Blank interrupt
+			// off). The check named DISPSTAT - 0x004 - instead of GREENSWP, which both returned the
+			// low byte for 0x04000005 and clobbered the enables on every byte write of the setting.
+			if ((offset & ~1u) == 0x002)
 			{
 				return (uint8_t)value;
 			}
@@ -988,10 +995,10 @@ namespace GBA
 
 		if (offset <= 0x05F)
 		{
-			if ((offset & ~1u) == 0x004)
+			if ((offset & ~1u) == 0x002)
 			{
-				// GREENSWP's low byte is mirrored in both lanes.
-				WriteIo16(0x004, (uint16_t)(value | (value << 8)));
+				// GREENSWP's low byte is mirrored in both lanes (see the read side).
+				WriteIo16(0x002, (uint16_t)(value | (value << 8)));
 				return;
 			}
 
