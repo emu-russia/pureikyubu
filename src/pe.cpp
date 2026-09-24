@@ -931,6 +931,123 @@ namespace GFX
 		SoftAlloc();
 	}
 
+	//! The pixel stride of the EFB window: the hardware uses a 1K-pixel stride so that the X and
+	//! the Y of a pixel extract directly from the address bits (gfx-pe.md 3.3). It is declared here
+	//! rather than with the rest of the software pixel engine below because the save state section
+	//! has to know the length of the EFB array it validates.
+	static const int EfbStride = 1024;
+	//! Address bit 22 selects the Z plane (gfx-pe.md 3.3): 1M words into the window.
+	static const size_t EfbZPlane = 1u << 20;
+
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The pixel engine is the register file of the PE (the BP registers 0x40-0x59 and the CPU-side
+	// status register), the software EFB memory it owns in the software pipeline, and the frame
+	// counters that go with it.
+	//
+	// The registers are restored through the decoded `PEState`, never by replaying a write through
+	// loadPEReg: several of its entries do far more than store a word. PE_FINISH presents the frame
+	// and raises the PE_FINISH interrupt, PE_TOKEN raises the token interrupt, PE_COPY_CMD runs the
+	// whole copy engine (a display copy, a texture copy, a clear and a frame boundary), and
+	// PE_QUAD_OFFSET recomputes the scissor rectangle and the viewport from the new origin. A state
+	// must not present a frame or copy an EFB while it is being loaded, so every one of those
+	// registers is put back as data and the host state they describe is re-applied afterwards by
+	// GFXCore::RefreshAfterLoad.
+	//
+	// What does not travel: the `gfx` back-pointer, which is the owner of this object and not part
+	// of the machine. There is no accumulated copy-clear member to write either: `CopyClearState` is
+	// a local of the PE_COPY_CMD handling (the clear runs synchronously, inside loadPEReg), so the
+	// only trace a copy leaves in this object is the register file itself.
+	// -------------------------------------------------------------------------------------------
+
+	void PixelEngine::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The CPU-side status register (PE_SR_DONE / PE_SR_TOKEN and their interrupt masks). A game
+		// polls it for the synchronisation it asks for, so it is part of the machine.
+		writer.Fields(peregs.sr);
+
+		// The PE register file, every union as its raw 32-bit word. The write masks of register
+		// 0xFE are applied as the write arrives and the result is what lives here, so the words are
+		// the state and the fields are this build's decoding of them.
+		writer.Fields(pe.zmode.bits, pe.cmode0.bits, pe.cmode1.bits, pe.control.bits,
+			pe.field_mask.bits, pe.finish.bits, pe.refresh.bits, pe.token.bits, pe.token_int.bits,
+			pe.copy_src_addr.bits, pe.copy_src_size.bits);
+		writer.Fields(pe.copy_dst_base[0].bits, pe.copy_dst_base[1].bits);
+		writer.Fields(pe.copy_dst_stride.bits, pe.copy_scale.bits, pe.copy_clear_ar.bits,
+			pe.copy_clear_gb.bits, pe.copy_clear_z.bits, pe.copy_cmd.bits, pe.vfilter_0.bits,
+			pe.vfilter_1.bits, pe.xbound.bits, pe.ybound.bits, pe.perfmode.bits, pe.chicken.bits,
+			pe.quad_offset.bits);
+
+		// The size of the software EFB and the memory itself. The bounding box registers above are
+		// accumulated while a frame draws and are read back by the CPU, so they have to survive; the
+		// EFB array is the frame a resumed run keeps drawing into.
+		writer.Fields(soft_w, soft_h);
+		writer.Values(efb);
+
+		// The two per-frame counters of the software bookkeeping: `frames` is the number of frames
+		// the framebuffer has shown and `pe_done_num` the number of draw-done events the title
+		// waited for. Both are wider than a state field needs (size_t), so they go out as 32 bits.
+		writer.Fields((uint32_t)frames, (uint32_t)pe_done_num);
+	}
+
+	void PixelEngine::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(peregs.sr);
+
+		reader.Fields(pe.zmode.bits, pe.cmode0.bits, pe.cmode1.bits, pe.control.bits,
+			pe.field_mask.bits, pe.finish.bits, pe.refresh.bits, pe.token.bits, pe.token_int.bits,
+			pe.copy_src_addr.bits, pe.copy_src_size.bits);
+		reader.Fields(pe.copy_dst_base[0].bits, pe.copy_dst_base[1].bits);
+		reader.Fields(pe.copy_dst_stride.bits, pe.copy_scale.bits, pe.copy_clear_ar.bits,
+			pe.copy_clear_gb.bits, pe.copy_clear_z.bits, pe.copy_cmd.bits, pe.vfilter_0.bits,
+			pe.vfilter_1.bits, pe.xbound.bits, pe.ybound.bits, pe.perfmode.bits, pe.chicken.bits,
+			pe.quad_offset.bits);
+
+		reader.Fields(soft_w, soft_h);
+
+		// The EFB is read into a scratch vector first, so that a state whose EFB is not the size
+		// the render target describes is refused *before* the machine's own array is replaced: a
+		// bad load must not leave the software rasterizer writing outside its buffer.
+		//
+		// The array is laid out as the window of the hardware: `EfbZPlane` words of the colour
+		// plane, then `soft_h` rows of `EfbStride` words of the Z plane (see SoftAlloc). A state
+		// written by another render target size therefore has a different length, and a length that
+		// is not one of those is a broken image rather than a smaller EFB.
+		std::vector<uint32_t> memory;
+		reader.Values(memory);
+
+		if (!reader.Failed())
+		{
+			// A machine that runs the shader pipeline never allocates the software EFB (the picture
+			// lives in the GL render target instead), and neither does one that has not drawn a
+			// frame yet: `SoftAlloc` is what gives `soft_w`/`soft_h` a size, so a zero height means
+			// the array is not there and its length has to be zero. An allocated one is exactly the
+			// window the hardware describes, which is what makes a state of another render target
+			// size a refusal rather than a shorter EFB.
+			size_t words = (soft_h > 0) ? (EfbZPlane + (size_t)soft_h * EfbStride) : 0;
+
+			if (memory.size() == words)
+			{
+				efb.swap(memory);
+			}
+			else
+			{
+				reader.Fail("the EFB in the save state is not the size the render target describes");
+			}
+		}
+
+		// The counters are written as 32 bits and are read back into the wider members.
+		uint32_t frameCount = 0, doneCount = 0;
+		reader.Fields(frameCount, doneCount);
+
+		if (reader.Failed())
+			return;
+
+		frames = frameCount;
+		pe_done_num = doneCount;
+	}
+
 	// -------------------------------------------------------------------------------------------
 	// The software Pixel Engine (GFX_PIPELINE = soft, issue #384)
 	//
@@ -948,12 +1065,6 @@ namespace GFX
 	// not presented by GL: the copy engine's display copy writes it into the XFB in main memory
 	// and the video interface scans that out, exactly like a real console.
 	// -------------------------------------------------------------------------------------------
-
-	//! The pixel stride of the EFB window: the hardware uses a 1K-pixel stride so that the X and
-	//! the Y of a pixel extract directly from the address bits (gfx-pe.md 3.3).
-	static const int EfbStride = 1024;
-	//! Address bit 22 selects the Z plane (gfx-pe.md 3.3): 1M words into the window.
-	static const size_t EfbZPlane = 1u << 20;
 
 	//! The colour word of the EFB lane: blue in the low byte, then green, red and alpha.
 	static uint32_t SoftPackEfbColor(int r, int g, int b, int a)

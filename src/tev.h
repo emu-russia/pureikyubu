@@ -412,5 +412,10 @@ namespace GFX
 		void Reset();
 
 		void DisposePrograms();
+
+		/// <summary>Write the block's state into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+		/// <summary>Put the block's state back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 }

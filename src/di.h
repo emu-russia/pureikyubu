@@ -47,6 +47,9 @@
 
 namespace Flipper
 {
+	class StateWriter;
+	class StateReader;
+
 	// DI state (registers and other data)
 	struct DIState
 	{
@@ -92,6 +95,29 @@ namespace Flipper
 	public:
 		DiskInterface(Flipper* flipper, HWConfig* config);
 		~DiskInterface();
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the disk interface into the save state section: every register the guest can
+		/// see (the status, cover and control registers, the DMA address and length, the
+		/// command and immediate buffers and the configuration word) and the two pieces of the
+		/// transfer protocol that outlive a single register write - the 32-byte DMA FIFO, its
+		/// position taken from the two byte counters the drive's callbacks advance. The disc
+		/// itself, its file and the drive's own transfer state belong to the frontend and to
+		/// the DVD block, not here.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>
+		/// Read it back. The registers are decoded state, so they go back as they are - in
+		/// particular the control register is not replayed through the write path, which would
+		/// start a command the drive is not being asked to run. The aggregate interrupt line the
+		/// CPU sees is derived from the restored causes and masks rather than stored, so it is
+		/// re-derived here (DIUpdateInt) once everything is in; nothing else has to be called
+		/// after the load.
+		/// </summary>
+		void LoadState(SaveStates::StateReader& reader);
 
 		//! The DI state, for the debug interface (`diregs` and the debugui2 "Disk" panel).
 		const DIState& State() const { return di; }

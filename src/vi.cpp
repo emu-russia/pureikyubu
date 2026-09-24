@@ -357,6 +357,108 @@ namespace Flipper
 		VideoOutClose();
 	}
 
+	// ---------------------------------------------------------------------------
+	// save states
+
+	void VideoInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(vi.disp_cr, vi.vert_timing);
+
+		writer.Fields(vi.tfbl, vi.bfbl);
+
+		// The four position registers are unions over their own bits (hcount/vcount and the
+		// interrupt enable and status flags, or the gun-trigger latches): the 32-bit image is the
+		// form the register file has, so that is what travels.
+		writer.Fields(vi.pos.val, vi.int0.val, vi.latch0.val, vi.latch1.val);
+
+		writer.Fields(vi.mode, vi.vcount, vi.vtime, vi.one_frame);
+
+		// `xfb` is the frontend's switch (it decides whether the scanout is handed to the display
+		// at all) and software never sees it, but it is not the frontend's to keep either: a state
+		// taken while the picture was being presented has to come back presenting it, so the
+		// switch travels with the timing it belongs to. What does *not* travel is `gfxbuf`, the
+		// host's DIB: it belongs to the frontend that allocated it, and a load must leave the
+		// window it is showing alone.
+		writer.Fields(vi.xfb);
+		writer.U64((uint64_t)vi.frames);
+
+		// `one_second` is how many CPU ticks make a second, which the block was handed at
+		// construction; it travels anyway, because the frame timing in the state (`one_frame`) is
+		// expressed in those ticks, and the two have to belong to the same clock.
+		writer.Fields(vi.one_second, vi.videoEncoderFuse);
+	}
+
+	void VideoInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		// The derived timing (`mode`, `inter`, `vcount`, `one_frame`) and the frame timer `vtime`
+		// come back into locals rather than straight into the block, because they are put back in
+		// the order below rather than left as they land:
+		//
+		//  1. Every field of the section is read first, so that `tfbl` and `disp_cr` are already
+		//     the loaded ones when the work below needs them.
+		//  2. `vi_set_timing()` rebuilds everything the display configuration register implies,
+		//     exactly as the register write path does - the video mode (with MPAL folded into
+		//     NTSC), the interlace flag, the line count of a frame and the frame length in ticks.
+		//     Calling it here keeps the block's own idea of the timing in one place instead of a
+		//     second copy in the loader.
+		//  3. The fields that call wrote are then put back from the state, `vtime` last, because
+		//     `vi_set_timing` sets the frame timer to the *current* clock (`Core->GetTicks()`),
+		//     which is what the boot path and a register write want and is exactly what a loaded
+		//     state does not: the state's own timer is the moment the frame was up to, and
+		//     overwriting it would make the first frame after a load wait for a whole frame from
+		//     now instead of finishing the one that was in progress. Restoring the rest as well
+		//     keeps the state (and `one_second`, the clock the ticks in it are counted in, which
+		//     the state carries) exactly as it was written.
+		uint32_t mode = 0, vcount = 0;
+		bool inter = false;
+		int64_t vtime = 0, oneFrame = 0, oneSecond = 0;
+
+		reader.Fields(vi.disp_cr, vi.vert_timing);
+
+		reader.Fields(vi.tfbl, vi.bfbl);
+
+		reader.Fields(vi.pos.val, vi.int0.val, vi.latch0.val, vi.latch1.val);
+
+		reader.Fields(mode, vcount, vtime, oneFrame);
+
+		// `xfb` is the frontend's switch (it decides whether the scanout is handed to the display
+		// at all) and software never sees it, but it is not the frontend's to keep either: a state
+		// taken while the picture was being presented has to come back presenting it, so the
+		// switch travels with the timing it belongs to. What does *not* travel is `gfxbuf`, the
+		// host's DIB: it belongs to the frontend that allocated it, and a load must leave the
+		// window it is showing alone.
+		reader.Fields(vi.xfb);
+		vi.frames = (size_t)reader.U64();
+
+		reader.Fields(oneSecond, vi.videoEncoderFuse);
+
+		// Nothing below this point is done to a half-read section: a load that has already failed
+		// (a short image, a foreign layout) leaves the block as it was rather than rebuilding its
+		// pointers from fields the reader refused to produce.
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		vi_set_timing();
+
+		vi.mode = mode;
+		vi.inter = inter;
+		vi.vcount = vcount;
+		vi.one_frame = oneFrame;
+		vi.one_second = oneSecond;
+		vi.vtime = vtime;
+
+		// `xfbbuf` is not state: it is the translation of the top field base into main memory,
+		// which the register write path recomputes every time TFBL is written (and which the
+		// constructor leaves null until the guest programs one). The state carries the base, so
+		// the pointer is translated again from it - through the memory interface's own accessor,
+		// because that is where the counter of VI traffic lives and where a base left over from a
+		// previous machine is rejected. Serializing a host pointer would be meaningless anyway:
+		// the address belongs to this process's allocation of Splash.
+		vi.xfbbuf = (uint8_t*)HW->mem->MIGetMemoryPointerForVI(vi.tfbl);
+	}
+
 	void VideoInterface::VISetEncoderFuse(int value)
 	{
 		vi.videoEncoderFuse = value;

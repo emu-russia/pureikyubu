@@ -526,10 +526,27 @@ namespace Gekko
 		GekkoCore* core;
 
 	public:
+		// The locked cache is a fixed 16 KB scratch-pad window (the Gekko manual's locked L1 data
+		// cache), which is why ZeroLocked masks an address to it and why the save state writes
+		// exactly this many bytes of it.
+		static constexpr size_t LockedCacheSize = 16 * 1024;
+
 		Cache(GekkoCore* core, bool instruction = false);
 		~Cache();
 
+		// The save state of the processor is written by GekkoCore::SaveState/LoadState, which needs
+		// the locked data cache (it is the one piece of the cache that is *not* a copy of main
+		// memory, so it cannot be left out of the state) and the dirty/invalid block arrays.
+		friend GekkoCore;
+
 		void Reset();
+
+		// Write every dirty, valid block of the cache back to main memory (through the PI, so the
+		// write is a real bus write) and then drop the whole cache with FlashInvalidate. It is what
+		// makes main memory the whole truth before a save state is taken - see the comment on the
+		// definition in gekko.cpp, which is also where the argument for not storing the 24 MB of
+		// cache data itself lives.
+		void FlushAll();
 
 		void Enable(bool enable);
 		bool IsEnabled() { return enabled; }
@@ -599,6 +616,16 @@ namespace Gekko
 		void Write64(uint64_t value);
 
 		bool NotEmpty();
+
+		// The write gather buffer is part of the machine: WPAR[BNE] is guest-visible and a partial
+		// 32-byte block can be waiting in it (the hardware has no timeout - see NotEmpty), so the
+		// bytes still to be delivered and the two cursors have to travel with the state. The pair
+		// writes the FIFO, the read cursor and the write cursor, in that order. The write cursor is
+		// also the one thing the core itself needs from the buffer: the guest-visible WPAR[BNE] bit
+		// is a function of the two cursors (GatherSize) and is worked out from them after a load.
+		void SaveState(SaveStates::StateWriter& writer);
+		void LoadState(SaveStates::StateReader& reader);
+		size_t WritePosition() { return writePtr; }
 
 	};
 }
@@ -1062,6 +1089,27 @@ namespace Gekko
 		uint8_t* GetDataCachePointer(uint32_t phys_addr);
 
 #pragma endregion "Debug"
+
+#pragma region "Save state"
+
+		// The processor half of a save state (the "CPU " section; the caller opens and closes the
+		// section and owns the file). What goes in is the architectural register file, the
+		// interrupt/exception latches, the write gather buffer and the locked data cache - and what
+		// stays out is everything that is either host state or a copy of something else. The
+		// definition in gekko.cpp is the whole design: it lists both directions field by field.
+		//
+		// Not const, and not a read-only operation: the caches are not coherent with main memory,
+		// so writing the state first writes every dirty line of the data cache back to memory. The
+		// machine is different afterwards (which is exactly what makes main memory, and therefore
+		// the MEM section of the same state, the whole truth).
+		void SaveState(SaveStates::StateWriter& writer);
+
+		// Put the processor back from the section the caller has opened. Everything that is a pure
+		// function of what was restored (the hashed page table window, the Flipper deadline, the
+		// cache enable flags, the BAT pointers) is derived here rather than stored.
+		void LoadState(SaveStates::StateReader& reader);
+
+#pragma endregion "Save state"
 
 	};
 }

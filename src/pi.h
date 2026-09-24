@@ -102,6 +102,9 @@ enum class PIInterruptSource
 
 namespace Flipper
 {
+	class StateWriter;
+	class StateReader;
+
 	// PI state (registers and other data)
 	struct PIState
 	{
@@ -139,6 +142,25 @@ namespace Flipper
 	public:
 		ProcessorInterface(Flipper* flipper, HWConfig* config);
 		~ProcessorInterface();
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the processor interface into the save state section: the two interrupt
+		/// registers, the console revision with the chip id it derives, and the four registers
+		/// of the command-processor FIFO window.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>
+		/// Read it back. The register values are decoded state, so they are put back as they
+		/// are; what the block leaves for the caller is the interrupt line itself, which the
+		/// interrupt controller recomputes from the restored INTSR and INTMR once the whole
+		/// machine has been loaded (see the report of the load: no method of this block has to
+		/// be called for it, but the line must not be left as the machine that was running
+		/// before the load had it).
+		/// </summary>
+		void LoadState(SaveStates::StateReader& reader);
 
 		// The role of the /HRESET signal is performed by the new PI/delete PI pairing. The role of INT signal is performed by PIAssertInt/PIClearInt pairing
 

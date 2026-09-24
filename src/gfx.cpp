@@ -1257,6 +1257,182 @@ namespace GFX
 			pe->SoftBeginFrame();
 	}
 
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The GFX engine is one section of a save state, and what the blocks below it own (the PE, the
+	// XF, the SU, the rasterizer, the TEV, the texture unit and the bump unit) are sections of their
+	// own. This one is the state of the engine itself: the shared GenMode registers, the flags that
+	// describe where the frame loop stands and the size of the render target.
+	//
+	// What does *not* travel is everything the host owns. The framebuffer and buffer objects
+	// (efbFbo/efbColor/efbDepth/xfbFbo/xfbColor/vao/vbo/ibo) are OpenGL objects of the process that
+	// is running, not of the emulated console: they are recreated by CreateEfbTarget,
+	// CreateXfbTarget and InitGeometryBuffers, and a state that named them would be naming an id of
+	// another context. The window, the GL context and the device context (render_window/context and
+	// the Win32 hwndMain/hglrc/hdcgl) belong to the front end, and backend_started describes the
+	// lifecycle of that backend rather than the machine. The dump configuration (dump_enabled and
+	// friends) is a debugger setting, and vertex_data/index_data are the scratch of the draw that
+	// is in flight: a state is taken between FIFO commands, where the vertex stream is always empty,
+	// so there is nothing in them to keep.
+	// -------------------------------------------------------------------------------------------
+
+	void GFXCore::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The shared registers (gfx-su.md 4.1): GEN_MODE and the four quad/sample locations. The
+		// whole 32-bit register word goes out, not the decoded fields: the decoder is this build's,
+		// the bits are the machine's.
+		writer.Fields(genmode.bits);
+		for (int i = 0; i < 4; i++)
+		{
+			writer.Fields(msloc[i].bits);
+		}
+
+		// Where the frame loop stands. These flags are the machine's, not the host's: frame_done
+		// and frameReady say whether the frame that is being built is open, frame_clear_pending says
+		// that its first primitive still owes the EFB a clear (see GPFrameDrawn), and frame_dirty
+		// says that the frame holds a picture the display has not been handed yet.
+		writer.Fields(frame_done, frameReady, frame_clear_pending, frame_dirty);
+
+		// The display copy of the shader backend: whether the XFB holds the picture of the frame,
+		// and the base the display copies of the frame that is being drawn started at.
+		//
+		// `xfb_frame` is not here, and it is the one member of this block that is deliberately left
+		// out of the state: it names a frame of the counter the frame loop keeps
+		// (`gfx_frame_counter`), which is a host value that does not travel - the front end has been
+		// counting frames all along. A restored number could only be stale, and a display copy that
+		// believed its base already belonged to the current frame would skip the update. A load
+		// re-arms the member instead (see LoadState), which is what makes the next copy latch it.
+		writer.Fields(xfb_pending, xfb_base);
+
+		// The size of the render target - the EFB the pipeline draws into - and the rendering
+		// pipeline in use (GFX_PIPELINE_SHADER or GFX_PIPELINE_SOFT). Both are part of the state of
+		// the machine: a state taken in the software pipeline resumes in the software pipeline, and
+		// a state whose render target is 640x480 must not be resumed into a 320x240 one.
+		writer.Fields(scr_w, scr_h, pipeline);
+	}
+
+	void GFXCore::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(genmode.bits);
+		for (int i = 0; i < 4; i++)
+		{
+			reader.Fields(msloc[i].bits);
+		}
+
+		reader.Fields(frame_done, frameReady, frame_clear_pending, frame_dirty);
+		reader.Fields(xfb_pending, xfb_base);
+
+		// The size of the render target. It is read into the live members, and what the emulator was
+		// running with is kept first: the section has to be consumed in exactly the order it was
+		// written and completely, and the resize that a different size asks for happens only once
+		// everything has been read.
+		uint32_t width = scr_w;
+		uint32_t height = scr_h;
+
+		reader.Fields(scr_w, scr_h);
+
+		// The pipeline in use (GFX_PIPELINE_SHADER or GFX_PIPELINE_SOFT). It is set directly rather
+		// than through SetPipeline: that entry point also writes the configuration variable, and a
+		// load is not the front end asking for a change of pipeline. It is put back before the
+		// render target is resized below, because the resize takes a different path in each
+		// pipeline (the software one has no framebuffer to reallocate).
+		reader.Fields(pipeline);
+
+		if (reader.Failed())
+			return;
+
+		// `xfb_frame` names a frame of the counter the frame loop keeps (`gfx_frame_counter`), which
+		// is why it is not in the state at all (see SaveState). A load re-arms it instead, the way
+		// DestroyXfbTarget does: -1 makes the next display copy latch the base rather than measure
+		// its rectangle against the base of a frame that is long over.
+		xfb_frame = -1;
+
+		// The render target is resized only when the state really describes a different one:
+		// ResizeRenderTarget reallocates the XFB, re-programs the viewport and recomputes the
+		// scissor box, which is wasted work when the size is the one the emulator is already
+		// running with.
+		if (width != scr_w || height != scr_h)
+		{
+			ResizeRenderTarget(width, height);
+		}
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// The host state that follows a load
+	//
+	// LoadState puts the register state of every block back, but several parts of the pipeline
+	// cache what the registers said at the moment they were written: the GL viewport and the GL
+	// scissor box are computed from registers and stored in the context, the texture maps keep a
+	// decoded image that was keyed on the registers of the draw that produced it, and the TEV
+	// fragment program is a generated shader that is linked from them. None of those are in a
+	// state (they are the host's copies of it), so they are all rebuilt here from what the load
+	// restored. The orchestrator calls this once, after every section of the GFX pipeline has been
+	// applied and before the machine runs again.
+	//
+	// The one thing this deliberately does *not* do is clear the software EFB. `frame_clear_pending`
+	// is the machine's own answer to "does the frame that is open still owe the EFB a clear": when
+	// the state says false, the frame that was saved has already been cleared and drawn into - and
+	// that picture is in the state (the PE section carries the whole software EFB array), so
+	// calling SoftBeginFrame here would wipe exactly what was restored. When it says true the clear
+	// happens on its own, at the first primitive of the frame, the way it does in a live run (see
+	// GPFrameDrawn).
+	// -------------------------------------------------------------------------------------------
+
+	void GFXCore::RefreshAfterLoad()
+	{
+		// The viewport and the scissor box are recomputed from the restored registers. Both are
+		// no-ops for a machine that never programmed one of them: the viewport keeps the default
+		// the backend established, and the scissor becomes the whole render target again.
+		if (xf != nullptr)
+		{
+			xf->RefreshViewport();
+		}
+
+		if (su != nullptr)
+		{
+			su->RefreshScissor();
+		}
+
+		// The depth state (PE_ZMODE, GEN_MODE.zfreeze) and the blend/logic/mask state (PE_CMODE0,
+		// PE_CMODE1) live in the context, not in the registers the load restored. Both calls are
+		// no-ops for the software pipeline, which applies the registers per pixel.
+		if (pe != nullptr)
+		{
+			pe->ApplyZMode();
+			pe->ApplyColorMode();
+		}
+
+		// A decoded texture map is keyed on the registers, the palette generation and the texture
+		// bytes of the draw that produced it, so every map is stale after a load. They are marked
+		// dirty rather than decoded here: the decode and the upload need a GL context and would
+		// repeat the work of the first draw, which rebuilds them anyway (Rasterizer::SetUpPipeline
+		// calls UpdateAndBindTextures). A map that the texture unit's own LoadState already marked
+		// is marked again here, which costs nothing and keeps this method complete on its own.
+		if (tx != nullptr)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				// The map keeps the texture object it was given by TexInit; what is invalid is the
+				// decoded image it holds, so `valid` is cleared and `dirty` set: the next
+				// UpdateAndBindTextures decodes the map from the restored registers and main memory.
+				tx->texMap[i].valid = false;
+				tx->texMap[i].dirty = true;
+			}
+		}
+
+		// The TEV fragment program is generated from the TEV registers and the GEN_MODE shading
+		// bits, so a program the last machine linked describes the wrong registers. GetTevProgram
+		// links the variant the restored registers ask for and caches it, which is what the first
+		// draw would do anyway; it is skipped when no GL context is current on this thread (linking
+		// a shader needs one, and the state may be loaded from the debugger's thread) and in the
+		// software pipeline, which has no shader at all.
+		if (tev != nullptr && backend_started && HasGLContext() && !SoftPipeline())
+		{
+			tev->GetTevProgram();
+		}
+	}
+
 	void GFXCore::GL_CloseSubsystem()
 	{
 		if (!backend_started)

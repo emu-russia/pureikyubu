@@ -4,6 +4,10 @@ This wiki contains information about the emulator for developers and anyone inte
 
 The wiki does not contain any detailed descriptions of the GameCube architecture, but is more focused on describing the emulator's internals.
 
+* [Save states](savestate.md) — the whole machine in one file: the format and its sections, what a
+  state carries and what it deliberately does not, the keys, the menu and the `savestate`/
+  `loadstate`/`states` commands.
+
 But here are some diagrams, just as a memo.
 
 GameCube:

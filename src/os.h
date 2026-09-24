@@ -90,6 +90,32 @@ namespace HLE
 
 
 
+// Save state of the high level (HLE) layer.
+//
+// Almost nothing in this layer is machine state. The OS calls here either work directly on the
+// guest's own memory (the OSContext structures, the thread queues, the low-memory words), which
+// is already in the state because main memory is, or they are host side: the trap table that
+// maps an address to a C function, the loaded map file and the symbol table, the call counters
+// of the debugger. None of that is written.
+//
+// What is left is the pair of context mirrors below. They are the values the emulator keeps in
+// host variables while the guest also keeps them in low memory: OSSetCurrentContext writes both
+// the host mirror and the guest word, and the calls that follow read the mirror. If a state did
+// not carry them, a load would put a machine in front of a host that still remembered the
+// previous machine's current context.
+
+namespace HLE
+{
+	/// <summary>Write the two host-side OS context mirrors (__OSCurrentContext and
+	/// __OSPhysicalContext) into the save state section the caller has opened.</summary>
+	void SaveState(SaveStates::StateWriter& writer);
+
+	/// <summary>Put the two context mirrors back from the section the caller has opened.</summary>
+	void LoadState(SaveStates::StateReader& reader);
+}
+
+
+
 void    MTXOpen();
 
 /* ---------------------------------------------------------------------------

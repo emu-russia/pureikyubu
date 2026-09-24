@@ -241,3 +241,11 @@ enum ELF_IDENT
 /// </summary>
 /// <param name="filename"></param>
 void LoadFile(const std::wstring& filename);
+
+/// <summary>
+/// The four character game code of the disc in the drive ("GM8E" and the like), read out of the
+/// first sector of the mounted image. Empty when there is no disc in the drive. Reading it seeks
+/// the drive, so a caller that has to leave the read position where it was puts it back (see the
+/// identity check of a save state in src/savestate.cpp).
+/// </summary>
+void GetDiskId(std::wstring& diskId);

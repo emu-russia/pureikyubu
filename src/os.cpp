@@ -832,6 +832,36 @@ static  uint32_t     __OSCurrentContext;     // OS_CURRENT_CONTEXT
 
 static  uint32_t     __OSDefaultThread;      // OS_DEFAULT_THREAD
 
+// Save state of this layer.
+//
+// Everything the HLE layer does is either an operation on the guest's own memory or a host side
+// facility, and neither belongs in a save state: the OSContext and OSThread structures, the
+// thread queues, the mutexes and the low-memory words are in main memory and therefore already
+// in the state, while the trap table (address -> C function), the map file, the symbol table and
+// the debugger's call counters are the front end's, not the machine's.
+//
+// The exception is the pair of context mirrors below. They are the host's copy of two words the
+// guest keeps at OS_CURRENT_CONTEXT and OS_PHYSICAL_CONTEXT: OSSetCurrentContext writes both the
+// mirror and the guest word, and the calls that follow read the mirror (OSGetCurrentContext), or
+// use the physical one to find the context frame to modify. If a load restored main memory but
+// not the mirrors, the guest would be running one thread's context while the HLE believed it was
+// another's, and a save/load round trip across a thread switch would come back wrong.
+//
+// Note that __OSDefaultThread (the other file-scope variable around the context calls) is
+// deliberately *not* written: every write to it is accompanied by a write of the same value to
+// the guest's OS_DEFAULT_THREAD word, so it is shadowed state that a load of main memory already
+// restores - and it is zero on a fresh machine, which is what the guest word holds then too.
+
+void HLE::SaveState(SaveStates::StateWriter& writer)
+{
+	writer.Fields(__OSCurrentContext, __OSPhysicalContext);
+}
+
+void HLE::LoadState(SaveStates::StateReader& reader)
+{
+	reader.Fields(__OSCurrentContext, __OSPhysicalContext);
+}
+
 /* ---------------------------------------------------------------------------
 	Context API, based on Dolphin OS reversing of OSContext module
 --------------------------------------------------------------------------- */

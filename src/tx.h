@@ -426,5 +426,10 @@ namespace GFX
 		//! Put the TX register state back into the reset state (the GL texture objects survive, the
 		//! decoded images are marked as stale).
 		void Reset();
+
+		/// <summary>Write the block's state into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+		/// <summary>Put the block's state back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 }

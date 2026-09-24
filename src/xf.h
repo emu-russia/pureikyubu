@@ -478,5 +478,10 @@ namespace GFX
 		//! Put the matrix RAM, the material/ambient colours and the channel controls at the values
 		//! the GX SDK's GXInit programs.
 		void SetGxInitDefaults();
+
+		/// <summary>Write the block's state into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+		/// <summary>Put the block's state back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 }

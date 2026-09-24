@@ -409,6 +409,19 @@ namespace GFX
 		//! and the unit tests to get a known starting point.
 		void ResetPipelineState();
 
+		/// <summary>Write the block's state into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+		/// <summary>Put the block's state back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
+
+		/// <summary>
+		/// Put the host state the blocks own back in step with the register state a LoadState of
+		/// every block has just restored: the viewport, the scissor box, the depth and colour modes,
+		/// the texture maps and the fragment program. The caller (the save state orchestrator) calls
+		/// it once, after every section has been applied and before the machine runs again.
+		/// </summary>
+		void RefreshAfterLoad();
+
 		// Geometry buffers
 		GLuint vao = 0;
 		GLuint vbo = 0;

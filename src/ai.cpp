@@ -248,4 +248,76 @@ namespace Flipper
 	{
 		DVD::DDU->SetStreamCallback(nullptr, nullptr);
 	}
+
+	// ---------------------------------------------------------------------------
+	// save states
+
+	void AudioInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(ai.cr, ai.vr, ai.scnt, ai.it);
+
+		// The streaming FIFO is a half-filled buffer rather than a register: the drive's decoder
+		// appends one sample pair to it per decoded sample (AIStreamCallback) and the mixer takes
+		// the whole 32 bytes at once when it is full. Nothing about that is visible in the four
+		// registers, so a state that left it out would drop (or repeat) the fraction of a buffer
+		// the drive had already decoded, and the first sound after a load would be wrong.
+		writer.Array(ai.streamFifo);
+		writer.U64((uint64_t)ai.streamFifoPtr);
+	}
+
+	void AudioInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(ai.cr, ai.vr, ai.scnt, ai.it);
+
+		reader.Array(ai.streamFifo);
+		ai.streamFifoPtr = (size_t)reader.U64();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// The write pointer only ever moves in whole sample pairs, four bytes at a time, and it
+		// is reset to zero when the mixer takes the buffer - so a position that is not inside the
+		// buffer or that splits a pair is not one this emulator could have written. (A write
+		// pointer left *equal* to the size is the moment the buffer is full, which is a place the
+		// callback really does leave it in for an instant, so it is accepted.)
+		if (ai.streamFifoPtr > sizeof(ai.streamFifo) || (ai.streamFifoPtr & 3) != 0)
+		{
+			reader.Fail("the audio streaming FIFO of the save state is not where its writer could have left it");
+			return;
+		}
+
+		// What the control register implies for the hardware *around* this block is not a register
+		// of it and is not in the state: PSTAT starts the drive's audio streaming clock and the
+		// mixer's DVD audio channel (and stopping the channel with the stream still running is
+		// worse than not having a state at all - the machine would stay silent), AIINT drops the
+		// streaming interrupt the register write clears, and DFR and AFR re-select the sample rate
+		// of the DSP's AI DMA and of the DVD audio mixer input. AIControl() is exactly that
+		// refresh, so it is called here rather than left to the caller - nothing outside this
+		// method has to know that a load needs it.
+		//
+		// The catch is that AIControl() is written for a *register write*, where the guest has
+		// just programmed the streaming state and starting it from the beginning is right: with
+		// PSTAT set it resets the write pointer to the start of the FIFO, and with SCRESET set it
+		// zeroes the sample counter. Neither of those is what a load wants - the state has just
+		// brought back both, and the drive will keep feeding the FIFO from where it was rather
+		// than from the start (nothing restarts the streaming burst), so resetting the pointer
+		// would overwrite the first sample pair of the buffer and repeat the samples at the end of
+		// the stream. The three values are therefore taken out of the way, the refresh is run, and
+		// they are put back, with only the spent SCRESET bit left cleared the way the register
+		// write leaves it.
+		uint8_t streamFifo[sizeof(ai.streamFifo)];
+		size_t streamFifoPtr = ai.streamFifoPtr;
+		uint32_t scnt = ai.scnt;
+
+		memcpy(streamFifo, ai.streamFifo, sizeof(streamFifo));
+
+		AIControl();
+
+		memcpy(ai.streamFifo, streamFifo, sizeof(streamFifo));
+		ai.streamFifoPtr = streamFifoPtr;
+		ai.scnt = scnt;
+		ai.cr &= ~AICR_SCRESET;
+	}
 }

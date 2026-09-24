@@ -1891,4 +1891,96 @@ void main()
 
 		return true;
 	}
+
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The TEV is the whole combine register file: the sixteen colour and sixteen alpha environments,
+	// the four colour registers, the four Rev B K constants with their own storage, the range
+	// adjustment, the fog parameters, the alpha function, the Z-texture environment and the eight
+	// K selectors. Every one of them changes the picture, so the section is the register file
+	// complete; the swap tables of the alpha environments and the K selectors are included because
+	// the shader and the software combine both read them from here.
+	//
+	// The K constants are called out on purpose: TEV_REGISTERL/H is routed to the 8-bit Rev B K form
+	// or to the 11-bit colour form by a tag bit of the payload (see TEVIsKonstForm), and the two
+	// forms are separate storage. A state that only kept the colour registers would restore the
+	// combines with the wrong constants and change the picture of every title that uses them.
+	//
+	// What does not travel: the `gfx` back-pointer, and the generated fragment shader cache
+	// (`program`/`programFlat`). A shader is a host object that was linked from the registers, not a
+	// register: GetTevProgram() rebuilds it from the restored state, and the GEN_MODE flat-shading
+	// bit it depends on is restored by the GFXCore section.
+	// -------------------------------------------------------------------------------------------
+
+	void TextureEnvironmentUnit::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The combine environments (0xC0-0xDF), each union as its 32-bit word.
+		for (int i = 0; i < 16; i++)
+		{
+			writer.Fields(tev.color_env[i].bits);
+			writer.Fields(tev.alpha_env[i].bits);
+		}
+
+		// The colour registers and the Rev B K constants (0xE0-0xE7). Both forms are written
+		// because they are two separate storages that share the register ids.
+		for (int i = 0; i < 4; i++)
+		{
+			writer.Fields(tev.regl[i].bits, tev.regh[i].bits);
+			writer.Fields(tev.kregl[i].bits, tev.kregh[i].bits);
+		}
+
+		// The range adjustment (0xE8-0xED), the fog (0xEE-0xF2) and the final alpha function
+		// (0xF3).
+		writer.Fields(tev.rangeadj_control.bits);
+		for (int i = 0; i < 5; i++)
+		{
+			writer.Fields(tev.range_adj[i].bits);
+		}
+
+		writer.Fields(tev.fog_param0.bits, tev.fog_param1.bits, tev.fog_param2.bits,
+			tev.fog_param3.bits, tev.fog_color.bits, tev.alpha_func.bits);
+
+		// The Z-texture environment (0xF4, 0xF5) and the eight K selectors (0xF6-0xFD), which also
+		// carry the four TEV swap mode tables.
+		writer.Fields(tev.zenv0.bits, tev.zenv1.bits);
+		for (int i = 0; i < 8; i++)
+		{
+			writer.Fields(tev.ksel[i].bits);
+		}
+	}
+
+	void TextureEnvironmentUnit::LoadState(SaveStates::StateReader& reader)
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			reader.Fields(tev.color_env[i].bits);
+			reader.Fields(tev.alpha_env[i].bits);
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			reader.Fields(tev.regl[i].bits, tev.regh[i].bits);
+			reader.Fields(tev.kregl[i].bits, tev.kregh[i].bits);
+		}
+
+		reader.Fields(tev.rangeadj_control.bits);
+		for (int i = 0; i < 5; i++)
+		{
+			reader.Fields(tev.range_adj[i].bits);
+		}
+
+		reader.Fields(tev.fog_param0.bits, tev.fog_param1.bits, tev.fog_param2.bits,
+			tev.fog_param3.bits, tev.fog_color.bits, tev.alpha_func.bits);
+
+		reader.Fields(tev.zenv0.bits, tev.zenv1.bits);
+		for (int i = 0; i < 8; i++)
+		{
+			reader.Fields(tev.ksel[i].bits);
+		}
+
+		// The fragment program is not rebuilt here: nothing in this method needs a GL context, and
+		// the program is a host object. The caller links the variant the restored registers ask for
+		// (GetTevProgram, reached through GFXCore::RefreshAfterLoad and again by the next draw).
+	}
 }

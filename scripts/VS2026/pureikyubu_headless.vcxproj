@@ -298,6 +298,7 @@
     <ClCompile Include="..\..\src\dvd.cpp" />
     <ClCompile Include="..\..\src\dvddebug.cpp" />
     <ClCompile Include="..\..\src\rvz.cpp" />
+    <ClCompile Include="..\..\src\savestate.cpp" />
     <ClCompile Include="..\..\src\exi.cpp" />
     <ClCompile Include="..\..\src\flipper.cpp" />
     <ClCompile Include="..\..\src\flipperdebug.cpp" />

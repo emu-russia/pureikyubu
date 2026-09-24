@@ -85,6 +85,27 @@ namespace DSP
 		bool empty();
 		int size();
 		void clear();
+
+		// Save state
+		//
+		// A stack is machine state like any register: the loop and interrupt machinery pushes
+		// return addresses, status words and loop ends onto the four of them and reads them
+		// back later. The stack contents travel as they are (the whole array, not only the
+		// live part, so that both sides of the image are the same size whatever the depth),
+		// and the top-of-stack index travels with them. `depth` is a constant of the
+		// construction, but it is written too - it is what says whether the array in a state is
+		// the array this build expects, and a state whose depth differs is refused rather than
+		// loaded with a top index that means something else here.
+		//
+		// (The words go out as the 16-bit index, the 16-bit depth and then the entries
+		// themselves, two bytes each; see DspCore::SaveState for how the four stacks are laid
+		// out inside the DSP section.)
+
+		/// <summary>Write the stack pointer and the whole stack buffer.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Read them back, refusing a stack of another depth.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 
 }
@@ -578,6 +599,36 @@ namespace DSP
 		/// wrote instruction memory.
 		/// </summary>
 		void InvalidateJit();
+
+		// Save state
+		//
+		// The core is the biggest part of the DSP section: the four memories (IRAM and IROM as
+		// instruction memory, DRAM and DROM as data memory), the register file, the four stacks
+		// and the interrupt machinery. Everything here is state the guest can observe, so
+		// everything here travels.
+		//
+		// What stays out is the host side of the core: the `dsp` back-pointer, the interpreter
+		// and recompiler objects with their decode caches and code arenas, the TraceRing, the
+		// debugger's breakpoint/watch/canary lists and their locks, and the instruction counter
+		// with its reset flag (a profiler number, not machine state). `JitEnabled` is a
+		// front-end switch rather than machine state too. The interpreter's parallel-word latch
+		// (`packedMemoryData`/`packedMemoryDataLatched`) is deliberately left out as well: it
+		// lives from the ALU half of one packed word to the memory half of the same word, so it
+		// can never be live across the boundary between two instructions, and a state is only
+		// ever taken between instructions.
+		//
+		// LoadState ends by dropping every compiled block. That is not an optimisation but a
+		// correctness requirement: the recompiler bakes the instruction words of a block into
+		// the code it generates, so a block compiled against the microcode of the old state
+		// would go on executing that microcode after the new one has been put in place. The
+		// Gekko's own recompiler needs the same treatment on the CPU side (that is the CPU
+		// agent's part of the feature).
+
+		/// <summary>Write the core (memories, registers, stacks, interrupts) into the section.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Read it back and invalidate the recompiler.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 
 		// Debug methods
 

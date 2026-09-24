@@ -83,6 +83,88 @@ namespace DSP
 		}
 	}
 
+	// ---------------------------------------------------------------------------------------
+	// Save state
+	// ---------------------------------------------------------------------------------------
+	//
+	// The caller has opened the DSP section; everything below is the *contents* of it, in a fixed
+	// order, and the top-level SaveStates::Save/Load is what frames and dispatches it. The section
+	// is the whole DSP machine, laid out from the outside in:
+	//
+	//   Dsp16::SaveState          the PI-facing block: run state, mailboxes, DSP-DMA registers
+	//     DSP::dsp_ai             the DSP-side AI DMA (the CDCR word lives here)
+	//     DSP::aram               the ARAM controller and its 16 MB buffer
+	//     DspCore::SaveState      the core: memories, register file, stacks, interrupts
+	//
+	// The two mailbox locks are deliberately not written (see dsp.h), and neither is anything else
+	// in these objects that belongs to the host rather than to the machine.
+
+	void Dsp16::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// Whether the core is running and the time-base anchor it resumes from. The anchor is a
+		// plain Gekko tick count, so it means the same thing in the machine that reads the state
+		// as in the one that wrote it.
+		writer.Fields(running, savedGekkoTicks, intdspRequested);
+
+		// Both mailboxes: the two halves of the message, the low-word snapshot and the snapshot
+		// valid flag. The snapshot is state and not a scratch register - a receiver that has read
+		// the high word but not yet the low word is in the middle of a message, and the state can
+		// be taken exactly there. The halves are `volatile` because the two threads touch them;
+		// the cursors take a volatile scalar by value, so they travel like any other integer.
+		writer.Array(DspToCpuMailbox);
+		writer.Fields(DspToCpuSnapshot, DspToCpuSnapshotValid);
+
+		writer.Array(CpuToDspMailbox);
+		writer.Fields(CpuToDspSnapshot, CpuToDspSnapshotValid);
+
+		// The DSP-DMA registers. The transfer itself is not state: DoDma completes it the moment
+		// the block size is written (there is no in-flight engine to stop in the middle of), so
+		// only the registers the guest can read back have to travel.
+		writer.Fields(DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+
+		// The accelerator: the sample format, the ADPCM coefficient table, the predictor/scale
+		// pair, the IIR filter history and the current window pointer. All of it is genuinely
+		// accumulated across samples, and a wrong window pointer after a load would stream the
+		// wrong part of ARAM.
+		writer.Fields(Accel.Fmt);
+		writer.Array(Accel.AdpcmCoef);
+		writer.Fields(Accel.AdpcmPds, Accel.AdpcmXn, Accel.AdpcmYn1, Accel.AdpcmYn2, Accel.AdpcmGan);
+		writer.Fields(Accel.StartAddress.addr, Accel.EndAddress.addr, Accel.CurrAddress.addr);
+
+		// The DSP-side AI DMA and the ARAM controller (registers and buffer) are globals of this
+		// namespace rather than members of the block, but they are parts of the same machine.
+		dsp_ai.SaveState(writer);
+		aram.SaveState(writer);
+
+		// The core, last: it is the largest part and the one everything above feeds.
+		core->SaveState(writer);
+	}
+
+	void Dsp16::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(running, savedGekkoTicks, intdspRequested);
+
+		reader.Array(DspToCpuMailbox);
+		reader.Fields(DspToCpuSnapshot, DspToCpuSnapshotValid);
+
+		reader.Array(CpuToDspMailbox);
+		reader.Fields(CpuToDspSnapshot, CpuToDspSnapshotValid);
+
+		reader.Fields(DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+
+		reader.Fields(Accel.Fmt);
+		reader.Array(Accel.AdpcmCoef);
+		reader.Fields(Accel.AdpcmPds, Accel.AdpcmXn, Accel.AdpcmYn1, Accel.AdpcmYn2, Accel.AdpcmGan);
+		reader.Fields(Accel.StartAddress.addr, Accel.EndAddress.addr, Accel.CurrAddress.addr);
+
+		dsp_ai.LoadState(reader);
+		aram.LoadState(reader);
+
+		// DspCore::LoadState also invalidates the recompiler, which is what stops the core from
+		// running the microcode of the state that was just replaced (see dspcore.cpp).
+		core->LoadState(reader);
+	}
+
 #pragma region "Memory Engine"
 
 	uint16_t Dsp16::ReadDMem(DspAddress addr)

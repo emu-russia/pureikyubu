@@ -90,6 +90,40 @@ namespace JdiSpecs
       "help": "Reset emulation"
     },
 
+    "savestate": {
+      "help": "Write the whole machine into a save state file (see wiki/savestate.md)",
+      "args": 1,
+      "hints": "[slot]",
+      "usage": [
+        "Syntax: savestate [slot]\n",
+        "The state is written next to the running image and is named after it: `game.iso` gives `game.st0`.\n",
+        "Ten slots are offered, 0 to 9; the slot is 0 when it is left out.\n",
+        "The answer is a Markdown report: the slot, the file and what happened.\n"
+      ],
+      "output": "{ markdown: String }"
+    },
+
+    "loadstate": {
+      "help": "Put a save state file back into the machine",
+      "args": 1,
+      "hints": "[slot]",
+      "usage": [
+        "Syntax: loadstate [slot]\n",
+        "Reads the slot file `savestate` wrote. The core is stopped for the duration and started\n",
+        "again afterwards the way it was.\n"
+      ],
+      "output": "{ markdown: String }"
+    },
+
+    "states": {
+      "help": "List the save state slots of the running image",
+      "usage": [
+        "Syntax: states\n",
+        "One table row per slot that holds a state: the slot, the file and its size.\n"
+      ],
+      "output": "{ markdown: String }"
+    },
+
     "IsLoaded": {
       "internal": true,
       "help": "Return true if emulation state is `Loaded`",

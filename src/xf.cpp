@@ -1818,5 +1818,132 @@ void main()
 		// The GL viewport is not refreshed here: the zeroed viewport registers do not describe one.
 		// It is restored by GFXCore::ApplyDefaultGLState().
 	}
+
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The Transform Unit is the matrix RAM (the geometry/texture matrices, the normal matrix and
+	// the dual texture transform), the eight light records and the general registers that configure
+	// the transforms, the lighting and the texture coordinate generation.
+	//
+	// The matrices and the light parameters are floating point here, not the raw register words the
+	// title wrote: the XF converts them as they arrive (a matrix word becomes a float, a light
+	// record becomes post-processed attenuation and direction vectors), and what the rest of the
+	// pipeline reads is that converted form. The cursor stores a float as the bits of its IEEE-754
+	// representation, so the values round-trip exactly and the state does not depend on the host's
+	// word representation being the register one.
+	//
+	// What does not travel: the `gfx` back-pointer; the vertex shader stages
+	// (`vert_shader`/`vert_shader_flat`), which are GL objects recompiled by CreateShader from the
+	// registers that do travel; and the CP handshake (xfLoadIdx/xfLoadAmount/xfRdData/xfRdValid),
+	// which is always idle at a command boundary - restoring a pending read would hand the CP a
+	// value from before the state that no request asked for.
+	// -------------------------------------------------------------------------------------------
+
+	void TransformUnit::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The three blocks of matrix RAM (0x0000-0x05FF): the modelview/texture matrices (64 rows
+		// of four words), the normal matrix (32 rows of three) and the dual texture transform
+		// matrices.
+		writer.Array(xf.mvTexMtx);
+		writer.Array(xf.nrmMtx);
+		writer.Array(xf.dualTexMtx);
+
+		// The eight light records (0x0600-0x067F), field by field: the three reserved words the
+		// register file keeps, the colour, the post-processed cosine and distance attenuation and
+		// the post-processed light position and direction. The last two are kept as the vectors the
+		// software lighting consumes; the shader normalizes them again on upload.
+		for (int i = 0; i < 8; i++)
+		{
+			const Light& light = xf.light[i];
+
+			writer.Array(light.Reserved);
+			writer.Fields(light.rgba.RGBA);
+			writer.Array(light.a);
+			writer.Array(light.k);
+			writer.Array(light.lpx);
+			writer.Array(light.dhx);
+		}
+
+		// The general registers (0x1000-0x1026) and the texture coordinate generation (0x103F-
+		// 0x1057). The unions go out as their 32-bit word, like the rest of the register file.
+		writer.Fields(xf.error, xf.diagnostics);
+		writer.Array(xf.state);
+		writer.Fields(xf.clock);
+		writer.Fields(xf.clipDisable.bits);
+		writer.Array(xf.perf);
+		writer.Fields(xf.vtxSpec.bits, xf.numColors);
+		writer.Fields(xf.ambient[0].RGBA, xf.ambient[1].RGBA);
+		writer.Fields(xf.material[0].RGBA, xf.material[1].RGBA);
+		writer.Fields(xf.colorControl[0].bits, xf.colorControl[1].bits);
+		writer.Fields(xf.alphaControl[0].bits, xf.alphaControl[1].bits);
+		writer.Fields(xf.dualTexTran);
+		writer.Fields(xf.matIdxA.bits, xf.matIdxB.bits);
+		writer.Array(xf.viewportScale);
+		writer.Array(xf.viewportOffset);
+		writer.Array(xf.projectionParam);
+		writer.Fields(xf.projectOrtho, xf.numTex);
+
+		for (int i = 0; i < 8; i++)
+		{
+			writer.Fields(xf.tex[i].bits);
+			writer.Fields(xf.dualTex[i].bits);
+		}
+
+		// Whether a viewport was ever programmed. This is a latch of this emulator, not a register:
+		// a viewport programmed to zero and a viewport that was never programmed hold the same
+		// words at 0x101A-0x101F, but they do not mean the same thing - the software pipeline maps
+		// the whole render target in the second case and a zero-sized window in the first (see
+		// SoftViewport), and the shader pipeline falls back to the default GL viewport. It is
+		// therefore part of the state.
+		writer.Fields(viewportSet);
+	}
+
+	void TransformUnit::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Array(xf.mvTexMtx);
+		reader.Array(xf.nrmMtx);
+		reader.Array(xf.dualTexMtx);
+
+		for (int i = 0; i < 8; i++)
+		{
+			Light& light = xf.light[i];
+
+			reader.Array(light.Reserved);
+			reader.Fields(light.rgba.RGBA);
+			reader.Array(light.a);
+			reader.Array(light.k);
+			reader.Array(light.lpx);
+			reader.Array(light.dhx);
+		}
+
+		reader.Fields(xf.error, xf.diagnostics);
+		reader.Array(xf.state);
+		reader.Fields(xf.clock);
+		reader.Fields(xf.clipDisable.bits);
+		reader.Array(xf.perf);
+		reader.Fields(xf.vtxSpec.bits, xf.numColors);
+		reader.Fields(xf.ambient[0].RGBA, xf.ambient[1].RGBA);
+		reader.Fields(xf.material[0].RGBA, xf.material[1].RGBA);
+		reader.Fields(xf.colorControl[0].bits, xf.colorControl[1].bits);
+		reader.Fields(xf.alphaControl[0].bits, xf.alphaControl[1].bits);
+		reader.Fields(xf.dualTexTran);
+		reader.Fields(xf.matIdxA.bits, xf.matIdxB.bits);
+		reader.Array(xf.viewportScale);
+		reader.Array(xf.viewportOffset);
+		reader.Array(xf.projectionParam);
+		reader.Fields(xf.projectOrtho, xf.numTex);
+
+		for (int i = 0; i < 8; i++)
+		{
+			reader.Fields(xf.tex[i].bits);
+			reader.Fields(xf.dualTex[i].bits);
+		}
+
+		// The latch is restored, but the GL viewport is not recomputed here: the caller has to ask
+		// for it (GFXCore::RefreshAfterLoad) because this method has to run without a GL context
+		// just as well.
+		reader.Fields(viewportSet);
+	}
 }
 

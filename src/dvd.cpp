@@ -2354,4 +2354,210 @@ namespace DVD
 		}
 	}
 
+	// ---------------------------------------------------------------------------
+	// save states
+
+	// What the drive carries into a state is the transaction it is in the middle of: the cover and
+	// the error it latched, the step of its own state machine, the command it received (and how
+	// much of it), the immediate buffer it is answering with, the read position and the size of
+	// the transfer still to make, and the streaming (DVD audio) bookkeeping that the sample clock
+	// walks. A state taken with the console in a game's load screen resumes with the drive on the
+	// command the DI had just given it.
+	//
+	// The order is fixed and both directions use it:
+	//
+	//   coverStatus 1, errorState 1, errorCode 4
+	//   state 1, commandBuffer 12, commandPtr 4, immediateBuffer 4, immediateBufferPtr 4
+	//   seekVal 4, transactionSize 4
+	//   sampleRate 1, streamClockEnabled 1, streamEnabledByDduCommand 1, streamSeekVal 4,
+	//   streamCount 4, pcmPlaybackBuffer (56 x 2), pcmPlaybackCounter 4, nextGekkoTicksToSample 8
+	//
+	// The disc image is not part of it and could not be: this object holds no handle of it. The
+	// mounted image and its path live in the front end's `dvd` record, reads go through
+	// DVD::Seek / DVD::Read, and GCMRead opens the container afresh for every read, so there is no
+	// FILE* here to carry and no position to restore beyond `seekVal`, which is. The image is
+	// front-end state: a state names the disc it was taken from (the META section) and refuses to
+	// load into a console running another one.
+	void DduCore::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The cover is a mechanical signal (DICOVER) and the error is what the drive hands back
+		// through Request Error, which the SDK classifies the failure by; both are read by the
+		// guest through the DI, and neither is derived from anything else here.
+		writer.U8((uint8_t)coverStatus);
+		writer.Fields(errorState, errorCode);
+
+		// The transaction state machine. `state` says which phase the drive is in, `commandBuffer`
+		// is the 12-byte command packet the host clocked in and `commandPtr` how many of those
+		// bytes have arrived, and `immediateBuffer` / `immediateBufferPtr` are the four-byte
+		// answer (or the padded sense answer) and how far the host has clocked it out.
+		writer.U8((uint8_t)state);
+		writer.Raw(commandBuffer, sizeof(commandBuffer));
+		writer.Fields(commandPtr);
+		writer.Raw(immediateBuffer, sizeof(immediateBuffer));
+		writer.Fields(immediateBufferPtr);
+
+		// Where the transfer in progress reads the disc and how much of it is left. `seekVal` is
+		// the byte position in the image (a Read Sector command's LBA shifted left by two), and
+		// `transactionSize` is the hint the command carried, which the read-ahead and the
+		// transfer end condition both use.
+		writer.Fields(seekVal);
+		writer.U32((uint32_t)transactionSize);
+
+		// The streaming (DVD audio) side. `streamClockEnabled` is the AISCLK signal, the rest is
+		// the stream command the drive is playing: where the raw ADPCM data is on the disc, how
+		// many samples are left, the decoded PCM buffer the sample clock is walking and the tick
+		// the next sample is due at. `pcmPlaybackBuffer` is written element by element (it is an
+		// array of 16-bit samples, and the cursor writes integers, not structs).
+		writer.U8((uint8_t)sampleRate);
+		writer.Fields(streamClockEnabled, streamEnabledByDduCommand);
+		writer.Fields(streamSeekVal, streamCount);
+		writer.Array(pcmPlaybackBuffer);
+		writer.U32((uint32_t)pcmPlaybackCounter);
+		writer.U64((uint64_t)nextGekkoTicksToSample);
+
+		// NOT part of the state:
+		//
+		// `dataCache` / `dataCachePtr` are the 512 KB of the image the drive read ahead for a Read
+		// Sector command. They are a copy of bytes that are still in the image, so they must not
+		// be saved (and are invalidated on load, see LoadState).
+		//
+		// `streamingCache` / `streamingCachePtr` are the same thing for the ADPCM stream: raw
+		// bytes of the disc, re-read from `streamSeekVal` when the cache is marked empty.
+		//
+		// `ddBusBusy` and `pumping` are provably clear at a save point: StartTransfer sets them
+		// and then runs the transfer to completion on the thread that programmed it - the loop
+		// `while (ddBusBusy) PumpOnce()` ends when the host's callback has taken every byte and
+		// called TransferComplete - so by the time the guest executes its next instruction (and a
+		// fortiori by the time a state is taken, which stops the core first) both are false. The
+		// next transfer is armed by the DI's own DI_CR write, which supplies the direction.
+		//
+		// `savedGekkoTicks` is when the next byte of a transfer is due, and `dduTicksPerByte` and
+		// `gekkoOneSecond` are the transfer rate: all three are re-derived by StartTransfer and
+		// Reset from the machine's clock, which is itself part of the state.
+		//
+		// `busDir` is the direction of the transfer in progress; besides being meaningless while
+		// no transfer is, it is not initialized until the first StartTransfer, so it is not a
+		// value a state can honestly carry.
+		//
+		// `hostToDduCallback`, `dduToHostCallback`, `transferContext`, `streamCallback`,
+		// `streamContext`, the cover and error callbacks and their contexts are function pointers
+		// and host objects: the DI installs them once (SetTransferCallbacks and friends) and a
+		// load must not touch them. `transferRateNoLimit` and the `log*` flags are settings, the
+		// two FILE* of the ADPCM / PCM dumps and their two enable flags are debug output, and
+		// `stats` is a set of profiler counters.
+	}
+
+	void DduCore::LoadState(SaveStates::StateReader& reader)
+	{
+		// Everything that has to pass a range check is read into a local first, so a state that
+		// turns out to be broken does not leave half of a step in the machine.
+		uint8_t cover = reader.U8();
+		bool errorStateValue = false;
+		reader.Fields(errorStateValue);
+		uint32_t errorCodeValue = reader.U32();
+
+		uint8_t stateValue = reader.U8();
+		reader.Raw(commandBuffer, sizeof(commandBuffer));
+		int commandPtrValue = 0;
+		reader.Fields(commandPtrValue);
+		reader.Raw(immediateBuffer, sizeof(immediateBuffer));
+		int immediateBufferPtrValue = 0;
+		reader.Fields(immediateBufferPtrValue);
+
+		uint32_t seekValValue = reader.U32();
+		uint32_t transactionSizeValue = reader.U32();
+
+		uint8_t sampleRateValue = reader.U8();
+		bool streamClockEnabledValue = false;
+		bool streamEnabledValue = false;
+		reader.Fields(streamClockEnabledValue, streamEnabledValue);
+		uint32_t streamSeekValValue = reader.U32();
+		int32_t streamCountValue = 0;
+		reader.Fields(streamCountValue);
+		reader.Array(pcmPlaybackBuffer);
+		uint32_t pcmCounterValue = reader.U32();
+		int64_t nextSampleTick = (int64_t)reader.U64();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// The cover has two states, the drive's state machine has the steps the enum names, and
+		// the sample rate has two values: a state that says anything else was not written by this
+		// machine. `commandPtr` counts the bytes of a 12-byte packet and `immediateBufferPtr` the
+		// bytes clocked out of the four-byte answer (the host's DMA read can ask for more, which
+		// is why it is not bounded above), so neither can be negative.
+		if (cover > (uint8_t)CoverStatus::Open)
+		{
+			reader.Fail("the drive cover is in a state this machine does not have");
+			return;
+		}
+
+		if (stateValue > (uint8_t)DduThreadState::GetErrorCode)
+		{
+			reader.Fail("the drive is at a transaction step this machine does not have");
+			return;
+		}
+
+		if (commandPtrValue < 0 || commandPtrValue > (int)sizeof(commandBuffer))
+		{
+			reader.Fail("the drive has received more command bytes than a command has");
+			return;
+		}
+
+		if (immediateBufferPtrValue < 0)
+		{
+			reader.Fail("the drive has clocked out a negative number of answer bytes");
+			return;
+		}
+
+		if (sampleRateValue > (uint8_t)DvdAudioSampleRate::Rate_48000)
+		{
+			reader.Fail("the DVD audio sample rate is not one this machine has");
+			return;
+		}
+
+		// The PCM buffer is 28 stereo samples. The counter is allowed to sit exactly on its end:
+		// that is the "the buffer needs the next chunk decoded" marker the stream command writes
+		// into it, and the sample clock decodes before it reads in that case.
+		if (pcmCounterValue > sizeof(pcmPlaybackBuffer))
+		{
+			reader.Fail("the DVD audio playback buffer is further along than its own length");
+			return;
+		}
+
+		coverStatus = (CoverStatus)cover;
+		errorState = errorStateValue;
+		errorCode = errorCodeValue;
+		state = (DduThreadState)stateValue;
+		commandPtr = commandPtrValue;
+		immediateBufferPtr = immediateBufferPtrValue;
+		seekVal = seekValValue;
+		transactionSize = (size_t)transactionSizeValue;
+		sampleRate = (DvdAudioSampleRate)sampleRateValue;
+		streamClockEnabled = streamClockEnabledValue;
+		streamEnabledByDduCommand = streamEnabledValue;
+		streamSeekVal = streamSeekValValue;
+		streamCount = streamCountValue;
+		pcmPlaybackCounter = (size_t)pcmCounterValue;
+		nextGekkoTicksToSample = nextSampleTick;
+
+		// The two read-ahead caches are dropped rather than restored: they hold copies of the
+		// image, and the image is not in the state. The way the code itself invalidates them is
+		// to put the pointer past the end of the buffer - `dataCachePtr = dataCacheSize` in the
+		// Read Sector command (0xA8) and again in TransferComplete, `streamingCachePtr =
+		// streamCacheSize` in the Set Stream command (0xE1) - and the next pump then seeks to
+		// `seekVal` (or `streamSeekVal`) and re-reads the image. The other fields of the two
+		// caches are not reset; they are only ever read through the pointer.
+		dataCachePtr = dataCacheSize;
+		streamingCachePtr = streamCacheSize;
+
+		// The transfer is not restarted and no register is written through: the decoded values
+		// above are the whole of what the guest can observe, and the DI keeps the registers on its
+		// own side. `state` is restored as it was, so a state taken in the middle of a command
+		// resumes that command exactly where it stood (the state machine is stepped by the host's
+		// DI_CR writes, not by a clock).
+	}
+
 }

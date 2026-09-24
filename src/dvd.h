@@ -61,6 +61,14 @@ The debugging interface specification provided by this component can be found in
 
 */
 
+// The save state cursors, forward declared: a header that only names them in a member signature
+// does not have to pull the whole format in (see savestate.h for the two classes).
+namespace SaveStates
+{
+	class StateWriter;
+	class StateReader;
+}
+
 // DVD interface
 
 namespace DVD
@@ -540,6 +548,21 @@ namespace DVD
 		{
 			memset(&stats, 0, sizeof(stats));
 		}
+
+#pragma region "Save states"
+
+		/// <summary>
+		/// Write the drive into a save state section: the cover, the error the drive latched and
+		/// the step of the transaction state machine it is on, with the command and immediate
+		/// buffers and the streaming bookkeeping. The disc image is not part of it - it belongs to
+		/// the front end, and a state names it instead (see the META section of the format).
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Put the drive back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
+
+#pragma endregion "Save states"
 	};
 
 	extern DduCore* DDU;

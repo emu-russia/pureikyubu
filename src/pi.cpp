@@ -783,6 +783,42 @@ namespace Flipper
 		PIClearTraps();
 	}
 
+	// ---------------------------------------------------------------------------
+	// save states
+
+	void ProcessorInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(pi.intsr, pi.intmr, pi.consoleVer, pi.chipid,
+			pi.cp_base, pi.cp_top, pi.cp_wrptr, pi.wrap_bit);
+	}
+
+	void ProcessorInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		// INTBRK is not read back, although the state has the field next to the two interrupt
+		// registers: it is the one-shot breakpoint the *debugger* arms with the PIBreakOnNextInt
+		// command (and which drops itself as soon as it has halted the core), not something the
+		// guest or the console's own wiring ever sets. It belongs to the session that is
+		// debugging this machine, exactly like the breakpoints a state does not carry either, so
+		// a state does not put it back and does not clear it - the breakpoint the debugger armed
+		// on the machine it is looking at stays armed across a load.
+		reader.Fields(pi.intsr, pi.intmr, pi.consoleVer, pi.chipid,
+			pi.cp_base, pi.cp_top, pi.cp_wrptr, pi.wrap_bit);
+
+		// The console revision comes from the configuration of the console this block was built
+		// with, and the chip id is derived from it, but both are registers the guest and the boot
+		// ROM read back (the boot ROM upgrades its machine type from the id), so they are state
+		// and travel. A state taken on a console of another revision brings that revision's id
+		// with it, which is a state of another console rather than a broken image - the memory
+		// size and the image the META section names are what guard against that.
+
+		// INTSR and INTMR are the machine's, and the CPU's interrupt line is not stored anywhere
+		// because it is derived from them (a set bit of INTSR under its mask in INTMR is what the
+		// processor sees). Restoring the two registers therefore does not restore the line, which
+		// still says what the machine that was running before the load had it say; the caller
+		// recomputes it once the whole state is in, and no method of this block has to be called
+		// for that.
+	}
+
 	void ProcessorInterface::PIBreakOnNextInt(uint32_t mask)
 	{
 		pi.intbrk |= mask;

@@ -28,6 +28,16 @@ static ImGui::FileBrowser chooseDirectoryDialog(ImGuiFileBrowserFlags_SelectDire
 static bool draw_about_box = false;
 static bool ui_insert_dvd_menu_item_enabled = false;
 
+/* Show a message to the user in the modal box the core uses for its own errors (`UIError`). The
+   status bar is not an option for anything that has to be read: the performance thread owns it and
+   rewrites all four of its fields once a second (PerfMetrics::PerfThreadProc), so a message put
+   there is gone before a user who was looking at the game can read it. */
+static void ui_report_error(const std::string& text)
+{
+	error_text = text;
+	draw_error_box = true;
+}
+
 /* What a file the front end's browsers returned is for. The browsers of the settings window (a card
    image, a firmware image, a directory the selector scans) are the window's own, see uisettings.cpp. */
 enum class FileReaction
@@ -1332,6 +1342,98 @@ static void ui_load_bootrom()
 /* Defined with the other file loaders, below; the menu needs it first. */
 static void reopen_last_file();
 
+/* The save state slot the quick save keys work on (File -> Quick Save/Load State). The ten slots
+   are numbered 0 to 9 - the number the `savestate`/`loadstate` commands take as an argument and
+   the one in the suffix of the file (`.st0` .. `.st9`) - and Shift+F5/Shift+F7 step the slot
+   instead of using it, the same arrangement the GBA front end offers for its own keys (see
+   src/gba/gba_sdl.cpp). */
+static int state_slot = 0;
+
+/* Write the state of a slot. The work is the debug interface's (`savestate <slot>`), so what the
+   menu item does is exactly what the command line does, and the front end neither knows the
+   format nor the file names - it only shows the file the answer names. */
+static void ui_save_state(int slot)
+{
+	std::string path, error;
+	bool ok = false;
+
+	try
+	{
+		ok = UI::Jdi->SaveState(slot, path, error);
+	}
+	catch (...)
+	{
+		error = "the debug interface refused the command";
+	}
+
+	if (ok)
+	{
+		SetStatusText(STATUS_ENUM::Progress, L"State saved to " + Util::StringToWstring(path));
+	}
+	else
+	{
+		ui_report_error("Save state failed: " + error);
+	}
+}
+
+/* Read the state of a slot back into the machine (`loadstate <slot>`). */
+static void ui_load_state(int slot)
+{
+	std::string path, error;
+	bool ok = false;
+
+	try
+	{
+		ok = UI::Jdi->LoadState(slot, path, error);
+	}
+	catch (...)
+	{
+		error = "the debug interface refused the command";
+	}
+
+	if (ok)
+	{
+		SetStatusText(STATUS_ENUM::Progress, L"State loaded from " + Util::StringToWstring(path));
+	}
+	else
+	{
+		ui_report_error("Load state failed: " + error);
+	}
+}
+
+/* The ten slots of one of the two save state submenus of the File menu. The current slot of the
+   quick save keys is marked, so that stepping it with Shift+F5 and then looking at the menu says
+   which slot the keys are on. */
+static void ui_state_slot_menu(bool write)
+{
+	for (int slot = 0; slot <= SaveStates::MaxSlot; slot++)
+	{
+		char label[32];
+		snprintf(label, sizeof(label), "Slot %i%s", slot, (slot == state_slot) ? " (current)" : "");
+
+		if (ImGui::MenuItem(label))
+		{
+			if (write)
+			{
+				ui_save_state(slot);
+			}
+			else
+			{
+				ui_load_state(slot);
+			}
+		}
+	}
+}
+
+/* Step the quick save slot (Shift+F5 / Shift+F7 and the two menu items). The slot wraps, so the
+   ten of them are a ring the user can walk without ever looking at a number. */
+static void ui_step_state_slot(int step)
+{
+	state_slot = (state_slot + step + (SaveStates::MaxSlot + 1)) % (SaveStates::MaxSlot + 1);
+
+	SetStatusText(STATUS_ENUM::Progress, L"Save state slot " + std::to_wstring(state_slot));
+}
+
 static void ui_main_menu()
 {
 	// Menu Bar
@@ -1379,6 +1481,32 @@ static void ui_main_menu()
 			ImGui::Separator();
 			if (ImGui::MenuItem("Refresh View", NULL, false, usel.active)) {
 				usel.needUpdate = true;
+			}
+			ImGui::Separator();
+			// The save states (see wiki/savestate.md). The two quick items work on the current
+			// slot, the two submenus pick one of the ten, and both go through the same commands
+			// the debug interface offers (`savestate`/`loadstate`).
+			if (ImGui::MenuItem("Quick Save State", "F5", false, emu.loaded)) {
+				ui_save_state(state_slot);
+			}
+			if (ImGui::MenuItem("Quick Load State", "F7", false, emu.loaded)) {
+				ui_load_state(state_slot);
+			}
+			if (ImGui::BeginMenu("Save State to Slot", emu.loaded))
+			{
+				ui_state_slot_menu(true);
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Load State from Slot", emu.loaded))
+			{
+				ui_state_slot_menu(false);
+				ImGui::EndMenu();
+			}
+			if (ImGui::MenuItem("Next State Slot", "Shift+F5")) {
+				ui_step_state_slot(1);
+			}
+			if (ImGui::MenuItem("Previous State Slot", "Shift+F7")) {
+				ui_step_state_slot(-1);
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Exit", NULL)) {
@@ -1819,6 +1947,31 @@ static int ui_main()
 				event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_F3)
 			{
 				reopen_last_file();
+			}
+
+			// File -> Quick Save State (F5) and Quick Load State (F7), with Shift+ the same keys
+			// stepping the slot. Unlike the reopen shortcut these work while a game runs - a state
+			// is taken in the middle of one - and they are why the two keys are F5/F7 rather than
+			// the F3/F4 the GBA front end uses (F3 is taken here).
+			if (forMainWindow && !UiSettingsCaptureActive() && emu.loaded &&
+				event.type == SDL_KEYDOWN &&
+				(event.key.keysym.scancode == SDL_SCANCODE_F5 ||
+					event.key.keysym.scancode == SDL_SCANCODE_F7))
+			{
+				bool write = (event.key.keysym.scancode == SDL_SCANCODE_F5);
+
+				if (event.key.keysym.mod & KMOD_SHIFT)
+				{
+					ui_step_state_slot(write ? 1 : -1);
+				}
+				else if (write)
+				{
+					ui_save_state(state_slot);
+				}
+				else
+				{
+					ui_load_state(state_slot);
+				}
 			}
 
 			// The settings window captures the next key press or game controller event as the

@@ -78,6 +78,9 @@
 
 namespace Flipper
 {
+	class StateWriter;
+	class StateReader;
+
 	union VIPosition
 	{
 		struct {
@@ -143,6 +146,29 @@ namespace Flipper
 	public:
 		VideoInterface(Flipper* flipper, HWConfig* config);
 		~VideoInterface();
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the video interface into the save state section: every register it keeps (the
+		/// display configuration, the vertical timing, the two field bases, the beam position,
+		/// the INT0 and display-latch registers, the video mode and its derived line count and
+		/// frame timing, the frame buffer enable and the frames scanned), plus the state of the
+		/// video-encoder strap the console is built with.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>
+		/// Read it back and put the block back together: the timing the display configuration
+		/// register implies is recomputed through the block's own vi_set_timing(), the frame
+		/// timer the state carries is restored over it (the recomputation would otherwise reset
+		/// it to now, and a load has to finish the frame that was in progress rather than wait
+		/// for a new one), and the pointer into main memory the scanout starts from is
+		/// translated again from the restored field base, because it is a pointer into the
+		/// memory interface's memory rather than state of its own. The frontend's own frame
+		/// buffer pointer is never touched.
+		/// </summary>
+		void LoadState(SaveStates::StateReader& reader);
 
 		void VIUpdate();
 

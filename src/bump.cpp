@@ -40,6 +40,48 @@ namespace GFX
 		bump.imask.bits = 0xFFFFFF;
 	}
 
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The bump unit owns the three 3x2 indirect matrices, the stream-classification mask and one
+	// indirect command per TEV stage. The TEV combine of a stage reads the command and the matrix
+	// it selects to perturb the coordinate it samples with (gfx-bump.md 3.3), so the whole register
+	// file is machine state and every union goes out as its 32-bit word.
+	//
+	// What does not travel: the `gfx` back-pointer only. The unit keeps no host state and no
+	// accumulator, so the register file *is* the state.
+	// -------------------------------------------------------------------------------------------
+
+	void BumpMappingUnit::SaveState(SaveStates::StateWriter& writer) const
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			writer.Fields(bump.matrix[i].a.bits, bump.matrix[i].b.bits, bump.matrix[i].c.bits);
+		}
+
+		writer.Fields(bump.imask.bits);
+
+		for (int i = 0; i < 16; i++)
+		{
+			writer.Fields(bump.cmd[i].bits);
+		}
+	}
+
+	void BumpMappingUnit::LoadState(SaveStates::StateReader& reader)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			reader.Fields(bump.matrix[i].a.bits, bump.matrix[i].b.bits, bump.matrix[i].c.bits);
+		}
+
+		reader.Fields(bump.imask.bits);
+
+		for (int i = 0; i < 16; i++)
+		{
+			reader.Fields(bump.cmd[i].bits);
+		}
+	}
+
 	// One word of the bump/indirect register range (0x06-0x1F), which is where the bypass walk
 	// arrives after the Pixel Engine (gfx.md 10.1).
 	void BumpMappingUnit::loadBUMPReg(size_t index, uint32_t value, uint32_t mask)

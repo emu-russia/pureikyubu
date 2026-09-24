@@ -178,4 +178,19 @@ namespace Flipper
 	{
 		return (uint32_t)memsize;
 	}
+
+	// The only state the ASIC object itself owns is the deadline of the periodic work (see
+	// `Update`). It is a tick of the emulated time base, so a state that carries the time base has
+	// to carry it too: without it the first scan-out and the first serial poll after a load would
+	// happen at the wrong tick, and that is the kind of difference that shows up as a movie frame
+	// decoded one line early.
+	void Flipper::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(hwUpdateTbrValue);
+	}
+
+	void Flipper::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(hwUpdateTbrValue);
+	}
 }
