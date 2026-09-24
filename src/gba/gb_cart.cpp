@@ -5,12 +5,29 @@
 // mapper registers and then ask which bank is mapped without executing any code.
 
 #include "gb_cart.h"
+#include "gba_savestate.h"
 
 #include <cstdio>
 #include <ctime>
 
 namespace GBA
 {
+	void GbCart::SaveState(StateWriter& writer) const
+	{
+		writer.Bytes(ram);
+		writer.Fields(ramEnabled, bankingMode, romBank, ramBank, rtcSelect, rtcLatchState);
+		writer.Fields(rtc.seconds, rtc.minutes, rtc.hours, rtc.days, rtc.dayCarry, rtc.halt);
+		writer.Fields(unixTime);
+	}
+
+	void GbCart::LoadState(StateReader& reader)
+	{
+		reader.Bytes(ram);
+		reader.Fields(ramEnabled, bankingMode, romBank, ramBank, rtcSelect, rtcLatchState);
+		reader.Fields(rtc.seconds, rtc.minutes, rtc.hours, rtc.days, rtc.dayCarry, rtc.halt);
+		reader.Fields(unixTime);
+	}
+
 	namespace
 	{
 		// The ROM size codes of the header (Pan Docs "The Cartridge Header"). Codes 0x00..0x08

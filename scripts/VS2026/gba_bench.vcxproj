@@ -130,6 +130,7 @@
     <ClCompile Include="..\..\testing\gba_bench\test_io.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_main.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_ppu.cpp" />
+    <ClCompile Include="..\..\testing\gba_bench\test_savestate.cpp" />
     <ClCompile Include="..\..\testing\gba_bench\test_settings.cpp" />
   </ItemGroup>
   <ItemGroup>

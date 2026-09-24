@@ -454,6 +454,44 @@ namespace JdiSpecs
 			"output": "{ markdown: String }"
 		},
 
+		"gbasavestate": {
+			"help": "Write a GBA save state into a slot",
+			"hints": "[slot]",
+			"usage": [
+				"Syntax: gbasavestate [slot]\n",
+				"The whole machine - the CPU and its banked registers, every memory, the LCD, the\n",
+				"sound controller, the DMA channels, the timers, the link port, the interrupt\n",
+				"controller, the keypad and the cartridge's save memory and chip state - goes into\n",
+				"one file. `slot` is 0..9 (0 by default) and the file is the one the frontend's\n",
+				"quick save key writes: `<cartridge>.st<slot>` next to its `.sav`.\n",
+				"The answer is Markdown: the slot, the file and whether it was written.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbaloadstate": {
+			"help": "Load a GBA save state from a slot",
+			"hints": "[slot]",
+			"usage": [
+				"Syntax: gbaloadstate [slot]\n",
+				"The machine is put back exactly where the state was taken, in the middle of a frame\n",
+				"if that is where it was. A state that belongs to another cartridge, that this build\n",
+				"cannot read, or whose checksum does not match is refused with the reason.\n",
+				"The answer is Markdown: the slot, the file, the result and the frame it resumed at.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbastates": {
+			"help": "List the GBA save state slots that hold a state",
+			"usage": [
+				"Syntax: gbastates\n",
+				"The answer is Markdown: one row per slot that has a state file, with its path and\n",
+				"its size.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
 		"gb": {
 			"help": "Dump the Game Boy (DMG / CGB) machine state",
 			"usage": [
@@ -501,6 +539,48 @@ namespace JdiSpecs
 				"Syntax: gbppu\n",
 				"The answer is Markdown: LCDC / STAT / LY, the scroll registers, the palettes and\n",
 				"the decoded layer configuration.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbsavestate": {
+			"help": "Write a Game Boy save state into a slot",
+			"hints": "[slot]",
+			"usage": [
+				"Syntax: gbsavestate [slot]\n",
+				"The whole machine - the LR35902 and its flags, the eight WRAM banks, HRAM, the\n",
+				"timer, the joypad, the serial port, the OAM DMA and the CGB's own registers (KEY1\n",
+				"with the double speed bit, VBK, SVBK, OPRI, the HDMA/GDMA transfer), the LCD with\n",
+				"both VRAM banks and both colour palette banks, the sound controller and the\n",
+				"cartridge's RAM, mapper registers and real time clock - goes into one file.\n",
+				"`slot` is 0..9 (0 by default) and the file is the one the frontend's quick save\n",
+				"key writes: `<cartridge>.st<slot>` next to its `.sav`.\n",
+				"The console kind (DMG or CGB) is part of the state and is checked when it is read.\n",
+				"The answer is Markdown: the slot, the file and whether it was written.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbloadstate": {
+			"help": "Load a Game Boy save state from a slot",
+			"hints": "[slot]",
+			"usage": [
+				"Syntax: gbloadstate [slot]\n",
+				"The machine is put back exactly where the state was taken, in the middle of a frame\n",
+				"or of an HDMA transfer if that is where it was. A state that belongs to another\n",
+				"cartridge or console, that was taken on the other machine (a Game Boy Advance),\n",
+				"or whose checksum does not match is refused with the reason.\n",
+				"The answer is Markdown: the slot, the file, the result and the frame it resumed at.\n"
+			],
+			"output": "{ markdown: String }"
+		},
+
+		"gbstates": {
+			"help": "List the Game Boy save state slots that hold a state",
+			"usage": [
+				"Syntax: gbstates\n",
+				"The answer is Markdown: one row per slot that has a state file, with its path and\n",
+				"its size.\n"
 			],
 			"output": "{ markdown: String }"
 		}

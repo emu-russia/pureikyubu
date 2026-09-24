@@ -50,6 +50,8 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	class Ppu
 	{
@@ -134,6 +136,19 @@ namespace GBA
 
 		/// <summary>Reset the frame counter (the tests use it to check the frame cadence).</summary>
 		void ResetFrameCounter() { frameCounter = 0; }
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the whole display into a save state: every register (including the affine
+		/// reference points and their write latches), DISPSTAT, the line counter, the display
+		/// memory (palette, VRAM and OAM), where the LCD is inside the scanline it is drawing
+		/// (`lineCycles`, `currentLine`) and the frame buffer that is on the screen right now, so
+		/// a state loaded into a running frontend shows the picture it was taken from before the
+		/// next line is composed.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 	private:
 		// -- registers ---------------------------------------------------------------------

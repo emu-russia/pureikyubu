@@ -8,11 +8,78 @@
 // filter the Pan Docs' reference implementation describes.
 
 #include "gb_apu.h"
+#include "gba_savestate.h"
 
 #include <cmath>
 
 namespace GBA
 {
+	void GbApu::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(nr50, nr51, powered, cgb);
+		writer.Array(waveRam);
+
+		for (int i = 0; i < 2; i++)
+		{
+			const Pulse& channel = pulse[i];
+			writer.Fields(channel.active, channel.dacEnabled, channel.lengthEnabled,
+				channel.sweepEnabled, channel.duty, channel.dutyStep, channel.lengthRegister,
+				channel.lengthCounter, channel.frequency, channel.timer, channel.volume,
+				channel.initialVolume, channel.envelopePeriod, channel.envelopeTimer,
+				channel.envelopeIncreasing, channel.envelopeRunning, channel.sweepPeriod,
+				channel.sweepShift, channel.sweepDecreasing, channel.sweepTimer, channel.sweepShadow,
+				channel.sweepNegateUsed);
+		}
+
+		writer.Fields(wave.active, wave.dacEnabled, wave.lengthEnabled, wave.lengthRegister,
+			wave.lengthCounter, wave.frequency, wave.timer, wave.volumeCode, wave.position,
+			wave.sampleBuffer);
+
+		writer.Fields(noise.active, noise.dacEnabled, noise.lengthEnabled, noise.lengthRegister,
+			noise.lengthCounter, noise.shift, noise.divisorCode, noise.widthMode, noise.timer,
+			noise.volume, noise.initialVolume, noise.envelopePeriod, noise.envelopeTimer,
+			noise.envelopeIncreasing, noise.envelopeRunning, noise.lfsr);
+
+		writer.Fields(frameSequencerCycles, frameStep, sampleAccum);
+		writer.Values(pending);
+
+		// The high pass filter's two capacitors are part of the sound the machine is making right
+		// now, so they travel with it; `highPassCharge` is derived from the sample rate and the
+		// console kind and is rebuilt by SetSampleRate/SetCgb.
+		writer.Fields(highPass, capacitorLeft, capacitorRight);
+	}
+
+	void GbApu::LoadState(StateReader& reader)
+	{
+		reader.Fields(nr50, nr51, powered, cgb);
+		reader.Array(waveRam);
+
+		for (int i = 0; i < 2; i++)
+		{
+			Pulse& channel = pulse[i];
+			reader.Fields(channel.active, channel.dacEnabled, channel.lengthEnabled,
+				channel.sweepEnabled, channel.duty, channel.dutyStep, channel.lengthRegister,
+				channel.lengthCounter, channel.frequency, channel.timer, channel.volume,
+				channel.initialVolume, channel.envelopePeriod, channel.envelopeTimer,
+				channel.envelopeIncreasing, channel.envelopeRunning, channel.sweepPeriod,
+				channel.sweepShift, channel.sweepDecreasing, channel.sweepTimer, channel.sweepShadow,
+				channel.sweepNegateUsed);
+		}
+
+		reader.Fields(wave.active, wave.dacEnabled, wave.lengthEnabled, wave.lengthRegister,
+			wave.lengthCounter, wave.frequency, wave.timer, wave.volumeCode, wave.position,
+			wave.sampleBuffer);
+
+		reader.Fields(noise.active, noise.dacEnabled, noise.lengthEnabled, noise.lengthRegister,
+			noise.lengthCounter, noise.shift, noise.divisorCode, noise.widthMode, noise.timer,
+			noise.volume, noise.initialVolume, noise.envelopePeriod, noise.envelopeTimer,
+			noise.envelopeIncreasing, noise.envelopeRunning, noise.lfsr);
+
+		reader.Fields(frameSequencerCycles, frameStep, sampleAccum);
+		reader.Values(pending);
+		reader.Fields(highPass, capacitorLeft, capacitorRight);
+	}
+
 	namespace
 	{
 		// The 512 Hz frame sequencer (Pan Docs "Audio Details": the envelope is clocked every 8

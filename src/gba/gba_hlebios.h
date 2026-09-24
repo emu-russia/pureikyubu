@@ -28,6 +28,8 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	// The SWI comment field values (the official function numbers).
 	enum SwiNumber : uint32_t
@@ -104,5 +106,17 @@ namespace GBA
 
 		/// <summary>True when a SWI number is implemented here.</summary>
 		bool Implemented(uint32_t comment);
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write what the host-side BIOS remembers between calls into a save state: the wait an
+		/// `IntrWait`/`VBlankIntrWait` left the machine sitting in (without it a state loaded
+		/// during a wait would never wake up), the sound driver's own state (its work area, the
+		/// playback mode, the DMA arming and the mixing rate) and the per-call counters. The work
+		/// area itself is the game's memory and is in the bus's section, not here.
+		/// </summary>
+		void SaveState(StateWriter& writer);
+		void LoadState(StateReader& reader);
 	}
 }

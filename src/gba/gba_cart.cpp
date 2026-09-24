@@ -23,6 +23,7 @@
 
 #include "gba_cart.h"
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 #include <chrono>
 #include <ctime>
@@ -30,6 +31,42 @@
 
 namespace GBA
 {
+	void Cart::SaveState(StateWriter& writer) const
+	{
+		// The save memory: SRAM and Flash storage, or the EEPROM blocks (the EEPROM keeps its
+		// data in the same buffer, addressed differently).
+		writer.Bytes(save);
+		writer.Fields(saveDirty, saveType);
+
+		// The Flash command state machine and the EEPROM bit stream.
+		writer.Fields(flashState, flashBank, flashIdMode, flashCmdCount);
+		writer.Fields(eepromBits, eepromBuffer, eepromReadMode, eepromChipSelect, eepromOutput,
+			eepromAddressBits, eepromAddress);
+
+		// The GPIO port and the S-3511A real time clock behind it.
+		writer.Fields(rtcEnabled, gpioData, gpioDirection, gpioControl, gpioPrevious);
+		writer.Fields(rtcState, rtcCommand, rtcParameter);
+		writer.Array(rtcResponse);
+		writer.Fields(rtcControl, rtcSetByGame, rtcHostSecond, rtcReadMode);
+		writer.Fields(rtc.year, rtc.month, rtc.day, rtc.weekday, rtc.hour, rtc.minute, rtc.second,
+			rtc.centisecond, rtc.reads256Hz);
+	}
+
+	void Cart::LoadState(StateReader& reader)
+	{
+		reader.Bytes(save);
+		reader.Fields(saveDirty, saveType);
+		reader.Fields(flashState, flashBank, flashIdMode, flashCmdCount);
+		reader.Fields(eepromBits, eepromBuffer, eepromReadMode, eepromChipSelect, eepromOutput,
+			eepromAddressBits, eepromAddress);
+		reader.Fields(rtcEnabled, gpioData, gpioDirection, gpioControl, gpioPrevious);
+		reader.Fields(rtcState, rtcCommand, rtcParameter);
+		reader.Array(rtcResponse);
+		reader.Fields(rtcControl, rtcSetByGame, rtcHostSecond, rtcReadMode);
+		reader.Fields(rtc.year, rtc.month, rtc.day, rtc.weekday, rtc.hour, rtc.minute, rtc.second,
+			rtc.centisecond, rtc.reads256Hz);
+	}
+
 	namespace
 	{
 		// The largest Game Pak: 32 MByte (GBATEK "GBA Technical Data": Game Pak max. 32MB ROM).

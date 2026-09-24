@@ -26,11 +26,22 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	class Sio
 	{
 	public:
 		void Reset();
+
+		/// <summary>
+		/// Write the port's registers and the transfer in progress into a save state. The *cable*
+		/// is not part of it: the peer is another machine (or another process), and a state cannot
+		/// carry it. A state taken in the middle of a transfer therefore resumes that transfer on
+		/// its own side of the cable; the peer's half is whatever it is doing.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		uint16_t Read16(GbaBus& bus, uint32_t offset, uint16_t openBus);
 		uint8_t Read8(GbaBus& bus, uint32_t offset, uint8_t openBus);

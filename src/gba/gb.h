@@ -12,6 +12,7 @@
 #pragma once
 
 #include "gba_types.h"
+#include "gba_savestate.h"
 #include "gb_bus.h"
 #include "gb_bootrom.h"
 
@@ -92,6 +93,39 @@ namespace GBA
 
 		/// <summary>Read the battery backed RAM and the RTC state back from the `.sav`.</summary>
 		bool LoadBattery(std::string* error) { return bus->cart.LoadSaveFile(error); }
+
+		/// <summary>The path the ROM was loaded from ("" when it came from an image).</summary>
+		const std::string& RomPath() const { return romPath; }
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the whole machine into a save state (the format is `gba_savestate.h`). The two
+		/// machines of this module share the image format, and the first section of the state
+		/// names the one it came from, so a Game Boy state is never read as a Game Boy Advance
+		/// one. The console kind (DMG or CGB) is part of the state and is checked on the way in:
+		/// a colour state carries the CGB's palettes, its VRAM banks and its double speed mode.
+		/// </summary>
+		bool SaveState(std::vector<uint8_t>& image, std::string* error = nullptr) const;
+
+		/// <summary>
+		/// Put the machine back into the state an image describes. Answers false and fills `error`
+		/// when the image is not a save state of this format, is corrupt, belongs to the other
+		/// machine, was taken on a console of the other kind, or belongs to another cartridge.
+		/// </summary>
+		bool LoadState(const uint8_t* image, size_t size, std::string* error = nullptr);
+		bool LoadState(const std::vector<uint8_t>& image, std::string* error = nullptr);
+
+		/// <summary>Write a slot's state file, or read one back.</summary>
+		bool SaveStateFile(const std::string& path, std::string* error = nullptr) const;
+		bool LoadStateFile(const std::string& path, std::string* error = nullptr);
+
+		/// <summary>
+		/// Where the state of a slot lives: next to the battery save, named after the ROM -
+		/// `Zelda.gbc` gives `Zelda.st0`. The Game Boy has its own slots, so a `.gb` next to a
+		/// `.gba` of the same name never shares one.
+		/// </summary>
+		std::string StateFilePath(int slot) const;
 
 		// -- running -------------------------------------------------------------------------
 
@@ -182,6 +216,7 @@ namespace GBA
 		std::unique_ptr<GbBus> bus;
 		GbSettings settings;
 		std::vector<uint8_t> bootImage;
+		std::string romPath;				// where the cartridge was loaded from ("" = an image)
 		bool bootImageFromFile = false;
 		uint8_t headerChecksum = 0x00;
 		uint8_t bootRegisterA = 0x01;

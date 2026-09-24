@@ -20,6 +20,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	// ---------------------------------------------------------------------------------------
 	// The header (0x0100 .. 0x014F). Pan Docs "The Cartridge Header". The names carry the Gb
 	// prefix because both cores of this module share namespace GBA.
@@ -191,6 +194,18 @@ namespace GBA
 		bool SaveSaveFile(std::string* error);
 
 		bool Describe(std::string& text) const;
+
+		// -- save states ---------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the cartridge's own state into a save state: the battery backed RAM (MBC2's
+		/// nibbles included), the mapper's registers (the RAM enable, MBC1's banking mode, the
+		/// ROM/RAM banks, MBC3's RTC register select and its latch sequence) and the real time
+		/// clock's five registers with their carry and halt bits. The ROM image and the `.sav`
+		/// path are not in it - they belong to the frontend.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 	private:
 		bool loaded = false;

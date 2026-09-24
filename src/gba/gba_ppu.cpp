@@ -36,9 +36,83 @@
 #include <cstdio>
 #include <cstdlib>
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
+	void Ppu::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(dispcnt, greenswap, bldcnt, bldalpha, bldy);
+		writer.Array(bgcnt);
+		writer.Array(bghofs);
+		writer.Array(bgvofs);
+		writer.Array(bgpa);
+		writer.Array(bgpb);
+		writer.Array(bgpc);
+		writer.Array(bgpd);
+		writer.Array(bgx);
+		writer.Array(bgy);
+		writer.Array(bgxLatch);
+		writer.Array(bgyLatch);
+		writer.Fields(win0h, win1h, win0v, win1v, winin, winout, mosaic);
+		writer.Fields(dispstat, vcount, vcountIrqLine);
+
+		writer.Raw(palette.Data(), palette.Size());
+		writer.Raw(vram.Data(), vram.Size());
+		writer.Raw(oam.Data(), oam.Size());
+
+		// Where the LCD is inside the scanline it is drawing. A state taken inside a line resumes
+		// that line: `lineCycles` is how far along the line the controller is, and `currentLine`
+		// is the line the renderer is composing.
+		writer.Fields(lineCycles, frameCounter, currentLine);
+
+		// The picture that is on the screen. The per-line scratch (line/windowMask/pixels) is not
+		// written: it is rebuilt by the next RenderLine and never survives the line it belongs to.
+		writer.Values(frame);
+	}
+
+	void Ppu::LoadState(StateReader& reader)
+	{
+		reader.Fields(dispcnt, greenswap, bldcnt, bldalpha, bldy);
+		reader.Array(bgcnt);
+		reader.Array(bghofs);
+		reader.Array(bgvofs);
+		reader.Array(bgpa);
+		reader.Array(bgpb);
+		reader.Array(bgpc);
+		reader.Array(bgpd);
+		reader.Array(bgx);
+		reader.Array(bgy);
+		reader.Array(bgxLatch);
+		reader.Array(bgyLatch);
+		reader.Fields(win0h, win1h, win0v, win1v, winin, winout, mosaic);
+		reader.Fields(dispstat, vcount, vcountIrqLine);
+
+		reader.Raw(palette.Data(), palette.Size());
+		reader.Raw(vram.Data(), vram.Size());
+		reader.Raw(oam.Data(), oam.Size());
+
+		reader.Fields(lineCycles, frameCounter, currentLine);
+
+		// The frame buffer is read into a scratch vector first: a state whose picture is not the
+		// size of the screen is refused *before* the machine's own buffer is replaced, so a bad
+		// load cannot leave the frontend reading a buffer that is too small.
+		std::vector<uint32_t> picture;
+		reader.Values(picture);
+
+		if (!reader.Failed())
+		{
+			if (picture.size() == (size_t)ScreenWidth * ScreenHeight)
+			{
+				frame.swap(picture);
+			}
+			else
+			{
+				reader.Fail("the frame buffer in the save state is not the size of the screen");
+			}
+		}
+	}
+
 	namespace
 	{
 		// -----------------------------------------------------------------------------------

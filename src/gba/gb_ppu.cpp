@@ -9,11 +9,85 @@
 // level - requests the interrupt.
 
 #include "gb_ppu.h"
+#include "gba_savestate.h"
 
 #include <cstdio>
 
 namespace GBA
 {
+	void GbPpu::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(lcdc, stat, scy, scx, ly, lyc, wy, wx, bgp, obp0, obp1);
+
+		// The CGB's colour memory and the two index registers that address it.
+		writer.Fields(vbk, bgpi, obpi);
+		writer.Array(bgPalette);
+		writer.Array(objPalette);
+
+		// Both VRAM banks and OAM: a colour cartridge writes the attribute map into bank 1, so a
+		// state that only carried bank 0 would come back with a monochrome picture.
+		writer.Array(vram[0]);
+		writer.Array(vram[1]);
+		writer.Array(oam);
+
+		writer.Fields(dots, mode, modeEndDots, lcdEnabled, frameCounter, statLine, lastMode3Length);
+		writer.Fields(windowActive, windowLine);
+
+		// The sprites the mode 2 scan picked for the line being composed are read again when mode
+		// 3 ends, so a state taken between the two has to carry them.
+		writer.Fields(lineSpriteCount);
+
+		for (int i = 0; i < 10; i++)
+		{
+			const LineSprite& sprite = lineSprites[i];
+			writer.Fields(sprite.x, sprite.index, sprite.row, sprite.tile, sprite.attributes);
+		}
+
+		// The console kind and the compatibility mode: the renderer's own view of the machine.
+		writer.Fields(cgb, dmgCompat, dmgObjectPriority, shadePalette);
+
+		writer.Values(frame);
+	}
+
+	void GbPpu::LoadState(StateReader& reader)
+	{
+		reader.Fields(lcdc, stat, scy, scx, ly, lyc, wy, wx, bgp, obp0, obp1);
+		reader.Fields(vbk, bgpi, obpi);
+		reader.Array(bgPalette);
+		reader.Array(objPalette);
+		reader.Array(vram[0]);
+		reader.Array(vram[1]);
+		reader.Array(oam);
+		reader.Fields(dots, mode, modeEndDots, lcdEnabled, frameCounter, statLine, lastMode3Length);
+		reader.Fields(windowActive, windowLine);
+		reader.Fields(lineSpriteCount);
+
+		for (int i = 0; i < 10; i++)
+		{
+			LineSprite& sprite = lineSprites[i];
+			reader.Fields(sprite.x, sprite.index, sprite.row, sprite.tile, sprite.attributes);
+		}
+
+		reader.Fields(cgb, dmgCompat, dmgObjectPriority, shadePalette);
+
+		// As on the GBA side: the picture is read into a scratch vector, so a state that does not
+		// carry a whole screen cannot leave the frontend reading a buffer that is too small.
+		std::vector<uint32_t> picture;
+		reader.Values(picture);
+
+		if (!reader.Failed())
+		{
+			if (picture.size() == (size_t)GbScreenWidth * GbScreenHeight)
+			{
+				frame.swap(picture);
+			}
+			else
+			{
+				reader.Fail("the frame buffer in the save state is not the size of the Game Boy screen");
+			}
+		}
+	}
+
 	// The four shades of the monochrome picture, as the frontend draws them. Pan Docs gives the
 	// abstract palette (0 = white .. 3 = black) but no RGB triplets; the well known DMG green
 	// (0x9BBC0F .. 0x0F380F) is used for GbPalette::Green and the other schemes are presentation

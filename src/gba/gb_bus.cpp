@@ -2,11 +2,62 @@
 // pages this is written from.
 
 #include "gb_bus.h"
+#include "gba_savestate.h"
 
 #include <cstring>
 
 namespace GBA
 {
+	void GbBus::SaveState(StateWriter& writer) const
+	{
+		writer.Array(wram);
+		writer.Array(hram);
+
+		// The boot ROM's *image* is the frontend's (the settings choose it); whether it is mapped
+		// right now is the machine's, and that is what decides where the CPU is running.
+		writer.Fields(bootRomMapped, bootRomLoaded, bootRomSize);
+		writer.Fields(interruptFlag, interruptEnable);
+
+		writer.Fields(cgb, doubleSpeed, clockSpeed);
+
+		writer.Fields(divider, tima, tma, tac, timaReloading, timaReloadDelay, lastTimerBit);
+
+		writer.Fields(joypadSelect, pressedKeys, stopped);
+
+		writer.Fields(serialData, serialControl, serialBitTimer, serialBitsLeft, serialActive,
+			serialInternalClock, serialShiftOut, serialShiftIn, lastSent, lastReceived,
+			serialTransfers);
+
+		writer.Fields(dmaRegister, oamDmaCycles, oamDmaSource);
+
+		// The CGB's HDMA/GDMA: the five registers, the transfer's pointers and block count, and
+		// the mode edge it is waiting for.
+		writer.Fields(hdma1, hdma2, hdma3, hdma4, hdma5, hdmaActive, hdmaHblank, hdmaSource,
+			hdmaDest, hdmaBlocks, hdmaLastMode);
+
+		writer.Fields(key1, vbk, svbk, opri);
+		writer.Fields(totalCycles);
+	}
+
+	void GbBus::LoadState(StateReader& reader)
+	{
+		reader.Array(wram);
+		reader.Array(hram);
+		reader.Fields(bootRomMapped, bootRomLoaded, bootRomSize);
+		reader.Fields(interruptFlag, interruptEnable);
+		reader.Fields(cgb, doubleSpeed, clockSpeed);
+		reader.Fields(divider, tima, tma, tac, timaReloading, timaReloadDelay, lastTimerBit);
+		reader.Fields(joypadSelect, pressedKeys, stopped);
+		reader.Fields(serialData, serialControl, serialBitTimer, serialBitsLeft, serialActive,
+			serialInternalClock, serialShiftOut, serialShiftIn, lastSent, lastReceived,
+			serialTransfers);
+		reader.Fields(dmaRegister, oamDmaCycles, oamDmaSource);
+		reader.Fields(hdma1, hdma2, hdma3, hdma4, hdma5, hdmaActive, hdmaHblank, hdmaSource,
+			hdmaDest, hdmaBlocks, hdmaLastMode);
+		reader.Fields(key1, vbk, svbk, opri);
+		reader.Fields(totalCycles);
+	}
+
 	// ---------------------------------------------------------------------------------------
 	// Reset and configuration
 	// ---------------------------------------------------------------------------------------

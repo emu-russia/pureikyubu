@@ -27,6 +27,8 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	// CPSR bits
 	enum : uint32_t
@@ -99,6 +101,17 @@ namespace GBA
 
 		/// <summary>Switch the mode, banking r13/r14/r8-r12 as the hardware does.</summary>
 		void SwitchMode(CpuMode mode);
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the whole register file into a save state: the current window, every banked
+		/// r13/r14, the FIQ's own r8-r12, the six SPSRs, the CPSR and the address of the
+		/// instruction being executed. The program counter is part of it, so a state loaded in the
+		/// middle of a frame resumes at the same instruction.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		// -- exceptions --------------------------------------------------------------------
 

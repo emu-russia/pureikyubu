@@ -16,6 +16,7 @@
 // meet, so ConditionMet() is false - an interrupt that watches no key never fires.
 
 #include "gba_keypad.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
@@ -23,6 +24,16 @@ namespace GBA
 	{
 		pressed = 0;
 		control = 0;
+	}
+
+	void Keypad::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(pressed, control);
+	}
+
+	void Keypad::LoadState(StateReader& reader)
+	{
+		reader.Fields(pressed, control);
 	}
 
 	bool Keypad::ConditionMet() const

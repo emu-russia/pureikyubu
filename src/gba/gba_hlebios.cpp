@@ -13,6 +13,7 @@
 
 #include "gba_hlebios.h"
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 #include <cmath>
 
@@ -30,6 +31,12 @@ namespace GBA
 		static uint32_t soundMode = 0;
 		static bool soundReady = false;
 		static bool soundDmaOn = false;
+
+		// How fast the driver mixes: the playback frequency the mode selected, in Hz. The mode's
+		// index picks a timer 0 reload, and the frequency is the machine's clock over the period.
+		// It is defined up here (and not next to the driver's own tables) because it is part of the
+		// state a save state carries.
+		static uint32_t soundRate = 13379;
 
 		static uint32_t Reg(GbaBus& bus, int index) { return bus.cpu.Reg(index); }
 		static void SetReg(GbaBus& bus, int index, uint32_t value) { bus.cpu.SetReg(index, value); }
@@ -53,6 +60,20 @@ namespace GBA
 			soundMode = 0;
 			soundReady = false;
 			soundDmaOn = false;
+		}
+
+		void SaveState(StateWriter& writer)
+		{
+			writer.Fields(waiting, waitMask);
+			writer.Fields(soundArea, soundMode, soundReady, soundDmaOn, soundRate);
+			writer.Array(callCounts);
+		}
+
+		void LoadState(StateReader& reader)
+		{
+			reader.Fields(waiting, waitMask);
+			reader.Fields(soundArea, soundMode, soundReady, soundDmaOn, soundRate);
+			reader.Array(callCounts);
 		}
 
 		uint64_t CallCount(uint32_t comment)
@@ -510,9 +531,8 @@ namespace GBA
 		const uint32_t SoundChannelBase = 0x50;
 		const uint32_t SoundChannelSize = 0x40;
 
-		// How fast the driver mixes: the playback frequency the mode selected, in Hz. The mode's
-		// index picks a timer 0 reload, and the frequency is the machine's clock over the period.
-		static uint32_t soundRate = 13379;
+		// How fast the driver mixes: the playback frequency the mode selected, in Hz (`soundRate`
+		// is declared with the rest of the state at the top of this file).
 		const uint16_t SoundTimerReload[13] =
 		{
 			// Read out of the real BIOS with SoundDriverMode(index) and a timer read that stops the

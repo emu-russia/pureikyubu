@@ -28,6 +28,23 @@
 
 namespace GBA
 {
+	/// <summary>
+	/// What the frontend's own keys asked for. The two toggles (fast forward, full screen) are the
+	/// state itself and live here across frames; the rest are requests for the iteration that saw
+	/// the key and are cleared with the struct.
+	/// </summary>
+	struct Hotkeys
+	{
+		bool fastForward = false;		// F1 toggles
+		bool fullscreen = false;		// F11 toggles
+		bool debugger = false;			// F2
+		bool screenshot = false;		// F12
+		bool saveBattery = false;		// F5: write the cartridge's .sav
+		bool saveState = false;			// F3: write the quick save of the current slot
+		bool loadState = false;			// F4: read it back
+		int slotStep = 0;				// Shift+F3 (-1) / Shift+F4 (+1): pick another slot
+	};
+
 	// ---------------------------------------------------------------------------------------
 	// Small helpers
 	// ---------------------------------------------------------------------------------------
@@ -385,20 +402,26 @@ namespace GBA
 			return status;
 		}
 
-		void HandleHotkey(SDL_Keycode key, bool down, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow, bool& debugger)
+		void HandleHotkey(const SDL_Event& event, Hotkeys& keys)
 		{
-			if (!down)
+			if (event.type != SDL_KEYDOWN)
 			{
 				return;
 			}
 
-			switch (key)
+			// Shift turns the two save state keys into the slot selection (F3/F4 write and read
+			// the current slot, Shift+F3/Shift+F4 step through the ten of them).
+			bool shift = (event.key.keysym.mod & KMOD_SHIFT) != 0;
+
+			switch (event.key.keysym.sym)
 			{
-				case SDLK_F1: fastForward = !fastForward; break;
-				case SDLK_F5: saveNow = true; break;
-				case SDLK_F11: fullscreen = !fullscreen; break;
-				case SDLK_F12: screenshot = true; break;
-				case SDLK_F2: debugger = true; break;
+				case SDLK_F1: keys.fastForward = !keys.fastForward; break;
+				case SDLK_F2: keys.debugger = true; break;
+				case SDLK_F3: if (shift) keys.slotStep = -1; else keys.saveState = true; break;
+				case SDLK_F4: if (shift) keys.slotStep = 1; else keys.loadState = true; break;
+				case SDLK_F5: keys.saveBattery = true; break;
+				case SDLK_F11: keys.fullscreen = !keys.fullscreen; break;
+				case SDLK_F12: keys.screenshot = true; break;
 				default: break;
 			}
 		}
@@ -516,7 +539,9 @@ namespace GBA
 
 		uint16_t Pressed() const { return pressed; }
 
-		bool Handle(const SDL_Event& event, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow)
+		/// <summary>Feed one SDL event to the key state. Answers false when the user asked to
+		/// quit (the window's close button or Escape).</summary>
+		bool Handle(const SDL_Event& event)
 		{
 			switch (event.type)
 			{
@@ -616,7 +641,9 @@ namespace GBA
 
 		uint8_t Pressed() const { return pressed; }
 
-		bool Handle(const SDL_Event& event, bool& fastForward, bool& fullscreen, bool& screenshot, bool& saveNow)
+		/// <summary>Feed one SDL event to the key state. Answers false when the user asked to
+		/// quit (the window's close button or Escape).</summary>
+		bool Handle(const SDL_Event& event)
 		{
 			switch (event.type)
 			{
@@ -784,8 +811,9 @@ namespace GBA
 		GbaInput input(settings);
 
 		std::vector<int16_t> samples;
-		bool fastForward = false;
-		bool fullscreen = settings.fullscreen;
+		Hotkeys keys;
+		keys.fullscreen = settings.fullscreen;
+		int slot = 0;					// the save state slot F3/F4 use
 		bool running = true;
 		uint32_t paceStart = SDL_GetTicks();
 		uint64_t paceFrames = 0;
@@ -793,9 +821,12 @@ namespace GBA
 
 		while (running)
 		{
-			bool screenshot = false;
-			bool saveNow = false;
-			bool debugger = false;
+			// The frontend's own keys. The two toggles keep the state they were in; every other
+			// request is for this iteration only, so the struct starts as a copy of the toggles
+			// and the poll fills in what the user asked for now.
+			Hotkeys pressed;
+			pressed.fastForward = keys.fastForward;
+			pressed.fullscreen = keys.fullscreen;
 
 			// The debugger window has its own events; the ones that are not its own are put back
 			// into the queue and end up in the poll loop below.
@@ -804,16 +835,17 @@ namespace GBA
 			SDL_Event event;
 			while (SDL_PollEvent(&event))
 			{
-				host.HandleHotkey(event.type == SDL_KEYDOWN ? event.key.keysym.sym : SDLK_UNKNOWN,
-					event.type == SDL_KEYDOWN, fastForward, fullscreen, screenshot, saveNow, debugger);
+				host.HandleHotkey(event, pressed);
 
-				if (!input.Handle(event, fastForward, fullscreen, screenshot, saveNow))
+				if (!input.Handle(event))
 				{
 					running = false;
 				}
 			}
 
-			if (debugger)
+			keys = pressed;
+
+			if (keys.debugger)
 			{
 				if (DebugActive())
 					DebugStop();
@@ -826,13 +858,34 @@ namespace GBA
 				break;
 			}
 
-			host.ApplyFullscreen(fullscreen);
+			host.ApplyFullscreen(keys.fullscreen);
 
-			if (saveNow)
+			if (keys.saveBattery)
 			{
 				std::string saveError;
 				system.SaveBattery(&saveError);
 				printf("gba: battery saved%s%s\n", saveError.empty() ? "" : " - ", saveError.c_str());
+			}
+
+			// The quick save and the quick load (F3/F4, and the slot they use is picked with
+			// Shift+F3/Shift+F4). Both go through the state file of the slot, so what a frontend
+			// key writes is exactly what the `savestate` JDI command writes.
+			if (keys.slotStep != 0)
+			{
+				slot = (slot + keys.slotStep + (MaxStateSlot + 1)) % (MaxStateSlot + 1);
+				printf("gba: save state slot %i\n", slot);
+			}
+
+			if (keys.saveState || keys.loadState)
+			{
+				std::string path = system.StateFilePath(slot);
+				std::string stateError;
+				bool ok = keys.saveState ? system.SaveStateFile(path, &stateError)
+					: system.LoadStateFile(path, &stateError);
+
+				printf("gba: %s slot %i (%s)%s%s\n",
+					keys.saveState ? "state saved to" : "state loaded from", slot, path.c_str(),
+					ok ? "" : " - ", ok ? "" : stateError.c_str());
 			}
 
 			// The machine runs one frame per iteration, so its speed is the frame loop's pace -
@@ -843,7 +896,7 @@ namespace GBA
 			// different rate (Host::UpdateAudioClock); a buffer that ran dry is refilled with extra
 			// frames here, but only while this frame still has time left, so a machine that cannot
 			// keep up does not lose the display to the catch-up as well.
-			if (fastForward)
+			if (keys.fastForward)
 			{
 				// Fast forward runs the machine as fast as the host allows; the sound of the
 				// frames is thrown away rather than pushed, so leaving fast forward does not start
@@ -883,7 +936,7 @@ namespace GBA
 
 			host.Present(system.FrameBuffer());
 
-			if (screenshot)
+			if (keys.screenshot)
 			{
 				host.SaveScreenshot(system.FrameBuffer());
 			}
@@ -893,13 +946,14 @@ namespace GBA
 			if (settings.showFps)
 			{
 				char title[256];
-				snprintf(title, sizeof(title), "pureikyubu GBA - %s - %.1f fps%s%s%s",
+				snprintf(title, sizeof(title), "pureikyubu GBA - %s - state %i - %.1f fps%s%s%s",
 					system.RomTitle().empty()
 						? (system.LinkMode() ? "link mode" : "no cartridge")
 						: system.RomTitle().c_str(),
+					slot,
 					host.fps,
 					host.AudioText().c_str(),
-					fastForward ? " [fast forward]" : "",
+					keys.fastForward ? " [fast forward]" : "",
 					system.Link().Peer() != nullptr ? " [linked]" : "");
 				SDL_SetWindowTitle(host.window, title);
 			}
@@ -980,8 +1034,9 @@ namespace GBA
 		GbInput input;
 
 		std::vector<int16_t> samples;
-		bool fastForward = false;
-		bool fullscreen = settings.fullscreen;
+		Hotkeys keys;
+		keys.fullscreen = settings.fullscreen;
+		int slot = 0;					// the save state slot F3/F4 use
 		bool running = true;
 		uint32_t paceStart = SDL_GetTicks();
 		uint64_t paceFrames = 0;
@@ -989,25 +1044,26 @@ namespace GBA
 
 		while (running)
 		{
-			bool screenshot = false;
-			bool saveNow = false;
-			bool debugger = false;
+			Hotkeys pressed;
+			pressed.fastForward = keys.fastForward;
+			pressed.fullscreen = keys.fullscreen;
 
 			DebugPumpEvents();
 
 			SDL_Event event;
 			while (SDL_PollEvent(&event))
 			{
-				host.HandleHotkey(event.type == SDL_KEYDOWN ? event.key.keysym.sym : SDLK_UNKNOWN,
-					event.type == SDL_KEYDOWN, fastForward, fullscreen, screenshot, saveNow, debugger);
+				host.HandleHotkey(event, pressed);
 
-				if (!input.Handle(event, fastForward, fullscreen, screenshot, saveNow))
+				if (!input.Handle(event))
 				{
 					running = false;
 				}
 			}
 
-			if (debugger)
+			keys = pressed;
+
+			if (keys.debugger)
 			{
 				if (DebugActive())
 					DebugStop();
@@ -1020,19 +1076,41 @@ namespace GBA
 				break;
 			}
 
-			host.ApplyFullscreen(fullscreen);
+			host.ApplyFullscreen(keys.fullscreen);
 
-			if (saveNow)
+			if (keys.saveBattery)
 			{
 				std::string saveError;
 				system.SaveBattery(&saveError);
 				printf("gb: battery saved%s%s\n", saveError.empty() ? "" : " - ", saveError.c_str());
 			}
 
+			// The Game Boy's quick save and quick load, exactly as the GBA's above: F3 writes the
+			// current slot, F4 reads it back and Shift+F3/Shift+F4 pick another one. The state
+			// carries the console kind, so a colour state is never loaded into a monochrome
+			// machine (the machine says so instead).
+			if (keys.slotStep != 0)
+			{
+				slot = (slot + keys.slotStep + (MaxStateSlot + 1)) % (MaxStateSlot + 1);
+				printf("gb: save state slot %i\n", slot);
+			}
+
+			if (keys.saveState || keys.loadState)
+			{
+				std::string path = system.StateFilePath(slot);
+				std::string stateError;
+				bool ok = keys.saveState ? system.SaveStateFile(path, &stateError)
+					: system.LoadStateFile(path, &stateError);
+
+				printf("gb: %s slot %i (%s)%s%s\n",
+					keys.saveState ? "state saved to" : "state loaded from", slot, path.c_str(),
+					ok ? "" : " - ", ok ? "" : stateError.c_str());
+			}
+
 			// The machine runs one frame per iteration and the mixer absorbs the difference
 			// between the frame loop's clock and the sound device's, exactly as in the GBA loop
 			// above (the Game Boy's frame is 59.7275 Hz too).
-			if (fastForward)
+			if (keys.fastForward)
 			{
 				for (int i = 0; i < 4; i++)
 				{
@@ -1069,7 +1147,7 @@ namespace GBA
 
 			host.Present(system.FrameBuffer());
 
-			if (screenshot)
+			if (keys.screenshot)
 			{
 				host.SaveScreenshot(system.FrameBuffer());
 			}
@@ -1079,12 +1157,13 @@ namespace GBA
 			if (settings.showFps)
 			{
 				char title[256];
-				snprintf(title, sizeof(title), "pureikyubu Game Boy - %s - %s - %.1f fps%s%s",
+				snprintf(title, sizeof(title), "pureikyubu Game Boy - %s - %s - state %i - %.1f fps%s%s",
 					system.Cgb() ? "CGB" : "DMG",
 					system.RomTitle().empty() ? "no cartridge" : system.RomTitle().c_str(),
+					slot,
 					host.fps,
 					host.AudioText().c_str(),
-					fastForward ? " [fast forward]" : "");
+					keys.fastForward ? " [fast forward]" : "");
 				SDL_SetWindowTitle(host.window, title);
 			}
 

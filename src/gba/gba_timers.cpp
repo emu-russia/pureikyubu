@@ -39,9 +39,20 @@
 
 #include "gba_timers.h"
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
+	void Timers::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(reload, control, counter, prescaleAccum, overflows);
+	}
+
+	void Timers::LoadState(StateReader& reader)
+	{
+		reader.Fields(reload, control, counter, prescaleAccum, overflows);
+	}
+
 	namespace
 	{
 		// TMxCNT_H

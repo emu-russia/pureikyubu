@@ -22,6 +22,8 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	class Dma
 	{
@@ -56,6 +58,13 @@ namespace GBA
 		};
 
 		void Reset();
+
+		/// <summary>Write the four channels and the state of the transfer engine into a save
+		/// state. A transfer that is in the middle of its word count is part of the machine's
+		/// state, not of the host's: the channel's `latched` count and running pointers are what
+		/// resume it.</summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		uint16_t Read16(uint32_t offset, uint16_t openBus) const;
 

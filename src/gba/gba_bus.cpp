@@ -13,9 +13,30 @@
 
 #include "gba_bus.h"
 #include "gba_hlebios.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
+	void GbaBus::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(openBus, waitCycles, totalCycles, customBios, postFlg, haltState, waitcnt,
+			sramWait, romNext, romChain, fetching, memControl, dmaAccess);
+
+		writer.Raw(ewram.Data(), ewram.Size());
+		writer.Raw(iwram.Data(), iwram.Size());
+		writer.Raw(io.Data(), io.Size());
+	}
+
+	void GbaBus::LoadState(StateReader& reader)
+	{
+		reader.Fields(openBus, waitCycles, totalCycles, customBios, postFlg, haltState, waitcnt,
+			sramWait, romNext, romChain, fetching, memControl, dmaAccess);
+
+		reader.Raw(ewram.Data(), ewram.Size());
+		reader.Raw(iwram.Data(), iwram.Size());
+		reader.Raw(io.Data(), io.Size());
+	}
+
 	/// <summary>
 	/// True when the address is inside the cartridge's GPIO/RTC window.
 	///

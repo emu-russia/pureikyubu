@@ -10,6 +10,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	class Irq
 	{
 		uint16_t enable = 0;		// 0x04000200 IE
@@ -18,6 +21,12 @@ namespace GBA
 
 	public:
 		void Reset();
+
+		/// <summary>Write the three registers into a save state.</summary>
+		void SaveState(StateWriter& writer) const;
+
+		/// <summary>Read them back (see gba_savestate.h).</summary>
+		void LoadState(StateReader& reader);
 
 		/// <summary>Raise one or more causes (the devices call this).</summary>
 		void Raise(uint16_t bits) { request |= bits; }

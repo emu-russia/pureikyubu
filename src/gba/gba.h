@@ -9,6 +9,7 @@
 #include "gba_types.h"
 #include "gba_bus.h"
 #include "gba_settings.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
@@ -44,6 +45,38 @@ namespace GBA
 
 		/// <summary>Save the cartridge's `.sav` (called on a clean shutdown).</summary>
 		bool SaveBattery(std::string* error);
+
+		/// <summary>The path the ROM was loaded from ("" when it was loaded from an image).</summary>
+		const std::string& RomPath() const { return romPath; }
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the whole machine into a save state (the format is `gba_savestate.h`). The image
+		/// holds every register, every banked shadow, the memory, the devices and the cartridge's
+		/// save memory and chip state - everything except the cartridge ROM and the BIOS image,
+		/// which belong to the frontend that loaded them (the state names the ROM it came from and
+		/// is refused by a machine running another one).
+		/// </summary>
+		bool SaveState(std::vector<uint8_t>& image, std::string* error = nullptr) const;
+
+		/// <summary>
+		/// Put the machine back into the state an image describes. Answers false and fills `error`
+		/// when the image is not a save state of this format, is corrupt, or belongs to another
+		/// cartridge; a save state whose *sections* do not fit this build is reported the same way.
+		/// </summary>
+		bool LoadState(const uint8_t* image, size_t size, std::string* error = nullptr);
+		bool LoadState(const std::vector<uint8_t>& image, std::string* error = nullptr);
+
+		/// <summary>Write a slot's state file, or read one back.</summary>
+		bool SaveStateFile(const std::string& path, std::string* error = nullptr) const;
+		bool LoadStateFile(const std::string& path, std::string* error = nullptr);
+
+		/// <summary>
+		/// Where the state of a slot lives: next to the battery save (or in the configured save
+		/// directory), named after the ROM - `Metroid Fusion.gba` gives `Metroid Fusion.st0`.
+		/// </summary>
+		std::string StateFilePath(int slot) const;
 
 		// -- running -----------------------------------------------------------------------
 
@@ -112,6 +145,7 @@ namespace GBA
 		std::unique_ptr<GbaBus> bus;
 		GbaSettings settings;
 		std::vector<uint8_t> biosImage;		// the installed BIOS (custom or a real one)
+		std::string romPath;				// where the cartridge was loaded from ("" = an image)
 		bool linkMode = false;
 
 		/// <summary>True when `biosImage` is a real BIOS the CPU should execute from address 0
@@ -119,5 +153,9 @@ namespace GBA
 		bool realBios = false;
 
 		void InstallBootRom();
+
+		/// <summary>The ROM's file name without its directory or extension (the base of a state
+		/// file's name).</summary>
+		std::string RomBaseName() const;
 	};
 }

@@ -44,11 +44,26 @@
 
 #include "gba_sio.h"
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 #include <map>
 
 namespace GBA
 {
+	void Sio::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(siomltSend, siodata32H, siodata8, siocnt, rcnt, joycnt, joyRecv, joyTrans, joystat);
+		writer.Fields(active, remainingCycles, mode, master, lastSent, lastReceived, baudCycles,
+			completionPending);
+	}
+
+	void Sio::LoadState(StateReader& reader)
+	{
+		reader.Fields(siomltSend, siodata32H, siodata8, siocnt, rcnt, joycnt, joyRecv, joyTrans, joystat);
+		reader.Fields(active, remainingCycles, mode, master, lastSent, lastReceived, baudCycles,
+			completionPending);
+	}
+
 	namespace
 	{
 		// SIOCNT, normal mode (GBATEK "SIO Normal Mode").
