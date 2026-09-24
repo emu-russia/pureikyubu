@@ -23,6 +23,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	// ---------------------------------------------------------------------------------------
 	// Interrupt bits (Pan Docs "Interrupts": IF at 0xFF0F, IE at 0xFFFF)
 	// ---------------------------------------------------------------------------------------
@@ -197,6 +200,19 @@ namespace GBA
 		uint8_t Vbk() const { return vbk; }
 		bool HdmaActive() const { return hdmaActive; }
 		int HdmaRemainingBlocks() const { return hdmaBlocks; }
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the machine into a save state: the eight WRAM banks, HRAM, the interrupt
+		/// registers, the timer with its divider and its reload window, the joypad and STOP, the
+		/// serial port with the transfer in progress, the OAM DMA, the CGB's HDMA/GDMA registers
+		/// and its own registers (KEY1 with the speed switch request, VBK, SVBK, OPRI) and the
+		/// total clock. The boot ROM image and the cable's peer are not in it: the first belongs
+		/// to the frontend and the second is another machine.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 	private:
 		// -- memory --------------------------------------------------------------------------

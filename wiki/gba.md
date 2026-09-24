@@ -100,6 +100,40 @@ timer can be faster than the host's sample rate. The mixer counts the timer's wr
 44.1 kHz or at 65 kHz keeps its rate rather than losing the overflows that fall between two host
 samples.
 
+## Save states
+
+Both machines of this module can write the whole machine into a file and put it back later. The
+keys are the frontend's, in the `--gba` and `--gb` window alike:
+
+| Key | What it does |
+|---|---|
+| `F3` | write the quick save of the current slot |
+| `F4` | read that quick save back |
+| `Shift`+`F3` / `Shift`+`F4` | step to the previous / next slot (`0`..`9`, shown in the window title and printed to the console) |
+| `F5` | write the cartridge's `.sav` (the battery, not a state) |
+
+A state lives next to the battery save and is named after the ROM: `Metroid Fusion.gba` gives
+`Metroid Fusion.st0` (or `.st1`..`.st9`), and `Zelda.gbc` gives `Zelda.st0` in the Game Boy's own
+folder. `emulation.saveDirectory` moves both, as it does the `.sav`.
+
+The same thing is available from the debug interface, where a state can be picked by slot and
+listed:
+
+| JDI command | What it does |
+|---|---|
+| `gbasavestate [slot]` | write a Game Boy Advance state (the cartridge's flash/EEPROM state included) |
+| `gbaloadstate [slot]` | put the machine back into it |
+| `gbastates` | the slots that hold one, with their files and sizes |
+| `gbsavestate [slot]`, `gbloadstate [slot]`, `gbstates` | the same for the Game Boy, where a colour state carries the CGB's palette banks, its two VRAM banks, its HDMA transfer and its `KEY1` speed |
+
+A state is a picture of a machine *running a particular cartridge*: it holds that game's memory and
+its program counter, so it carries the cartridge's identity (title, game code, size) and is refused
+by a machine running another one - or by the other machine entirely, since a Game Boy state is
+never read as a Game Boy Advance one and a CGB state is never loaded into a DMG. The ROM image and
+the BIOS image are not in a state (the frontend and the settings own them); everything else is,
+including how far into the scanline the LCD is, so a state taken in the middle of a frame resumes
+exactly there.
+
 ## Settings
 
 `build/Data/GBASettings.json`:
@@ -226,8 +260,10 @@ Also not implemented:
   (`build/Data/gba_bios.bin`, or `--bios <file>` in the harness) the real routines run instead of
   the HLE ones and both work. The harness prints the core's warnings, so a run that falls back to
   an unimplemented call says so.
-* **Save states and rewind**; the battery-backed save memory (SRAM/Flash/EEPROM on the GBA,
-  the mapper RAM on the Game Boy) *is* implemented and written to a `.sav` next to the ROM.
+* **Rewind** (running the machine backwards through a ring of states). Save states themselves
+  *are* implemented for both machines (see the section above); the battery-backed save memory
+  (SRAM/Flash/EEPROM on the GBA, the mapper RAM on the Game Boy) *is* implemented and written to a
+  `.sav` next to the ROM.
 * **Cycle-exact LCD timing**: a scanline is composed when its HBlank starts rather than dot by
   dot, so a game that rewrites VRAM inside the visible part of a line sees the change one line
   early. On the Game Boy side a line is composed at the end of mode 3 as well, and a few DMG-only

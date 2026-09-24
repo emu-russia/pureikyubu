@@ -29,6 +29,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	// ---------------------------------------------------------------------------------------
 	// The memory interface the CPU drives. The bus implements it; the tests implement it with a
 	// flat 64 KByte array, which is enough to check every instruction without a PPU.
@@ -140,6 +143,16 @@ namespace GBA
 
 		/// <summary>A one line dump of the registers (used by the failure messages).</summary>
 		std::string Describe() const;
+
+		// -- save states ---------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the register file into a save state: AF/BC/DE/HL/SP/PC, the interrupt master
+		/// enable, HALT/STOP, the HALT bug and the delayed EI, and the speed the CPU is running
+		/// at (the CGB's double speed halves the clocks one M-cycle is worth).
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		// -- flag helpers, for the tests -----------------------------------------------------
 

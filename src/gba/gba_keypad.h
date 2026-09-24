@@ -10,6 +10,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	// The bits of KEYINPUT. The frontend fills a mask of KEY_* bits with 1 = pressed; the
 	// register is the complement of that mask.
 	enum KeyBit : uint16_t
@@ -33,6 +36,12 @@ namespace GBA
 
 	public:
 		void Reset();
+
+		/// <summary>Write the held keys and KEYCNT into a save state. The keys are in it as well
+		/// as KEYCNT: a state loaded while a key is held has to keep it held, or the machine would
+		/// see a release the user never made.</summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		/// <summary>Replace the pressed-key mask (the frontend calls this once per frame).</summary>
 		void SetPressed(uint16_t mask) { pressed = mask; }

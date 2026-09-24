@@ -43,6 +43,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	// ---------------------------------------------------------------------------------------
 	// The geometry (Pan Docs "Rendering" / "Specifications"): 456 dots per line, 154 lines.
 	// ---------------------------------------------------------------------------------------
@@ -182,6 +185,19 @@ namespace GBA
 		/// request bit (0x02) when the line rose (a test can call it after a register write to see
 		/// the effect).</summary>
 		uint8_t RefreshStat();
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the display into a save state: the registers, the CGB's two palette banks with
+		/// the two index registers (BGPI/OBPI), both VRAM banks, OAM, where the LCD is (`dots`,
+		/// the current mode and the dot it ends at), the window's line counter, the sprites the
+		/// OAM scan picked for the line being composed, and the frame buffer that is on the screen.
+		/// The CGB-only members - the banks, the palettes and the DMG compatibility mode - are in
+		/// it too, so a colour cartridge's picture and a speed-switched machine come back whole.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 	private:
 		// -- registers (Pan Docs "LCDC" / "STAT" / "Scrolling") -------------------------------

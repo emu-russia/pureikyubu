@@ -48,6 +48,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_armasm.h/.cpp` | A small ARM/Thumb emitter: the boot ROM and the test ROMs are built with it |
 | `gba_bootrom.h/.cpp` | The pureikyubu boot ROM (logo animation) and its SIO link driver |
 | `gba_settings.h/.cpp` | `build/Data/GBASettings.json` |
+| `gba_savestate.h/.cpp` | Save states: the image format (a header, a checksum and one section per subsystem), the two cursors (`StateWriter`/`StateReader`) every device writes and reads through, and the `GbaSystem` half of it - `SaveState`/`LoadState`, the `.st<slot>` files and the machine section that names the cartridge a state belongs to. The Game Boy's half is `gb_savestate.cpp`, which shares the format |
 | `gba.h/.cpp` | `GbaSystem`: what a frontend talks to |
 | `gba_debug.h/.cpp` | The debug interface of both machines for the new debugger (debugui2) and the JDI command line. This is the one file of the module that is compiled with the host rather than into the portable library: JDI, Markdown and the debugger live on the GameCube side, and their headers need the third-party paths the module deliberately does not have (see the header comment) |
 | `gba_sdl.h/.cpp` | The SDL2 frontend of both machines (the `--gba` / `--gb` modes), including the LCD ghosting effect (`video.lcdEffect`, dmgemu's `lcd_effect`) |
@@ -63,6 +64,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gb_cart.h/.cpp` | The cartridge header and the MBC1/2/3/5 mappers with battery saves |
 | `gb_bus.h/.cpp` | The bus, the timer, the joypad, the serial port, OAM DMA and the CGB's double speed |
 | `gb_bootrom.h/.cpp` | The emulator's own 256-byte DMG/CGB boot ROM (the wordmark slides in) |
+| `gb_savestate.cpp` | The Game Boy's half of the save states: `GbSystem`'s `SaveState`/`LoadState` and its `.st<slot>` files. The format and the two cursors are shared with the GBA (`gba_savestate.h`), and the first field of a state names the machine it was taken from, so neither machine can read the other's |
 | `gb_asm.h/.cpp` | The LR35902 emitter that builds the boot ROM and the test ROMs |
 
 ## How a frame runs
@@ -113,6 +115,39 @@ composing it dot by dot during the visible part. A game that rewrites VRAM (or t
 registers) *inside* the visible line therefore sees the change one line earlier than on hardware.
 This is the usual simplification; it is recorded in `testing/gba_bench/Readme.md` together with
 the other intentional deviations.
+
+## Save states
+
+Both machines can write the whole machine into one file and put it back later (`GbaSystem::SaveState`
+/ `LoadState`, `GbSystem::SaveState` / `LoadState`, and the `SaveStateFile` / `LoadStateFile` pair
+the frontend uses). The image is a header (magic, format version, payload size, FNV-1a 64 checksum)
+followed by one *section* per subsystem - the CPU, the bus and its memory, the LCD, the sound
+controller, the DMA channels, the timers, the serial port, the interrupt controller, the keypad and
+the cartridge - and every section ends by checking that it consumed exactly its own length, so a
+state whose layout this build does not share is reported by the name of the section rather than
+loaded as a machine that is quietly wrong.
+
+Three things follow from what a state is:
+
+* **The cartridge ROM and the BIOS image are not in it.** They belong to the frontend (the settings
+  choose the BIOS, the user chose the ROM), so the state names the cartridge it came from - its
+  title, its game code and its size - and a machine running another one refuses it by name. Both
+  machines write the same format, so a state's first field is the machine it was taken from and a
+  Game Boy state offered to a Game Boy Advance is refused as such; the Game Boy's state also
+  carries the console kind, so a colour state is never loaded into a monochrome machine.
+* **A state is taken wherever the machine is**, not at a frame boundary: the LCD's position
+  inside the line it is drawing (`lineCycles`, the current mode and the dot the mode ends at), the
+  timer prescaler accumulators, the sound controller's envelopes, phases and FIFO fill, a DMA
+  transfer's remaining words, the Game Boy's HDMA pointers and the fraction of a frame of mixed
+  sound waiting for the frontend are all part of it. `testing/gba_bench/test_savestate.cpp`
+  compares a run that continued against a run that was resumed, mid-frame, and requires the two to
+  agree in the picture, in memory and in the clock.
+* **The link cable is not in it.** A peer is another machine (or another process); a state taken in
+  the middle of a transfer resumes that transfer on its own side of the cable.
+
+The cartridge's own chip state goes with it, which is what makes an EEPROM or Flash write that was
+half way through a command sequence survive a load, and so does the state memory itself - a state
+loaded after a reset therefore still has the game's saves in it.
 
 ## The boot ROM
 

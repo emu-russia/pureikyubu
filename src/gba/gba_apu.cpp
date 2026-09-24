@@ -24,9 +24,116 @@
 
 #include "gba_apu.h"
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
+	void Apu::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(sound1cntL, sound1cntH, sound1cntX, sound2cntL, sound2cntH,
+			sound3cntL, sound3cntH, sound3cntX, sound4cntL, sound4cntH,
+			soundcntL, soundcntH, soundcntX, soundbias);
+
+		writer.Array(waveRam[0]);
+		writer.Array(waveRam[1]);
+
+		writer.Fields(cycleAccum);
+		writer.Values(pending);
+
+		for (int i = 0; i < 2; i++)
+		{
+			const SquareChannel& channel = square[i];
+			writer.Fields(channel.enabled, channel.dacEnabled, channel.frequency,
+				channel.shadowFrequency, channel.duty, channel.dutyStep, channel.length,
+				channel.lengthEnabled, channel.volume, channel.envelopeVolume, channel.envelopePeriod,
+				channel.envelopeTimer, channel.envelopeUp, channel.sweepPeriod, channel.sweepShift,
+				channel.sweepTimer, channel.sweepUp, channel.sweepNegateUsed, channel.phaseAccum,
+				channel.sample);
+		}
+
+		writer.Fields(noiseSample);
+
+		writer.Fields(waveEnabled, waveDacEnabled, waveFrequency, waveDimension, waveBank,
+			waveVolume, waveForceVolume, wavePhase, waveSample, wavePosition, waveLength,
+			waveLengthEnabled);
+
+		writer.Fields(noiseEnabled, noiseDacEnabled, noiseFrequency, noiseDivisor, noiseWidth,
+			noiseShift, noisePhase, noiseEnvelopeVolume, noiseEnvelopePeriod, noiseEnvelopeTimer,
+			noiseEnvelopeUp, noiseLfsr, noiseLengthEnabled, noiseLength, noiseSampleRate);
+
+		writer.Array(fifo[0]);
+		writer.Array(fifo[1]);
+		writer.Array(fifoHead);
+		writer.Array(fifoTail);
+		writer.Array(fifoCount);
+		writer.Array(fifoRequest);
+		writer.Array(fifoEnabled);
+		writer.Array(fifoVolume);
+		writer.Array(fifoTimerSelect);
+		writer.Array(fifoTimerRight);
+		writer.Array(fifoLeftOnly);
+		writer.Array(fifoRightOnly);
+		writer.Array(fifoTimerA);
+		writer.Array(fifoOutput);
+		writer.Array(fifoOverflowBase);
+		writer.Array(fifoLatchedSample);
+
+		writer.Fields(sampleCounter, frameSeqStep, frameSeqClock);
+	}
+
+	void Apu::LoadState(StateReader& reader)
+	{
+		reader.Fields(sound1cntL, sound1cntH, sound1cntX, sound2cntL, sound2cntH,
+			sound3cntL, sound3cntH, sound3cntX, sound4cntL, sound4cntH,
+			soundcntL, soundcntH, soundcntX, soundbias);
+
+		reader.Array(waveRam[0]);
+		reader.Array(waveRam[1]);
+
+		reader.Fields(cycleAccum);
+		reader.Values(pending);
+
+		for (int i = 0; i < 2; i++)
+		{
+			SquareChannel& channel = square[i];
+			reader.Fields(channel.enabled, channel.dacEnabled, channel.frequency,
+				channel.shadowFrequency, channel.duty, channel.dutyStep, channel.length,
+				channel.lengthEnabled, channel.volume, channel.envelopeVolume, channel.envelopePeriod,
+				channel.envelopeTimer, channel.envelopeUp, channel.sweepPeriod, channel.sweepShift,
+				channel.sweepTimer, channel.sweepUp, channel.sweepNegateUsed, channel.phaseAccum,
+				channel.sample);
+		}
+
+		reader.Fields(noiseSample);
+
+		reader.Fields(waveEnabled, waveDacEnabled, waveFrequency, waveDimension, waveBank,
+			waveVolume, waveForceVolume, wavePhase, waveSample, wavePosition, waveLength,
+			waveLengthEnabled);
+
+		reader.Fields(noiseEnabled, noiseDacEnabled, noiseFrequency, noiseDivisor, noiseWidth,
+			noiseShift, noisePhase, noiseEnvelopeVolume, noiseEnvelopePeriod, noiseEnvelopeTimer,
+			noiseEnvelopeUp, noiseLfsr, noiseLengthEnabled, noiseLength, noiseSampleRate);
+
+		reader.Array(fifo[0]);
+		reader.Array(fifo[1]);
+		reader.Array(fifoHead);
+		reader.Array(fifoTail);
+		reader.Array(fifoCount);
+		reader.Array(fifoRequest);
+		reader.Array(fifoEnabled);
+		reader.Array(fifoVolume);
+		reader.Array(fifoTimerSelect);
+		reader.Array(fifoTimerRight);
+		reader.Array(fifoLeftOnly);
+		reader.Array(fifoRightOnly);
+		reader.Array(fifoTimerA);
+		reader.Array(fifoOutput);
+		reader.Array(fifoOverflowBase);
+		reader.Array(fifoLatchedSample);
+
+		reader.Fields(sampleCounter, frameSeqStep, frameSeqClock);
+	}
+
 	namespace
 	{
 		// -----------------------------------------------------------------------------------

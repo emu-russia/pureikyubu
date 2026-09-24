@@ -55,6 +55,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	class GbApu
 	{
 	public:
@@ -115,6 +118,18 @@ namespace GBA
 
 		/// <summary>How many sample frames are waiting for ReadSamples.</summary>
 		int PendingSamples() const { return (int)pending.size() / 2; }
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the sound controller into a save state: NR50/NR51 and the master enable, the four
+		/// channels with their dividers, duty phases, length counters, envelopes, the sweep unit
+		/// and the noise LFSR, the 16 bytes of wave RAM, the frame sequencer's position, the
+		/// sample clock, the two high pass capacitors and the samples that are mixed but not
+		/// drained yet. The host sample rate is not in it - it belongs to the sound device.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 	private:
 		// -- the four channels ---------------------------------------------------------------

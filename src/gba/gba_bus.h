@@ -35,6 +35,9 @@
 
 namespace GBA
 {
+	class StateWriter;
+	class StateReader;
+
 	class GbaBus
 	{
 	public:
@@ -45,6 +48,19 @@ namespace GBA
 
 		/// <summary>Reset every device and the memory (the BIOS and the cartridge stay).</summary>
 		void Reset();
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the bus itself into a save state: the open bus latch, the accumulated waitstates,
+		/// the system clock, WAITCNT and the cartridge timing it derives, the Game Pak access
+		/// chain, POSTFLG and the halt state, plus the three memories the bus owns (EWRAM, IWRAM
+		/// and the raw I/O file). The devices are *not* written here - each has its own section -
+		/// and neither is the BIOS: its image belongs to the frontend (the settings choose it),
+		/// not to the state.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		/// <summary>Install a BIOS image (16 KByte; a shorter image is padded with 0xFF).</summary>
 		void SetBios(const uint8_t* data, size_t size);

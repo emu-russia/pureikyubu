@@ -56,6 +56,8 @@ official IPL.
 | `Demo` | A whole cartridge assembled at run time and run on the whole machine |
 | `Bios` | The official IPL, when the user has one (skipped otherwise) |
 | `Settings` | `build/Data/GBASettings.json`: the defaults, the round trip, the shipped file matching the code, the malformed documents |
+| `SaveState` | The Game Boy Advance save states (`src/gba/gba_savestate.*`): the image's magic, version, length and checksum; the refusal of a corrupt, truncated or foreign state; the machine that comes back from a state taken at a frame boundary *and* from one taken in the middle of a frame (the picture, the memory, the clock and the banked registers are compared against the run that continued); the completeness property that saving, running on, loading and saving again gives the same image byte for byte; and the slot files |
+| `GameBoyState` | The Game Boy and Game Boy Color save states (`src/gba/gb_savestate.cpp`): a CGB program built with the module's own emitter that switches to double speed, writes VRAM bank 1, loads a colour palette and runs an HBlank HDMA, resumed exactly in the middle of a frame with the HDMA part way through; the CGB-only state (speed, `VBK`, both palette banks, the HDMA's remaining blocks); the refusal of the other machine's state and of the other console's; and the slot files |
 | `HleBios` | The high level BIOS calls against the official BIOS image, when the user has one: the SWI numbers, `HuffUnComp`, `BitUnPack`, `LZ77` (both write variants), `RL` and the two delta filters byte for byte on crafted and on randomly generated streams, `MidiKey2Freq` against the BIOS's own fixed point, and the sound driver's identifier, frequency table, FIFO DMA setup, mixer and VSync/VSyncOff (the image is not shipped, so those tests skip themselves without it) |
 
 ## Deviations the tests pin down
@@ -126,8 +128,11 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 * **VRAM is 96 KByte of linear memory mirrored through a 128 KByte window**, with no "unused"
   windows in the bitmap modes; the object tile base only differs for the renderer (0x14000 in the
   bitmap modes, 0x10000 in the tile modes).
-* **Save states, rewind, the EEPROM's "last byte is the AND of the old and new value" quirk, and
-  the real-time clock's per-minute interrupt register** are not implemented.
+* **Save states** *are* implemented for both machines (`src/gba/gba_savestate.*` and
+  `src/gba/gb_savestate.cpp`, the `SaveState`/`GameBoyState` suites, `F3`/`F4` in the frontend and
+  the `gbasavestate`/`gbaloadstate`/`gbastates` JDI commands); **rewind**, the EEPROM's "last byte
+  is the AND of the old and new value" quirk, and the real-time clock's per-minute interrupt
+  register are not.
 * **The GBA's sound output stage is not modelled**: SOUNDBIAS is stored and read back, but neither
   its bias level (which only shifts the unsigned representation of the samples) nor the PWM
   amplitude resolution (9/8/7/6 bit at 32.768/65.536/131.072/262.144 kHz) change the mix, which is
@@ -154,7 +159,7 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 
 ## The test suite
 
-Every test passes: **362 of 362**. (The two that compare `build/Data/GBASettings.json` with
+Every test passes: **378 of 378**. (The two that compare `build/Data/GBASettings.json` with
 `DefaultJson()` byte for byte need that file to have LF endings; a Windows checkout with
 `core.autocrlf` turns it into CRLF and they then report the `\r`s as a difference, which says
 nothing about the emulator.) The suite was not green
@@ -213,7 +218,8 @@ sound (41: the GBA's 29 channel and mixer tests and the twelve of the mixer buff
 machine and the sound device), the settings (19), the cartridge (16), the bus (2), the disassemblers
 (13), the boot ROM and the emitter (12), the DMA (12), the SIO (7), the timers/keypad/interrupts (12),
 the demo
-machine (5), the BIOS harness (2) and the HLE calls against the official BIOS (15).
+machine (5), the BIOS harness (2), the save states (11 for the Game Boy Advance and 5 for the Game
+Boy) and the HLE calls against the official BIOS (15).
 
 ## Open findings
 

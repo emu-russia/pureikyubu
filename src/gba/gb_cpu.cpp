@@ -8,11 +8,24 @@
 // alone, BIT leaving C alone, the HALT behaviour and the interrupt dispatch cost).
 
 #include "gb_cpu.h"
+#include "gba_savestate.h"
 
 #include <cstdio>
 
 namespace GBA
 {
+	void GbCpu::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(a, f, b, c, d, e, h, l, sp, pc);
+		writer.Fields(ime, halted, stopped, haltBug, imePending, doubleSpeed);
+	}
+
+	void GbCpu::LoadState(StateReader& reader)
+	{
+		reader.Fields(a, f, b, c, d, e, h, l, sp, pc);
+		reader.Fields(ime, halted, stopped, haltBug, imePending, doubleSpeed);
+	}
+
 	namespace
 	{
 		// ---------------------------------------------------------------------------------

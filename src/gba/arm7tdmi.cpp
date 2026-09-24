@@ -23,9 +23,39 @@
 
 #include "arm7tdmi.h"
 #include "gba_bus.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
+	void Arm7tdmi::SaveState(StateWriter& writer) const
+	{
+		writer.Array(regs);
+		writer.Array(bankR13);
+		writer.Array(bankR14);
+		writer.Array(bankR8_12[0]);
+		writer.Array(bankR8_12[1]);
+		writer.Array(bankSPSR);
+		writer.Fields(cpsr, currentPC, halted);
+
+		// The two counters the harness and the debugger report. They are host-side statistics
+		// rather than machine state, but a state that resumed with a different instruction count
+		// than the machine it came from would make the reports of a replayed run disagree with
+		// each other, and the save state tests compare exactly that.
+		writer.Fields(retired, undefinedCount);
+	}
+
+	void Arm7tdmi::LoadState(StateReader& reader)
+	{
+		reader.Array(regs);
+		reader.Array(bankR13);
+		reader.Array(bankR14);
+		reader.Array(bankR8_12[0]);
+		reader.Array(bankR8_12[1]);
+		reader.Array(bankSPSR);
+		reader.Fields(cpsr, currentPC, halted);
+		reader.Fields(retired, undefinedCount);
+	}
+
 	namespace
 	{
 		// -----------------------------------------------------------------------------------

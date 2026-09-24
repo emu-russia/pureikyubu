@@ -16,11 +16,20 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	class Timers
 	{
 	public:
 		void Reset();
+
+		/// <summary>Write the counters, the reload values and the overflow totals into a save
+		/// state. The overflow totals matter: the direct-sound FIFOs are clocked from them, and a
+		/// loaded state has to hand the mixer the same number of wraps as the machine it came
+		/// from.</summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		/// <summary>Read a timer register (offset is relative to 0x04000000, 0x100..0x10F).</summary>
 		uint16_t Read16(uint32_t offset) const;

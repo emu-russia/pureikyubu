@@ -15,7 +15,9 @@ clean as it was.
 
 Every report is Markdown, which is the format the new debugger shows a command answer in, so the
 same text is what the "GBA" and "Game Boy" panels of the debugger display and what a user of the
-JDI command line sees:
+JDI command line sees. The three save state commands work on exactly the files the frontend's
+quick save keys do, so a state written at the keyboard can be listed, loaded and moved from a JDI
+session:
 
 | Command | Subject |
 |---|---|
@@ -28,11 +30,17 @@ JDI command line sees:
 | `gbtimers` | the four timers and the interrupt controller |
 | `gbsio` | the link port and its state |
 | `gbcart` | the cartridge: the header and the save memory |
+| `gbasavestate [slot]` | write a save state into a slot (`0`..`9`, `.st<slot>` next to the cartridge's `.sav`) |
+| `gbaloadstate [slot]` | put the machine back into the state of a slot |
+| `gbastates` | the slots that hold a save state, with their files and sizes |
 | `gb` | the Game Boy machine: the console kind, the cartridge, the interrupts |
 | `gbregs` | the LR35902 register file |
 | `gbcpu [count]` | the SM83 disassembly at the program counter |
 | `gbmem <address> [lines]` | the Game Boy address space, as a hexdump |
 | `gbppu` | the Game Boy LCD: LCDC / STAT / LY, the palettes, the frame |
+| `gbsavestate [slot]` | write a Game Boy save state into a slot (the CGB's palettes, banks and speed are in it) |
+| `gbloadstate [slot]` | put the Game Boy back into the state of a slot |
+| `gbstates` | the Game Boy slots that hold a save state |
 
 A report answers with the `markdown` object the debugger renders, exactly like the Flipper reports
 of `hwdebug.cpp`. With no machine running the command says so instead.

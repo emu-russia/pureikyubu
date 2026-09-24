@@ -116,6 +116,7 @@
     <ClCompile Include="..\..\src\gba\gba_irq.cpp" />
     <ClCompile Include="..\..\src\gba\gba_keypad.cpp" />
     <ClCompile Include="..\..\src\gba\gba_ppu.cpp" />
+    <ClCompile Include="..\..\src\gba\gba_savestate.cpp" />
     <ClCompile Include="..\..\src\gba\gba_sdl.cpp" />
     <ClCompile Include="..\..\src\gba\gba_settings.cpp" />
     <ClCompile Include="..\..\src\gba\gba_sio.cpp" />
@@ -130,6 +131,7 @@
     <ClCompile Include="..\..\src\gba\gb_cpu.cpp" />
     <ClCompile Include="..\..\src\gba\gb_disasm.cpp" />
     <ClCompile Include="..\..\src\gba\gb_ppu.cpp" />
+    <ClCompile Include="..\..\src\gba\gb_savestate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\gba\arm7tdmi.h" />
@@ -146,6 +148,7 @@
     <ClInclude Include="..\..\src\gba\gba_irq.h" />
     <ClInclude Include="..\..\src\gba\gba_keypad.h" />
     <ClInclude Include="..\..\src\gba\gba_ppu.h" />
+    <ClInclude Include="..\..\src\gba\gba_savestate.h" />
     <ClInclude Include="..\..\src\gba\gba_sdl.h" />
     <ClInclude Include="..\..\src\gba\gba_settings.h" />
     <ClInclude Include="..\..\src\gba\gba_sio.h" />

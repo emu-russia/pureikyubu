@@ -15,6 +15,7 @@
 // CPU checks Pending() before executing the next instruction.
 
 #include "gba_irq.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
@@ -23,5 +24,15 @@ namespace GBA
 		enable = 0;			// IE = 0000h after a reset (no cause enabled)
 		request = 0;		// IF = 0000h (nothing latched)
 		masterEnable = false;	// IME = 0 (all interrupts disabled)
+	}
+
+	void Irq::SaveState(StateWriter& writer) const
+	{
+		writer.Fields(enable, request, masterEnable);
+	}
+
+	void Irq::LoadState(StateReader& reader)
+	{
+		reader.Fields(enable, request, masterEnable);
 	}
 }

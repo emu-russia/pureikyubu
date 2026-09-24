@@ -20,6 +20,8 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	enum class SaveType
 	{
@@ -125,6 +127,19 @@ namespace GBA
 
 		/// <summary>True when the EEPROM is in the middle of a transfer (for tests).</summary>
 		bool EepromBusy() const { return eepromBits != 0; }
+
+		// -- save states ----------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the chip state into a save state: the save memory itself (SRAM, the Flash array,
+		/// the EEPROM blocks) and the state machines the commands left behind - the Flash's unlock
+		/// sequence and its ID mode, the EEPROM's half-shifted bit stream, and the RTC's GPIO
+		/// port, its clocked command and its own time. The ROM image and the `.sav` path are not in
+		/// it: the image belongs to the frontend that loaded it and the path is the host's
+		/// business, not the machine's.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 		// -- header --------------------------------------------------------------------------
 

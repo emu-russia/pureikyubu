@@ -167,6 +167,10 @@ namespace GBA
 		if (!bus->cart.LoadRomImage(image, error))
 			return false;
 
+		// The cartridge came from an image rather than a file, so there is no path to name a
+		// state file after; StateFilePath falls back to the ROM's own title.
+		romPath.clear();
+
 		GBA::Log(LogLevel::Info, "gb: loaded a %u byte cartridge", (unsigned)image.size());
 		return true;
 	}
@@ -175,6 +179,8 @@ namespace GBA
 	{
 		if (!bus->cart.LoadRomFile(path, error))
 			return false;
+
+		romPath = path;
 
 		// The GBA module's convention: the battery backed RAM is read back from the .sav next to
 		// the ROM.

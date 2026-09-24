@@ -57,9 +57,45 @@
 #include "gba_dma.h"
 #include "gba_bus.h"
 #include "gba_apu.h"
+#include "gba_savestate.h"
 
 namespace GBA
 {
+	void Dma::SaveState(StateWriter& writer) const
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			const Channel& channel = channels[i];
+			writer.Fields(channel.source, channel.dest, channel.count, channel.control,
+				channel.active, channel.pending, channel.triggered, channel.latched,
+				channel.sourceRegister, channel.destRegister, channel.sourceLatch, channel.destLatch);
+		}
+
+		// The transfers that were still on the stack when the state was taken. A DMA transfer
+		// does not run across two frames (it completes inside the Step that started it, or at the
+		// slice its timing asks for), so this is normally zero - it is written anyway so that a
+		// state taken *inside* a transfer (a debugger's breakpoint, an EEPROM block write that
+		// spans ticks) can be read back exactly.
+		writer.Fields(transferDepth, inTransfer);
+		writer.Array(fifoRequest);
+		writer.Fields(scanlineRequest);
+	}
+
+	void Dma::LoadState(StateReader& reader)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			Channel& channel = channels[i];
+			reader.Fields(channel.source, channel.dest, channel.count, channel.control,
+				channel.active, channel.pending, channel.triggered, channel.latched,
+				channel.sourceRegister, channel.destRegister, channel.sourceLatch, channel.destLatch);
+		}
+
+		reader.Fields(transferDepth, inTransfer);
+		reader.Array(fifoRequest);
+		reader.Fields(scanlineRequest);
+	}
+
 	namespace
 	{
 		// DMAxCNT_H

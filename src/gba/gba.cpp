@@ -180,6 +180,8 @@ namespace GBA
 			return false;
 		}
 
+		romPath = path;
+
 		// The save file lives next to the ROM unless the settings say otherwise.
 		std::string savePath;
 
@@ -220,6 +222,9 @@ namespace GBA
 			return false;
 		}
 
+		// The cartridge came from an image rather than a file, so there is no path to name a
+		// state file after; StateFilePath falls back to the ROM's own title.
+		romPath.clear();
 		Reset();
 		return true;
 	}
@@ -229,6 +234,7 @@ namespace GBA
 		std::string error;
 		SaveBattery(&error);
 		bus->cart.Eject();
+		romPath.clear();
 		Reset();
 	}
 

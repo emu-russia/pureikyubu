@@ -34,6 +34,8 @@
 namespace GBA
 {
 	class GbaBus;
+	class StateWriter;
+	class StateReader;
 
 	class Apu
 	{
@@ -67,6 +69,19 @@ namespace GBA
 
 		/// <summary>The master enable (SOUNDCNT_X bit 7), for the harness.</summary>
 		bool Enabled() const { return (soundcntX & 0x80) != 0; }
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the sound controller into a save state: every register, the wave pattern RAM,
+		/// the four channels with their phases, envelopes, lengths and counters, both FIFOs with
+		/// their ring and their fill, and the frame sequencer's position. The samples the mixer
+		/// has produced but the frontend has not drained yet are written too, so a loaded state
+		/// does not drop (or repeat) the fraction of a frame of sound that was in the queue.
+		/// The host sample rate is not in it: it belongs to the sound device the frontend opened.
+		/// </summary>
+		void SaveState(StateWriter& writer) const;
+		void LoadState(StateReader& reader);
 
 	private:
 		// -- registers ---------------------------------------------------------------------

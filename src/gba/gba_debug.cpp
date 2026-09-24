@@ -869,6 +869,313 @@ namespace GBA
 		return MarkdownAnswer(GbaCartReport(), "gbcart");
 	}
 
+
+	// ========================================================================================
+	// Save states
+	// ========================================================================================
+
+	// The slot a `gbasavestate` / `gbaloadstate` argument asks for, bounded to the ten slots a
+	// frontend offers.
+	static int StateSlot(std::vector<std::string>& args)
+	{
+		int slot = (args.size() > 1) ? atoi(args[1].c_str()) : 0;
+
+		if (slot < 0)
+			slot = 0;
+		if (slot > MaxStateSlot)
+			slot = MaxStateSlot;
+
+		return slot;
+	}
+
+	// The size of a state file, or -1 when there is none.
+	static long StateFileSize(const std::string& path)
+	{
+		FILE* f = fopen(path.c_str(), "rb");
+
+		if (f == nullptr)
+		{
+			return -1;
+		}
+
+		fseek(f, 0, SEEK_END);
+		long size = ftell(f);
+		fclose(f);
+
+		return size;
+	}
+
+	static std::string GbaSaveStateReport(int slot)
+	{
+		if (debugGba == nullptr)
+			return "";
+
+		std::string path = debugGba->StateFilePath(slot);
+		std::string error;
+		bool ok = debugGba->SaveStateFile(path, &error);
+
+		long size = ok ? StateFileSize(path) : -1;
+
+		std::string md = "# GBA Save State\n";
+
+		MdSection(md, "Write");
+		MdBullet(md, "slot: **%i**, file: `%s`", slot, path.c_str());
+
+		if (ok)
+		{
+			MdBullet(md, "result: **saved** (%li bytes)", size);
+			Debug::Report(Debug::Channel::Norm, "gbasavestate: slot %i -> %s\n", slot, path.c_str());
+		}
+		else
+		{
+			MdBullet(md, "result: **failed** - %s", error.c_str());
+			Debug::Report(Debug::Channel::Norm, "gbasavestate: %s\n", error.c_str());
+		}
+
+		return md;
+	}
+
+	static std::string GbaLoadStateReport(int slot)
+	{
+		if (debugGba == nullptr)
+			return "";
+
+		std::string path = debugGba->StateFilePath(slot);
+		std::string error;
+		bool ok = debugGba->LoadStateFile(path, &error);
+
+		std::string md = "# GBA Save State\n";
+
+		MdSection(md, "Read");
+		MdBullet(md, "slot: **%i**, file: `%s`", slot, path.c_str());
+
+		if (ok)
+		{
+			MdBullet(md, "result: **loaded**");
+			MdBullet(md, "frame: **%i**, cycles: **%llu**",
+				debugGba->FrameCounter(), (unsigned long long)debugGba->Cycles());
+			Debug::Report(Debug::Channel::Norm, "gbaloadstate: slot %i <- %s\n", slot, path.c_str());
+		}
+		else
+		{
+			MdBullet(md, "result: **failed** - %s", error.c_str());
+			Debug::Report(Debug::Channel::Norm, "gbaloadstate: %s\n", error.c_str());
+		}
+
+		return md;
+	}
+
+	static std::string GbaStatesReport()
+	{
+		if (debugGba == nullptr)
+			return "";
+
+		std::string md = "# GBA Save States\n";
+
+		MdSection(md, "Slots");
+		md += "| Slot | File | Size |\n";
+		md += "|---|---|---|\n";
+
+		int found = 0;
+
+		for (int slot = 0; slot <= MaxStateSlot; slot++)
+		{
+			std::string path = debugGba->StateFilePath(slot);
+			long size = StateFileSize(path);
+
+			if (size < 0)
+			{
+				continue;
+			}
+
+			char line[0x400];
+			sprintf(line, "| %i | `%s` | %li |\n", slot, path.c_str(), size);
+			md += line;
+			found++;
+		}
+
+		if (found == 0)
+		{
+			MdBullet(md, "no save state has been written for this cartridge yet");
+		}
+		else
+		{
+			MdBullet(md, "**%i** of the **%i** slots are in use", found, MaxStateSlot + 1);
+		}
+
+		return md;
+	}
+
+	static Json::Value* CmdGbaSaveState(std::vector<std::string>& args)
+	{
+		if (debugGba == nullptr)
+		{
+			Debug::Report(Debug::Channel::Norm, "gbasavestate: no GBA is running\n");
+			return nullptr;
+		}
+
+		return MarkdownAnswer(GbaSaveStateReport(StateSlot(args)), "gbasavestate");
+	}
+
+	static Json::Value* CmdGbaLoadState(std::vector<std::string>& args)
+	{
+		if (debugGba == nullptr)
+		{
+			Debug::Report(Debug::Channel::Norm, "gbaloadstate: no GBA is running\n");
+			return nullptr;
+		}
+
+		return MarkdownAnswer(GbaLoadStateReport(StateSlot(args)), "gbaloadstate");
+	}
+
+	static Json::Value* CmdGbaStates(std::vector<std::string>& args)
+	{
+		if (debugGba == nullptr)
+		{
+			Debug::Report(Debug::Channel::Norm, "gbastates: no GBA is running\n");
+			return nullptr;
+		}
+
+		return MarkdownAnswer(GbaStatesReport(), "gbastates");
+	}
+
+	// The same three commands for the Game Boy (the two machines share the state format but not a
+	// single slot: the machine field of a state is what keeps them apart).
+	static std::string GbSaveStateReport(int slot)
+	{
+		if (debugGb == nullptr)
+			return "";
+
+		std::string path = debugGb->StateFilePath(slot);
+		std::string error;
+		bool ok = debugGb->SaveStateFile(path, &error);
+
+		long size = ok ? StateFileSize(path) : -1;
+
+		std::string md = "# Game Boy Save State\n";
+
+		MdSection(md, "Write");
+		MdBullet(md, "console: **%s**", debugGb->Cgb() ? "CGB" : "DMG");
+		MdBullet(md, "slot: **%i**, file: `%s`", slot, path.c_str());
+
+		if (ok)
+		{
+			MdBullet(md, "result: **saved** (%li bytes)", size);
+			Debug::Report(Debug::Channel::Norm, "gbsavestate: slot %i -> %s\n", slot, path.c_str());
+		}
+		else
+		{
+			MdBullet(md, "result: **failed** - %s", error.c_str());
+			Debug::Report(Debug::Channel::Norm, "gbsavestate: %s\n", error.c_str());
+		}
+
+		return md;
+	}
+
+	static std::string GbLoadStateReport(int slot)
+	{
+		if (debugGb == nullptr)
+			return "";
+
+		std::string path = debugGb->StateFilePath(slot);
+		std::string error;
+		bool ok = debugGb->LoadStateFile(path, &error);
+
+		std::string md = "# Game Boy Save State\n";
+
+		MdSection(md, "Read");
+		MdBullet(md, "slot: **%i**, file: `%s`", slot, path.c_str());
+
+		if (ok)
+		{
+			MdBullet(md, "result: **loaded**");
+			MdBullet(md, "frame: **%i**, cycles: **%llu**",
+				debugGb->FrameCounter(), (unsigned long long)debugGb->Cycles());
+			Debug::Report(Debug::Channel::Norm, "gbloadstate: slot %i <- %s\n", slot, path.c_str());
+		}
+		else
+		{
+			MdBullet(md, "result: **failed** - %s", error.c_str());
+			Debug::Report(Debug::Channel::Norm, "gbloadstate: %s\n", error.c_str());
+		}
+
+		return md;
+	}
+
+	static std::string GbStatesReport()
+	{
+		if (debugGb == nullptr)
+			return "";
+
+		std::string md = "# Game Boy Save States\n";
+
+		MdSection(md, "Slots");
+		md += "| Slot | File | Size |\n";
+		md += "|---|---|---|\n";
+
+		int found = 0;
+
+		for (int slot = 0; slot <= MaxStateSlot; slot++)
+		{
+			std::string path = debugGb->StateFilePath(slot);
+			long size = StateFileSize(path);
+
+			if (size < 0)
+			{
+				continue;
+			}
+
+			char line[0x400];
+			sprintf(line, "| %i | `%s` | %li |\n", slot, path.c_str(), size);
+			md += line;
+			found++;
+		}
+
+		if (found == 0)
+		{
+			MdBullet(md, "no save state has been written for this cartridge yet");
+		}
+		else
+		{
+			MdBullet(md, "**%i** of the **%i** slots are in use", found, MaxStateSlot + 1);
+		}
+
+		return md;
+	}
+
+	static Json::Value* CmdGbSaveState(std::vector<std::string>& args)
+	{
+		if (debugGb == nullptr)
+		{
+			Debug::Report(Debug::Channel::Norm, "gbsavestate: no Game Boy is running\n");
+			return nullptr;
+		}
+
+		return MarkdownAnswer(GbSaveStateReport(StateSlot(args)), "gbsavestate");
+	}
+
+	static Json::Value* CmdGbLoadState(std::vector<std::string>& args)
+	{
+		if (debugGb == nullptr)
+		{
+			Debug::Report(Debug::Channel::Norm, "gbloadstate: no Game Boy is running\n");
+			return nullptr;
+		}
+
+		return MarkdownAnswer(GbLoadStateReport(StateSlot(args)), "gbloadstate");
+	}
+
+	static Json::Value* CmdGbStates(std::vector<std::string>& args)
+	{
+		if (debugGb == nullptr)
+		{
+			Debug::Report(Debug::Channel::Norm, "gbstates: no Game Boy is running\n");
+			return nullptr;
+		}
+
+		return MarkdownAnswer(GbStatesReport(), "gbstates");
+	}
+
 	static Json::Value* CmdGb(std::vector<std::string>& args)
 	{
 		return MarkdownAnswer(GbMachineReport(), "gb");
@@ -908,11 +1215,17 @@ namespace GBA
 		JDI::Hub.AddCmd("gbtimers", CmdGbaTimers);
 		JDI::Hub.AddCmd("gbsio", CmdGbaSio);
 		JDI::Hub.AddCmd("gbcart", CmdGbaCart);
+		JDI::Hub.AddCmd("gbasavestate", CmdGbaSaveState);
+		JDI::Hub.AddCmd("gbaloadstate", CmdGbaLoadState);
+		JDI::Hub.AddCmd("gbastates", CmdGbaStates);
 		JDI::Hub.AddCmd("gb", CmdGb);
 		JDI::Hub.AddCmd("gbregs", CmdGbRegs);
 		JDI::Hub.AddCmd("gbcpu", CmdGbCpu);
 		JDI::Hub.AddCmd("gbmem", CmdGbMem);
 		JDI::Hub.AddCmd("gbppu", CmdGbPpu);
+		JDI::Hub.AddCmd("gbsavestate", CmdGbSaveState);
+		JDI::Hub.AddCmd("gbloadstate", CmdGbLoadState);
+		JDI::Hub.AddCmd("gbstates", CmdGbStates);
 	}
 
 
