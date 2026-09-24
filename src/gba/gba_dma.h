@@ -115,8 +115,15 @@ namespace GBA
 		bool inTransfer = false;
 		bool fifoRequest[2]{};		// a FIFO asked for a refill since the last service
 		bool scanlineRequest = false;
+		bool servicing = false;		// the trigger that arrived during the last transfer is running
 
 		void Trigger(GbaBus& bus, int timing);
+
+		/// <summary>Run the channels whose start condition arrived while another transfer was
+		/// running and that the running transfer therefore could not service at a unit boundary.
+		/// The outermost transfer calls this as it finishes, so such a request is honoured as soon
+		/// as the bus is free rather than at the next start condition (see Dma::Trigger).</summary>
+		void ServiceTriggered(GbaBus& bus);
 		int Perform(GbaBus& bus, int channel);
 	};
 }
