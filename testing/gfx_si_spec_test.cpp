@@ -439,5 +439,99 @@ namespace pureikyubutest
 			WriteSiWord(ComCsr, ReadSiWord(ComCsr) & ~SI_COMCSR_RDSTINTMSK);
 			Assert::IsTrue(RdstInt(m), L"RDSTINT survives a COMCSR write");
 		}
+
+		// =========================================================================================
+		// 4. A COM transfer to an empty socket
+		// =========================================================================================
+
+		//! The devices the empty-socket tests unplugged, as (device, port) pairs, so that the cleanup
+		//! can put them back: the pool belongs to the machine the whole suite shares, and it outlives
+		//! a test method.
+		static std::vector<std::pair<int, int>>& Unplugged()
+		{
+			static std::vector<std::pair<int, int>> unplugged;
+			return unplugged;
+		}
+
+		//! Unplug whatever the harness plugged into a channel, to leave that socket empty.
+		static void EmptySocket(int channel)
+		{
+			Peripherals& pool = Peripherals::Instance();
+
+			for (int i = 0; i < pool.Count(); i++)
+			{
+				if (pool.PortOf(i) == PERIPH_PORT_SI(channel))
+				{
+					pool.Detach(i);
+					Unplugged().push_back(std::make_pair(i, PERIPH_PORT_SI(channel)));
+				}
+			}
+		}
+
+		TEST_METHOD_CLEANUP(SiSpec_PlugTheUnpluggedDevicesBackIn)
+		{
+			for (size_t i = 0; i < Unplugged().size(); i++)
+			{
+				Peripherals::Instance().Attach(Unplugged()[i].first, Unplugged()[i].second);
+			}
+			Unplugged().clear();
+		}
+
+		//! Start a COM transfer the way the CPU does: SICOMCSR takes the lengths, the channel and
+		//! TSTART. The command bytes themselves come from SIRAM (see SI_COMBUF).
+		static void RunComTransfer(int channel, int outlen, int inlen)
+		{
+			WriteSiWord(ComCsr, ((uint32_t)outlen << 16) | ((uint32_t)inlen << 8) |
+				((uint32_t)channel << 1) | SI_COMCSR_TSTART);
+		}
+
+		// A socket with nothing in it answers nothing: the channel latches NOREP, the transfer is
+		// the last one that failed, and the response bytes read as the idle line, which is all ones.
+		// NOREP is how the guest tells an empty socket from a device that answered: the response
+		// bytes alone cannot tell it, because the line is half duplex.
+		TEST_METHOD(SiSpec_TransferToAnEmptySocketReportsNoResponse)
+		{
+			GfxTestMachine& m = M();
+			EmptySocket(0);
+
+			WriteSiWord(SI_COMBUF, 0x00000000);     // the command the transfer shifts out
+			RunComTransfer(0, 1, 3);
+
+			Assert::AreEqual<uint32_t>(SI_SR_NOREP0, ReadSiWord(SrReg) & SI_SR_NOREP0,
+				L"the empty socket reported no response");
+			Assert::IsTrue((ReadSiWord(ComCsr) & SI_COMCSR_COMERR) != 0, L"the transfer failed");
+			Assert::AreEqual<uint32_t>(0xffff0000, ReadSiWord(SI_COMBUF) & 0xffff0000,
+				L"the idle line reads as all ones");
+		}
+
+		// A socket the harness plugged a pad into answers the transfer, so nothing is latched.
+		TEST_METHOD(SiSpec_TransferToASocketWithADeviceReportsNoError)
+		{
+			GfxTestMachine& m = M();
+
+			WriteSiWord(SI_COMBUF, 0x00000000);
+			RunComTransfer(1, 1, 3);
+
+			Assert::AreEqual<uint32_t>(0, ReadSiWord(SrReg) & SI_SR_NOREP1, L"the pad answered");
+			Assert::AreEqual<uint32_t>(0, ReadSiWord(ComCsr) & SI_COMCSR_COMERR, L"the transfer did not fail");
+			Assert::AreEqual<uint32_t>(9, ReadSiWord(SI_COMBUF) >> 24, L"TYPEL of a standard controller");
+		}
+
+		// The error bits are latched and each is cleared by writing a one to it; a written zero
+		// leaves the bit alone.
+		TEST_METHOD(SiSpec_NoResponseIsClearedByWritingAOneToIt)
+		{
+			GfxTestMachine& m = M();
+			EmptySocket(0);
+
+			RunComTransfer(0, 1, 3);
+			WriteSiWord(SrReg, 0x00000000);
+			Assert::AreEqual<uint32_t>(SI_SR_NOREP0, ReadSiWord(SrReg) & SI_SR_NOREP0,
+				L"a written zero leaves the latched bit alone");
+
+			WriteSiWord(SrReg, SI_SR_NOREP0);
+			Assert::AreEqual<uint32_t>(0, ReadSiWord(SrReg) & SI_SR_NOREP0,
+				L"writing a one cleared the latched bit");
+		}
 	};
 }

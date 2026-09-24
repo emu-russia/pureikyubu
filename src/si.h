@@ -53,6 +53,13 @@
 #define SI_COMCSR_TSTART        (1)
 
 // SI Status Register mask
+
+// The latched error bits of every channel (11.6). They are write-1-to-clear, so the write side of
+// the register needs the mask of the bits a write can clear: channels 0 and 1 are in the high
+// halfword of the register, channels 2 and 3 in the low one.
+#define SI_SR_ERROR_HI          0x0f0f0000      // channel 0 bits 27:24, channel 1 bits 19:16
+#define SI_SR_ERROR_LO          0x00000f0f      // channel 2 bits 11:8, channel 3 bits 3:0
+
 #define SI_SR_WR                (1 << 31)
 #define SI_SR_RDST0             (1 << 29)
 #define SI_SR_WRST0             (1 << 28)
