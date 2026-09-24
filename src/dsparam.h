@@ -61,6 +61,27 @@ namespace DSP
 		volatile bool        masked;             // AMDM - ARAM-DMA requests masked by the DSP (ARAM dedicated to the accelerator)
 		uint16_t    amcr;               // AMCR (0x12) - the AR driver stores the ARAM size code here
 		bool log;
+
+		// Save state
+		//
+		// ARAM is not a view of main memory but a separate 16 MB heap block of the controller,
+		// so it is part of the machine and has to travel with the state - it holds the audio
+		// data the guest has staged there and the microcode's own work areas. The registers
+		// around it are the DMA window (main-memory address, ARAM address and block length) and
+		// the two configuration bits the driver reads back (AMCR and the accelerator mask).
+		//
+		// The `mem` pointer itself is not written (a state never carries a pointer); the bytes
+		// it points at are, with `Raw`. `log` is a host switch and stays out.
+		//
+		// Only the buffer of exactly ARAMSIZE bytes is accepted on load: the length written in
+		// front of it is checked against ARAMSIZE before a byte is copied, so a state whose ARAM
+		// block is another size is refused instead of being read into the buffer.
+
+		/// <summary>Write the ARAM controller registers and the whole ARAM buffer.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Read them back, refusing an ARAM block that is not ARAMSIZE bytes.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 
 	void    AROpen(Flipper::Flipper* flipper);

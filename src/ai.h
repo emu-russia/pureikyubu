@@ -26,6 +26,9 @@
 
 namespace Flipper
 {
+	class StateWriter;
+	class StateReader;
+
 	// AI state (registers and other data)
 	struct AIState
 	{
@@ -56,6 +59,28 @@ namespace Flipper
 	public:
 		AudioInterface(Flipper *flipper, HWConfig* config);
 		~AudioInterface();
+
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the audio interface into the save state section: the four streaming registers
+		/// and the 32-byte FIFO the DVD audio decoder fills, with the position inside it. The
+		/// FIFO is fed and drained outside the guest's register writes (the decoder callback
+		/// appends a sample pair every time the drive decodes one), so the half-filled buffer
+		/// is state the guest cannot rebuild by writing a register.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>
+		/// Read it back and re-derive what the control register implies for the machinery around
+		/// this block. The four registers are decoded state and go back as they are; the stream
+		/// clock, the mixer's DVD audio channel and the two sample rates are not registers, so
+		/// the load ends with AIControl() - the same refresh a write to the control register
+		/// does - after taking the restored FIFO position and sample counter out of its way,
+		/// because that refresh restarts the streaming state from the beginning rather than
+		/// resuming it. Nothing has to be called after the load.
+		/// </summary>
+		void LoadState(SaveStates::StateReader& reader);
 
 		//! The AI state, for the debug interface (`airegs` and the debugui2 "Audio" panel).
 		const AIState& State() const { return ai; }

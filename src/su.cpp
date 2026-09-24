@@ -303,6 +303,82 @@ namespace GFX
 	}
 
 	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The Setup Unit owns the registers that describe the scissor rectangle, the line and point
+	// size and the texture coordinate scales, plus two kinds of state no register can rebuild.
+	//
+	// The first is the family of latches (`ssizeSet`, `tsizeSet`, `scissorSet`). The hardware has no
+	// "manual scale" bit and no "scissor programmed" bit: a coordinate scale register that was never
+	// written and one that was written with zero hold the same word, but the first means "use the
+	// automatic scale of the texture actually bound" and the second means "scale by one texel"
+	// (see CoordScale). The scissor is the same story: a programmed rectangle of zero and one that
+	// was never programmed both read as 0x20/0x21 = 0, but the reset rectangle follows a change of
+	// the render target size while a programmed one does not (see ResizeScissor).
+	//
+	// The second is the frozen depth plane of GEN_MODE.zfreeze: the SU latches the depth plane of
+	// the last triangle before the freeze and every later triangle reuses it (gfx-su.md 3.6), so it
+	// is accumulated state that the register file cannot rebuild.
+	//
+	// What does not travel: the `gfx` back-pointer, and the primitive assembly scratch
+	// (`soft_prim` and `soft_vertices`), which is always empty at a command boundary - a state is
+	// taken between FIFO commands, never in the middle of a draw.
+	// -------------------------------------------------------------------------------------------
+
+	void SetupUnit::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The register file (0x20-0x22, 0x30-0x3F), each union as its 32-bit word.
+		writer.Fields(su.scis0.bits, su.scis1.bits, su.lpsize.bits);
+
+		for (int i = 0; i < 8; i++)
+		{
+			writer.Fields(su.ssize[i].bits);
+			writer.Fields(su.tsize[i].bits);
+		}
+
+		// The latches: whether a coordinate size was ever written for a pair (the automatic scale
+		// is used until it was) and whether the scissor rectangle was programmed at all.
+		for (int i = 0; i < 8; i++)
+		{
+			writer.Fields(su.ssizeSet[i]);
+			writer.Fields(su.tsizeSet[i]);
+		}
+
+		writer.Fields(su.scissorSet);
+
+		// The frozen depth plane and its validity. A plane is three floats (the value at the raster
+		// origin and the two screen-space slopes).
+		writer.Fields(soft_zfreeze.o, soft_zfreeze.dx, soft_zfreeze.dy);
+		writer.Fields(soft_zfreeze_valid);
+	}
+
+	void SetupUnit::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(su.scis0.bits, su.scis1.bits, su.lpsize.bits);
+
+		for (int i = 0; i < 8; i++)
+		{
+			reader.Fields(su.ssize[i].bits);
+			reader.Fields(su.tsize[i].bits);
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			reader.Fields(su.ssizeSet[i]);
+			reader.Fields(su.tsizeSet[i]);
+		}
+
+		reader.Fields(su.scissorSet);
+
+		reader.Fields(soft_zfreeze.o, soft_zfreeze.dx, soft_zfreeze.dy);
+		reader.Fields(soft_zfreeze_valid);
+
+		// The GL scissor box is not programmed here: a load may run on a thread without a GL
+		// context, so the caller asks for it once every section has been applied
+		// (GFXCore::RefreshAfterLoad calls RefreshScissor).
+	}
+
+	// -------------------------------------------------------------------------------------------
 	// The software Setup Unit (GFX_PIPELINE = soft, issue #384)
 	//
 	// The SU is the primitive assembler and the setup stage of the pipeline: it turns the vertex

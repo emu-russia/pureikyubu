@@ -286,6 +286,69 @@ namespace UI
 		ExecuteCommand("reset");
 	}
 
+	// Save states. The two commands answer an object (see `StateAnswer` in main.cpp): the Markdown
+	// report the debugger shows, and the file, the slot and the verdict next to it. The front end
+	// only needs the last two - the report is for whoever asks for it - but taking them from the
+	// answer rather than recomputing the file name keeps the front end out of the business of
+	// naming state files.
+
+	// The member of an object answer, or nullptr when the answer is not one or has no such member.
+	static Json::Value* AnswerMember(Json::Value* answer, const char* name)
+	{
+		if (answer == nullptr || answer->type != Json::ValueType::Object)
+		{
+			return nullptr;
+		}
+
+		for (Json::Value* child : answer->children)
+		{
+			if (child->name != nullptr && strcmp(child->name, name) == 0)
+			{
+				return child;
+			}
+		}
+
+		return nullptr;
+	}
+
+	bool JdiClient::SaveState(int slot, std::string& path, std::string& error)
+	{
+		return StateCall(("savestate " + std::to_string(slot)).c_str(), path, error);
+	}
+
+	bool JdiClient::LoadState(int slot, std::string& path, std::string& error)
+	{
+		return StateCall(("loadstate " + std::to_string(slot)).c_str(), path, error);
+	}
+
+	bool JdiClient::StateCall(const char* request, std::string& path, std::string& error)
+	{
+		Json::Value* answer = CallJdi(request);
+
+		Json::Value* file = AnswerMember(answer, "file");
+		Json::Value* reason = AnswerMember(answer, "error");
+		Json::Value* result = AnswerMember(answer, "result");
+
+		path.clear();
+		error.clear();
+
+		if (file != nullptr && file->type == Json::ValueType::String && file->value.AsString != nullptr)
+		{
+			path = Util::WstringToString(file->value.AsString);
+		}
+
+		if (reason != nullptr && reason->type == Json::ValueType::String && reason->value.AsString != nullptr)
+		{
+			error = Util::WstringToString(reason->value.AsString);
+		}
+
+		bool ok = (result != nullptr && result->type == Json::ValueType::Bool) && result->value.AsBool;
+
+		delete answer;
+
+		return ok;
+	}
+
 	// Performance Counters, SystemTime
 
 	int64_t JdiClient::GetPerformanceCounter(int counter)

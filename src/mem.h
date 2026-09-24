@@ -59,6 +59,9 @@
 
 namespace Flipper
 {
+	class StateWriter;
+	class StateReader;
+
 	union MEMMarrControl
 	{
 		struct
@@ -145,6 +148,27 @@ namespace Flipper
 		MemoryInterface(Flipper* flipper, HWConfig* config);
 		~MemoryInterface();
 
+		// -- save states -------------------------------------------------------------------
+
+		/// <summary>
+		/// Write the memory interface into the save state section: the size of the memory the
+		/// console was built with, the whole of main memory ("Splash", the largest part of any
+		/// state), the four memory-address-range registers with their control word, the two
+		/// interrupt registers and the eight access counters.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>
+		/// Read it back. A state from a console with another memory configuration is refused
+		/// here: the section describes a differently sized main memory, so the machine it belongs
+		/// to is not the one this block is part of. Everything else needs no fixup - the counters
+		/// and the range registers the state brings back are read by the next access, and the
+		/// contents of main memory have no derived copy anywhere (every reader of it goes through
+		/// the pointer this block owns) - so nothing has to be called after the load. The MI
+		/// interrupt line is the Processor Interface's to re-derive, not this block's.
+		/// </summary>
+		void LoadState(SaveStates::StateReader& reader);
+
 		// These calls are specifically added to show the direct connection of the MEM block, with the rest of the Flipper modules (according to the architecture).
 
 		/// <summary>
@@ -219,5 +243,24 @@ namespace Flipper
 
 		//! The MI state, for the debug interface (`miregs` and the debugui2 "Memory Interface" panel).
 		const MIState& State() const { return mi; }
+
+		/// <summary>
+		/// Put the eight access counters the state carried back where they belong.
+		///
+		/// A load is not a read-only affair: walking the sections of a state makes the blocks
+		/// translate addresses of their own (the video interface recomputes its XFB pointer out of
+		/// the restored TFBL, which counts as a VI access), and those translations land in the very
+		/// counters the `MEM ` section has already put back. The caller runs this once every
+		/// section has been applied, so that saving, loading and saving again gives the same image.
+		/// It does nothing when no state has been loaded.
+		/// </summary>
+		void RefreshAfterLoad();
+
+	private:
+		//! The counters the last loaded state carried, held until the load is over (see
+		//! `RefreshAfterLoad`). The order is the order of the section, which is the order of the
+		//! members in `MIState`.
+		MEMCounter loadedCounters[8]{};
+		bool countersPending = false;
 	};
 }

@@ -175,6 +175,37 @@ namespace GFX
 #undef glViewport
 #define glViewport(...) GFX::Null::Ignore(__VA_ARGS__)
 
+// The framebuffer entry points the pixel engine's copy engine uses (`CreateEfbTarget`,
+// `CreateXfbTarget`, `GL_DisplayCopy`). They were added to the pipeline after this header was
+// written, and without them the headless build does not link: the GLEW macros expand to the
+// `__glew*` function pointers, which only the OpenGL build ever resolves. Every one of them is a
+// no-op except the completeness check, which has to *answer* something because the pipeline reads
+// it - a null framebuffer is as complete as it gets, so it says so rather than reporting an
+// incomplete one on every headless run.
+
+#undef glBindFramebuffer
+#define glBindFramebuffer(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glGenFramebuffers
+#define glGenFramebuffers(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glDeleteFramebuffers
+#define glDeleteFramebuffers(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glFramebufferTexture2D
+#define glFramebufferTexture2D(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glFramebufferRenderbuffer
+#define glFramebufferRenderbuffer(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glBindRenderbuffer
+#define glBindRenderbuffer(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glGenRenderbuffers
+#define glGenRenderbuffers(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glDeleteRenderbuffers
+#define glDeleteRenderbuffers(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glRenderbufferStorage
+#define glRenderbufferStorage(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glBlitFramebuffer
+#define glBlitFramebuffer(...) GFX::Null::Ignore(__VA_ARGS__)
+#undef glCheckFramebufferStatus
+#define glCheckFramebufferStatus(...) (GL_FRAMEBUFFER_COMPLETE)
+
 // The entry points whose result the pipeline uses.
 
 #undef glCreateShader

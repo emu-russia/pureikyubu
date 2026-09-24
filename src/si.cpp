@@ -484,6 +484,81 @@ namespace Flipper
 	}
 
 	// ---------------------------------------------------------------------------
+	// save states
+
+	// What the SI must carry into a state is everything the block itself decided, in the order it
+	// is written here and read back in exactly the same order:
+	//
+	//   SICnOUTBUF   the four CPU visible command latches                    4 x 32 bits
+	//   SICnOUTBUF'  the four hidden shadows the transfer engine shifts out   4 x 32 bits
+	//   SIPOLL, SICOMCSR, SISR, SIEXILK, four registers                      4 x 32 bits
+	//   SICOMBUF     the communication buffer, 128 bytes plus the 32 bytes of overrun protection
+	//   the poll schedule: `lastPollLine`, `pollLineBase`, `pollsThisFrame` (3 x 32 bits) and
+	//   `pollLineDue` (1 byte)
+	//
+	// The visible and the hidden command latch are both here because the guest can write the
+	// visible one at any time and only SISR[WR] copies it into the shadow: a state taken between
+	// those two writes has to bring back the difference, exactly like the bypass write mask of
+	// the command processor. SICOMCSR carries the interrupt latches (TCINT / RDSTINT) and SISR
+	// the per channel latched errors, which is why both are in the state rather than derived.
+	void SerialInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Array(si.out);
+		writer.Array(si.shdw);
+
+		writer.Fields(si.poll, si.comcsr, si.sr, si.exilk);
+
+		// The whole buffer, overrun protection included: `combuf` is what the transfer of the
+		// channel reads its command bytes from and writes its answer into, and the tail past the
+		// 128 bytes the register window exposes is written by the overrun path, so a state that
+		// kept only the visible part would come back with a different buffer.
+		writer.Raw(si.combuf, sizeof(si.combuf));
+
+		// The poll schedule (serial-interface.md 5.1) is not a set of registers the guest can
+		// restore: it is how far into the current frame the poller is, so a state taken between
+		// two polls has to carry where the next one is due.
+		writer.Fields(si.lastPollLine, si.pollLineBase, si.pollsThisFrame, si.pollLineDue);
+
+		// NOT part of the state:
+		//
+		// `pad[4]` is what the last poll got out of the device pool (SIPoll asks
+		// Peripherals::PollSI for every enabled channel), and the pool re-fills it on every poll.
+		// It is the state of the *controllers* - the player's hands - not of the machine, and it
+		// changes on its own while the emulator runs. Leaving it out is what makes a load do the
+		// right thing with it: the buffer the guest reads before the next poll still holds the
+		// snapshot of the live input taken on the machine that is running now, rather than the
+		// input of the moment the state was saved, and the next poll refreshes it from the pool.
+		//
+		// `rumble[4]` is derived from that same pool: the constructor asks every channel's motor
+		// whether it can rumble (SetMotorSI) and the answer only changes when the user plugs
+		// another controller in. There is nothing here the guest wrote, and re-deriving it on load
+		// would send a motor command to the host's controller, which is a thing a load must not do.
+		//
+		// `log` is the `si_log` setting and never affects the machine.
+	}
+
+	void SerialInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Array(si.out);
+		reader.Array(si.shdw);
+
+		reader.Fields(si.poll, si.comcsr, si.sr, si.exilk);
+		reader.Raw(si.combuf, sizeof(si.combuf));
+		reader.Fields(si.lastPollLine, si.pollLineBase, si.pollsThisFrame, si.pollLineDue);
+
+		// Nothing here is replayed through a register write: SICOMCSR and SISR are put back as
+		// values, so a state taken between two guest writes to them comes back in the middle of
+		// that sequence, and no transfer runs, no interrupt is raised and no status bit moves
+		// because of the load.
+		//
+		// The PI line is deliberately left alone. The other blocks' sections restore the PI's
+		// cause register as it was, and the SI's own copy of it is *not* a function of the
+		// latches: a guest that raises RDSTINT and then clears RDSTINTMSK leaves the PI bit
+		// asserted (write_commcsr_hi only calls SIClearInterrupt when it clears a latch), so
+		// recomputing the line here would clear an interrupt the state says was pending.
+	}
+
+	// ---------------------------------------------------------------------------
 	// init
 
 	// The SI input buffer registers are writable, but the emulated SI gets their contents from

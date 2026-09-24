@@ -910,6 +910,151 @@ namespace DSP
 		}
 	}
 
+	// ---------------------------------------------------------------------------------------
+	// Save state
+	// ---------------------------------------------------------------------------------------
+	//
+	// The core is written after the rest of the DSP block (see Dsp16::SaveState) and is the last
+	// thing the DSP section holds. Field by field, and in this order:
+	//
+	//   iram   u32 length + 8192 bytes       instruction RAM, where the downloaded microcode lives
+	//   irom   u32 length + 8192 bytes       instruction ROM (the boot loader of the console)
+	//   dram   u32 length + 8192 bytes       data RAM
+	//   drom   u32 length + 4096 bytes       data ROM (the audio tables)
+	//   r[4]   4 x u16                       addressing registers
+	//   m[4]   4 x u16                       modifier (circular addressing) registers
+	//   l[4]   4 x u16                       buffer length registers
+	//   a      l u16, m u16, h u16           the 40-bit accumulator `a`, by its three halves
+	//   b      l u16, m u16, h u16           the 40-bit accumulator `b`, by its three halves
+	//   x      l u16, h u16                  the multiplier operand `x`
+	//   y      l u16, h u16                  the multiplier operand `y`
+	//   prod   l u16, m1 u16, h u16, m2 u16  the product register, by its four halves
+	//   dpp    u16                           the high byte of some load/store addresses
+	//   psr    u16                           the status register, as its raw bits
+	//   pc     u16                           the program counter
+	//   pcs    u16 index, u16 depth, 8 x u16 program counter stack
+	//   pss    u16 index, u16 depth, 4 x u16 status stack
+	//   eas    u16 index, u16 depth, 4 x u16 loop end-address stack
+	//   lcs    u16 index, u16 depth, 4 x u16 loop count stack
+	//   intr   u8 pendingSomething, 8 x u8 pending, 8 x u32 pendingDelay
+	//   repeatCount        u32 (int)
+	//   waitHalted         u8
+	//   mailboxHoldTick    u64 (int64_t)
+	//   jitGeneration      u32
+	//
+	// The accumulator, the operands and the product are unions of a packed integer and its halves.
+	// They are expanded here instead of being written as one wide integer because the halves are
+	// what the microcode reads and writes (`a0`, `a1`, `a2`, `ps0`..`pc1` are separate registers
+	// in the register file), so the halves are the honest description of the state.
+
+	// One of the four memories. The stored size is checked against the array before a byte is
+	// copied, so a state whose block is the wrong length is refused rather than overrunning the
+	// array - the reader's own bound check only sees the length of the image, not of the array.
+	static void DspMemorySave(SaveStates::StateWriter& writer, const uint8_t* memory, uint32_t size)
+	{
+		writer.U32(size);
+		writer.Raw(memory, size);
+	}
+
+	static void DspMemoryLoad(SaveStates::StateReader& reader, uint8_t* memory, uint32_t size,
+		const char* name)
+	{
+		uint32_t stored = reader.U32();
+
+		if (stored != size)
+		{
+			reader.Fail(std::string("the DSP ") + name + " block is not the size this machine has");
+			return;
+		}
+
+		reader.Raw(memory, size);
+	}
+
+	void DspCore::SaveState(SaveStates::StateWriter& writer) const
+	{
+		DspMemorySave(writer, iram, (uint32_t)IRAM_SIZE);
+		DspMemorySave(writer, irom, (uint32_t)IROM_SIZE);
+		DspMemorySave(writer, dram, (uint32_t)DRAM_SIZE);
+		DspMemorySave(writer, drom, (uint32_t)DROM_SIZE);
+
+		writer.Array(regs.r);
+		writer.Array(regs.m);
+		writer.Array(regs.l);
+
+		writer.Fields(regs.a.l, regs.a.m, regs.a.h);
+		writer.Fields(regs.b.l, regs.b.m, regs.b.h);
+		writer.Fields(regs.x.l, regs.x.h);
+		writer.Fields(regs.y.l, regs.y.h);
+		writer.Fields(regs.prod.l, regs.prod.m1, regs.prod.h, regs.prod.m2);
+
+		writer.Fields(regs.dpp, regs.psr.bits, regs.pc);
+
+		// The four stacks. `regs` holds them by pointer (they are heap objects of the
+		// construction and always exist), so each one is asked to write itself.
+		regs.pcs->SaveState(writer);
+		regs.pss->SaveState(writer);
+		regs.eas->SaveState(writer);
+		regs.lcs->SaveState(writer);
+
+		// The interrupt machinery: which interrupts are latched (one byte each) and how many
+		// instructions each of them still has to wait before it is taken (an int in the machine,
+		// so it travels as four bytes).
+		writer.Fields(intr.pendingSomething);
+		writer.Array(intr.pending);
+		writer.Array(intr.pendingDelay);
+
+		// The `rep` countdown, the `wait` latch, the mailbox hold (a Gekko tick count, like the
+		// time-base anchor above) and the recompiler's block generation.
+		writer.Fields(repeatCount, waitHalted, mailboxHoldTick, jitGeneration);
+	}
+
+	void DspCore::LoadState(SaveStates::StateReader& reader)
+	{
+		DspMemoryLoad(reader, iram, (uint32_t)IRAM_SIZE, "IRAM");
+		DspMemoryLoad(reader, irom, (uint32_t)IROM_SIZE, "IROM");
+		DspMemoryLoad(reader, dram, (uint32_t)DRAM_SIZE, "DRAM");
+		DspMemoryLoad(reader, drom, (uint32_t)DROM_SIZE, "DROM");
+
+		reader.Array(regs.r);
+		reader.Array(regs.m);
+		reader.Array(regs.l);
+
+		reader.Fields(regs.a.l, regs.a.m, regs.a.h);
+		reader.Fields(regs.b.l, regs.b.m, regs.b.h);
+		reader.Fields(regs.x.l, regs.x.h);
+		reader.Fields(regs.y.l, regs.y.h);
+		reader.Fields(regs.prod.l, regs.prod.m1, regs.prod.h, regs.prod.m2);
+
+		reader.Fields(regs.dpp, regs.psr.bits, regs.pc);
+
+		regs.pcs->LoadState(reader);
+		regs.pss->LoadState(reader);
+		regs.eas->LoadState(reader);
+		regs.lcs->LoadState(reader);
+
+		reader.Fields(intr.pendingSomething);
+		reader.Array(intr.pending);
+		reader.Array(intr.pendingDelay);
+
+		// The generation the generated blocks compare against is part of the state, but the
+		// invalidation below bumps it: the value is read into a local and put back afterwards, so
+		// that saving, loading and saving again gives the same image. A restored value cannot
+		// resurrect a block - the JIT's own generation was bumped, and a block bakes the value it
+		// finds when it is compiled, which is this one.
+		uint32_t loadedGeneration = 0;
+		reader.Fields(repeatCount, waitHalted, mailboxHoldTick, loadedGeneration);
+
+		// The memories the state just replaced are the input of the recompiler, so every compiled
+		// block is stale the moment this call returns: a block carries the instruction words it
+		// was built from inside its generated code, and running one would execute the microcode
+		// of the state that was just thrown away. That is why the invalidation is here, inside
+		// the load, rather than left to the caller - a load that forgets it is not a slow load,
+		// it is a wrong machine.
+		InvalidateJit();
+
+		jitGeneration = loadedGeneration;
+	}
+
 	void DspCore::SetJitMaxBlockInstrs(uint32_t count)
 	{
 		if (jit != nullptr)
@@ -4348,6 +4493,47 @@ namespace DSP
 	void DspStack::clear()
 	{
 		ptr = 0;
+	}
+
+	// Save state of one stack. The index goes out first (so that a reader can tell an empty stack
+	// from a full one at a glance in a hex dump), then the depth and the entries. The depth is
+	// written even though it is a constant of the construction: it is what says whether the array
+	// in the state is the array this build expects, and a mismatch has to be a refused state
+	// rather than a silently wrong stack. The whole array is written, not only the entries below
+	// `ptr`, so that a stack of a given depth always occupies the same number of bytes and a
+	// member added later cannot shift the ones written after it.
+
+	void DspStack::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(ptr, depth);
+		writer.Raw(stack, (size_t)depth * sizeof(uint16_t));
+	}
+
+	void DspStack::LoadState(SaveStates::StateReader& reader)
+	{
+		int storedPtr = 0;
+		int storedDepth = 0;
+
+		reader.Fields(storedPtr, storedDepth);
+
+		if (storedDepth != depth)
+		{
+			reader.Fail("a DSP stack in the state is not as deep as the one in this machine");
+			return;
+		}
+
+		reader.Raw(stack, (size_t)depth * sizeof(uint16_t));
+
+		// The index is only applied once the array it indexes has been read, and only when it can
+		// address that array: an index the stack's own push and pop could never have produced
+		// means the state did not come from this machine.
+		if (!reader.Failed() && (storedPtr < 0 || storedPtr > depth))
+		{
+			reader.Fail("a DSP stack pointer in the state is outside its stack");
+			return;
+		}
+
+		ptr = storedPtr;
 	}
 
 }

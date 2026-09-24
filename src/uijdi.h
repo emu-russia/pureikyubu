@@ -57,6 +57,15 @@ namespace UI
 		void Stop();
 		void Reset();
 
+		// Save states (see wiki/savestate.md). The two calls write and read the slot files the
+		// `savestate`/`loadstate` commands work on, so the menu item and the command line do
+		// exactly the same thing; `path` and `error` come back with the file that was used and
+		// the reason a call failed, for the status bar. The machine is stopped for the duration
+		// of the call, whichever side it is made from, because a state of a machine that is
+		// running on another thread is a state of nothing.
+		bool SaveState(int slot, std::string& path, std::string& error);
+		bool LoadState(int slot, std::string& path, std::string& error);
+
 		// Debug interface
 
 		std::string DebugChannelToString(int chan);
@@ -73,6 +82,10 @@ namespace UI
 
 		bool JitcEnabled();
 
+	private:
+		// The two save state calls are one command with one answer, so they share the reading of
+		// it: the file the state went to (or came from), the verdict and the reason it failed.
+		bool StateCall(const char* request, std::string& path, std::string& error);
 	};
 
 	extern JdiClient* Jdi;

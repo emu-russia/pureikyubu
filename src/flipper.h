@@ -124,6 +124,15 @@ namespace Flipper
 		~Flipper();
 
 		/// <summary>
+		/// Write the Flipper's own bookkeeping into the save state section the caller opened. Every
+		/// block below carries a section of its own (see src/savestate.cpp); what is left here is
+		/// the anchor of the periodic work, which is a value in the emulated time base and has to
+		/// travel with it.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+		void LoadState(SaveStates::StateReader& reader);
+
+		/// <summary>
 		/// The periodic Flipper-side work (the VI scan-out and the serial interface poll).
 		/// It is driven by the CPU thread from the tick the emulated CPU advances, at the ticks
 		/// where it is due. It used to live on a thread of its own that polled the shared time base

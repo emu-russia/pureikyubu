@@ -1,6 +1,14 @@
 
 #pragma once
 
+// The save state cursors, forward declared: a header that only names them in a member signature
+// does not have to pull the whole format in (see savestate.h for the two classes).
+namespace SaveStates
+{
+	class StateWriter;
+	class StateReader;
+}
+
 // SI registers (all registers are 32-bit from the software side)
 
 #define SI_CHAN0_OUTBUF     0x00      // Channel 0 Output Buffer
@@ -199,5 +207,11 @@ namespace Flipper
 
 		//! The SI state, for the debug interface (`siregs` and the debugui2 "Serial" panel).
 		const SIState& State() const { return si; }
+
+		/// <summary>Write the block's state into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Put the block's state back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 }

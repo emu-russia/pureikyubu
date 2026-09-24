@@ -519,4 +519,73 @@ namespace Flipper
 		di.dduToHostByteCounter = 0;
 		di.hostToDduByteCounter = 32;
 	}
+
+	// ---------------------------------------------------------------------------
+	// save states
+
+	void DiskInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(di.sr, di.cvr, di.cr, di.mar, di.len);
+
+		writer.Array(di.cmdbuf);
+		writer.Array(di.immbuf);
+
+		writer.Fields(di.cfg);
+
+		writer.Array(di.dmaFifo);
+
+		// The two counters are the position inside the protocol, not statistics: the drive's
+		// callbacks walk them as the bytes move (the command buffer, then the 32-byte DMA FIFO or
+		// the four immediate bytes) and the direction decides which of the two is being walked.
+		// A transfer that the guest started completes inside the register write that starts it, so
+		// these two and the FIFO are all that is left of it to carry across a state.
+		writer.Fields(di.dduToHostByteCounter, di.hostToDduByteCounter);
+	}
+
+	void DiskInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(di.sr, di.cvr, di.cr, di.mar, di.len);
+
+		reader.Array(di.cmdbuf);
+		reader.Array(di.immbuf);
+
+		reader.Fields(di.cfg);
+
+		reader.Array(di.dmaFifo);
+		reader.Fields(di.dduToHostByteCounter, di.hostToDduByteCounter);
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// The counters are the position of the drive's byte-by-byte callbacks and only ever run
+		// from 0 to the end of the buffer they walk, so anything outside that range is a broken
+		// image rather than a machine. The host-to-DDU one has one more value worth knowing
+		// about: the write direction parks it at exactly 32 (the size of the DMA FIFO) when the
+		// command buffer has just been consumed and the FIFO has not been touched yet, and
+		// DIHostToDduCallbackData reads that as "fill the FIFO from memory first". Every value
+		// from 0 to 32 is therefore a place the protocol really does pass through, and 32 is the
+		// highest of them.
+		if (di.dduToHostByteCounter < 0 || di.dduToHostByteCounter > (int)sizeof(di.dmaFifo) ||
+			di.hostToDduByteCounter < 0 || di.hostToDduByteCounter > (int)sizeof(di.dmaFifo))
+		{
+			reader.Fail("a disk transfer counter of the save state is out of range");
+			return;
+		}
+
+		// The registers went back as data, and deliberately not through the write path: `write_cr`
+		// would see the restored TSTART and start the command again (and `write_sr` would spend the
+		// causes it is asked to restore by clearing them). What the read cannot recover is the
+		// aggregate PI line, which DIUpdateInt derives from the causes in DISR/DICVR and their
+		// masks rather than storing. The Processor Interface section is loaded before this one, so
+		// by now the PI holds the state's INTSR/INTMR and the line has to be derived from the
+		// causes that were just restored - otherwise it would still be saying what the disk
+		// interface of the machine that was running before the load had pending, and a guest
+		// waiting on a transfer-complete or a device-error interrupt would never be woken. Note
+		// also that the drive side of a transfer (the DDU's callbacks) is wired up by the
+		// constructor and is never taken down, so a state loaded while a transfer was in flight
+		// simply resumes it from the byte the counters name.
+		DIUpdateInt();
+	}
 }

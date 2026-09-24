@@ -432,6 +432,142 @@ namespace Flipper
 	}
 
 	// ---------------------------------------------------------------------------
+	// save states
+
+	// The EXI is a protocol spoken over several register writes per transaction: the guest selects
+	// a device and a direction in the channel's CSR, presents the command and the address in the
+	// immediate data register, starts the transfer in the CR and reads the answer back out of the
+	// data register. `mxaddr` and `ad16_cmd` are the two devices' own step counters and `firstImm`
+	// is the "the next immediate write is the command, not the data" flag, so all of them are part
+	// of the machine's state even though they are not registers the guest can read.
+	//
+	// The section, in the order written and read back:
+	//
+	//   for each of the three channels: CSR (16 bits), MADR (32), LEN (32), CR (16), DATA (32)
+	//   the SRAM the MX chip backs: the settings record, field by field (64 bytes)
+	//   `firstImm` (1 byte), `mxaddr` (32), `ad16` (32), `ad16_cmd` (32), `chan` (32), `sel` (32)
+	void ExternalInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The register file of the three channels. CSR carries the interrupt latches (EXTINT,
+		// TCINT, EXIINT) and their masks, which is the interrupt state of the block; CR never
+		// comes back with TSTART set, because the transfer it starts completes inside the write
+		// that starts it (see exi_write_cr), so there is no in-flight transfer to reconstruct.
+		for (int chan = 0; chan < 3; chan++)
+		{
+			const EXIRegs& regs = exi.regs[chan];
+			writer.Fields(regs.csr, regs.madr, regs.len, regs.cr, regs.data);
+		}
+
+		// The battery-backed settings record. It is guest state: the IPL's calendar and options
+		// screens write the language, the display offset and the counter bias into it, and they
+		// are read back by the guest through the same MX chip window. The block loads it from
+		// `Data/sram.bin` at construction and writes that file only when it is destroyed, so
+		// during a session the copy in the machine is the only current one - a state that left it
+		// out would show the guest the settings the emulator started with.
+		//
+		// The struct is expanded field by field (the cursor takes integers, not structs); the
+		// reserved tail travels raw, because the guest can write those bytes too.
+		writer.Fields(exi.sram.checkSum, exi.sram.checkSumInv, exi.sram.ead0, exi.sram.ead1,
+			exi.sram.counterBias, exi.sram.displayOffsetH, exi.sram.ntd, exi.sram.language,
+			exi.sram.flags);
+		writer.Raw(exi.sram.dummy, sizeof(exi.sram.dummy));
+
+		// The protocol state. `sel` is the device the last CSR write selected (-1 for none) and
+		// `chan` the channel of the last transfer, so they are what the next immediate write
+		// consults. `ad16` is the Barnacle's trace step and `ad16_cmd` the command it is in the
+		// middle of, which is exactly the kind of state split over several guest writes the
+		// section has to keep.
+		writer.Fields(exi.firstImm, exi.mxaddr, exi.ad16, exi.ad16_cmd, exi.chan, exi.sel);
+
+		// NOT part of the state:
+		//
+		// `rtcVal` is the host clock, not the machine: RTCUpdate re-derives it on every read of
+		// the RTC register (bootrtc.cpp), so saving it would only pin a value the next read
+		// replaces anyway.
+		//
+		// `uart[256]`, `upos` and `uartNE` are the OSReport text the guest prints through the MX
+		// chip's UART window and the cursor into it. The guest never reads that buffer back (a
+		// read of the UART register answers a status byte), so it is host output state: restoring
+		// it would make the block print text the user has already seen. `uartNE` is not read or
+		// written anywhere in this build at all.
+		//
+		// `ansiFont`, `sjisFont`, `bootrom`, `bootromSize` and `BootromPresent` are host pointers
+		// to images the front end loaded from files (the IPL font and the boot ROM), not machine
+		// state; the boot ROM is named by the state's own META section instead. Loading a state
+		// must not re-load or free them.
+		//
+		// The memory cards are not here either: their contents live in the device's own file and
+		// are written through immediately, and the card's protocol state belongs to the device in
+		// the peripheral pool (see MemoryCardDevice in memcard.cpp), not to the EXI block. The
+		// same goes for the channel configuration - what is plugged into a slot is a setting, and
+		// a state says nothing about it.
+		//
+		// `log` and `osReport` are settings.
+	}
+
+	void ExternalInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		for (int chan = 0; chan < 3; chan++)
+		{
+			EXIRegs& regs = exi.regs[chan];
+			reader.Fields(regs.csr, regs.madr, regs.len, regs.cr, regs.data);
+		}
+
+		reader.Fields(exi.sram.checkSum, exi.sram.checkSumInv, exi.sram.ead0, exi.sram.ead1,
+			exi.sram.counterBias, exi.sram.displayOffsetH, exi.sram.ntd, exi.sram.language,
+			exi.sram.flags);
+		reader.Raw(exi.sram.dummy, sizeof(exi.sram.dummy));
+
+		// The registers are put back as values, never through the write entries: writing a CR
+		// would start the transfer it describes, writing a CSR would re-run the device select and
+		// writing the data register would push bytes into a device. The decoded values are what
+		// the guest would have read back, so this is what the block must hold.
+		//
+		// The channel and the device select are read into locals first: a channel or a select that
+		// no code path can produce is a broken image, not a machine (`sel` is only ever set to 0,
+		// 1, 2 or -1 by exi_select, `chan` to 0..2 by exi_write_cr), and the next transfer would
+		// index the dispatch table with it.
+		int32_t chan = 0;
+		int32_t sel = -1;
+
+		reader.Fields(exi.firstImm, exi.mxaddr, exi.ad16, exi.ad16_cmd, chan, sel);
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		if (sel < -1 || sel > 2)
+		{
+			reader.Fail("the EXI device select is not one this machine has");
+			return;
+		}
+
+		if (chan < 0 || chan > 2)
+		{
+			reader.Fail("the EXI channel is not one this machine has");
+			return;
+		}
+
+		exi.chan = chan;
+		exi.sel = sel;
+
+		// The latched causes and their masks are back, so the block's own "apply" helper is run to
+		// re-derive the processor interrupt line from them. It is exactly what every CSR / CR write
+		// does at its end, and it is a pure function of the three CSR registers (see
+		// EXIUpdateInterrupts), so it restores the line the state had.
+		//
+		// It has to run here, after the registers, and it depends on the processor interface's
+		// section being already in place: the helper recomputes the *core's* pending-interrupt
+		// line from the PI's whole cause and mask registers (PIAssertInt / PIClearInt derive
+		// `Core->AssertInterrupt`), not only from the EXI bit. The state's sections are written and
+		// applied with the PI before this one, which is what makes it correct; the disk interface
+		// does the same with its DIUpdateInt. If the section order ever changes, this call has to
+		// move to the post-load refresh the caller runs once the whole machine is in.
+		EXIUpdateInterrupts();
+	}
+
+	// ---------------------------------------------------------------------------
 	// init
 
 	ExternalInterface::ExternalInterface(Flipper* flipper, HWConfig* config)

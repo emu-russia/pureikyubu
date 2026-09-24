@@ -936,6 +936,65 @@ namespace Flipper
 		readPtr = writePtr = 0;
 	}
 
+	// The decoded command stream: one 1 MB ring the parser walks between `readPtr` and `writePtr`
+	// and wraps at `fifoSize`. Only the run between the two pointers is live, but the ring wraps,
+	// so saving just that run would need a story about which of the two layouts it was in; the
+	// whole buffer goes out raw instead, which cannot be misread and costs one megabyte in a file
+	// that already holds main memory. The capacity travels with the buffer (a display list opened
+	// by CALL_DL gets its own, smaller, FifoProcessor), so the pointers can be checked against it
+	// on the way back in.
+	void FifoProcessor::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The capacity is written as 32 bits: `size_t` is not the same width on every host and
+		// the image must not depend on which build wrote it. A megabyte of command stream fits.
+		writer.U32((uint32_t)fifoSize);
+		writer.Raw(fifo, fifoSize);
+		writer.U32((uint32_t)readPtr);
+		writer.U32((uint32_t)writePtr);
+	}
+
+	void FifoProcessor::LoadState(SaveStates::StateReader& reader)
+	{
+		uint32_t capacity = reader.U32();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// A stream buffer of another size is an image this build cannot be reading: the pointers
+		// below are offsets into this build's buffer and every read of the stream is bounded by
+		// `fifoSize`. (The main stream is always the megabyte the constructor allocates, so in
+		// practice this is a check of the image, not of the machine.)
+		if (capacity != (uint32_t)fifoSize)
+		{
+			reader.Fail("the decoded command stream is a different size than this build's");
+			return;
+		}
+
+		reader.Raw(fifo, fifoSize);
+
+		uint32_t rd = reader.U32();
+		uint32_t wr = reader.U32();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// The readers wrap at `fifoSize` exactly (Read8 resets the pointer to 0 when it reaches
+		// the end, PushBytes does the same for the write side), so a pointer at or past the end
+		// cannot have come from this block, and honouring it would walk off the heap block.
+		if (rd >= fifoSize || wr >= fifoSize)
+		{
+			reader.Fail("a decoded command stream pointer is outside the stream buffer");
+			return;
+		}
+
+		readPtr = rd;
+		writePtr = wr;
+	}
+
 	void FifoProcessor::PushBytes(uint8_t dataPtr[32])
 	{
 		lock.Lock();
@@ -2623,5 +2682,161 @@ namespace Flipper
 		stats->tris = tris;
 		stats->points = pts;
 		stats->lines = lines;
+	}
+
+	// ---------------------------------------------------------------------------
+	// save states
+
+	// What the CP carries into a state is only what the CP decided itself: the mapped host
+	// registers (the ring's base / top and its two pointers, the water marks, the break point, the
+	// enable register, the status flags and the XF read-back latch), the register file the
+	// LOAD_CPREG commands build (VCD / VAT and the attribute arrays), the bypass write-mask latch,
+	// the FIFO drain anchor and the decoded command stream the reader has pulled out of the ring.
+	//
+	// The command *ring* is not here: it lives in main memory, which travels with the MEM section,
+	// and only the two pointers into it belong to the CP. Nor is any of the graphics state the
+	// commands produced. A CP command that loads an XF register block, writes a bypass register or
+	// draws pushes the effect *through* into the graphics blocks (BpRegWrite -> XF::CPSuCommand,
+	// CPRegLoadBegin / CPRegLoadData, CPDrawBegin / CPVertex / CPDrawEnd) and keeps no copy of it;
+	// every one of those completes inside the command that starts it, on the CPU thread. What the
+	// pipeline holds afterwards belongs to those blocks and is restored by their own sections, so
+	// this pair never has to replay a command and the boundary is consistent after a load simply
+	// because the CP's half of it is exactly the values written here.
+	//
+	// The one boundary value that is latched and must travel is `cpregs.xfData` together with the
+	// `cpregs.xfAddr` that produced it: the CP -> XF read-back path leaves the XF register's value
+	// in CP_XF_DATAL / CP_XF_DATAH for the guest to read long after the read was made. The XF's own
+	// half of that handshake - the read word waiting to be taken - is quiescent at every save
+	// point, because XFSync drains it before and after every register read (ReadXFReg) and before
+	// every push, so there is never an unread word to reconstruct.
+	//
+	// There is also no half-parsed command to reconstruct. The parser is driven from the CPU
+	// thread (Flipper::Update -> DrainFifo -> ExecuteFifo), so a state is only ever taken between
+	// two of its calls, and between two calls the read pointer sits on a command boundary: a
+	// command is started only when every byte of it is already in the stream (EnoughToExecute) and
+	// runs to completion inside one GxCommand call - a draw's vertex loop, a CALL_DL walk and a
+	// block register load are stack locals of that call. What the stream may hold is a *partial*
+	// command whose remaining bytes are still on their way in the ring, and that is exactly what
+	// the buffer, its read pointer and its write pointer carry across the state.
+	void CommandProcessor::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The mapped registers, in the order the struct declares them. `base`, `top`, `lomark`,
+		// `himark`, `cnt`, `wrptr`, `rdptr` and `bpptr` are unions of two 16-bit halves and one
+		// 32-bit view; the 32-bit view is the value the fetch and the guest reads use, and it is
+		// the same storage as the halves.
+		writer.Fields(cpregs.sr, cpregs.cr, cpregs.base, cpregs.top, cpregs.lomark, cpregs.himark,
+			cpregs.cnt, cpregs.wrptr, cpregs.rdptr, cpregs.bpptr, cpregs.xfAddr, cpregs.xfData);
+
+		// The CP's own register file, the one the LOAD_CPREG commands write. Each register is a
+		// union of a bitfield view and `bits`, and `bits` is the whole register; a struct or a
+		// union never goes to a cursor by itself.
+		writer.Fields(cp.matIndexA.bits, cp.matIndexB.bits, cp.vcdLo.bits, cp.vcdHi.bits);
+
+		for (size_t i = 0; i < 8; i++)
+		{
+			writer.Fields(cp.vatA[i].bits, cp.vatB[i].bits, cp.vatC[i].bits);
+		}
+
+		for (size_t i = 0; i < (size_t)ArrayId::Max; i++)
+		{
+			writer.Fields(cp.arrayBase[i].bits, cp.arrayStride[i].bits);
+		}
+
+		// The bypass write mask. Register 0xFE limits which bits of the *next* bypass register
+		// write are updated and is consumed by that write (GDTev.h SS_MASK), so at an instruction
+		// boundary the latch can genuinely be open - a guest instruction boundary can fall between
+		// the two FIFO commands - and the first BP write after the load has to see it. It is CP
+		// state, not graphics state: the block that owns the target register only ever sees the
+		// mask that travels with the write.
+		writer.Fields(bpWriteMask, bpWriteMaskPending);
+
+		// The FIFO drain anchor. The emulated CP consumes one FIFO entry per `tickPerFifo` ticks
+		// and works out what it owes from the time since this anchor (DrainFifo), so the anchor is
+		// what keeps the reader's rate continuous across the load. It is an absolute tick and the
+		// time base is part of the same state, so it travels verbatim.
+		writer.U64((uint64_t)lastDrainTick);
+
+		// The decoded command stream: what the reader has pulled out of the ring and the parser
+		// has not reached yet.
+		fifo->SaveState(writer);
+
+		// NOT part of the state:
+		//
+		// `tickPerFifo` is the CP's emulated speed, a constant of the machine (100 ticks per FIFO
+		// entry, set once in the constructor), and `tris` / `pts` / `lines` / `cpLoads` / `xfLoads`
+		// / `bpLoads` are frame counters that ResetFrameStats clears at every frame end - profiler
+		// numbers, not machine state.
+		//
+		// `logOpcode`, `logDrawCommands` and `GpRegsLog` are settings, `fifoLock` guards the walk
+		// between the threads that drive it, and `fifo` is the object that owns the buffer above.
+	}
+
+	void CommandProcessor::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(cpregs.sr, cpregs.cr, cpregs.base, cpregs.top, cpregs.lomark, cpregs.himark,
+			cpregs.cnt, cpregs.wrptr, cpregs.rdptr, cpregs.bpptr, cpregs.xfAddr, cpregs.xfData);
+
+		reader.Fields(cp.matIndexA.bits, cp.matIndexB.bits, cp.vcdLo.bits, cp.vcdHi.bits);
+
+		for (size_t i = 0; i < 8; i++)
+		{
+			reader.Fields(cp.vatA[i].bits, cp.vatB[i].bits, cp.vatC[i].bits);
+		}
+
+		for (size_t i = 0; i < (size_t)ArrayId::Max; i++)
+		{
+			reader.Fields(cp.arrayBase[i].bits, cp.arrayStride[i].bits);
+		}
+
+		// The mask and the anchor are read into locals: nothing is written into the machine until
+		// the values are known to be ones this block can have produced.
+		uint32_t mask = 0;
+		bool maskPending = false;
+
+		reader.Fields(mask, maskPending);
+
+		uint64_t tick = reader.U64();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// The mask register holds 24 bits (BpRegWrite), and nothing else writes the latch, so a
+		// wider value cannot have come from this machine. The block that owns the target register
+		// merges its value with the mask, so a wild one would corrupt a register instead of being
+		// caught downstream.
+		if (mask > 0xFFFFFF)
+		{
+			reader.Fail("the bypass write mask is wider than the register it masks");
+			return;
+		}
+
+		bpWriteMask = mask;
+		bpWriteMaskPending = maskPending;
+		lastDrainTick = (int64_t)tick;
+
+		fifo->LoadState(reader);
+
+		// Nothing is replayed through a register write on the way in: the mapped registers are put
+		// back as values, so a write to CP_ENABLE does not run its break-point status logic, the
+		// ring's base / top / pointers do not look like a repoint of the FIFO to the reader, and
+		// CP_XF_ADDR does not start an XF register read (which would consume the XF's read-back
+		// handshake and overwrite `cpregs.xfData`). The two idle bits of `sr` (RD_IDLE / CMD_IDLE)
+		// are derived state: UpdateReaderStatus recomputes them on the next read of CP_STATUS, so
+		// the stored ones are harmless.
+		//
+		// The CP interrupt line is deliberately left alone. The PI's cause register is restored by
+		// the processor interface's own section, and this block's copy of the CP cause is not a
+		// function of its flags: disabling an enable bit after its flag was raised leaves the PI
+		// bit asserted (CpWriteReg on CP_ENABLE only clears the line when every flag is clear), so
+		// recomputing it here could clear an interrupt the state says was pending.
+		//
+		// What the orchestrator must not do after this call: re-run or replay any FIFO command to
+		// rebuild the graphics state. The effects of the commands the guest already ran live in the
+		// graphics blocks and are restored by their own sections; replaying them would draw twice,
+		// and re-latching an XF register read would overwrite `cpregs.xfData` with something the
+		// guest never asked for. If a graphics block refreshes derived state on its own load, it
+		// must do it without pushing anything through the CP's write path.
 	}
 }

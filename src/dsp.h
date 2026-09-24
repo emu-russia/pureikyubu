@@ -246,6 +246,31 @@ namespace DSP
 
 		void DumpIfx();
 
+		// Save state
+		//
+		// The DSP section of a save state is the whole DSP machine: this block (its running flag,
+		// its two mailboxes with the snapshots that make a half-read message impossible, and its
+		// DSP-DMA registers), the accelerator and its ADPCM/IIR history, the DSP-side AI DMA, the
+		// ARAM controller with the ARAM itself, and the DSP core underneath (its four memories,
+		// its register file and its stacks).
+		//
+		// Every member below is either a plain value or a small value aggregate that is expanded
+		// field by field - a state never carries a pointer, a lock or a host-side flag. The two
+		// SpinLocks of the mailboxes stay out on purpose: they are host synchronisation, and the
+		// machine is stopped while a state is written or read, so the mutex they protect cannot
+		// be held in any interesting way.
+		//
+		// Loading a state also means *invalidating the DSP recompiler*, because a compiled block
+		// has the instruction words it was built from baked into its code arena: without the
+		// invalidation the core would keep executing the microcode of the state that was just
+		// replaced (DspCore::LoadState does it, see dspcore.cpp).
+
+		/// <summary>Write the DSP machine into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Put the DSP machine back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
+
 #pragma region "Flipper interface"
 
 		// CDCR bits

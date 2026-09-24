@@ -871,6 +871,82 @@ static Json::Value* CmdReset(std::vector<std::string>& args)
 	return nullptr;
 }
 
+// Save states.
+//
+// The three commands are the debug interface's half of the feature whose other half is the File
+// menu (see wiki/savestate.md): they write and read the very same slot files the menu does, and
+// they answer Markdown, which is what the debugger shows a command's answer in. The work itself -
+// the format, the sections and the reports - is `src/savestate.cpp`.
+
+// The slot a command asked for, clamped into the range the front end offers.
+static int StateSlot(std::vector<std::string>& args)
+{
+	int slot = (args.size() > 1) ? atoi(args[1].c_str()) : 0;
+
+	return SaveStates::ClampSlot(slot);
+}
+
+static Json::Value* MarkdownAnswer(const std::string& markdown, const char* command)
+{
+	// An empty report is the blocks' way of saying that there is nothing to report on: the
+	// emulator has no machine loaded, so a state of one cannot be written or read.
+	if (markdown.empty())
+	{
+		Report(Channel::Norm, "%s: nothing is running\n", command);
+		return nullptr;
+	}
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Object;
+	output->AddUtf8String("markdown", markdown.c_str());
+	return output;
+}
+
+// The same answer with the fields a caller that does not want to read the report can use: the
+// emulator's own front end takes the file and the verdict from here (see uisdl.cpp), and a client
+// of the debug interface can do the same instead of parsing the Markdown.
+static Json::Value* StateAnswer(const SaveStates::StateResult& result, const char* command)
+{
+	if (result.markdown.empty())
+	{
+		Report(Channel::Norm, "%s: nothing is running\n", command);
+		return nullptr;
+	}
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Object;
+	output->AddUtf8String("markdown", result.markdown.c_str());
+	output->AddUtf8String("file", result.path.c_str());
+	output->AddInt("slot", result.slot);
+	output->AddBool("result", result.ok);
+
+	if (!result.ok)
+	{
+		output->AddUtf8String("error", result.error.c_str());
+	}
+	else if (result.size >= 0)
+	{
+		output->AddInt("size", (int)result.size);
+	}
+
+	return output;
+}
+
+static Json::Value* CmdSaveState(std::vector<std::string>& args)
+{
+	return StateAnswer(SaveStates::SaveToSlot(StateSlot(args)), "savestate");
+}
+
+static Json::Value* CmdLoadState(std::vector<std::string>& args)
+{
+	return StateAnswer(SaveStates::LoadFromSlot(StateSlot(args)), "loadstate");
+}
+
+static Json::Value* CmdStates(std::vector<std::string>& args)
+{
+	return MarkdownAnswer(SaveStates::SlotsReport(), "states");
+}
+
 // Return true if emulation state is `Loaded`
 static Json::Value* CmdIsLoadedInternal(std::vector<std::string>& args)
 {
@@ -1043,6 +1119,9 @@ void EmuReflector()
 	JDI::Hub.AddCmd("load", CmdLoad);
 	JDI::Hub.AddCmd("unload", CmdUnload);
 	JDI::Hub.AddCmd("reset", CmdReset);
+	JDI::Hub.AddCmd("savestate", CmdSaveState);
+	JDI::Hub.AddCmd("loadstate", CmdLoadState);
+	JDI::Hub.AddCmd("states", CmdStates);
 	JDI::Hub.AddCmd("IsLoaded", CmdIsLoadedInternal);
 	JDI::Hub.AddCmd("GetLoaded", CmdGetLoadedInternal);
 	JDI::Hub.AddCmd("GetVersion", CmdGetVersionInternal);

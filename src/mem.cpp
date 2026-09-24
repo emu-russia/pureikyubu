@@ -237,6 +237,131 @@ namespace Flipper
 		}
 	}
 
+	// ---------------------------------------------------------------------------
+	// save states
+
+	// One access counter. A counter is a pair of 16-bit register halves the guest writes one at a
+	// time (MEM_CP_COUNTERH / MEM_CP_COUNTERL and the seven pairs after them), which is why the
+	// state of the block has it as a union - and it is the union's 32-bit view that travels: the
+	// two halves are one counter, and reading them back separately would let a truncated image
+	// leave the halves of different counters in place.
+	static void MEMCounterState(SaveStates::StateWriter& writer, const MEMCounter& counter)
+	{
+		writer.U32(counter.cnt);
+	}
+
+	static void MEMCounterState(SaveStates::StateReader& reader, MEMCounter& counter)
+	{
+		counter.cnt = reader.U32();
+	}
+
+	void MemoryInterface::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// Main memory is the biggest part of a state by an order of magnitude, so the first field
+		// says how much of it follows: the loader needs the length to refuse a state taken from a
+		// console with another memory configuration (24 MB against 48 MB) *before* it copies any
+		// of it, and the section would otherwise be an unreadable run of bytes.
+		writer.U64((uint64_t)mi.ramSize);
+		writer.Raw(mi.ram, mi.ramSize);
+
+		writer.Array(mi.marr_start);
+		writer.Array(mi.marr_end);
+
+		// The three register types of the block are unions over their own bits: what travels is
+		// the 32-bit image the guest reads and writes, not the bitfield members, because that is
+		// the form the register file has and the form every write path stores.
+		writer.Fields(mi.marr_control.bits, mi.int_enable.bits, mi.int_status.bits);
+
+		MEMCounterState(writer, mi.cp_counter);
+		MEMCounterState(writer, mi.tc_counter);
+		MEMCounterState(writer, mi.pi_read_counter);
+		MEMCounterState(writer, mi.pi_write_counter);
+		MEMCounterState(writer, mi.dsp_counter);
+		MEMCounterState(writer, mi.io_counter);
+		MEMCounterState(writer, mi.vi_counter);
+		MEMCounterState(writer, mi.pe_counter);
+	}
+
+	void MemoryInterface::LoadState(SaveStates::StateReader& reader)
+	{
+		uint64_t ramSize = reader.U64();
+
+		// Let us explain why it is a question of "which console wrote this state" and not of a
+		// broken image: the GameCube was built with either 24 MB or 48 MB of 1T-SRAM, the
+		// MemoryInterface is handed the size of the console it belongs to, and a state carries the
+		// contents of exactly that memory, from address 0 to the top. A state of the other
+		// configuration holds a differently sized memory *and* a machine that was running with it,
+		// so it is not a state this console can be put into; the section is refused as a whole.
+		//
+		// The memory of such a state is *stepped over* rather than copied: `Raw` with no
+		// destination consumes the bytes (or refuses them when the image ends first, which is just
+		// as well) and leaves this machine's memory as it was, so a refusal never half-applies the
+		// section it refuses. The reason is latched before the bytes are consumed, because the
+		// reader keeps the *first* failure and the one the user needs to read is "another console",
+		// not whatever the wrong-sized block did to the walk of the section.
+		if (ramSize == (uint64_t)mi.ramSize)
+		{
+			reader.Raw(mi.ram, mi.ramSize);
+		}
+		else
+		{
+			reader.Fail("the save state was taken on a console with another amount of main memory");
+
+			// The length is arbitrary here, so a value the host cannot even represent is walked as
+			// far as the image goes and refused there rather than wrapped around to a short block.
+			reader.Raw(nullptr, ramSize <= (uint64_t)SIZE_MAX ? (size_t)ramSize : SIZE_MAX);
+		}
+
+		reader.Array(mi.marr_start);
+		reader.Array(mi.marr_end);
+		reader.Fields(mi.marr_control.bits, mi.int_enable.bits, mi.int_status.bits);
+
+		MEMCounterState(reader, mi.cp_counter);
+		MEMCounterState(reader, mi.tc_counter);
+		MEMCounterState(reader, mi.pi_read_counter);
+		MEMCounterState(reader, mi.pi_write_counter);
+		MEMCounterState(reader, mi.dsp_counter);
+		MEMCounterState(reader, mi.io_counter);
+		MEMCounterState(reader, mi.vi_counter);
+		MEMCounterState(reader, mi.pe_counter);
+
+		// The counters are kept as well, because the rest of the load still has to run: the
+		// sections after this one translate addresses of their own (the video interface recomputes
+		// its XFB pointer) and those translations count. The caller puts the state's values back
+		// when the last section has been applied.
+		loadedCounters[0] = mi.cp_counter;
+		loadedCounters[1] = mi.tc_counter;
+		loadedCounters[2] = mi.pi_read_counter;
+		loadedCounters[3] = mi.pi_write_counter;
+		loadedCounters[4] = mi.dsp_counter;
+		loadedCounters[5] = mi.io_counter;
+		loadedCounters[6] = mi.vi_counter;
+		loadedCounters[7] = mi.pe_counter;
+		countersPending = true;
+	}
+
+	// The eight counters, in the order the section carries them. This is the other half of the
+	// comment in `LoadState`: what the load counted on its own way through the sections is thrown
+	// away, and the machine gets the counters the state describes.
+	void MemoryInterface::RefreshAfterLoad()
+	{
+		if (!countersPending)
+		{
+			return;
+		}
+
+		countersPending = false;
+
+		mi.cp_counter = loadedCounters[0];
+		mi.tc_counter = loadedCounters[1];
+		mi.pi_read_counter = loadedCounters[2];
+		mi.pi_write_counter = loadedCounters[3];
+		mi.dsp_counter = loadedCounters[4];
+		mi.io_counter = loadedCounters[5];
+		mi.vi_counter = loadedCounters[6];
+		mi.pe_counter = loadedCounters[7];
+	}
+
 	// The counters are not emulated accurately, but this is not required.
 
 	void* MemoryInterface::MIGetMemoryPointerForPI(uint32_t phys_addr)

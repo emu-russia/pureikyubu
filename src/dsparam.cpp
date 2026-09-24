@@ -515,6 +515,44 @@ void DSPUpdateInt()
 	static void am_read_amnf(uint32_t addr, uint32_t* reg, void* ctx) { *reg = 1; }
 
 	// ---------------------------------------------------------------------------
+	// Save state
+
+	// The ARAM controller: the four words of the DMA window, the two configuration bits the
+	// driver can read back, and the whole 16 MB buffer. `mem` is a host pointer and is not
+	// written - the bytes behind it are, which is the point of the ARAM being a real part of the
+	// machine rather than a window onto main memory (`log` is a host switch and stays out too).
+	//
+	// The length of the buffer travels in front of it and is checked before anything is read
+	// into it. A state whose ARAM block is not exactly ARAMSIZE bytes cannot have come from this
+	// machine, and reading a shorter or longer one into the buffer would either leave the tail of
+	// the previous machine's ARAM in place or run off the end of the allocation.
+	//
+	// The order is the order the members are declared in, so the two sides cannot drift apart:
+	// mmaddr, araddr, cnt, masked, amcr, then the buffer.
+
+	void ARControl::SaveState(SaveStates::StateWriter& writer) const
+	{
+		writer.Fields(mmaddr, araddr, cnt, masked, amcr);
+		writer.U32((uint32_t)ARAMSIZE);
+		writer.Raw(mem, (size_t)ARAMSIZE);
+	}
+
+	void ARControl::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Fields(mmaddr, araddr, cnt, masked, amcr);
+
+		uint32_t size = reader.U32();
+
+		if (size != (uint32_t)ARAMSIZE)
+		{
+			reader.Fail("the ARAM block of the state is not 16 MB");
+			return;
+		}
+
+		reader.Raw(mem, (size_t)ARAMSIZE);
+	}
+
+	// ---------------------------------------------------------------------------
 	// init
 
 	void AROpen(Flipper::Flipper* flipper)

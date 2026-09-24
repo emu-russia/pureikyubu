@@ -899,7 +899,7 @@ namespace Gekko
 
 		invalidBlocks = new bool[cacheSize >> 5];
 
-		LockedCache = new uint8_t[16 * 1024];
+		LockedCache = new uint8_t[LockedCacheSize];
 
 		Reset();
 	}
@@ -1038,6 +1038,55 @@ namespace Gekko
 			modifiedBlocks[n] = false;
 			invalidBlocks[n] = true;
 		}
+	}
+
+	// Write the cache back and throw it away: after this the whole of the data cache is invalid
+	// (so every line is refilled from main memory on its next use) and main memory holds every
+	// value the emulated cache ever held.
+	//
+	// This is what makes it possible for a save state to leave the 24 MB of cache data out. The
+	// argument is the dirty bit: a line that is *dirty* is the only place a value written by the
+	// guest can live, because a store marks its line dirty (WriteByte and the other write entries
+	// end in SetDirty, and Zero does the same), so casting the dirty lines out copies every one of
+	// those values back to memory. A line that is *clean* and valid is by construction a copy of
+	// what main memory already holds: it was either cast in from memory (Touch/TouchForStore/
+	// ReadWord), which copies memory and clears the dirty bit, or written through to memory
+	// (GekkoCore::WriteWord/WriteByte/... check WIMG[W] and hand the store to the PI as well as to
+	// the cache), which leaves both copies equal. Zero() is the one path that makes a line dirty
+	// without reading it, and it is therefore covered by the cast-out rather than lost. Dropping a
+	// clean line loses nothing, and the state does not have to carry tens of megabytes of data
+	// that a guest could not tell apart from what MEM already holds.
+	//
+	// The flush runs through Flush() rather than CastOut() so that it cannot resurrect a block
+	// that is dirty and invalid at the same time: only dirty *valid* lines are written, exactly
+	// like the per-line cache management instructions do it.
+	//
+	// One honest caveat about a *frozen* cache (HID0[DLOCK]): CastOut refuses to write while
+	// `frozen` is set, so a truly dirty line of a frozen data cache is not written back here. The
+	// emulator treats a frozen cache as storage the bus cannot reach, which is what freeze means
+	// (CastIn does not fill it either), and the loaded state restores the same frozen flag, so the
+	// line is not lost - it simply stays where it was, and it is the emulator's own model of DLOCK
+	// rather than this flush that is approximate.
+	void Cache::FlushAll()
+	{
+		size_t blocks = cacheSize >> 5;
+
+		for (size_t block = 0; block < blocks; block++)
+		{
+			uint32_t pa = (uint32_t)(block << 5);
+
+			if (IsDirty(pa) && !IsInvalid(pa))
+			{
+				Flush(pa);
+			}
+		}
+
+		// FlashInvalidate also drops the compiled blocks, which is right here: a recompiled block
+		// was translated against the address translation and the instruction bytes the guest had
+		// at the time, and after a load state both of those may be different (the JIT is
+		// invalidated again by GekkoCore::LoadState, but the save side must not leave it pointing
+		// at blocks it compiled for a machine that no longer exists).
+		FlashInvalidate();
 	}
 
 	void Cache::Store(uint32_t pa)
@@ -1687,6 +1736,45 @@ namespace Gekko
 		// block behind, so with the hardware-accurate "any byte" answer the wait never ends.
 		return GatherSize() >= (sizeof(fifo) / 2);
 	}
+
+	// The write gather buffer is machine state, not a host buffer: WPAR[BNE] is a register the
+	// guest polls, and the bytes the CPU has already pushed but not yet delivered to the CP are
+	// the difference between a command stream that continues after the load and one that starts
+	// with half a command. The FIFO is written whole (the holes in it are bytes of a block that
+	// has not been completed yet, and the guest can still make them part of a delivered block by
+	// padding), followed by the two cursors. The `log` flag stays out: it is a host reporting
+	// option, like the cache's own log level.
+	void GatherBuffer::SaveState(SaveStates::StateWriter& writer)
+	{
+		writer.Raw(fifo, sizeof(fifo));
+		writer.U32((uint32_t)readPtr);
+		writer.U32((uint32_t)writePtr);
+	}
+
+	void GatherBuffer::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Raw(fifo, sizeof(fifo));
+
+		uint32_t read = reader.U32();
+		uint32_t write = reader.U32();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// Both cursors index the FIFO, so a value that is not inside it cannot have come from this
+		// machine. The failure is latched rather than clamped: the caller refuses the whole state,
+		// and a wrong cursor never becomes a machine.
+		if (read >= sizeof(fifo) || write >= sizeof(fifo))
+		{
+			reader.Fail("the write gather buffer cursors are outside the FIFO");
+			return;
+		}
+
+		readPtr = read;
+		writePtr = write;
+	}
 }
 
 
@@ -2188,4 +2276,283 @@ namespace Gekko
 		}
 	}
 
+}
+
+
+// Save states: the processor half (the "CPU " section).
+//
+// The caller opens the section, calls this pair, and closes it; the section tag and the file
+// around it belong to the top-level orchestrator (see savestate.h / savestate.cpp). Both
+// functions write and read the same fields in the same order at the same widths - there is one
+// fixed layout and no versioning inside it, so a state written by a build whose layout differs is
+// refused by the section's own length check when the reader closes it.
+//
+// What is in the section, and why each part of it is:
+//
+//   * the architectural register file - the 32 GPRs, the 64 bits of each FPR (the register is
+//     physical storage and the paired-single halves are *views* of it, not separate registers, so
+//     one u64 per register carries everything), the 1024 SPRs, the 16 segment registers, CR, MSR,
+//     FPSCR, PC and the 64-bit time base;
+//   * the three latched requests (decreq, intFlag, exception) - they are sticky between
+//     instructions, so a decrementer underflow or an external interrupt line that arrived while
+//     MSR[EE] was clear would be lost if it were recomputed from the registers;
+//   * the lwarx/stwcx reservation (RESERVE and the address it was taken on) - a state taken in the
+//     middle of a locked sequence has to keep it, or the stwcx that follows would clear a
+//     reservation the guest still owns;
+//   * PrCause, the reason the last PROGRAM exception was taken, for the same reason: the handler
+//     has not read SRR1 yet when the state is taken;
+//   * the write gather buffer - guest-visible through WPAR[BNE], and a partial 32-byte block can
+//     be waiting in it;
+//   * the locked L1 data cache and the address of its window - it is scratch-pad storage that is
+//     deliberately NOT coherent with main memory, so unlike the ordinary caches it cannot be
+//     reconstructed by flushing and refilling.
+//
+// What is deliberately not in the section:
+//
+//   * the 24 MB of ordinary data cache data and the 24 MB of instruction cache data: they are
+//     copies of main memory and are written back and dropped by SaveState before anything is
+//     stored (see Cache::FlushAll, which carries the argument);
+//   * the `modifiedBlocks` / `invalidBlocks` arrays for the same reason - they describe those
+//     copies, and after the flush every block is clean and invalid;
+//   * the translation caches dtlb/itlb: they are a cache of the page-table walk, they refill on a
+//     miss, and even their `changed` bit is recoverable by taking the walk again (see
+//     EffectiveToPhysical, which is what makes a store to a page whose PTE Changed bit has not
+//     been set through this entry take the walk);
+//   * htabOrg/htabEnd (a pure function of SDR1), the BAT pointers dbatu/dbatl/ibatu/ibatl (they
+//     point into regs.spr), and the cache enable flags (a pure function of HID0 and HID2): all of
+//     them are derived on load instead of stored;
+//   * MmuLastResult: it is read immediately after a translation, by the exception entry of the
+//     instruction that caused it, and a load state is not taken between those two points;
+//   * the JIT (interp/jit/gekkoThread are host objects; the compiled blocks are thrown away and
+//     retranslated);
+//   * everything the debugger and the profiler own - the breakpoint lists, breakPointsLock,
+//     oneShotBreakpoint, the break_on_* switches, the trace_* switches, EnableTest*, opcodeStats
+//     and `ops`;
+//   * the host's own switches (suspended, resetInstructionCounter, JitEnabled,
+//     trace_locked_dma_regs), the constants and statistics (one_second, the CpuStats counters, the
+//     cycle profiling flag, the cache log levels), and the scratch registers used by instructions.
+
+namespace Gekko
+{
+	namespace
+	{
+		// The cursors read an enum as the integer of its width, so a loaded value has to be checked
+		// against the enumeration it belongs to before it becomes machine state.
+		bool IsPrivilegedCause(uint32_t value)
+		{
+			switch ((PrivilegedCause)value)
+			{
+			case PrivilegedCause::None:
+			case PrivilegedCause::FpuEnabled:
+			case PrivilegedCause::IllegalInstruction:
+			case PrivilegedCause::Privileged:
+			case PrivilegedCause::Trap:
+				return true;
+			default:
+				return false;
+			}
+		}
+
+		// A floating-point register is physical 64-bit storage: fr1 (the paired-single second
+		// half) is a *view* of it, not a register of its own, so one u64 per register carries all
+		// of fpr/ps0/ps1. FPREG is a union with no value mapping, so the cursors cannot take it as
+		// a field - a struct or a union is never written as a block of bytes - and the 64 bits go
+		// out as the .uval member. These two loops are the only places the save state has to touch
+		// the register file: everything else in it is a plain integer array.
+		void WriteFprs(SaveStates::StateWriter& writer, const FPREG(&fpr)[32])
+		{
+			for (int i = 0; i < 32; i++)
+			{
+				writer.Fields(fpr[i].uval);
+			}
+		}
+
+		void ReadFprs(SaveStates::StateReader& reader, FPREG(&fpr)[32])
+		{
+			for (int i = 0; i < 32; i++)
+			{
+				reader.Fields(fpr[i].uval);
+			}
+		}
+	}
+
+	void GekkoCore::SaveState(SaveStates::StateWriter& writer)
+	{
+		// Main memory has to become the whole truth before a single field is written: the data
+		// cache holds values the guest stored that main memory does not have yet, and the MEM
+		// section of this state is written from main memory. The flush writes those lines back
+		// through the PI (a real bus write, not a memcpy) and then drops the whole cache, so
+		// nothing that lived only in the cache can be lost.
+		//
+		// The instruction cache is flushed the same way. It should never hold a dirty line,
+		// because the emulator only ever writes into the *data* cache - Cache::Store and the write
+		// entries are called on core->cache only, and the instruction cache is only ever read
+		// through Fetch and touched by Enable/Invalidate/FlashInvalidate (see the HID0 and icbi
+		// paths in gekkoc.cpp). Flushing it anyway means the answer to "is the cache empty?" does
+		// not depend on that argument staying true.
+
+		cache->FlushAll();
+		icache->FlushAll();
+
+		// The register file, in the order the design fixes it. The time base goes out as the whole
+		// 64-bit counter rather than as its two halves: TBL and TBU are views of it.
+		writer.Array(regs.gpr);
+		WriteFprs(writer, regs.fpr);
+		WriteFprs(writer, regs.ps1);
+		writer.Array(regs.spr);
+		writer.Array(regs.sr);
+		writer.Fields(regs.cr, regs.msr, regs.fpscr, regs.pc, regs.tb.uval);
+
+		// The latches. decreq, intFlag and exception are volatile bools set from the decrementer
+		// underflow in Tick, from the interrupt line and by the exception entry; they are sticky
+		// between instructions, so a state taken while MSR[EE] is clear has to carry them rather
+		// than recompute them. RESERVE and RESERVE_ADDR are the lwarx/stwcx reservation, which a
+		// state taken in the middle of a locked sequence has to keep. PrCause is the reason the
+		// last PROGRAM exception was taken: the handler has not read SRR1 yet at this point, so
+		// the reason cannot be recovered from the register file.
+		writer.Fields(decreq, intFlag, exception, RESERVE, RESERVE_ADDR, PrCause);
+
+		// The tick at which the Flipper-side periodic work is next due. It looks derived - SyncFlipper
+		// arms it as "now plus one Flipper tick" - but it is a latch, not a function of the clock:
+		// the time base has advanced since it was armed, so recomputing it from the restored clock
+		// would push the next scan-out, serial poll and device step up to a Flipper tick
+		// (`FlipperTickStep`, 100 ticks) later than the run the state was taken from. The device
+		// work is what raises the interrupts the guest sees, so a shifted deadline is a machine that
+		// continues differently - the resumed run and the run that never stopped have to deliver
+		// those interrupts on the same tick.
+		writer.Fields(flipperDeadline);
+
+		gatherBuffer->SaveState(writer);
+
+		// What is left of the caches that is not a copy of main memory: the locked L1 data cache,
+		// which is scratch-pad storage the guest fills with dcbz_l and locked-cache DMA and then
+		// reads and writes without any of it reaching memory. The instruction cache has a
+		// LockedCache member of the same shape, but nothing ever puts anything in it - LockedEnable
+		// is called on the data cache only (mtspr HID2 in gekkoc.cpp) - so it is dead storage and
+		// not part of the machine. LockedCacheAddr is the 16 KB-aligned window that storage is
+		// mapped at. The locked cache's own enable flag is not written either: it follows HID2[LCE]
+		// in the restored register file.
+		writer.Raw(cache->LockedCache, Cache::LockedCacheSize);
+		writer.Fields(cache->LockedCacheAddr);
+	}
+
+	void GekkoCore::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Array(regs.gpr);
+		ReadFprs(reader, regs.fpr);
+		ReadFprs(reader, regs.ps1);
+		reader.Array(regs.spr);
+		reader.Array(regs.sr);
+		reader.Fields(regs.cr, regs.msr, regs.fpscr, regs.pc, regs.tb.uval);
+
+		// An enum travels as the integer of its width, so it is read into an integer here and
+		// checked before it is assigned: a bit pattern that is not one of the five causes cannot
+		// have come from this machine, and latching the failure makes the caller refuse the whole
+		// state rather than hand a handler a cause no exception entry understands.
+		uint32_t cause = 0;
+		reader.Fields(decreq, intFlag, exception, RESERVE, RESERVE_ADDR, cause);
+
+		if (!reader.Failed() && !IsPrivilegedCause(cause))
+		{
+			reader.Fail("the save state names a PROGRAM exception cause this build does not know");
+		}
+
+		PrCause = (PrivilegedCause)cause;
+
+		// The deadline of the Flipper work is read back with the latches above, for the reason the
+		// save side gives: it is a latch of the run, not a function of the restored clock.
+		reader.Fields(flipperDeadline);
+
+		gatherBuffer->LoadState(reader);
+
+		reader.Raw(cache->LockedCache, Cache::LockedCacheSize);
+
+		uint32_t lockedCacheAddr = reader.U32();
+
+		if (reader.Failed())
+		{
+			return;
+		}
+
+		// The locked cache window is 16 KB and the register that names it is masked to a 16 KB
+		// boundary (GEKKO_DMAL_LC_ADDR), so an address that does not sit on that boundary cannot
+		// have come from this machine. The window is put back even when HID2[LCE] is clear: the
+		// flag is derived below, and the guest may enable the window later without reloading it.
+		if ((lockedCacheAddr & 0x3fff) != 0)
+		{
+			reader.Fail("the save state has a locked cache address that is not 16 KB aligned");
+			return;
+		}
+
+		cache->LockedCacheAddr = lockedCacheAddr;
+
+		// Everything below is derived from what was just restored, in the order the machine itself
+		// builds it.
+
+		// The hashed page table window is a function of SDR1 (UpdateHtabRange is what
+		// FlushTlbOnPteWrite consults), and the BAT pointers are positions inside the register
+		// file - pointers are never serialized, they are re-seated here the way Reset seats them.
+		UpdateHtabRange();
+
+		dbatu[0] = &regs.spr[SPR::DBAT0U];
+		dbatu[1] = &regs.spr[SPR::DBAT1U];
+		dbatu[2] = &regs.spr[SPR::DBAT2U];
+		dbatu[3] = &regs.spr[SPR::DBAT3U];
+
+		dbatl[0] = &regs.spr[SPR::DBAT0L];
+		dbatl[1] = &regs.spr[SPR::DBAT1L];
+		dbatl[2] = &regs.spr[SPR::DBAT2L];
+		dbatl[3] = &regs.spr[SPR::DBAT3L];
+
+		ibatu[0] = &regs.spr[SPR::IBAT0U];
+		ibatu[1] = &regs.spr[SPR::IBAT1U];
+		ibatu[2] = &regs.spr[SPR::IBAT2U];
+		ibatu[3] = &regs.spr[SPR::IBAT3U];
+
+		ibatl[0] = &regs.spr[SPR::IBAT0L];
+		ibatl[1] = &regs.spr[SPR::IBAT1L];
+		ibatl[2] = &regs.spr[SPR::IBAT2L];
+		ibatl[3] = &regs.spr[SPR::IBAT3L];
+
+		// The cache enables follow HID0 (DCE, ICE, DLOCK) and HID2 (LCE) in the register file just
+		// restored, exactly as the mtspr path in gekkoc.cpp derives them, so they are not stored:
+		// a state that carried them as well could disagree with those registers.
+		cache->Enable((regs.spr[SPR::HID0] & HID0_DCE) != 0);
+		icache->Enable((regs.spr[SPR::HID0] & HID0_ICE) != 0);
+		cache->Freeze((regs.spr[SPR::HID0] & HID0_DLOCK) != 0);
+		cache->LockedEnable((regs.spr[SPR::HID2] & HID2_LCE) != 0);
+
+		// The translation caches and the compiled blocks are dropped rather than restored: a
+		// translation is a cache of the page-table walk and refills on its next miss - the
+		// `changed` bit included, which is recoverable by taking the walk again (see
+		// EffectiveToPhysical) - and a compiled block was translated against registers,
+		// translations and instruction bytes that this load has just replaced.
+		dtlb.InvalidateAll();
+		itlb.InvalidateAll();
+
+		if (jit != nullptr)
+		{
+			jit->InvalidateAll();
+		}
+
+		// The emulated caches are thrown away as well, and they are thrown away rather than
+		// written back.
+		//
+		// A state is normally loaded into a machine that has *run on* since it was written (the
+		// user pressed the save key, played for a while and pressed the load key), so the lines
+		// the caches hold describe the newer run while main memory has just been rolled back to
+		// the state: an instruction or a datum served out of the cache would be one the restored
+		// machine never had. The instruction cache is the one that shows it first - the decoded
+		// instruction is re-fetched through it, so a stale line makes the CPU execute the code of
+		// the run that was thrown away - which is how this was found: the boot ROM, resumed from a
+		// state, died on an unimplemented opcode.
+		//
+		// Writing the cache back instead would be worse than useless: its dirty lines are the
+		// *newer* bytes, so casting them out would overwrite the memory this load has just
+		// restored. `FlashInvalidate` drops every line without touching memory; the locked cache
+		// is not affected by it and is restored by its own field, because it is scratch-pad
+		// storage that main memory does not mirror.
+		cache->FlashInvalidate();
+		icache->FlashInvalidate();
+	}
 }

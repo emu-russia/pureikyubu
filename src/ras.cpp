@@ -508,4 +508,42 @@ namespace GFX
 		ss[1].bits = 0;
 		iref = 0;
 	}
+
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The rasterizers own the register state that the rest of the pipeline reads from RAS1: the
+	// eight texture/colour source references (RAS1_TREF0..7, one register per pair of TEV stages),
+	// the two coordinate shift scale registers of the indirect stages and the indirect reference
+	// (RAS1_IREF). The texture unit binds the maps the TEV stages name through these words, so a
+	// state without them samples the wrong textures.
+	//
+	// What does not travel: the `gfx` back-pointer; `current_prim` and `vertex_count`, which are the
+	// primitive being assembled - always empty at a command boundary, because a state is taken
+	// between FIFO commands; and `ras_wireframe`, which is a debugger toggle rather than machine
+	// state.
+	// -------------------------------------------------------------------------------------------
+
+	void Rasterizer::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The texture/colour source references, as their 32-bit words.
+		for (int i = 0; i < 8; i++)
+		{
+			writer.Fields(tref[i].bits);
+		}
+
+		writer.Fields(ss[0].bits, ss[1].bits);
+		writer.Fields(iref);
+	}
+
+	void Rasterizer::LoadState(SaveStates::StateReader& reader)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			reader.Fields(tref[i].bits);
+		}
+
+		reader.Fields(ss[0].bits, ss[1].bits);
+		reader.Fields(iref);
+	}
 }

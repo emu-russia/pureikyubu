@@ -100,6 +100,7 @@ set (PUREIKYUBU_CORE
 	src/pi.cpp
 	src/ras.cpp
 	src/rvz.cpp
+	src/savestate.cpp
 	src/si.cpp
 	src/su.cpp
 	src/sym.cpp
@@ -153,6 +154,7 @@ else ()
 	src/gba/gba_irq.cpp
 	src/gba/gba_keypad.cpp
 	src/gba/gba_ppu.cpp
+	src/gba/gba_savestate.cpp
 	src/gba/gba_sdl.cpp
 	src/gba/gba_settings.cpp
 	src/gba/gba_sio.cpp
@@ -171,6 +173,7 @@ else ()
 	src/gba/gb_cpu.cpp
 	src/gba/gb_disasm.cpp
 	src/gba/gb_ppu.cpp
+	src/gba/gb_savestate.cpp
 
 	thirdparty/imgui/imgui.cpp
 	thirdparty/imgui/imgui_demo.cpp

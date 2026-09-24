@@ -1,6 +1,14 @@
 // GFX Command Processor
 #pragma once
 
+// The save state cursors, forward declared: a header that only names them in a member signature
+// does not have to pull the whole format in (see savestate.h for the two classes).
+namespace SaveStates
+{
+	class StateWriter;
+	class StateReader;
+}
+
 // With CP it's very complicated, this component has spread its tentacles almost all over the Flipper chip:
 // - There is an interface with PI so that Gekko can do burst transactions in FIFO (PI_CPMappedRegister)
 // - There is another interface where some CP registers are mapped to the HW address space (CPMappedRegister)
@@ -530,6 +538,17 @@ namespace Flipper
 		void PushBytes(uint8_t dataPtr[32]);
 
 		void Reset();
+
+		/// <summary>
+		/// Write the decoded command stream into a save state section: the capacity of the buffer,
+		/// the buffer itself, and the two pointers that say which part of it is live. The whole
+		/// buffer goes out raw - it is a ring, and the caller that reads it back is this same
+		/// build, so the wrap never has to be described.
+		/// </summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Put the decoded command stream back (see SaveState for what travels).</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 
 	class CommandProcessor
@@ -691,5 +710,11 @@ namespace Flipper
 
 		//! The live FIFO occupancy in 32-byte units, the same number CP_FIFO_COUNT reports.
 		void FifoOccupancy(uint32_t* count) const { FifoCount(count); }
+
+		/// <summary>Write the block's state into the save state section the caller has opened.</summary>
+		void SaveState(SaveStates::StateWriter& writer) const;
+
+		/// <summary>Put the block's state back from the section the caller has opened.</summary>
+		void LoadState(SaveStates::StateReader& reader);
 	};
 }

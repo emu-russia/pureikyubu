@@ -1241,6 +1241,136 @@ namespace GFX
 		}
 	}
 
+	//! Words per TMEM bank (16K words, gfx-tc.md 3.1). It is declared here rather than with the rest
+	//! of the software texture unit below because the save state section has to know the length of
+	//! the texture memory array it validates.
+	static const uint32_t SoftTmemWords = 16384;
+
+	// -------------------------------------------------------------------------------------------
+	// Save states
+	//
+	// The texture unit owns more of the machine than its register file. Next to the registers it
+	// keeps the copy of the palette the decode path dereferences (`tlut`, filled by
+	// TX_LOADTLUT from main memory), the real texture memory of the software pipeline (`tmem`, with
+	// the tag cache of the hardware-managed images) and the texture objects the decoded images are
+	// uploaded into.
+	//
+	// The palette is written even though it is derivable from main memory: nothing replays the
+	// TX_LOADTLUT write when a state is loaded, and the shader pipeline reads the palette from this
+	// array and not from memory, so without it every paletted texture of a resumed run would be
+	// decoded against a zeroed palette (a black or transparent picture) until the title happens to
+	// load the palette again.
+	//
+	// The software TMEM and its tag cache are written for the same reason, one level deeper: the
+	// explicit load commands (TX_LOADBLOCK/TX_LOADTLUT) streamed main-memory tiles into TMEM at the
+	// moment they ran, and nothing replays them either. The tag cache goes with the memory because
+	// it is the record of which main-memory line every cache slot of a hardware-managed image was
+	// filled from (gfx-tc.md 3.5): it is a pure cache of main memory, so it *could* be rebuilt by
+	// re-fetching, but a fetch is not free and the state would resume one game frame later than it
+	// was saved. It is exact and it is not large (8 maps x 4096 slots, 256 KB), so it travels.
+	//
+	// What does not travel: the `gfx` back-pointer; `rgbabuf`, the single 4 MB scratch buffer every
+	// decode is assembled in, which is overwritten by the first decode of the next draw; `texMap`
+	// entirely, which is a decode cache - the eight maps are reset here (`valid = false`,
+	// `dirty = true`) so that UpdateAndBindTextures rebuilds them from the restored registers and
+	// main memory, with the GL texture object each map already owns; and `active`, which is a host
+	// flag that says whether TexInit has run and is put back by TexInit itself.
+	// -------------------------------------------------------------------------------------------
+
+	void TextureEngine::SaveState(SaveStates::StateWriter& writer) const
+	{
+		// The register file (0x60-0x69 and 0x80-0xBB), every union as its 32-bit word.
+		writer.Array(tx.loadblock);
+		writer.Fields(tx.loadtlut0.bits, tx.loadtlut1.bits);
+		writer.Fields(tx.invtags, tx.perfmode, tx.misc, tx.refresh);
+
+		for (int i = 0; i < 8; i++)
+		{
+			writer.Fields(tx.texmode0[i].bits, tx.texmode1[i].bits);
+			writer.Fields(tx.teximg0[i].bits, tx.teximg1[i].bits, tx.teximg2[i].bits,
+				tx.teximg3[i].bits, tx.settlut[i].bits);
+		}
+
+		// The palette generation. A decoded image of a paletted texture is only current while the
+		// palette it was decoded with is, so the counter has to resume where it was.
+		writer.Fields(tlutGeneration);
+
+		// The palette bytes the decode path reads.
+		writer.Raw(tlut, sizeof(tlut));
+
+		// The texture memory of the software pipeline and the tags of the lines the
+		// hardware-managed images were fetched into.
+		writer.Values(tmem);
+
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		{
+			for (size_t s = 0; s < _countof(softCacheTags[i]); s++)
+			{
+				writer.Fields(softCacheTags[i][s].line, softCacheTags[i][s].valid);
+			}
+		}
+	}
+
+	void TextureEngine::LoadState(SaveStates::StateReader& reader)
+	{
+		reader.Array(tx.loadblock);
+		reader.Fields(tx.loadtlut0.bits, tx.loadtlut1.bits);
+		reader.Fields(tx.invtags, tx.perfmode, tx.misc, tx.refresh);
+
+		for (int i = 0; i < 8; i++)
+		{
+			reader.Fields(tx.texmode0[i].bits, tx.texmode1[i].bits);
+			reader.Fields(tx.teximg0[i].bits, tx.teximg1[i].bits, tx.teximg2[i].bits,
+				tx.teximg3[i].bits, tx.settlut[i].bits);
+		}
+
+		reader.Fields(tlutGeneration);
+
+		// The palette is a fixed-size array of this build, so it is read straight into place; a
+		// state that is short of it is caught by the section length check when the section is
+		// closed.
+		reader.Raw(tlut, sizeof(tlut));
+
+		// The software TMEM has to be the size SoftTmemInit gives it, or the sampler would index
+		// outside the array it was restored into. It is read into a scratch vector and checked
+		// before the machine's own memory is replaced, so that a bad load cannot leave a short
+		// array behind a sampler that trusts its size.
+		std::vector<uint16_t> memory;
+		reader.Values(memory);
+
+		if (!reader.Failed())
+		{
+			if (memory.size() == (size_t)SoftTmemBankCount * SoftTmemWords)
+			{
+				tmem.swap(memory);
+			}
+			else
+			{
+				reader.Fail("the texture memory in the save state is not the size of TMEM");
+			}
+		}
+
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		{
+			for (size_t s = 0; s < _countof(softCacheTags[i]); s++)
+			{
+				reader.Fields(softCacheTags[i][s].line, softCacheTags[i][s].valid);
+			}
+		}
+
+		// A decoded map is a cache of the registers, the palette generation and the texture bytes
+		// of the draw that produced it, so what the map holds now belongs to the machine that was
+		// running before the load. The image is invalidated rather than decoded here: the decode
+		// and the upload need a GL context, and the next draw asks for them anyway
+		// (UpdateAndBindTextures). The GL texture object is kept - it is the map's own, and only the
+		// image inside it is stale.
+		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		{
+			texMap[i].valid = false;
+			texMap[i].dirty = true;
+		}
+	}
+
 	// -------------------------------------------------------------------------------------------
 	// The software texture unit (GFX_PIPELINE = soft, issue #384)
 	//
@@ -1257,8 +1387,6 @@ namespace GFX
 	// of the colour-index formats in 3.7).
 	// -------------------------------------------------------------------------------------------
 
-	//! Words per TMEM bank (16K words, gfx-tc.md 3.1)
-	static const uint32_t SoftTmemWords = 16384;
 	//! Lines of the two halves: a half is 512 KB = 16384 lines of 32 bytes.
 	static const uint32_t SoftTmemHalfLines = 16384;
 	//! Where the software model keeps the tag cache of the hardware-managed images: 128 KB at the

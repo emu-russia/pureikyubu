@@ -14,6 +14,10 @@
 #include <limits.h>
 #include <fstream>
 
+// The save state format and its two cursors. The devices' `SaveState`/`LoadState` pairs are the
+// only users of it, so it is here, with the rest of what every translation unit reads.
+#include "savestate.h"
+
 #ifdef _WINDOWS
 // The Windows builds still use the Win32 API directly, even though there is no Win32 front end any
 // more (issue #421): the threads, the directory scan and the file mapping of utils.cpp and os.cpp,
