@@ -507,7 +507,10 @@ public:
 	bool PollSI(int chan, PADState* state);
 
 	//! A communication transfer of one SI channel.
-	void TransferSI(int chan, int outlen, int inlen, uint8_t* buf);
+	//! Hand a COM transfer to the device on a channel. Returns false when nothing is plugged into
+	//! the channel, in which case nothing answers it (the caller latches the channel's no-response
+	//! error, see serial-interface.md 7.1).
+	bool TransferSI(int chan, int outlen, int inlen, uint8_t* buf);
 
 	//! A transfer of one EXI channel and chip select (see exi.cpp).
 	void TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi);

@@ -823,18 +823,20 @@ bool Peripherals::PollSI(int chan, PADState* state)
 	return device->Poll(state);
 }
 
-void Peripherals::TransferSI(int chan, int outlen, int inlen, uint8_t* buf)
+bool Peripherals::TransferSI(int chan, int outlen, int inlen, uint8_t* buf)
 {
 	PeripheralDevice* device = DeviceOnPort(PERIPH_PORT_SI(chan));
 
 	// Nothing is plugged into the channel: the transfer is not answered at all, which is how the
-	// guest finds out that there is no controller (SISR[NOREP]).
+	// guest finds out that there is no controller (SISR[NOREP], latched by the caller).
 	if (device == nullptr)
 	{
-		return;
+		return false;
 	}
 
 	device->Transfer(outlen, inlen, buf);
+
+	return true;
 }
 
 void Peripherals::TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi)

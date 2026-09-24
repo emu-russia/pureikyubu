@@ -41,7 +41,29 @@ namespace Flipper
 
 	void SerialInterface::SICommand(int chan, int outlen, int inlen, uint8_t* ptr)
 	{
-		Peripherals::Instance().TransferSI(chan, outlen, inlen, ptr);
+		// COMERR is re-evaluated on each COM completion (serial-interface.md 7.4).
+		SI_COMCSR_REG &= ~SI_COMCSR_COMERR;
+
+		if (!Peripherals::Instance().TransferSI(chan, outlen, inlen, ptr))
+		{
+			// Nothing is plugged into the channel, so nothing answers the transfer: the channel
+			// latches its no-response error and the transfer is the last one that failed
+			// (serial-interface.md 7.1, 7.4). A guest that probes a socket reads that error to tell
+			// an empty one from a device that answered; the response bytes alone cannot tell them
+			// apart, because with no device driving the line the SI only hears itself.
+			SI_SR_REG |= (SI_SR_NOREP0 >> (chan * 8));
+			SI_COMCSR_REG |= SI_COMCSR_COMERR;
+
+			// The line is left idle, and the receiver reads the idle polarity for every bit cell of
+			// the response, so every response byte reads as all ones (3.2, 6.4). The Wind Waker's pad
+			// code takes the device type out of these bytes and waits for the probe of a socket it
+			// believes to hold a controller to settle: leaving the command bytes of the transfer in
+			// the buffer instead makes it wait for a device that is not there.
+			for (int i = 0; i < inlen; i++)
+			{
+				ptr[i] = 0xff;
+			}
+		}
 	}
 
 	void SerialInterface::SIClearInterrupt()
@@ -329,6 +351,10 @@ namespace Flipper
 		SerialInterface* si = (SerialInterface*)ctx;
 		data <<= 16;
 
+		// The latched error bits of a channel are write-1-to-clear (11.6); channels 0 and 1 live in
+		// this halfword. A written 0 leaves the bit alone.
+		si->SI_SR_REG &= ~(data & SI_SR_ERROR_HI);
+
 		// copy the visible command registers into the shadow ones
 		if (data & SI_SR_WR)
 		{
@@ -344,6 +370,10 @@ namespace Flipper
 	}
 	void SerialInterface::write_sisr_lo(uint32_t addr, uint32_t data, void* ctx)
 	{
+		SerialInterface* si = (SerialInterface*)ctx;
+
+		// Channels 2 and 3 clear their latch in the low halfword.
+		si->SI_SR_REG &= ~(data & SI_SR_ERROR_LO);
 	}
 
 	void SerialInterface::read_sisr_hi(uint32_t addr, uint32_t* reg, void* ctx)

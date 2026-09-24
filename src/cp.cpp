@@ -1023,6 +1023,7 @@ namespace Flipper
 			case CPCommand::CP_CMD_LOAD_BPREG | 6:
 			case CPCommand::CP_CMD_LOAD_BPREG | 7:
 			case CPCommand::CP_CMD_LOAD_BPREG | 8:
+			case CPCommand::CP_CMD_LOAD_BPREG | 9:
 			case CPCommand::CP_CMD_LOAD_BPREG | 0xa:
 			case CPCommand::CP_CMD_LOAD_BPREG | 0xb:
 			case CPCommand::CP_CMD_LOAD_BPREG | 0xc:
@@ -2378,6 +2379,7 @@ namespace Flipper
 			case CP_CMD_LOAD_BPREG | 6:
 			case CP_CMD_LOAD_BPREG | 7:
 			case CP_CMD_LOAD_BPREG | 8:
+			case CP_CMD_LOAD_BPREG | 9:
 			case CP_CMD_LOAD_BPREG | 0xa:
 			case CP_CMD_LOAD_BPREG | 0xb:
 			case CP_CMD_LOAD_BPREG | 0xc:
