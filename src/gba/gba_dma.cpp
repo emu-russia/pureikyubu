@@ -285,6 +285,24 @@ namespace GBA
 		}
 
 		/// <summary>
+		/// What a channel that is still enabled needs after a transfer: it runs again on its next
+		/// start condition, so its word count is reloaded - "Upon Repeat: Reloads CNT_L, and
+		/// optionally DAD" (GBATEK "Source and Destination Address and Word Count Registers"). The
+		/// *pointers* are deliberately left where the transfer stopped (that is what streams a
+		/// sound buffer through a FIFO); a channel whose count is left at zero is taken for stale
+		/// by the next RunNow, which re-latches the pointers from the registers and starts the block
+		/// over. Every path that runs a transfer has to finish it here.
+		/// </summary>
+		void FinishTransfer(Dma::Channel& channel, int index)
+		{
+			if (!channel.active)
+				return;
+
+			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
+			ApplyDestReload(channel, channel.destRegister);
+		}
+
+		/// <summary>
 		/// Run an EEPROM transfer to completion.
 		///
 		/// The games poll the DMA enable bit - or the cartridge's EEPROM state - in the
@@ -596,14 +614,9 @@ namespace GBA
 		if (channel.active)
 		{
 			// Repeat: the enable bit stays set and the transfer runs again on the next start
-			// condition. "Upon Repeat: Reloads CNT_L, and optionally DAD (Increment+Reload)"
-			// (GBATEK "Source and Destination Address and Word Count Registers") - the source
-			// pointer is *not* reloaded, it carries on where the last block ended. That is what
-			// streams a sound buffer through the FIFO: reloading SAD here would restart the DMA
-			// from the same 16 bytes on every refill, so a game's music came out as one short
-			// loop buzzing at the FIFO's byte rate instead of the music.
-			channel.latched = (channel.count == 0) ? (uint16_t)MaxUnits(index) : channel.count;
-			ApplyDestReload(channel, channel.destRegister);
+			// condition. The source pointer is *not* reloaded, it carries on where the last block
+			// ended - that is what streams a sound buffer through the FIFO (see FinishTransfer).
+			FinishTransfer(channel, index);
 		}
 
 		return cycles;
@@ -655,6 +668,47 @@ namespace GBA
 		}
 	}
 
+	void Dma::ServiceTriggered(GbaBus& bus)
+	{
+		// A request remembered while another transfer ran is normally let in at that transfer's
+		// next unit boundary (see the loop in Perform). A request that arrives after the last one -
+		// while the transfer is finishing its bookkeeping, or from a device tick inside its last
+		// unit - has no boundary left to wait for, so this runs it here: the bus is free, and the
+		// hardware starts a pending channel as soon as it is. Without this the request sat on the
+		// channel until its *next* start condition, which for an HBlank channel is one scanline
+		// later: the line it was meant for was composed with the previous line's colour, and the
+		// seam moved about from frame to frame.
+		//
+		// `servicing` keeps the loop below in charge: a transfer started here outlives this call,
+		// and its own guard would otherwise re-enter with the requests that arrived meanwhile.
+		if (servicing)
+			return;
+
+		servicing = true;
+
+		for (int pass = 0; pass < 8; pass++)
+		{
+			int next = -1;
+
+			for (int i = 0; i < 4; i++)
+			{
+				if (channels[i].triggered && channels[i].active && (channels[i].control & DmaEnable))
+				{
+					next = i;
+					break;
+				}
+			}
+
+			if (next < 0)
+				break;
+
+			channels[next].triggered = false;
+			RunNow(bus, next);
+		}
+
+		servicing = false;
+	}
+
 	int Dma::Perform(GbaBus& bus, int index)
 	{
 		Channel& channel = channels[index];
@@ -678,6 +732,16 @@ namespace GBA
 				{
 					dma.inTransfer = false;
 					bus.dmaAccess = false;
+
+					// A start condition that arrived after the last unit boundary of the transfer
+					// that just ended is still parked on its channel: the bus is free now, so it
+					// runs here rather than waiting for the next edge of its own timing. An HBlank
+					// transfer that missed its line is a line the game never gets - which is how
+					// Final Fantasy V Advance's message-window gradient came to flicker: its
+					// per-line palette DMA was parked behind an immediate DMA3 that had already
+					// spent its last unit, the line was composed with the previous line's colour,
+					// and the seam moved from frame to frame.
+					dma.ServiceTriggered(bus);
 				}
 			}
 		} guard(*this, bus);
@@ -747,6 +811,16 @@ namespace GBA
 				{
 					other.triggered = false;
 					Perform(bus, p);
+
+					// The transfer is complete, so this channel is finished the same way RunNow
+					// finishes one: without it its word count stays at zero, the next start
+					// condition takes the channel for stale and re-latches its pointers from the
+					// registers - which restarts a repeating block from its SAD in the middle of
+					// the frame. Final Fantasy V Advance's message-window gradient is an HBlank
+					// DMA of one palette entry per scanline whose source walks a table; a parked
+					// request serviced here sent it back to the table's first entry, and where that
+					// happened moved from frame to frame, so the gradient flickered.
+					FinishTransfer(other, p);
 				}
 			}
 

@@ -442,6 +442,42 @@ GBA_TEST(Bus, SubwordReadsLandOnTheRightByteLanes)
 	GBA_CHECK_HEX16(f.bus.Read16(0x07000002), hi);
 }
 
+GBA_TEST(Bus, ByteWritesToTheDisplayRegistersKeepTheOtherLane)
+{
+	// GBATEK 4000004h: DISPSTAT's low byte carries the IRQ enables (bits 3-5) and its high byte
+	// the V-Count setting (bits 8-15), so a program that writes one of them by byte expects the
+	// other to stay as it was. Castlevania: Circle of the Moon's raster engine does exactly that:
+	// it enables its V-Counter interrupt with an 8 bit read-modify-write of 4000004h and moves the
+	// comparison line with an 8 bit store to 4000005h. A byte store that landed in both lanes
+	// there took the V-Blank IRQ enable with it whenever the line's low byte had bits 3-5 clear
+	// (line 131 is 83h), and the game stopped dead on its intro text: its main loop waits for the
+	// V-Blank handler to tick a frame counter that then never ticked again.
+	Fixture f;
+	// Bits 0-2 are the live flags (VCOUNT happens to match the setting 0 here), so only the
+	// writable half 0xFF38 is compared.
+	auto dispstat = [&]() { return (uint16_t)(f.Read(0x004) & 0xFF38); };
+
+	f.Write(0x004, 0x0008);						// the V-Blank IRQ enable, V-Count setting 0
+	GBA_CHECK_HEX16(dispstat(), 0x0008);
+
+	f.Write8(0x005, 0x83);						// the setting alone: compare against line 131
+	GBA_CHECK_HEX16(dispstat(), 0x8308);		// the enable survived the store
+	GBA_CHECK_HEX16(f.Read8(0x005), 0x83);		// and a byte read answers the high lane
+
+	f.Write8(0x004, 0x28);						// the enables alone: V-Blank and V-Counter
+	GBA_CHECK_HEX16(dispstat(), 0x8328);
+
+	// The one display register that does mirror its byte into both lanes is the undocumented
+	// Green Swap (GBATEK 4000002h): it holds a single bit, so a byte store to either of its two
+	// bytes sets the same bit.
+	f.Write(0x002, 0x0000);
+	f.Write8(0x002, 0x01);
+	GBA_CHECK_HEX16(f.Read(0x002), 0x0001);
+	f.Write(0x002, 0x0000);
+	f.Write8(0x003, 0x01);
+	GBA_CHECK_HEX16(f.Read(0x002), 0x0001);
+}
+
 GBA_TEST(Bus, InternalMemoryTimingsFollowTheMemoryMap)
 {
 	// GBATEK "GBA Memory Map" gives the access cycles of the internal memories, and the aging
@@ -697,6 +733,62 @@ GBA_TEST(Dma, RepeatTransferRestartedByVBlank)
 	// Clearing the enable bit stops the repetition.
 	f.Write(0x0DE, (uint16_t)(0x0200 | 0x1000 | 0x0060));
 	GBA_CHECK(!f.bus.dma.Active(3));
+}
+
+GBA_TEST(Dma, AParkedHblankTransferCarriesOnWhereItStopped)
+{
+	// A start condition that arrives while another transfer runs waits for it: the running
+	// transfer lets the higher priority channels in at its next unit boundary ("DMA Priority" in
+	// GBATEK's "DMA Transfers", and the "may offhold sound DMA" note in "Sound DMA (FIFO Timing
+	// Mode)"). What the waiting channel must *not* lose is its place: the transfer that runs there
+	// is an ordinary repeat of that channel, so it carries on from the source pointer the channel
+	// had reached, exactly as a transfer started at the edge itself does. A channel left with its
+	// word count at zero is taken for stale by the next start condition, which re-latches its
+	// pointers from the registers and starts the block over.
+	//
+	// Final Fantasy V Advance's message window is fed by an HBlank DMA of one palette entry per
+	// scanline whose source walks a gradient table. The parked request a long immediate DMA3
+	// produces put the table's first entry into the middle of the window, and *where* that
+	// happened moved from frame to frame with the immediate transfer's timing, so the gradient
+	// flickered between two shapes.
+	Fixture f;
+
+	// Eight halfwords of source at 0x02000000 and a zeroed destination at 0x02000100, plus the
+	// block the immediate transfer of the second half of the test copies.
+	for (int i = 0; i < 8; i++)
+		f.WriteMem16(0x02000000 + i * 2, (uint16_t)(0x1000 + i));
+
+	// DMA0: one 16 bit unit per HBlank, both pointers incrementing, repeat, word count 1.
+	f.Write(0x0B0, 0x0000);
+	f.Write(0x0B2, 0x0200);				// SAD = 0x02000000
+	f.Write(0x0B4, 0x0100);
+	f.Write(0x0B6, 0x0200);				// DAD = 0x02000100
+	f.Write(0x0B8, 1);
+	f.Write(0x0BA, 0xA200);				// enable, HBlank, repeat, 16 bit units
+
+	// The HBlank that arrives on its own runs the first unit at once.
+	f.bus.dma.OnHBlank(f.bus);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000100), 0x1000);
+
+	// Bring the LCD to just before the visible part of a line ends, then start an immediate
+	// transfer long enough (128 units, a few hundred cycles) to still be running when that edge
+	// arrives. Its HBlank request is parked, and DMA3 lets it in at its next unit boundary.
+	f.bus.Tick(900);
+	f.Write(0x0D4, 0x0200);
+	f.Write(0x0D6, 0x0200);				// SAD = 0x02000200
+	f.Write(0x0D8, 0x0400);
+	f.Write(0x0DA, 0x0200);				// DAD = 0x02000400
+	f.Write(0x0DC, 128);
+	f.Write(0x0DE, 0x8000);				// immediate, 16 bit units
+
+	// The parked request moved one more unit of the *same* walk, and nothing has been written
+	// past it yet.
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000102), 0x1001);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000104), 0x0000);
+
+	// The next HBlank carries on from there rather than from the channel's SAD.
+	f.bus.dma.OnHBlank(f.bus);
+	GBA_CHECK_HEX16(f.ReadMem16(0x02000104), 0x1002);
 }
 
 GBA_TEST(Dma, FifoRefillCompletesWhenTheApuAsks)
