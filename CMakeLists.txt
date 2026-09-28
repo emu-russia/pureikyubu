@@ -84,6 +84,11 @@ set (PUREIKYUBU_CORE
 	src/gfxosd.cpp
 	src/hwdebug.cpp
 	src/hwosd.cpp
+	src/hsp.cpp
+	src/bba.cpp
+	src/mdm.cpp
+	src/gbplayer.cpp
+	src/gbalink.cpp
 	src/hwprof.cpp
 	src/jdi.cpp
 	src/jdiserver.cpp
@@ -119,6 +124,7 @@ set (PUREIKYUBU_CORE
 if (HEADLESS)
   set (PUREIKYUBU_FRONTEND
 	src/audionull.cpp
+	src/bbaudp.cpp
 	src/bench.cpp
 	src/gfxnull.cpp
 	src/padnull.cpp
@@ -127,6 +133,7 @@ if (HEADLESS)
   )
 else ()
   set (PUREIKYUBU_FRONTEND
+	src/bbaudp.cpp
 	src/audiosdl.cpp
 	src/bench.cpp
 	src/debugui2.cpp
@@ -134,12 +141,33 @@ else ()
 	src/padsdl.cpp
 	src/uisdl.cpp
 	src/uisettings.cpp
+	src/uisettingsgba.cpp
 	src/videosdl.cpp
 
-	# The integrated GBA emulator (issue #388). The core is self contained (see src/gba/Readme.md);
-	# gba_sdl.cpp is the SDL2 frontend the `--gba` mode uses and gba_debug.cpp is the debug
-	# interface that frontend drives, which is the one file of the module the host compiles (it
-	# speaks JDI and Markdown, and its headers need the third-party paths the core does not have).
+	# The SDL frontend of the portable machines and their debug interface. The two are the only
+	# files of the module that belong to a frontend: `gba_sdl.cpp` is the `--gba` mode's window and
+	# `gba_debug.cpp` speaks JDI and Markdown (its headers need the third-party paths the core does
+	# not have). The core itself is in `PUREIKYUBU_GBA` below, because the Game Boy Player device
+	# (gbplayer.cpp) drives a Game Boy Advance in every build.
+	src/gba/gba_debug.cpp
+	src/gba/gba_sdl.cpp
+
+	thirdparty/imgui/imgui.cpp
+	thirdparty/imgui/imgui_demo.cpp
+	thirdparty/imgui/imgui_draw.cpp
+	thirdparty/imgui/backends/imgui_impl_sdl2.cpp
+	thirdparty/imgui/backends/imgui_impl_sdlrenderer2.cpp
+	thirdparty/imgui/imgui_tables.cpp
+	thirdparty/imgui/imgui_widgets.cpp
+  )
+endif ()
+
+# The integrated GBA/Game Boy emulator (issue #388). The core is self contained (see
+# src/gba/Readme.md) and needs no SDL, so both builds link it: the headless one has no `--gba` mode,
+# but the Game Boy Player device of the peripheral pool runs a Game Boy Advance of its own, and that
+# machine is the same core.
+
+set (PUREIKYUBU_GBA
 	src/gba/arm7tdmi.cpp
 	src/gba/gba.cpp
 	src/gba/gba_apu.cpp
@@ -147,7 +175,6 @@ else ()
 	src/gba/gba_bootrom.cpp
 	src/gba/gba_bus.cpp
 	src/gba/gba_cart.cpp
-	src/gba/gba_debug.cpp
 	src/gba/gba_disasm.cpp
 	src/gba/gba_dma.cpp
 	src/gba/gba_hlebios.cpp
@@ -155,7 +182,6 @@ else ()
 	src/gba/gba_keypad.cpp
 	src/gba/gba_ppu.cpp
 	src/gba/gba_savestate.cpp
-	src/gba/gba_sdl.cpp
 	src/gba/gba_settings.cpp
 	src/gba/gba_sio.cpp
 	src/gba/gba_timers.cpp
@@ -174,19 +200,11 @@ else ()
 	src/gba/gb_disasm.cpp
 	src/gba/gb_ppu.cpp
 	src/gba/gb_savestate.cpp
-
-	thirdparty/imgui/imgui.cpp
-	thirdparty/imgui/imgui_demo.cpp
-	thirdparty/imgui/imgui_draw.cpp
-	thirdparty/imgui/backends/imgui_impl_sdl2.cpp
-	thirdparty/imgui/backends/imgui_impl_sdlrenderer2.cpp
-	thirdparty/imgui/imgui_tables.cpp
-	thirdparty/imgui/imgui_widgets.cpp
-  )
-endif ()
+)
 
 add_executable (pureikyubu
 	${PUREIKYUBU_CORE}
+	${PUREIKYUBU_GBA}
 	${PUREIKYUBU_FRONTEND}
 )
 

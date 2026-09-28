@@ -11,8 +11,16 @@ The tabs are:
 
   * "General" - the game selector: the directories it scans, the file filter and the view;
   * "GCN Hardware" - the console version and the firmware images;
-  * "Controllers" - the pads: the devices of the peripheral pool on the SI bus and their bindings;
-  * "Memory Cards" - the devices of the pool on the EXI bus, which are the two card slots.
+  * "Controllers" - the pads (their bindings are here too) and the Game Boy Advance on a link
+    cable, which is an SI device but not a pad;
+  * "Memory Cards" - the two card slots;
+  * "Network" - the broadband and modem adapters of serial port 1, which share the EXI bus with the
+    cards but are devices of their own;
+  * "High-Speed Port" - the Game Boy Player.
+
+A device says which page it is edited on when it registers its model (PERIPH_PAGE_*), so a page is
+what the user understands rather than the bus a device hangs from, and a build that compiles another
+device module offers it on the right page without a line of front end code.
 
 A property grid is a table of two columns: the name of a property on the left and its editor on the
 right (see PropertyGrid / PropertyRow). The devices are edited through the peripheral subsystem
@@ -111,6 +119,11 @@ static ImGui::FileBrowser settings_dir_dialog(ImGuiFileBrowserFlags_SelectDirect
 static const std::vector<std::string> settings_any_filter = { ".*" };
 static const std::vector<std::string> settings_memcard_filter = { ".mci", ".*" };
 
+/* The cartridge images of the portable machines (see the "Game Boy Player" page of the settings and
+   PERIPH_PROP_ROM in peripherals.h): a Game Pak of any of the three families. */
+static const std::vector<std::string> settings_rom_filter =
+	{ ".gba", ".agb", ".gb", ".gbc", ".sgb", ".*" };
+
 /* What the browser that is up is picking a file for */
 enum class SettingsFile
 {
@@ -120,6 +133,7 @@ enum class SettingsFile
 	DspIrom,
 	CardFile,       //!< the file of the card an EXI device holds
 	CardNew,        //!< the file of a card that is about to be made
+	RomFile,        //!< the cartridge image of a device that reads one (the Game Boy Player)
 	SelectorPath,   //!< a directory the selector scans
 };
 
@@ -156,6 +170,8 @@ enum class SettingsTab
 	Hardware,
 	Controllers,
 	MemoryCards,
+	Network,
+	HiSpeedPort,
 	Max
 };
 
@@ -410,12 +426,47 @@ static void settings_page_hw()
 	settings_firmware_row("Bootrom file:", USER_BOOTROM, SettingsFile::Bootrom, "Choose Bootrom");
 	settings_firmware_row("DSP DROM file:", USER_DSP_DROM, SettingsFile::DspDrom, "Choose DSP DROM");
 	settings_firmware_row("DSP IROM file:", USER_DSP_IROM, SettingsFile::DspIrom, "Choose DSP IROM");
+
+	ImGui::Separator();
+
+	// The Broadband Adapter's network (see bbaudp.cpp). Two emulators that name each other play on
+	// one emulated segment: `host:port` of the other end, and the UDP port this one listens on.
+	if (PropertyGrid("settings_bba"))
+	{
+		PropertyRow("BBA peer");
+		{
+			std::string peer = UI::Jdi->GetConfigString(USER_BBA_PEER, USER_HW);
+
+			if (PropertyText(peer))
+			{
+				UI::Jdi->SetConfigString(USER_BBA_PEER, peer, USER_HW);
+			}
+		}
+		PropertyRowEnd();
+
+		PropertyRow("BBA port");
+		{
+			int port = UI::Jdi->GetConfigInt(USER_BBA_PORT, USER_HW);
+			ImGui::SetNextItemWidth(120);
+
+			if (ImGui::InputInt("##v", &port) && port > 0 && port <= 65535)
+			{
+				UI::Jdi->SetConfigInt(USER_BBA_PORT, port, USER_HW);
+			}
+		}
+		PropertyRowEnd();
+
+		PropertyGridEnd();
+	}
+
+	ImGui::TextDisabled("The peer takes effect the next time the emulator starts (the adapter's\n"
+		"network is opened with it). Leave it empty for an adapter with no network.");
 }
 
 // ---------------------------------------------------------------------------
-// "Controllers" and "Memory Cards" - the devices of the peripheral pool
+// The device pages - the devices of the peripheral pool
 //
-// The two pages are the same: the pool, filtered to the bus of the devices a page is about. A
+// The pages are the same: the pool, filtered to the page's devices. A
 // device is edited where it is: the page shows the devices in a list, and the one that is selected
 // in it is configured in the grid below. What the grid holds for a device comes from the device
 // itself - its actuators (the controls the host drives, each with a keyboard and a game controller
@@ -486,8 +537,11 @@ static int DeviceFileProperty(PeripheralDevice* device)
 	return -1;
 }
 
-/* The path of a file property: it is shown, never typed, and picked with the file browser. */
-static void PropertyFileRow(const char* path, int index, int prop)
+/* The path of a file property: it is shown, never typed, and picked with the file browser. `kind`
+   is the kind of the property, which is what picks the browser: an image the device owns (a memory
+   card) and a cartridge it only reads (a Game Pak) are not the same file, and the second one has a
+   fixed set of extensions. */
+static void PropertyFileRow(const char* path, int index, int prop, int kind)
 {
 	char buf[0x400];
 	snprintf(buf, sizeof(buf), "%s", path);
@@ -501,7 +555,15 @@ static void PropertyFileRow(const char* path, int index, int prop)
 	{
 		settings_file_device = index;
 		settings_file_prop = prop;
-		settings_pick_file(SettingsFile::CardFile, "Choose Memcard File", settings_memcard_filter);
+
+		if (kind == PERIPH_PROP_ROM)
+		{
+			settings_pick_file(SettingsFile::RomFile, "Insert Game Pak", settings_rom_filter);
+		}
+		else
+		{
+			settings_pick_file(SettingsFile::CardFile, "Choose Memcard File", settings_memcard_filter);
+		}
 	}
 }
 
@@ -601,18 +663,83 @@ static void settings_bindings(int index, PeripheralDevice* device)
 	ImGui::EndTable();
 }
 
-/* The page of a bus: the devices of the pool that belong to it. */
-static void settings_page_devices(int bus)
+/* The port a page's device wants when the user has not picked one (see DefaultModelOfPort). */
+static int page_default_port(int page)
+{
+	switch (page)
+	{
+		case PERIPH_PAGE_CONTROLLERS:  return PERIPH_PORT_SI0;
+		case PERIPH_PAGE_MEMORY_CARDS: return PERIPH_PORT_SLOTA;
+		case PERIPH_PAGE_NETWORK:      return PERIPH_PORT_SERIAL1;
+		case PERIPH_PAGE_HSP:          return PERIPH_PORT_HSP;
+	}
+
+	return PERIPH_PORT_SI0;
+}
+
+/* A settings page: the devices of the pool that are edited on it. The page of a device is its
+   model's own (see PERIPH_PAGE_*), not the bus it is plugged into - the two network adapters share
+   the EXI bus with the cards, and the Game Boy Advance on a link cable sits in a controller
+   socket. */
+static void settings_page_devices(int page)
 {
 	Peripherals& pool = Peripherals::Instance();
 
-	// What a new device of the page is: the model its ports are meant for.
-	uint32_t model = Peripherals::DefaultModelOfPort(bus == PERIPH_BUS_SI ? PERIPH_PORT_SI0 : PERIPH_PORT_SLOTA);
+	// The models of this page, which is what the user picks from when a device is added. The list
+	// comes from the subsystem (every device module registers its own model), so a build that
+	// compiles another one offers it here without a line of front end code.
+	static uint32_t addModel[PERIPH_PAGE_MAX];      // one remembered choice per page
+	static bool addModelValid[PERIPH_PAGE_MAX] = { false };
+
+	if (page < 0 || page >= PERIPH_PAGE_MAX)
+	{
+		return;
+	}
+
+	std::vector<uint32_t> models;
+
+	for (int i = 0; i < Peripherals::ModelCount(); i++)
+	{
+		uint32_t type = Peripherals::ModelAt(i);
+
+		if (Peripherals::ModelPage(type) == page)
+		{
+			models.push_back(type);
+		}
+	}
+
+	if (models.empty())
+	{
+		return;     // this build has no device for this page at all
+	}
+
+	if (!addModelValid[page])
+	{
+		// The device the ports of the page are meant for is the one a fresh configuration wants.
+		addModel[page] = Peripherals::DefaultModelOfPort(page_default_port(page));
+
+		bool known = false;
+
+		for (uint32_t type : models)
+		{
+			if (type == addModel[page])
+			{
+				known = true;
+			}
+		}
+
+		if (!known)
+		{
+			addModel[page] = models.front();
+		}
+
+		addModelValid[page] = true;
+	}
 
 	// The selection has to be a device of this page (the other page selects its own).
 	PeripheralDevice* selected = pool.Device(periph_selected);
 
-	if (selected == nullptr || Peripherals::ModelBus(selected->Type()) != bus)
+	if (selected == nullptr || Peripherals::ModelPage(selected->Type()) != page)
 	{
 		periph_selected = -1;
 
@@ -620,7 +747,7 @@ static void settings_page_devices(int bus)
 		{
 			PeripheralDevice* device = pool.Device(i);
 
-			if (device != nullptr && Peripherals::ModelBus(device->Type()) == bus)
+			if (device != nullptr && Peripherals::ModelPage(device->Type()) == page)
 			{
 				periph_selected = i;
 				selected = device;
@@ -643,7 +770,7 @@ static void settings_page_devices(int bus)
 		{
 			PeripheralDevice* device = pool.Device(i);
 
-			if (device == nullptr || Peripherals::ModelBus(device->Type()) != bus)
+			if (device == nullptr || Peripherals::ModelPage(device->Type()) != page)
 			{
 				continue;
 			}
@@ -672,9 +799,39 @@ static void settings_page_devices(int bus)
 
 	ImGui::EndChild();
 
+	// What a new device is: the model the user picked, and the socket it goes into. The model list
+	// only has the devices *this build* can make, so a build without a Game Boy Player simply does
+	// not offer one.
+	{
+		const char* preview = Peripherals::ModelName(addModel[page]);
+		ImGui::SetNextItemWidth(260);
+
+		if (ImGui::BeginCombo("##add_model", preview != nullptr ? preview : "?"))
+		{
+			for (uint32_t type : models)
+			{
+				bool selected = type == addModel[page];
+
+				if (ImGui::Selectable(Peripherals::ModelName(type), selected))
+				{
+					addModel[page] = type;
+				}
+
+				if (selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+
+		ImGui::SameLine();
+	}
+
 	if (ImGui::Button("Add", ImVec2(80, 0)))
 	{
-		int index = pool.AddDevice(model);
+		int index = pool.AddDevice(addModel[page]);
 
 		if (index >= 0)
 		{
@@ -735,9 +892,11 @@ static void settings_page_devices(int bus)
 					pool.Detach(periph_selected);
 				}
 
+				// A device goes into a port of its own bus, which is the model's and not the page's:
+				// the network adapters and the cards are on the same bus but not on the same ports.
 				for (int p = 0; p < pool.PortCount(); p++)
 				{
-					if (pool.PortBus(p) != bus)
+					if (pool.PortBus(p) != Peripherals::ModelBus(selected->Type()))
 					{
 						continue;
 					}
@@ -779,12 +938,25 @@ static void settings_page_devices(int bus)
 				}
 
 				case PERIPH_PROP_FILE:
-					PropertyFileRow(selected->GetProperty(prop->id).c_str(), periph_selected, prop->id);
+				case PERIPH_PROP_ROM:
+					PropertyFileRow(selected->GetProperty(prop->id).c_str(), periph_selected,
+						prop->id, prop->kind);
 					break;
 
 				case PERIPH_PROP_INFO:
 					ImGui::TextUnformatted(selected->GetProperty(prop->id).c_str());
 					break;
+
+				case PERIPH_PROP_TEXT:
+				{
+					std::string value = selected->GetProperty(prop->id);
+
+					if (PropertyText(value))
+					{
+						selected->SetProperty(prop->id, value);
+					}
+					break;
+				}
 			}
 
 			PropertyRowEnd();
@@ -987,6 +1159,7 @@ static void settings_poll_files()
 				break;
 
 			case SettingsFile::CardFile:
+			case SettingsFile::RomFile:
 			{
 				PeripheralDevice* device = Peripherals::Instance().Device(settings_file_device);
 
@@ -1134,7 +1307,7 @@ void UiSettingsFrame()
 	{
 		static const char* tabs[(int)SettingsTab::Max] =
 		{
-			"General", "GCN Hardware", "Controllers", "Memory Cards"
+			"General", "GCN Hardware", "Controllers", "Memory Cards", "Network", "High-Speed Port"
 		};
 
 		const float footer = ImGui::GetFrameHeightWithSpacing();
@@ -1159,10 +1332,12 @@ void UiSettingsFrame()
 
 		switch (settings_tab)
 		{
-			case SettingsTab::General:     settings_page_general(); break;
-			case SettingsTab::Hardware:    settings_page_hw(); break;
-			case SettingsTab::Controllers: settings_page_devices(PERIPH_BUS_SI); break;
-			case SettingsTab::MemoryCards: settings_page_devices(PERIPH_BUS_EXI); break;
+			case SettingsTab::General:      settings_page_general(); break;
+			case SettingsTab::Hardware:     settings_page_hw(); break;
+			case SettingsTab::Controllers:  settings_page_devices(PERIPH_PAGE_CONTROLLERS); break;
+			case SettingsTab::MemoryCards:  settings_page_devices(PERIPH_PAGE_MEMORY_CARDS); break;
+			case SettingsTab::Network:      settings_page_devices(PERIPH_PAGE_NETWORK); break;
+			case SettingsTab::HiSpeedPort:  settings_page_devices(PERIPH_PAGE_HSP); break;
 		}
 
 		ImGui::EndChild();

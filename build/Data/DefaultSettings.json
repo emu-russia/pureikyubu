@@ -26,6 +26,8 @@
 		"SJIS": "Data/SjisFont.szp",
 		"CONSOLE": 3,
 		"EXI_LOG": true,
+		"BBA_PEER": "",
+		"BBA_PORT": 20001,
 		"OS_REPORT": true,
 		"VI_LOG": false,
 		"VI_XFB": true,
@@ -34,6 +36,7 @@
 		"DI_LOG": false,
 		"SI_LOG": false,
 		"AI_LOG": false,
+		"AR_LOG": false,
 		"MI_LOG": false,
 		"CP_LOG": false,
 		"BOOTROM": "Data/gc-ntsc-11.bin",
@@ -55,7 +58,11 @@
 			{ "Type": 65537, "Name": "Controller 3" },
 			{ "Type": 65537, "Name": "Controller 4" },
 			{ "Type": 131073, "Name": "Memory Card A" },
-			{ "Type": 131073, "Name": "Memory Card B" }
+			{ "Type": 131073, "Name": "Memory Card B" },
+			{ "Type": 196609, "Name": "Game Boy Player", "Port": -1 },
+			{ "Type": 65538, "Name": "GBA + Link Cable", "Port": -1 },
+			{ "Type": 131074, "Name": "Broadband Adapter", "Port": -1 },
+			{ "Type": 131075, "Name": "Modem Adapter", "Port": -1 }
 		]
 	}
 	

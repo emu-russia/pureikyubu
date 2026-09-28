@@ -126,7 +126,10 @@ const MCCommand Memcard_ValidCommands[Num_Memcard_ValidCommands] = {
 		MEMCARD_COMMAND_ERASESECTOR }, //#define MEMCARD_COMMAND_ERASESECTOR   0xF1
 	{ 0, 1, MCImmRead, MCGetEXIDeviceIdProc,
 		MEMCARD_COMMAND_GETEXIID }, //#define MEMCARD_COMMAND_GETEXIID      0x00
-	{ 0, 0, MCImmWrite, MCCardEraseProc,
+	// Erase card is three bytes on the wire: the opcode and two zeros (memory-card.md 3). The
+	// two are not parameters - nothing about a whole-card erase is configurable - so they are
+	// consumed as dummy bytes rather than refused as extras.
+	{ 0, 2, MCImmWrite, MCCardEraseProc,
 		MEMCARD_COMMAND_ERASECARD }, //#define MEMCARD_COMMAND_ERASECARD     0xF4
 	{ 1, 0, MCImmWrite,  MCEnableInterruptsProc,
 		MEMCARD_COMMAND_ENABLEINTER }, //#define MEMCARD_COMMAND_ENABLEINTER   0x81
@@ -149,6 +152,126 @@ const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = {
 
 Memcard memcard[2];
 
+/*
+ * The card controller answers an unlock challenge with a value the console recomputes for itself
+ * (`CARDUnlock`): the challenge is run through a bit-serial mixing step a number of times that the
+ * console picks along with the challenge, and the result is bit-reversed. The step is three rotated
+ * copies of the state XNORed back into it, which is exactly what `exnor` in that unit does:
+ *
+ *     t1 = rol(x, 25) & 0x01FFFFFF      t2 = rol(x, 17) & 0x0001FFFF
+ *     t3 = rol(x,  9) & 0x000001FF      y  = ~(t3 ^ t2 ^ x ^ t1)
+ *     next = (rol(x, 31) & 0x7FFFFFFF) | (rol(y, 30) & 0x40000000)
+ *
+ * The masks are the ones the disassembly's `rlwinm` operands spell out, and they clear the "top"
+ * bits of the rotated copy in PowerPC's most-significant-bit-first numbering.
+ */
+static uint32_t MCRotateLeft(uint32_t value, int bits)
+{
+	bits &= 31;
+	return bits == 0 ? value : ((value << bits) | (value >> (32 - bits)));
+}
+
+static uint32_t MCExnorStep(uint32_t x)
+{
+	uint32_t t1 = MCRotateLeft(x, 25) & 0x01FFFFFF;
+	uint32_t t2 = MCRotateLeft(x, 17) & 0x0001FFFF;
+	uint32_t t3 = MCRotateLeft(x, 9) & 0x000001FF;
+	uint32_t y = ~(t3 ^ t2 ^ x ^ t1);
+
+	return (MCRotateLeft(x, 31) & 0x7FFFFFFF) | (MCRotateLeft(y, 30) & 0x40000000);
+}
+
+/*
+ * The last operation of a run of mixing steps is not another step: the state is left where it is
+ * and its top bit is taken from the mixer's low bit. A plain run of steps always clears that bit,
+ * so leaving it out costs exactly the one bit of the answer that comes from it.
+ */
+static uint32_t MCExnorClose(uint32_t x)
+{
+	uint32_t t1 = MCRotateLeft(x, 25) & 0x01FFFFFF;
+	uint32_t t2 = MCRotateLeft(x, 17) & 0x0001FFFF;
+	uint32_t t3 = MCRotateLeft(x, 9) & 0x000001FF;
+
+	return x | ((~(t3 ^ t2 ^ x ^ t1) & 1) << 31);
+}
+
+/*
+ * The words of the code read are not all mixed with the same value. The console walks the value on
+ * between them with a *different* mixing step - the unit carries two, and this is the one the SDK
+ * calls `exnor` as opposed to `exnor_1st`: the state shifts left and the new bit comes from the
+ * mixer's top bit, where the challenge chain shifts right and takes its new bit from the bottom.
+ */
+static uint32_t MCExnorStepUp(uint32_t x)
+{
+	uint32_t t1 = (x << 7) & 0xFFFFFF80;
+	uint32_t t2 = (x << 15) & 0xFFFF8000;
+	uint32_t t3 = (x << 23) & 0xFFFFFE00;
+	uint32_t y = ~(t3 ^ t2 ^ x ^ t1);
+
+	return ((x << 1) & 0xFFFFFFFE) | (((y >> 31) & 1) << 1);
+}
+
+/* The closing of a run of those steps: the mixer's top bit goes into the value's low bit. */
+static uint32_t MCExnorCloseUp(uint32_t x)
+{
+	uint32_t t1 = (x << 7) & 0xFFFFFF80;
+	uint32_t t2 = (x << 15) & 0xFFFF8000;
+	uint32_t t3 = (x << 23) & 0xFFFFFE00;
+
+	return x | ((~(t3 ^ t2 ^ x ^ t1) >> 31) & 1);
+}
+
+static uint32_t MCBitReverse(uint32_t x)
+{
+	uint32_t out = 0;
+
+	for (int bit = 0; bit < 32; bit++)
+	{
+		out = (out << 1) | ((x >> bit) & 1);
+	}
+
+	return out;
+}
+
+/*
+ * The challenge is carried in the four address bytes, scrambled by the same unit's
+ * `ReadArrayUnlock`:
+ *
+ *     byte0 = rol(c, 3)  & 0x3        byte1 = rol(c, 11) & 0xFF
+ *     byte2 = rol(c, 13) & 0x3        byte3 = rol(c, 20) & 0x7F
+ *
+ * which spreads the challenge's bits over the top two bits of the first and third bytes, the
+ * whole of the second, and the low seven of the fourth. This is that mapping read backwards; the
+ * challenge's own top bit is not carried at all, which is harmless because the card only has to
+ * produce a value that re-encodes the bytes it was given.
+ */
+static uint32_t MCUnlockChallenge(uint32_t address)
+{
+	uint32_t b0 = (address >> 24) & 0xFF;
+	uint32_t b1 = (address >> 16) & 0xFF;
+	uint32_t b2 = (address >> 8) & 0xFF;
+	uint32_t b3 = address & 0xFF;
+
+	return (((b0 >> 1) & 1) << 30) | ((b0 & 1) << 29) | (b1 << 21) |
+		(((b2 >> 1) & 1) << 20) | ((b2 & 1) << 19) | ((b3 & 0x7F) << 12);
+}
+
+static uint32_t MCUnlockMask(uint32_t challenge, uint32_t bytesRead)
+{
+	uint32_t x = challenge;
+	uint32_t steps = bytesRead * 8 + 1;      // the console's `DummyLen() * 8 + 1`
+
+	for (uint32_t i = 0; i < steps; i++)
+	{
+		x = MCExnorStep(x);
+	}
+
+	return MCBitReverse(MCExnorClose(x));
+}
+
+/* How far the console walks the answer on between two words of the code read. */
+#define MCUnlockWordSteps 32
+
 static uint32_t MCCalculateOffset(uint32_t mc_address) {
 	// Fail closed: Halt() only logs, so returning an offset with the extra-bytes bit
 	// silently masked off would let the malformed request reach the copy below.
@@ -159,6 +282,52 @@ static uint32_t MCCalculateOffset(uint32_t mc_address) {
 	return        (mc_address & 0x0000007F) |
 		((mc_address & 0x00000300) >> 1) |
 		((mc_address & 0x7FFF0000) >> 7);
+}
+
+/*
+ * The card is a flash part behind a small controller, and the address the controller puts on the
+ * part's bus is wider than the part's own capacity: the address lines above it are simply not
+ * connected, so the part sees the address modulo its size. A transfer at an address the image does
+ * not have is therefore not an error - it is the same bytes as the wrapped address holds.
+ *
+ * This matters to the console's own library: its card mount runs an identification sequence that
+ * reads at addresses which only exist on a larger part, and a card that refuses them (or answers
+ * with whatever was left in the buffer) is a card the library cannot mount.
+ */
+static uint32_t MCWrapOffset(Memcard* memcard, uint32_t offset)
+{
+	if (memcard->size == 0)
+	{
+		return 0;
+	}
+
+	return offset % memcard->size;
+}
+
+static void MCReadImage(Memcard* memcard, uint32_t offset, uint8_t* dst, uint32_t size)
+{
+	if (size > memcard->size)
+	{
+		size = memcard->size;       // a transfer larger than the image is clamped, not wrapped
+	}
+
+	for (uint32_t i = 0; i < size; i++)
+	{
+		dst[i] = memcard->data[MCWrapOffset(memcard, offset + i)];
+	}
+}
+
+static void MCWriteImage(Memcard* memcard, uint32_t offset, const uint8_t* src, uint32_t size)
+{
+	if (size > memcard->size)
+	{
+		size = memcard->size;
+	}
+
+	for (uint32_t i = 0; i < size; i++)
+	{
+		memcard->data[MCWrapOffset(memcard, offset + i)] = src[i];
+	}
 }
 
 static void MCSyncSave(Memcard* memcard, uint32_t offset, uint32_t size) {
@@ -224,14 +393,9 @@ static void MCPageProgramProc(Memcard* memcard, EXIRegs* exi) {
 
 	offset = MCCalculateOffset(auxdata);
 
-	if (!Verify::MemcardWindow(memcard->size, offset, size)) {
-		Report(Channel::MC, "PageProgram offset is out of range\n");
-		return;
-	}
-
 	/* memcard->status |= MEMCARD_STATUS_BUSY; */
 
-	memcpy(&memcard->data[offset], abuf, size);
+	MCWriteImage(memcard, offset, abuf, size);
 
 	MCSyncSave(memcard, offset, size);
 
@@ -271,18 +435,98 @@ static void MCReadArrayProc(Memcard* memcard, EXIRegs* exi) {
 
 	offset = MCCalculateOffset(auxdata);
 
-	if (!Verify::MemcardWindow(memcard->size, offset, size)) {
-		Report(Channel::MC, "ReadArray offset is out of range\n");
-		return;
-	}
-
 	/* memcard->status |= MEMCARD_STATUS_BUSY; */
 
-	memcpy(abuf, &memcard->data[offset], size);
+	/*
+	 * The four address bytes say where the block starts; the bytes that follow are clocked out of
+	 * the card in order, so a transfer picks up where the previous one stopped instead of reading
+	 * the same address again. The console depends on this: it hands the card an address once and
+	 * then reads the whole block with as many transfers as its transfer length asks for.
+	 */
+	if (!memcard->readValid) {
+		/*
+		 * The first transfer of a command is the moment the previous one is known to be over. An
+		 * unlock challenge is an immediate read that carries a nonzero address; the length the
+		 * console picked travels as the number of bytes it reads, and it can be as short as the
+		 * four bytes a single immediate transfer holds. A page read is a DMA transfer and a page
+		 * is far longer than any challenge, so leaving DMA out keeps ordinary reads from being
+		 * mistaken for one.
+		 */
+		if (memcard->readTotal >= 4 && memcard->lastAddress != 0 &&
+			!(exi->cr & EXI_CR_DMA)) {
+			memcard->unlockMask = MCUnlockMask(MCUnlockChallenge(memcard->lastAddress), memcard->readTotal);
+			memcard->unlockGroup = 0;
+			memcard->unlockArmed = true;
+
+			/*
+			 * And this is what tells the library the card accepted the challenge: it reads the
+			 * status back before it will go on to verify the card, and a card that does not
+			 * report the bit is treated as one that refused (`CARD_RESULT_IOERROR`). Nothing
+			 * else sets it, so a card that has never been challenged does not look unlocked.
+			 */
+			memcard->status |= MEMCARD_STATUS_ARRAYTOBUFFER;
+		}
+
+		if (offset == UINT32_MAX) {
+			return;
+		}
+		memcard->readAddress = offset;
+		memcard->readValid = true;
+
+		memcard->lastAddress = auxdata;
+		memcard->readTotal = 0;
+	}
+
+	offset = memcard->readAddress;
+	memcard->readAddress += size;
+
+	/*
+	 * A read taken while the unlock is in progress does not come from the flash at all: it is the
+	 * card's code, which lives in the controller rather than in the array the file holds, and which
+	 * is why it can only be read once the challenge has been answered. That is also what makes the
+	 * exchange necessary - the code is not the header's first bytes, so nothing the console wrote
+	 * into the flash can stand in for it. This card's code is zero.
+	 */
+	if (memcard->unlockArmed && !(exi->cr & EXI_CR_DMA)) {
+		memset(abuf, 0, size);          // the code is not in the array; it is the controller's
+	}
+	else {
+		MCReadImage(memcard, offset, abuf, size);
+	}
+
+	/*
+	 * The card hands its code back mixed with the answer to the challenge, and the console
+	 * recomputes that answer and takes it back out, so what it is left with is the code itself.
+	 * The sequence ends when the console goes back to reading whole sectors with DMA.
+	 */
+	if (exi->cr & EXI_CR_DMA) {
+		memcard->unlockArmed = false;
+	}
+	else if (memcard->unlockArmed) {
+		/*
+		 * The console does not mix a single constant into the whole read: it mixes the current
+		 * answer into one word, advances the answer nine mixing steps, and repeats (`CARDUnlock`
+		 * runs nine steps between each pair of `xor ...,card+44` stores). The card has to walk the
+		 * same sequence, which is what `unlockGroup` counts.
+		 */
+		for (uint32_t i = 0; i < size; i++) {
+			uint32_t group = (memcard->readTotal + i) >> 2;
+
+			while (memcard->unlockGroup < group) {
+				for (int step = 0; step < MCUnlockWordSteps; step++) {
+					memcard->unlockMask = MCExnorStepUp(memcard->unlockMask);
+				}
+				memcard->unlockMask = MCExnorCloseUp(memcard->unlockMask);
+				memcard->unlockGroup++;
+			}
+
+			abuf[i] ^= (uint8_t)(memcard->unlockMask >> (24 - 8 * ((memcard->readTotal + i) & 3)));
+		}
+	}
+
+	memcard->readTotal += size;
 
 	/* memcard->status &= ~MEMCARD_STATUS_BUSY; */
-
-	memcard->status |= MEMCARD_STATUS_ARRAYTOBUFFER;
 
 
 	if (exi->cr & EXI_CR_DMA) {
@@ -299,15 +543,13 @@ static void MCSectorEraseProc(Memcard* memcard, EXIRegs* exi) {
 
 	offset = MCCalculateOffset(memcard->commandData);
 
-	// The whole erased sector has to fit, not just its first byte.
-	if (!Verify::MemcardWindow(memcard->size, offset, Memcard_BlockSize)) {
-		Report(Channel::MC, "MC :: Erase sector is out of range\n");
-		return;
-	}
-
 	/* memcard->status |= MEMCARD_STATUS_BUSY; */
 
-	memset(&memcard->data[offset], MEMCARD_ERASEBYTE, Memcard_BlockSize);
+	{
+		uint8_t erased[Memcard_BlockSize];
+		memset(erased, MEMCARD_ERASEBYTE, sizeof(erased));
+		MCWriteImage(memcard, offset, erased, sizeof(erased));
+	}
 
 	MCSyncSave(memcard, offset, Memcard_BlockSize);
 
@@ -319,10 +561,15 @@ static void MCSectorEraseProc(Memcard* memcard, EXIRegs* exi) {
 static void MCGetEXIDeviceIdProc(Memcard* memcard, EXIRegs* exi) {
 
 	int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
-	// The mask keeps the most significant byte, so the capacity has to be shifted
-	// there the way MCGetStatusProc/MCReadIdProc do it (was always zero).
+
+	// The device ID is a 32-bit value whose *low* byte is the capacity code: 0x00000004 for the
+	// 4 Mbit card, 0x00000040 for the 64 Mbit one. The bytes go out most significant first, so the
+	// four bytes on the wire are 00 00 00 04 and a four-byte immediate read leaves the value as it
+	// stands. The library reads all four (`EXIGetType` compares the whole word with
+	// EXI_MEMORY_CARD_*), which is why this one is *not* shifted into the top byte the way the
+	// one-byte status and the two-byte card ID are.
 	exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
-		((((uint32_t)(memcard->size >> 17)) << 24) & Memcard_BytesMask[auxbytes]);
+		(((uint32_t)(memcard->size >> 17)) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCCardEraseProc*********************************************/
 static void MCCardEraseProc(Memcard* memcard, EXIRegs* exi) {
@@ -399,6 +646,7 @@ void MCTransfer(Flipper::ExternalInterface* exi) {
 				while (auxbytes > 0) {
 					if (auxmc->Command == MEMCARD_COMMAND_UNDEFINED || auxmc->ready) {
 						auxmc->Command = (uint8_t)(auxdata >> 24);
+						auxmc->readValid = false;   // a new command starts a new read address
 						for (i = 0; i < Num_Memcard_ValidCommands; i++)
 							if (auxmc->Command == Memcard_ValidCommands[i].Command) {
 								auxmc->databytes = Memcard_ValidCommands[i].databytes;
@@ -417,7 +665,8 @@ void MCTransfer(Flipper::ExternalInterface* exi) {
 							auxmc->Command = MEMCARD_COMMAND_UNDEFINED;
 						}
 						else {
-							Report(Channel::MC, "Recognized Memcard Command %02x\n", auxmc->Command);
+							Report(Channel::MC, "Recognized Memcard Command %02x (tlen %d data %08X)\n",
+								auxmc->Command, auxbytes, auxdata);
 						}
 					}
 					else if (auxmc->databytesread < auxmc->databytes) {
@@ -428,7 +677,15 @@ void MCTransfer(Flipper::ExternalInterface* exi) {
 						auxmc->dummybytesread++;
 					}
 					else
-						Halt("MC :: Extra bytes at transfer , data : %02x\n", (uint8_t)(auxdata >> 24));
+					{
+						// More bytes in the transfer than the command's own description accounts for.
+						// The command is named, because the fix is almost always in the table above:
+						// a command whose wire form is longer than its `databytes + dummybytes` is
+						// read as an extra here.
+						Report(Channel::MC,
+							"MC :: Command %02X got more bytes than it takes (data %02X)\n",
+							auxmc->Command, (uint8_t)(auxdata >> 24));
+					}
 					auxdata = auxdata << 8;
 					auxbytes--;
 				}
@@ -615,6 +872,29 @@ bool MCConnect(int cardnum) {
 			/* if nothing fails... */
 			memcard[cardnum].ID = ((uint16_t)0xC2) << 8 | (uint16_t)0x42; // Datel's code just for now
 			memcard[cardnum].status = MEMCARD_STATUS_READY;
+
+			// The command decoder starts idle. `Command` is what tells the decoder that the next
+			// byte of a write is an opcode rather than the rest of the previous command, and the
+			// value that means "idle" is 0xFF - a card that comes up with the field zeroed reads
+			// every byte of its first write as an extra and never decodes a command at all, which
+			// is exactly what the guest sees as "there is no card in this slot".
+			memcard[cardnum].Command = MEMCARD_COMMAND_UNDEFINED;
+			memcard[cardnum].databytes = 0;
+			memcard[cardnum].dummybytes = 0;
+			memcard[cardnum].executionFlags = 0;
+			memcard[cardnum].procedure = nullptr;
+			memcard[cardnum].databytesread = 0;
+			memcard[cardnum].dummybytesread = 0;
+			memcard[cardnum].commandData = 0;
+			memcard[cardnum].ready = false;
+			memcard[cardnum].readAddress = 0;
+			memcard[cardnum].readValid = false;
+			memcard[cardnum].unlockMask = 0;
+			memcard[cardnum].unlockArmed = false;
+			memcard[cardnum].unlockGroup = 0;
+			memcard[cardnum].readTotal = 0;
+			memcard[cardnum].lastAddress = 0;
+
 			memcard[cardnum].connected = true;
 			Flipper::HW->exi->EXIAttach(cardnum);        // connect device
 
@@ -840,7 +1120,9 @@ public:
 
 	// -----------------------------------------------------------------------
 
-	void ExiTransfer(Flipper::ExternalInterface* exi) override
+	// The card's own protocol carries a command byte and then the data of that command, so the card
+	// recognises its commands by itself and does not need the channel's command-word flag.
+	void ExiTransfer(Flipper::ExternalInterface* exi, bool first) override
 	{
 		MCTransfer(exi);
 	}
@@ -864,7 +1146,7 @@ namespace
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_MEMCARD, "Memory Card",
 				"DOL-008 / DOL-014 / DOL-020, an EXI device of a card slot",
-				PERIPH_BUS_EXI, CreateMemoryCard);
+				PERIPH_BUS_EXI, PERIPH_PAGE_MEMORY_CARDS, CreateMemoryCard);
 		}
 	};
 

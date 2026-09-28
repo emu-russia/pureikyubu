@@ -22,6 +22,9 @@
 // The Windows builds still use the Win32 API directly, even though there is no Win32 front end any
 // more (issue #421): the threads, the directory scan and the file mapping of utils.cpp and os.cpp,
 // the graphics API entry points of gfx.cpp and the executable pages of the JIT allocate through it.
+// Winsock 2 has to be read before windows.h, or the latter pulls in the 1.x header and the two
+// disagree about the socket types (the Broadband Adapter's network backend is the consumer).
+#include <winsock2.h>
 #include <windows.h>
 #endif
 
@@ -85,6 +88,11 @@
 
 #include "flipper.h"
 
+// The Hi-Speed Port (the ARAM expansion the Game Boy Player sits on). It is declared here, with the
+// rest of the hardware, because the Flipper owns it and the ARAM DMA engine routes the transfers
+// that land in its window to it (see hsp.h).
+#include "hsp.h"
+
 // The audio mixer is the SDL one in every build (issue #421). The headless build compiles
 // audionull.cpp against this same declaration: the class has to look the same, and the null mixer
 // never touches the SDL device members.
@@ -116,6 +124,8 @@
 #include "exi.h"
 #include "memcard.h"
 #include "peripherals.h"
+#include "bba.h"
+#include "mdm.h"
 #include "si.h"
 #include "flipperdebug.h"
 

@@ -1214,9 +1214,15 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 			Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
 			break;
 		case ValueType::Int:
-			// %llu, not the MSVC %I64u: glibc reads "%I64u" as the 'I' flag plus a field width of
-			// 64 and pads every number to 64 columns.
-			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%llu", (unsigned long long)value.AsInt);
+			// Signed, and %lld rather than the MSVC %I64u: glibc reads "%I64u" as the 'I' flag plus
+			// a field width of 64 and pads every number to 64 columns. The member holds the two's
+			// complement form of a value that can be negative - a device's socket is -1 when it is
+			// unplugged - and printing that as unsigned wrote 18446744073709551615 into the file,
+			// which the reader then clamped to 9223372036854775807 (its positive range stops at
+			// INT64_MAX). The emulator read that back as -1 through a cast to `int`, so nothing
+			// inside it misbehaved, but the file no longer said what it meant.
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%lld",
+				(long long)(int64_t)value.AsInt);
 			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::Float:

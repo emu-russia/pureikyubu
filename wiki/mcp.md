@@ -97,6 +97,54 @@ a memory dump with `memdump`, a breakpoint with `b`). The **headless** build is 
 unattended run (a build server, a WSL session without a display): there is no window, and the
 emulator is idle until a tool loads something.
 
+## Pressing the controls from a client
+
+An unattended run has no keyboard, which is a problem for anything that waits for a button: a demo
+that will not go past its title screen, a disc whose menu has to be answered, a link that only
+starts when the player asks for it. `hkey` gives the run a keyboard:
+
+```
+{ "name": "hkey", "arguments": { "args": ["27", "1"] } }    // press
+{ "name": "hkey", "arguments": { "args": ["27", "0"] } }    // release
+{ "name": "hkey", "arguments": { "args": ["40"] } }         // press only
+```
+
+The code is the one the settings store a keyboard binding under - the value of a `VKEY_FOR_*` field
+of the device being driven, so `27` is whatever that pad's `VKEY_FOR_A` holds. Both host backends
+answer it: the headless one has nothing else to press with, and the windowed one keeps its own
+keyboard and treats the injected key as a second source, so the same script works in either. A
+device only feels the press if one of its actuators is bound to that code, which is what the
+settings window is for.
+
+## Seeing the Game Boy Player's screen
+
+A GameCube session publishes no GBA debug interface - the portable machines publish theirs only when
+the emulator *is* one - so the picture the Game Pak inside a Game Boy Player is producing has no way
+out of the machine by default. `gbpshot` writes it to a PNG:
+
+```
+{ "name": "gbpshot", "arguments": { "args": ["player.png"] } }
+{ "name": "gbpshot", "arguments": { "args": ["link.png", "GBA"] } }
+```
+
+The answer carries the file, the **device** the picture came from, its size (240x160, the LCD of the
+machine), the machine's frame counter and whether the file was written. Two devices carry such a
+machine - the Game Boy Player in its bay and the Game Boy Advance on a link cable - and a third word
+chooses between them by a part of the device's name; without it the first one of the pool is written
+out. A run with neither device, or with an empty cartridge bay, is told so instead of being handed a
+black picture:
+
+```
+gbpshot: PNG file name expected
+gbpshot: no device with a Game Pak in it (a Game Boy Player with a cartridge, or a Game Boy Advance
+on a link cable)
+```
+
+The picture only moves once the console has switched the Player on and the Game Pak with it, which
+is what the Start-up Disc does; a title that never touches the port leaves the Player off and the
+frame at whatever the last run left in it (see [gbplayer.md](gbplayer.md)).
+
+
 ## The protocol, in one page
 
 | Method | Answer |

@@ -14,7 +14,7 @@
 
 	SRAM : little piece of battery-backed data. 64 bytes or so.
 	RTC  : 32-bit counter of seconds, since current millenium
-	AD16 : This is most likely a debugging device called `Barnacle`.
+	AD16 : a debugging device, which the console uses to trace the guest.
 
 	memcard should be in another module (see memcard.cpp)
 	broad band adapter should be in another module (see bba.cpp)
@@ -64,11 +64,16 @@ namespace Flipper
 	// EXI transfer bindings
 	//
 	// The device of a channel is the one that is plugged into the matching port of the peripheral
-	// pool: a memory card in a card slot (see peripherals.h). The devices that are part of the
-	// console itself - the boot ROM / RTC / SRAM chip on CS1B and the AD16 debugger of channel 2 -
-	// are not peripherals and stay here.
+	// pool: a memory card in a card slot, a network adapter on the serial port (see peripherals.h).
+	// The devices that are part of the console itself - the boot ROM / RTC / SRAM chip on CS1B and
+	// the AD16 debugger of channel 2 - are not peripherals and stay here.
+	//
+	// The network adapters are **channel 0, chip select 2**: that is the "MDM" line of the block
+	// (expansion-interface.md 3.1), and it is what the console's own driver selects - `EXIGetID(0,
+	// 2)` and every transfer after it address channel 0, device 2 (the ethernet library's
+	// readEXIcmd/readcmdLong have that channel and device hard-coded).
 	static EXITransferCallback exi_cb[3][3] = {
-		{ ExternalInterface::CardTransferA	, MXTransfer						, ExternalInterface::UnknownTransfer },
+		{ ExternalInterface::CardTransferA	, MXTransfer						, ExternalInterface::SerialTransfer },
 		{ ExternalInterface::CardTransferB	, ExternalInterface::UnknownTransfer, ExternalInterface::UnknownTransfer },
 		{ ExternalInterface::ADTransfer		, ExternalInterface::UnknownTransfer, ExternalInterface::UnknownTransfer }
 	};
@@ -105,15 +110,15 @@ namespace Flipper
 	// attach / detach device on EXI channel
 	//
 
+	// EXT is the level the device-presence pin (EXT_IN) is at, and EXTINT is the interrupt that
+	// pin's *falling* edge raises: the hardware asks for an interrupt when a device is taken out,
+	// not when one is put in, and the request bit resets pending (expansion-interface.md 1.3). The
+	// emulated pin has no other source, so a device that is plugged in is the pin being high.
 	void ExternalInterface::EXIAttach(int chan)
 	{
 		if (exi.log) Report(Channel::EXI, "attaching device at channel %i\n", chan);
 
-		// set attach flag
 		exi.regs[chan].csr |= EXI_CSR_EXT;
-
-		// assert attach interrupt
-		exi.regs[chan].csr |= EXI_CSR_EXTINT;
 		EXIUpdateInterrupts();
 	}
 
@@ -121,11 +126,16 @@ namespace Flipper
 	{
 		if (exi.log) Report(Channel::EXI, "detaching device at channel %i\n", chan);
 
-		// clear attach flag
+		bool wasPresent = (exi.regs[chan].csr & EXI_CSR_EXT) != 0;
+
 		exi.regs[chan].csr &= ~EXI_CSR_EXT;
 
-		// assert detach interrupt
-		exi.regs[chan].csr |= EXI_CSR_EXTINT;
+		// Only the 1 -> 0 edge raises the request.
+		if (wasPresent)
+		{
+			exi.regs[chan].csr |= EXI_CSR_EXTINT;
+		}
+
 		EXIUpdateInterrupts();
 	}
 
@@ -155,8 +165,16 @@ namespace Flipper
 		Peripherals::Instance().TransferEXI(1, 0, (ExternalInterface*)ctx);
 	}
 
+	// Serial port 1: the socket the broadband adapter and the modem adapter share (EXI0 chip
+	// select 2). The device is the one plugged into that port of the pool; with an empty socket
+	// the transfer completes with nothing on the line, exactly like a card slot without a card.
+	void ExternalInterface::SerialTransfer(void* ctx)
+	{
+		Peripherals::Instance().TransferEXI(0, 2, (ExternalInterface*)ctx);
+	}
+
 	// AD16 device transfer (EXI device 2:0)
-	// This is most likely a debugging device called `Barnacle`.
+	// A debugging device that the console talks to over this one.
 	void ExternalInterface::ADTransfer(void* ctx)
 	{
 		ExternalInterface* exi = (ExternalInterface*)ctx;
@@ -208,43 +226,107 @@ namespace Flipper
 	// communication control
 	//
 
-	void ExternalInterface::exi_select(int chan)
+	// Which device of a channel is selected is a function of *that channel's* own chip-select bits
+	// (each channel has its own CSR). The emulator used to keep one
+	// global "last select" written by any channel, which is only the same thing as long as the guest
+	// touches one channel at a time.
+	int ExternalInterface::exi_sel_of(int chan)
 	{
-		// set flag
-		exi.firstImm = true;
-
 		if (exi.regs[chan].csr & EXI_CSR_CS0B)
 		{
-			exi.sel = 0;
-			return;
+			return 0;
 		}
 		if (exi.regs[chan].csr & EXI_CSR_CS1B)
 		{
-			exi.sel = 1;
-			return;
+			return 1;
 		}
 		if (exi.regs[chan].csr & EXI_CSR_CS2B)
 		{
-			exi.sel = 2;
-			return;
+			return 2;
 		}
 
 		// no device selected
-		exi.sel = -1;
+		return -1;
+	}
+
+	void ExternalInterface::exi_select(int chan)
+	{
+		exi.sel = exi_sel_of(chan);
+
+		// A *write that asserts a chip select* starts a new command sequence, which is what a device
+		// that takes a command word and then data words keys on (the AD16 debugger, the two network
+		// adapters). It is the assertion that matters, not the change of device: a guest that
+		// selects the socket it already had selected - which is what a driver does when the bus it
+		// is handed is already asserted, and what the console's own `EXISelect` does every time -
+		// is starting a sequence just the same. Keying on the change alone made such a driver's
+		// first command word be taken for data, so the device answered from whatever register the
+		// previous sequence had left behind: with the two adapters that showed up as an
+		// identification that read zero about one run in three. Only the chip select matters here,
+		// which is why this is called from the CSR write and nowhere else: a write that carries no
+		// select leaves the sequence alone.
+		if (exi.sel != -1)
+		{
+			exi.firstImm = true;
+		}
+	}
+
+	// The chip-select bits are mutually exclusive in hardware, and the rule is per bit: a select is
+	// taken only when no *other* select is asserted and none is being asserted by the same write
+	// (expansion-interface.md 1.3). A write that asks for two of them therefore selects
+	// none, and a write that asks for one while another is already asserted drops both - the field
+	// ends up holding exactly what the write asked for, minus the bits that lost the arbitration.
+	uint32_t ExternalInterface::exi_select_bits(uint32_t csr, uint32_t data)
+	{
+		const uint32_t all = EXI_CSR_CS0B | EXI_CSR_CS1B | EXI_CSR_CS2B;
+
+		uint32_t want = data & all;
+		uint32_t selected = 0;
+
+		for (uint32_t bit = 1; bit <= EXI_CSR_CS2B; bit <<= 1)
+		{
+			if ((all & bit) == 0 || (want & bit) == 0)
+			{
+				continue;
+			}
+
+			if (((want | csr) & all & ~bit) == 0)
+			{
+				selected |= bit;
+			}
+		}
+
+		return selected;
 	}
 
 	void ExternalInterface::write_csr(int chan, uint32_t data)
 	{
-		if (chan == 0 && (data & EXI_CSR_ROMDIS) != 0) {
+		uint16_t csr = exi.regs[chan].csr;
 
-			Report(Channel::EXI, "BootROM Decryption Disabled\n");
+		// ROMDIS is write-once: the bit disables the boot-ROM descrambler and only the 0 -> 1
+		// transition exists in the hardware.
+		uint32_t romdis = csr & EXI_CSR_ROMDIS;
+
+		if ((data & EXI_CSR_ROMDIS) != 0 && romdis == 0)
+		{
+			romdis = EXI_CSR_ROMDIS;
+
+			if (chan == 0)
+			{
+				Report(Channel::EXI, "BootROM Decryption Disabled\n");
+			}
 		}
 
-		// clear interrupts 
-		exi.regs[chan].csr &= ~(data & EXI_CSR_INTERRUPTS);
+		// The status bits of the register are write-1-to-clear, the rest is read only.
+		csr = (uint16_t)(csr & ~(data & EXI_CSR_INTERRUPTS));
 
-		// update register and do select
-		exi.regs[chan].csr = (exi.regs[chan].csr & EXI_CSR_READONLY) | (data & ~EXI_CSR_READONLY);
+		uint32_t writable = data &
+			~(EXI_CSR_READONLY | EXI_CSR_CS0B | EXI_CSR_CS1B | EXI_CSR_CS2B | EXI_CSR_ROMDIS);
+
+		csr = (uint16_t)((csr & EXI_CSR_READONLY) | writable | romdis |
+			exi_select_bits(csr, data));
+
+		exi.regs[chan].csr = csr;
+
 		exi_select(chan);
 		EXIUpdateInterrupts();
 	}
@@ -252,9 +334,9 @@ namespace Flipper
 	void ExternalInterface::exi_read_dummy(uint32_t addr, uint32_t* reg, void* ctx) { *reg = 0; }
 	void ExternalInterface::exi_write_dummy(uint32_t addr, uint32_t data, void* ctx) {}
 
-	void ExternalInterface::exi0_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[0].csr; }
-	void ExternalInterface::exi1_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[1].csr; }
-	void ExternalInterface::exi2_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[2].csr; }
+	void ExternalInterface::exi0_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[0].csr & EXI_CSR_MASK; }
+	void ExternalInterface::exi1_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[1].csr & EXI_CSR_MASK; }
+	void ExternalInterface::exi2_read_csr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[2].csr & EXI_CSR_MASK; }
 	void ExternalInterface::exi0_write_csr(uint32_t addr, uint32_t data, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; exi->write_csr(0, data); }
 	void ExternalInterface::exi1_write_csr(uint32_t addr, uint32_t data, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; exi->write_csr(1, data); }
 	void ExternalInterface::exi2_write_csr(uint32_t addr, uint32_t data, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; exi->write_csr(2, data); }
@@ -312,16 +394,19 @@ namespace Flipper
 		ExternalInterface* exi = (ExternalInterface*)ctx;
 		exi->exi.regs[0].len &= 0x0000ffff;
 		exi->exi.regs[0].len |= data << 16;
+		exi->exi.regs[0].len &= EXI_LEN_MASK;   // the low five bits do not exist
 	}
 	void ExternalInterface::exi1_write_lenh(uint32_t addr, uint32_t data, void* ctx) {
 		ExternalInterface* exi = (ExternalInterface*)ctx;
 		exi->exi.regs[1].len &= 0x0000ffff;
 		exi->exi.regs[1].len |= data << 16;
+		exi->exi.regs[1].len &= EXI_LEN_MASK;   // the low five bits do not exist
 	}
 	void ExternalInterface::exi2_write_lenh(uint32_t addr, uint32_t data, void* ctx) {
 		ExternalInterface* exi = (ExternalInterface*)ctx;
 		exi->exi.regs[2].len &= 0x0000ffff;
 		exi->exi.regs[2].len |= data << 16;
+		exi->exi.regs[2].len &= EXI_LEN_MASK;   // the low five bits do not exist
 	}
 
 	void ExternalInterface::exi0_read_lenl(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = (uint16_t)exi->exi.regs[0].len; }
@@ -331,16 +416,19 @@ namespace Flipper
 		ExternalInterface* exi = (ExternalInterface*)ctx;
 		exi->exi.regs[0].len &= 0xffff0000;
 		exi->exi.regs[0].len |= (uint16_t)data;
+		exi->exi.regs[0].len &= EXI_LEN_MASK;   // the low five bits do not exist
 	}
 	void ExternalInterface::exi1_write_lenl(uint32_t addr, uint32_t data, void* ctx) {
 		ExternalInterface* exi = (ExternalInterface*)ctx;
 		exi->exi.regs[1].len &= 0xffff0000;
 		exi->exi.regs[1].len |= (uint16_t)data;
+		exi->exi.regs[1].len &= EXI_LEN_MASK;   // the low five bits do not exist
 	}
 	void ExternalInterface::exi2_write_lenl(uint32_t addr, uint32_t data, void* ctx) {
 		ExternalInterface* exi = (ExternalInterface*)ctx;
 		exi->exi.regs[2].len &= 0xffff0000;
 		exi->exi.regs[2].len |= (uint16_t)data;
+		exi->exi.regs[2].len &= EXI_LEN_MASK;   // the low five bits do not exist
 	}
 
 	//
@@ -354,15 +442,24 @@ namespace Flipper
 
 		if (regs->cr & EXI_CR_TSTART)
 		{
-			if (exi.sel == -1)
-			{
-				Report(Channel::EXI, "device should be selected before transfer\n");
-				return;
-			}
-
-			// start transfer
+			// The channel is the one whose CR was written, and the device is the one *its* chip
+			// selects assert - never another channel's. The selection is read, not re-made, so the
+			// command sequence of a device that is in the middle of one is left alone.
 			exi.chan = chan;
-			exi_cb[exi.chan][exi.sel](this);
+			exi.sel = exi_sel_of(chan);
+
+			// A transfer with nothing selected still runs to completion: the master state machine
+			// does not consult the chip selects, so TSTART clears and the transfer-complete
+			// interrupt is raised just the same. Only the device is skipped, and the channel is
+			// left with nothing to talk to.
+			if (exi.sel != -1)
+			{
+				exi_cb[exi.chan][exi.sel](this);
+			}
+			else
+			{
+				Report(Channel::EXI, "transfer with no device selected\n");
+			}
 
 			// The transfer the device just performed moved `len` bytes between it and main memory
 			// when it was a DMA one (issue #394). The emulator completes EXI transfers instantly
@@ -382,9 +479,9 @@ namespace Flipper
 		}
 	}
 
-	void ExternalInterface::exi0_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[0].cr; }
-	void ExternalInterface::exi1_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[1].cr; }
-	void ExternalInterface::exi2_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[2].cr; }
+	void ExternalInterface::exi0_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[0].cr & EXI_CR_MASK; }
+	void ExternalInterface::exi1_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[1].cr & EXI_CR_MASK; }
+	void ExternalInterface::exi2_read_cr(uint32_t addr, uint32_t* reg, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; *reg = exi->exi.regs[2].cr & EXI_CR_MASK; }
 	void ExternalInterface::exi0_write_cr(uint32_t addr, uint32_t data, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; exi->exi_write_cr(0, data); }
 	void ExternalInterface::exi1_write_cr(uint32_t addr, uint32_t data, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; exi->exi_write_cr(1, data); }
 	void ExternalInterface::exi2_write_cr(uint32_t addr, uint32_t data, void* ctx) { ExternalInterface* exi = (ExternalInterface*)ctx; exi->exi_write_cr(2, data); }
@@ -474,7 +571,7 @@ namespace Flipper
 
 		// The protocol state. `sel` is the device the last CSR write selected (-1 for none) and
 		// `chan` the channel of the last transfer, so they are what the next immediate write
-		// consults. `ad16` is the Barnacle's trace step and `ad16_cmd` the command it is in the
+		// consults. `ad16` is the debug device's trace step and `ad16_cmd` the command it is in the
 		// middle of, which is exactly the kind of state split over several guest writes the
 		// section has to keep.
 		writer.Fields(exi.firstImm, exi.mxaddr, exi.ad16, exi.ad16_cmd, exi.chan, exi.sel);
@@ -583,6 +680,15 @@ namespace Flipper
 
 		// reset devices
 		exi.sel = -1;           // deselect MX device
+
+		// The device-presence request bit resets *pending* and its mask resets clear:
+		// the hardware has no way to know that a socket is empty when it comes out of reset, so it
+		// comes up asking. The guest clears the request with its first CSR write.
+		for (int chan = 0; chan < 3; chan++)
+		{
+			exi.regs[chan].csr |= EXI_CSR_EXTINT;
+		}
+
 		SRAMLoad(&exi.sram);    // load sram
 		RTCUpdate(&exi.rtcVal);
 		if (!exi.BootromPresent)

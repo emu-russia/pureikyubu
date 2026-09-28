@@ -12,6 +12,7 @@
 #include "res/pureikyubu_icon.h"
 #include "bench.h"
 #include "uisettings.h"
+#include "uisettingsgba.h"
 
 static bool ui_active = false;
 static bool show_demo_window = false;
@@ -1541,6 +1542,13 @@ static void ui_main_menu()
 			if (ImGui::MenuItem("Settings...", NULL)) {
 				UiSettingsOpen();
 			}
+
+			// The machine the emulator is *not* running is configured in a window of its own:
+			// its settings live in GBASettings.json and have nothing to do with the console's
+			// (see the "stand-alone GBA settings" module).
+			if (ImGui::MenuItem("Stand-alone GBA...", NULL)) {
+				UiGbaSettingsOpen();
+			}
 			ImGui::EndMenu();
 		}
 
@@ -1943,7 +1951,7 @@ static int ui_main()
 
 			// File -> Reopen (F3): reload the image that was loaded last. The menu item is the
 			// primary way in, this is the shortcut for it.
-			if (forMainWindow && !emu_running && !UiSettingsCaptureActive() &&
+			if (forMainWindow && !emu_running && !UiSettingsCaptureActive() && !UiGbaSettingsCaptureActive() &&
 				event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_F3)
 			{
 				reopen_last_file();
@@ -1953,7 +1961,7 @@ static int ui_main()
 			// stepping the slot. Unlike the reopen shortcut these work while a game runs - a state
 			// is taken in the middle of one - and they are why the two keys are F5/F7 rather than
 			// the F3/F4 the GBA front end uses (F3 is taken here).
-			if (forMainWindow && !UiSettingsCaptureActive() && emu.loaded &&
+			if (forMainWindow && !UiSettingsCaptureActive() && !UiGbaSettingsCaptureActive() && emu.loaded &&
 				event.type == SDL_KEYDOWN &&
 				(event.key.keysym.scancode == SDL_SCANCODE_F5 ||
 					event.key.keysym.scancode == SDL_SCANCODE_F7))
@@ -1978,7 +1986,7 @@ static int ui_main()
 			// binding of a control (see uisettings.cpp). The captured event must not reach ImGui,
 			// otherwise it would also move the selector cursor, trigger a menu item or navigate the
 			// interface.
-			if (UiSettingsSdlEvent(event, mainWindowID))
+			if (UiGbaSettingsSdlEvent(event, mainWindowID) || UiSettingsSdlEvent(event, mainWindowID))
 			{
 				forMainWindow = false;
 			}
@@ -2034,6 +2042,7 @@ static int ui_main()
 		ui_main_window();
 
 		UiSettingsFrame();
+		UiGbaSettingsFrame();
 
 		if (show_demo_window) {
 			ImGui::ShowDemoWindow(&show_demo_window);

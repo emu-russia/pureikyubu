@@ -50,7 +50,12 @@ namespace SaveStates
 #define EXI_CR_DMA          (1 << 1)        // select dma transfer (dma/immediate)
 #define EXI_CR_TSTART       (1 << 0)        // start transfer
 
-#define EXI_MADR_MASK 0x3fff'ffe0
+// The DMA address and length are 26-bit byte values with the low five bits tied to zero (the
+// engine moves 32-byte lines): bits 25:5 of the register are the ones that exist.
+#define EXI_MADR_MASK 0x03ffffe0
+#define EXI_LEN_MASK  0x03ffffe0
+#define EXI_CR_MASK   0x3f
+#define EXI_CSR_MASK  0x3fff
 
 // EXI registers block
 struct EXIRegs
@@ -102,8 +107,10 @@ namespace Flipper
 
 	class ExternalInterface
 	{
+		int exi_sel_of(int chan);
 		void exi_select(int chan);
 		void write_csr(int chan, uint32_t data);
+		static uint32_t exi_select_bits(uint32_t csr, uint32_t data);
 
 		static void exi_read_dummy(uint32_t addr, uint32_t* reg, void* ctx);
 		static void exi_write_dummy(uint32_t addr, uint32_t data, void* ctx);
@@ -175,6 +182,10 @@ namespace Flipper
 		//! The transfer of a memory card, dispatched to the device in the slot (see peripherals.h).
 		static void CardTransferA(void* ctx);
 		static void CardTransferB(void* ctx);
+
+		//! The transfer of the device on serial port 1 (EXI0 chip select 2): the broadband adapter
+		//! or the modem adapter.
+		static void SerialTransfer(void* ctx);
 
 		// for memcards and other external devices
 		void EXIUpdateInterrupts();

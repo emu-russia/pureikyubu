@@ -420,20 +420,24 @@ void EMUParseCmdLine(const char* commandLine)
 
 void EMUParseCmdLine(int argc, char** argv)
 {
-	std::string commandLine;
+	// The arguments arrive already split, with the quoting the shell used already taken off, so
+	// they are walked as they are. Joining them back into one line and splitting it again would
+	// lose that: a file name with a space in it is one argument here but two tokens there, which
+	// is how a disc image called "Game Boy Player Start-Up Disc (USA).iso" ended up being opened
+	// as "(USA).iso". The string overload stays for the callers that only have a line to give
+	// (the debug console's `load`, for one), and that is where the quotes have to be looked for.
 
-	// Skip argv[0] (the executable itself)
+	std::vector<std::string> args;
 
 	for (int i = 1; i < argc; i++)
 	{
-		if (i > 1)
+		if (argv[i] != nullptr)
 		{
-			commandLine.push_back(' ');
+			args.push_back(argv[i]);
 		}
-		commandLine += argv[i];
 	}
 
-	EMUParseCmdLine(commandLine.c_str());
+	ParseCmdLineArgs(args);
 }
 
 Gekko::GekkoCore *Core;
@@ -496,6 +500,7 @@ void EMUGetHwConfig(HWConfig * config)
 	config->di_log = GetConfigBool(USER_DI_LOG, USER_HW);
 	config->si_log = GetConfigBool(USER_SI_LOG, USER_HW);
 	config->ai_log = GetConfigBool(USER_AI_LOG, USER_HW);
+	config->ar_log = GetConfigBool(USER_AR_LOG, USER_HW);
 	config->mi_log = GetConfigBool(USER_MI_LOG, USER_HW);
 	config->cp_log = GetConfigBool(USER_CP_LOG, USER_HW);
 
@@ -632,6 +637,11 @@ void EMUCtor()
 	// later is what the devices are plugged into (see Flipper::Flipper).
 	Peripherals::Instance().Open();
 
+	// The Broadband Adapter's network, if the configuration names one (see bbaudp.cpp). It is host
+	// state like the peripheral pool: it is opened with the emulator and does not belong to a
+	// machine.
+	BbaSetBackend(BbaNetworkCreate());
+
 	emu.init = true;
 }
 
@@ -645,6 +655,12 @@ void EMUDtor()
 	// The server is shut down before the nodes it publishes go away, so that a client that is
 	// still connected cannot call into a half-destroyed debug interface.
 	Mcp::StopTransport();
+
+	// The adapter's backend is the emulator's own (it is opened with it), and the device that uses
+	// it goes away with the pool below.
+	BbaBackend* backend = BbaGetBackend();
+	BbaSetBackend(nullptr);
+	delete backend;
 
 	// The pool of peripheral devices goes last: it is what the settings window edits, and it
 	// outlives every machine (see EMUCtor).

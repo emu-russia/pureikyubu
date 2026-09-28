@@ -74,3 +74,42 @@ conversion, and they also assemble and split the surrogate pairs of the code poi
 A file name that leaves the ANSI code page therefore travels through the interface as UTF-8 and is
 opened with `Util::FileOpen` (which is `_wfopen_s` on Windows and `fopen` of the UTF-8 name
 elsewhere). See also the note at the top of `src/utils.h`.
+
+## What the SDK demos need to run
+
+The whole demo tree under the SDK's `HW2/bin/demos` is a useful corpus - 168 executables - and each
+one is loaded and run the same way, so a sweep through them is the cheapest check of the console's
+side of the emulation that exists. 91 of the 168 run unattended and produce their reports; the rest
+fall into three groups, and only the first is the emulator's business:
+
+* **needing arguments.** `carddemo/create`, `carddemo/save` and a few others print a `usage:` line
+  and give up, because the emulator has no way to hand a command line to the guest. Nothing is wrong
+  with them.
+* **intentional failures.** `osdemo/panic` panics on purpose, and a PAL-only demo booted as an NTSC
+  console follows its own `printf` into the error path.
+* **needing their data.** The largest group: a demo opens its textures, samples or scripts with
+  `DVDOpen` and panics when the file is not there. Those files are not lost - they are in
+  `$DOLPHIN_ROOT/dvddata`, which is the *content* of the demo disc the SDK's build system used to
+  produce, not something a bare `.elf` can reach. The tool that packs it is there too
+  (`X86/bin/MakeGcm.exe`, with `HW2/boot/apploader.img`), but its input is a "Disk Layout File"
+  whose format is neither documented nor shipped as an example, and its parser is guarded by magic
+  numbers the reader has to know. Feeding it a plain list of files - the obvious first guess, and a
+  dozen variations of it - fails at "error occurred in file analysis". Running those demos therefore
+  needs either that format reversed or a host-file path for `DVDOpen` in the emulator, not a
+  different way of running the emulator.
+
+### Checking that a demo actually draws
+
+"Ran without an error" is a weak verdict for a demo that is supposed to put a picture on the screen,
+and the emulator can be asked for a stronger one without a window: the debug interface's `viregs`
+reports which buffer the video interface is scanning out and how many frames it has scanned, and
+`ramsave` copies that buffer out of main memory. Reading it twice, a few seconds apart, says both
+whether anything is there and whether it is moving.
+
+For `videmo/moving.elf`, for instance: the interface had scanned out 1405 frames at the first look
+and 2535 at the second; the buffer held 114 distinct byte values (a picture, not a blank one), and
+the two snapshots differed - with about three quarters of the bytes identical, which is what a demo
+that moves something over a still background should look like. The same check on other demos reports
+their own frame counts and contents. One caveat: the data cache is write-back, so a demo that has
+just drawn into a buffer the cache still holds may read back stale - the buffer the *interface* scans
+out is the one to look at, because that is the one the display path keeps current.

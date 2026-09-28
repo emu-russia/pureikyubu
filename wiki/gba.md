@@ -145,8 +145,19 @@ exactly there.
 | `video` | `videoScale`, `fullscreen`, `vsync`, `integerScale`, `showFps`, `lcdEffect`, `frameSkip` |
 | `audio` | `audioEnabled`, `sampleRate`, `volume`, `highPassFilter` |
 | `input` | the eleven bindings (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`, `R`, `L`, `SPEED`) |
+
+The default keys of the two buttons follow the machine: a Game Boy Advance has **A to the right of
+B**, so `A` is `X` and `B` is `Z` - the two keys a hand on the left of the keyboard finds in that
+order. The harness pins it (`Settings.KeyBindingNames`).
 | `link` | `linkEnabled`, `linkServer`, `linkAddress`, `linkPlayers` |
 | `emulation` | `rtcEnabled`, `bootWithNoCartridge`, `debugger`, `saveDirectory`, `logLevel` |
+
+The file is edited in the console's own user interface, under **Options -> Stand-alone GBA...**: a
+window of its own (`uisettingsgba.cpp`), because the machine it configures is a different one from
+the console the rest of the menu belongs to. It reads the file the first time it is opened, writes
+it back when "Save" is asked for, and edits the keys as well ("Default keys" is the module's own
+layout, `GbaSettings::Defaults`). A saved change is in effect for the next `--gba` run, which is
+when the front end reads the file.
 
 The file is read with the emulator's shared Json engine (`src/json.cpp`), the same one the GameCube
 side uses. The engine is self-contained (the C++ standard library and `verify.h` only), so the GBA

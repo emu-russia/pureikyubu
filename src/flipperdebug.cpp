@@ -98,6 +98,30 @@ namespace Flipper
 		return nullptr;
 	}
 
+	/*
+	 * Press or release a host key from the debug interface, by the same code the settings store a
+	 * keyboard binding under (`VKEY_FOR_*`). The headless build has no keyboard of its own, so this
+	 * is how an unattended run - a test script, or an agent driving the emulator over the MCP
+	 * server - presses the controls a player would, which is what a demo that waits for a button
+	 * needs before it will go any further.
+	 *
+	 *   hkey <code> [1|0]      press (the default) or release
+	 */
+	static Json::Value* cmd_hkey(std::vector<std::string>& args)
+	{
+		if (args.size() < 2)
+		{
+			Report(Channel::Norm, "hkey: key code expected (the value a VKEY_FOR_* setting holds)\n");
+			return nullptr;
+		}
+
+		int code = (int)strtol(args[1].c_str(), nullptr, 0);
+		bool down = args.size() > 2 ? (strtol(args[2].c_str(), nullptr, 0) != 0) : true;
+
+		HostInputSetKey(code, down);
+		return nullptr;
+	}
+
 	static Json::Value* cmd_nextvi(std::vector<std::string>& args)
 	{
 		if (!JDI::Hub.ExecuteFastBool("IsLoaded")) {
@@ -204,6 +228,7 @@ namespace Flipper
 
 	void hw_init_handlers()
 	{
+		JDI::Hub.AddCmd("hkey", cmd_hkey);
 		JDI::Hub.AddCmd("cpfifo", cmd_cpfifo);
 		JDI::Hub.AddCmd("ramload", cmd_ramload);
 		JDI::Hub.AddCmd("ramsave", cmd_ramsave);

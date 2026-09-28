@@ -63,9 +63,23 @@ class SdlHostInput : public HostInput
 	PADRUMBLE   rumble[MaxPads];
 	SpinLock    snapshot_lock;
 
+	// Keys the debug interface pressed (`hkey`). A windowed run has a real keyboard, so this is
+	// only ever a second source, and `KeyDown` answers yes for either.
+	static const int MaxKey = 512;
+	bool injected[MaxKey] = {};
+
 public:
 	void Update() override;
 	bool KeyDown(int scancode) override;
+
+	//! Press or release a key from the debug interface (`hkey`), as `HostInputSetKey` does.
+	void SetKey(int code, bool down)
+	{
+		if (code >= 0 && code < MaxKey)
+		{
+			injected[code] = down;
+		}
+	}
 	int GamepadCount() override;
 	std::string GamepadName(int pad) override;
 	bool GamepadButton(int pad, int button) override;
@@ -197,6 +211,11 @@ void SdlHostInput::Update()
 
 bool SdlHostInput::KeyDown(int scancode)
 {
+	if (scancode >= 0 && scancode < MaxKey && injected[scancode])
+	{
+		return true;
+	}
+
 	if (scancode <= 0 || scancode >= SDL_NUM_SCANCODES)
 	{
 		return false;
@@ -376,24 +395,64 @@ static const PadDefault pad_defaults[] =
 	{ "START",     SDL_SCANCODE_RETURN,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
 };
 
+// The controls of a Game Boy (Advance): the Game Pak of a Game Boy Player, and the handheld a GBA
+// link cable turns into a Joybus device. Its eight directions and its four buttons are the natural
+// ones on the host, and the two shoulders are the pad's: a Game Pak played on the console is driven
+// with the pad in the player's hands.
+static const PadDefault gb_defaults[] =
+{
+	{ "UP",     SDL_SCANCODE_UP,        PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP) },
+	{ "DOWN",   SDL_SCANCODE_DOWN,      PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN) },
+	{ "LEFT",   SDL_SCANCODE_LEFT,      PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT) },
+	{ "RIGHT",  SDL_SCANCODE_RIGHT,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) },
+	{ "A",      SDL_SCANCODE_X,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A) },
+	{ "B",      SDL_SCANCODE_Z,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B) },
+	{ "START",  SDL_SCANCODE_RETURN,    PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
+	{ "SELECT", SDL_SCANCODE_BACKSPACE, PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_BACK) },
+	{ "L",      SDL_SCANCODE_Q,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_LEFTSHOULDER) },
+	{ "R",      SDL_SCANCODE_W,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) },
+};
+
 void SdlHostInput::DefaultBindings(uint32_t type, const char* actuator, int& keyboard, int& gamepad)
 {
 	keyboard = 0;
 	gamepad = 0;
 
-	// The default layout of a pad; the other models will have their own (there is one device model
-	// per bus for now, and a memory card has no actuators at all).
-	if (type != PERIPH_DEVICE_STANDARD_PAD || actuator == nullptr)
+	if (actuator == nullptr)
 	{
 		return;
 	}
 
-	for (const auto& def : pad_defaults)
+	// The model decides the layout: the standard pad has the two analog sticks and the analog
+	// triggers of a GameCube controller, and the devices that carry a Game Boy (the Game Boy Player
+	// and the GBA link cable) have the eight directions and the four buttons of a handheld. A
+	// memory card has no actuators at all.
+	const PadDefault* table = nullptr;
+	size_t count = 0;
+
+	switch (type)
 	{
-		if (strcmp(def.id, actuator) == 0)
+		case PERIPH_DEVICE_STANDARD_PAD:
+			table = pad_defaults;
+			count = _countof(pad_defaults);
+			break;
+
+		case PERIPH_DEVICE_GBPLAYER:
+		case PERIPH_DEVICE_GBA_LINK:
+			table = gb_defaults;
+			count = _countof(gb_defaults);
+			break;
+
+		default:
+			return;
+	}
+
+	for (size_t i = 0; i < count; i++)
+	{
+		if (strcmp(table[i].id, actuator) == 0)
 		{
-			keyboard = def.keyboard;
-			gamepad = def.gamepad;
+			keyboard = table[i].keyboard;
+			gamepad = table[i].gamepad;
 			return;
 		}
 	}
@@ -403,6 +462,16 @@ void SdlHostInput::DefaultBindings(uint32_t type, const char* actuator, int& key
 // The backend of this build
 
 static SdlHostInput* sdl_host_input = nullptr;
+
+void HostInputSetKey(int code, bool down)
+{
+	if (sdl_host_input == nullptr)
+	{
+		return;
+	}
+
+	sdl_host_input->SetKey(code, down);
+}
 
 HostInput* HostInputCreate()
 {

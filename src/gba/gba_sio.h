@@ -70,6 +70,39 @@ namespace GBA
 		/// <summary>The value that came back from the cable in the last transfer.</summary>
 		uint16_t LastReceived() const { return lastReceived; }
 
+		// -- the console side of the JOY bus ---------------------------------------------------
+		//
+		// A DOL-011 cable turns the Game Boy Advance into a Joybus device on one of the console's
+		// SI sockets: the console drives the socket with its own command set (see gbalink.cpp) and
+		// the GBA answers out of the registers below. The two sides are separate machines, so the
+		// console does not own the GBA: it is handed these register operations and nothing else.
+
+		/// <summary>Whether the port is in JOY bus mode (RCNT bits 15-14). A console commands a
+		/// GBA that is in this mode; a cartridge that has not selected it ignores the bus.</summary>
+		bool JoyBusSelected() const;
+
+		/// <summary>Tell the port that a console is on the other end of the cable. While one is,
+		/// a write of JOY_TRANS only latches the data and waits to be asked for it; with the port
+		/// empty the transfer completes at once, which is how the BIOS's own port probe learns that
+		/// there is nothing in the socket.</summary>
+		void AttachConsole(bool attached) { consoleAttached = attached; }
+		bool ConsoleAttached() const { return consoleAttached; }
+
+		/// <summary>JOYSTAT as the console reads it.</summary>
+		uint16_t JoyStatus() const { return joystat; }
+
+		/// <summary>The 32bit value in JOY_TRANS (the data the GBA is sending to the console).</summary>
+		uint32_t JoyTransmit() const { return (uint32_t)joyTrans | ((uint32_t)joyTransH << 16); }
+
+		/// <summary>The console read JOY_TRANS: the send flag drops and the GBA is told about it.</summary>
+		void JoyConsoleRead(GbaBus& bus);
+
+		/// <summary>The console wrote the GBA's JOY_RECV.</summary>
+		void JoyConsoleWrite(GbaBus& bus, uint32_t value);
+
+		/// <summary>The console reset the port (a repeated reset is how a JOY Reboot is asked for).</summary>
+		void JoyConsoleReset(GbaBus& bus);
+
 	private:
 		Sio* peer = nullptr;
 
@@ -81,9 +114,12 @@ namespace GBA
 		uint16_t siocnt = 0;		// 0x128
 		uint16_t rcnt = 0;		// 0x134
 		uint16_t joycnt = 0;		// 0x140
-		uint16_t joyRecv = 0;		// 0x150/0x152
-		uint16_t joyTrans = 0;		// 0x154/0x156
+		uint16_t joyRecv = 0;		// 0x150 (low half of the 32bit JOY_RECV)
+		uint16_t joyRecvH = 0;		// 0x152 (high half)
+		uint16_t joyTrans = 0;		// 0x154 (low half of the 32bit JOY_TRANS)
+		uint16_t joyTransH = 0;		// 0x156 (high half)
 		uint16_t joystat = 0;		// 0x158
+		bool     consoleAttached = false;	//!< a console is on the other end of the cable
 
 		// -- transfer state ----------------------------------------------------------------
 

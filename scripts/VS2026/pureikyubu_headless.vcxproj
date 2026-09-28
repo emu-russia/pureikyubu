@@ -126,7 +126,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;ws2_32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -145,7 +145,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;ws2_32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -168,7 +168,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;ws2_32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -191,7 +191,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;ws2_32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -312,6 +312,12 @@
     <ClCompile Include="..\..\src\gekkodec.cpp" />
     <ClCompile Include="..\..\src\gekkodisasm.cpp" />
     <ClCompile Include="..\..\src\hwdebug.cpp" />
+    <ClCompile Include="..\..\src\hsp.cpp" />
+    <ClCompile Include="..\..\src\bba.cpp" />
+    <ClCompile Include="..\..\src\mdm.cpp" />
+    <ClCompile Include="..\..\src\bbaudp.cpp" />
+    <ClCompile Include="..\..\src\gbalink.cpp" />
+    <ClCompile Include="..\..\src\gbplayer.cpp" />
     <ClCompile Include="..\..\src\hwprof.cpp" />
     <ClCompile Include="..\..\src\hwosd.cpp" />
     <ClCompile Include="..\..\src\gfxosd.cpp" />
@@ -361,6 +367,14 @@
     <ClCompile Include="..\..\src\bench.cpp" />
     <ClCompile Include="..\..\src\uinull.cpp" />
     <ClCompile Include="..\..\src\gfxnull.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The integrated GBA/Game Boy emulator (issue #388). The Game Boy Player device
+         (gbplayer.cpp) drives a Game Boy Advance, so the headless build links the same core: it is
+         self contained and needs no SDL, which only the gba_sdl.cpp frontend of the library does. -->
+    <ProjectReference Include="GBA.vcxproj">
+      <Project>{2f7c4a61-8d3b-4e52-9c74-6a5e1b0d93c8}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

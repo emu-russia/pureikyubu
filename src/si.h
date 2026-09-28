@@ -115,6 +115,8 @@ namespace Flipper
 		PADState            pad[4];         // PAD state (inbuf replacement), filled from the device pool
 		bool                rumble[4];      // rumble support flags for every controller
 		// filled when SI is inited, by checking the motor of the pad of every channel
+		bool                padErr[4];      // the last poll of the channel had no answer
+		// (register bit 31 of SICnINBUFH, see serial-interface.md 7.3)
 		bool                log;            // do debugger log output
 		// The poll schedule (serial-interface.md 5.1) is counted in video lines, not CPU ticks.
 		uint32_t            lastPollLine;   // line counter value at the previous poll evaluation
@@ -128,7 +130,6 @@ namespace Flipper
 		SIState si{};		//!< SI state (registers and other data)
 
 		void SICommand(int chan, int outlen, int inlen, uint8_t* ptr);
-		void SIClearInterrupt();
 
 		void si_wr_out_hi(int chan, uint32_t data);
 		void si_wr_out_lo(int chan, uint32_t mask, uint32_t data);
@@ -149,8 +150,8 @@ namespace Flipper
 		static void si_rd_out3_hi(uint32_t addr, uint32_t* reg, void* ctx);
 		static void si_rd_out3_lo(uint32_t addr, uint32_t* reg, void* ctx);
 
-		void si_inh_hi(int chan, uint32_t* reg);
-		void si_inh_lo(int chan, uint32_t mask, uint32_t* reg);
+		void si_inh_hi(int chan, uint32_t mask, uint32_t* reg);
+		void si_inh_lo(int chan, uint32_t* reg);
 		void si_inl_hi(int chan, uint32_t* reg);
 		void si_inl_lo(int chan, uint32_t* reg);
 		static void si_inh0_hi(uint32_t addr, uint32_t* reg, void* ctx);
@@ -204,6 +205,12 @@ namespace Flipper
 		/// and a wrap of the counter is a new frame.
 		/// </summary>
 		void SIPoll(uint32_t line);
+
+		//! Re-derive the processor interface's SI line from the interrupt latches and their masks
+		//! (serial-interface.md 11.4): the block's own interrupt is exactly
+		//! (TCINT && TCINTMSK) || (RDSTINT && RDSTINTMSK), so every write that can move one of the
+		//! four has to run this, and so does a load.
+		void SIUpdateInterrupt();
 
 		//! The SI state, for the debug interface (`siregs` and the debugui2 "Serial" panel).
 		const SIState& State() const { return si; }

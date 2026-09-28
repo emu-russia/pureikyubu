@@ -44,10 +44,15 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 // TODO: Add more
 #define USER_PI_LOG "PI_LOG"			// PI interrupts & fifo
 #define USER_EXI_LOG "EXI_LOG"			// 1: log EXI activities
+// The Broadband Adapter's network (see bbaudp.cpp): the other end of the emulated segment as
+// "host:port", and the UDP port this emulator listens on. An empty peer means "no network".
+#define USER_BBA_PEER "BBA_PEER"
+#define USER_BBA_PORT "BBA_PORT"
 #define USER_VI_LOG "VI_LOG"			// do debugger log output
 #define USER_DI_LOG "DI_LOG"
 #define USER_SI_LOG "SI_LOG"
 #define USER_AI_LOG "AI_LOG"
+#define USER_AR_LOG "AR_LOG"			// 1: log the ARAM DMA traffic (a Game Boy Player run moves tens of thousands of blocks a second)
 #define USER_MI_LOG "MI_LOG"
 #define USER_CP_LOG "CP_LOG"
 

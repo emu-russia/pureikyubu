@@ -247,6 +247,19 @@ namespace GfxUnitTest
 		// it through the PI register window (PIRegWrite), exactly like the CPU does.
 		flipper->cp = new Flipper::CommandProcessor(flipper, &config);
 
+		// The Hi-Speed Port is part of the machine, not of the devices: a device on it is told
+		// about the port when the pool is told that the machine is up, so the tests need one to
+		// plug a Game Boy Player into (see Peripherals::MachineOpened).
+		flipper->hsp = new Flipper::HiSpeedPort();
+
+		// The external interface is part of the machine as well: it owns the EXI channel register
+		// file, the socket select the devices of a channel are told apart by, and the SRAM the
+		// MX chip backs. A test that drives a card or a network adapter the way the guest does -
+		// through the register window, so that the channel's own command-sequence rule applies -
+		// needs it (see the BBA test in peripherals_test.cpp). The machine loads no boot ROM and no
+		// fonts, so the block comes up without either; it only reports that they are missing.
+		flipper->exi = new Flipper::ExternalInterface(flipper, &config);
+
 		// The peripherals of the machine. In the emulator the pool is opened once, with the emulator
 		// itself (see EMUCtor), and its devices are the ones the configuration lists; a test machine
 		// has no settings file, so it opens the pool here and adds a pad per socket, which is what
@@ -300,6 +313,16 @@ namespace GfxUnitTest
 		delete serialInterface;
 		serialInterface = nullptr;
 		if (flipper != nullptr) flipper->si = nullptr;
+
+		if (flipper != nullptr)
+		{
+			delete flipper->hsp;
+			flipper->hsp = nullptr;
+
+			// The interface goes while the register file it installed traps into is still there.
+			delete flipper->exi;
+			flipper->exi = nullptr;
+		}
 
 		Flipper::HW = nullptr;
 		Core = nullptr;
@@ -862,10 +885,76 @@ namespace Flipper
 		return GfxUnitTest::TestMainMemory(phys_addr, 0);
 	}
 
+	// The DMA path of an EXI device: the broadband adapter sends a frame out of main memory and
+	// reads a packet into it (see bba.cpp).
+	void* MemoryInterface::MIGetMemoryPointerForIO(uint32_t phys_addr)
+	{
+		return GfxUnitTest::TestMainMemory(phys_addr, 0);
+	}
+
+	void* MemoryInterface::MIGetMemoryPointerForIO(uint32_t phys_addr, size_t size)
+	{
+		return GfxUnitTest::TestMainMemory(phys_addr, size);
+	}
+
 	void VideoInterface::VIDisableXfb()
 	{
 		// The unit tests render into an offscreen window; there is no XFB to disable.
 	}
+}
+
+// -------------------------------------------------------------------------------------------
+// The host side of the Macronix chip.
+//
+// The EXI block is the chip's bus: the boot ROM, the real-time clock and the SRAM are served by
+// the channel itself, and the two host-side pieces of that - the images the front end loads and
+// the chip's own transfer - live outside the block (see bootrtc.cpp). The machine under test
+// loads no boot ROM, no fonts and no SRAM file, so what is left for them here is a machine that
+// comes up without any of the three. It is the block's register window and the devices of the
+// pool that a test drives over this bus, not the contents of the chip.
+// -------------------------------------------------------------------------------------------
+
+void SRAMLoad(SRAM* s)
+{
+	memset(s, 0, sizeof(SRAM));
+}
+
+void SRAMSave(SRAM* s)
+{
+	// The machine under test has no SRAM file to write back to (and nowhere to write it).
+}
+
+void RTCUpdate(uint32_t* rtc_val)
+{
+	// The emulator reports a clock that never ran, which is what a machine without a battery sees.
+	*rtc_val = 0;
+}
+
+void FontLoad(uint8_t** font, uint32_t fontsize, wchar_t* filename)
+{
+	*font = nullptr;
+}
+
+void FontUnload(uint8_t** font)
+{
+	*font = nullptr;
+}
+
+void LoadBootrom(HWConfig* config, bool& BootromPresent, size_t& bootromSize, uint8_t** bootrom_out)
+{
+	BootromPresent = false;
+	bootromSize = BOOTROM_SIZE;
+	*bootrom_out = nullptr;
+}
+
+//! The transfer of the chip itself (channel 0, chip select 1: the boot ROM window, the clock and
+//! the SRAM). The machine under test has none of the three, so the bus completes with nothing on
+//! it - the same answer an empty socket gives.
+void MXTransfer(void* ctx)
+{
+	Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)ctx;
+
+	exi->exi.regs[0].data = 0;
 }
 
 // -------------------------------------------------------------------------------------------

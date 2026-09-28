@@ -648,6 +648,14 @@ namespace Flipper
 				// Write 1 clears only HSP, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
 				data &= (PI_INTERRUPT_HSP | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
 				pi->PIClearInt(data);
+
+				// The HSP bit is the Hi-Speed Port's own line, and the port has to see the
+				// acknowledge as well: it is the port's device that raised it, and a device that is
+				// never told keeps its cause (see hsp.h).
+				if ((data & PI_INTERRUPT_HSP) != 0 && HW != nullptr && HW->hsp != nullptr)
+				{
+					HW->hsp->Acknowledge();
+				}
 				break;
 			case PI_INTMR + 2:
 				pi->pi.intmr = data;

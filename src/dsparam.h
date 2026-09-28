@@ -84,7 +84,7 @@ namespace DSP
 		void LoadState(SaveStates::StateReader& reader);
 	};
 
-	void    AROpen(Flipper::Flipper* flipper);
+	void    AROpen(Flipper::Flipper* flipper, HWConfig* config);
 	void    ARClose();
 
 	extern  ARControl aram;

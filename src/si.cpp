@@ -66,9 +66,22 @@ namespace Flipper
 		}
 	}
 
-	void SerialInterface::SIClearInterrupt()
+	// The block's own interrupt line is a pure function of the two latches and their two masks
+	// (serial-interface.md 11.4): asserting a latch with its mask set raises it, clearing a mask
+	// drops it, and the guest's interrupt is served or not according to where it is now - not
+	// according to what the write that moved the bit was. Every path that can move any of the four
+	// runs this, which is what the RTL does by evaluating the same expression continuously.
+	void SerialInterface::SIUpdateInterrupt()
 	{
-		if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
+		bool pending =
+			((SI_COMCSR_REG & SI_COMCSR_TCINT) != 0 && (SI_COMCSR_REG & SI_COMCSR_TCINTMSK) != 0) ||
+			((SI_COMCSR_REG & SI_COMCSR_RDSTINT) != 0 && (SI_COMCSR_REG & SI_COMCSR_RDSTINTMSK) != 0);
+
+		if (pending)
+		{
+			HW->pi->PIAssertInt(PI_INTERRUPT_SI);
+		}
+		else
 		{
 			HW->pi->PIClearInt(PI_INTERRUPT_SI);
 		}
@@ -135,35 +148,49 @@ namespace Flipper
 
 	// The names are a bit silly here. The registers themselves are called High and Low. We also refer to the higher and lower halves, which are also called hi and lo.
 
-	void SerialInterface::si_inh_hi(int chan, uint32_t* reg)          // high [31:16]
+	// The input buffer of a channel is double buffered, and the *high* halfword is the one whose
+	// read copies the response out and clears the channel's read-status flag (the RTL matches
+	// RdSiNInBufHH, see serial-interface.md 4.1). Its top two bits are not data either: bit 31 is
+	// the error the last poll of the channel ended with and bit 30 the channel's latched error
+	// summary (serial-interface.md 7.3). A guest that lost a transfer reads them; libogc's
+	// `PAD_Read` is one of them (`buf[0] & 0x80000000` is `PAD_ERR_TRANSFER`).
+	void SerialInterface::si_inh_hi(int chan, uint32_t mask, uint32_t* reg)          // high [31:16]
 	{
-		uint32_t res;
+		uint32_t res = si.pad[chan].button;
 
-		// return swapped joypad values
-		res = si.pad[chan].button;
+		// The returned value is the halfword the CPU reads, so register bit 31 is bit 15 of it and
+		// register bit 30 is bit 14. The buttons occupy bits 0..12, so the two do not collide.
+		if (si.padErr[chan])
+		{
+			res |= 0x00008000;
+		}
+
+		if (((si.sr >> (24 + chan * 8)) & 0xf) != 0)
+		{
+			res |= 0x00004000;
+		}
+
+		// Clear the read status of this channel. The aggregate read-status interrupt is the OR of
+		// the four channel flags, so it can only fall when the last of them does.
+		SI_SR_REG &= ~mask;
+
+		if ((SI_SR_REG & (SI_SR_RDST0 | SI_SR_RDST1 | SI_SR_RDST2 | SI_SR_RDST3)) == 0)
+		{
+			SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
+		}
+
+		SIUpdateInterrupt();
 
 		*reg = res;
 	}
 
-	void SerialInterface::si_inh_lo(int chan, uint32_t mask, uint32_t* reg)          // high [15:0]
+	void SerialInterface::si_inh_lo(int chan, uint32_t* reg)          // low [15:0]
 	{
 		uint32_t res;
 
 		// return swapped joypad values
 		res = (uint8_t)si.pad[chan].stickY;
 		res |= (uint8_t)si.pad[chan].stickX << 8;
-
-		// clear RDST mask and interrupt
-		SI_SR_REG &= ~mask;
-		if ((SI_SR_REG &
-			(SI_SR_RDST0 |
-				SI_SR_RDST1 |
-				SI_SR_RDST2 |
-				SI_SR_RDST3)) == 0)
-		{
-			SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-			SIClearInterrupt();
-		}
 
 		*reg = res;
 	}
@@ -192,29 +219,29 @@ namespace Flipper
 
 	/* ******* CHAN 0 ******* */
 
-	void SerialInterface::si_inh0_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(0, reg); }
-	void SerialInterface::si_inh0_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(0, SI_SR_RDST0, reg); }
+	void SerialInterface::si_inh0_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(0, SI_SR_RDST0, reg); }
+	void SerialInterface::si_inh0_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(0, reg); }
 	void SerialInterface::si_inl0_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_hi(0, reg); }
 	void SerialInterface::si_inl0_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_lo(0, reg); }
 
 	/* ******* CHAN 1 ******* */
 
-	void SerialInterface::si_inh1_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(1, reg); }
-	void SerialInterface::si_inh1_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(1, SI_SR_RDST1, reg); }
+	void SerialInterface::si_inh1_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(1, SI_SR_RDST1, reg); }
+	void SerialInterface::si_inh1_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(1, reg); }
 	void SerialInterface::si_inl1_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_hi(1, reg); }
 	void SerialInterface::si_inl1_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_lo(1, reg); }
 
 	/* ******* CHAN 2 ******* */
 
-	void SerialInterface::si_inh2_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(2, reg); }
-	void SerialInterface::si_inh2_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(2, SI_SR_RDST2, reg); }
+	void SerialInterface::si_inh2_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(2, SI_SR_RDST2, reg); }
+	void SerialInterface::si_inh2_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(2, reg); }
 	void SerialInterface::si_inl2_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_hi(2, reg); }
 	void SerialInterface::si_inl2_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_lo(2, reg); }
 
 	/* ******* CHAN 3 ******* */
 
-	void SerialInterface::si_inh3_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(3, reg); }
-	void SerialInterface::si_inh3_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(3, SI_SR_RDST3, reg); }
+	void SerialInterface::si_inh3_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_hi(3, SI_SR_RDST3, reg); }
+	void SerialInterface::si_inh3_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inh_lo(3, reg); }
 	void SerialInterface::si_inl3_hi(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_hi(3, reg); }
 	void SerialInterface::si_inl3_lo(uint32_t addr, uint32_t* reg, void* ctx) { SerialInterface* si = (SerialInterface*)ctx; si->si_inl_lo(3, reg); }
 
@@ -274,7 +301,7 @@ namespace Flipper
 		if (data & SI_COMCSR_TCINT)
 		{
 			si->SI_COMCSR_REG &= ~SI_COMCSR_TCINT;
-			si->SIClearInterrupt();
+			si->SIUpdateInterrupt();
 		}
 
 		// change RDST interrupt mask
@@ -289,6 +316,10 @@ namespace Flipper
 		// are read-only and the reserved bits read as 0 (11.5).
 		si->SI_COMCSR_REG &= ~SI_COMCSR_OUTLEN_MASK;
 		si->SI_COMCSR_REG |= (outlen << 16);
+
+		// A mask that was just enabled with its latch already pending has to raise the line, and one
+		// that was cleared with the latch still set has to drop it (11.4).
+		si->SIUpdateInterrupt();
 	}
 
 	void SerialInterface::write_commcsr_lo(uint32_t addr, uint32_t data, void* ctx)
@@ -320,14 +351,9 @@ namespace Flipper
 			// complete transfer
 			si->SI_COMCSR_REG &= ~SI_COMCSR_TSTART;
 
-			// set completion interrupt
+			// set completion interrupt and re-derive the line from it (11.4)
 			si->SI_COMCSR_REG |= SI_COMCSR_TCINT;
-
-			// generate cpu interrupt (if mask allows that)
-			if (si->SI_COMCSR_REG & SI_COMCSR_TCINTMSK)
-			{
-				HW->pi->PIAssertInt(PI_INTERRUPT_SI);
-			}
+			si->SIUpdateInterrupt();
 		}
 	}
 
@@ -467,20 +493,27 @@ namespace Flipper
 				continue;
 			}
 
-			// update pad input buffer
-			if (Peripherals::Instance().PollSI(chan, &si.pad[chan]))
+			// A poll of an enabled channel always completes. The device answers, or it does not
+			// answer at all - and a channel whose device does not answer latches NOREP and its read
+			// status just the same, because the guest is being told that the channel has something
+			// for it. That is how an absent controller is detected on the automatic path
+			// (serial-interface.md 5.1, 7.1): the response bytes alone cannot say it, since with
+			// nothing driving the line the SI only hears itself.
+			bool answered = Peripherals::Instance().PollSI(chan, &si.pad[chan]);
+
+			si.padErr[chan] = !answered;
+
+			if (!answered)
 			{
-				SI_SR_REG |= (SI_SR_RDST0 >> (chan * 8));
-				SI_COMCSR_REG |= SI_COMCSR_RDSTINT;
+				SI_SR_REG |= (SI_SR_NOREP0 >> (chan * 8));
 			}
+
+			SI_SR_REG |= (SI_SR_RDST0 >> (chan * 8));
+			SI_COMCSR_REG |= SI_COMCSR_RDSTINT;
 		}
 
-		// generate RDST interrupt
-		if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) && (SI_COMCSR_REG & SI_COMCSR_RDSTINTMSK))
-		{
-			// assert processor interrupt
-			HW->pi->PIAssertInt(PI_INTERRUPT_SI);
-		}
+		// The line follows the latches and their masks, not the poll that moved them (11.4).
+		SIUpdateInterrupt();
 	}
 
 	// ---------------------------------------------------------------------------
@@ -554,7 +587,7 @@ namespace Flipper
 		// The PI line is deliberately left alone. The other blocks' sections restore the PI's
 		// cause register as it was, and the SI's own copy of it is *not* a function of the
 		// latches: a guest that raises RDSTINT and then clears RDSTINTMSK leaves the PI bit
-		// asserted (write_commcsr_hi only calls SIClearInterrupt when it clears a latch), so
+		// asserted (write_commcsr_hi only recomputes the line when it moves a latch), so
 		// recomputing the line here would clear an interrupt the state says was pending.
 	}
 
@@ -596,8 +629,17 @@ namespace Flipper
 			si.shdw[i] = si.out[i];
 		}
 
-		// enable polling (for homebrewn), IPL enabling it
-		SI_POLL_REG |= (SI_POLL_EN0 | SI_POLL_EN1 | SI_POLL_EN2 | SI_POLL_EN3);
+		// The reset value of the poll register: SIPOLL[X] = 7 lines between two polls, `Y = 0` (the
+		// poller is off) and every channel disabled, which is the RTL's reset value. The interval
+		// matters to a guest that only writes `Y`: with `X = 0` the encoder would poll every line
+		// (and the emulation treats a zero interval as "off"), so the reset value is the hardware's.
+		//
+		// The four enable bits are set here on purpose, which the hardware does not do. The guest
+		// library enables them itself (PADInit writes SIPOLL), but a homebrew image that drives the
+		// registers directly and only sets `Y` would otherwise never be polled, and the emulator has
+		// answered that case this way since before the pool. It is a deliberate deviation, not an
+		// oversight: the RTL's own reset has them clear.
+		SI_POLL_REG = 0x00070000 | SI_POLL_EN0 | SI_POLL_EN1 | SI_POLL_EN2 | SI_POLL_EN3;
 
 		// update joypad data
 		SIPoll(0);

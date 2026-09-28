@@ -56,6 +56,28 @@ struct Memcard {
 	int dummybytesread;
 	uint32_t commandData;
 	bool ready;
+
+	/*
+	 * A read hands the card an address once and then clocks the block out with as many transfers
+	 * as it likes, so the address has to move along with the bytes that have already left. The
+	 * counter belongs to the command in hand: the next command word starts a new one, which is
+	 * what `readValid` marks.
+	 */
+	uint32_t readAddress;
+	bool readValid;
+
+	/*
+	 * The unlock (see wiki/peripherals.md). The library hides a challenge in the address bytes of
+	 * a read, clocks it out over more than one immediate transfer, and then reads the card's code
+	 * back; the controller is expected to evaluate the challenge and mix the result into what it
+	 * returns. `unlockMask` is that mixed value, `unlockArmed` says the card has been challenged
+	 * and the reads that follow are the code read.
+	 */
+	uint32_t unlockMask;
+	uint32_t unlockGroup;    // which word of the read the mask has been advanced to
+	bool unlockArmed;
+	uint32_t readTotal;      // bytes read so far by the read command in hand
+	uint32_t lastAddress;    // the address the previous read command carried
 };
 
 struct MCCommand {

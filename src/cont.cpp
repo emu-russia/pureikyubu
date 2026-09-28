@@ -44,6 +44,17 @@ static const PeriphActuator pad_actuators[PAD_ACT_MAX] =
 	{ "Buttons",       "Start",       "START",      1 },
 };
 
+//! The analog travel at which the trigger's click switch closes. The L and R controls are analog,
+//! and the digital L / R bits of the poll answer come from the mechanical click at the end of
+//! their travel (standard-controller.md 1, 4.2), not from "the trigger is touched at all": the
+//! pad reports the click as a separate bit and the console's own clamping treats 0..30 as the
+//! dead zone and 180..255 as the outer one (standard-controller.md 6.3), so a value past the
+//! middle of the travel is where a pressed trigger is. The exact point is not documented; this one
+//! sits above the dead zone of the console's own clamp, so a trigger that is only brushed is
+//! analog-only and a trigger that is pressed reports both.
+#define PAD_TRIGGER_CLICK   176
+
+
 // ---------------------------------------------------------------------------
 // The configuration of a pad
 //
@@ -217,11 +228,24 @@ public:
 				break;
 			}
 
-			// The standard poll: the data the guest reads comes from the poll (see Poll), so a
-			// communication transfer of it has nothing to answer.
+			// The standard poll. Over the automatic poll the guest reads the state out of
+			// SICnINBUFH/L (see Poll and si.cpp), but a communication transfer of 0x40 asks the same
+			// question over the wire and has to be answered with the same eight bytes: the console
+			// builds its answer here from the state of its own controls.
 			case 0x40:
+			{
+				PADState state;
+				Poll(&state);
+				PackResponse(&state, buf);
+				break;
+			}
+
+			// Write Joy Port: 34 data bytes and a CRC go out, one byte comes back. The emulated pad
+			// keeps no writable EEPROM, so the write is acknowledged and dropped (the origins it
+			// answers 0x41 with are the ones its analog channels are calibrated at).
 			case 0x42:
-				return;
+				buf[0] = 0;
+				break;
 
 			// Read the calibration origins
 			case 0x41:
@@ -233,13 +257,55 @@ public:
 				break;
 			}
 
+			// Reset: the state machine goes back to its power-on state and the latched errors are
+			// cleared, and the answer is the identification - the same three bytes 0x00 gives
+			// (standard-controller.md 3). "Clears the error latches" reaches the host as well: the
+			// latched motor command is dropped, so a motor that was rumbling stops.
+			case 0xFF:
+			{
+				motor = PAD_MOTOR_STOP;
+
+				HostInput* host = Peripherals::Instance().Host();
+
+				if (host != nullptr)
+				{
+					host->Rumble(HostPadOfPort(port), PAD_MOTOR_STOP);
+				}
+
+				buf[0] = 9;
+				buf[1] = 0;
+				buf[2] = (uint8_t)(motor << 4);
+				break;
+			}
+
+			// A command the controller does not know: it answers with its type byte once and
+			// abandons the transfer (standard-controller.md 3). The emulation reports it instead of
+			// stopping, because a guest that probes an unknown opcode is not a broken machine.
 			default:
 			{
-				Debug::Halt(
+				Report(Channel::SI,
 					"Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
 					port >= PERIPH_PORT_SI0 ? port - PERIPH_PORT_SI0 : 0, cmd, outlen, inlen);
+
+				buf[0] = 9;
+				break;
 			}
 		}
+	}
+
+	//! The eight bytes of the 0x40 answer, in the order they go out on the wire (the response
+	//! bytes of standard-controller.md 4.2). The automatic poll fills SICnINBUFH/L with the same
+	//! bytes (see si_inh_*/si_inl_*), so the two paths cannot disagree about what a pad reports.
+	static void PackResponse(const PADState* pad, uint8_t* buf)
+	{
+		buf[0] = (uint8_t)(pad->button >> 8);   // A, B, X, Y, Start and the EEPROM state
+		buf[1] = (uint8_t)pad->button;          // the D-pad and L / R / Z
+		buf[2] = (uint8_t)pad->stickX;
+		buf[3] = (uint8_t)pad->stickY;
+		buf[4] = (uint8_t)pad->substickX;
+		buf[5] = (uint8_t)pad->substickY;
+		buf[6] = pad->triggerLeft;
+		buf[7] = pad->triggerRight;
 	}
 
 	//! The state the guest polls: the buttons and the six analog channels.
@@ -260,14 +326,14 @@ public:
 		if (Act(PAD_ACT_Y)) button |= PAD_BUTTON_Y;
 		if (Act(PAD_ACT_START)) button |= PAD_BUTTON_START;
 
-		// The digital L and R are only reported when their analog control is pressed all the way
-		// down, which is what the pad does.
-		if (Act(PAD_ACT_TRIGGERL) > 0)
+		// The digital L and R come from the click switch at the end of the trigger's travel, so a
+		// trigger that is only brushed is analog-only (see PAD_TRIGGER_CLICK).
+		if (Act(PAD_ACT_TRIGGERL) >= PAD_TRIGGER_CLICK)
 		{
 			button |= PAD_TRIGGER_L;
 		}
 
-		if (Act(PAD_ACT_TRIGGERR) > 0)
+		if (Act(PAD_ACT_TRIGGERR) >= PAD_TRIGGER_CLICK)
 		{
 			button |= PAD_TRIGGER_R;
 		}
@@ -321,7 +387,8 @@ namespace
 		ContRegistrar()
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_STANDARD_PAD, "Standard Controller",
-				"DOL-003, the pad on one of the four SI sockets", PERIPH_BUS_SI, CreateStandardPad);
+				"DOL-003, the pad on one of the four SI sockets", PERIPH_BUS_SI,
+				PERIPH_PAGE_CONTROLLERS, CreateStandardPad);
 		}
 	};
 
