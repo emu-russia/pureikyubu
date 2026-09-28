@@ -299,6 +299,14 @@ GBA_TEST(Settings, KeyBindingNames)
 			std::string("KeyFor(") + expectedNames[i] + ")");
 	}
 
+	// A Game Boy Advance has its A button to the *right* of B, and the default keyboard layout keeps
+	// that where the hands are: A is the right-hand key of the pair (X) and B the left-hand one (Z).
+	// A layout that had them the other way round would be the one thing about these defaults that a
+	// player notices at once, so it is pinned here rather than left to the list above.
+	GBA_CHECK_MSG(settings.KeyFor("A") == "X", "the A of a Game Boy Advance is the right-hand key");
+	GBA_CHECK_MSG(settings.KeyFor("B") == "Z", "and B is the left-hand one");
+	GBA_CHECK_MSG(settings.KeyFor("A") != settings.KeyFor("B"), "the two are different keys");
+
 	// The bindings are distinct, and an action that does not exist is not bound.
 	for (int i = 0; i < count; i++)
 		for (int j = i + 1; j < count; j++)
