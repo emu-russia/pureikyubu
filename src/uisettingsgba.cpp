@@ -149,14 +149,36 @@ static void GbaPageBoot()
 		char buf[0x400];
 		snprintf(buf, sizeof(buf), "%s", gba_settings.biosPath.c_str());
 
+		// The field is typed into *or* filled by the browser, and the two buttons of the row are given
+		// the width that is left of it: the editor of a property row takes the whole column by
+		// default (see GbaPropertyRow), which would push them past the edge and clip them away - the
+		// row then looks like a field with no way to pick a file at all. The width is measured rather
+		// than guessed, so a resized window keeps both buttons inside the row.
+		const float buttonWidth = 100.0f;
+		const float spacing = ImGui::GetStyle().ItemSpacing.x;
+		float fieldWidth = ImGui::GetContentRegionAvail().x - (buttonWidth * 2.0f + spacing * 2.0f);
+
+		if (fieldWidth < 60.0f)
+		{
+			fieldWidth = 60.0f;
+		}
+
+		ImGui::SetNextItemWidth(fieldWidth);
 		ImGui::InputText("##v", buf, sizeof(buf));
 		gba_settings.biosPath = buf;
 
 		ImGui::SameLine();
 
-		if (ImGui::Button("Browse..."))
+		if (ImGui::Button("Choose...", ImVec2(buttonWidth, 0)))
 		{
 			gba_bios_dialog.Open();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Built-in", ImVec2(buttonWidth, 0)))
+		{
+			gba_settings.biosPath.clear();
 		}
 	}
 	GbaPropertyRowEnd();
@@ -306,16 +328,30 @@ static void GbaPageInput()
 		{
 			bool capturing = gba_capture_active && gba_capture_binding == (int)i;
 
-			ImGui::TextUnformatted(capturing ? "(press a key, Esc drops the capture)"
+			// The two buttons are pinned to the right end of the row, so a long key name ("Left
+			// Shift", "Keypad 5") cannot push them out of it - the same reason the BIOS row measures
+			// its field.
+			const float bindWidth = 90.0f;
+			const float clearWidth = 80.0f;
+			const float spacing = ImGui::GetStyle().ItemSpacing.x;
+			float buttons = ImGui::GetContentRegionAvail().x -
+				(bindWidth + clearWidth + spacing);
+
+			if (buttons < 80.0f)
+			{
+				buttons = 80.0f;
+			}
+
+			ImGui::TextUnformatted(capturing ? "(press a key)"
 				: (gba_settings.keys[i].key.empty() ? "unbound" : gba_settings.keys[i].key.c_str()));
 
-			ImGui::SameLine();
+			ImGui::SameLine(buttons);
 
 			char label[0x40];
 			snprintf(label, sizeof(label), capturing ? "Cancel##bind%u" : "Bind...##bind%u",
 				(unsigned)i);
 
-			if (ImGui::Button(label))
+			if (ImGui::Button(label, ImVec2(bindWidth, 0)))
 			{
 				if (capturing)
 				{
@@ -333,7 +369,7 @@ static void GbaPageInput()
 
 			snprintf(label, sizeof(label), "Clear##clear%u", (unsigned)i);
 
-			if (ImGui::Button(label))
+			if (ImGui::Button(label, ImVec2(clearWidth, 0)))
 			{
 				gba_settings.keys[i].key.clear();
 			}
@@ -510,14 +546,6 @@ void UiGbaSettingsFrame()
 		gba_dialogs_ready = true;
 	}
 
-	gba_bios_dialog.Display();
-
-	if (gba_bios_dialog.HasSelected())
-	{
-		gba_settings.biosPath = gba_bios_dialog.GetSelected().string();
-		gba_bios_dialog.ClearSelected();
-	}
-
 	if (!gba_open)
 	{
 		return;
@@ -614,6 +642,17 @@ void UiGbaSettingsFrame()
 	}
 
 	ImGui::End();
+
+	// The browser is drawn after the window it was opened from, and this is also where its answer is
+	// taken (the same two steps the console's settings window takes in settings_poll_files).
+	gba_bios_dialog.Display();
+
+	if (gba_bios_dialog.HasSelected())
+	{
+		gba_settings.biosPath = gba_bios_dialog.GetSelected().string();
+		gba_bios_dialog.ClearSelected();
+		gba_status = "the BIOS image is chosen, Save writes it";
+	}
 
 	if (!gba_open)
 	{

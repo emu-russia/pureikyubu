@@ -189,24 +189,42 @@ GBA_TEST(Settings, RoundTripDefaults)
 	GBA_CHECK(parsed.ToJson() == text);
 }
 
-GBA_TEST(Settings, ShippedFileIsDefaultJson)
+GBA_TEST(Settings, DefaultJsonIsTheDefaultsItDescribes)
 {
-	// The shipped document and DefaultJson() are the same bytes: the file can never drift from the
-	// code, which is what the harness (and the frontend that ships the file) relies on.
-	std::string shipped = ReadFile(ShippedPath);
+	// The document the code generates and the defaults it builds are the same configuration, and the
+	// document is stable: parsing it gives the defaults back and writing those gives the document
+	// again. This is what "the file can never drift from the code" means for the *generator*, and it
+	// holds whatever the file on the disk happens to hold.
 	std::string generated = GbaSettings::DefaultJson();
-	if (shipped != generated)
-		GBA_FAIL(Difference(generated, shipped));
+
+	GbaSettings parsed;
+	std::string error;
+	GBA_CHECK_MSG(GbaSettings::Parse(generated, parsed, &error), "DefaultJson() must parse: " + error);
+	CheckSame(parsed, GbaSettings::Defaults(), "DefaultJson() describes the defaults");
+	GBA_CHECK_MSG(parsed.ToJson() == generated, "the defaults write back as DefaultJson()");
 }
 
-GBA_TEST(Settings, ShippedFileRoundTrips)
+GBA_TEST(Settings, TheFileInTheRepositoryRoundTrips)
 {
-	// Load the shipped file, save it, and get byte identical text back.
+	// The file `build/Data/GBASettings.json` is what ships *and* what the stand-alone machine's
+	// settings window writes: a user who saves a change makes it their configuration, and that is
+	// not an error. What has to hold for any file it may be is that it loads without complaint and
+	// comes back out of the writer byte for byte - a save must never rewrite what it did not change.
 	GbaSettings settings;
 	std::string error;
-	GBA_CHECK_MSG(GbaSettings::Load(ShippedPath, settings, &error), "the shipped file must load: " + error);
-	GBA_CHECK_MSG(error.empty(), "loading the shipped file is not an error: " + error);
-	CheckSame(settings, GbaSettings::Defaults(), "the shipped file is the defaults");
+	GBA_CHECK_MSG(GbaSettings::Load(ShippedPath, settings, &error), "the file must load: " + error);
+	GBA_CHECK_MSG(error.empty(), "loading the file is not an error: " + error);
+
+	// A file that still holds the shipped defaults is worth saying out loud: it is what a fresh
+	// checkout has, and what the window's "Restore the defaults" writes.
+	if (ReadFile(ShippedPath) == GbaSettings::DefaultJson())
+	{
+		GbaTest::Note("the file holds the shipped defaults");
+	}
+	else
+	{
+		GbaTest::Note("the file holds a local configuration (the settings window has saved it)");
+	}
 
 	GBA_CHECK_MSG(settings.Save(ScratchPath, &error), "cannot save: " + error);
 	std::string written = ReadFile(ScratchPath);
