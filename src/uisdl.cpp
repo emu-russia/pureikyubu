@@ -13,13 +13,13 @@
 #include "bench.h"
 #include "uisettings.h"
 #include "uisettingsgba.h"
+#include "uitheme.h"
 
 static bool ui_active = false;
 static bool show_demo_window = false;
 static SDL_Window* window;
 static SDL_Window* render_target;
 static SDL_Renderer* renderer;
-static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static bool draw_error_box = false;
 static bool draw_message_box = false;
 static std::string error_text;
@@ -168,16 +168,43 @@ static void ui_draw_about_box(bool* enabled)
 		std::string dateStamp = __DATE__;
 		std::string timeStamp = __TIME__;
 
-		auto buffer =
-			Util::StringToWstring(APPNAME_A) + L" - " + std::wstring(APPDESC) + L"\n" +
-			std::wstring(L"Copyright 2003-2026 Dolwin team, emu-russia\n") +
-			std::wstring(L"Build version ") +
-			Util::StringToWstring(UI::Jdi->GetVersion()) + L" " +
-			std::wstring(version) + L" " + std::wstring(platform) + L" " + std::wstring(jitc) + L" (" +
-			Util::StringToWstring(dateStamp) + L" " +
-			Util::StringToWstring(timeStamp) + L")\n";
+		std::wstring build =
+			L"Build " + Util::StringToWstring(UI::Jdi->GetVersion()) + L" " +
+			std::wstring(version) + L" " + std::wstring(platform);
 
-		ImGui::Text(Util::WstringToString(buffer).c_str());
+		if (jitc[0] != 0)
+		{
+			build += std::wstring(L" ") + jitc;
+		}
+
+		build += L" (" + Util::StringToWstring(dateStamp) + L" " + Util::StringToWstring(timeStamp) + L")";
+
+		// The mark of the emulator next to its name, the way the site has the cube next to its
+		// wordmark, and the build under it in the muted colour.
+		const UiPalette& pal = UiThemePalette();
+
+		const ImVec2 origin = ImGui::GetCursorScreenPos();
+		UiThemeDrawCube(ImGui::GetWindowDrawList(), ImVec2(origin.x + 27.0f, origin.y + 27.0f), 54.0f);
+
+		ImGui::Dummy(ImVec2(60.0f, 54.0f));
+		ImGui::SameLine(0.0f, 16.0f);
+
+		ImGui::BeginGroup();
+		ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(pal.text));
+		ImGui::TextUnformatted(APPNAME_A);
+		ImGui::PopStyleColor();
+		ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(pal.muted));
+		ImGui::TextUnformatted(Util::WstringToString(APPDESC).c_str());
+		ImGui::PopStyleColor();
+		ImGui::EndGroup();
+
+		ImGui::Separator();
+
+		ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(pal.muted));
+		ImGui::TextUnformatted(Util::WstringToString(build).c_str());
+		ImGui::TextUnformatted("Copyright 2003-2026 Dolwin team, emu-russia");
+		ImGui::PopStyleColor();
+
 		ImGui::Separator();
 
 		if (ImGui::Button("OK", ImVec2(120, 0))) {
@@ -1648,6 +1675,90 @@ static void ui_bench()
 	OnMainWindowClosed();
 }
 
+/* The capsule that says what a file is: the extension of its name, in the colour of the kind of file
+   it is (a disk image is the second accent, an executable the first). Its text is drawn by the draw
+   list and the layout only reserves its room, so that the capsule cannot move the row it is in. */
+static void ui_selector_type_badge(const std::wstring& name, SELECTOR_FILE type)
+{
+	const wchar_t* dot = wcsrchr(name.c_str(), L'.');
+
+	if (dot == nullptr || dot[1] == 0)
+	{
+		return;
+	}
+
+	// Only the extensions the selector lists reach this point, but a file of any name can be dropped
+	// into a directory that is scanned.
+	std::string label;
+
+	for (const wchar_t* p = dot + 1; *p != 0; p++)
+	{
+		if (*p > 0x7f)
+		{
+			return;
+		}
+
+		char ch = (char)*p;
+		label += (ch >= 'a' && ch <= 'z') ? (char)(ch - 'a' + 'A') : ch;
+	}
+
+	const UiPalette& pal = UiThemePalette();
+	const ImU32 color = (type == SELECTOR_FILE::Dvd) ? pal.accent2 : pal.accent;
+
+	const float height = ImGui::GetTextLineHeight();
+	const float width = ImGui::CalcTextSize(label.c_str()).x + 14.0f;
+
+	const ImVec2 pos = ImGui::GetCursorScreenPos();
+	const ImVec2 capsuleMin = ImVec2(pos.x, pos.y - 2.0f);
+	const ImVec2 capsuleMax = ImVec2(pos.x + width, pos.y + height + 2.0f);
+	const float rounding = (capsuleMax.y - capsuleMin.y) * 0.5f;
+
+	ImDrawList* dl = ImGui::GetWindowDrawList();
+	dl->AddRectFilled(capsuleMin, capsuleMax, UiThemeAlpha(color, 0.16f), rounding);
+	dl->AddRect(capsuleMin, capsuleMax, UiThemeAlpha(color, 0.45f), rounding);
+	dl->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2(pos.x + 7.0f, pos.y), color, label.c_str());
+
+	ImGui::Dummy(ImVec2(width, height));
+}
+
+/* What the selector shows when it has nothing to list: the mark of the emulator and where the files
+   come from. An empty table would say the same thing in a colder way. */
+static void ui_selector_empty()
+{
+	const UiPalette& pal = UiThemePalette();
+
+	const ImVec2 origin = ImGui::GetCursorScreenPos();
+	const ImVec2 avail = ImGui::GetContentRegionAvail();
+
+	const float cubeSize = 96.0f;
+	const ImVec2 center = ImVec2(origin.x + avail.x * 0.5f, origin.y + avail.y * 0.5f - 40.0f);
+
+	UiThemeDrawCube(ImGui::GetWindowDrawList(), center, cubeSize, 0.30f);
+
+	// The lines are centered by hand: the child holds a table in the other branch, so there is no
+	// layout to center them with.
+	const char* title = "Nothing to run yet";
+	const char* hint = "Add the directories the selector scans in Options -> Settings, General";
+
+	auto centered = [&](const char* text, float y, ImU32 color)
+	{
+		const ImVec2 size = ImGui::CalcTextSize(text);
+
+		ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+			ImVec2(origin.x + (avail.x - size.x) * 0.5f, y), color, text);
+	};
+
+	centered(title, center.y + cubeSize * 0.5f + 24.0f, pal.text);
+	centered(hint, center.y + cubeSize * 0.5f + 48.0f, pal.muted);
+}
+
+/* The height of the status bar. The selector is a child of the window and has to leave this much at
+   its bottom, so the two share the one description of it. */
+static float ui_status_bar_height()
+{
+	return ImGui::GetTextLineHeight() + 12.0f;
+}
+
 static void ui_selector()
 {
 	if (!usel.active)
@@ -1660,15 +1771,23 @@ static void ui_selector()
 		update_selector();
 	}
 
-	const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+	const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y * 2.0f + ui_status_bar_height();
 	if (ImGui::BeginChild("selector", ImVec2(0, -footer_height_to_reserve), false, ImGuiWindowFlags_HorizontalScrollbar))
 	{
 		const float iconWidth = (float)(usel.smallIcons ? (DVD_BANNER_WIDTH >> 1) : DVD_BANNER_WIDTH);
 		const float iconHeight = (float)(usel.smallIcons ? (DVD_BANNER_HEIGHT >> 1) : DVD_BANNER_HEIGHT);
 		const float rowHeight = iconHeight + ImGui::GetStyle().CellPadding.y * 2;
 
-		if (ImGui::BeginTable("selector_grid", 5,
-			ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersOuter |
+		// A banner makes a row much taller than a line of text, so the text is centered in it rather
+		// than sitting at its top.
+		const float textOffset = (rowHeight - ImGui::GetTextLineHeight()) * 0.5f - ImGui::GetStyle().CellPadding.y;
+
+		if (usel.files.empty())
+		{
+			ui_selector_empty();
+		}
+		else if (ImGui::BeginTable("selector_grid", 5,
+			ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV |
 			ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable,
 			ImVec2(0, ImGui::GetContentRegionAvail().y)))
 		{
@@ -1713,16 +1832,26 @@ static void ui_selector()
 				}
 
 				ImGui::TableSetColumnIndex(1);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + textOffset);
+				ui_selector_type_badge(file->name, file->type);
+				ImGui::SameLine();
 				ImGui::TextUnformatted(ToUtf8(file->title).c_str());
 
 				ImGui::TableSetColumnIndex(2);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + textOffset);
 				ImGui::TextUnformatted(SmartSize(file->size).c_str());
 
 				ImGui::TableSetColumnIndex(3);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + textOffset);
+				ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(UiThemePalette().accent));
 				ImGui::TextUnformatted(Util::WstringToString(file->id).c_str());
+				ImGui::PopStyleColor();
 
 				ImGui::TableSetColumnIndex(4);
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + textOffset);
+				ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(UiThemePalette().muted));
 				ImGui::TextUnformatted(ToUtf8(file->comment).c_str());
+				ImGui::PopStyleColor();
 
 				if (usel.scrollToSelected && i == usel.selected)
 				{
@@ -1762,15 +1891,153 @@ static void ui_selector()
 		}
 	}
 	ImGui::EndChild();
-	ImGui::Separator();
 }
+
+/* The text cut to the width there is for it, with an ellipsis where it was cut. The status line is
+   the one place where a string the user never sees the end of ("State loaded from ...") would run
+   into the counters on its right. The string is walked by UTF-8 sequences and not by bytes, so a
+   title in Japanese is not cut in the middle of a character. */
+static std::string Ellipsize(const char* text, float width)
+{
+	if (text == nullptr || text[0] == 0)
+	{
+		return "";
+	}
+
+	if (ImGui::CalcTextSize(text).x <= width)
+	{
+		return text;
+	}
+
+	const float limit = width - ImGui::CalcTextSize("...").x;
+
+	if (limit <= 0.0f)
+	{
+		return "";
+	}
+
+	size_t length = strlen(text);
+	size_t cut = 0;
+
+	while (cut < length)
+	{
+		const unsigned char lead = (unsigned char)text[cut];
+		size_t step = (lead >= 0xF0) ? 4 : (lead >= 0xE0) ? 3 : (lead >= 0xC0) ? 2 : 1;
+
+		if (cut + step > length)
+		{
+			break;
+		}
+
+		std::string candidate(text, cut + step);
+
+		if (ImGui::CalcTextSize(candidate.c_str()).x > limit)
+		{
+			break;
+		}
+
+		cut += step;
+	}
+
+	return std::string(text, cut) + "...";
+}
+
+/*
+
+The line at the bottom of the window: what the machine is doing. Its parts are the ones the core
+fills in through `SetStatusText` (the state of the emulation and the counters of the performance
+thread), and this function only lays them out: the state on the left, the two counters beside it and
+the console clock on the right.
+
+*/
 
 static void ui_status_bar()
 {
-	for (int i = 0; i < (int)STATUS_ENUM::StatusMax; i++)
+	const UiPalette& pal = UiThemePalette();
+
+	const float height = ui_status_bar_height();
+	const ImVec2 origin = ImGui::GetCursorScreenPos();
+	const float width = ImGui::GetContentRegionAvail().x;
+
+	ImGui::Dummy(ImVec2(width, height));
+
+	ImDrawList* dl = ImGui::GetWindowDrawList();
+	const ImVec2 lowerRight = ImVec2(origin.x + width, origin.y + height);
+	const float middleY = origin.y + height * 0.5f;
+
+	dl->AddRectFilled(origin, lowerRight, pal.child, 9.0f);
+	dl->AddRect(origin, lowerRight, pal.border, 9.0f);
+
+	// The counters and the clock are laid out from the right edge, so that they stay where they are
+	// while the line of the state changes length.
+	struct StatusPart
 	{
-		ImGui::TextWrapped(Util::WstringToString(status_parts[i]).c_str());
-		ImGui::SameLine();
+		std::string text;
+		ImU32       color;
+	};
+
+	StatusPart parts[] =
+	{
+		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::VIs]),        pal.accent },
+		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::PEs]),        pal.accent2 },
+		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::SystemTime]), pal.muted },
+	};
+
+	const float gap = 22.0f;
+	float partsWidth = 0.0f;
+	int partsShown = 0;
+
+	for (const StatusPart& part : parts)
+	{
+		if (part.text.empty())
+		{
+			continue;
+		}
+
+		partsWidth += ImGui::CalcTextSize(part.text.c_str()).x;
+		partsShown++;
+	}
+
+	if (partsShown > 1)
+	{
+		partsWidth += (partsShown - 1) * gap;
+	}
+
+	const float partsX = origin.x + width - 14.0f - partsWidth;
+
+	// The state on the left: a lamp in the colour of the state and the line the core wrote. It is
+	// cut where the counters begin, because that line can be a path of any length.
+	const std::string progress = Ellipsize(Util::WstringToString(status_parts[(int)STATUS_ENUM::Progress]).c_str(),
+		partsX - origin.x - 44.0f);
+
+	dl->AddCircleFilled(ImVec2(origin.x + 16.0f, middleY), 4.0f, emu_running ? pal.accent : pal.muted);
+
+	ImGui::SetCursorScreenPos(ImVec2(origin.x + 28.0f, middleY - ImGui::GetTextLineHeight() * 0.5f));
+	ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(pal.text));
+	ImGui::TextUnformatted(progress.c_str());
+	ImGui::PopStyleColor();
+
+	float x = partsX;
+
+	for (const StatusPart& part : parts)
+	{
+		if (part.text.empty())
+		{
+			continue;
+		}
+
+		if (x > partsX)
+		{
+			// A dot between two parts, in the colour of the hairline.
+			dl->AddCircleFilled(ImVec2(x - gap * 0.5f, middleY), 1.5f, pal.border);
+		}
+
+		ImGui::SetCursorScreenPos(ImVec2(x, middleY - ImGui::GetTextLineHeight() * 0.5f));
+		ImGui::PushStyleColor(ImGuiCol_Text, UiThemeVec4(part.color));
+		ImGui::TextUnformatted(part.text.c_str());
+		ImGui::PopStyleColor();
+
+		x += ImGui::CalcTextSize(part.text.c_str()).x + gap;
 	}
 }
 
@@ -1783,6 +2050,13 @@ static void ui_main_window()
 	ImGui::SetNextWindowPos(use_work_area ? viewport->WorkPos : viewport->Pos);
 	ImGui::SetNextWindowSize(use_work_area ? viewport->WorkSize : viewport->Size);
 
+	// The window is the whole client area of the window SDL opened, so it is square and carries no
+	// frame of its own: the system rounds and outlines that window, and a second rounding drawn
+	// inside it only shows as a seam in the corners. The rounding of the theme belongs to the
+	// dialogs, which are drawn inside this window.
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
 	if (ImGui::Begin("main_window", nullptr, flags))
 	{
 		ui_main_menu();
@@ -1790,6 +2064,8 @@ static void ui_main_window()
 		ui_status_bar();
 	}
 	ImGui::End();
+
+	ImGui::PopStyleVar(2);
 }
 
 static int ui_main()
@@ -1837,8 +2113,40 @@ static int ui_main()
 #endif
 
 	// Create window with SDL_Renderer graphics context
+	//
+	// The window is the game selector, and it opens wide screen (16:9): that is the shape the table
+	// of the selector - with the banners next to the titles - and the pages of the settings window
+	// are read in. The size is capped by the work area of the display, because a 1280x720 window
+	// does not fit above the taskbar of a 1366x768 screen, and the status line at the bottom of the
+	// window is the last thing that may end up under it. Asking the display needs the video
+	// subsystem, which SDL_CreateWindow below would initialize by itself; it is asked for here,
+	// before the size is known. The call is counted, so the one SDL makes later is a no-op.
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
+
+	int windowWidth = 1280, windowHeight = 720;
+
+	SDL_Rect workArea = { 0, 0, 0, 0 };
+
+	if (SDL_GetDisplayUsableBounds(0, &workArea) == 0 && workArea.w > 0 && workArea.h > 0)
+	{
+		const int maxWidth = workArea.w * 9 / 10;
+		const int maxHeight = workArea.h * 9 / 10;
+
+		if (windowHeight > maxHeight)
+		{
+			windowHeight = maxHeight;
+			windowWidth = windowHeight * 16 / 9;
+		}
+
+		if (windowWidth > maxWidth)
+		{
+			windowWidth = maxWidth;
+			windowHeight = windowWidth * 9 / 16;
+		}
+	}
+
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	window = SDL_CreateWindow(APPNAME_A, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, window_flags);
+	window = SDL_CreateWindow(APPNAME_A, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, window_flags);
 	SetWindowIcon(window);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_SOFTWARE);
 	if (renderer == nullptr) {
@@ -1856,10 +2164,11 @@ static int ui_main()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-	// Setup Dear ImGui style
-	//ImGui::StyleColorsClassic();
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsLight();
+	// The look of the interface: the font atlas and the palette of the theme the configuration asks
+	// for (see uitheme.h). The style is applied once, here, and everything that is drawn after this
+	// point - the selector, the settings window and the dialogs - is drawn with it.
+	UiThemeLoadFonts();
+	UiThemeApplyByName(UI::Jdi->GetConfigString(USER_THEME, USER_UI).c_str());
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -2114,7 +2423,13 @@ static int ui_main()
 		ImGui::Render();
 		ImGuiIO& io = ImGui::GetIO();
 		SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-		SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
+
+		// The window is cleared in the background of the theme: the windows are rounded and the work
+		// area of the main one does not always cover the whole viewport, so the colour behind them is
+		// a part of the look and not an arbitrary one. It is read every frame, so that a theme picked
+		// in the settings window takes effect here too.
+		const ImVec4 background = UiThemeVec4(UiThemePalette().window);
+		SDL_SetRenderDrawColor(renderer, (Uint8)(background.x * 255), (Uint8)(background.y * 255), (Uint8)(background.z * 255), 255);
 		SDL_RenderClear(renderer);
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 		SDL_RenderPresent(renderer);

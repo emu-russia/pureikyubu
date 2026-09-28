@@ -9,6 +9,7 @@ settings that had no dialog at all (everything the selector view is made of).
 
 The tabs are:
 
+  * "Interface" - the look of the front end: the theme the whole interface is drawn with;
   * "General" - the game selector: the directories it scans, the file filter and the view;
   * "GCN Hardware" - the console version and the firmware images;
   * "Controllers" - the pads (their bindings are here too) and the Game Boy Advance on a link
@@ -40,6 +41,7 @@ opened for. The front end has its own for the files the emulator loads.
 
 #include "pch.h"
 #include "uisettings.h"
+#include "uitheme.h"
 #include "../thirdparty/imgui-filebrowser/imfilebrowser.h"
 
 // ---------------------------------------------------------------------------
@@ -166,7 +168,8 @@ static void settings_pick_new_file(const char* title, const std::vector<std::str
 
 enum class SettingsTab
 {
-	General = 0,
+	Interface = 0,
+	General,
 	Hardware,
 	Controllers,
 	MemoryCards,
@@ -184,6 +187,82 @@ static int settings_path_selected = -1;
 /* The message of the error box ("the card file cannot be made"), if there is one */
 static std::string  settings_error;
 static bool         settings_error_open = false;
+
+// ---------------------------------------------------------------------------
+// "Interface" - the look of the front end
+//
+// A theme is the palette the whole interface is drawn with (see uitheme.h): the widgets, the header
+// band of the selector and the status bar. Picking one applies it at once - the style belongs to the
+// ImGui context, so the very next frame is drawn in the new colours - and stores its name in the
+// configuration, where the front end reads it when it starts.
+
+/* One colour of the palette: a capsule of it and its name. The pair is drawn by the draw list, so
+   that the capsule and its name are laid out as one thing and not as a widget and a label. */
+static void settings_swatch(const char* label, ImU32 color)
+{
+	const UiPalette& pal = UiThemePalette();
+	const float box = 20.0f;
+
+	const ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImDrawList* dl = ImGui::GetWindowDrawList();
+
+	dl->AddRectFilled(pos, ImVec2(pos.x + box, pos.y + box), color, 6.0f);
+	dl->AddRect(pos, ImVec2(pos.x + box, pos.y + box), UiThemeAlpha(pal.text, 0.18f), 6.0f);
+	dl->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+		ImVec2(pos.x + box + 8.0f, pos.y + (box - ImGui::GetTextLineHeight()) * 0.5f), pal.muted, label);
+
+	ImGui::Dummy(ImVec2(box + 8.0f + ImGui::CalcTextSize(label).x, box));
+}
+
+static void settings_page_interface()
+{
+	const UiPalette& pal = UiThemePalette();
+
+	ImGui::TextUnformatted("The look of the front end:");
+	ImGui::TextDisabled("A theme colours the whole interface, and is kept for the next start");
+
+	if (PropertyGrid("settings_interface"))
+	{
+		PropertyRow("Theme");
+		{
+			if (ImGui::BeginCombo("##v", UiThemeName(UiThemeCurrent())))
+			{
+				for (int i = 0; i < UiThemeCount(); i++)
+				{
+					if (ImGui::Selectable(UiThemeName(i), i == UiThemeCurrent()))
+					{
+						UiThemeApply(i);
+						UI::Jdi->SetConfigString(USER_THEME, UiThemeName(i), USER_UI);
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+		}
+		PropertyRowEnd();
+
+		PropertyGridEnd();
+	}
+
+	ImGui::Separator();
+	ImGui::TextUnformatted("The colours of the applied theme:");
+
+	settings_swatch("Window", pal.window);
+	ImGui::SameLine(0.0f, 18.0f);
+	settings_swatch("Panel", pal.child);
+	ImGui::SameLine(0.0f, 18.0f);
+	settings_swatch("Surface", pal.surface);
+	ImGui::SameLine(0.0f, 18.0f);
+	settings_swatch("Border", pal.border);
+
+	settings_swatch("Text", pal.text);
+	ImGui::SameLine(0.0f, 18.0f);
+	settings_swatch("Hint", pal.muted);
+	ImGui::SameLine(0.0f, 18.0f);
+	settings_swatch("Accent", pal.accent);
+	ImGui::SameLine(0.0f, 18.0f);
+	settings_swatch("Second accent", pal.accent2);
+}
 
 // ---------------------------------------------------------------------------
 // "General" - the game selector
@@ -1307,7 +1386,7 @@ void UiSettingsFrame()
 	{
 		static const char* tabs[(int)SettingsTab::Max] =
 		{
-			"General", "GCN Hardware", "Controllers", "Memory Cards", "Network", "High-Speed Port"
+			"Interface", "General", "GCN Hardware", "Controllers", "Memory Cards", "Network", "High-Speed Port"
 		};
 
 		const float footer = ImGui::GetFrameHeightWithSpacing();
@@ -1332,6 +1411,7 @@ void UiSettingsFrame()
 
 		switch (settings_tab)
 		{
+			case SettingsTab::Interface:    settings_page_interface(); break;
 			case SettingsTab::General:      settings_page_general(); break;
 			case SettingsTab::Hardware:     settings_page_hw(); break;
 			case SettingsTab::Controllers:  settings_page_devices(PERIPH_PAGE_CONTROLLERS); break;

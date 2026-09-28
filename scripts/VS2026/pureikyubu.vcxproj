@@ -104,6 +104,7 @@
     <ClInclude Include="..\..\src\peripherals.h" />
     <ClInclude Include="..\..\src\uisettings.h" />
     <ClInclude Include="..\..\src\uisettingsgba.h" />
+    <ClInclude Include="..\..\src\uitheme.h" />
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\vi.h" />
@@ -199,6 +200,7 @@
     <ClCompile Include="..\..\src\vi.cpp" />
     <ClCompile Include="..\..\src\uisettings.cpp" />
     <ClCompile Include="..\..\src\uisettingsgba.cpp" />
+    <ClCompile Include="..\..\src\uitheme.cpp" />
     <ClCompile Include="..\..\src\videosdl.cpp" />
     <ClCompile Include="..\..\src\xf.cpp" />
     <!-- The third-party sources have no precompiled header of their own. -->
