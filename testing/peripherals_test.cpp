@@ -189,6 +189,65 @@ namespace pureikyubutest
 			Assert::IsTrue(second == pool.DeviceOnPort(PERIPH_PORT_SI(1)), L"the second one is still in its socket");
 		}
 
+		// The settings window edits the devices on pages, and a page is the model's own rather than
+		// the bus it hangs from: the two network adapters share the EXI bus with the cards and the
+		// Game Boy Advance on a link cable sits in a controller socket. A page that took its devices
+		// from the bus put the adapters under "Memory Cards", which is what this pins down.
+		TEST_METHOD(Peripherals_EveryModelNamesThePageItIsEditedOn)
+		{
+			M();
+
+			struct Expected
+			{
+				uint32_t type;
+				int page;
+				const wchar_t* model;
+			};
+
+			const Expected expected[] =
+			{
+				{ PERIPH_DEVICE_STANDARD_PAD, PERIPH_PAGE_CONTROLLERS,  L"the pad" },
+				{ PERIPH_DEVICE_GBA_LINK,     PERIPH_PAGE_CONTROLLERS,  L"the Game Boy Advance on a link cable" },
+				{ PERIPH_DEVICE_MEMCARD,      PERIPH_PAGE_MEMORY_CARDS, L"the memory card" },
+				{ PERIPH_DEVICE_BBA,          PERIPH_PAGE_NETWORK,      L"the broadband adapter" },
+				{ PERIPH_DEVICE_MODEM,        PERIPH_PAGE_NETWORK,      L"the modem adapter" },
+				{ PERIPH_DEVICE_GBPLAYER,     PERIPH_PAGE_HSP,          L"the Game Boy Player" },
+			};
+
+			for (const Expected& e : expected)
+			{
+				int page = Peripherals::ModelPage(e.type);
+
+				if (page < 0)
+				{
+					// A build that does not compile that device module has no such model. The card
+					// is the one this test build leaves out (memcard.cpp is not part of it, see the
+					// module comment), so its page is checked by the emulator's own build.
+					continue;
+				}
+
+				Assert::AreEqual(e.page, page, e.model);
+			}
+
+			// The adapters are on the network page, which is the bug this pins down: they share the
+			// EXI bus with the cards, so a page that took its devices from the bus put them under
+			// "Memory Cards".
+			Assert::AreEqual(PERIPH_PAGE_NETWORK, Peripherals::ModelPage(PERIPH_DEVICE_BBA),
+				L"the broadband adapter is a network device");
+			Assert::AreEqual(PERIPH_PAGE_NETWORK, Peripherals::ModelPage(PERIPH_DEVICE_MODEM),
+				L"and so is the modem");
+
+			// Every model this build has names a page that exists, so a registrar that passed the
+			// wrong word is caught here rather than by an empty tab.
+			for (int i = 0; i < Peripherals::ModelCount(); i++)
+			{
+				int page = Peripherals::ModelPage(Peripherals::ModelAt(i));
+
+				Assert::IsTrue(page >= 0 && page < PERIPH_PAGE_MAX,
+					L"a model that names no settings page this build has");
+			}
+		}
+
 		// Unplugging a device keeps it in the pool (with its settings) and plugging it back in puts
 		// it where it was asked to be.
 		TEST_METHOD(Peripherals_UnpluggingAndPluggingBackIn)

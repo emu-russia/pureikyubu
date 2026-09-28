@@ -78,6 +78,21 @@ namespace GBA
 #define PERIPH_BUS_HSP                  2
 
 // ---------------------------------------------------------------------------
+// The settings pages
+//
+// The page of the settings window a model is edited on. A page is what the *user* understands, not
+// the bus the device hangs from: the two network adapters share the EXI bus with the cards but are
+// not cards, and the Game Boy Advance on a link cable sits in a controller socket but is not a pad.
+// A model names its page when it registers (see RegisterFactory), so a build that compiles another
+// device module offers it on the right page without a line of front end code.
+
+#define PERIPH_PAGE_CONTROLLERS         0   //!< the pads, and the Game Boy Advance on a link cable
+#define PERIPH_PAGE_MEMORY_CARDS        1   //!< the memory cards
+#define PERIPH_PAGE_NETWORK             2   //!< the broadband and modem adapters
+#define PERIPH_PAGE_HSP                 3   //!< the devices of the Hi-Speed Port
+#define PERIPH_PAGE_MAX                 4
+
+// ---------------------------------------------------------------------------
 // Ports
 
 //! The sockets of the console. The order is the order the settings dialog shows them in.
@@ -526,8 +541,10 @@ public:
 	// -----------------------------------------------------------------------
 	// The models
 
-	//! Register a device model. Called by the module that implements the device.
-	static void RegisterFactory(uint32_t type, const char* name, const char* info, int bus, PeripheralDevice* (*factory)());
+	//! Register a device model. Called by the module that implements the device. `page` is the
+	//! settings page the model is edited on (PERIPH_PAGE_*).
+	static void RegisterFactory(uint32_t type, const char* name, const char* info, int bus, int page,
+		PeripheralDevice* (*factory)());
 
 	//! The name of a model ("Standard Controller"), or nullptr when this build has no such device.
 	static const char* ModelName(uint32_t type);
@@ -540,6 +557,10 @@ public:
 
 	//! The bus a model is plugged into (PERIPH_BUS_*), or -1 when this build has no such device.
 	static int ModelBus(uint32_t type);
+
+	//! The settings page a model is edited on (PERIPH_PAGE_*), or -1 when this build has no such
+	//! device.
+	static int ModelPage(uint32_t type);
 
 	//! The model of a port when the configuration does not say (the device the port is meant for).
 	static uint32_t DefaultModelOfPort(int port);

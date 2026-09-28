@@ -574,7 +574,8 @@ namespace
 		GbaLinkRegistrar()
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_GBA_LINK, "GBA + Link Cable",
-				"DOL-011, a Game Boy Advance on a controller socket", PERIPH_BUS_SI, CreateGbaLink);
+				"DOL-011, a Game Boy Advance on a controller socket", PERIPH_BUS_SI,
+				PERIPH_PAGE_CONTROLLERS, CreateGbaLink);
 		}
 	};
 

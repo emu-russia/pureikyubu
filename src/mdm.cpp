@@ -463,7 +463,8 @@ namespace
 		ModemRegistrar()
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_MODEM, "Modem Adapter",
-				"DOL-012, 56 kbit/s dial-up on serial port 1", PERIPH_BUS_EXI, CreateModemAdapter);
+				"DOL-012, 56 kbit/s dial-up on serial port 1", PERIPH_BUS_EXI,
+				PERIPH_PAGE_NETWORK, CreateModemAdapter);
 		}
 	};
 

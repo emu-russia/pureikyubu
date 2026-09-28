@@ -736,7 +736,8 @@ namespace
 		GameBoyPlayerRegistrar()
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_GBPLAYER, "Game Boy Player",
-				"DOL-017, the add-on on the Hi-Speed Port", PERIPH_BUS_HSP, CreateGameBoyPlayer);
+				"DOL-017, the add-on on the Hi-Speed Port", PERIPH_BUS_HSP,
+				PERIPH_PAGE_HSP, CreateGameBoyPlayer);
 		}
 	};
 

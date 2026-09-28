@@ -343,11 +343,16 @@ until the pool itself is closed in one piece.
 
 Every setting of the emulator is in one window with a vertical strip of tabs on the left and a
 property grid on the right (`uisettings.cpp`): the tabs are "General" (the game selector),
-"GCN Hardware" (the console version and the firmware), "Controllers" (the devices of the pool on the
-SI bus and their bindings), "Memory Cards" (the devices on the EXI bus, which are the two card slots
-and the two network adapters of serial port 1) and "High-Speed Port" (the Game Boy Player). The
+"GCN Hardware" (the console version and the firmware), "Controllers" (the pads and their bindings,
+and the Game Boy Advance on a link cable), "Memory Cards" (the two card slots), "Network" (the
+broadband and modem adapters of serial port 1) and "High-Speed Port" (the Game Boy Player). The
 window is generic over the devices: it asks a device for its actuators and its properties and draws
-them, so a new device model appears in it without a line of front end code.
+them, and a device says which page it is edited on when it registers its model
+(`PERIPH_PAGE_*`), so a new device model appears on the right page without a line of front end code.
+
+A page follows the *device*, not the bus it hangs from, and that is not a detail: the cards and the
+two network adapters are all EXI devices of the pool, so a page that took its devices from the bus
+showed the adapters under "Memory Cards".
 
 The dialog that each of those pages replaced - `Options -> Controllers -> Port n`,
 `Options -> Memcards -> Slot A`, and the settings that had no dialog at all (the selector view) -

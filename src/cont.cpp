@@ -387,7 +387,8 @@ namespace
 		ContRegistrar()
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_STANDARD_PAD, "Standard Controller",
-				"DOL-003, the pad on one of the four SI sockets", PERIPH_BUS_SI, CreateStandardPad);
+				"DOL-003, the pad on one of the four SI sockets", PERIPH_BUS_SI,
+				PERIPH_PAGE_CONTROLLERS, CreateStandardPad);
 		}
 	};
 

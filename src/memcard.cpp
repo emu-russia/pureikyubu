@@ -1146,7 +1146,7 @@ namespace
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_MEMCARD, "Memory Card",
 				"DOL-008 / DOL-014 / DOL-020, an EXI device of a card slot",
-				PERIPH_BUS_EXI, CreateMemoryCard);
+				PERIPH_BUS_EXI, PERIPH_PAGE_MEMORY_CARDS, CreateMemoryCard);
 		}
 	};
 

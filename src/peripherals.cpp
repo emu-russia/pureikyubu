@@ -61,6 +61,7 @@ namespace
 		const char* name;
 		const char* info;
 		int         bus;
+		int         page;               //!< the settings page it is edited on (PERIPH_PAGE_*)
 		PeripheralDevice* (*factory)();
 	};
 
@@ -99,6 +100,13 @@ namespace
 	{
 		const PeriphModel* model = FindModel(type);
 		return model != nullptr ? model->bus : -1;
+	}
+
+	//! The settings page a model is edited on (the model of a device always exists).
+	int ModelPageOf(uint32_t type)
+	{
+		const PeriphModel* model = FindModel(type);
+		return model != nullptr ? model->page : -1;
 	}
 
 	const char* BusName(int bus)
@@ -197,7 +205,7 @@ Peripherals& Peripherals::Instance()
 	return instance;
 }
 
-void Peripherals::RegisterFactory(uint32_t type, const char* name, const char* info, int bus,
+void Peripherals::RegisterFactory(uint32_t type, const char* name, const char* info, int bus, int page,
 	PeripheralDevice* (*factory)())
 {
 	for (auto& model : Models())
@@ -207,12 +215,13 @@ void Peripherals::RegisterFactory(uint32_t type, const char* name, const char* i
 			model.name = name;
 			model.info = info;
 			model.bus = bus;
+			model.page = page;
 			model.factory = factory;
 			return;
 		}
 	}
 
-	Models().push_back(PeriphModel{ type, name, info, bus, factory });
+	Models().push_back(PeriphModel{ type, name, info, bus, page, factory });
 }
 
 const char* Peripherals::ModelName(uint32_t type)
@@ -224,6 +233,11 @@ const char* Peripherals::ModelName(uint32_t type)
 int Peripherals::ModelBus(uint32_t type)
 {
 	return ModelBusOf(type);
+}
+
+int Peripherals::ModelPage(uint32_t type)
+{
+	return ModelPageOf(type);
 }
 
 int Peripherals::ModelCount()

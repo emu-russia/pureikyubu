@@ -56,6 +56,7 @@ build/*.cmd
 # same kinds under Data): driver binaries loaded through the debug interface, emulator and test logs,
 # raw memory dumps and screenshots taken with the shot commands.
 build/*.bin
+build/*.txt
 build/*.log
 build/*.raw
 build/*.png

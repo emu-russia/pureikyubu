@@ -890,7 +890,8 @@ namespace
 		BbaRegistrar()
 		{
 			Peripherals::RegisterFactory(PERIPH_DEVICE_BBA, "Broadband Adapter",
-				"DOL-015, 10BASE-T Ethernet on serial port 1", PERIPH_BUS_EXI, CreateBroadbandAdapter);
+				"DOL-015, 10BASE-T Ethernet on serial port 1", PERIPH_BUS_EXI,
+				PERIPH_PAGE_NETWORK, CreateBroadbandAdapter);
 		}
 	};
 
