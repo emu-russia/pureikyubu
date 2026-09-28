@@ -142,6 +142,7 @@ else ()
 	src/uisdl.cpp
 	src/uisettings.cpp
 	src/uisettingsgba.cpp
+	src/uitheme.cpp
 	src/videosdl.cpp
 
 	# The SDL frontend of the portable machines and their debug interface. The two are the only

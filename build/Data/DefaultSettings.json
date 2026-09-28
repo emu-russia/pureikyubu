@@ -12,7 +12,8 @@
 		"PATH": "./",
 		"SELECTOR": true,
 		"SMALLICONS": true,
-		"SORTVIEW": 1
+		"SORTVIEW": 1,
+		"THEME": "Flipper"
 	},
 
 	"loader":

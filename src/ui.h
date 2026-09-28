@@ -37,6 +37,7 @@ void UIReflector();
 #define USER_SELECTOR "SELECTOR"			// selector disabled, if 0
 #define USER_SMALLICONS "SMALLICONS"			// show small icons, if 1
 #define USER_SORTVIEW "SORTVIEW"			// sort files in selector (1..6, see menu)
+#define USER_THEME "THEME"				// name of the interface theme (see uitheme.h)
 
 
 // version info
