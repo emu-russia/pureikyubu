@@ -369,15 +369,34 @@ void DSPUpdateInt()
 
 		if (beyondAram)
 		{
-			// No expansion module is installed: a read returns zeros, a write is discarded.
-			// This case is emulated on purpose (the AR driver probes for a module by moving test
-			// blocks at and past the 16 MB boundary) and does not touch ARAM at all.
-			if (type == ARAM_TO_RAM && ptr != nullptr)
+			// The address is in the expansion window, which is the Hi-Speed Port (see hsp.h). When
+			// a device is on the port - the Game Boy Player - the transfer is a command to that
+			// device or a status read out of it, and the device answers: the console's own Game Boy
+			// Player driver is built on exactly that, and its identification is a loopback
+			// handshake through one of the window's 32-byte blocks.
+			//
+			// With nothing on the port the window is dead: a read returns zeros and a write is
+			// discarded. That case is emulated on purpose - the console's AR driver probes for a
+			// plain SDRAM expansion module by moving test blocks at and past the 16 MB boundary,
+			// and on a console whose port holds a Game Boy Player (which is not memory) that probe
+			// has to find nothing, or the Player's own driver refuses to initialise.
+			Flipper::HiSpeedPort* hsp = Flipper::HW->hsp;
+
+			if (ptr == nullptr || !memOk)
 			{
-				if (memOk)
-					memset(ptr, 0, cnt);
-				else
-					Report(Channel::AR, "ARAM DMA out of main memory: mmaddr:0x%08X cnt:0x%08X\n", aram.mmaddr, cnt);
+				Report(Channel::AR, "ARAM DMA out of main memory: mmaddr:0x%08X cnt:0x%08X\n",
+					aram.mmaddr, cnt);
+			}
+			else if (type == RAM_TO_ARAM)
+			{
+				if (hsp != nullptr)
+				{
+					hsp->Write(aram.araddr, ptr, cnt);
+				}
+			}
+			else if (hsp == nullptr || !hsp->Read(aram.araddr, ptr, cnt))
+			{
+				memset(ptr, 0, cnt);
 			}
 		}
 		else if (!aramOk || !memOk || ptr == nullptr)
@@ -555,7 +574,7 @@ void DSPUpdateInt()
 	// ---------------------------------------------------------------------------
 	// init
 
-	void AROpen(Flipper::Flipper* flipper)
+	void AROpen(Flipper::Flipper* flipper, HWConfig* config)
 	{
 		Report(Channel::AR, "Aux. memory (ARAM) driver\n");
 
@@ -569,7 +588,12 @@ void DSPUpdateInt()
 		aram.mmaddr = aram.araddr = aram.cnt = 0;
 		aram.amcr = 0x43;			// 16 MB internal ARAM, no expansion
 		aram.masked = false;
-		aram.log = true;
+
+		// The ARAM traffic is logged only when the configuration asks for it. It used to be logged
+		// always, which is a heavy thing to do to a machine that moves a block per video frame:
+		// a Game Boy Player disc that polls its window moves tens of thousands of blocks a second,
+		// and every one of them used to cost two lines of text in the log.
+		aram.log = config != nullptr && config->ar_log;
 
 		// set traps to aram registers
 		// (the unit tests initialise the controller without a Flipper instance)

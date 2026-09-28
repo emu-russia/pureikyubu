@@ -134,6 +134,12 @@ belongs to:
 * **the memory cards and the other devices of the peripheral pool.** A card's contents live in its
   own file and are written through to it as the guest writes them; the controllers are the user's
   hands, re-read before every poll. The pool is opened with the emulator and outlives every machine.
+  The one part of it that is *machine* state rather than settings or the user's hands is the Game
+  Boy Advance a Game Boy Player or a link cable owns: a Game Pak running inside one of them is not
+  in the state either, so a state loaded with a Game Boy game in progress resumes with the machine
+  at its reset. It is a known limitation, not a decision about what belongs in a state - the
+  machine's own state exists (see [gba.md](gba.md)) and hooking it into this image is what would
+  close it.
 * **the samples already handed to the host audio device.** They are a host buffer, not machine state.
   A load therefore always has a sub-frame audio discontinuity; the FIFO of samples that the AI has
   not pushed yet *is* in the state, so the discontinuity is a fraction of a frame.

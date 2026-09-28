@@ -72,6 +72,9 @@ struct HWConfig
 	// SI
 	bool		si_log;
 
+	// AR (the ARAM controller and its DMA engine)
+	bool		ar_log;
+
 	wchar_t     BootromFilename[0x1000];
 	wchar_t     DspDromFilename[0x1000];
 	wchar_t     DspIromFilename[0x1000];
@@ -94,6 +97,7 @@ namespace Flipper
 	class CommandProcessor;
 	class ProcessorInterface;
 	class VideoInterface;
+	class HiSpeedPort;
 
 	// The granularity at which the VI scan-out and the serial poll see the time base. It has to stay
 	// well below one VI line (`vi.one_frame / vi.vcount`, about 2570 ticks on NTSC), and 100 ticks
@@ -119,6 +123,11 @@ namespace Flipper
 		//! they own, and there is no other way to reach it.
 		AudioInterface* ai = nullptr;
 		DiskInterface* di = nullptr;
+
+		//! The Hi-Speed Port (the ARAM expansion the Game Boy Player sits on). It is not an EXI
+		//! channel: the port is served by the memory controller, and the ARAM DMA engine routes
+		//! the transfers that land in its window to it (see hsp.h).
+		HiSpeedPort* hsp = nullptr;
 
 		Flipper(HWConfig* config);
 		~Flipper();

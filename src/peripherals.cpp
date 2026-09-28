@@ -19,7 +19,11 @@ its position: a device that is taken out of the pool takes its settings with it 
 behind, so nothing that is stored next to a device can end up belonging to another one.
 
 The pool of a fresh console is what `DefaultSettings.json` ships: the four controller sockets and
-the two memory card slots, each with the device that port is meant for, and none of them plugged in.
+the two memory card slots, each with the device that port is meant for. The shipped list does not
+say where the devices are plugged in - that is what "the port is meant for" means - so a device
+whose entry names no port goes into the first free port of its bus when the pool is opened, and the
+configuration is told (see `Open`). A device the user unplugged on purpose names its port as -1 and
+stays where it was put.
 
 ## The pool lives as long as the emulator does
 
@@ -99,7 +103,14 @@ namespace
 
 	const char* BusName(int bus)
 	{
-		return bus == PERIPH_BUS_SI ? "Serial Interface" : "EXI";
+		switch (bus)
+		{
+			case PERIPH_BUS_SI:  return "Serial Interface";
+			case PERIPH_BUS_EXI: return "EXI";
+			case PERIPH_BUS_HSP: return "Hi-Speed Port";
+		}
+
+		return "?";
 	}
 }
 
@@ -126,6 +137,8 @@ namespace
 		{ "Controller Port 4",  PERIPH_BUS_SI,  PERIPH_DEVICE_STANDARD_PAD },
 		{ "Memory Card Slot A", PERIPH_BUS_EXI, PERIPH_DEVICE_MEMCARD },
 		{ "Memory Card Slot B", PERIPH_BUS_EXI, PERIPH_DEVICE_MEMCARD },
+		{ "Serial Port 1",      PERIPH_BUS_EXI, PERIPH_DEVICE_BBA },
+		{ "Hi-Speed Port",      PERIPH_BUS_HSP, PERIPH_DEVICE_GBPLAYER },
 	};
 
 	//! The value of one host control bound to an actuator. A button (the keyboard is one too) gives
@@ -213,6 +226,23 @@ int Peripherals::ModelBus(uint32_t type)
 	return ModelBusOf(type);
 }
 
+int Peripherals::ModelCount()
+{
+	return (int)Models().size();
+}
+
+uint32_t Peripherals::ModelAt(int index)
+{
+	const std::vector<PeriphModel>& models = Models();
+
+	if (index < 0 || index >= (int)models.size())
+	{
+		return PERIPH_DEVICE_NONE;
+	}
+
+	return models[index].type;
+}
+
 uint32_t Peripherals::DefaultModelOfPort(int port)
 {
 	if (port < 0 || port >= PERIPH_PORT_MAX)
@@ -296,13 +326,74 @@ void Peripherals::Open()
 			continue;
 		}
 
+		// An entry that does not name a port at all is a device that has never been placed: the
+		// shipped defaults are written that way (they list the four sockets and the two card slots
+		// but do not say where any of them is plugged in), and until this was handled here a fresh
+		// installation came up with every device of the pool dangling and no controller answering.
+		// It goes where the console expects its model and the configuration is told, so that the
+		// next run finds it there.
+		//
+		// An entry that *does* name a port is a decision the user made, "-1" (unplugged)
+		// included: only a member that is not there is a missing value.
 		int port = GetConfigEntryInt(entry, "Port", -1);
+
+		if (!ConfigEntryValueExists(entry, "Port"))
+		{
+			port = FreePortFor(device);
+
+			if (port >= 0)
+			{
+				SetConfigEntryInt(entry, "Port", port);
+			}
+		}
 
 		if (port >= 0 && port < PERIPH_PORT_MAX)
 		{
+			// A port holds one device, and an entry that names a port the configuration has already
+			// given away takes it: the device that was there is unplugged, and its own entry is told
+			// so that the file comes back consistent. The shipped defaults are the case that needs
+			// this - they name no port at all and are placed by `FreePortFor` above, so a user who
+			// puts a Game Boy Advance into a controller socket writes that socket's number into the
+			// *new* entry; until this was handled the pad that had been placed automatically kept the
+			// socket: the new device reported that it had attached, the pool dispatched the port to
+			// the pad, and nothing said which of the two was really in the socket.
+			int occupant = DeviceIndexOnPort(port);
+
+			if (occupant >= 0 && occupant != DeviceIndexOf(device))
+			{
+				Report(Channel::Norm, "%s was unplugged: %s takes the port\n",
+					Name(occupant).c_str(), Name(DeviceIndexOf(device)).c_str());
+				Detach(occupant);
+			}
+
 			Plug(DeviceIndexOf(device), port);
 		}
 	}
+}
+
+int Peripherals::FreePortFor(PeripheralDevice* device)
+{
+	if (device == nullptr)
+	{
+		return -1;
+	}
+
+	int bus = ModelBusOf(device->Type());
+
+	for (int port = 0; port < PERIPH_PORT_MAX; port++)
+	{
+		if (port_desc[port].bus != bus)
+		{
+			continue;
+		}
+
+		if (DeviceIndexOnPort(port) < 0)
+		{
+			return port;
+		}
+	}
+
+	return -1;
 }
 
 void Peripherals::Close()
@@ -842,20 +933,39 @@ bool Peripherals::TransferSI(int chan, int outlen, int inlen, uint8_t* buf)
 void Peripherals::TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi)
 {
 	// The devices of a channel are told apart by the chip select the transfer selects (see
-	// exi.cpp): a memory card is on CS0B of the channel of its slot.
-	if (sel != 0 || chan > 1)
+	// exi.cpp). The two on-chip devices the console owns - the boot ROM / RTC / SRAM chip on
+	// channel 0 CS1B and the AD16 debugger of channel 2 - are not peripherals and are served by the
+	// channel itself; every other combination is a socket of the pool:
+	//
+	//   EXI0 CS0B  Slot A          (a memory card)
+	//   EXI1 CS0B  Slot B          (a memory card)
+	//   EXI0 CS2B  serial port 1   (the broadband adapter and the modem adapter)
+	int port = -1;
+
+	if (sel == 0 && chan == 0) port = PERIPH_PORT_SLOTA;
+	else if (sel == 0 && chan == 1) port = PERIPH_PORT_SLOTB;
+	else if (sel == 2 && chan == 0) port = PERIPH_PORT_SERIAL1;
+
+	if (port < 0)
 	{
 		return;
 	}
 
-	PeripheralDevice* device = DeviceOnPort(PERIPH_PORT_SLOT(chan));
+	PeripheralDevice* device = DeviceOnPort(port);
 
 	if (device == nullptr)
 	{
 		return;
 	}
 
-	device->ExiTransfer(exi);
+	// The transfer that begins a command sequence - the one the console makes right after it
+	// asserts the chip select - is the command word, and every transfer after it is data. The
+	// channel's flag says which one this is (see exi.cpp); the device is the one that knows what
+	// its own commands mean, so the flag is passed on and cleared here.
+	bool first = exi->exi.firstImm;
+	exi->exi.firstImm = false;
+
+	device->ExiTransfer(exi, first);
 }
 
 bool Peripherals::SetMotorSI(int chan, int cmd)

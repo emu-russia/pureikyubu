@@ -627,37 +627,53 @@ namespace pureikyubutest
 				uint32_t fogColor;
 				bool rangeAdj;
 				const char* note;
+
+				// The A and C of the fog (TEV_FOG_PARAM_0 and the C field of TEV_FOG_PARAM_3). They
+				// are per case because the *scale* of the depth the fog sees is what the two
+				// projections differ in: an orthographic depth arrives as a fraction of the 24-bit
+				// range (0..1), and a perspective one as the reciprocal of the remapped depth, which
+				// is 2^24 / b - a different order of magnitude entirely. A test that used one A and
+				// one C for both would find the perspective curve saturating at every depth.
+				uint32_t fogA;
+				uint32_t fogC;
 			};
 
-			// C = 0: the s11e8 form has no zero mantissa, so the exponent 0 is the smallest offset it can
-			// express. b_mag / b_shft belong to the remap of the perspective case.
-			const uint32_t fogC = 0;
+			// A = 1.0 (a_mant 0, a_expn 127) and C = 0: the s11e8 form has no zero mantissa, so the
+			// exponent 0 is the smallest offset it can express.
+			const uint32_t fogA1 = 127u << 11;
+			const uint32_t fogC0 = 0;
 
 			const Case cases[] = {
 				{ "tev_fog_linear.png", "F-select 2: linear", 2, 1, 0, 0, 0x0000FF,
-					false, "The fog factor is the depth itself (minus C): a linear ramp into the blue fog colour." },
+					false, "The fog factor is the depth itself (minus C): a linear ramp into the blue fog colour.",
+					fogA1, fogC0 },
 				{ "tev_fog_off1.png", "F-select 1: the off family", 1, 1, 0, 0, 0x0000FF,
 					false, "F-select 1 is the \"off\" family with the square bit set: the primitive stays unfogged at\n"
-					"every depth, exactly like F-select 0." },
+					"every depth, exactly like F-select 0.", fogA1, fogC0 },
 				{ "tev_fog_quadratic.png", "F-select 3: the linear law on the squared value", 3, 1, 0, 0, 0x0000FF,
 					false, "F-select 3 is the linear law applied to the squared clamped value, i.e. a quadratic curve:\n"
-					"the near half of the picture stays clear much longer than the linear one." },
+					"the near half of the picture stays clear much longer than the linear one.", fogA1, fogC0 },
 				{ "tev_fog_exp.png", "F-select 4: exponential", 4, 1, 0, 0, 0x0000FF,
-					false, "1 - 2^(-8f): the fog comes in quickly and then flattens out." },
+					false, "1 - 2^(-8f): the fog comes in quickly and then flattens out.", fogA1, fogC0 },
 				{ "tev_fog_exp2.png", "F-select 5: exponential squared", 5, 1, 0, 0, 0x0000FF,
-					false, "1 - 2^(-8f*f): the curve is even steeper at the far end." },
+					false, "1 - 2^(-8f*f): the curve is even steeper at the far end.", fogA1, fogC0 },
 				{ "tev_fog_expinv.png", "F-select 6: inverse exponential", 6, 1, 0, 0, 0x0000FF,
-					false, "2^(-8(1-f)): the fog is nearly absent on the left and full on the right." },
+					false, "2^(-8(1-f)): the fog is nearly absent on the left and full on the right.", fogA1, fogC0 },
 				{ "tev_fog_expinv2.png", "F-select 7: inverse exponential squared", 7, 1, 0, 0, 0x0000FF,
-					false, "2^(-8(1-f)^2), the last of the five functions the hardware defines." },
-				{ "tev_fog_perspective.png", "F-select 2 with the projection bit clear", 2, 0, 2, 24, 0x0000FF,
+					false, "2^(-8(1-f)^2), the last of the five functions the hardware defines.", fogA1, fogC0 },
+				// The remapped depth b = b_mag - (z >> b_shft) has to take several values across the
+				// ramp for the curve to be visible at all (a shift of 24 would leave b constant),
+				// and the eye value 2^24 / b lands around 1, so A is 2^-24 and C is 0.5: the linear
+				// fog then ramps between them instead of saturating.
+				{ "tev_fog_perspective.png", "F-select 2 with the projection bit clear", 2, 0, 16, 20, 0x0000FF,
 					false, "Without the projection bit the depth is remapped as b_mag - (z >> b_shft) and the\n"
-					"reciprocal of that is the view distance, so this is a different curve over the same ramp." },
+					"reciprocal of that is the view distance, so this is a different curve over the same ramp.",
+					(127u - 24u) << 11, 126u << 11 },
 				{ "tev_fog_rangeadj.png", "range adjustment enabled", 4, 1, 0, 0, 0x0000FF,
 					true, "The range adjustment multiplies the eye distance by a coefficient that depends on the\n"
-					"horizontal distance from the centre, so the fog gets a pattern of its own." },
+					"horizontal distance from the centre, so the fog gets a pattern of its own.", fogA1, fogC0 },
 				{ "tev_fog_color.png", "a red fog colour with F-select 6", 6, 1, 0, 0, 0xFF2000,
-					false, "The fog colour is a TEV register: the same curve as above, a different colour." },
+					false, "The fog colour is a TEV register: the same curve as above, a different colour.", fogA1, fogC0 },
 			};
 
 			for (const Case& c : cases)
@@ -667,12 +683,12 @@ namespace pureikyubutest
 				SetClearColor(m, MakeRgba(0, 0, 0));
 
 				m.BpLoad(PE_ZMODE_ID, 0);
-				m.BpLoad(TEV_FOG_PARAM_0_ID, 127u << 11);			// A = 1.0
+				m.BpLoad(TEV_FOG_PARAM_0_ID, c.fogA);
 				m.BpLoad(TEV_FOG_PARAM_1_ID, c.fogParam1);
 				m.BpLoad(TEV_FOG_PARAM_2_ID, c.fogParam2);
 
 				// TEV_FOG_PARAM_3: c_mant 10:0, c_expn 18:11, c_sign 19, proj 20, fsel 23:21
-				m.BpLoad(TEV_FOG_PARAM_3_ID, fogC | (c.proj ? (1u << 20) : 0u) | ((uint32_t)c.fsel << 21));
+				m.BpLoad(TEV_FOG_PARAM_3_ID, c.fogC | (c.proj ? (1u << 20) : 0u) | ((uint32_t)c.fsel << 21));
 				m.BpLoad(TEV_FOG_COLOR_ID, c.fogColor);
 
 				// The range adjustment: one coefficient per 256 pixels of horizontal distance from the centre

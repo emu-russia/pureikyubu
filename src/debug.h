@@ -55,6 +55,7 @@ namespace Debug
 		SI,
 		EXI,
 		MC,
+		HSP,
 		DVD,
 		AX,
 

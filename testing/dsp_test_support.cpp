@@ -74,10 +74,24 @@ void DspTestInitAram()
 	// ARAM itself is a flat buffer, so a fresh image is just as cheap.
 	static uint8_t flipperShell[sizeof(Flipper::Flipper)] = { 0 };
 
+	// The machine the test run already has, if any: the ARAM module is global and the tests that
+	// use it are not the only ones in the process. `Flipper::HW` is a global every block reaches
+	// the rest of the machine through, so the shell is put back afterwards - a test that leaves it
+	// pointing at the shell leaves every later test without a machine.
+	Flipper::Flipper* previous = Flipper::HW;
+
 	Flipper::HW = (Flipper::Flipper*)flipperShell;		// the ARAM DMA engine reaches main memory through it
 
+	// No configuration document is available to a unit test, so the ARAM traffic is not logged
+	// (AROpen's second argument is the machine configuration; nullptr means "the defaults", and the
+	// default of the log is off).
 	DSP::ARClose();
-	DSP::AROpen((Flipper::Flipper*)flipperShell);
+	DSP::AROpen((Flipper::Flipper*)flipperShell, nullptr);
+
+	if (previous != nullptr)
+	{
+		Flipper::HW = previous;
+	}
 }
 
 void DspTestSetGekkoTicks(int64_t ticks)
@@ -255,6 +269,13 @@ namespace Gekko
 	int64_t GekkoCore::GetTicks()
 	{
 		return testGekkoTicks;
+	}
+
+	// A device that runs a machine of its own (the Game Boy Player, the GBA link cable) asks the
+	// time base how long a second is; a test drives that clock itself, so one second is one tick.
+	int64_t GekkoCore::OneSecond()
+	{
+		return 1;
 	}
 }
 

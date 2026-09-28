@@ -41,6 +41,13 @@ has no such devices:
 
 #pragma once
 
+// The portable machine two of the devices run (their picture is reachable through the device, which
+// is what `PeripheralDevice::Gba` is for). Only the name is needed here.
+namespace GBA
+{
+	class GbaSystem;
+}
+
 // ---------------------------------------------------------------------------
 // Device models
 
@@ -53,9 +60,22 @@ has no such devices:
 //! DOL-008 / DOL-014 / DOL-020, the memory card: an EXI device on the CS0B line of a card slot.
 #define PERIPH_DEVICE_MEMCARD           0x00020001
 
+//! DOL-015, the broadband adapter: an EXI device on the CS2B line of EXI0 ("serial port 1").
+#define PERIPH_DEVICE_BBA                0x00020002
+
+//! DOL-012, the modem adapter: the other device on the same CS2B line, told apart by its ID.
+#define PERIPH_DEVICE_MODEM              0x00020003
+
+//! DOL-011, the GBA link cable: the Game Boy Advance as a Joybus device on an SI channel.
+#define PERIPH_DEVICE_GBA_LINK           0x00010002
+
+//! DOL-017, the Game Boy Player: the device on the Hi-Speed Port (the ARAM expansion).
+#define PERIPH_DEVICE_GBPLAYER           0x00030001
+
 // The buses a device is plugged into. A device can only be attached to a port of its own bus.
 #define PERIPH_BUS_SI                   0
 #define PERIPH_BUS_EXI                  1
+#define PERIPH_BUS_HSP                  2
 
 // ---------------------------------------------------------------------------
 // Ports
@@ -69,6 +89,8 @@ enum
 	PERIPH_PORT_SI3,
 	PERIPH_PORT_SLOTA,          //!< the two memory card slots (EXI0 CS0B / EXI1 CS0B)
 	PERIPH_PORT_SLOTB,
+	PERIPH_PORT_SERIAL1,        //!< serial port 1: EXI0 CS2B, the two network adapters
+	PERIPH_PORT_HSP,            //!< the Hi-Speed Port: the Game Boy Player (not EXI)
 
 	PERIPH_PORT_MAX
 };
@@ -176,6 +198,13 @@ struct PADState
 #define PERIPH_PROP_BOOL        0       //!< a checkbox ("1" or "0")
 #define PERIPH_PROP_FILE        1       //!< a file name, picked with the host's file browser
 #define PERIPH_PROP_INFO        2       //!< read only text (a size, a state)
+#define PERIPH_PROP_ROM         3       //!< a cartridge image: a file the device only reads
+#define PERIPH_PROP_TEXT        4       //!< text the user types (an address the device answers to)
+
+// The device properties of the file kinds. `PERIPH_PROP_FILE` is an image the device owns and
+// writes back (a memory card), so its row also offers "make a new one"; `PERIPH_PROP_ROM` is a
+// cartridge the device only reads, and the settings window opens the browser with the extensions
+// of the portable machines for it.
 
 struct PeriphProperty
 {
@@ -201,6 +230,12 @@ public:
 
 	//! The DeviceID of the model.
 	virtual uint32_t Type() = 0;
+
+	//! The portable machine the device runs, or nullptr. Two devices carry one - the Game Boy Player
+	//! in its bay and the Game Boy Advance on a link cable - and neither can show its picture
+	//! through a GameCube session's own debug interface (the portable machines publish theirs only
+	//! when the emulator *is* one), so this is how a front end or a debug command reaches it.
+	virtual GBA::GbaSystem* Gba() { return nullptr; }
 
 	//! The configuration of the device, for the pool and for the device itself.
 	ConfigEntry* Config() const { return config; }
@@ -264,7 +299,12 @@ public:
 	//! A transfer over the EXI channel the device is plugged into. A memory card moves whole blocks
 	//! through the channel's DMA path, so the interface hands the device the channel's registers
 	//! rather than a flat buffer.
-	virtual void ExiTransfer(Flipper::ExternalInterface* exi) {}
+	//!
+	//! `first` is true for the transfer that begins a command sequence - the one the console makes
+	//! right after it asserts the chip select. The devices that speak a command-then-data protocol
+	//! (the network adapters, whose command word and data byte can be the same two-byte write) need
+	//! it to tell the two apart; a device with a self-describing protocol ignores it.
+	virtual void ExiTransfer(Flipper::ExternalInterface* exi, bool first) {}
 
 	//! The rumble motor command of a Joybus device (PAD_MOTOR_*). Returns false when the model has
 	//! no motor.
@@ -379,6 +419,11 @@ class Peripherals
 	//! The index of a device in the pool (-1 when it is not there).
 	int DeviceIndexOf(PeripheralDevice* device);
 
+	//! The port a device the configuration does not place goes into (see Open): the first free
+	//! port of the bus of its model, in the order the settings window shows them. -1 when every
+	//! port of that bus is taken.
+	int FreePortFor(PeripheralDevice* device);
+
 	//! Plug a device in without writing the configuration (used while the pool is built from it).
 	void Plug(int index, int port);
 
@@ -487,6 +532,12 @@ public:
 	//! The name of a model ("Standard Controller"), or nullptr when this build has no such device.
 	static const char* ModelName(uint32_t type);
 
+	//! How many device models this build has, and the DeviceID of one of them. The settings window
+	//! lists the models of a bus so that the user can say *what* to add - a build that compiles
+	//! another device module offers it here without a line of front end code.
+	static int ModelCount();
+	static uint32_t ModelAt(int index);
+
 	//! The bus a model is plugged into (PERIPH_BUS_*), or -1 when this build has no such device.
 	static int ModelBus(uint32_t type);
 
@@ -524,3 +575,8 @@ public:
 
 //! Keep the host input devices open and their state fresh (once a frame, from the UI thread).
 void HostInputUpdate();
+
+//! Press or release a host key by the same code the settings store a keyboard binding under
+//! (`VKEY_FOR_*`). The headless build has no keyboard of its own, so this is how an unattended run
+//! is given one; the windowed build keeps its own state as well and simply ORs this in.
+void HostInputSetKey(int code, bool down);

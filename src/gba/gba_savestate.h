@@ -53,7 +53,7 @@ namespace GBA
 	/// misread (adding a member to a device is enough - the section length check would catch it,
 	/// but the version makes the reason readable).
 	/// </summary>
-	const uint32_t StateFormatVersion = 1;
+	const uint32_t StateFormatVersion = 2;   // 2: the two halves of the 32bit JOY_RECV / JOY_TRANS
 
 	/// <summary>The eight bytes every state image starts with ("PSAVEST" and a NUL).</summary>
 	extern const uint8_t StateMagic[8];

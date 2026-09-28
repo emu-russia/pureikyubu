@@ -1231,6 +1231,30 @@ namespace JdiSpecs
 
   "can": {
 
+	"hkey": {
+	  "help": "Press or release a host key, by the code a VKEY_FOR_* setting holds. The headless build has no keyboard of its own, so this is how an unattended run presses the controls a player would.",
+	  "args": 2,
+	  "usage": [
+		"Syntax: hkey <code> [1|0]\n",
+		"  hkey 74 1    press the key whose binding code is 74\n",
+		"  hkey 74 0    release it; with no second word the key is pressed\n"
+	  ]
+	},
+
+	"gbpshot": {
+	  "help": "Write the picture the Game Pak inside the Game Boy Player is producing to a PNG. A GameCube session has no GBA debug interface of its own, so this is the Player's screen.",
+	  "args": 1,
+	  "hints": "<filename.png>",
+	  "usage": [
+		"Syntax: gbpshot <filename.png> [device]\n",
+		"The answer is the file, the device it came from, its size (240x160) and the frame counter.\n",
+		"Without a device name the first portable machine of the pool is written out; with one,\n",
+		"only a device whose name contains it is looked at (the Player and the GBA on a link\n",
+		"cable are the two of them).\n",
+		"Example: gbpshot player.png\n"
+	  ]
+	},
+
 	"ramload": {
 	  "help": "Load binary file to main memory",
 	  "args": 2,

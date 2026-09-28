@@ -51,6 +51,14 @@ build-asan/
 build/*.elf
 build/*.map
 build/*.cmd
+
+# What a run and the test tooling leave in the working directory (see build/Data/.gitignore for the
+# same kinds under Data): driver binaries loaded through the debug interface, emulator and test logs,
+# raw memory dumps and screenshots taken with the shot commands.
+build/*.bin
+build/*.log
+build/*.raw
+build/*.png
 temp
 
 build/imgui.ini

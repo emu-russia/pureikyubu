@@ -27,10 +27,15 @@ namespace Flipper
 		cp = new CommandProcessor(this, config);
 		ai = new AudioInterface(this, config);
 		DSP::DspAIOpen(this, config);			// TODO: find better place
-		DSP::AROpen(this);       // aux. memory (ARAM)  TODO: find better place
+		DSP::AROpen(this, config);       // aux. memory (ARAM)  TODO: find better place
 		exi = new ExternalInterface(this, config);
 		di = new DiskInterface(this, config);
 		si = new SerialInterface(this, config);
+
+		// The Hi-Speed Port exists with the machine (it is the ARAM expansion's window, and the
+		// ARAM controller is part of the DSP block), and a device goes onto it when the pool of
+		// devices is told the machine is up (see MachineOpened below).
+		hsp = new HiSpeedPort();
 
 		DSP->core->HardReset();
 
@@ -102,6 +107,10 @@ namespace Flipper
 			delete si;
 			si = nullptr;
 		}
+		if (hsp) {
+			delete hsp;
+			hsp = nullptr;
+		}
 		if (exi) {
 			delete exi;
 			exi = nullptr;
@@ -148,6 +157,14 @@ namespace Flipper
 		// update joypads and video
 		vi->VIUpdate();
 		si->SIPoll(vi->GetCurrentLine());
+
+		// The device on the Hi-Speed Port (the Game Boy Player) runs the machine of its own that
+		// the console is not the one emulating. It is stepped from the same time base as everything
+		// else, and only when there is a device on the port.
+		if (hsp != nullptr && hsp->Attached())
+		{
+			hsp->Tick(ticks);
+		}
 
 		// ... and step the devices that have to run in lock step with the CPU. They used to run on
 		// their own threads, woken from here: the work they owe is a function of the time base, so

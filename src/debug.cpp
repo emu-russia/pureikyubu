@@ -129,6 +129,7 @@ namespace Debug
 			case Channel::SI: return "SI";
 			case Channel::EXI: return "EXI";
 			case Channel::MC: return "MC";
+			case Channel::HSP: return "HSP";
 			case Channel::DVD: return "DVD";
 			case Channel::AX: return "AX";
 

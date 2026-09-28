@@ -52,14 +52,16 @@ namespace GBA
 {
 	void Sio::SaveState(StateWriter& writer) const
 	{
-		writer.Fields(siomltSend, siodata32H, siodata8, siocnt, rcnt, joycnt, joyRecv, joyTrans, joystat);
+		writer.Fields(siomltSend, siodata32H, siodata8, siocnt, rcnt, joycnt,
+			joyRecv, joyRecvH, joyTrans, joyTransH, joystat);
 		writer.Fields(active, remainingCycles, mode, master, lastSent, lastReceived, baudCycles,
 			completionPending);
 	}
 
 	void Sio::LoadState(StateReader& reader)
 	{
-		reader.Fields(siomltSend, siodata32H, siodata8, siocnt, rcnt, joycnt, joyRecv, joyTrans, joystat);
+		reader.Fields(siomltSend, siodata32H, siodata8, siocnt, rcnt, joycnt,
+			joyRecv, joyRecvH, joyTrans, joyTransH, joystat);
 		reader.Fields(active, remainingCycles, mode, master, lastSent, lastReceived, baudCycles,
 			completionPending);
 	}
@@ -200,7 +202,9 @@ namespace GBA
 		rcnt = 0;
 		joycnt = 0;
 		joyRecv = 0;
+		joyRecvH = 0;
 		joyTrans = 0;
+		joyTransH = 0;
 		joystat = 0;
 
 		// The multiplayer data registers read back as FFFFh until a transfer has filled them in
@@ -293,9 +297,16 @@ namespace GBA
 		case 0x134: return rcnt;
 		case 0x140: return joycnt;
 		case 0x150:
-		case 0x152: return joyRecv;
-		case 0x154:
-		case 0x156: return joyTrans;
+		{
+			// "Bit 1 is automatically reset when reading from local JOY_RECV" (GBATEK "JOYSTAT"):
+			// the flag says "there is data in the input port", so taking the data clears it.
+			uint16_t value = joyRecv;
+			joystat &= (uint16_t)~JoyStatReceive;
+			return value;
+		}
+		case 0x152: return joyRecvH;
+		case 0x154: return joyTrans;
+		case 0x156: return joyTransH;
 		case 0x158: return joystat;
 		default: return openBus;
 		}
@@ -453,33 +464,27 @@ namespace GBA
 			return;
 
 		case 0x150:
-		case 0x152:
 			joyRecv = value;
-			// "Bit 3 is automatically reset when reading from local JOY_RECV" (GBATEK
-			// "4000158h - JOYSTAT"): the flag belongs to the read side, so a write of JOY_RECV
-			// only stores the data.
+			return;
+
+		case 0x152:
+			joyRecvH = value;
 			return;
 
 		case 0x154:
-		case 0x156:
 			joyTrans = value;
 			// "Bit 3 is automatically set when writing to local JOY_TRANS" (GBATEK "JOYSTAT").
 			joystat |= JoyStatSend;
 
-			// Nothing is plugged into the link port here, but the transfer still has to *finish*:
-			// the bus drives the line, no device answers, and both completion flags are set with
-			// the receive data left at zero - that is how a game (and the BIOS's own port probe at
-			// boot) learns that there is no device on the port. A JOY transfer that never completes
-			// leaves the BIOS waiting for the SIO interrupt for ever, which is what stopped the
-			// real BIOS from reaching its logo animation.
-			joycnt |= (uint16_t)(JoyCntSend | JoyCntRecv);
-			joyRecv = 0;
-			joystat &= (uint16_t)~JoyStatSend;
-			joystat |= JoyStatReceive;
+			// A console on the other end of the cable reads the value when it asks for it (see
+			// JoyConsoleRead), so the transfer stays open until it does. With an empty port there is
+			// nobody to ask, and the transfer has to finish here.
+			if (consoleAttached)
+				return;
+			break;
 
-			// JOYCNT bit 6 enables the interrupt of the port (GBATEK "4000140h - JOYCNT").
-			if (joycnt & 0x0040)
-				bus.irq.Raise(INT_SIO);
+		case 0x156:
+			joyTransH = value;
 			return;
 
 		case 0x158:
@@ -491,6 +496,69 @@ namespace GBA
 		default:
 			return;
 		}
+
+		// No console is on the cable, but the transfer still has to *finish*: the bus drives the
+		// line, no device answers, and both completion flags are set with the receive data left at
+		// zero - that is how a game (and the BIOS's own port probe at boot) learns that there is
+		// nothing in the socket. A JOY transfer that never completes leaves the BIOS waiting for
+		// the SIO interrupt for ever, which is what stopped the real BIOS from reaching its logo
+		// animation. Only a write of JOY_TRANS reaches this.
+		joycnt |= (uint16_t)(JoyCntSend | JoyCntRecv);
+		joyRecv = 0;
+		joystat &= (uint16_t)~JoyStatSend;
+		joystat |= JoyStatReceive;
+
+		// JOYCNT bit 6 enables the interrupt of the port (GBATEK "4000140h - JOYCNT").
+		if (joycnt & 0x0040)
+			bus.irq.Raise(INT_SIO);
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// The console side of the JOY bus
+	//
+	// These are the register operations a console performs on a Game Boy Advance that is on the
+	// other end of a DOL-011 cable. The console's own command set - which command does what, and
+	// the bytes that go out on the wire - lives in gbalink.cpp; what is here is the GBA end of it:
+	// the flags the GBA's program watches and the interrupt it takes.
+
+	bool Sio::JoyBusSelected() const
+	{
+		return JoyBusMode(rcnt);
+	}
+
+	void Sio::JoyConsoleRead(GbaBus& bus)
+	{
+		// The console took the value JOY_TRANS was holding, so the GBA is done sending it and its
+		// program is told that the send completed (gba-link-cable.md 4).
+		joystat &= (uint16_t)~JoyStatSend;
+		joycnt |= JoyCntSend;
+
+		if (joycnt & 0x0040)
+			bus.irq.Raise(INT_SIO);
+	}
+
+	void Sio::JoyConsoleWrite(GbaBus& bus, uint32_t value)
+	{
+		joyRecv = (uint16_t)value;
+		joyRecvH = (uint16_t)(value >> 16);
+
+		// The value is in the GBA's input port: the receive flag stays up until the GBA reads it.
+		joystat |= JoyStatReceive;
+		joycnt |= JoyCntRecv;
+
+		if (joycnt & 0x0040)
+			bus.irq.Raise(INT_SIO);
+	}
+
+	void Sio::JoyConsoleReset(GbaBus& bus)
+	{
+		// The reset puts the port's own state back and tells the program about it; the program's
+		// own registers (JOY_TRANS and the two general purpose flags) are its to keep.
+		joystat = (uint16_t)(joystat & 0x0030);
+		joycnt |= JoyCntReset;
+
+		if (joycnt & 0x0040)
+			bus.irq.Raise(INT_SIO);
 	}
 
 	uint8_t Sio::Read8(GbaBus& bus, uint32_t offset, uint8_t openBus)
@@ -620,10 +688,12 @@ namespace GBA
 
 		if (JoyBusMode(rcnt))
 		{
-			// A GameCube controller would answer here. Without one the idle state is kept:
-			// JOYSTAT's send flag was set when JOY_TRANS was written and stays set until
-			// JOY_RECV is read (GBATEK "4000158h - JOYSTAT").
-			LogJoyBusOnce();
+			// A console on the cable drives the port with its own command set and calls the
+			// JoyConsole* operations above, so there is nothing to count down here. Without one the
+			// idle state is kept: JOYSTAT's send flag was set when JOY_TRANS was written and stays
+			// set until the port is read (GBATEK "4000158h - JOYSTAT").
+			if (!consoleAttached)
+				LogJoyBusOnce();
 			return;
 		}
 
