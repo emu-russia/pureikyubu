@@ -79,8 +79,16 @@ ImVec4 UiThemeVec4(ImU32 color);
 //! colour of the palette (the capsule a file type is written in, see uisdl.cpp).
 ImU32 UiThemeAlpha(ImU32 color, float alpha);
 
-//! Build the font atlas of the interface. Called once, before the first frame.
-void UiThemeLoadFonts();
+//! Build the font atlas of the interface.
+//!
+//! `scale` is how many framebuffer pixels a logical pixel of the interface is: 1.0 on a display that
+//! does not scale it, and the 1.25 and 1.5 of a Windows desktop that does. The faces are baked at
+//! that size while the interface goes on laying itself out at the logical one, so that a glyph lands
+//! on the framebuffer one texel to one pixel - which is what the sharpness of the text is. A face
+//! baked at the logical size is handed to the renderer as a texture smaller than the text it draws
+//! and scaled up by it, and the renderer scales a texture with linear filtering. Called once, before
+//! the first frame.
+void UiThemeLoadFonts(float scale = 1.0f);
 
 //! Draw the pureikyubu cube - the mark of the emulator - into a draw list, centered on `center` and
 //! `size` pixels wide. It is the logo of the project (`res/pureikyubu_icon.svg`) drawn from the
