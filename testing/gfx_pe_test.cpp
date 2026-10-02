@@ -617,6 +617,12 @@ namespace pureikyubutest
 
 			size_t frames = m.gfx->pe->Frames();
 
+			// The GL backend counts the frames it presents on their own: that counter is the frame
+			// rate the front end shows in the title of the video output window (issue #458), so it
+			// has to follow the same rule - one per frame handed to the display, and none for the
+			// copies that only build a picture.
+			size_t presented = m.gfx->PresentedFrames();
+
 			// The copy rectangle covers the whole render target, like the movie players' copy does.
 			m.BpLoad(PE_COPY_SRC_ADDR_ID, 0);
 			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() - 1) | ((m.gfx->RenderHeight() - 1) << 10));
@@ -627,12 +633,14 @@ namespace pureikyubutest
 			copy.opcode = GFX::PE_COPY_CMD_TEXTURE;
 			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
 			Assert::AreEqual<size_t>(frames, m.gfx->pe->Frames(), L"a texture copy must not present");
+			Assert::AreEqual<size_t>(presented, m.gfx->PresentedFrames(), L"a texture copy is not a frame");
 
 			// A partial display copy is one pass of a frame the title finishes with PE_FINISH.
 			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() / 2 - 1) | ((m.gfx->RenderHeight() / 2 - 1) << 10));
 			copy.opcode = GFX::PE_COPY_CMD_DISPLAY;
 			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
 			Assert::AreEqual<size_t>(frames, m.gfx->pe->Frames(), L"a partial display copy must not present");
+			Assert::AreEqual<size_t>(presented, m.gfx->PresentedFrames(), L"a partial display copy is not a frame either");
 
 			// Drawing into the frame arms the next present again, and the full-frame display copy
 			// presents it: this is how the titles that never call GXDrawDone show their picture.
@@ -640,6 +648,8 @@ namespace pureikyubutest
 			m.BpLoad(PE_COPY_SRC_SIZE_ID, (m.gfx->RenderWidth() - 1) | ((m.gfx->RenderHeight() - 1) << 10));
 			m.BpLoad(PE_COPY_CMD_ID, copy.bits);
 			Assert::AreEqual<size_t>(frames + 1, m.gfx->pe->Frames(), L"a full-frame display copy must present");
+			Assert::AreEqual<size_t>(presented + 1, m.gfx->PresentedFrames(),
+				L"a full-frame display copy is one frame of the rate");
 
 			// A second copy of a frame that has not been drawn into again must not present: that is
 			// what wiped the picture between frames before.

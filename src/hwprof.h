@@ -3,7 +3,8 @@
 # HW interface profiler (issue #394)
 
 The debugger has always had a few performance counters (the status bar shows the emulated Gekko
-MIPS, the VI rate and the PE rate), but they answer only one question - "how fast is the CPU". The
+MIPS and the two clocks of the emulation, and the frame rate is in the title of the video output
+window), but they answer only one question - "how fast is the CPU". The
 reverse engineering work keeps asking another one: *is the data moving at all, and where*. A title
 that boots into a black screen may be spinning on an interrupt that never arrives, may be pushing
 an empty display list into the CP FIFO, or may be playing samples out of ARAM that nothing writes.

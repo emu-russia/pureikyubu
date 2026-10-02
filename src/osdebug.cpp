@@ -183,6 +183,22 @@ namespace HLE
 		return output;
 	}
 
+	// The console clock in whole seconds: the value of the emulated time base (TBR) divided by the
+	// ticks in one emulated second. The two functions above hand the same clock out as the text the
+	// debugger prints, which rolls the hours over at 24 and carries milliseconds; a front end that
+	// shows a *duration* rather than a date wants the number (issue #458: the "time since the
+	// emulation started" of the status bar).
+	static Json::Value* OSSecondsInternal(std::vector<std::string>& args)
+	{
+		int64_t ticksPerSecond = Core->OneSecond();
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+		output->value.AsInt = (ticksPerSecond > 0) ? (Core->GetTicks() / ticksPerSecond) : 0;
+
+		return output;
+	}
+
 	static Json::Value* GetNearestNameInternal(std::vector<std::string>& args)
 	{
 		uint32_t address = strtoul(args[1].c_str(), nullptr, 0);
@@ -216,6 +232,7 @@ namespace HLE
 		JDI::Hub.AddCmd("NameByAddress", NameByAddress);
 		JDI::Hub.AddCmd("OSDateTime", OSDateTimeInternal);
 		JDI::Hub.AddCmd("OSTime", OSTimeInternal);
+		JDI::Hub.AddCmd("OSSeconds", OSSecondsInternal);
 		JDI::Hub.AddCmd("GetNearestName", GetNearestNameInternal);
 	}
 }

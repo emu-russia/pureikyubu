@@ -192,8 +192,9 @@ namespace Debug
 		DspInstructions,		// Number of DSP instructions executed
 		VIs,				// Number of VI VBlank interrupts (based on PI interrupt counters)
 		PEs,				// Number of PE DRAW_DONE operations (based on PI interrupt counters)
+		PresentedFrames,		// Frames the GL backend presented: the frame rate of the video output window (issue #458)
 
-		// CPU-side counters (see Gekko::CpuStats). 4 and 5 are also what the status bar shows as
+		// CPU-side counters (see Gekko::CpuStats). 5 and 6 are also what the status bar shows as
 		// "jitc <compiled>/<executed>".
 		GekkoCompiledSegments,		// Basic blocks translated by the recompiler
 		GekkoExecutedSegments,		// Basic blocks run by the recompiler

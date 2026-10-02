@@ -773,6 +773,13 @@ namespace Debug
 			case PerfCounter::PEs:
 				return (Flipper::HW != nullptr) ? Flipper::HW->pi->PIGetInterruptCounter(PIInterruptSource::PE_FINISH) : 0;
 				break;
+			case PerfCounter::PresentedFrames:
+				// The frame rate (issue #458): the frames the GL backend handed to the display. The
+				// front end reads the counter and resets it once a second (see UI::PerfMetrics);
+				// the pictures the video back end outputs instead are counted by that back end.
+				return (Flipper::HW != nullptr && Flipper::HW->gfx != nullptr) ?
+					(int64_t)Flipper::HW->gfx->PresentedFrames() : 0;
+				break;
 
 			case PerfCounter::GekkoCompiledSegments:
 				return Gekko::stats.jitCompiles;
@@ -802,6 +809,10 @@ namespace Debug
 			case PerfCounter::PEs:
 				if (Flipper::HW != nullptr)
 					Flipper::HW->pi->PIResetInterruptCounter(PIInterruptSource::PE_FINISH);
+				break;
+			case PerfCounter::PresentedFrames:
+				if (Flipper::HW != nullptr && Flipper::HW->gfx != nullptr)
+					Flipper::HW->gfx->ResetPresentedFrames();
 				break;
 
 			case PerfCounter::GekkoCompiledSegments:

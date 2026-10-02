@@ -148,17 +148,32 @@ namespace GFX
 		if (!InitOsd())
 			return;
 
-		GLint viewport[4] = { 0, 0, 0, 0 };
-		glGetIntegerv(GL_VIEWPORT, viewport);
+		// The overlay belongs to the picture, not to the window: the picture is scaled into the
+		// largest rectangle of the window that has its shape (the window is the user's, issue #458),
+		// so the overlay is drawn into that rectangle and is scaled with it. The software pipeline
+		// does the same thing by blitting it into the XFB the video interface shows (see
+		// HwOsd::Blit), which is what keeps the two back ends alike.
+		GFXCore* core = (Flipper::HW != nullptr) ? Flipper::HW->gfx : nullptr;
 
-		if (viewport[2] <= 0 || viewport[3] <= 0)
+		if (core == nullptr)
 			return;
 
-		// The picture is drawn at its own size in the top left corner of the render target; a
-		// picture that does not fit is clamped rather than scaled (an overlay that changes size
-		// with the window is harder to read than one that is cut off).
-		int drawWidth = (width < viewport[2]) ? width : viewport[2];
-		int drawHeight = (height < viewport[3]) ? height : viewport[3];
+		const GFXCore::Presentation& presented = core->presentation;
+
+		if (presented.source == 0 || presented.windowWidth <= 0 || presented.windowHeight <= 0)
+			return;
+
+		const int sourceWidth = (int)core->RenderWidth();
+		const int sourceHeight = (int)core->RenderHeight();
+
+		// The overlay covers the picture with one texel of its own per pixel of the source, so it is
+		// scaled into the window by the same factor the picture was.
+		const float scale = (float)presented.width / (float)sourceWidth;
+
+		// A picture that does not fit in the corner is clamped rather than scaled (an overlay that
+		// changes size with the window is harder to read than one that is cut off).
+		int drawWidth = (width < sourceWidth) ? width : sourceWidth;
+		int drawHeight = (height < sourceHeight) ? height : sourceHeight;
 
 		uint64_t version = Debug::HwOsd::Version();
 
@@ -171,8 +186,19 @@ namespace GFX
 			osdUploadedVersion = version;
 		}
 
-		// The frame is complete by now (the scene, the clears and the dumps are done), so the only
-		// state the overlay has to put back is the blend it turns on.
+		// The frame is complete by now (the scene, the clears and the dumps are done), so the state
+		// the overlay has to put back is the blend it turns on and the viewport it changes.
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+
+		// The overlay is drawn in the coordinates of the window, so the whole of the window is the
+		// viewport while it is drawn: the pipeline leaves the console's own viewport behind (a title
+		// programs it through XF_VIEWPORT), and the NDC rectangle below is measured against the
+		// window - a viewport of the console's size would scale and move it (the overlay used to
+		// land on the top left corner of the *console's* picture, which was the same thing only
+		// while the window and the render target were the same size).
+		glViewport(0, 0, presented.windowWidth, presented.windowHeight);
+
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_SCISSOR_TEST);
@@ -187,10 +213,15 @@ namespace GFX
 		glBindTexture(GL_TEXTURE_2D, osdTexture);
 		glUniform1i(osdSamplerUniform, 0);
 
-		float x0 = 2.0f * 0.0f / (float)viewport[2] - 1.0f;
-		float y0 = 1.0f - 2.0f * 0.0f / (float)viewport[3];
-		float w = 2.0f * (float)drawWidth / (float)viewport[2];
-		float h = -2.0f * (float)drawHeight / (float)viewport[3];
+		// The rectangle of the picture the overlay goes into, in the pixels of the window, mapped
+		// onto the NDC rectangle the viewport above makes the whole of it.
+		const float windowWidth = (float)presented.windowWidth;
+		const float windowHeight = (float)presented.windowHeight;
+
+		float x0 = 2.0f * (float)presented.x / windowWidth - 1.0f;
+		float y0 = 1.0f - 2.0f * (float)presented.y / windowHeight;
+		float w = 2.0f * (float)drawWidth * scale / windowWidth;
+		float h = -2.0f * (float)drawHeight * scale / windowHeight;
 
 		glUniform4f(osdRectUniform, x0, y0, w, h);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -198,6 +229,8 @@ namespace GFX
 		glBindVertexArray(0);
 		glUseProgram(0);
 		glDisable(GL_BLEND);
+
+		glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	}
 
 	void OsdDispose()

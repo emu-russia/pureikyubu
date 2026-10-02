@@ -22,3 +22,9 @@ void VideoOutRefresh()
 void VideoOutResize(int width, int height)
 {
 }
+
+int64_t VideoOutTakeFrames()
+{
+	// Nothing is shown, so no frame is output.
+	return 0;
+}

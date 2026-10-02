@@ -1656,7 +1656,8 @@ namespace GFX
 		glFlush();
 
 		// The picture of the frame is handed over before anything is read back from it: the dump
-		// and the overlay both work on what the viewer sees (see PresentFrame).
+		// reads the framebuffer that was presented (see DumpFrame) and the overlay is drawn into
+		// the rectangle the picture took in the window (see PresentFrame).
 		PresentFrame();
 
 		if (dump_enabled)
@@ -1683,6 +1684,13 @@ namespace GFX
 		// (PresentFrame left the window's back buffer bound, which is what the overlay painted on).
 		glBindFramebuffer(GL_FRAMEBUFFER, DrawFbo());
 
+		// One picture is on the display now: this is the frame rate the front end shows in the title
+		// of the video output window (issue #458). A title that presents through the copy engine
+		// reaches this from GPDisplayCopy and one that presents with GXDrawDone from GPFrameDone, so
+		// both ways of showing a frame are counted - the copy engine's full-frame EFB -> XFB copy is
+		// simply the one that happens to present through the first of them.
+		presented_frames++;
+
 		frameReady = false;
 		pe->frames++;
 		gfx_frame_counter++;
@@ -1701,7 +1709,15 @@ namespace GFX
 		// glReadPixels hands back RGB triplets with the rows running bottom-up; the PNG wants
 		// them top-down, so the rows are copied out in reverse.
 		std::vector<uint8_t> pixels((size_t)w * h * 3);
+
+		// The picture is read out of the framebuffer the display copy wrote - or out of the EFB of
+		// a title that never copies out - and not out of the window: the window belongs to the user
+		// and the picture is scaled into it (issue #458), so a read-back there would be the window
+		// with its black bands rather than the picture the console drew. `presentation.source` is
+		// the framebuffer `PresentFrame` presented the frame from.
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, presentation.source);
 		glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 		std::vector<uint8_t> flipped((size_t)w * h * 3);
 		for (uint32_t y = 0; y < h; y++)
@@ -2012,12 +2028,60 @@ namespace GFX
 	//! The picture goes to the window's back buffer - in the headless build that is the back buffer
 	//! of the hidden window, which is what a frame dump reads. The EFB is left alone: it is a
 	//! framebuffer of its own and the title keeps drawing into it.
+	//!
+	//! The window belongs to the user and can be resized and maximized (issue #458), so the picture
+	//! is scaled into the largest rectangle of it that has the shape of the console picture, and the
+	//! bands that are left are black. Stretching the picture over a window of another shape would
+	//! bend everything in it - a maximized 16:9 window would turn the cubes of a game into bricks.
+	//! The hidden window of the headless build has the size of the render target, so nothing moves
+	//! there.
 	void GFXCore::PresentFrame()
 	{
 		GLuint source = (xfb_pending && xfbFbo != 0) ? xfbFbo : DrawFbo();
 
 		if (source == 0)
 			return;
+
+		int windowWidth = (int)scr_w, windowHeight = (int)scr_h;
+
+#if GFX_USE_SDL_WINDOW
+		if (render_window != nullptr)
+		{
+			SDL_GL_GetDrawableSize(render_window, &windowWidth, &windowHeight);
+
+			if (windowWidth <= 0 || windowHeight <= 0)
+			{
+				windowWidth = (int)scr_w;
+				windowHeight = (int)scr_h;
+			}
+		}
+#endif
+
+		// The scale of the picture keeps its shape: the smaller of the two fits it in the window,
+		// and what is left over becomes the black band on two of the four sides.
+		const float scale = my_min((float)windowWidth / (float)scr_w, (float)windowHeight / (float)scr_h);
+
+		GLint destW = (GLint)((float)scr_w * scale);
+		GLint destH = (GLint)((float)scr_h * scale);
+
+		// An odd pixel of rounding is not worth a column or a row of the picture.
+		if (destW > windowWidth) destW = windowWidth;
+		if (destH > windowHeight) destH = windowHeight;
+		if (destW < 1) destW = 1;
+		if (destH < 1) destH = 1;
+
+		const GLint destX = (windowWidth - destW) / 2;
+		const GLint destY = (windowHeight - destH) / 2;
+
+		// What was presented, for the two things that work around the picture rather than in it
+		// (the frame dump and the profiler overlay, see the note on `presentation`).
+		presentation.source = source;
+		presentation.x = destX;
+		presentation.y = destY;
+		presentation.width = destW;
+		presentation.height = destH;
+		presentation.windowWidth = windowWidth;
+		presentation.windowHeight = windowHeight;
 
 		GLint scissor[4];
 		glGetIntegerv(GL_SCISSOR_BOX, scissor);
@@ -2026,8 +2090,25 @@ namespace GFX
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, source);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-		glBlitFramebuffer(0, 0, (GLint)scr_w, (GLint)scr_h, 0, 0, (GLint)scr_w, (GLint)scr_h,
-			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		// The bands are black, and they are cleared every frame: the window keeps what the frame
+		// before it left there, and a frame drawn before a resize covers less of the window than
+		// the one after it. The clear has to run with the whole colour mask, which is what the
+		// title's last primitive may have narrowed (PE_CMODE0).
+		GLint colorMask[4];
+		glGetIntegerv(GL_COLOR_WRITEMASK, colorMask);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glColorMask((GLboolean)colorMask[0], (GLboolean)colorMask[1],
+			(GLboolean)colorMask[2], (GLboolean)colorMask[3]);
+
+		// The picture is resampled by the GPU, which is free here and is what keeps a 640x480
+		// picture of a window that is not a whole multiple of it from showing its pixels in stripes
+		// of two sizes.
+		glBlitFramebuffer(0, 0, (GLint)scr_w, (GLint)scr_h, destX, destY, destX + destW, destY + destH,
+			GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 		glEnable(GL_SCISSOR_TEST);

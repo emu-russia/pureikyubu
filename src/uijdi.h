@@ -72,11 +72,20 @@ namespace UI
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 		int64_t GetResetGekkoMipsCounter();
 
-		// Performance Counters, SystemTime
+		// Performance Counters, the emulated clock
 
 		int64_t GetPerformanceCounter(int counter);
 		void ResetPerformanceCounter(int counter);
-		std::string GetSystemTime();
+
+		//! The emulated clock (TBR) in whole seconds: the time the console has counted since the
+		//! machine was built. A front end shows it as a duration (the `OSSeconds` command).
+		int64_t GetEmulatedSeconds();
+
+		//! The rendering backend the GFX subsystem is running (`gxpipeline`): 0 is the shader
+		//! (OpenGL) pipeline, 1 the software one. It is asked of the emulator rather than read from
+		//! the configuration, because the two can differ - a save state carries the pipeline it was
+		//! taken in. Answers 0 while no machine is running.
+		int GetGfxPipeline();
 
 		// Misc
 

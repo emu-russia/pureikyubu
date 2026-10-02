@@ -48,7 +48,7 @@ void UIReflector();
 
 
 // The counters are polled once a second after starting the emulation.
-// Polling is performed in a separate thread that sleeps after polling so as not to load the CPU. The information is displayed in the status bar.
+// Polling is performed in a separate thread that sleeps after polling so as not to load the CPU. The information is displayed in the status bar, and the frame rate it measures is shown in the title of the video output window.
 
 namespace UI
 {
@@ -59,6 +59,14 @@ namespace UI
 
 		Thread* perfThread;
 		static void PerfThreadProc(void* param);
+
+		// The two clocks of the status bar (issue #458) are measured from the moment the sampler is
+		// built, which is the moment the emulation started: the console's time base (TBR) and the
+		// host's steady clock. `lastSampleMs` is when the previous sample was taken, which is what
+		// the frame rate is divided by.
+		int64_t startEmulatedSeconds = 0;
+		uint64_t startWallMs = 0;
+		uint64_t lastSampleMs = 0;
 
 		// The counter values are retrieved and cleared using JDI.
 
@@ -74,13 +82,17 @@ namespace UI
 		int64_t GetDspInstructionsCounter();
 		void ResetDspInstructionsCounter();
 
-		int32_t GetVICounter();
-		void ResetVICounter();
+		//! The frames the GL backend presented (the frame rate of issue #458) since the previous
+		//! call to ResetPresentedFramesCounter.
+		int64_t GetPresentedFramesCounter();
+		void ResetPresentedFramesCounter();
 
-		int32_t GetPECounter();
-		void ResetPECounter();
+		//! The value of `OSSeconds`: the emulated clock of the console in whole seconds.
+		int64_t GetEmulatedSeconds();
 
-		std::string GetSystemTime();
+		//! The rendering backend the machine is running (`gxpipeline`): 0 is the shader
+		//! (OpenGL) pipeline, 1 the software one.
+		int GetGfxPipeline();
 
 	public:
 		PerfMetrics();
@@ -126,9 +138,8 @@ enum class SELECTOR_SORT
 enum class STATUS_ENUM
 {
 	Progress = 0,       // Current emu state / Gekko/DSP performance counters
-	VIs,                // VI / second
-	PEs,                // PE DrawDone / second
-	SystemTime,         // OS System Time
+	EmuTime,            // The time since the emulation started, as the console's clock (TBR) counts it
+	WallTime,           // ... and as the host's own clock counts it
 	StatusMax,
 };
 

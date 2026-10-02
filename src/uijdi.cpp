@@ -349,7 +349,7 @@ namespace UI
 		return ok;
 	}
 
-	// Performance Counters, SystemTime
+	// Performance Counters, the emulated clock
 
 	int64_t JdiClient::GetPerformanceCounter(int counter)
 	{
@@ -364,13 +364,46 @@ namespace UI
 		ExecuteCommand(("ResetPerformanceCounter " + std::to_string(counter)).c_str());
 	}
 
-	std::string JdiClient::GetSystemTime()
+	int64_t JdiClient::GetEmulatedSeconds()
 	{
-		uint64_t tbr = 0;
-		Json::Value* value = CallJdi("OSDateTime");
-		std::string res = Util::WstringToString(value->children.front()->value.AsString);
-		delete value;
-		return res;
+		int64_t seconds = 0;
+
+		Json::Value* value = CallJdi("OSSeconds");
+		if (value != nullptr)
+		{
+			if (value->type == Json::ValueType::Int)
+			{
+				seconds = value->value.AsInt;
+			}
+
+			delete value;
+		}
+
+		return seconds;
+	}
+
+	int JdiClient::GetGfxPipeline()
+	{
+		int pipeline = 0;
+
+		Json::Value* value = CallJdi("gxpipeline");
+
+		if (value != nullptr)
+		{
+			if (value->type == Json::ValueType::Object)
+			{
+				Json::Value* item = value->ByName("pipeline");
+
+				if (item != nullptr && item->type == Json::ValueType::Int)
+				{
+					pipeline = (int)item->value.AsInt;
+				}
+			}
+
+			delete value;
+		}
+
+		return pipeline;
 	}
 
 	bool JdiClient::JitcEnabled()

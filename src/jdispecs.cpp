@@ -1797,6 +1797,18 @@ namespace JdiSpecs
       "output": "Array: [String]"
     },
 
+    "OSSeconds": {
+      "internal": true,
+      "help": "The emulated time base (TBR) in whole seconds",
+      "usage": [
+        "Syntax: OSSeconds\n",
+        "The console clock since the machine was built, without the date and the milliseconds of\n",
+        "OSTime/OSDateTime and without their 24 hour rollover. A front end that shows a duration\n",
+        "rather than a date reads it (see the status bar of the SDL one)."
+      ],
+      "output": "Int"
+    },
+
     "GetNearestName": {
       "internal": true,
       "help": "Get the symbol closest to the specified address and offset relative to the start of the symbol.",
