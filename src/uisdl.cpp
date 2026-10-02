@@ -2167,7 +2167,22 @@ static int ui_main()
 	// The look of the interface: the font atlas and the palette of the theme the configuration asks
 	// for (see uitheme.h). The style is applied once, here, and everything that is drawn after this
 	// point - the selector, the settings window and the dialogs - is drawn with it.
-	UiThemeLoadFonts();
+	//
+	// The atlas is baked for the pixels the display really has. The renderer answers how many
+	// framebuffer pixels a logical pixel of the window is (1.25 and 1.5 are what a Windows desktop at
+	// 125% and 150% answers), and a face baked at the logical size is scaled up to them by the
+	// renderer, which scales a texture with linear filtering: that is the text coming out soft.
+	int clientWidth = 0, clientHeight = 0;
+	int framebufferWidth = 0, framebufferHeight = 0;
+
+	SDL_GetWindowSize(window, &clientWidth, &clientHeight);
+	SDL_GetRendererOutputSize(renderer, &framebufferWidth, &framebufferHeight);
+
+	const float uiScale = (clientWidth > 0 && framebufferWidth > 0)
+		? (float)framebufferWidth / (float)clientWidth
+		: 1.0f;
+
+	UiThemeLoadFonts(uiScale);
 	UiThemeApplyByName(UI::Jdi->GetConfigString(USER_THEME, USER_UI).c_str());
 
 	// Setup Platform/Renderer backends

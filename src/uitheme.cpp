@@ -425,9 +425,33 @@ void UiThemeApplyByName(const char* name)
 	UiThemeApply(UiThemeValid(index) ? index : 0);
 }
 
-void UiThemeLoadFonts()
+void UiThemeLoadFonts(float scale)
 {
 	ImGuiIO& io = ImGui::GetIO();
+
+	// A display that scales the interface - Windows at 125% or 150% is the usual case - draws the
+	// window into a framebuffer larger than the window itself. Every glyph would then be handed to
+	// the renderer at the logical size and scaled up by it, and the renderer scales a texture with
+	// linear filtering, which is what the text coming out soft is (see the header).
+	//
+	// The faces are baked at the size of a framebuffer pixel instead, and ImGui is told, through
+	// FontGlobalScale, that the interface goes on being laid out at the logical size: a glyph is
+	// drawn at the size of the texels it was baked from. The cap is there because the atlas is one
+	// texture of the renderer and the Japanese ranges make it a large one; a display above 200% gets
+	// its text scaled from the 200% atlas instead of from a larger one, which is still sharp.
+	if (scale < 1.0f)
+	{
+		scale = 1.0f;
+	}
+
+	if (scale > 2.0f)
+	{
+		scale = 2.0f;
+	}
+
+	const float bakedSize = UiFontSize * scale;
+
+	io.FontGlobalScale = 1.0f / scale;
 
 	// The interface is set in a proportional face, the way the site is set in Segoe UI, and the
 	// faces below are the ones the systems have. The first of them is the very face the site asks
@@ -446,6 +470,16 @@ void UiThemeLoadFonts()
 
 	bool loaded = false;
 
+	// The glyphs are stored at the very size they are drawn at, without the horizontal oversampling
+	// ImGui asks for by default (OversampleH is 2). An oversampled atlas is a texture twice as wide
+	// as the text it draws, so the renderer is handed a glyph that it has to scale down, glyph by
+	// glyph, and it scales a texture with linear filtering - which reads as text that is soft. At
+	// the size they are drawn at, a glyph is copied one texel to one pixel, and the edges keep the
+	// antialiasing the rasterizer itself draws.
+	ImFontConfig config;
+	config.OversampleH = 1;
+	config.OversampleV = 1;
+
 	for (const char* face : faces)
 	{
 		// The file is looked at before the atlas is asked to read it: a face that is not there
@@ -455,7 +489,7 @@ void UiThemeLoadFonts()
 			continue;
 		}
 
-		if (io.Fonts->AddFontFromFileTTF(face, UiFontSize, nullptr, io.Fonts->GetGlyphRangesCyrillic()) != nullptr)
+		if (io.Fonts->AddFontFromFileTTF(face, bakedSize, &config, io.Fonts->GetGlyphRangesCyrillic()) != nullptr)
 		{
 			loaded = true;
 			break;
@@ -502,10 +536,10 @@ void UiThemeLoadFonts()
 			continue;
 		}
 
-		ImFontConfig config;
-		config.MergeMode = true;
+		ImFontConfig merge = config;
+		merge.MergeMode = true;
 
-		if (io.Fonts->AddFontFromFileTTF(face, UiFontSize, &config, io.Fonts->GetGlyphRangesJapanese()) != nullptr)
+		if (io.Fonts->AddFontFromFileTTF(face, bakedSize, &merge, io.Fonts->GetGlyphRangesJapanese()) != nullptr)
 		{
 			break;
 		}
