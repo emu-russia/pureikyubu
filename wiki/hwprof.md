@@ -1,9 +1,10 @@
 # HW interface profiler (issue #394)
 
 The debugger has always had a few performance counters. The status bar shows the emulated Gekko
-MIPS, the VI rate and the PE rate, and the benchmark (`--bench`) prints a table of its own. They
-answer one question - *how fast is the CPU* - and the reverse engineering work keeps asking
-another one: **is the data moving at all, and where**.
+MIPS and the two clocks of the emulation, the title of the video output window shows the frame rate,
+and the benchmark (`--bench`) prints a table of its own. They answer one question - *how fast is the
+CPU* - and the reverse engineering work keeps asking another one: **is the data moving at all, and
+where**.
 
 A title that boots into a black screen may be spinning on an interrupt that never arrives, may be
 pushing an empty display list into the CP FIFO, or may be streaming audio out of an ARAM buffer
@@ -91,9 +92,9 @@ folder would show (`hwprofile.png`).
 
 ## Where it stands next to the old counters
 
-The `PerfCounter` enumeration and the status bar stay as they are: they are the cheap, always-on
-subset of the same idea (the emulated MIPS, the VI and PE rates, the JIT statistics). The profiler
-subsumes them - it reports the instructions per second and the VI frame rate from the same sources
-- and adds the channels the status bar never had. The `--bench` report keeps its own richer
-breakdown of the host cycles, which is a different measurement (what the *host* spends, not what
-the *console* moves).
+The `PerfCounter` enumeration stays as it is: it is the cheap, always-on subset of the same idea
+(the emulated MIPS, the VI and PE rates, the frames the video output window shows as a frame rate,
+the JIT statistics). The profiler subsumes it - it reports the instructions per second and the VI
+frame rate from the same sources - and adds the channels the status bar never had. The `--bench`
+report keeps its own richer breakdown of the host cycles, which is a different measurement (what
+the *host* spends, not what the *console* moves).

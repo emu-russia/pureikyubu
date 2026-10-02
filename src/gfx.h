@@ -253,6 +253,18 @@ namespace GFX
 		//! that copy has to read the picture that is still in the EFB (see GL_DisplayCopy).
 		bool frame_clear_pending = false;
 
+		//! The frames the GL backend has presented - the pictures it has output to the display -
+		//! since the counter was reset. The front end takes the difference once a second as the
+		//! frame rate it shows in the title of the video output window (issue #458), so it is a
+		//! measurement of the emulator and not a part of the console: it neither travels in a save
+		//! state nor is touched by a reset. It is counted here, where the picture is handed over,
+		//! rather than at the copy that produced it: the copy engine is only one of the ways a
+		//! title presents a frame (the other is GXDrawDone, which presents the EFB), and the frame
+		//! rate is what the display gets either way. The pictures the video back end outputs
+		//! instead - the software pipeline, or a machine whose GL backend never started - are
+		//! counted by that back end, so that no frame is counted twice.
+		size_t presented_frames = 0;
+
 		// The frame holds content that has not been handed to the display yet. A display copy only
 		// presents such a frame: the copy engine may be asked to write the XFB several times per
 		// frame (init sequences, two XFB buffers), and swapping for every copy would show the
@@ -397,12 +409,34 @@ namespace GFX
 
 		void ResizeRenderTarget(size_t width, size_t height);
 
+		//! Where the picture of the last presented frame went (see `PresentFrame`): the framebuffer
+		//! it was read from, the rectangle of the window it was scaled into and the size of the
+		//! window itself, all in the window's own pixels. The picture is not always the whole of
+		//! the window (the window is the user's, and the console picture keeps its shape in it),
+		//! so the two things that are drawn or read out *around* the picture need it: the frame
+		//! dump reads the framebuffer, and the HW profiler overlay draws itself into the rectangle
+		//! (see gfxosd.cpp).
+		struct Presentation
+		{
+			GLuint source = 0;								//!< the EFB or the XFB the picture was read from
+			int x = 0, y = 0;								//!< the top left corner of the picture in the window
+			int width = 640, height = 480;					//!< ... and the size it was scaled to
+			int windowWidth = 640, windowHeight = 480;		//!< the size of the window itself
+		};
+
+		Presentation presentation;
+
 		//! True when the OpenGL backend has been started (a context is current).
 		bool BackendStarted() const { return backend_started; }
 
 		//! The size of the render target (the EFB window the pipeline draws into).
 		size_t RenderWidth() const { return scr_w; }
 		size_t RenderHeight() const { return scr_h; }
+
+		//! The frames the GL backend presented (see `presented_frames`), and the reset the front
+		//! end's sampler of the frame rate uses.
+		size_t PresentedFrames() const { return presented_frames; }
+		void ResetPresentedFrames() { presented_frames = 0; }
 
 		//! Put every pipeline block back into its reset state (the software equivalent of a GX
 		//! reset). The emulator calls it when the console is reset, the debugger with `gxreset`,

@@ -17,7 +17,8 @@ second machine (an integrated Game Boy Advance and Game Boy, in `src/gba`), a so
 rendering path next to the OpenGL one, a new debugger and a local MCP server; 1.9.1 makes the
 portable machines sound and time the way the hardware does, fixes the host-side BIOS, and leaves the
 SDL2 front end as the only one. The screenshots below are captures from earlier builds; the status
-bar shows the emulated MIPS, VI and PE rates. Some
+bar of a current build shows the emulated MIPS and the time the emulation has been running - the
+console's clock and the host's. Some
 titles still fail to render or hang — compatibility is a work in progress.
 
 |![progress_bs2](wiki/imgstore/progress_bs2.png)|![progress_ikaruga](wiki/imgstore/progress_ikaruga.png)|![progress_luigi](wiki/imgstore/progress_luigi.png)|

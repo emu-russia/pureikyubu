@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <memory>
+#include <chrono>
 #include "res/pureikyubu_icon.h"
 #include "bench.h"
 #include "uisettings.h"
@@ -286,9 +287,8 @@ std::wstring status_parts[(int)STATUS_ENUM::StatusMax];
 static void ResetStatusBar()
 {
 	SetStatusText(STATUS_ENUM::Progress, L"Idle");
-	SetStatusText(STATUS_ENUM::VIs, L"");
-	SetStatusText(STATUS_ENUM::PEs, L"");
-	SetStatusText(STATUS_ENUM::SystemTime, L"");
+	SetStatusText(STATUS_ENUM::EmuTime, L"");
+	SetStatusText(STATUS_ENUM::WallTime, L"");
 }
 
 /* Create status bar window */
@@ -1011,6 +1011,64 @@ void SelectorRescan()
 
 
 /*
+# The window titles
+
+The video output window - the one the emulated picture is in - says what the machine is drawing with
+and how fast: the backend the picture comes from and the frame rate of the last measured second
+(issue #458). The main window keeps the plain name of what is running; the state of the machine
+belongs to the window that shows it.
+
+The rate is measured by the performance thread, but SDL wants a window touched from the thread that
+owns it, so the thread only leaves the measurement here and the frame loop writes the title.
+*/
+
+static std::atomic<bool>  ui_title_dirty{ false };
+static std::atomic<float> ui_frame_rate{ 0.0f };
+static std::atomic<int>   ui_gfx_pipeline{ GFX_PIPELINE_SHADER };
+
+/* The milliseconds of the host's steady clock, counted from the first call of the process. The
+   performance thread measures the frame rate and the wall time of the status bar against it. */
+static uint64_t ui_now_ms()
+{
+	static const auto origin = std::chrono::steady_clock::now();
+	return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::steady_clock::now() - origin).count();
+}
+
+/* A duration the way the status line shows it: `2h 05m 09s`, `5m 09s`, `9s`. The hours and the
+   minutes are left out when they are zero, and the seconds keep two digits when something is shown
+   in front of them (issue #458). */
+static std::wstring ui_duration(int64_t seconds)
+{
+	if (seconds < 0)
+	{
+		seconds = 0;
+	}
+
+	const int64_t hours = seconds / 3600;
+	const int64_t minutes = (seconds / 60) % 60;
+	const int64_t rest = seconds % 60;
+
+	wchar_t pair[8];
+	std::wstring text;
+
+	if (hours > 0)
+	{
+		text = std::to_wstring(hours) + L"h ";
+	}
+
+	if (hours > 0 || minutes > 0)
+	{
+		swprintf(pair, _countof(pair), L"%02i", (int)minutes);
+		text += std::wstring(pair) + L"m ";
+	}
+
+	swprintf(pair, _countof(pair), (hours > 0 || minutes > 0) ? L"%02i" : L"%i", (int)rest);
+
+	return text + pair + L"s";
+}
+
+/*
 
 # Performance Counters
 
@@ -1018,9 +1076,8 @@ Interesting to track :
 - The number of emulated Gekko instructions (million per second, mips)
 - Number of recompiled and executed GekkoCore recompiler segments.
 - Number of DSP instructions emulated (million per second, mips)
-- Number of VI interrupts (frames per second)
-- Number of draw operations (PE DrawDone / second)
-- Show formatted value of TBR register (OSSystemTime)
+- The number of frames a second the emulated picture is output with (the window title)
+- The time since the emulation started, as the console's clock (TBR) and the host's clock count it
 
 */
 
@@ -1064,31 +1121,57 @@ namespace UI
 				(float)gekkoMips / 1000000.f, (float)dspMips / 1000000.f);
 		}
 
-		int32_t vis = perf->GetVICounter();
-		perf->ResetVICounter();
+		// The frame rate (issue #458): how many times the emulated picture was output since the
+		// previous sample, over the host time that passed in between. A sample that arrives too
+		// early to have a window of its own (a sleeping host, a clock that did not move) keeps the
+		// rate of the previous one.
+		//
+		// The picture is output in one of two places, and exactly one of them counts a frame: the
+		// GL backend presents the frames it is given (the counter of those, which is read through
+		// the debug interface like the other statistics), and the video back end outputs the XFB
+		// when the GL backend is not the one presenting - the software pipeline, or a machine that
+		// never reached the GL backend at all (VideoOutTakeFrames, videosdl.cpp).
+		uint64_t now = ui_now_ms();
 
-		int32_t pes = perf->GetPECounter();
-		perf->ResetPECounter();
+		int64_t frames = perf->GetPresentedFramesCounter() + VideoOutTakeFrames();
+		perf->ResetPresentedFramesCounter();
 
-		// An unattended benchmark leaves a per-second timeline in the debug log (`EMU_LOG=<file>`),
-		// so that a run can be examined afterwards without watching the status bar.
-		if (cmdline.bench)
+		if (now > perf->lastSampleMs)
 		{
-			Debug::Report(Debug::Channel::Info, "profile: %s, %d VI/s, %d PE/s\n", str, vis, pes);
+			ui_frame_rate.store((float)((double)frames / ((double)(now - perf->lastSampleMs) / 1000.0)));
 		}
+
+		perf->lastSampleMs = now;
+
+		// The two clocks of the status bar (issue #458): the console's time base (TBR) and the
+		// host's own clock, both measured from the moment the emulation of this image started.
+		int64_t emulated = perf->GetEmulatedSeconds() - perf->startEmulatedSeconds;
+		int64_t wall = (int64_t)((now - perf->startWallMs) / 1000);
 
 		// Display information in the status bar
 
 		SetStatusText(STATUS_ENUM::Progress, Util::StringToWstring(str));
-		SetStatusText(STATUS_ENUM::VIs, std::to_wstring(vis) + L" VI/s");
-		SetStatusText(STATUS_ENUM::PEs, std::to_wstring(pes) + L" PE/s");
-		SetStatusText(STATUS_ENUM::SystemTime, Util::StringToWstring(perf->GetSystemTime()));
+		SetStatusText(STATUS_ENUM::EmuTime, L"TBR " + ui_duration(emulated));
+		SetStatusText(STATUS_ENUM::WallTime, L"wall " + ui_duration(wall));
+
+		// The backend can be switched while a game runs (the Hardware page of the settings, the
+		// `gxpipeline` command), so it is asked of the machine with every sample rather than read
+		// from the configuration once.
+		ui_gfx_pipeline.store(perf->GetGfxPipeline());
+
+		// The titles belong to the frame loop (see the note above this section).
+		ui_title_dirty.store(true);
 
 		Thread::Sleep(perf->metricsInterval);
 	}
 
 	PerfMetrics::PerfMetrics()
 	{
+		// The clocks of the status bar are measured from here: the moment the emulation started.
+		startEmulatedSeconds = Jdi->GetEmulatedSeconds();
+		startWallMs = ui_now_ms();
+		lastSampleMs = startWallMs;
+
 		perfThread = EMUCreateThread(PerfThreadProc, false, this, "PerfThread");
 	}
 
@@ -1099,70 +1182,66 @@ namespace UI
 
 	int64_t PerfMetrics::GetGekkoInstructionsCounter()
 	{
-		return Jdi->GetPerformanceCounter(0);
+		return Jdi->GetPerformanceCounter((int)Debug::PerfCounter::GekkoInstructions);
 	}
 
 	void PerfMetrics::ResetGekkoInstructionsCounter()
 	{
-		Jdi->ResetPerformanceCounter(0);
+		Jdi->ResetPerformanceCounter((int)Debug::PerfCounter::GekkoInstructions);
 	}
 
 	int64_t PerfMetrics::GetGekkoCompiledSegments()
 	{
-		return Jdi->GetPerformanceCounter(4);
+		return Jdi->GetPerformanceCounter((int)Debug::PerfCounter::GekkoCompiledSegments);
 	}
 
 	void PerfMetrics::ResetGekkoCompiledSegments()
 	{
-		Jdi->ResetPerformanceCounter(4);
+		Jdi->ResetPerformanceCounter((int)Debug::PerfCounter::GekkoCompiledSegments);
 	}
 
 	int64_t PerfMetrics::GetGekkoExecutedSegments()
 	{
-		return Jdi->GetPerformanceCounter(5);
+		return Jdi->GetPerformanceCounter((int)Debug::PerfCounter::GekkoExecutedSegments);
 	}
 
 	void PerfMetrics::ResetGekkoExecutedSegments()
 	{
-		Jdi->ResetPerformanceCounter(5);
+		Jdi->ResetPerformanceCounter((int)Debug::PerfCounter::GekkoExecutedSegments);
 	}
 
 	int64_t PerfMetrics::GetDspInstructionsCounter()
 	{
-		return Jdi->GetPerformanceCounter(1);
+		return Jdi->GetPerformanceCounter((int)Debug::PerfCounter::DspInstructions);
 	}
 
 	void PerfMetrics::ResetDspInstructionsCounter()
 	{
-		Jdi->ResetPerformanceCounter(1);
+		Jdi->ResetPerformanceCounter((int)Debug::PerfCounter::DspInstructions);
 	}
 
-	int32_t PerfMetrics::GetVICounter()
+	int64_t PerfMetrics::GetPresentedFramesCounter()
 	{
-		return (int32_t)Jdi->GetPerformanceCounter(2);
+		return Jdi->GetPerformanceCounter((int)Debug::PerfCounter::PresentedFrames);
 	}
 
-	void PerfMetrics::ResetVICounter()
+	void PerfMetrics::ResetPresentedFramesCounter()
 	{
-		Jdi->ResetPerformanceCounter(2);
+		Jdi->ResetPerformanceCounter((int)Debug::PerfCounter::PresentedFrames);
 	}
 
-	int32_t PerfMetrics::GetPECounter()
+	int64_t PerfMetrics::GetEmulatedSeconds()
 	{
-		return (int32_t)Jdi->GetPerformanceCounter(3);
+		return Jdi->GetEmulatedSeconds();
 	}
 
-	void PerfMetrics::ResetPECounter()
+	int PerfMetrics::GetGfxPipeline()
 	{
-		Jdi->ResetPerformanceCounter(3);
-	}
-
-	std::string PerfMetrics::GetSystemTime()
-	{
-		return Jdi->GetSystemTime();
+		return Jdi->GetGfxPipeline();
 	}
 
 }
+
 
 
 // The icon is embedded in the source code, so it is available in the SDL port on any platform
@@ -1183,6 +1262,50 @@ static void SetWindowIcon(SDL_Window* wnd)
 	}
 }
 
+/*
+The name of the video output window - the window the emulated picture is in. It carries what the
+machine is drawing with and how fast: the backend the picture comes from and the frame rate of the
+last measured second (issue #458). The main window is the front end itself (the selector and the
+status line) and keeps the plain name of what is running.
+*/
+
+/* The name a title gives the rendering backend: the shader (OpenGL) pipeline or the software one
+   (issue #384). The performance thread asks the machine which one it is running (it can be
+   switched at any moment) and leaves the answer in `ui_gfx_pipeline`. */
+static const wchar_t* ui_backend_name()
+{
+	return (ui_gfx_pipeline.load() == GFX_PIPELINE_SOFT) ? L"soft" : L"shader";
+}
+
+/* The name of the video output window with the backend and the frame rate on it: `Video Output |
+   shader | 59.9 fps`. */
+static std::wstring ui_video_output_title()
+{
+	wchar_t rate[0x20];
+	swprintf(rate, _countof(rate), L"%.1f", (double)ui_frame_rate.load());
+
+	return std::wstring(L"Video Output | ") + ui_backend_name() + L" | " + rate + L" fps";
+}
+
+/* What the main window is called while nothing runs (the name and the version of the emulator) and
+   while an image does (OnMainWindowOpened makes that one out of the loaded file). */
+static std::wstring ui_idle_title;
+static std::wstring ui_running_title;
+
+static void ui_update_window_titles()
+{
+	if (window != nullptr)
+	{
+		SDL_SetWindowTitle(window, ToUtf8(ui_running_title.empty() ? ui_idle_title : ui_running_title).c_str());
+	}
+
+	// The video output window exists only while an image runs.
+	if (render_target != nullptr)
+	{
+		SDL_SetWindowTitle(render_target, ToUtf8(ui_video_output_title()).c_str());
+	}
+}
+
 static void CreateRenderTarget()
 {
 	// Create RenderTarget (for xfb / gfx)
@@ -1194,6 +1317,7 @@ static void CreateRenderTarget()
 	}
 	render_target = SDL_CreateWindow("Video Output", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, window_flags);
 	SetWindowIcon(render_target);
+	ui_update_window_titles();
 }
 
 static void DestroyRenderTarget()
@@ -1329,8 +1453,13 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		newTitle = std::wstring(APPNAME) + L" - Running " + gameTitle;
 	}
 
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-	SDL_SetWindowTitle(window, utf8_conv.to_bytes(newTitle).c_str());
+	ui_running_title = newTitle;
+
+	// The rate of the sample the performance thread is about to take belongs to this image and not
+	// to the one before it, which the video output window was showing until a moment ago.
+	ui_frame_rate.store(0.0f);
+
+	ui_update_window_titles();
 
 	// A benchmark run samples the counters itself: the metrics thread clears them every second.
 	if (!cmdline.bench)
@@ -1352,9 +1481,9 @@ void OnMainWindowClosed()
 	usel.needUpdate = true;
 
 	// set to Idle
-	auto win_name = std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L" (" + Util::StringToWstring(UI::Jdi->GetVersion()) + L")";
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-	SDL_SetWindowTitle(window, utf8_conv.to_bytes(win_name).c_str());
+	ui_running_title.clear();
+	ui_idle_title = std::wstring(APPNAME) + L" - " + std::wstring(APPDESC) + L" (" + Util::StringToWstring(UI::Jdi->GetVersion()) + L")";
+	ui_update_window_titles();
 	ResetStatusBar();
 }
 
@@ -1553,6 +1682,14 @@ static void ui_main_menu()
 				else
 					Debug2::StartDebugger();
 			}
+
+			// The HW interface profiler overlay (issue #394) drawn over the emulated picture: the
+			// same switch the `hwsod` command works on, and the checkmark is the choice it keeps in
+			// the settings (HW_OSD), so it is remembered for the next run.
+			if (ImGui::MenuItem("HW Profiler Overlay", NULL, Debug::HwOsd::Enabled())) {
+				Debug::HwOsd::SetEnabled(!Debug::HwOsd::Enabled());
+			}
+
 			if (ImGui::MenuItem("Mount DolphinSDK as DVD...", NULL)) {
 				file_reaction = FileReaction::ChooseDirectory_MountSdk;
 				chooseDirectoryDialog.Open();
@@ -1771,6 +1908,17 @@ static void ui_selector()
 		update_selector();
 	}
 
+	// While the emulation runs the list is a view of what could have been started and not a thing
+	// to click: a stray key or click would load another image over the running one, and the picture
+	// the user is watching is in the video output window anyway. The list is drawn disabled behind
+	// a veil that says why, and the keyboard handling below is skipped with it (issue #458).
+	const bool locked = emu_running;
+
+	if (locked)
+	{
+		ImGui::BeginDisabled();
+	}
+
 	const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y * 2.0f + ui_status_bar_height();
 	if (ImGui::BeginChild("selector", ImVec2(0, -footer_height_to_reserve), false, ImGuiWindowFlags_HorizontalScrollbar))
 	{
@@ -1863,9 +2011,38 @@ static void ui_selector()
 			ImGui::EndTable();
 		}
 
+		// The veil of the disabled list: the whole child is covered with the colour of the window
+		// and the reason, so that the dimmed rows read as "not now" rather than as a broken list.
+		if (locked)
+		{
+			const UiPalette& pal = UiThemePalette();
+
+			ImDrawList* dl = ImGui::GetWindowDrawList();
+			const ImVec2 min = ImGui::GetWindowPos();
+			const ImVec2 size = ImGui::GetWindowSize();
+			const ImVec2 max = ImVec2(min.x + size.x, min.y + size.y);
+
+			dl->AddRectFilled(min, max, UiThemeAlpha(pal.window, 0.72f));
+
+			const char* lines[] = { "The emulation is running", "File -> Close stops it" };
+			const int lineCount = (int)_countof(lines);
+
+			float y = min.y + size.y * 0.5f - (ImGui::GetTextLineHeightWithSpacing() * lineCount) * 0.5f;
+
+			for (int i = 0; i < lineCount; i++)
+			{
+				const ImVec2 textSize = ImGui::CalcTextSize(lines[i]);
+
+				dl->AddText(ImVec2(min.x + (size.x - textSize.x) * 0.5f, y),
+					(i == 0) ? pal.text : pal.muted, lines[i]);
+
+				y += ImGui::GetTextLineHeightWithSpacing();
+			}
+		}
+
 		// The table does not handle the keyboard, so the cursor is moved by the usual
 		// cursor keys.
-		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_RootWindow))
+		if (!locked && ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_RootWindow))
 		{
 			if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
 			{
@@ -1891,6 +2068,11 @@ static void ui_selector()
 		}
 	}
 	ImGui::EndChild();
+
+	if (locked)
+	{
+		ImGui::EndDisabled();
+	}
 }
 
 /* The text cut to the width there is for it, with an ellipsis where it was cut. The status line is
@@ -1945,9 +2127,9 @@ static std::string Ellipsize(const char* text, float width)
 /*
 
 The line at the bottom of the window: what the machine is doing. Its parts are the ones the core
-fills in through `SetStatusText` (the state of the emulation and the counters of the performance
-thread), and this function only lays them out: the state on the left, the two counters beside it and
-the console clock on the right.
+fills in through `SetStatusText` (the state of the emulation and the two clocks of the performance
+thread), and this function only lays them out: the state on the left and the clocks on the right -
+the time the emulation has been running, as the console counts it and as the host does (issue #458).
 
 */
 
@@ -1968,8 +2150,8 @@ static void ui_status_bar()
 	dl->AddRectFilled(origin, lowerRight, pal.child, 9.0f);
 	dl->AddRect(origin, lowerRight, pal.border, 9.0f);
 
-	// The counters and the clock are laid out from the right edge, so that they stay where they are
-	// while the line of the state changes length.
+	// The two clocks are laid out from the right edge, so that they stay where they are while the
+	// line of the state changes length (issue #458: the console's clock and the host's).
 	struct StatusPart
 	{
 		std::string text;
@@ -1978,9 +2160,8 @@ static void ui_status_bar()
 
 	StatusPart parts[] =
 	{
-		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::VIs]),        pal.accent },
-		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::PEs]),        pal.accent2 },
-		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::SystemTime]), pal.muted },
+		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::EmuTime]),  pal.accent },
+		{ Util::WstringToString(status_parts[(int)STATUS_ENUM::WallTime]), pal.muted },
 	};
 
 	const float gap = 22.0f;
@@ -2330,6 +2511,14 @@ static int ui_main()
 		// devices that are driven by them (see padsdl.cpp). The events pumped above have the device
 		// list up to date.
 		HostInputUpdate();
+
+		// The frame rate and the backend the performance thread measured go into the names of the
+		// two windows from here: SDL wants a window touched from the thread that owns it, and this
+		// loop is that thread (see the note on the window titles).
+		if (ui_title_dirty.exchange(false))
+		{
+			ui_update_window_titles();
+		}
 
 		// The release of a pressed button can be delivered to another window or to another
 		// application, so do not leave the mouse captured by the main window when it is not active.

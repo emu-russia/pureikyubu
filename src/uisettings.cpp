@@ -502,6 +502,56 @@ static void settings_page_hw()
 
 	ImGui::Separator();
 
+	// The rendering backend (issue #384). The choice is kept in the configuration and switched in
+	// the machine that is running at once (the `gxpipeline` command of the debug interface); the
+	// emulator is asked which pipeline it runs, and while no machine is loaded it is the
+	// configuration that answers, because that is the choice the next start will make (issue #458).
+	const int backend = emu.loaded
+		? UI::Jdi->GetGfxPipeline()
+		: UI::Jdi->GetConfigInt(USER_GFX_PIPELINE, USER_HW);
+
+	static const char* settings_backend_names[] = { "Shader (OpenGL)", "Software (experimental)" };
+
+	ImGui::TextUnformatted("The rendering backend:");
+
+	if (PropertyGrid("settings_hw_backend"))
+	{
+		PropertyRow("Graphics backend");
+		{
+			const int current = (backend == GFX_PIPELINE_SOFT) ? 1 : 0;
+
+			if (ImGui::BeginCombo("##v", settings_backend_names[current]))
+			{
+				for (int i = 0; i < (int)_countof(settings_backend_names); i++)
+				{
+					if (ImGui::Selectable(settings_backend_names[i], current == i))
+					{
+						UI::Jdi->SetConfigInt(USER_GFX_PIPELINE, i, USER_HW);
+
+						// The running machine is switched through the command the whole debug
+						// interface uses, so that the settings window and a typed `gxpipeline` do
+						// exactly the same thing.
+						if (emu.loaded)
+						{
+							UI::Jdi->ExecuteCommand((i == GFX_PIPELINE_SOFT) ? "gxpipeline soft" : "gxpipeline shader");
+						}
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+		}
+		PropertyRowEnd();
+
+		PropertyGridEnd();
+	}
+
+	ImGui::TextDisabled("The shader backend draws the picture with OpenGL, the software one on the host\n"
+		"CPU and without a GL context (it is young: a few demos still have picture defects).\n"
+		"The choice takes effect at once and is kept for the next start.");
+
+	ImGui::Separator();
+
 	settings_firmware_row("Bootrom file:", USER_BOOTROM, SettingsFile::Bootrom, "Choose Bootrom");
 	settings_firmware_row("DSP DROM file:", USER_DSP_DROM, SettingsFile::DspDrom, "Choose DSP DROM");
 	settings_firmware_row("DSP IROM file:", USER_DSP_IROM, SettingsFile::DspIrom, "Choose DSP IROM");
