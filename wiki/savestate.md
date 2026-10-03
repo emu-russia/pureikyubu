@@ -114,7 +114,7 @@ the format does not depend on the compiler that wrote it.
 | `DSP ` | the DSP machine: whether it runs and its clock anchor, both mailbox pairs with their snapshots, the DMA registers, the ADPCM/IIR filter history and the accelerator window, the DSP-side AI DMA, ARAM (16 MB) with its registers, and the core (both memories, the register file, the four stacks, the interrupt control and the countdowns) |
 | `DVD ` | the drive's state machine, the command and immediate buffers, the read pointer and the transaction size, and the DVD-audio streaming state (position, rate, the decoded PCM buffer and the ADPCM filter history) |
 | `GX  ` | the graphics pipeline's shared registers (GEN_MODE and the four quad/sample locations), where the frame loop stands and the size of the render target |
-| `PE  ` | the BP register file of the pixel engine, the CPU-side status register, and the software EFB (the colour plane and the Z plane, about 6 MB at 640x480) when the software pipeline is running |
+| `PE  ` | the BP register file of the pixel engine, the CPU-side status register, and the software EFB (the colour and the Z of three sub-samples per pixel, about 12 MB at 640x480) when the software pipeline is running |
 | `XF  ` | every transform register: the three matrix memories, the eight lights, the channel controls, the viewport, the projection and the texture coordinate generation |
 | `SU  ` | the scissor registers, the line/point size, the eight texture size pairs and the latches that say which of them were programmed |
 | `RAS ` | the eight texture references, the two scale/bias pairs and IREF |

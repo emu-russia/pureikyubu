@@ -510,7 +510,7 @@ static void settings_page_hw()
 		? UI::Jdi->GetGfxPipeline()
 		: UI::Jdi->GetConfigInt(USER_GFX_PIPELINE, USER_HW);
 
-	static const char* settings_backend_names[] = { "Shader (OpenGL)", "Software (experimental)" };
+	static const char* settings_backend_names[] = { "Shader (OpenGL)", "Software (CPU)" };
 
 	ImGui::TextUnformatted("The rendering backend:");
 

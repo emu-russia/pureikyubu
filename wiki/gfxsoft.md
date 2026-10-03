@@ -1,14 +1,14 @@
-# Flipper GFX - the software pipeline (experimental)
-
-> **The software pipeline is experimental.** It renders the whole pipeline by itself and the
-> DolphinSDK demo sweep agrees with the shader backend on most of the demos, but a few titles still
-> have picture defects (the anti-aliased framebuffer demos, a handful of texture and copy cases);
-> they are being worked through one by one. The default stays the shader backend.
+# Flipper GFX - the software pipeline
 
 The second rendering path of the GFX subsystem, selected by the `GFX_PIPELINE` configuration
 variable (`0` = the OpenGL shader backend of [gfx.md](gfx.md), `1` = software) and switchable at run
 time with the `gxpipeline` JDI command. The choice is written back to the settings file, so it
 survives a restart.
+
+The path renders the whole pipeline by itself, and the DolphinSDK demo sweep and the titles it runs
+agree with the shader backend on the pictures they draw; what it does not model yet is listed at the
+end of this page. The shader backend is the default, and a title that needs a feature the list
+names is the reason to switch back to it.
 
 It is a path of its own: it never opens an OpenGL context and shares no rendering state with the
 shader backend. The two implementations live side by side in the same modules (`xf.cpp`, `su.cpp`,
@@ -17,8 +17,15 @@ carry the `Soft` prefix.
 
 There is no GL frame in this pipeline at all. The blocks render into a **real EFB memory array**
 and the copy engine converts the finished frame into the **XFB in main memory**, which `vi.cpp`
-scans out exactly like a real console (the number of active lines comes from `VI_VERT_TIMING`, so a
-title that copies the 448 visible lines of an NTSC frame does not show the rest of the buffer):
+scans out exactly like a real console: the number of active lines comes from `VI_VERT_TIMING`, so a
+title that copies the 448 visible lines of an NTSC frame does not show the rest of the buffer, and
+the geometry of a line comes from `VI_PICTURE_CFG` - its `WPL` field is the width of the picture in
+16-pixel words and its `STD` field is the stride the VI fetches the lines of a field with. The
+bootrom's splash is the case that needs the width: its picture is 592 pixels wide (37 words, 1184
+bytes to a line) and the screen came out skewed while the scanout assumed the 640 pixels of the
+render target. `VI_HSCALE` then decides whether the horizontal scaler spreads the picture over the
+whole line (the bootrom enables it, and its 592 pixels fill the 640 columns of the window) or the
+picture is left in the left of the line, one pixel to one pixel:
 
 ```
 Gekko --PI FIFO--> CP --commands--> XF(soft) --> SU(soft) --> RAS(soft) --> TEV(soft) --> PE(soft)
@@ -94,6 +101,16 @@ the quad); the model reads a field as a signed 1/12-pixel offset from the *pixel
 value 6 - the value the SDK's `GXInit` programs - means "no offset", so the three sub-samples of a
 pixel degenerate to its centre unless a title programs a real pattern.
 
+The mask travels with the fragment into the pixel engine: the pixel type that multi-samples
+(`pe_pixtype` = `rgb_aa`, gfx-pe.md 4.5) keeps a colour and a Z for **every sub-sample**, so the
+fragment writes the sub-samples the mask marks and leaves the others alone. This is what two
+triangles that share an edge agree about: each writes the sub-samples on its own side of the edge,
+and the copy path resolves the three of them into the pixel the display shows (the `pe_vf` filter
+of gfx-pe.md 5.3, which the software pipeline models as their average). A pixel written by both
+triangles is therefore the mix of the two - not the translucent surface blended twice, which is
+what a single-sample EFB made of the shared edges of a translucent model (the seams on the faces of
+the IPL's cube).
+
 ## TX (TMEM)
 
 The software texture unit owns a real **TMEM**: the 32 banks of 16K x 16-bit words of gfx-tc.md
@@ -131,12 +148,16 @@ feedback of the previous indirect stage. The arithmetic is the one the shader ba
 two pipelines produce the same picture; the unit tests pin it with an indirect fetch that shifts a
 stage by one texel (`Soft_AnIndirectStageSamplesItsTextureThroughTheBumpOffset`).
 
-The pixel engine owns a real **EFB memory array**, addressed like the CPU window of the hardware
-(gfx-pe.md 3.3): the colour word of the pixel (x, y) sits at `y * 1024 + x` and the address bit 22
-selects the Z plane. It performs the RMW datapath of gfx-pe.md 4 - the Z test of the Z unit and the
-blend / logic op with the write masks of the colour unit - and the copy engine: the display copy
-that converts a rectangle into the packed YUV 4:2:2 **XFB** in main memory (5.6), the texture copy
-that re-packs it into the tiled texture formats (5.7) and the clear a copy may ask for (5.1).
+The pixel engine owns a real **EFB memory array** (gfx-pe.md 3.3, 4.5): the colour and the Z of
+every sub-sample of a pixel, the planes of the three sub-samples packed one after another, each of
+them `soft_h` rows of the 1K-pixel stride. The pixel type decides how many of them a pixel has -
+three for the anti-aliased type, one for every other - and a fragment writes exactly the
+sub-samples its coverage mask marks. The RMW datapath of gfx-pe.md 4 runs per sub-sample: the Z
+test of the Z unit and the blend / logic op with the write masks of the colour unit. The copy
+engine reads a pixel by averaging its sub-samples, which is the resolution the `pe_vf` filter of
+gfx-pe.md 5.3 performs: the display copy that converts a rectangle into the packed YUV 4:2:2
+**XFB** in main memory (5.6), the texture copy that re-packs it into the tiled texture formats
+(5.7) and the clear a copy may ask for (5.1, which clears every sub-sample).
 
 There is no GL frame in this pipeline: the picture the copy engine wrote into the XFB is what the
 video interface scans out (`vi.cpp`), exactly like a real console.
@@ -147,9 +168,9 @@ video interface scans out (`vi.cpp`), exactly like a real console.
   through.
 - The anisotropic filtering (`maxaniso`), the `diag_lod` and `lodclamp` refinements of the LOD, and
   the `round` / `field_predict` motion-compensation modes of the filter.
-- The anti-aliased EFB (a 12-bit coverage mask selects the sample to shade, but the EFB stores one
-  colour per pixel) and the EFB pixel types other than RGB8 - which is also why the dither matrix
-  is not applied: for RGB8 it is the identity.
+- The 16-bit R5G6B5 colour and Z a sub-sample of the anti-aliased EFB is stored in, and the EFB
+  pixel types other than the 8-bit ones the model keeps - which is also why the dither matrix is
+  not applied: for them it is the identity.
 - The `PE_COPY_VFILTER` coefficients (the display copy scales vertically with the `PE_COPY_SCALE`
   lerp, but the 7-tap filter is a no-op), the YUV/4:2:0 copy modes and the EFB CPU window
   (`Cpu2Efb`).

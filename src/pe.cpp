@@ -936,8 +936,14 @@ namespace GFX
 	//! rather than with the rest of the software pixel engine below because the save state section
 	//! has to know the length of the EFB array it validates.
 	static const int EfbStride = 1024;
-	//! Address bit 22 selects the Z plane (gfx-pe.md 3.3): 1M words into the window.
-	static const size_t EfbZPlane = 1u << 20;
+	//! The sub-samples a pixel of the anti-aliased EFB holds, each with its own colour and Z
+	//! (gfx-pe.md 4.5). `PixelEngine::EfbSampleCount` decides how many of them a pixel really has;
+	//! the planes of all three are always there, because the pixel type is a register a title can
+	//! change between frames and a resolve must not read a plane that was never cleared.
+	static const int EfbSamples = 3;
+	//! The EFB pixel type that turns the sub-samples on: `rgb_aa` of the specification's
+	//! `pe_pixtype` (gfx-pe.md 6.4), which the SDK programs as `GX_PF_RGB565_Z16`.
+	static const unsigned EfbPixelTypeAA = 2;
 
 	// -------------------------------------------------------------------------------------------
 	// Save states
@@ -1010,8 +1016,9 @@ namespace GFX
 		// the render target describes is refused *before* the machine's own array is replaced: a
 		// bad load must not leave the software rasterizer writing outside its buffer.
 		//
-		// The array is laid out as the window of the hardware: `EfbZPlane` words of the colour
-		// plane, then `soft_h` rows of `EfbStride` words of the Z plane (see SoftAlloc). A state
+		// The array holds the colour and the Z of every sub-sample of the window, the planes of
+		// `EfbSamples` sub-samples packed one after another (`EfbSamples` colour planes and
+		// `EfbSamples` Z planes of `soft_h` rows of `EfbStride` words each, see SoftAlloc). A state
 		// written by another render target size therefore has a different length, and a length that
 		// is not one of those is a broken image rather than a smaller EFB.
 		std::vector<uint32_t> memory;
@@ -1025,7 +1032,7 @@ namespace GFX
 			// the array is not there and its length has to be zero. An allocated one is exactly the
 			// window the hardware describes, which is what makes a state of another render target
 			// size a refusal rather than a shorter EFB.
-			size_t words = (soft_h > 0) ? (EfbZPlane + (size_t)soft_h * EfbStride) : 0;
+			size_t words = (soft_h > 0) ? ((size_t)(2 * EfbSamples) * (size_t)soft_h * EfbStride) : 0;
 
 			if (memory.size() == words)
 			{
@@ -1095,17 +1102,68 @@ namespace GFX
 		soft_w = w;
 		soft_h = h;
 
-		// The colour plane and the Z plane of the window the EFB occupies.
-		size_t words = EfbZPlane + (size_t)h * EfbStride;
+		// The colour and the Z of every sub-sample of the window: the planes of `EfbSamples`
+		// sub-samples, one after another.
+		size_t words = (size_t)(2 * EfbSamples) * (size_t)h * EfbStride;
 		efb.assign(words, 0);
 
-		// The Z of a fresh EFB is the far value, so that the first primitive of a frame that never
-		// asks for a clear still passes its depth test.
-		for (int y = 0; y < h; y++)
+		// The Z of a fresh EFB is the far value in every sub-sample, so that the first primitive of
+		// a frame that never asks for a clear still passes its depth test.
+		for (int s = 0; s < EfbSamples; s++)
 		{
-			for (int x = 0; x < w; x++)
-				efb[EfbZPlane + (size_t)y * EfbStride + x] = 0xFFFFFF;
+			for (int y = 0; y < h; y++)
+			{
+				for (int x = 0; x < w; x++)
+					efb[SoftSampleZIndex(x, y, s)] = 0xFFFFFF;
+			}
 		}
+	}
+
+	//! The word of the colour of sub-sample `s` of the pixel (x, y): the sub-samples of a pixel sit
+	//! in planes of their own, `soft_h` rows of the 1K-pixel stride each. The hardware's CPU window
+	//! packs the sub-samples of an anti-aliased pixel into one word instead (gfx-pe.md 8.1, 8.3);
+	//! that window is a format of its own and is not implemented for the software EFB (Cpu2Efb), so
+	//! the packing here is the emulator's.
+	size_t PixelEngine::SoftSampleIndex(int x, int y, int s) const
+	{
+		return ((size_t)s * (size_t)soft_h + (size_t)y) * EfbStride + x;
+	}
+
+	//! The word of the Z of sub-sample `s` of the pixel (x, y): the Z planes follow the colour ones.
+	size_t PixelEngine::SoftSampleZIndex(int x, int y, int s) const
+	{
+		return ((size_t)(EfbSamples + s) * (size_t)soft_h + (size_t)y) * EfbStride + x;
+	}
+
+	//! The sub-samples a pixel of the software EFB holds: the three of the anti-aliased pixel type,
+	//! one for every other type (gfx-pe.md 4.5, 8.1).
+	int PixelEngine::EfbSampleCount() const
+	{
+		return (pe.control.pixtype == EfbPixelTypeAA) ? EfbSamples : 1;
+	}
+
+	//! The colour of a pixel as the copy path reads it. The three sub-samples of the anti-aliased
+	//! EFB are resolved by averaging them - `pe_vf` is the filter that turns a multi-sampled buffer
+	//! into the display image (gfx-pe.md 5.3) - and a point-sampled EFB holds the one value of the
+	//! pixel, which the average of one sample is.
+	void PixelEngine::SoftResolve(int x, int y, int* r, int* g, int* b, int* a) const
+	{
+		int n = EfbSampleCount();
+		int sum[4] = { 0, 0, 0, 0 };
+
+		for (int s = 0; s < n; s++)
+		{
+			int c[4];
+			SoftUnpackEfbColor(efb[SoftSampleIndex(x, y, s)], &c[0], &c[1], &c[2], &c[3]);
+
+			for (int i = 0; i < 4; i++)
+				sum[i] += c[i];
+		}
+
+		*r = (sum[0] + n / 2) / n;
+		*g = (sum[1] + n / 2) / n;
+		*b = (sum[2] + n / 2) / n;
+		*a = (sum[3] + n / 2) / n;
 	}
 
 	void PixelEngine::SoftClearRect(int x, int y, int w, int h, uint32_t rgba, uint32_t z)
@@ -1120,12 +1178,18 @@ namespace GFX
 		if (w <= 0 || h <= 0)
 			return;
 
+		// The clear writes every sub-sample, whatever the pixel type is: a cleared region has its
+		// samples equal (gfx-pe.md 5.1), and a title that switches to the anti-aliased type reads
+		// samples this frame rather than the leftovers of the last one.
 		for (int row = 0; row < h; row++)
 		{
 			for (int col = 0; col < w; col++)
 			{
-				efb[(size_t)(y + row) * EfbStride + x + col] = rgba;
-				efb[EfbZPlane + (size_t)(y + row) * EfbStride + x + col] = z & 0xFFFFFF;
+				for (int s = 0; s < EfbSamples; s++)
+				{
+					efb[SoftSampleIndex(x + col, y + row, s)] = rgba;
+					efb[SoftSampleZIndex(x + col, y + row, s)] = z & 0xFFFFFF;
+				}
 			}
 		}
 	}
@@ -1172,14 +1236,19 @@ namespace GFX
 		}
 	}
 
-	bool PixelEngine::SoftWritePixel(int x, int y, const float rgba[4], float depth)
+	bool PixelEngine::SoftWritePixel(int x, int y, const float rgba[4], float depth, uint32_t coverage)
 	{
 		SoftAlloc();
 
 		if (x < 0 || y < 0 || x >= soft_w || y >= soft_h)
 			return false;
 
-		size_t idx = (size_t)y * EfbStride + x;
+		int samples = EfbSampleCount();
+
+		// A point-sampled pixel has one sample, and a fragment that covers any part of the pixel
+		// covers it: it is the anti-aliased EFB the sub-sample mask of the rasterizer resolves.
+		if (samples == 1)
+			coverage = 0x7;
 
 		int src[4];
 		for (int c = 0; c < 4; c++)
@@ -1192,6 +1261,30 @@ namespace GFX
 		if (z < 0) z = 0;
 		if (z > 0xFFFFFF) z = 0xFFFFFF;
 
+		// Every sub-sample the fragment covers is shaded with the same colour and Z; the ones it
+		// does not cover keep what they hold, which is what resolves to the anti-aliased edge.
+		bool written = false;
+
+		for (int s = 0; s < samples; s++)
+		{
+			if ((coverage & (1u << s)) == 0)
+				continue;
+
+			if (SoftWriteSample(x, y, s, src, z))
+				written = true;
+		}
+
+		return written;
+	}
+
+	//! The RMW of one sub-sample of the EFB: the depth test of the Z unit and the blend / logic op
+	//! with the write masks of the colour unit (gfx-pe.md 4.2, 4.3), on the colour and the Z that
+	//! the sub-sample itself holds.
+	bool PixelEngine::SoftWriteSample(int x, int y, int s, const int src[4], int z)
+	{
+		size_t idx = SoftSampleIndex(x, y, s);
+		size_t zidx = SoftSampleZIndex(x, y, s);
+
 		int dst[4];
 		SoftUnpackEfbColor(efb[idx], &dst[0], &dst[1], &dst[2], &dst[3]);
 
@@ -1199,7 +1292,7 @@ namespace GFX
 
 		if (pe.zmode.enable)
 		{
-			uint32_t zref = efb[EfbZPlane + idx] & 0xFFFFFF;
+			uint32_t zref = efb[zidx] & 0xFFFFFF;
 			bool pass;
 
 			switch (pe.zmode.func & 7)
@@ -1249,26 +1342,26 @@ namespace GFX
 			// The 16 logic operations of the colour unit (gfx-pe.md 4.3)
 			for (int c = 0; c < 4; c++)
 			{
-				int s = src[c], d = dst[c];
+				int sv = src[c], d = dst[c];
 				int v;
 
 				switch (pe.cmode0.logop & 0xF)
 				{
 					case 0:  v = 0; break;						// clear
-					case 1:  v = s & d; break;					// and
-					case 2:  v = s & ~d; break;					// and_reverse
-					case 3:  v = s; break;						// copy
-					case 4:  v = ~s & d; break;					// and_inverted
+					case 1:  v = sv & d; break;					// and
+					case 2:  v = sv & ~d; break;					// and_reverse
+					case 3:  v = sv; break;						// copy
+					case 4:  v = ~sv & d; break;					// and_inverted
 					case 5:  v = d; break;						// noop
-					case 6:  v = s ^ d; break;					// xor
-					case 7:  v = s | d; break;					// or
-					case 8:  v = ~(s | d); break;				// nor
-					case 9:  v = ~(s ^ d); break;				// equiv
+					case 6:  v = sv ^ d; break;					// xor
+					case 7:  v = sv | d; break;					// or
+					case 8:  v = ~(sv | d); break;				// nor
+					case 9:  v = ~(sv ^ d); break;				// equiv
 					case 10: v = ~d; break;						// invert
-					case 11: v = s | ~d; break;					// or_reverse
-					case 12: v = ~s; break;						// copy_inverted
-					case 13: v = ~s | d; break;					// or_inverted
-					case 14: v = ~(s & d); break;				// nand
+					case 11: v = sv | ~d; break;					// or_reverse
+					case 12: v = ~sv; break;						// copy_inverted
+					case 13: v = ~sv | d; break;					// or_inverted
+					case 14: v = ~(sv & d); break;				// nand
 					default: v = 255; break;					// set
 				}
 
@@ -1297,7 +1390,7 @@ namespace GFX
 
 		// GEN_MODE.zfreeze holds the depth of the frame (gfx-su.md 3.6)
 		if (pe.zmode.mask && !(gfx != nullptr && gfx->genmode.zfreeze != 0))
-			efb[EfbZPlane + idx] = (uint32_t)z;
+			efb[zidx] = (uint32_t)z;
 
 		return true;
 	}
@@ -1309,7 +1402,9 @@ namespace GFX
 		if (x < 0 || y < 0 || x >= soft_w || y >= soft_h)
 			return false;
 
-		size_t idx = (size_t)y * EfbStride + x;
+		// The CPU of the hardware reads the first sub-sample of an anti-aliased pixel (gfx-pe.md
+		// 4.5, 8.3), and a point-sampled pixel has only that one.
+		size_t idx = SoftSampleIndex(x, y, 0);
 
 		int r, g, b, a;
 		SoftUnpackEfbColor(efb[idx], &r, &g, &b, &a);
@@ -1320,7 +1415,7 @@ namespace GFX
 		rgba[3] = (uint8_t)a;
 
 		if (z != nullptr)
-			*z = efb[EfbZPlane + idx] & 0xFFFFFF;
+			*z = efb[SoftSampleZIndex(x, y, 0)] & 0xFFFFFF;
 
 		return true;
 	}
@@ -1423,10 +1518,10 @@ namespace GFX
 				int rr, gg, bb, aa;
 
 				if (py0 >= 0 && py0 < soft_h)
-					SoftUnpackEfbColor(efb[(size_t)py0 * EfbStride + px], &r0, &g0, &b0, &a0);
+					SoftResolve(px, py0, &r0, &g0, &b0, &a0);
 
 				if (py1 >= 0 && py1 < soft_h)
-					SoftUnpackEfbColor(efb[(size_t)py1 * EfbStride + px], &r1, &g1, &b1, &a1);
+					SoftResolve(px, py1, &r1, &g1, &b1, &a1);
 				else
 				{
 					r1 = r0; g1 = g0; b1 = b0; a1 = a0;
@@ -1489,8 +1584,9 @@ namespace GFX
 
 	//! Read a rectangle of the EFB into an RGBA buffer, top row first. This is the only way back
 	//! from the copy engine's round trip through the colour buffer, which is what makes it a pixel
-	//! engine operation (gfx-pe.md 5). The software pipeline reads its own EFB memory, the shader
-	//! pipeline the GL render target.
+	//! engine operation (gfx-pe.md 5). The software pipeline reads its own EFB memory - the
+	//! sub-samples of a pixel resolved the way the copy path resolves them, see SoftResolve - and
+	//! the shader pipeline the GL render target.
 	//!
 	//! The alpha byte is part of what is read back, not just the colour: the copy engine's
 	//! single-channel formats (a8 and friends, gfx-pe.md 5.7) copy that plane into a texture, and
@@ -1522,7 +1618,7 @@ namespace GFX
 					}
 
 					int r, g, b, a;
-					SoftUnpackEfbColor(efb[(size_t)py * EfbStride + px], &r, &g, &b, &a);
+					SoftResolve(px, py, &r, &g, &b, &a);
 
 					p[0] = (uint8_t)r;
 					p[1] = (uint8_t)g;

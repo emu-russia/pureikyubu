@@ -48,6 +48,13 @@
 #define VI_CR_LE1(r)    ((r>>6)&3)      // to enable Display Latch Register 1
 #define VI_CR_FMT(r)    ((r>>8)&3)      // indicates current video format
 
+// Picture Configuration Register fields (VI_PICT_CR, 16-bit)
+#define VI_PICT_WPL(r)  (((r)>>8)&0x7f) // pixels of an XFB line, in 16-pixel units
+#define VI_PICT_STD(r)  ((r)&0xff)      // the same line, in 16-byte units (see XfbLineStride)
+
+// Horizontal Scaling Register fields (VI_HORZ_SCALE, 16-bit)
+#define VI_HS_EN        0x1000          // enables the horizontal scaler of the scanout
+
 // Display Position Register mask (for 32-bit register)
 #define VI_POS_VCT(r)   ((r>>16)&0x7ff) // vertical count (1...vcount in emu)
 #define VI_POS_HCT(r)   (r & 0x7ff)     // horizontal count (always 1 in emu)
@@ -101,6 +108,10 @@ namespace Flipper
 		volatile uint16_t    disp_cr;    // display configuration register
 		volatile uint16_t    vert_timing; // vertical timing register: the active line count is
 										  // `ACV` (bits 13:4), see ActiveLines()
+		volatile uint16_t    pict_cr;    // picture configuration register (VI_PICT_CR): the width
+										  // of the XFB in 16-pixel units (bits 8-14), see XfbWidth()
+		volatile uint16_t    horz_scale; // horizontal scaling register (VI_HORZ_SCALE): the scaler
+										  // enable is bit 12, see XfbScanWidth()
 		volatile uint32_t    tfbl;       // video buffer (top field)
 		volatile uint32_t    bfbl;       // video buffer (bottom field)
 		volatile VIPosition  pos;        // beam position
@@ -126,8 +137,11 @@ namespace Flipper
 		int         videoEncoderFuse;
 	};
 
-	// The XFB the video interface scans: 640 pixels wide (1280 bytes per line of packed YUV 4:2:2)
-	// and 480 lines high, which is the picture the emulator's window shows.
+	// The picture the video interface hands to the display: 640x480 in packed YUV 4:2:2, which is
+	// the render target of the emulator and the window it shows. The XFB the console scans is a
+	// picture of its own and can be narrower and packed differently (the bootrom's splash is 592
+	// pixels wide), so its geometry comes from the picture configuration register - see XfbWidth()
+	// and XfbLineStride().
 	#define VI_XFB_WIDTH 640
 	#define VI_XFB_HEIGHT 480
 
@@ -137,6 +151,15 @@ namespace Flipper
 
 		//! The number of XFB lines the VI scans out (the active picture of `VI_VERT_TIMING`).
 		uint32_t ActiveLines() const;
+
+		//! The width of the picture the VI scans, in pixels (VI_PICTURE_CFG, see the definition).
+		uint32_t XfbWidth() const;
+
+		//! The distance between two fetched lines of the XFB, in bytes (VI_PICTURE_CFG).
+		uint32_t XfbLineStride() const;
+
+		//! The columns of the window the picture covers (VI_HSCALE decides whether it is scaled).
+		uint32_t XfbScanWidth() const;
 
 		void YUVBlit(uint8_t* yuvbuf, RGB* dib);
 		void vi_set_timing();
@@ -151,10 +174,10 @@ namespace Flipper
 
 		/// <summary>
 		/// Write the video interface into the save state section: every register it keeps (the
-		/// display configuration, the vertical timing, the two field bases, the beam position,
-		/// the INT0 and display-latch registers, the video mode and its derived line count and
-		/// frame timing, the frame buffer enable and the frames scanned), plus the state of the
-		/// video-encoder strap the console is built with.
+		/// display configuration, the vertical timing, the picture configuration and the horizontal
+		/// scaler, the two field bases, the beam position, the INT0 and display-latch registers, the
+		/// video mode and its derived line count and frame timing, the frame buffer enable and the
+		/// frames scanned), plus the state of the video-encoder strap the console is built with.
 		/// </summary>
 		void SaveState(SaveStates::StateWriter& writer) const;
 

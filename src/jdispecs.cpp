@@ -1639,15 +1639,14 @@ namespace JdiSpecs
 
 		"gxpipeline":
 		{
-			"help": "Read or switch the GFX rendering pipeline (0 = shader backend, 1 = software, experimental)",
+			"help": "Read or switch the GFX rendering pipeline (0 = shader backend, 1 = software)",
 			"args": 0,
 			"hints": "[shader|soft]",
 			"usage": [
 				"Syntax: gxpipeline [shader|soft|0|1]\n",
 				"Without an argument the active pipeline is reported. With one, the emulator switches\n",
 				"between the OpenGL shader pipeline and the software (CPU) pipeline of the same GFX\n",
-				"blocks and stores the choice in the GFX_PIPELINE configuration variable. The software\n",
-				"pipeline is experimental: it renders correctly, but a few titles still have picture defects.\n",
+				"blocks and stores the choice in the GFX_PIPELINE configuration variable.\n",
 				"Example of use: gxpipeline soft\n"
 			],
 			"output": "Object with pipeline and name"

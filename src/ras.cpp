@@ -291,8 +291,11 @@ namespace GFX
 		return true;
 	}
 
-	//! Shade one covered pixel and hand it to the pixel engine.
-	void Rasterizer::SoftShadePixel(const SoftTriangle& tri, int px, int py, float sx, float sy)
+	//! Shade one covered pixel and hand it to the pixel engine, with the sub-sample mask the
+	//! fragment covers of the pixel (gfx-pe.md 4.5: the anti-aliased EFB writes the sub-samples the
+	//! mask marks and leaves the others alone).
+	void Rasterizer::SoftShadePixel(const SoftTriangle& tri, int px, int py, float sx, float sy,
+		uint32_t coverage)
 	{
 		SoftFragment f;
 		f.x = sx;
@@ -331,7 +334,7 @@ namespace GFX
 		if (!gfx->tev->SoftShade(f, rgba, &depth))
 			return;			// the alpha function discarded the fragment
 
-		gfx->pe->SoftWritePixel(px, py, rgba, depth);
+		gfx->pe->SoftWritePixel(px, py, rgba, depth, coverage);
 	}
 
 	void Rasterizer::SoftQuad(const SoftTriangle& tri, int qx, int qy)
@@ -341,6 +344,7 @@ namespace GFX
 		bool covered[4] = { false, false, false, false };
 		float evalx[4] = { 0, 0, 0, 0 };
 		float evaly[4] = { 0, 0, 0, 0 };
+		uint32_t coverage[4] = { 0, 0, 0, 0 };
 		uint32_t mask = 0;
 
 		for (int p = 0; p < 4; p++)
@@ -397,6 +401,7 @@ namespace GFX
 			mask |= (uint32_t)cov << (3 * p);
 
 			covered[p] = (cov != 0);
+			coverage[p] = (uint32_t)cov;
 
 			// The evaluation point of the pixel: a fully covered pixel at its centre, a partially
 			// covered one at one of its covered sub-samples (gfx-ras2.md 3.3 - "the pixel's 3-bit
@@ -413,7 +418,7 @@ namespace GFX
 			if (!covered[p])
 				continue;
 
-			SoftShadePixel(tri, qx + (p & 1), qy + (p >> 1), evalx[p], evaly[p]);
+			SoftShadePixel(tri, qx + (p & 1), qy + (p >> 1), evalx[p], evaly[p], coverage[p]);
 		}
 	}
 
