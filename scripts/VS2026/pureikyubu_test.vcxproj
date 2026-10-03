@@ -232,6 +232,9 @@
     <ClCompile Include="..\..\src\gfx.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\src\gfxdump.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\src\xf.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -280,6 +283,7 @@
     <ClInclude Include="..\..\src\hwprof.h" />
     <ClInclude Include="..\..\src\mcp.h" />
     <ClInclude Include="..\..\src\gfx.h" />
+    <ClInclude Include="..\..\src\gfxdump.h" />
     <ClInclude Include="..\..\src\cont.h" />
     <ClInclude Include="..\..\src\cp.h" />
     <ClInclude Include="..\..\src\xf.h" />

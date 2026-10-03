@@ -397,6 +397,8 @@ namespace GFX
 		size_t TextureDataSize(int id);
 		void UploadTexture(int id);
 		void ApplyTextureParams(int id);
+		//! Hand the image a map samples to the GFX command dump (gfxdump.h).
+		void AttachTextureSlice(int id);
 		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
 		void InvalidatePalettedTextures();
 

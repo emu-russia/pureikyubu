@@ -130,6 +130,12 @@ namespace GFX
 		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
 		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
 
+		// The palette bytes came from main memory, and the dump of the frame that loaded them
+		// carries them (gfxdump.h, "The RAM slices"): a paletted texture cannot be looked at
+		// without its palette.
+		if (gfx_dump != nullptr)
+			gfx_dump->RamSlice(addr, ptr, (size_t)cnt * 16 * 2, "TLUT");
+
 		// The decoded image of a paletted texture is a function of the palette bytes as well:
 		// remember that the palettes changed so that DecodeTexture converts those maps again even
 		// when the texture bytes themselves did not move.
@@ -913,6 +919,37 @@ namespace GFX
 		m->paramsDirty = false;
 	}
 
+	// Hand the image a texture map samples to the GFX command dump (gfxdump.h, "The RAM slices"). The
+	// GL image a map was decoded into frames ago does not say where those bytes live now, and the dump
+	// of a frame has to carry every image that frame was drawn with.
+	void TextureEngine::AttachTextureSlice(int id)
+	{
+		if (gfx_dump == nullptr || !gfx_dump->Capturing())
+			return;
+
+		int width = tx.teximg0[id].width + 1;
+		int height = tx.teximg0[id].height + 1;
+		uint32_t addr = tx.teximg3[id].base << 5;
+		size_t size = TextureDataSize(id);
+
+		if (width == 0 || height == 0 || size == 0)
+			return;
+
+		// The address and the size are guest data: the window has to be inside the RAM before a byte
+		// of it is copied into the dump.
+		if (!Verify::MainMemory(addr, size, Flipper::HW->mem->MIGetMemorySize()))
+			return;
+
+		const uint8_t* data = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
+		if (data == nullptr)
+			return;
+
+		char note[0x40];
+		sprintf(note, "texture map %i (%ix%i)", id, width, height);
+
+		gfx_dump->RamSlice(addr, data, size, note);
+	}
+
 	void TextureEngine::UpdateAndBindTextures()
 	{
 		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
@@ -952,7 +989,13 @@ namespace GFX
 				ApplyTextureParams(i);
 
 			if (m->valid)
+			{
+				// A map that is bound here is a map the draw samples, and the dump wants the bytes
+				// it samples out of main memory (see AttachTextureSlice).
+				AttachTextureSlice(i);
+
 				glBindTexture(GL_TEXTURE_2D, m->glTexture);
+			}
 			else
 				glBindTexture(GL_TEXTURE_2D, 0);
 		}
@@ -1462,6 +1505,11 @@ namespace GFX
 		if (src == nullptr)
 			return;
 
+		// The block the command streams into TMEM comes from main memory: it travels with the frame
+		// that loaded it (gfxdump.h, "The RAM slices").
+		if (gfx_dump != nullptr)
+			gfx_dump->RamSlice(base, src, (size_t)count * ((format == 3) ? 64 : 32), "texture block load");
+
 		// gfx-tc.md 4.2: a 32-bit texel needs a pair of cache lines (the AR and the GB half), which
 		// the two TMEM offsets name; every other format streams one line per count.
 		if (format == 3)
@@ -1500,6 +1548,10 @@ namespace GFX
 		const uint8_t* src = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(base);
 		if (src == nullptr)
 			return;
+
+		// The palette the command streams into TMEM comes from main memory (see SoftLoadBlock).
+		if (gfx_dump != nullptr)
+			gfx_dump->RamSlice(base, src, (size_t)count * 32, "TLUT load");
 
 		// TLUTs live in the upper half, addressed in 512-byte units (gfx-tc.md 3.1, 4.2). Each
 		// main-memory fetch carries sixteen 16-bit entries; the write path replicates every entry
