@@ -331,14 +331,32 @@ namespace Debug2
 			}
 			else if (c == '[')
 			{
-				// A link: the URL is dropped, the text stays (the debugger has no browser).
+				// A link: a target that names a command is a button (the front end runs it when it
+				// is clicked), any other URL is dropped - the debugger has no browser - and only the
+				// text stays.
 				size_t textEnd = text.find(']', i + 1);
 				if (textEnd != std::string::npos && (textEnd + 1) < n && text[textEnd + 1] == '(')
 				{
 					size_t urlEnd = text.find(')', textEnd + 2);
 					if (urlEnd != std::string::npos)
 					{
-						pending += text.substr(i + 1, textEnd - i - 1);
+						std::string target = text.substr(textEnd + 2, urlEnd - textEnd - 2);
+
+						if (target.compare(0, 4, "cmd:") == 0)
+						{
+							flushPending();
+
+							MdSpan button;
+							button.style = MdStyle::Link;
+							button.text = text.substr(i + 1, textEnd - i - 1);
+							button.ref = target.substr(4);
+							spans.push_back(button);
+						}
+						else
+						{
+							pending += text.substr(i + 1, textEnd - i - 1);
+						}
+
 						i = urlEnd + 1;
 						continue;
 					}
@@ -717,6 +735,16 @@ namespace Debug2
 		// The log is the artifact a session leaves behind.
 		if (!sessionPath.empty())
 		{
+			// The GFX command dump (`gfxdump`) is the other one: a machine that was captured keeps
+			// its last frame in the session folder, next to the log, so that the dump can be looked
+			// at after the session is closed. The command writes the files (and answers nothing at
+			// all when nothing was captured - the dump is a utility of the GFX subsystem and not of
+			// the debugger), and what it says goes into the log with everything else.
+			std::string dumpReport = JdiCommandToMarkdown("gfxdump save");
+
+			if (!dumpReport.empty())
+				AppendItem(log, dumpReport, ItemAlign::Left);
+
 			std::string logText = "# " + sessionPath + "\n\n";
 			for (size_t i = 0; i < log->ItemCount(); i++)
 			{
@@ -763,31 +791,49 @@ namespace Debug2
 	// the live panels of the machine sharing the space on the right as tabs. Only one of them has
 	// to be on the screen at a time, which is what the tabs are for.
 	//
+	// A GameCube session gets one more tab over the whole of that: the GFX command dump, which is
+	// a view of the machine rather than one of its devices, so it takes the whole window when it is
+	// selected (`commandDump`).
+	//
 	// The processor panels (registers, disassembly, memory) are the same three objects in every
 	// tree: the command that fills them is named by the machine (`regs` / `gbaregs`), so the
 	// refresh code below stays in one place.
-	void Debugger::BuildPanels(const char* machineTitle, size_t liveCount)
+	void Debugger::BuildPanels(const char* machineTitle, size_t liveCount, bool commandDump)
 	{
 		root.SetTitle(sessionPath);
-		root.SplitInto(Split::Vertical, 2);
 
-		Panel& messagePanel = root.Sub(0);
+		if (commandDump)
+		{
+			root.SplitInto(Split::Tabs, 2);
+			root.Sub(0).SetTitle("Debugger");
+			root.Sub(0).SplitInto(Split::Vertical, 2);
+		}
+		else
+		{
+			root.SplitInto(Split::Vertical, 2);
+		}
+
+		Panel& main = commandDump ? root.Sub(0) : root;
+
+		Panel& messagePanel = main.Sub(0);
 		messagePanel.SetTitle("Debug Messages");
 		messagePanel.SetCmdline(true);
 
-		Panel& right = root.Sub(1);
+		Panel& right = main.Sub(1);
 		right.SetTitle(machineTitle);
 		right.SplitInto(Split::Tabs, liveCount);
 	}
 
 	void Debugger::BuildGameCubePanels()
 	{
-		// Registers, disassembly, memory, the Flipper subsystems and the profiler.
-		BuildPanels("GameCube", 4 + _countof(FlipperPanels));
+		// Registers, disassembly, memory, the Flipper subsystems and the profiler, with the GFX
+		// command dump as a tab of its own above all of them.
+		BuildPanels("GameCube", 4 + _countof(FlipperPanels), true);
 
-		Panel& right = root.Sub(1);
+		Panel& main = root.Sub(0);
+		Panel& right = main.Sub(1);
 
-		log = &root.Sub(0);
+		log = &main.Sub(0);
 
 		regs = &right.Sub(0);
 		regs->SetTitle("Registers");
@@ -809,17 +855,28 @@ namespace Debug2
 		profile = &right.Sub(3 + subsystemCount);
 		profile->SetTitle("Profiler");
 
+		// The dump panel is a tab set of its own: the capture state and the frames, the decoded
+		// commands of the selected frame and its raw stream. One tab per view, all three filled
+		// from the commands of the module (gfxdump.cpp).
+		gfxDump = &root.Sub(1);
+		gfxDump->SetTitle("GFX Dump");
+		gfxDump->SplitInto(Split::Tabs, 3);
+		gfxDump->Sub(0).SetTitle("Frames");
+		gfxDump->Sub(1).SetTitle("Commands");
+		gfxDump->Sub(2).SetTitle("Hex");
+
 		AppendItem(log, "**debugui2**: the new debugger is running. The command line is at the bottom of this panel.\n", ItemAlign::Left);
 		AppendItem(regs, "_Load an image to see the live registers._\n", ItemAlign::Left);
 		AppendItem(disasm, "_Load an image to see the live disassembly._\n", ItemAlign::Left);
 		AppendItem(memdump, "_Load an image to see the physical memory._\n", ItemAlign::Left);
 		AppendItem(profile, "_Load an image to see the HW interface profile._\n", ItemAlign::Left);
+		AppendItem(&gfxDump->Sub(0), "_The GFX command dump is not running yet._\n", ItemAlign::Left);
 	}
 
 	void Debugger::BuildGbaPanels()
 	{
 		// Registers, disassembly, memory and the portable devices.
-		BuildPanels("Game Boy Advance", 3 + _countof(GbaPanels));
+		BuildPanels("Game Boy Advance", 3 + _countof(GbaPanels), false);
 
 		Panel& right = root.Sub(1);
 
@@ -850,7 +907,7 @@ namespace Debug2
 
 	void Debugger::BuildGbPanels()
 	{
-		BuildPanels("Game Boy", 3 + _countof(GbPanels));
+		BuildPanels("Game Boy", 3 + _countof(GbPanels), false);
 
 		Panel& right = root.Sub(1);
 
@@ -1240,6 +1297,13 @@ namespace Debug2
 			profileRefresh = NowMs();
 			RefreshFromMarkdown(profile, "hwprofile image");
 		}
+
+		// 2.6: the GFX command dump. The three tabs are three views of the same frame: the capture
+		// state with the history, the decoded commands of the selected frame and its raw stream
+		// with the RAM slices it was executed with.
+		RefreshFromMarkdown(&gfxDump->Sub(0), "gfxdump frames");
+		RefreshFromMarkdown(&gfxDump->Sub(1), "gfxdump commands");
+		RefreshFromMarkdown(&gfxDump->Sub(2), "gfxdump hex");
 	}
 
 	void Debugger::RefreshGbaPanels()

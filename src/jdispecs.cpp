@@ -1662,6 +1662,29 @@ namespace JdiSpecs
 				"Example of use: gxtexdump 0 map0.png\n"
 			],
 			"output": "Object with the file name and the size of the saved image"
+		},
+
+		"gfxdump":
+		{
+			"help": "Record the GFX command stream (what the CP pushes into the XF) and show the last frames of it",
+			"args": 0,
+			"hints": "[frames|commands|hex|capture|select|clear|save] [id]",
+			"usage": [
+				"Syntax: gfxdump [frames|commands|hex|capture|select|clear|save] [id]\n",
+				"Without a subcommand the frame list is answered: whether the recording is on, and the\n",
+				"frames the history holds. The dump starts at the XF, so the CP's own state is not part\n",
+				"of it (the CP is the producer of the stream).\n",
+				"  frames              the capture state and the frames (the \"Frames\" tab)\n",
+				"  commands [id]       the decoded commands of one frame (the \"Commands\" tab)\n",
+				"  hex [id]            the raw stream and the RAM slices of one frame (the \"Hex\" tab)\n",
+				"  capture [on|off|toggle]  start or stop the recording (the capture button)\n",
+				"  select <id>         the frame the panels look at\n",
+				"  clear               drop the history\n",
+				"  save [id]           write the frame into the session folder: the stream, the RAM slices\n",
+				"                      and the decoded listing\n",
+				"Example of use: gfxdump capture on\n"
+			],
+			"output": "Object with the Markdown the debugger shows in the GFX Dump panel"
 		}
 	}
 }

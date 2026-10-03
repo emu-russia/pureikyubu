@@ -59,6 +59,11 @@ namespace GFX
 		JDI::Hub.AddCmd("gxreset", CmdGxReset);
 		JDI::Hub.AddCmd("gxpipeline", CmdGxPipeline);
 		JDI::Hub.AddCmd("gxtexdump", CmdGxTexDump);
+
+		// The GFX command dump (gfxdump.cpp) is the other half of the same node: it records what the
+		// CP pushes into the XF, which is the stream every one of the commands above describes the
+		// state of.
+		GfxDump::Reflector();
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -939,6 +944,10 @@ namespace GFX
 		tx = new TextureEngine(config, this);
 		tev = new TextureEnvironmentUnit(config, this);
 
+		// The command dump lives exactly as long as the pipeline it records (gfxdump.h): the XF and
+		// the texture engine hand it their stream from here on.
+		gfx_dump = new GfxDump();
+
 		Report(Channel::GP, "GFX pipeline: %s\n",
 			SoftPipeline() ? "software (CPU, issue #384)" : "shader (OpenGL)");
 
@@ -952,6 +961,11 @@ namespace GFX
 	{
 		JDI::Hub.RemoveNode(L"GFX_JDI_JSON");
 		gfx_jdi_instance = nullptr;
+
+		// The dump is gone before the blocks that feed it: a machine that is torn down stops
+		// recording with it.
+		delete gfx_dump;
+		gfx_dump = nullptr;
 
 		GL_CloseSubsystem();
 

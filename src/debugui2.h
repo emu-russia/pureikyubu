@@ -62,6 +62,12 @@ an object with a `markdown` member and the debugger puts it into a panel as a ne
 artifacts a command creates (binaries, PNGs) go next to the session, and image references in the
 Markdown are resolved against the session folder.
 
+A Markdown link whose target starts with `cmd:` is a button rather than a link: the front end draws
+it as a button and a click runs the command. It is how a panel offers an action without a toolkit -
+the capture button of the GFX command dump is one (`gfxdump.h`) - and it keeps the panel a live view
+of the same command line the user types into: the button only sends the command, the debugger
+answers it like any other and the panel is refreshed from the answer.
+
 ## Text on GL
 
 The GL front end does not use a UI toolkit. It rasterizes the glyphs it needs out of a TrueType
@@ -109,6 +115,7 @@ namespace Debug2
 		Bullet,				// a list item
 		Rule,				// a horizontal rule (the text is empty)
 		Image,				// ![alt](file) - the file is relative to the session folder
+		Link,				// [text](cmd:command) - a button, the command is in MdSpan::ref
 	};
 
 	// A run of text with one style.
@@ -117,7 +124,7 @@ namespace Debug2
 		MdStyle style = MdStyle::Norm;
 		int level = 0;				// heading level, 1..6
 		std::string text;			// the text itself, the markup is already stripped
-		std::string ref;			// the image file name (MdStyle::Image)
+		std::string ref;			// the image file name (MdStyle::Image) or the command (MdStyle::Link)
 	};
 
 	// One line of the view. A line is a sequence of styled runs.
@@ -304,6 +311,11 @@ namespace Debug2
 		// The panel of the HW interface profile, which is part of a GameCube session only.
 		Panel* profile = nullptr;
 
+		// The GFX command dump (gfxdump.cpp), which is part of a GameCube session only. It is a tab
+		// of its own next to the whole debugger, because it is a view of the machine and not one of
+		// the machine's devices.
+		Panel* gfxDump = nullptr;
+
 		Machine machine = Machine::GameCube;
 
 		std::string sessionPath;
@@ -348,7 +360,7 @@ namespace Debug2
 		void Publish();
 
 		// The three panel trees (one per machine) and the refresh of the live panels of each.
-		void BuildPanels(const char* machineTitle, size_t liveCount);
+		void BuildPanels(const char* machineTitle, size_t liveCount, bool commandDump);
 		void BuildGameCubePanels();
 		void BuildGbaPanels();
 		void BuildGbPanels();

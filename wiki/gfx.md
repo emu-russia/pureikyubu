@@ -44,6 +44,9 @@ own register; a block that replaced the whole register instead made the masked w
 picture, which is what turned the sky of Zelda: The Wind Waker's title screen black (the blend write of
 the library carried the colour update bits away, and everything drawn after it wrote no colour at all).
 
+The whole stream can be recorded and looked at command by command: `gfxdump` (see
+[The GFX command dump](#the-gfx-command-dump-gfxdump)) keeps the last frames of it, decoded and raw.
+
 ### XF (vertex shader)
 
 - geometry (modelview) and texture matrix multiplies against the matrix RAM (`matrixMem`, 64 rows x 4 words) and
@@ -282,8 +285,61 @@ state is reachable from the debugger and from the JDI server (issue #87):
 | `gxpixel <x> <y>` | Read one EFB pixel: colour and depth |
 | `gxreset` | Reset the GFX register state (the software equivalent of a GX reset) |
 | `gxpipeline [shader\|soft]` | Report or switch the rendering pipeline (`GFX_PIPELINE`) |
+| `gfxdump [...]` | The GFX command dump: record what the CP pushes into the XF and look at the last frames of it (see below) |
 
 The commands that read the EFB (`gxshot`, `gxpixel`, `gxtexdump`) need a current OpenGL context, so
 they report an error instead of crashing when they are called from a thread that does not drive the
 frame loop.
+
+### The GFX command dump (`gfxdump`)
+
+`src/gfxdump.cpp` records the graphics command stream as it enters the Transform Unit and keeps the
+last frames of it, so that a picture that came out wrong can be looked at as the sequence of commands
+that produced it. The CP is the producer of the stream and its own state (the VCD/VAT registers, the
+attribute arrays, the FIFO pointers) is not part of it: **the dump starts where the XF starts**.
+
+What one frame of the dump holds:
+
+| Record | What it is |
+|---|---|
+| `xf.write` | An XF register block load (`xf_cmd_regload` + the data words) |
+| `xf.read` | An XF register read (`xf_cmd_regread`) |
+| `bp.write` | A bypass register word the XF forwards to the SU, with the BP write mask that preceded it |
+| `draw` | A draw command with the vertex rows that followed it (position, normal, binormal, tangent, two colours, eight texture pairs, two matrix index words) |
+
+The dump is cut into frames by the GFX frame counter, and the history is a ring: the oldest frame is
+dropped when a new one arrives (`GfxDump::MaxFrames`), a frame that passes the byte limit is cut off
+and marked as truncated (`GfxDump::FrameByteLimit`). The stream of a frame is a self-describing
+sequence of big-endian 32-bit words, so a file written by `gfxdump save` can be read back by anything
+and does not depend on the host's word order or on the struct layout of the build.
+
+Some of the commands cannot be executed without the guest RAM they read, and that RAM is not part of
+the stream: a draw samples a texture (and, for a paletted one, the TLUT) that was programmed by a
+register write long before it. The texture engine hands every such read to the dump
+(`TextureEngine::AttachTextureSlice`, `LoadTlut`, `SoftLoadBlock`, `SoftLoadTlut`), and the bytes are
+copied into the frame that needed them, so a dump is self-contained even though the guest overwrites
+the texture in the next frame.
+
+| Command | What it does |
+|---|---|
+| `gfxdump [frames]` | The capture state and the frames the history holds (the "Frames" tab) |
+| `gfxdump commands [id]` | The decoded commands of one frame (the "Commands" tab) |
+| `gfxdump hex [id]` | The raw stream and the RAM slices of one frame (the "Hex" tab) |
+| `gfxdump capture [on\|off\|toggle]` | Start or stop the recording (the capture button) |
+| `gfxdump select <id>` | The frame the panels look at |
+| `gfxdump clear` | Drop the history |
+| `gfxdump save [id]` | Write the frame into the debug session folder: the stream, the RAM slices and the decoded listing |
+
+The debugger has a panel for it: **GFX Dump** is a tab of its own next to the whole debugger
+(`debugui2.cpp`), because it is a view of the machine and not one of its devices. The panel is filled
+from those commands, one tab per answer ("Frames", "Commands", "Hex"), so the same report is
+available from the command line; the capture button is a Markdown `cmd:` link that the front end
+draws as a button and runs through the same JDI path a typed command takes. The dump is an artifact of
+the session: `gfxdump save` writes into the session folder, and the session saves the last frame next
+to `log.md` when it is closed.
+
+The decoded listing prints a vertex row with the attributes the vertex specification
+(`XF_INVTXSPEC`) of the draw's state allows - a vertex row carries every attribute the hardware has,
+and the ones the draw's format did not supply hold whatever the CP left in the row. The raw stream
+holds the row whole, and `gfxdump save` writes a listing where every field is printed.
 

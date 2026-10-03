@@ -113,6 +113,7 @@
 #include "dvddebug.h"
 
 #include "gfx.h"
+#include "gfxdump.h"
 #include "cp.h"
 #include "ai.h"
 #include "vi.h"

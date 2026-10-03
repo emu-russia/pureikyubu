@@ -80,6 +80,10 @@ namespace Debug2
 	static const uint32_t ColCmdBg = 0xFF141414;
 	static const uint32_t ColCmdText = 0xFFFFFFFF;
 	static const uint32_t ColCmdHint = 0xFF6A6A6A;
+	static const uint32_t ColButtonBg = 0xFF0E639C;	// a `cmd:` link: a button the front end runs
+	static const uint32_t ColButtonHover = 0xFF1177BB;
+	static const uint32_t ColButtonBorder = 0xFF3D8FD1;
+	static const uint32_t ColButtonText = 0xFFFFFFFF;
 
 	static void UnpackColor(uint32_t color, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a)
 	{
@@ -208,6 +212,7 @@ namespace Debug2
 	{
 		MdStyle style = MdStyle::Norm;
 		std::string text;
+		std::string ref;			// the command of a `cmd:` link (MdStyle::Link)
 	};
 
 	// One line as it ends up on the screen: the runs of a Markdown line, already wrapped.
@@ -246,6 +251,14 @@ namespace Debug2
 		size_t index = 0;
 	};
 
+	// The rectangle of one button (a Markdown `cmd:` link), kept from the layout so that a click can
+	// run the command it stands for.
+	struct ButtonHit
+	{
+		Rect rect;
+		std::string command;
+	};
+
 	struct ImageTexture
 	{
 		GLuint texture = 0;
@@ -259,6 +272,7 @@ namespace Debug2
 	static const float ScrollbarWidth = 6.0f;
 	static const float ScrollbarGap = 3.0f;
 	static const float TabPadding = 7.0f;
+	static const float ButtonPadding = 6.0f;	//!< the air on both sides of a button's caption
 
 
 	// ----------------------------------------------------------------------------------------
@@ -314,6 +328,8 @@ namespace Debug2
 		std::map<const Panel*, std::string> panelKeys;
 		std::map<const Panel*, ScrollGeom> scrollGeoms;
 		std::vector<TabHit> tabHits;
+		std::vector<ButtonHit> buttonHits;
+		Rect buttonClip;					//!< the area of the panel being drawn: a button outside it is not on the screen
 		std::map<std::string, ImageTexture> images;
 
 		// The view of the last frame. It is kept alive so that a mouse event can walk the tree
@@ -337,6 +353,8 @@ namespace Debug2
 		float CharAdvance(int codepoint);
 		float CodepointAdvance(uint32_t codepoint);
 		float MeasureText(const std::string& text);
+		//! The room a run takes on the line: a button adds the air around its caption.
+		float RunWidth(const Run& run);
 
 		// ---- the batch ----
 
@@ -558,6 +576,17 @@ namespace Debug2
 		return width;
 	}
 
+	// A button is a run of its own: the caption plus the air on both sides of it.
+	float GlUi::RunWidth(const Run& run)
+	{
+		float width = MeasureText(run.text);
+
+		if (run.style == MdStyle::Link)
+			width += ButtonPadding * 2;
+
+		return width;
+	}
+
 
 	// ----------------------------------------------------------------------------------------
 	// The batch
@@ -659,6 +688,30 @@ namespace Debug2
 		for (size_t i = 0; i < runs.size(); i++)
 		{
 			const Run& run = runs[i];
+
+			// A `cmd:` link is a button: it is drawn as one and remembered so that a click can run
+			// the command it stands for (`debugui2.h`). Only the buttons of the panel being drawn
+			// are remembered, and only while they are inside its visible area.
+			if (run.style == MdStyle::Link)
+			{
+				Rect box = { x, y, RunWidth(run), lineHeight };
+				bool hot = box.Contains(mouseX, mouseY);
+
+				if (buttonClip.Contains(box.x, box.y) && buttonClip.Contains(box.Right() - 1, box.Bottom() - 1))
+				{
+					ButtonHit hit;
+					hit.rect = box;
+					hit.command = run.ref;
+					buttonHits.push_back(hit);
+				}
+
+				FillRect(box, hot ? ColButtonHover : ColButtonBg);
+				FrameRect(box, ColButtonBorder, 1.0f);
+				DrawText(x + ButtonPadding, y, run.text, ColButtonText);
+
+				x += box.w;
+				continue;
+			}
 
 			uint32_t color = ColText;
 
@@ -791,6 +844,36 @@ namespace Debug2
 			{
 				if (mdLine.spans[s].style == MdStyle::Image)
 					continue;
+
+				// A button is a piece of its own: it is not split at spaces and it never wraps in
+				// the middle (a caption that does not fit is left to run over the edge).
+				if (mdLine.spans[s].style == MdStyle::Link)
+				{
+					const std::string& caption = mdLine.spans[s].text;
+
+					Run button;
+					button.style = MdStyle::Link;
+					button.text = caption;
+					button.ref = mdLine.spans[s].ref;
+
+					float width = MeasureText(caption) + ButtonPadding * 2;
+
+					if (!current.empty() && (x + width) > maxWidth)
+					{
+						VisualLine wrapped;
+						wrapped.runs = current;
+						wrapped.height = lineHeight;
+						lines.push_back(wrapped);
+
+						current.clear();
+						x = 0;
+					}
+
+					current.push_back(button);
+					x += width;
+					anything = true;
+					continue;
+				}
 
 				const std::string& text = mdLine.spans[s].text;
 
@@ -952,7 +1035,7 @@ namespace Debug2
 			{
 				float width = 0;
 				for (size_t r = 0; r < line.runs.size(); r++)
-					width += MeasureText(line.runs[r].text);
+					width += RunWidth(line.runs[r]);
 
 				float x = (align == ItemAlign::Right) ? (content.Right() - width) : content.x;
 
@@ -1179,7 +1262,7 @@ namespace Debug2
 					{
 						float lw = 0;
 						for (size_t r = 0; r < itemLines[i][l].runs.size(); r++)
-							lw += MeasureText(itemLines[i][l].runs[r].text);
+							lw += RunWidth(itemLines[i][l].runs[r]);
 						width = my_max(width, lw);
 					}
 					positions[i] = x;
@@ -1198,7 +1281,7 @@ namespace Debug2
 					{
 						float lw = 0;
 						for (size_t r = 0; r < itemLines[i][l].runs.size(); r++)
-							lw += MeasureText(itemLines[i][l].runs[r].text);
+							lw += RunWidth(itemLines[i][l].runs[r]);
 						width = my_max(width, lw);
 					}
 					x -= width;
@@ -1212,6 +1295,10 @@ namespace Debug2
 		// Everything that was emitted so far (the frames and the titles) is drawn before the
 		// scissor box of this panel is set, so that it is not clipped by it.
 		FlushBatch();
+
+		// The buttons drawn below belong to this panel: a button that the scroll has pushed out of
+		// the area is not on the screen and is not to be clicked.
+		buttonClip = itemArea;
 
 		glEnable(GL_SCISSOR_TEST);
 		glScissor((GLint)itemArea.x, (GLint)(viewportHeight - itemArea.Bottom()),
@@ -1454,7 +1541,20 @@ namespace Debug2
 
 	void GlUi::MouseDown(float x, float y)
 	{
-		// A tab takes the click first: it is the only thing in a header that reacts to one.
+		// A button runs the command it stands for: it goes to the debugger through the same sink the
+		// command line uses, so a click and a typed command are the same thing (`debugui2.h`).
+		for (size_t i = 0; i < buttonHits.size(); i++)
+		{
+			if (!buttonHits[i].rect.Contains(x, y))
+				continue;
+
+			if (sink != nullptr && !buttonHits[i].command.empty())
+				sink->OnUiCommand(buttonHits[i].command);
+
+			return;
+		}
+
+		// A tab takes the click next: it is the only thing in a header that reacts to one.
 		for (size_t i = 0; i < tabHits.size(); i++)
 		{
 			if (!tabHits[i].rect.Contains(x, y))
@@ -1806,6 +1906,7 @@ namespace Debug2
 			panelKeys.clear();
 			scrollGeoms.clear();
 			tabHits.clear();
+			buttonHits.clear();
 
 			BeginBatch(width, height);
 			FillRect({ 0, 0, (float)width, (float)height }, ColWindowBg);

@@ -1646,6 +1646,10 @@ void main()
 	// pipeline: the vertex stream that it produces leaves it towards the Setup Unit.
 	// -------------------------------------------------------------------------------------------
 
+	// Every word the CP pushes into the XF is also what the GFX command dump records (gfxdump.h):
+	// the hooks below are the boundary between the producer and the pipeline, which is where the
+	// dump starts. The methods themselves are unchanged - a recorded word is one the XF really got.
+
 	bool TransformUnit::CPReady()
 	{
 		// The XF takes a word every cycle; only a read-back value that the CP has not taken yet
@@ -1655,6 +1659,9 @@ void main()
 
 	void TransformUnit::CPRegLoadBegin(size_t startIdx, size_t amount)
 	{
+		if (gfx_dump != nullptr)
+			gfx_dump->RegLoadBegin(startIdx, amount);
+
 		xfLoadIdx = startIdx;
 		xfLoadAmount = amount;
 	}
@@ -1668,12 +1675,18 @@ void main()
 			return;
 		}
 
+		if (gfx_dump != nullptr)
+			gfx_dump->RegLoadData(value);
+
 		xfLoadAmount--;
 		WriteXFReg(xfLoadIdx++, value);
 	}
 
 	void TransformUnit::CPRegRead(size_t index)
 	{
+		if (gfx_dump != nullptr)
+			gfx_dump->RegRead(index);
+
 		xfRdData = ReadXFReg(index);
 		xfRdValid = true;
 	}
@@ -1690,6 +1703,9 @@ void main()
 
 	void TransformUnit::CPSuCommand(size_t index, uint32_t value, uint32_t mask)
 	{
+		if (gfx_dump != nullptr)
+			gfx_dump->SuRegWrite(index, value, mask);
+
 		// The XF does not interpret the bypass words: they are forwarded to the SU verbatim, together
 		// with the write mask of the BP mask register that may precede them (GDTev.h SS_MASK).
 		gfx->su->loadSUReg(index, value, mask);
@@ -1705,6 +1721,9 @@ void main()
 
 	void TransformUnit::CPDrawBegin(RAS_Primitive prim, size_t vtx_num)
 	{
+		if (gfx_dump != nullptr)
+			gfx_dump->DrawBegin(prim, vtx_num);
+
 		if (gfx->SoftPipeline())
 		{
 			gfx->su->SoftBeginPrimitive(prim, vtx_num);
@@ -1716,6 +1735,9 @@ void main()
 
 	void TransformUnit::CPVertex(const Vertex* v)
 	{
+		if (gfx_dump != nullptr)
+			gfx_dump->DrawVertex(v);
+
 		if (gfx->SoftPipeline())
 		{
 			// The software XF transforms the vertex on the way through (the shader pipeline lets
@@ -1731,6 +1753,9 @@ void main()
 
 	void TransformUnit::CPDrawEnd()
 	{
+		if (gfx_dump != nullptr)
+			gfx_dump->DrawEnd();
+
 		if (gfx->SoftPipeline())
 		{
 			gfx->su->SoftEndPrimitive();
