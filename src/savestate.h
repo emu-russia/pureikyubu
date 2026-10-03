@@ -54,7 +54,7 @@ namespace SaveStates
 	/// misread (adding a member to a device is enough - the section length check would catch it,
 	/// but the version makes the reason readable).
 	/// </summary>
-	const uint32_t FormatVersion = 1;
+	const uint32_t FormatVersion = 2;
 
 	/// <summary>The eight bytes every state image starts with ("PSAVEST" and a NUL).</summary>
 	extern const uint8_t Magic[8];

@@ -1136,9 +1136,16 @@ namespace GFX
 				tx.invtags = MergeBpWriteMask(tx.invtags, value, mask);
 				// The hardware's "the texture bytes changed" command (GXInvalidateTexAll). The
 				// backend decodes from main memory on demand and otherwise keeps the decoded image,
-				// so every map has to be decoded again.
+				// so every map has to be decoded again. The software texture unit reads TMEM through
+				// the tag cache of the hardware-managed images, so the tags go as well: a title that
+				// rewrites a texture in main memory and invalidates the cache with this command (the
+				// THP movie player does that with every frame) left every line the cache had already
+				// fetched serving the frame before it.
 				for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 					texMap[i].dirty = true;
+
+				for (size_t s = 0; s < _countof(softCacheTags); s++)
+					softCacheTags[s].valid = false;
 				return;
 
 			case TX_PERFMODE_ID:
@@ -1302,12 +1309,9 @@ namespace GFX
 		// hardware-managed images were fetched into.
 		writer.Values(tmem);
 
-		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		for (size_t s = 0; s < _countof(softCacheTags); s++)
 		{
-			for (size_t s = 0; s < _countof(softCacheTags[i]); s++)
-			{
-				writer.Fields(softCacheTags[i][s].line, softCacheTags[i][s].valid);
-			}
+			writer.Fields(softCacheTags[s].line, softCacheTags[s].valid);
 		}
 	}
 
@@ -1350,12 +1354,9 @@ namespace GFX
 			}
 		}
 
-		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		for (size_t s = 0; s < _countof(softCacheTags); s++)
 		{
-			for (size_t s = 0; s < _countof(softCacheTags[i]); s++)
-			{
-				reader.Fields(softCacheTags[i][s].line, softCacheTags[i][s].valid);
-			}
+			reader.Fields(softCacheTags[s].line, softCacheTags[s].valid);
 		}
 
 		// A decoded map is a cache of the registers, the palette generation and the texture bytes
@@ -1401,13 +1402,10 @@ namespace GFX
 		else
 			memset(tmem.data(), 0, tmem.size() * sizeof(uint16_t));
 
-		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
+		for (size_t s = 0; s < _countof(softCacheTags); s++)
 		{
-			for (size_t s = 0; s < _countof(softCacheTags[i]); s++)
-			{
-				softCacheTags[i][s].line = 0xFFFFFFFF;
-				softCacheTags[i][s].valid = false;
-			}
+			softCacheTags[s].line = 0xFFFFFFFF;
+			softCacheTags[s].valid = false;
 		}
 	}
 
@@ -1428,6 +1426,24 @@ namespace GFX
 	{
 		for (int k = 0; k < 16; k++)
 			SoftTmemWord(line, k) = (uint16_t)(((uint16_t)data[k * 2] << 8) | data[k * 2 + 1]);
+	}
+
+	//! A pre-load wrote the TMEM lines `line` .. `line + count - 1`. The tag cache of the
+	//! hardware-managed images keeps its lines in TMEM as well (one fixed region, see SoftCacheBase),
+	//! and a load that lands on that region overwrites a slot the cache still calls valid: the bytes
+	//! in it are not the line its tag names any more, and no fetch can tell. The slots the load
+	//! touched are dropped here, so the next fetch of them reads main memory again.
+	void TextureEngine::SoftCacheDrop(uint32_t line, uint32_t count)
+	{
+		for (uint32_t i = 0; i < count; i++)
+		{
+			uint32_t l = line + i;
+
+			if (l < SoftCacheBase || l >= SoftCacheBase + SoftCacheLines)
+				continue;
+
+			softCacheTags[l - SoftCacheBase].valid = false;
+		}
 	}
 
 	void TextureEngine::SoftLoadBlock(uint32_t base, uint32_t off0, uint32_t off1, uint32_t count,
@@ -1455,6 +1471,9 @@ namespace GFX
 				SoftWriteLine((off0 + i) & 0x7FFF, src + (size_t)i * 64);
 				SoftWriteLine((off1 + i) & 0x7FFF, src + (size_t)i * 64 + 32);
 			}
+
+			SoftCacheDrop(off0, count);
+			SoftCacheDrop(off1, count);
 		}
 		else
 		{
@@ -1462,6 +1481,8 @@ namespace GFX
 			{
 				SoftWriteLine((off0 + i) & 0x7FFF, src + (size_t)i * 32);
 			}
+
+			SoftCacheDrop(off0, count);
 		}
 	}
 
@@ -1598,18 +1619,27 @@ namespace GFX
 		uint32_t memLine = byteAddr >> 5;
 
 		uint32_t slot = (memLine ^ (uint32_t)(level * 0x9E3779B1u)) % SoftCacheLines;
-		SoftCacheTag* tag = &softCacheTags[map][slot & (_countof(softCacheTags[map]) - 1)];
+		SoftCacheTag* tag = &softCacheTags[slot];
 
-		if (!tag->valid || tag->line != memLine)
+		const uint8_t* src = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(byteAddr);
+		if (src == nullptr)
+			return false;
+
+		// The tag names the main-memory line the slot holds, and a title that decodes a new picture
+		// into the buffer it already used rewrites those bytes without moving them: the hardware
+		// hears about that through the invalidate command (TX_INVTAGS), and the software model -
+		// which reads main memory directly and has no bus to snoop - compares the bytes as well, so
+		// that a line rewritten under a tag is fetched again rather than served a frame late. The
+		// GL path's decode cache makes the same check with the same hash.
+		uint64_t hash = HashTextureData(src, 32);
+
+		if (!tag->valid || tag->line != memLine || tag->hash != hash)
 		{
-			const uint8_t* src = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(byteAddr);
-			if (src == nullptr)
-				return false;
-
 			SoftWriteLine(SoftCacheBase + slot, src);
 
 			tag->valid = true;
 			tag->line = memLine;
+			tag->hash = hash;
 		}
 
 		*line = SoftCacheBase + slot;

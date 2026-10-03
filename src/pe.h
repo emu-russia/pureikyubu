@@ -532,13 +532,33 @@ namespace GFX
 		// presented: the XFB in main memory is what the console shows.
 		// -------------------------------------------------------------------------------------
 
-		//! The EFB memory array (gfx-pe.md 3.3). It is addressed like the CPU window of the
-		//! hardware: the word of the colour pixel (x, y) sits at `y * 1024 + x` and the address
-		//! bit 22 selects the Z plane (`PixelEngine::EfbZPlane` words into the array). The colour
-		//! word is the CPU view of the eDRAM lane - `{blue, green, red, alpha}` from the low byte
-		//! up - and the Z word carries the 24-bit depth.
+		//! The EFB memory array (gfx-pe.md 3.3, 4.5). Its planes - the colour and the Z of every
+		//! sub-sample of a pixel - are packed one after another, each of them `soft_h` rows of the
+		//! 1K-pixel stride of the hardware (`PixelEngine::EfbStride`, see `SoftSampleIndex`). The
+		//! colour word is the CPU view of the eDRAM lane - `{blue, green, red, alpha}` from the low
+		//! byte up - and the Z word carries the 24-bit depth.
 		std::vector<uint32_t> efb;
 		int soft_w = 0, soft_h = 0;
+
+		//! The word of the colour of sub-sample `s` of the pixel (x, y), and the word of its Z.
+		size_t SoftSampleIndex(int x, int y, int s) const;
+		size_t SoftSampleZIndex(int x, int y, int s) const;
+
+		//! The sub-samples the EFB holds for a pixel: the three of the anti-aliased pixel type, one
+		//! for every other type (gfx-pe.md 4.5, 8.1). The pixel type is a register, so a title that
+		//! switches it mid-frame reads the samples it has drawn so far.
+		int EfbSampleCount() const;
+
+		//! The colour of a pixel as the copy path reads it: the sub-samples of the anti-aliased EFB
+		//! are resolved by averaging them (gfx-pe.md 5.3); a point-sampled EFB holds the one sample
+		//! the pixel has.
+		void SoftResolve(int x, int y, int* r, int* g, int* b, int* a) const;
+
+		//! Depth-test, blend and write one sub-sample of the pixel into the EFB (the RMW datapath of
+		//! gfx-pe.md 4.1-4.3). The fragment reaches every sub-sample with the same colour and Z, so
+		//! the caller walks the mask and this writes one of them. Returns false when the depth test
+		//! rejected it.
+		bool SoftWriteSample(int x, int y, int s, const int src[4], int z);
 
 		void SoftAlloc();
 		void SoftClearRect(int x, int y, int w, int h, uint32_t rgba, uint32_t z);
@@ -594,12 +614,14 @@ namespace GFX
 		//! copies of the previous frame asked for and is the equivalent of the GL frame begin.
 		void SoftBeginFrame();
 
-		//! Depth test, blend and write one shaded sample into the software EFB (the RMW datapath of
-		//! gfx-pe.md 4). Returns false when the depth test rejected the sample or the coordinate is
-		//! outside the EFB.
-		bool SoftWritePixel(int x, int y, const float rgba[4], float depth);
+		//! Depth test, blend and write one shaded fragment into the software EFB (the RMW datapath
+		//! of gfx-pe.md 4), into the sub-samples the coverage mask marks. Returns false when the
+		//! depth test rejected every one of them or the coordinate is outside the EFB.
+		bool SoftWritePixel(int x, int y, const float rgba[4], float depth, uint32_t coverage);
 
-		//! The software EFB of the debugger's `gxpixel`: the colour and the depth of one pixel.
+		//! The software EFB of the debugger's `gxpixel`: the colour and the depth of one pixel. The
+		//! CPU of the hardware reads the first sub-sample of an anti-aliased pixel (gfx-pe.md 4.5, 
+		//! 8.3), which is what this answers with.
 		bool SoftPixel(int x, int y, uint8_t rgba[4], uint32_t* z);
 
 

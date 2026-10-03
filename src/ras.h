@@ -113,8 +113,9 @@ namespace GFX
 		//! Rasterize one quad of the triangle: the coverage mask and the shaded pixels.
 		void SoftQuad(const SoftTriangle& tri, int qx, int qy);
 
-		//! Shade one covered pixel of a quad and hand it to the pixel engine.
-		void SoftShadePixel(const SoftTriangle& tri, int px, int py, float sx, float sy);
+		//! Shade one covered pixel of a quad and hand it to the pixel engine. `coverage` is the
+		//! sub-sample mask of the pixel: three bits, one per sub-sample of the anti-aliased EFB.
+		void SoftShadePixel(const SoftTriangle& tri, int px, int py, float sx, float sy, uint32_t coverage);
 
 	public:
 		bool ras_wireframe = false;			//!< Enable wireframe drawing of primitives (DEBUG)

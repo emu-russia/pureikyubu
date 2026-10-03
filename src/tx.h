@@ -324,14 +324,21 @@ namespace GFX
 		static const int SoftTmemBankCount = 32;
 		std::vector<uint16_t> tmem;
 
-		//! One tag per line slot of the cache of an image: the main-memory line it holds.
+		//! One tag per line slot of the tag cache: the main-memory line the slot holds and a hash of
+		//! the bytes it was filled with. The hash is what tells a line that was rewritten in place
+		//! from the line the slot already has, and the line is what tells one image's data from
+		//! another's - the hardware's tag cache is **one** cache that every hardware-managed image
+		//! shares (gfx-tc.md 3.5), so a slot filled for one map is not the line another map's tag
+		//! promised. The hash is a pure cache of main memory and is not part of the save state: a
+		//! state that comes back hashes the lines again on the first fetch.
 		struct SoftCacheTag
 		{
 			uint32_t line = 0xFFFFFFFF;
+			uint64_t hash = 0;
 			bool valid = false;
 		};
 
-		SoftCacheTag softCacheTags[GFX_MAX_TEXTURES][4096];
+		SoftCacheTag softCacheTags[4096];
 
 		void SoftTmemInit();
 
@@ -358,6 +365,11 @@ namespace GFX
 		//! address for a pre-loaded image, or - for a hardware-managed one - the line it was
 		//! fetched into through the tag cache.
 		bool SoftTileLine(int map, int level, uint32_t tile, bool gb, uint32_t* line);
+
+		//! Drop the cache slots a pre-load wrote over: the tag cache keeps its lines in TMEM of its
+		//! own, and a load that lands on one of them leaves the slot holding bytes its tag does not
+		//! describe (see SoftCacheDrop).
+		void SoftCacheDrop(uint32_t line, uint32_t count);
 
 		//! The 16-bit texel word (or the two words of a 32-bit texel) of a texel, out of TMEM.
 		bool SoftFetchTexel(int map, int level, int u, int v, float rgba[4]);

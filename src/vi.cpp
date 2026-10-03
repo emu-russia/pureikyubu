@@ -71,6 +71,56 @@ namespace Flipper
 		return lines;
 	}
 
+	// The width of the picture the VI scans, in pixels. `VI_PICTURE_CFG` holds it in 16-pixel words
+	// - its `WPL` field is "the number of reads per line" - so the bootrom's splash, 37 of them, is
+	// 592 pixels. A register that names no picture (it was never programmed, or the value is not
+	// one a video line can have) means the 640 pixels of the render target, which is what the
+	// scanout assumed while only the vertical geometry was decoded.
+	uint32_t VideoInterface::XfbWidth() const
+	{
+		uint32_t width = VI_PICT_WPL(vi.pict_cr) * 16;
+
+		if (width < 64 || width > 1024)
+			width = VI_XFB_WIDTH;
+
+		return width;
+	}
+
+	// The distance between two lines of the picture in main memory, in bytes. The picture is packed
+	// YUV 4:2:2 - 16 pixels to a 32-byte word - so a line of `XfbWidth()` pixels is twice that many
+	// bytes, and `VI_PICTURE_CFG.STD` ("the stride per line, in words") keeps the two sides of the
+	// buffer in step: the system library programs STD = 2 * WPL for an interlaced mode, whose two
+	// fields the VI fetches with every other line of the picture between its own (which is why the
+	// bottom field base sits one line below the top one), and STD = WPL for a mode that fetches the
+	// picture line by line. A register that names no stride means the 640-pixel picture the scanout
+	// assumed before the picture configuration was decoded.
+	uint32_t VideoInterface::XfbLineStride() const
+	{
+		uint32_t std = VI_PICT_STD(vi.pict_cr);
+		uint32_t wpl = VI_PICT_WPL(vi.pict_cr);
+
+		if (std == 0)
+			return XfbWidth() * 2;
+
+		// The fields are interleaved in the buffer exactly when the fetch stride is two lines of
+		// the picture; a mode whose stride is one line fetches the picture itself, line by line
+		// (each field of it is then a run of consecutive lines of that buffer).
+		return (vi.inter && std == 2 * wpl) ? (std * 16) : (std * 32);
+	}
+
+	// The columns of the emulator's window the picture covers. The horizontal scaler of the VI
+	// spreads the `XfbWidth()` pixels of a line over the whole 640-pixel line while it is enabled
+	// (the bootrom scales its splash from 592 to 640 that way); a title that leaves it off gets its
+	// picture in the left of the window, one pixel to one pixel, and the rest of the line is
+	// blanking.
+	uint32_t VideoInterface::XfbScanWidth() const
+	{
+		if ((vi.horz_scale & VI_HS_EN) != 0)
+			return VI_XFB_WIDTH;
+
+		return my_min(XfbWidth(), (uint32_t)VI_XFB_WIDTH);
+	}
+
 	// copy XFB to screen
 	void VideoInterface::YUVBlit(uint8_t* yuvbuf, RGB* dib)
 	{
@@ -84,24 +134,41 @@ namespace Flipper
 		// to hold.
 		uint32_t active = ActiveLines();
 
-		// Simple blitting, without effects. The XFB holds packed YUV 4:2:2 as Y0 U0 Y1 V0, four
-		// bytes per pixel pair (video-interface.md 3.1), so the chroma of the pair is the Cb (U) in
-		// the second byte and the Cr (V) in the fourth one, and a line of a 640-pixel frame is
-		// 1280 bytes.
+		// The picture is not always as wide as the window: the bootrom's splash is 592 pixels of a
+		// 1184-byte line (VI_PICTURE_CFG), and the horizontal scaler spreads it over the 640
+		// columns of the window. Simple blitting, without effects. The XFB holds packed YUV 4:2:2
+		// as Y0 U0 Y1 V0, four bytes per pixel pair (video-interface.md 3.1), so the chroma of the
+		// pair is the Cb (U) in the second byte and the Cr (V) in the fourth one.
+		uint32_t width = XfbWidth();
+		uint32_t stride = XfbLineStride();
+		uint32_t scanWidth = XfbScanWidth();
+
 		for (uint32_t y = 0; y < VI_XFB_HEIGHT; y++)
 		{
 			uint32_t src = (uint32_t)((uint64_t)y * active / VI_XFB_HEIGHT);
-			const uint8_t* line = yuvbuf + (size_t)src * VI_XFB_WIDTH * 2;
+			const uint8_t* line = yuvbuf + (size_t)src * stride;
 
-			for (uint32_t x = 0; x < VI_XFB_WIDTH / 2; x++)
+			for (uint32_t x = 0; x < VI_XFB_WIDTH; x++)
 			{
-				int y1 = line[x * 4 + 0],
-					u = line[x * 4 + 1],
-					y2 = line[x * 4 + 2],
-					v = line[x * 4 + 3];
+				if (x >= scanWidth)
+				{
+					// The line of a title whose scaler is off ends where its picture does: the
+					// columns it does not reach are the black of the blanking, which is not the
+					// black a YUV triple of zeros converts to.
+					*rgbbuf++ = 0;
+					continue;
+				}
 
-				*rgbbuf++ = yuv2bs(y1, u, v) | yuv2gs(y1, u, v) | yuv2rs(y1, u, v);
-				*rgbbuf++ = yuv2bs(y2, u, v) | yuv2gs(y2, u, v) | yuv2rs(y2, u, v);
+				// The pixel of the picture this column of the window shows.
+				uint32_t px = (uint32_t)((uint64_t)x * width / scanWidth);
+				if (px >= width) px = width - 1;
+
+				const uint8_t* texel = line + (size_t)(px >> 1) * 4;
+				int lum = (px & 1) ? texel[2] : texel[0];
+				int u = texel[1];
+				int v = texel[3];
+
+				*rgbbuf++ = yuv2bs(lum, u, v) | yuv2gs(lum, u, v) | yuv2rs(lum, u, v);
 			}
 		}
 
@@ -169,10 +236,11 @@ namespace Flipper
 				if (vi.xfb)
 				{
 					// One frame scanned out: the XFB is read out of main memory (packed YUV 4:2:2,
-					// two bytes per pixel of a 640 pixel line) and handed to the display.
+					// two bytes per pixel of the line the picture configuration names) and handed
+					// to the display.
 					HwProfile::Count(HwProfile::Counter::ViFrames, 1);
 					HwProfile::Count(HwProfile::Counter::SplashRead,
-						(uint64_t)VI_XFB_WIDTH * 2 * ActiveLines());
+						(uint64_t)XfbWidth() * 2 * ActiveLines());
 
 					YUVBlit(vi.xfbbuf, vi.gfxbuf);
 					vi.frames++;
@@ -202,6 +270,12 @@ namespace Flipper
 				break;
 			case VI_TFBL + 2:
 				*reg = (uint16_t)vi->vi.tfbl;
+				break;
+			case VI_PICT_CR:
+				*reg = vi->vi.pict_cr;
+				break;
+			case VI_HORZ_SCALE:
+				*reg = vi->vi.horz_scale;
 				break;
 			case VI_BFBL:
 				*reg = vi->vi.bfbl >> 16;
@@ -242,6 +316,16 @@ namespace Flipper
 				break;
 			case VI_VERT_TIMING:
 				vi->vi.vert_timing = (uint16_t)data;
+				break;
+			case VI_PICT_CR:
+				// The picture geometry: the width of an XFB line and the stride between the lines
+				// the VI fetches (see XfbWidth and XfbLineStride).
+				vi->vi.pict_cr = (uint16_t)data;
+				break;
+			case VI_HORZ_SCALE:
+				// The step and the enable of the horizontal scaler, which stretches the picture
+				// over the line (see XfbScanWidth).
+				vi->vi.horz_scale = (uint16_t)data;
 				break;
 			case VI_TFBL:
 				vi->vi.tfbl &= 0x0000ffff;
@@ -304,7 +388,8 @@ namespace Flipper
 		Report(Channel::Norm, "    VI interrupt : [%d x x x]\n", vi.int0.status);
 		Report(Channel::Norm, "    VI int mask  : [%d x x x]\n", vi.int0.enabled);
 		Report(Channel::Norm, "    VI int pos   : %d == %d, x == x, x == x, x == x (line)\n", vi.pos.vcount, vi.int0.vcount);
-		Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), enabled: %d\n", vi.tfbl, vi.bfbl, vi.xfb);
+		Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), %dx%d, enabled: %d\n",
+			vi.tfbl, vi.bfbl, XfbWidth(), ActiveLines(), vi.xfb);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -364,6 +449,11 @@ namespace Flipper
 	{
 		writer.Fields(vi.disp_cr, vi.vert_timing);
 
+		// The picture geometry the scanout reads the XFB with (the width and the stride of a line)
+		// and the step and enable of the horizontal scaler are registers software programs, so they
+		// belong to the machine rather than to the front end.
+		writer.Fields(vi.pict_cr, vi.horz_scale);
+
 		writer.Fields(vi.tfbl, vi.bfbl);
 
 		// The four position registers are unions over their own bits (hcount/vcount and the
@@ -414,6 +504,8 @@ namespace Flipper
 		int64_t vtime = 0, oneFrame = 0, oneSecond = 0;
 
 		reader.Fields(vi.disp_cr, vi.vert_timing);
+
+		reader.Fields(vi.pict_cr, vi.horz_scale);
 
 		reader.Fields(vi.tfbl, vi.bfbl);
 
