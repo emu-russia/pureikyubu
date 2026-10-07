@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Notes 2.0 — pureikyubu</title>
+<meta name="description" content="Release notes for pureikyubu 2.0: the peripheral release. One pool of peripheral devices, the emulated Broadband and Modem Adapters, the memory card that mounts, the Game Boy Player and the link cable, save states for the GameCube and the portable machines, and a software GFX pipeline that is no longer experimental.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="imgstore/favicon-32.png">
+<link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script>(function(){try{var t=localStorage.getItem("pureikyubu-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="imgstore/pureikyubu.png" alt="pureikyubu">
+    </a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="digest.html">Digest</a>
+      <a href="gba.html">GBA</a>
+      <a href="gfxsoft.html">Soft GFX</a>
+      <a href="mcp.html">MCP</a>
+      <a href="release_notes_2.0.html" aria-current="page">Release Notes 2.0</a>
+      <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
+    </nav>
+    <div class="lang-switch" aria-label="Language">
+      <a href="release_notes_2.0.html" class="active" hreflang="en">EN</a>
+      <a href="release_notes_2.0_ru.html" hreflang="ru">RU</a>
+    </div>
+    <button class="theme-toggle" data-theme-toggle type="button">☀ Light</button>
+  </div>
+</header>
+
+<main class="article">
+  <div class="wrap">
+
+    <div class="article-header">
+      <h1>pureikyubu 2.0 — Release Notes</h1>
+      <div class="meta">
+        October 2026 · previous release 1.9.1 (September 2026) ·
+        <a href="RELEASE_NOTES_2.0.md">Markdown version</a>
+      </div>
+    </div>
+
+    <p>
+      Version 2.0 is the <strong>peripheral release</strong> the 1.9.1 notes promised. The console's
+      peripherals are one subsystem now: every device — a controller, a memory card, a network adapter,
+      a Game Boy Player, a Game Boy Advance on a link cable — is a model of its own, with its own
+      settings, its own place in the configuration and one window that edits them all. The Broadband
+      Adapter and the Modem Adapter are emulated end to end from the console's side, the Game Boy
+      Player is reached through the ARAM window it really lives in, and the memory card finally
+      mounts. <strong>Save states</strong> arrive for the GameCube side, with the portable machines
+      keeping theirs. The <strong>software GFX pipeline leaves its experimental status</strong>: it
+      draws the boot ROM's splash and the movie players, and the titles it runs agree with the shader
+      backend. The interface gets eight themes, the Japanese titles of the selector, text that is one
+      texel to one pixel at any display scale, a video output window that follows the window it is in,
+      and a status bar that reports the two clocks of the emulation. <em>Need for Speed: Carbon</em>,
+      whose VM abort started this line of work, boots.
+    </p>
+
+    <figure>
+      <img src="imgstore/tww_title.png" alt="The Legend of Zelda: The Wind Waker, drawn by the software GFX pipeline">
+      <figcaption><strong>The Wind Waker.</strong>The title screen drawn by the software GFX pipeline,
+        in its own video output window. The black sky the title used to have was the CP's BP write
+        mask, which the library uses to share a register between two features.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="imgstore/ui_main.png" alt="The main window and the game selector">
+      <figcaption><strong>The main window.</strong>The game selector lists the images it scanned with
+        their icons, sizes, game IDs and the comments of their banners, and the status line reports
+        the emulated throughput and the clocks of the emulation.</figcaption>
+    </figure>
+
+    <div class="toc">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#highlights">Highlights</a></li>
+        <li><a href="#added">Added</a></li>
+        <li><a href="#changed">Changed</a></li>
+        <li><a href="#fixed">Fixed</a></li>
+        <li><a href="#known">Known issues</a></li>
+        <li><a href="#next">Up next</a></li>
+        <li><a href="#build">Building</a></li>
+      </ol>
+    </div>
+
+    <h2 id="highlights">Highlights</h2>
+    <ul>
+      <li><strong>One pool of peripheral devices.</strong> The emulation of a peripheral used to be
+        wherever its consumer happened to be: <code>si.cpp</code> knew the controller's answer bytes,
+        <code>padsdl.cpp</code> knew both the SDL side and the way a pad is polled,
+        <code>memcard.cpp</code> mixed the card format with the EXI lifecycle, and a device's settings
+        were kept by whoever used the device. A peripheral is a <strong>device of its own</strong> now
+        (<code>src/peripherals.cpp</code>): a model registered by its module (<code>cont.cpp</code>,
+        <code>memcard.cpp</code>, <code>gbplayer.cpp</code>, <code>gbalink.cpp</code>,
+        <code>bba.cpp</code>, <code>mdm.cpp</code>), a port of the console's SI, EXI or Hi-Speed bus,
+        a pool that is the <code>Devices</code> list of the configuration, and a property grid the
+        settings window draws from what the device publishes. A build that does not compile a module
+        simply has no such devices, and a new model appears in the settings window without a line of
+        front end code.</li>
+      <li><strong>The two network adapters.</strong> The Broadband Adapter (DOL-015) and the Modem
+        Adapter (DOL-012) share <strong>serial port 1</strong> (EXI channel 0, chip select 2) and are
+        told apart by their EXI device ID. Both speak the console's own <strong>command word, then
+        data</strong> protocol — an EXI shim in front of an off-the-shelf Ethernet controller, with
+        the address walking forward with every byte — and both answer the bring-up the SDK's ethernet
+        library performs. The Broadband Adapter's frames go through a <code>BbaBackend</code>, and the
+        backend the builds ship puts them on <strong>UDP</strong>, so two emulators play on one
+        emulated segment. <strong>The network support is still a work in progress</strong>: no title
+        in the SDK speaks IP, the challenge/response handshake and the split length field are models,
+        and with an empty peer the adapter is a console whose cable is unplugged.</li>
+      <li><strong>The memory card mounts.</strong> Five things were wrong before a title could use a
+        card, and each was invisible until a real program tried: the command decoder came up
+        un-parked, the EXI device ID was shifted into the wrong byte, "erase card" was missing its two
+        trailing bytes, an address past the part's capacity was refused instead of wrapping, and a read
+        restarted from the command's address on every transfer instead of streaming on. With those and
+        the card's <strong>unlock challenge</strong>, <strong>all six capacities were verified end to
+        end</strong> — 4, 8, 16, 32, 64 and 128 Mbit — with <code>CARDFormat</code>,
+        <code>CARDMount</code> and <code>CARDCheck</code> returning what the hardware returns.</li>
+      <li><strong>The Game Boy Player is reached where it really is.</strong> The Player does not
+        appear on EXI or SI: it hangs off the <strong>ARAM (SDRAM) controller</strong>, and the
+        Start-up Disc talks to it by claiming an expansion window at <code>0x0100_0000</code> and then
+        running a four-round <strong>complement handshake</strong> that a plain memory window cannot
+        pass. <code>gbplayer.cpp</code> implements the window, the <code>AMCR</code> expansion size,
+        the 32-byte command channels and PI interrupt bit 13, and once the channels hold their writes
+        the disc stops spinning and reaches <code>***Creating GbpSystemObject</code>. <strong>The GBA
+        support is still a work in progress:</strong> the <em>Player's own firmware</em> is not
+        implemented, no frame stream is ever read, and the link cable speaks only the JOY protocol —
+        not the multi-boot upload that puts a program <em>into</em> a Game Boy Advance.</li>
+      <li><strong>Save states.</strong> The GameCube side gets the format the portable machines have
+        had since <code>src/gba/gba_savestate.*</code>: the whole machine in one file, <code>F5</code>
+        to write and <code>F7</code> to read the current slot, <code>Shift</code>+<code>F5</code>/F7
+        to step it, the same items in the File menu, and <code>savestate</code>, <code>loadstate</code>
+        and <code>states</code> in the debug interface. A state is a header, a checksum and one
+        section per subsystem, about <strong>45 MB</strong> (51 MB with the software pipeline, which
+        also carries its EFB). The round trip was checked byte for byte, and so was the property that
+        matters: a state loaded into a machine that has run on resumes the run that never stopped.</li>
+      <li><strong>The software GFX pipeline is no longer experimental.</strong> It renders the
+        <strong>boot ROM's splash</strong> (the 592-pixel picture the VI fetches with
+        <code>VI_PICTURE_CFG</code>'s own width and the horizontal scaler) and the <strong>movie
+        players</strong> — the <em>Wind Waker</em> title screen above is its work — and the DolphinSDK
+        demo sweep agrees with the shader backend, which remains the default. The fix that let the
+        picture out was the CP's <strong>BP write mask</strong> (<code>0xFE</code>): every bypass
+        register merges the mask into its own value for the very next write, which keeps the GX
+        library's shared payloads from clobbering each other.</li>
+      <li><strong>The GFX command dump.</strong> <code>gfxdump</code> records what the CP pushes into
+        the XF, keeps the last frames as a ring, and shows the stream in three ways: the decoded
+        commands, the raw big-endian words and the guest-RAM slices of the textures the frame sampled.
+        It is a debugger tab of its own (<strong>GFX Dump</strong>) and a command of the debug
+        interface.</li>
+      <li><strong>The interface has a look of its own.</strong> Eight themes drawn from the site's
+        palette (the default "Flipper", the six hues next to it and "Daylight" for the light one), the
+        <strong>Japanese titles</strong> of the selector merged into the font, text baked at the
+        display scale so that a glyph lands on one pixel at any scaling, the video output window
+        resized and titled with its backend and frame rate, and a status bar that reports the
+        <strong>two clocks of the emulation</strong>: the console's time base and the host's wall
+        clock.</li>
+      <li><strong><em>Need for Speed: Carbon</em> boots.</strong> Its VM abort was a TLB that was not
+        flushed when a DSI/ISI page fault was taken, so the guest kept executing through a stale
+        translation; the PTE's <strong>Changed</strong> bit is now set through the translation cache
+        as the hardware sets it.</li>
+    </ul>
+
+    <h2 id="added">Added</h2>
+
+    <h3>The peripheral pool</h3>
+    <ul>
+      <li><strong>What a device is, in one number.</strong> <code>DeviceID</code> names a model:
+        <code>0x00010001</code> is the standard controller (DOL-003), <code>0x00020001</code> a memory
+        card, <code>0x00030001</code> the Game Boy Player. A module registers its models
+        (<code>Peripherals::RegisterFactory</code>), so the subsystem itself does not know what a pad
+        or a card is; a <strong>port</strong> belongs to a bus (SI, EXI or HSP), and a device can only
+        be plugged into a socket of its own bus. The ports are the four SI channels, the two card
+        slots, serial port 1 and the Hi-Speed Port.</li>
+      <li><strong>A device publishes its controls and its properties.</strong> An <em>actuator</em> is
+        one control (<code>PAD_ACT_*</code> for a pad, <code>GBP_ACT_*</code> for a Game Pak), a
+        <em>binding</em> is what drives it (a keyboard key and a host controller button or axis), and
+        <em>properties</em> are everything else a device shows about itself: a checkbox, a read-only
+        line, a file it owns (<code>PERIPH_PROP_FILE</code>) or one it only reads
+        (<code>PERIPH_PROP_ROM</code>). The kind picks the editor and the browser.</li>
+      <li><strong>The host side is a back end, not a part of a device.</strong> <code>HostInput</code>
+        is implemented by the front end (<code>padsdl.cpp</code>, <code>padnull.cpp</code>) and by the
+        unit tests; the rumble motor reaches the host controller through it. A device never makes an
+        SDL call and the front end never knows what a pad is.</li>
+      <li><strong>The pool is a list, not a table with holes.</strong> A device keeps <em>its entry of
+        the list</em>, so taking a device out takes its settings with it and the entries that follow
+        are not renumbered. The list is the content; there is no fallback in the code for "a slot the
+        configuration does not mention". The settings of the builds before the pool
+        (<code>controllers</code>, <code>memcards</code> and the <code>Device3_Name</code> variables)
+        are dropped from the document when the settings are read.
+
+        <pre><code>"peripherals":
+{
+    "Devices":
+    [
+        { "Type": 65537, "Name": "Controller 1", "Port": 0, "VKEY_FOR_A": 27, "GCKEY_FOR_A": 65536 },
+        { "Type": 131073, "Name": "Memory Card A", "File": "Data/card.mci" }
+    ]
+}</code></pre>
+      </li>
+      <li><strong>The lifetime.</strong> The pool is opened with the emulator, not with the machine —
+        the settings window edits it with no game loaded — and the machine only matters to a device
+        that talks to it: <code>MachineOpened</code> puts the cards into their slots and
+        <code>MachineClosed</code> takes them out and flushes the files they were writing. A device is
+        never destroyed while the emulator runs: one that is removed is detached, taken out of the
+        list, and kept alive until the pool is closed in one piece.</li>
+      <li><code>testing/peripherals_test.cpp</code> drives a pad the way a user does and covers the
+        pool, the buses, the motor, the origins, and that an added device is still there after a
+        restart.</li>
+    </ul>
+
+    <h3>The two network adapters</h3>
+    <ul>
+      <li><strong>The transport.</strong> Both adapters front an off-the-shelf chip with an EXI
+        <em>shim</em>, and a selection is a command word followed by the data, most significant byte
+        first, with the address walking forward with every byte — which is how the driver reads six
+        MAC bytes or a packet in one burst:
+
+        <table>
+          <tr><th>access</th><th>command word</th><th>then</th></tr>
+          <tr><td>controller read</td><td>four bytes: <code>0x8000</code> and the address in bits 15:8</td><td>an <code>n</code>-byte read</td></tr>
+          <tr><td>controller write</td><td>four bytes: <code>0xC000</code> and the address</td><td>an <code>n</code>-byte write</td></tr>
+          <tr><td>shim read</td><td>two bytes: <code>reg &lt;&lt; 8</code></td><td>an <code>n</code>-byte read</td></tr>
+          <tr><td>shim write</td><td>two bytes: <code>0x4000 | reg &lt;&lt; 8</code></td><td>an <code>n</code>-byte write</td></tr>
+        </table>
+
+        The shim's register is six bits and the controller's address sixteen; the register file is
+        page 0 and the packet memory is the pages above it. The device is told which transfer begins a
+        sequence (the channel's <code>firstImm</code> flag), because a two-byte write can be either a
+        command or a byte of data.</li>
+      <li><strong>The Broadband Adapter (DOL-015).</strong> The controller's register file, its
+        identification, its MAC address and its receive/transmit ring are emulated; the network behind
+        it is a <code>BbaBackend</code> the front end installs. <code>bbaudp.cpp</code> puts frames on
+        <strong>UDP</strong>: the "GCN Hardware" page names the other end (<code>BBA_PEER</code>, a
+        <code>host:port</code>) and the port this emulator listens on (<code>BBA_PORT</code>). An
+        empty peer is the default and means "no network" — the adapter then identifies itself, reports
+        the link down and no frame arrives.</li>
+      <li><strong>The Modem Adapter (DOL-012).</strong> The same command-then-data protocol with a
+        six-bit register number of its own page: <code>0x01</code> is the status the driver polls,
+        <code>0x0D</code> the error status, <code>0x12</code> the raw status, and
+        <code>0x06</code>/<code>0x07</code>, <code>0x0E</code>/<code>0x0F</code>,
+        <code>0x10</code>/<code>0x11</code> are the divisor and threshold pairs. The register file,
+        the identification, the acknowledge commands and the AT interface are emulated; the
+        <strong>telephone line is not</strong> — the setup commands are answered <code>OK</code> and a
+        dial is answered <code>NO DIALTONE</code>.</li>
+      <li><strong>The command word is keyed on the assertion, not on a change.</strong> The flag that
+        marks the first transfer after a chip select used to be set only when the selected device
+        changed, and a driver handed a bus on which the socket is already selected begins its sequence
+        with a select that changes nothing — its command word was taken for data. The flag is now set
+        by every write that <em>asserts</em> a select; three runs out of three of the modem replay
+        driver now read the identification back.</li>
+      <li><strong>How the two are checked without a game.</strong> No SDK demo speaks IP, so what is
+        checked is the half of the driver that lives on the console's side — the bring-up the ethernet
+        library performs before any packet moves (<code>bbadrv.py</code> / <code>mdmdrv.py</code> load
+        that sequence into a booted demo). Both adapters answer it, and they answer differently:
+
+        <table>
+          <tr><th>The driver reads</th><th>Broadband Adapter</th><th>Modem Adapter</th></tr>
+          <tr><td>the EXI device type</td><td><code>0x04020200</code></td><td><code>0x02020000</code></td></tr>
+          <tr><td>the controller id at <code>0x44</code></td><td><code>4D 58</code> (<code>"MX"</code>)</td><td><code>0x00020000</code></td></tr>
+          <tr><td>the MAC burst</td><td>a MAC (<code>00 09 BF 00 00 01</code>)</td><td>the adapter's own id</td></tr>
+          <tr><td>the link state at <code>0x31</code></td><td><code>03</code></td><td><code>00</code></td></tr>
+          <tr><td>MISC2 (<code>0x50</code>) written <code>0x80</code>, read back</td><td><code>80</code></td><td><code>00</code></td></tr>
+          <tr><td>the shim revision written <code>0xD107</code>, read back</td><td><code>D1</code></td><td><code>D1</code></td></tr>
+          <tr><td>the challenge burst</td><td><code>5A 5A A5 A5</code></td><td><code>00 00 00 00</code></td></tr>
+        </table>
+      </li>
+    </ul>
+
+    <h3>The Game Boy Player and the link cable</h3>
+    <ul>
+      <li><strong>The Player is an ARAM expansion, not a device on a bus.</strong> <code>AMCR</code>
+        carries both the internal and the expansion size; the driver claims the largest window
+        (<code>0x0063</code>), probes it with a four-round handshake that requires <strong>byte 1 of
+        the answer to be the complement of the byte written</strong>, and settles on 16 MB
+        (<code>0x005B</code>). The window's base is the internal ARAM size — all Player traffic is at
+        ARAM <code>0x0100_0000</code> and upwards — and it is a window of <em>registers and
+        mailboxes</em>, not of memory.</li>
+      <li><strong>The channels hold their writes.</strong> The console's command routine is a
+        read-modify-write: it reads a byte, clears the bits it is acknowledging and sets the bits of
+        the command it sends, and writes the result back. A device that answered a constant could
+        never be acknowledged, and the disc spent a 20-second run on ~107 000 reads of
+        <code>+0x400000</code> and ~53 000 of <code>+0xD00000</code>. With the channels holding their
+        writes and the interrupt raised only when the <em>device</em> changes state, the same run
+        makes 526 and 3 reads, and the disc gets on with its bring-up.</li>
+      <li><strong>What the disc does now.</strong> With the port brought up to that point the Start-up
+        Disc prints <code>***Creating GbpSystemObject</code>, <code>***Allocating
+        GbpSystemObject</code>, <code>***Creating Display object</code> and
+        <code>GBAPadInit : ClientImageSize = 19464</code> — the port bring-up is past the point it
+        used to be stuck at.</li>
+      <li><strong>The Game Pak is a property of the device.</strong> The cartridge file is kept in the
+        Player's own entry of the pool ("GamePak"), the settings window draws a "Game Pak" row with a
+        file browser on it, and the device carries the "BIOS" row as well. A <strong>"Run Game
+        Pak"</strong> switch decides whether the machine inside the Player costs anything at all: a
+        Game Pak that is running costs about as much host time as the console it is attached to.</li>
+      <li><strong>Watching the Game Pak run.</strong> A GameCube session publishes no GBA debug
+        interface of its own, so the device publishes <code>gbpshot &lt;file.png&gt;</code>: the
+        240x160 LCD of the machine in the Player (or of the one on the link cable), written to a file,
+        with the device's name, the size and the machine's frame counter in the answer.</li>
+      <li><strong>The link cable</strong> (<code>gbalink.cpp</code>) is the same machine behind the
+        DOL-011 JOY command set, and it runs only when it has something to do: a Game Pak in the bay,
+        <em>or</em> the console driving the port as a link — the second case is what a
+        <em>multi-boot</em> needs, because a title that streams its program into the partner's RAM
+        does it with an <strong>empty</strong> bay. The device says so in the log once: <code>GBA
+        Link: the console drives the port as a link (command 15)</code>. It does <strong>not</strong>
+        speak the transfer that uploads a program into a Game Boy Advance.</li>
+    </ul>
+
+    <h3>Save states</h3>
+    <ul>
+      <li><strong>The keys and the menu.</strong> <code>F5</code> writes the state of the current slot
+        and <code>F7</code> reads it back; <code>Shift</code>+<code>F5</code>/F7 step the slot (0..9,
+        wrapping, shown in the status bar). The File menu carries <strong>Quick Save/Load
+        State</strong>, a submenu per slot with the current one marked, and <strong>Next/Previous
+        State Slot</strong>.</li>
+      <li><strong>The commands.</strong> <code>savestate [slot]</code>, <code>loadstate [slot]</code>
+        and <code>states</code>, each answering Markdown next to the fields a client can use
+        (<code>file</code>, <code>slot</code>, <code>result</code>, <code>error</code>/<code>size</code>).
+        The machine is stopped for the duration of a save or a load and started again the way it
+        was.</li>
+      <li><strong>The files.</strong> A state lives next to the image and is named after it:
+        <code>Data/game.iso</code> gives <code>Data/game.st0</code>..<code>.st9</code>,
+        <code>pong.dol</code> gives <code>pong.st0</code>.., the boot ROM gives
+        <code>Bootrom.st0</code>...</li>
+      <li><strong>The format.</strong> A header (the magic <code>PSAVEST</code>, the format version,
+        the payload size and its FNV-1a 64 checksum) and then one section per subsystem:
+        <code>META</code>, <code>FLPR</code>, <code>CPU </code>, <code>MEM </code>,
+        <code>PI  </code>, <code>VI  </code>, <code>AI  </code>, <code>DI  </code>,
+        <code>SI  </code>, <code>EXI </code>, <code>CP  </code>, <code>DSP </code>,
+        <code>DVD </code>, <code>GX  </code>, <code>PE  </code>, <code>XF  </code>,
+        <code>SU  </code>, <code>RAS </code>, <code>TEV </code>, <code>TX  </code>,
+        <code>BP  </code> and <code>HLE </code>. A section is a tag, a length and the bytes; the
+        reader walks them in order and steps over a tag it does not know, and every section has to be
+        consumed exactly to its end.</li>
+      <li><strong>What a state does not carry</strong>, and each has its reason: the disc image, the
+        executables, the boot ROM and the DSP ROMs; the memory cards and the rest of the pool; the
+        samples already handed to the audio device; the EFB of the shader pipeline; the GL objects,
+        the window and the host threads; the JIT's compiled blocks; the debugger's breakpoints; and
+        the caches (written back and dropped, except the locked L1 data cache, which is scratch-pad
+        memory and travels in the state).</li>
+      <li><strong>A state that does not belong is refused by name</strong> — not a state, an unknown
+        format version, a checksum that does not match, another game, another amount of memory,
+        another build's section layout, the other machine's state, or an empty slot.</li>
+      <li><strong>The checks it was written from.</strong> A headless build driven through the MCP
+        transport wrote a state, read it back and wrote it again — byte for byte identical, on
+        <code>pong.dol</code> and on the boot ROM with the software pipeline live. A machine stepped
+        20 000 instructions after loading a state produces the same bytes as one that never stopped,
+        and the same holds when the state is loaded into a machine that ran free for five seconds. The
+        tests found two real asymmetries and one cache problem before they passed.</li>
+      <li><strong>The portable machines keep theirs.</strong> Both GBA and Game Boy machines write and
+        read a state with <code>F3</code>/<code>F4</code> and <code>Shift</code>+<code>F3</code>/F4
+        (the slot is shown in the window title), the cartridge's <code>.sav</code> is still
+        <code>F5</code>, and the debug interface has
+        <code>gbasavestate</code>/<code>gbaloadstate</code>/<code>gbastates</code> and the Game Boy's
+        <code>gbsavestate</code>/<code>gbloadstate</code>/<code>gbstates</code>. A state carries the
+        cartridge's identity and is refused by a machine running another one — or by the other machine
+        entirely.</li>
+    </ul>
+
+    <h3>The GFX command dump</h3>
+    <ul>
+      <li><code>src/gfxdump.cpp</code> records the graphics stream <strong>where the XF starts</strong>
+        (the CP's own VCD/VAT state is not part of it), as four kinds of record: an XF register block
+        load, an XF register read, a bypass register word with the BP write mask that preceded it, and
+        a draw command with the vertex rows that followed it.</li>
+      <li>The dump is cut into frames by the frame counter and kept as a ring
+        (<code>GfxDump::MaxFrames</code>); a frame past the byte limit is cut off and marked
+        truncated. The stream is a self-describing sequence of big-endian 32-bit words, so a saved
+        file does not depend on the host's word order or on a struct layout.</li>
+      <li><strong>The RAM slices make a dump self-contained.</strong> A draw samples a texture (and,
+        for a paletted one, a TLUT) programmed long before it, and the guest overwrites that texture in
+        the next frame; the texture engine hands every such read to the dump and the bytes are copied
+        into the frame that needed them.</li>
+      <li>The commands are <code>gfxdump [frames]</code>, <code>gfxdump commands [id]</code>,
+        <code>gfxdump hex [id]</code>, <code>gfxdump capture [on|off|toggle]</code>,
+        <code>gfxdump select &lt;id&gt;</code>, <code>gfxdump clear</code> and
+        <code>gfxdump save [id]</code>. The debugger has a <strong>GFX Dump</strong> tab next to the
+        whole debugger, with a tab per answer ("Frames", "Commands", "Hex"), a capture button and a
+        per-frame listing where every field is printed.</li>
+      <li>The CP also handles the <code>0x69</code> bypass command now, which is one of the commands a
+        bypass stream can carry.</li>
+    </ul>
+
+    <h3>The interface</h3>
+    <ul>
+      <li><strong>Eight themes.</strong> The look is a module of its own (<code>uitheme.cpp</code>): a
+        palette of ten colours turned into the ImGui style, with the hovered and held states derived
+        from the resting one. The default theme, "Flipper", is the dark ink of the project's site with
+        the blue of the cube of its logo for everything that is selected and the violet of its shaded
+        face as the second accent; six themes next to it are hues of the same recipe (Nebula, Emerald,
+        Crimson, Amber, Graphite, Sakura) and "Daylight" is the recipe over a light background. A
+        theme is picked in <strong>Options → Settings… → Interface</strong>, shown before it is
+        applied, and kept in <code>ui.THEME</code>.</li>
+      <li><strong>The interface mark.</strong> The pureikyubu cube of the project's logo is drawn from
+        the palette (<code>UiThemeDrawCube</code>), so the interface is marked by the project and not
+        only coloured like it.</li>
+      <li><strong>Japanese titles.</strong> The selector's Title and Comment columns came out blank for
+        every Japanese disc, because neither ImGui's built-in font nor the proportional faces of the
+        systems have a kana or a kanji in them. Japanese is merged into the interface font from the
+        CJK face each system has (Meiryo, Yu Gothic, MS Gothic, BIZ UDGothic and Arial Unicode on
+        Windows; Noto CJK, VL Gothic, IPA, Takao and Droid Sans Fallback on Linux) over the 2999
+        ideographs of the Joyo and Jinmeiyo sets; a system without such a face shows the titles the way
+        it did before.</li>
+      <li><strong>Sharp text at any scale.</strong> The font atlas is baked at the display's own scale
+        (1.0, 1.25, 1.5) while the interface keeps laying itself out at the logical one, so a glyph
+        lands on the framebuffer one texel to one pixel instead of being a smaller texture stretched
+        by the renderer.</li>
+      <li><strong>The video output window (issue #458).</strong> It can be resized and maximized now:
+        both presenters scale the picture into the largest rectangle of the window that has the
+        picture's shape, centred, with the bands around it black — a maximised 16:9 window no longer
+        turns the cubes of a game into bricks. The software back end scales on the CPU, one pixel at a
+        time; the GL back end blits with the linear filter and clears the bands with the whole colour
+        mask. The software path used to stop updating altogether on a resize, because SDL throws the
+        window surface away and it was never asked for again.</li>
+      <li><strong>The window titles and the clocks (issue #458).</strong> The video output window says
+        which backend draws the picture and how many frames a second the emulator outputs
+        (<code>Video Output | shader | 59.9 fps</code>); the main window keeps the plain name of what
+        runs. Exactly one of the two counts a frame. The status bar shows the emulated Gekko and DSP
+        throughput and the two clocks of the emulation measured from the moment the image was loaded:
+        the console's time base (<code>TBR 5m 09s</code>) and the host's own clock
+        (<code>wall 1h 02m 03s</code>). The emulated clock is a new <code>OSSeconds</code> command,
+        because <code>OSTime</code>/<code>OSDateTime</code> roll their hours over at 24.</li>
+      <li><strong>The settings window (and the stand-alone GBA).</strong> Every setting of the
+        emulator is in one window with a strip of tabs on the left — General (the game selector), GCN
+        Hardware, Controllers, Memory Cards, Network, High-Speed Port and Interface — and a property
+        grid on the right. The portable machine is configured in a window of its own,
+        <strong>Options → Stand-alone GBA…</strong> (<code>uisettingsgba.cpp</code>), which edits the
+        machine's file and its eleven bindings; the default keys follow the hardware, where A is to
+        the right of B (<code>A</code> is <code>X</code>, <code>B</code> is <code>Z</code>).</li>
+      <li>The selector's menu is disabled, and veiled with the reason, while the emulation runs, so a
+        stray key or click can no longer load another image over the running one. <strong>Hardware →
+        Graphics backend</strong> picks the shader or the software pipeline (the same switch as
+        <code>gxpipeline</code>), and <strong>Debug → HW Profiler Overlay</strong> switches the
+        profiler's overlay, which now follows the picture into the rectangle the picture took in the
+        window.</li>
+    </ul>
+
+    <h2 id="changed">Changed</h2>
+
+    <h3>The memory card, reviewed</h3>
+    <ul>
+      <li><strong>The command decoder has to start idle</strong> (<code>0xFF</code>). The device came
+        up with the field zeroed, read every byte of its first write as an extra, never decoded a
+        command and answered nothing — which the console's library sees as "no card in this slot".
+        <code>MCConnect</code> now parks the decoder.</li>
+      <li><strong>The EXI device ID is not the card ID.</strong> The 32-bit type
+        (<code>EXI_MEMORY_CARD_59</code> = <code>0x00000004</code> and so on) is read with a four-byte
+        immediate transfer, most significant byte first, so the capacity code lives in the
+        <em>low</em> byte; the module shifted it into the top byte. The two-byte card ID and the
+        one-byte status <em>are</em> shifted, which is what hid the mistake.</li>
+      <li><strong>"Erase card" is three bytes</strong> (<code>0xF4 0x00 0x00</code>). The table gave
+        it no trailing bytes, so the two zeros were refused as extras — and the refusal used
+        <code>Halt</code>, which raised a front-end report on every retry and cost about 80x on the
+        demo that does it.</li>
+      <li><strong>The card wraps its addresses.</strong> A flash part is smaller than the address its
+        controller can put on the bus, so a transfer at an address the part does not have is the same
+        bytes as the wrapped address. The library reads at addresses that only exist on larger parts
+        while it identifies the card. Reads, writes and sector erases now wrap.</li>
+      <li><strong>A read streams from an internal address.</strong> The four offset bytes a read
+        carries are where the block <em>starts</em>, and every transfer continues where the last one
+        stopped; only a new command word resets the counter. The module re-read the command's address
+        on every transfer, so the library's mount read the card's first four bytes nine times.</li>
+      <li><strong>The unlock challenge.</strong> An original card does not hand its code over to anyone
+        who asks: the library hides a challenge in the read command's spare fields (a 20-bit value and
+        a length of 4..32 from a generator seeded by the tick counter), works out the answer with a
+        bit-serial mixing step, reads the card's code with the answer walking on between the words, and
+        requires bit 6 of the status byte. <code>memcard.cpp</code> implements the whole exchange; the
+        four details that make it work are that the code read comes from the controller and not the
+        flash, that bit <code>0x40</code> is set only by a challenge, that a challenge is an immediate
+        transfer and never a page read, and that a challenge can be exactly four bytes long.</li>
+    </ul>
+
+    <h3>The settings window is one window</h3>
+    <ul>
+      <li>The dialogs the pool replaced — <strong>Options → Controllers → Port n</strong>,
+        <strong>Options → Memcards → Slot A</strong> and the settings that had no dialog at all — are
+        gone from the menu, which carries a single <strong>Options → Settings…</strong> item.</li>
+      <li><strong>A page follows the device, not the bus it hangs from.</strong> The cards and the two
+        network adapters are all EXI devices of the pool, so a page that took its devices from the bus
+        showed the adapters under "Memory Cards".</li>
+      <li>A setting takes effect as it is edited (a binding is used by the next poll, a card file is
+        opened at once) and the pool writes the device back itself, so the window has neither an OK
+        nor a Cancel.</li>
+    </ul>
+
+    <h3>The software pipeline</h3>
+    <ul>
+      <li><strong>The boot ROM's splash is drawn.</strong> The number of active lines comes from
+        <code>VI_VERT_TIMING</code> and the geometry of a line from <code>VI_PICTURE_CFG</code> — its
+        <code>WPL</code> field is the width of the picture in 16-pixel words and its <code>STD</code>
+        field is the stride a field's lines are fetched with. The splash is 592 pixels wide (37 words,
+        1184 bytes to a line) and the picture came out skewed while the scanout assumed the 640 pixels
+        of the render target. <code>VI_HSCALE</code> then decides whether the horizontal scaler spreads
+        the picture over the whole line (the boot ROM enables it) or leaves it one pixel to one
+        pixel.</li>
+      <li><strong>The movie players run.</strong> The software pipeline draws the movie players'
+        output, which is what put the <em>Wind Waker</em> title screen on the screen above.</li>
+      <li><strong>The BP write mask (<code>0xFE</code>)</strong> limits which bits of the very next BP
+        register write are updated and then clears itself. Every bypass register honours it now, and
+        the CP hands it down the bypass chain with the write. Without it the library's blend write took
+        the colour and alpha update bits of <code>CMODE0</code> away, and everything drawn after it
+        wrote no colour at all — the black sky of <em>The Wind Waker</em>.</li>
+      <li><strong>The software EFB is cleared with the first primitive of its frame</strong>, which is
+        what a frame that begins with a full-screen primitive needs. A bypass register that honours the
+        write mask also no longer clobbers the bits another feature owns.</li>
+    </ul>
+
+    <h3>Gekko, the command processor and the serial interface</h3>
+    <ul>
+      <li><strong>TLB flush on a page fault.</strong> The cache-management instructions that fill the
+        TLB can leave a stale translation behind, and the guest kept executing through it after a
+        DSI/ISI page fault — <em>Need for Speed: Carbon</em>'s VM abort. The TLB is flushed when such
+        a fault is taken.</li>
+      <li><strong>The PTE's Changed bit is set through the translation cache</strong>, as the hardware
+        sets it. Before, the bit was only written when the TLB entry was filled, so a page that was
+        written through a cached translation never reported that it had been changed.</li>
+      <li><strong><code>WPAR[BNE]</code></strong> is reported only when half of the write gather
+        buffer is occupied, which is the condition the hardware reports it under (an experiment that
+        the benchmarks now measure).</li>
+      <li>The CP handles the <code>0x69</code> bypass command.</li>
+      <li><strong>Issue #416: deterministic stepping.</strong> The <code>step</code> command, the
+        IPL's "no disc" path (<code>--no-disc</code>) and the display XFB reporting were made
+        deterministic and repeatable, so a run can be stopped at an exact instruction and
+        compared.</li>
+      <li>The serial interface answers a <strong>COM transfer to an empty socket</strong> the way the
+        hardware does, and latches <code>NOREP</code> — a channel that answered a communication
+        transfer with no reply must keep saying so.</li>
+    </ul>
+
+    <h3>The portable core</h3>
+    <ul>
+      <li><strong>A parked DMA keeps its place in the block it is repeating.</strong> GBATEK reloads
+        <code>CNT_L</code> and optionally <code>DAD</code> on a repeat, not <code>SAD</code>, so the
+        source pointer carries on; a sound DMA is always repeating, and the old code restarted the
+        stream at the same address on every FIFO refill.</li>
+      <li><strong>A byte store to <code>DISPSTAT</code> keeps the half it does not address</strong>,
+        which is what a game that writes one byte of the register expects.</li>
+      <li>The GBA settings get a window of their own, the BIOS row's buttons have their room and the
+        file is a user file rather than a shipped one.</li>
+      <li>The two Game Boy devices share the controls and the settings and differ only in which bus the
+        console reaches them by.</li>
+    </ul>
+
+    <h2 id="fixed">Fixed</h2>
+    <ul>
+      <li><strong>The black sky of <em>The Legend of Zelda: The Wind Waker</em>'s title screen</strong>
+        — the CP's BP write mask (see Changed), which made the picture of a title that begins with a
+        blend-mode write go dark.</li>
+      <li><strong><em>Need for Speed: Carbon</em></strong> — the stale TLB translation after a DSI/ISI
+        page fault and the PTE Changed bit (see Changed). The title boots and runs.</li>
+      <li><strong>The memory card could not be mounted</strong> — five separate defects (see Changed),
+        each of which made the console's own card library refuse the card.</li>
+      <li><strong>A JSON list is replaced as a whole</strong> instead of merged member by member; the
+        elements of a list have no name, so a merge could only go by position and folded every entry
+        of the file into the first one. The bug was reachable as soon as the pool became a list.</li>
+      <li><strong>The Game Boy Player's status byte had no return on its default path</strong>, so
+        every status read the Start-up Disc made was whatever the return register happened to hold;
+        the whole status block is decided now.</li>
+      <li><strong>The ARAM DMA engine logged every block it moved</strong>, unconditionally. A Player
+        disc that polls its window moves tens of thousands of blocks a second and every one of them
+        cost two lines of text; the block honours an <code>AR_LOG</code> setting now, off by default.
+        That one change is worth about 4x on a run of the Start-up Disc.</li>
+      <li><strong>The GFX dump's frame counter</strong> and the presented-frame counter of the copy
+        engine are pinned by tests: a texture copy and a partial display copy do not count, a
+        full-frame display copy does.</li>
+    </ul>
+
+    <h2 id="known">Known issues</h2>
+    <ul>
+      <li><strong>The network support is a work in progress.</strong> The adapter's own half is
+        emulated (the transport, the registers, the identification, the MAC and the rings), but the
+        <strong>network behind it is a backend</strong>, and no title in the SDK speaks IP: ARP, IP
+        and the sockets the SDK's library builds on them are unproven. The challenge/response handshake
+        and the split length field of a received packet's descriptor are <strong>models rather than
+        reconstructions</strong>, and they are marked as such in the source. The <strong>Modem
+        Adapter's telephone line is not emulated</strong> — the setup commands are answered
+        <code>OK</code> and a dial is answered <code>NO DIALTONE</code>, which is the result code a
+        modem with nothing in its socket reports. With an empty <code>BBA_PEER</code> the adapter is a
+        console whose cable is unplugged.</li>
+      <li><strong>The GBA support is a work in progress.</strong> The <strong>Game Boy Player's own
+        firmware is not implemented</strong>: the port's window, the handshake, the channels and the
+        interrupt are there and the Start-up Disc is past its bring-up, but every command the console
+        sends is answered by the Player's firmware and nothing implements it, so no frame stream is
+        ever read and the frame buffer the VI scans out stays empty. The <strong>link cable</strong>
+        speaks only the JOY protocol a Game Pak runs from its own cartridge; it does not speak the
+        multi-boot transfer that uploads a program <em>into</em> a Game Boy Advance, which is what the
+        Start-up Disc's own 19 464-byte client image needs. A Game Pak running inside a Player or a
+        link device is <strong>not part of a GameCube save state</strong> either: a state loaded with a
+        Game Boy game in progress resumes with that machine at its reset.</li>
+      <li><strong>The portable machines keep the issues of 1.9.1.</strong> The Game Boy Color's picture
+        is still work in progress (a line is composed at once rather than dot by dot); the GBA's
+        per-line OBJ cycle budget and <code>DISPCNT</code> bit 5 are not modelled and the video-memory
+        contention cycle is missing; the sound output stage (<code>SOUNDBIAS</code>, the PWM
+        amplitude) is not modelled; the HLE sound driver's reverb is not modelled; Nintendo's aging
+        cartridge is not fully green (the remaining checks are in the waitstate/prefetch area); and
+        <strong>rewind</strong> (running the machine backwards through a ring of states) is not
+        implemented.</li>
+      <li><strong>Save states.</strong> There is no unit test for the GameCube side yet — it was
+        checked with a headless build driven through the MCP transport, and the portable harness covers
+        the GBA and Game Boy states. The EFB of the shader pipeline does not travel, so a state of a
+        machine running the shader pipeline resumes with whatever the title draws next; the JIT's
+        compiled blocks are dropped; and a state that fails half way leaves the machine half loaded.
+        Nothing is compressed: a state is 45 MB or so.</li>
+      <li><strong>The software pipeline</strong> still does not do the per-vertex "emboss" bump texgen,
+        the anisotropic filtering and the <code>diag_lod</code>/<code>lodclamp</code> refinements, the
+        <code>round</code>/<code>field_predict</code> motion-compensation modes, the 16-bit R5G6B5
+        colour and Z formats of the anti-aliased EFB, the <code>PE_COPY_VFILTER</code> coefficients,
+        the YUV/4:2:0 copy modes, the EFB CPU window (<code>Cpu2Efb</code>) and the Rev-B
+        <code>PE_CHICKEN</code> behaviours. The shader backend remains the default, and a title that
+        needs one of those is the reason to switch back to it.</li>
+      <li><strong>The dump</strong> holds the last frames of the stream, not a whole session, and a
+        frame past its byte limit is truncated; a texture read that the texturing unit does not perform
+        is not in the frame.</li>
+      <li>The Linux build still has no sound and no input for the GameCube side, and the Linux headless
+        target has no OpenGL offscreen backend (the Visual Studio one does). The
+        <code>Settings</code> tests that compare <code>build/Data/GBASettings.json</code> with the
+        defaults byte for byte need that file to have LF endings.</li>
+      <li>The emulator's own unit suite is at <strong>531 tests with three failures</strong>
+        (<code>Pe_ZWriteMaskControlsTheDepthUpdate</code>,
+        <code>Pe_ZFreezeDisablesTheDepthWrites</code> and <code>Report_TevFog</code>), and the same
+        three fail on a build made before this work — they are the harness' own, and the two depth ones
+        pass when they are run on their own.</li>
+    </ul>
+
+    <h2 id="next">Up next</h2>
+    <p>
+      The peripherals are not finished, and the next release is where they are finished. The two
+      <strong>network adapters</strong> need the top half of the stack (a title that speaks IP, or a
+      host-side bridge), the <strong>Game Boy Player</strong> needs the Player's own firmware — the
+      command set, the video and audio format of the frame stream — and the <strong>link cable</strong>
+      needs the multi-boot transfer. The Game Boy Advance a Player or a link device owns should also
+      travel in a GameCube save state, which is what would close the one hole in the state format that
+      is machine state rather than settings.
+    </p>
+    <p>
+      With that, the project moves into its steady state: <strong>planned, methodical
+      improvement</strong> — performance work and bug fixing release after release, rather than
+      another feature push. The architecture is in place; what remains is making what is there faster,
+      more exact and more complete.
+    </p>
+
+    <h2 id="build">Building</h2>
+    <p><strong>Windows.</strong> Open <code>scripts/VS2026/pureikyubu.sln</code> in Visual Studio 2026
+      and build. The emulator is the SDL2 front end in every configuration, the solution holds
+      <code>pureikyubu</code>, <code>SDL2</code> (a static library) and the portable targets, both x64
+      and x86 (Win32) build, the recompilers follow the host, and the projects target Windows 7. The
+      <code>pureikyubu_headless</code> target is part of the solution but is not built by "Build
+      Solution". <code>EMU_VERSION</code> is <strong>2.0</strong>, which is what the title of the main
+      window, the About box, the JDI <code>GetVersion</code> and the MCP handshake report.</p>
+    <p><strong>Linux.</strong></p>
+    <pre><code>sudo apt install libglew-dev libsdl2-dev
+git clone https://github.com/emu-russia/pureikyubu.git
+cd pureikyubu
+git submodule update --init
+cd build &amp;&amp; cmake .. &amp;&amp; make
+./pureikyubu pong.dol
+cmake -DHEADLESS=ON .. &amp;&amp; make          # the windowless target</code></pre>
+    <p><strong>Tests.</strong></p>
+    <pre><code>MSBuild scripts/VS2026/pureikyubu_test.slnx -p:Configuration=Release -p:Platform=x64
+vstest.console.exe scripts/VS2026/x64/Release/pureikyubu_test.dll /Platform:x64</code></pre>
+    <p>The portable machines have their own harness — <strong>380 of 380 tests pass</strong>:</p>
+    <pre><code>testing/gba_bench/check.sh
+testing/gba_bench/get_test_roms.sh     # the public test ROMs and the two Acid2 pictures</code></pre>
+
+    <p class="note">
+      The previous releases are still available:
+      <a href="release_notes_1.9.1.html">Release Notes 1.9.1</a> ·
+      <a href="release_notes_1.9.1_ru.html">Заметки о релизе 1.9.1</a> ·
+      <a href="release_notes_1.9.html">Release Notes 1.9</a> ·
+      <a href="release_notes_1.8.html">Release Notes 1.8</a> ·
+      <a href="release_notes_1.7.html">Release Notes 1.7</a> ·
+      <a href="RELEASE_NOTES_2.0.md">Markdown</a>. The long story of the work after
+      release 1.6 is in the <a href="digest.html">digest</a>.
+    </p>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© pureikyubu project. Nintendo GameCube, Game Boy, Game Boy Color and Game Boy Advance are trademarks of Nintendo; this emulator is not affiliated with Nintendo.</div>
+    <div><a href="security.html">Security</a> · <a href="index.html">Home</a> · <a href="release_notes_1.9.1.html">Release Notes 1.9.1 (archive)</a> · <a href="release_notes_1.9.html">Release Notes 1.9 (archive)</a> · <a href="release_notes_1.8.html">Release Notes 1.8 (archive)</a> · <a href="release_notes_1.7.html">Release Notes 1.7 (archive)</a> · <a href="https://github.com/emu-russia/pureikyubu">GitHub</a></div>
+  </div>
+</footer>
+
+<script src="assets/theme.js"></script>
+</body>
+</html>

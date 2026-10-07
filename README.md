@@ -12,11 +12,14 @@ yourself.
 ## Progress
 
 The emulator boots and runs more titles with every release — the per-title throughput of the current
-release is listed in the [1.9.1 release notes](docs/RELEASE_NOTES_1.9.1.md). Release 1.9 added a
+release is listed in the [2.0 release notes](docs/RELEASE_NOTES_2.0.md). Release 1.9 added a
 second machine (an integrated Game Boy Advance and Game Boy, in `src/gba`), a software (CPU)
-rendering path next to the OpenGL one, a new debugger and a local MCP server; 1.9.1 makes the
-portable machines sound and time the way the hardware does, fixes the host-side BIOS, and leaves the
-SDL2 front end as the only one. The screenshots below are captures from earlier builds; the status
+rendering path next to the OpenGL one, a new debugger and a local MCP server; 1.9.1 made the
+portable machines sound and time the way the hardware does, fixed the host-side BIOS, and left the
+SDL2 front end as the only one; 2.0 is the peripheral release: one pool of peripheral devices
+(controllers, memory cards, the network adapters, the Game Boy Player and the GBA link cable), save
+states for the GameCube side, and a software GFX pipeline that is no longer experimental. The
+screenshots below are captures from earlier builds; the status
 bar of a current build shows the emulated MIPS and the time the emulation has been running - the
 console's clock and the host's. Some
 titles still fail to render or hang — compatibility is a work in progress.
