@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>pureikyubu — Nintendo GameCube emulator</title>
-<meta name="description" content="pureikyubu is a work-in-progress Nintendo GameCube emulator for research and reverse engineering. Landing page, release notes 1.9 and the archive of earlier releases.">
+<meta name="description" content="pureikyubu is a work-in-progress Nintendo GameCube emulator for research and reverse engineering. Landing page, release notes 2.0 and the archive of earlier releases.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="imgstore/favicon-32.png">
 <link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
@@ -24,7 +24,7 @@
       <a href="gba.html">GBA</a>
       <a href="gfxsoft.html">Soft GFX</a>
       <a href="mcp.html">MCP</a>
-      <a href="release_notes_1.9.1.html">Release Notes 1.9.1</a>
+      <a href="release_notes_2.0.html">Release Notes 2.0</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Language">
@@ -46,7 +46,7 @@
       it apart and understand it.
     </p>
     <div class="btn-row">
-      <a class="btn" href="release_notes_1.9.1.html">Release Notes 1.9.1</a>
+      <a class="btn" href="release_notes_2.0.html">Release Notes 2.0</a>
       <a class="btn secondary" href="digest.html">What changed after 1.6</a>
       <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu">Source on GitHub</a>
     </div>
@@ -59,63 +59,68 @@
     <section>
       <h2>What is new</h2>
       <p class="sub">
-        Release 1.9 is the feature release: an integrated Game Boy Advance and Game Boy, a complete
-        software implementation of the Flipper graphics blocks, a new debugger, an MCP server for LLM
-        agents, a hardware-interface profiler, a headless build and a DSP recompiler — plus the fixes
-        that run the <em>Metroid Prime</em> intro to its title screen and boot <em>Super Mario
-        Sunshine</em>.
+        Release 2.0 is the peripheral release: the console's peripherals become one pool of devices —
+        controllers, memory cards, the Broadband and Modem Adapters, the Game Boy Player and a Game Boy
+        Advance on a link cable — with one window that configures them. Save states arrive for the
+        GameCube side, the software GFX pipeline leaves its experimental status, and the interface gets
+        eight themes, the Japanese titles of the selector and the two clocks of the emulation in its
+        status bar.
       </p>
       <div class="grid">
         <div class="card">
-          <span class="badge">New machine</span>
-          <h3>Game Boy Advance and Game Boy</h3>
-          <p><code>src/gba</code> is a second console written from the public specifications, with a
-             free boot ROM that draws the pureikyubu logo, its own SDL2 front end and its own test
-             harness. <code>pureikyubu --gba game.gba</code> runs a cartridge;
-             <code>pureikyubu game.gbc</code> runs the Game Boy inside it.</p>
+          <span class="badge">Peripherals</span>
+          <h3>One pool of devices</h3>
+          <p>Every peripheral is a model of its own in <code>src/peripherals.cpp</code>: a controller,
+             a card, an adapter or a Game Boy Player plugged into a socket of the SI, EXI or Hi-Speed
+             bus, with its own settings and one property grid that draws them.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Network</span>
+          <h3>Broadband and Modem Adapters</h3>
+          <p>The two adapters of serial port 1 are emulated from the console's side, command word by
+             command word, and the shipped backend puts the Broadband Adapter's frames on UDP so two
+             emulators share one emulated segment.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Portable link</span>
+          <h3>Game Boy Player and link cable</h3>
+          <p>The Player is reached through the ARAM window it really lives in, and a Game Pak in its
+             bay runs the same integrated Game Boy Advance. The link cable drives a Game Boy Advance
+             on an SI socket the way a title does.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Save states</span>
+          <h3>The whole console in a file</h3>
+          <p><code>F5</code> and <code>F7</code>, ten slots, the File menu and the
+             <code>savestate</code>/<code>loadstate</code> commands. The portable machines keep their
+             own states, and a state loaded into a machine that has run on resumes the run.</p>
         </div>
         <div class="card">
           <span class="badge">Graphics</span>
-          <h3>The software GFX pipeline</h3>
-          <p>The Flipper blocks have a CPU implementation next to the OpenGL one: a real EFB memory
-             array, a real TMEM and a copy engine that writes the XFB the video interface scans out.
-             <code>GFX_PIPELINE</code> switches pipelines on the fly.</p>
+          <h3>Soft GFX, out of beta</h3>
+          <p>The software pipeline is no longer experimental: it draws the boot ROM's splash and the
+             movie players, honours the CP's BP write mask, and the titles it runs agree with the
+             shader backend.</p>
         </div>
         <div class="card">
-          <span class="badge">Debugging</span>
-          <h3>DebugUI2</h3>
-          <p>A new debugger with its own thread, its own OpenGL window and a session per run. Every
-             panel is the Markdown of a JDI command: thirteen tabs from Gekko to the profiler, plus
-             the GBA and Game Boy machines.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Tooling</span>
-          <h3>The MCP server</h3>
-          <p><code>pureikyubu --mcp</code> publishes the whole debug interface as Model Context
-             Protocol tools — around 170 of them — so an LLM agent drives the emulator over
-             stdin/stdout.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Diagnostics</span>
-          <h3>HW interface profiler</h3>
-          <p>What the console's channels actually move, per emulated second: the 60x and Splash buses,
-             the PI/CP FIFOs, every DMA engine, the audio mixer input, the GFX primitives and the VI
-             frames — as a table, a PNG or an overlay.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Platform</span>
-          <h3>Headless build and DSP JIT</h3>
-          <p>A windowless console target for benchmarks and MCP runs (with an offscreen OpenGL
-             backend on Windows), a security review behind a small verifier layer, UTF-8 throughout
-             the interface, and a DSP basic-block recompiler that is 1.5–1.8x faster.</p>
+          <span class="badge">Interface</span>
+          <h3>Themes, dump and clocks</h3>
+          <p>Eight themes drawn from the site's palette, Japanese titles in the selector, text that is
+             one texel to one pixel, a video output window that follows its window — and
+             <code>gfxdump</code>, which keeps the last frames of the graphics command stream.</p>
         </div>
       </div>
     </section>
 
     <section>
       <h2>Screenshots</h2>
-      <p class="sub">Captured from the current development build (release 1.9 line).</p>
+      <p class="sub">Captured from the current development build (release 2.0 line).</p>
       <div class="shots">
+        <figure>
+          <img src="imgstore/tww_title.png" alt="The Legend of Zelda: The Wind Waker drawn by the software GFX pipeline">
+          <figcaption><strong>The Wind Waker</strong>Its title screen drawn by the software GFX
+            pipeline, in its own video output window.</figcaption>
+        </figure>
         <figure>
           <img src="imgstore/debugui2.png" alt="The new DebugUI2 debugger with the Gekko registers and memory">
           <figcaption><strong>The new debugger</strong>Every panel is the Markdown of a JDI command:
@@ -204,19 +209,18 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
     <section id="next">
       <h2>Up next</h2>
       <p class="sub" style="max-width:none">
-        Release 2.0 will be the next major version, the <strong>peripheral release</strong>. It is aimed at the console's
-        peripheral devices — the EXI bus and the devices on it (memory cards, the Broadband Adapter,
-        the RTC), the serial interface and the pads, the disk interface and the drive, and the link
-        port the GBA side already has — and it should <strong>close out many of the emulator's
-        features</strong>, so that the list of what is not implemented yet shrinks to what genuinely
-        does not matter.
+        The peripherals are not finished, and the next release is where they are finished: the top half
+        of the network stack behind the Broadband Adapter, the <strong>Game Boy Player's own
+        firmware</strong> and the frame stream it feeds, the multi-boot transfer the link cable still
+        needs, and the Game Boy Advance of a Player or a link device travelling in a GameCube save
+        state.
       </p>
       <p class="sub" style="max-width:none">
         After that the project moves into its steady state: <strong>planned, methodical
         improvement</strong> — performance work and bug fixing release after release, rather than
         another feature push. The architecture is in place; what remains is making what is there
         faster, more exact and more complete. The details are in the
-        <a href="release_notes_1.9.1.html#next">1.9.1 release notes</a>.
+        <a href="release_notes_2.0.html#next">2.0 release notes</a>.
       </p>
     </section>
 
@@ -224,10 +228,10 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Documentation</h2>
       <div class="grid">
         <div class="card">
-          <h3>Release Notes 1.9.1</h3>
-          <p><a href="release_notes_1.9.1.html">English release notes</a> ·
-             <a href="release_notes_1.9.1_ru.html">Заметки о релизе на русском</a> ·
-             <a href="RELEASE_NOTES_1.9.1.md">Markdown</a></p>
+          <h3>Release Notes 2.0</h3>
+          <p><a href="release_notes_2.0.html">English release notes</a> ·
+             <a href="release_notes_2.0_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_2.0.md">Markdown</a></p>
         </div>
         <div class="card">
           <h3>Digest since 1.6</h3>
@@ -245,6 +249,12 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Archive</h2>
       <p class="sub">Earlier releases, kept for reference.</p>
       <div class="grid">
+        <div class="card">
+          <h3>Release Notes 1.9.1</h3>
+          <p><a href="release_notes_1.9.1.html">English release notes</a> ·
+             <a href="release_notes_1.9.1_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.9.1.md">Markdown</a></p>
+        </div>
         <div class="card">
           <h3>Release Notes 1.9</h3>
           <p><a href="release_notes_1.9.html">English release notes</a> ·

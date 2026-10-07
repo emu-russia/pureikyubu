@@ -24,7 +24,7 @@
       <a href="gba_ru.html">GBA</a>
       <a href="gfxsoft_ru.html" aria-current="page">Soft GFX</a>
       <a href="mcp_ru.html">MCP</a>
-      <a href="release_notes_1.9.1_ru.html">Release Notes 1.9.1</a>
+      <a href="release_notes_2.0_ru.html">Release Notes 2.0</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Язык">
@@ -37,12 +37,13 @@
 
 <section class="hero">
   <div class="wrap">
-    <h1>Программный конвейер GFX <span style="font-size:0.5em;color:#ffd166">(экспериментально)</span></h1>
+    <h1>Программный конвейер GFX</h1>
     <p class="lead">
-      <strong>Экспериментально.</strong> Конвейер реализован целиком, и прогон демок DolphinSDK ниже
-      на большинстве демок даёт те же картинки, что и шейдерный бэкенд, но в некоторых заголовках
-      ещё есть дефекты картинки (среди них демки сглаженного framebuffer). По умолчанию остаётся
-      шейдерный бэкенд.<br><br>
+      Конвейер реализован целиком, и прогон демок DolphinSDK ниже даёт те же картинки, что и шейдерный
+      бэкенд. Начиная с релиза 2.0 он также рисует заставку boot ROM и проигрыватели фильмов и уважает
+      маску записи bypass-регистров в CP — её отсутствие и было причиной чёрного неба титульного экрана
+      <em>The Wind Waker</em>. Он больше не экспериментальный; по умолчанию остаётся шейдерный
+      бэкенд.<br><br>
       У графической подсистемы Flipper есть второй путь рендеринга: программная (CPU) реализация тех
       же аппаратных блоков. Она написана по спецификациям GameCube — блок трансформации, блок setup,
       три растеризатора, блок текстур с <strong>настоящей TMEM</strong>, TEV и пиксельный движок с

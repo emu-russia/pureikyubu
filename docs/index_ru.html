@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>pureikyubu — эмулятор Nintendo GameCube</title>
-<meta name="description" content="pureikyubu — разрабатываемый эмулятор Nintendo GameCube для исследований и реверс-инжиниринга. Лендинг, заметки о релизе 1.9 и архив прошлых релизов.">
+<meta name="description" content="pureikyubu — разрабатываемый эмулятор Nintendo GameCube для исследований и реверс-инжиниринга. Лендинг, заметки о релизе 2.0 и архив прошлых релизов.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="imgstore/favicon-32.png">
 <link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
@@ -24,7 +24,7 @@
       <a href="gba_ru.html">GBA</a>
       <a href="gfxsoft_ru.html">Soft GFX</a>
       <a href="mcp_ru.html">MCP</a>
-      <a href="release_notes_1.9.1_ru.html">Release Notes 1.9.1</a>
+      <a href="release_notes_2.0_ru.html">Release Notes 2.0</a>
       <a href="https://github.com/emu-russia/pureikyubu">GitHub</a>
     </nav>
     <div class="lang-switch" aria-label="Язык">
@@ -46,7 +46,7 @@
       большое удовольствие.
     </p>
     <div class="btn-row">
-      <a class="btn" href="release_notes_1.9.1_ru.html">Заметки о релизе 1.9.1</a>
+      <a class="btn" href="release_notes_2.0_ru.html">Заметки о релизе 2.0</a>
       <a class="btn secondary" href="digest_ru.html">Что изменилось после 1.6</a>
       <a class="btn secondary" href="https://github.com/emu-russia/pureikyubu">Исходники на GitHub</a>
     </div>
@@ -59,62 +59,68 @@
     <section>
       <h2>Что нового</h2>
       <p class="sub">
-        Релиз 1.9 — релиз новых возможностей: встроенный Game Boy Advance и Game Boy, полная программная
-        реализация графических блоков Flipper, новый отладчик, MCP-сервер для LLM-агентов,
-        профилировщик аппаратных интерфейсов, headless-сборка и рекомпилятор DSP — плюс исправления,
-        благодаря которым вступление <em>Metroid Prime</em> доходит до титульного экрана, а
-        <em>Super Mario Sunshine</em> загружается.
+        Релиз 2.0 — релиз периферии: периферийные устройства консоли становятся одним пулом —
+        контроллеры, карты памяти, Broadband и Modem Adapter, Game Boy Player и Game Boy Advance на
+        кабеле связи — с одним окном, которое их настраивает. На стороне GameCube появляются
+        сохранения состояния, программный конвейер GFX перестаёт быть экспериментальным, а интерфейс
+        получает восемь тем, японские названия в селекторе и два такта эмуляции в строке состояния.
       </p>
       <div class="grid">
         <div class="card">
-          <span class="badge">Новая машина</span>
-          <h3>Game Boy Advance и Game Boy</h3>
-          <p><code>src/gba</code> — вторая консоль, написанная по публичным спецификациям, со свободным
-             boot ROM, рисующим логотип pureikyubu, собственным SDL2-интерфейсом и собственным стендом.
-             <code>pureikyubu --gba game.gba</code> запускает картридж;
-             <code>pureikyubu game.gbc</code> запускает Game Boy внутри него.</p>
+          <span class="badge">Периферия</span>
+          <h3>Один пул устройств</h3>
+          <p>Каждое периферийное устройство — отдельная модель в <code>src/peripherals.cpp</code>:
+             контроллер, карта, адаптер или Game Boy Player, включённые в разъём шины SI, EXI или
+             Hi-Speed, со своими настройками и одной таблицей свойств, которая их рисует.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Сеть</span>
+          <h3>Broadband и Modem Adapter</h3>
+          <p>Оба адаптера последовательного порта 1 эмулируются со стороны консоли, командное слово
+             за командным словом, а поставляемый бэкенд отправляет кадры Broadband Adapter по UDP,
+             так что два эмулятора делят один эмулируемый сегмент.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Портативная связь</span>
+          <h3>Game Boy Player и кабель связи</h3>
+          <p>Player достигается через ту самую оконную область ARAM, в которой он и живёт, а Game Pak
+             в его слоте запускает тот же встроенный Game Boy Advance. Кабель связи управляет Game Boy
+             Advance в разъёме SI так, как это делает игра.</p>
+        </div>
+        <div class="card">
+          <span class="badge">Сохранения</span>
+          <h3>Вся консоль в одном файле</h3>
+          <p><code>F5</code> и <code>F7</code>, десять слотов, меню File и команды
+             <code>savestate</code>/<code>loadstate</code>. Портативные машины сохраняют свои
+             состояния, а состояние, загруженное в машину, которая успела поработать, продолжает
+             тот же прогон.</p>
         </div>
         <div class="card">
           <span class="badge">Графика</span>
-          <h3>Программный конвейер GFX</h3>
-          <p>У блоков Flipper появилась реализация на CPU рядом с OpenGL: настоящий массив памяти EFB,
-             настоящий TMEM и движок копирования, который пишет XFB, сканируемый видеоинтерфейсом.
-             <code>GFX_PIPELINE</code> переключает конвейеры на ходу.</p>
+          <h3>Soft GFX — больше не бета</h3>
+          <p>Программный конвейер больше не экспериментальный: он рисует заставку boot ROM и
+             проигрыватели фильмов, уважает маску записи BP в CP, а заголовки, которые он запускает,
+             совпадают с шейдерным бэкендом.</p>
         </div>
         <div class="card">
-          <span class="badge">Отладка</span>
-          <h3>DebugUI2</h3>
-          <p>Новый отладчик с собственным потоком, собственным окном OpenGL и сессией на каждый запуск.
-             Каждая панель — Markdown команды JDI: тринадцать вкладок от Gekko до профилировщика, плюс
-             машины GBA и Game Boy.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Инструменты</span>
-          <h3>MCP-сервер</h3>
-          <p><code>pureikyubu --mcp</code> публикует весь отладочный интерфейс как инструменты Model
-             Context Protocol — около 170 штук — и LLM-агент управляет эмулятором через stdin/stdout.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Диагностика</span>
-          <h3>Профилировщик интерфейсов</h3>
-          <p>Что реально переносят каналы консоли за эмулируемую секунду: шины 60x и Splash, FIFO PI/CP,
-             каждый движок DMA, вход аудиомикшера, примитивы GFX и кадры VI — таблицей, PNG или
-             оверлеем.</p>
-        </div>
-        <div class="card">
-          <span class="badge">Платформа</span>
-          <h3>Headless-сборка и JIT для DSP</h3>
-          <p>Консольная цель без окна для бенчмарков и запусков MCP (с offscreen-бэкендом OpenGL в
-             Windows), аудит безопасности за небольшим слоем проверок, UTF-8 во всём интерфейсе и
-             рекомпилятор базовых блоков DSP, который в 1.5–1.8 раза быстрее.</p>
+          <span class="badge">Интерфейс</span>
+          <h3>Темы, дамп и такты</h3>
+          <p>Восемь тем на палитре сайта, японские названия в селекторе, текст «один тексель на
+             пиксель», окно видеовыхода, следящее за своим окном, — и <code>gfxdump</code>, который
+             хранит последние кадры потока графических команд.</p>
         </div>
       </div>
     </section>
 
     <section>
       <h2>Скриншоты</h2>
-      <p class="sub">Снято с текущей сборки (линейка релиза 1.9).</p>
+      <p class="sub">Снято с текущей сборки (линейка релиза 2.0).</p>
       <div class="shots">
+        <figure>
+          <img src="imgstore/tww_title.png" alt="The Legend of Zelda: The Wind Waker, нарисованная программным конвейером GFX">
+          <figcaption><strong>The Wind Waker</strong>Титульный экран, нарисованный программным
+            конвейером GFX, в собственном окне видеовыхода.</figcaption>
+        </figure>
         <figure>
           <img src="imgstore/debugui2.png" alt="Новый отладчик DebugUI2 с регистрами Gekko и памятью">
           <figcaption><strong>Новый отладчик</strong>Каждая панель — Markdown команды JDI: история
@@ -204,17 +210,16 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
     <section id="next">
       <h2>Что дальше</h2>
       <p class="sub" style="max-width:none">
-        Релиз 2.0 станет следующим мажорным релизом — <strong>релизом периферии</strong>. Он нацелен на периферийные устройства
-        консоли — шину EXI и устройства на ней (карты памяти, Broadband Adapter, RTC), последовательный
-        интерфейс и контроллеры, дисковый интерфейс и привод, а также порт связи, который уже есть у
-        стороны GBA, — и должен <strong>замкнуть множество возможностей эмулятора</strong>, чтобы список
-        «ещё не реализовано» сократился до того, что действительно не имеет значения.
+        Периферия не закончена, и следующий релиз — это тот, где она будет закончена: верхняя половина
+        сетевого стека за Broadband Adapter, <strong>прошивка самого Game Boy Player</strong> и поток
+        кадров, который она питает, передача multi-boot, которая всё ещё нужна кабелю связи, и Game Boy
+        Advance от Player или link-устройства, путешествующий в состоянии GameCube.
       </p>
       <p class="sub" style="max-width:none">
         После этого проект переходит в своё устойчивое состояние: <strong>планомерное улучшение</strong> —
         производительность и исправление ошибок от релиза к релизу, а не очередной рывок за новыми
         возможностями. Архитектура уже на месте; остаётся сделать то, что есть, быстрее, точнее и полнее.
-        Подробности — в <a href="release_notes_1.9.1_ru.html#next">заметках о релизе 1.9.1</a>.
+        Подробности — в <a href="release_notes_2.0_ru.html#next">заметках о релизе 2.0</a>.
       </p>
     </section>
 
@@ -222,10 +227,10 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Документация</h2>
       <div class="grid">
         <div class="card">
-          <h3>Release Notes 1.9.1</h3>
-          <p><a href="release_notes_1.9.1.html">English release notes</a> ·
-             <a href="release_notes_1.9.1_ru.html">Заметки о релизе на русском</a> ·
-             <a href="RELEASE_NOTES_1.9.1.md">Markdown</a></p>
+          <h3>Release Notes 2.0</h3>
+          <p><a href="release_notes_2.0.html">English release notes</a> ·
+             <a href="release_notes_2.0_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_2.0.md">Markdown</a></p>
         </div>
         <div class="card">
           <h3>Дайджест после 1.6</h3>
@@ -243,6 +248,12 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
       <h2>Архив</h2>
       <p class="sub">Прошлые релизы, оставлены для справки.</p>
       <div class="grid">
+        <div class="card">
+          <h3>Release Notes 1.9.1</h3>
+          <p><a href="release_notes_1.9.1.html">English release notes</a> ·
+             <a href="release_notes_1.9.1_ru.html">Заметки о релизе на русском</a> ·
+             <a href="RELEASE_NOTES_1.9.1.md">Markdown</a></p>
+        </div>
         <div class="card">
           <h3>Release Notes 1.9</h3>
           <p><a href="release_notes_1.9.html">English release notes</a> ·
