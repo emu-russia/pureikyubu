@@ -77,7 +77,7 @@ identically.
 command `jit 0` / `jit 1` toggles it at runtime and reports the current state.
 Turning it off drops the compiled blocks and runs the plain interpreter.
 
-## Two host modules: x86-64 and 32-bit x86
+## Host modules
 
 The recompiler needs an x86 host (the register file and the calling convention are
 hard-coded). The x86-64 translator is `gekkojit_x64.cpp` with its Paired-Single half in
@@ -165,6 +165,9 @@ namespace Gekko
 			uint32_t gen;				// Generation the entry belongs to
 			uint32_t instrCount;
 			uint32_t codeOffset;
+			// PS translation specializes on MSR[FP]. A context switch can change
+			// it without changing guest PC, physical address or cache generation.
+			uint32_t fpEnabled;
 		};
 
 	private:
