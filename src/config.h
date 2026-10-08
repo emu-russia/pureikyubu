@@ -52,6 +52,10 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 // 0: the shader (OpenGL) GFX pipeline, 1: the software (CPU) GFX pipeline (issue #384: it renders
 // the whole pipeline itself, into a real EFB memory array, and hands the XFB to the video interface)
 #define USER_GFX_PIPELINE "GFX_PIPELINE"
+// 1: the shader pipeline drops a uniform upload whose value has not changed (gfxuniformcache.cpp),
+// 0: every upload of a draw reaches the GL context. The cache mirrors what the context holds, so a
+// picture that a stale uniform is suspected of is compared against a run with the cache off.
+#define USER_GFX_UNIFORM_CACHE "GFX_UNIFORM_CACHE"
 
 // TODO: Add more
 #define USER_PI_LOG "PI_LOG"			// PI interrupts & fifo

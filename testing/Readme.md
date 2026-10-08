@@ -260,6 +260,7 @@ XF vertex shader and TEV fragment shader. Nothing is stubbed out except the Flip
 | `gfx_cp_test.cpp` | The CP FIFO: the register window, a display list executed burst by burst, the frame counters |
 | `gfx_bump_test.cpp` | The indirect (bump) registers and the coordinate offset arithmetic, checked by rendering a ramp texture with and without the offset |
 | `gfx_texture_test.cpp` | The texture formats (I4/I8/IA4/IA8/RGB565/RGB5A3/RGBA8/CMPR) and the palette (TLUT) lookup, with the alpha expansions checked through the alpha function |
+| `gfx_uniform_cache_test.cpp` | The uniform upload cache (`src/gfxuniformcache.cpp`): an upload whose value has not changed must not reach the GL context (read back with `glGetUniformfv`, so a dropped upload shows up as the value another writer left in the uniform), a register that moved must reach both the program and the picture, a program that was linked again - the flat-shaded TEV variant, or the one a pipeline switch leaves behind - must be given the whole state, and the switch of the cache itself (`GFX_UNIFORM_CACHE`, `gxuniformcache`) must turn the skipping off and on |
 
 ## How the tests observe the pipeline
 

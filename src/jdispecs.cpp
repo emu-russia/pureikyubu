@@ -1652,6 +1652,22 @@ namespace JdiSpecs
 			"output": "Object with pipeline and name"
 		},
 
+		"gxuniformcache":
+		{
+			"help": "Read or switch the uniform upload cache of the shader (OpenGL) pipeline",
+			"args": 0,
+			"hints": "[on|off]",
+			"usage": [
+				"Syntax: gxuniformcache [on|off|0|1]\n",
+				"Without an argument the state of the cache is reported. With one, the emulator switches\n",
+				"the cache that drops a uniform upload whose value has not changed - the shader pipeline\n",
+				"re-uploads the whole register state of a draw to its two static programs - and stores the\n",
+				"choice in the GFX_UNIFORM_CACHE configuration variable.\n",
+				"Example of use: gxuniformcache off\n"
+			],
+			"output": "Object with cache and name"
+		},
+
 		"gxtexdump":
 		{
 			"help": "Save the image of one texture map as a PNG file",

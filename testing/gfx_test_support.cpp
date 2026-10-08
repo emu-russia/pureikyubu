@@ -225,6 +225,10 @@ namespace GfxUnitTest
 		config.renderTarget = window;
 		config.consoleVer = 1;
 
+		// The uniform upload cache runs like a configured machine does (the settings themselves are
+		// the in-memory double of this file, so nothing reads GFX_UNIFORM_CACHE for the machine).
+		config.gfxUniformCache = true;
+
 		// The Flipper device doubles: only the pointers are ever dereferenced, and the stubs above
 		// ignore `this`, so plain storage is enough.
 		flipperStorage = new uint8_t[sizeof(Flipper::Flipper)]();
@@ -883,6 +887,14 @@ namespace Flipper
 	void* MemoryInterface::MIGetMemoryPointerForPI(uint32_t phys_addr)
 	{
 		return GfxUnitTest::TestMainMemory(phys_addr, 0);
+	}
+
+	// The window-checked form of the same call: the block that reads a whole 32-byte line out of
+	// main memory (the software texture unit) asks for it, and a range that leaves the memory the
+	// test machine has is answered with nullptr, exactly like the real interface (Verify::MainMemory).
+	void* MemoryInterface::MIGetMemoryPointerForPI(uint32_t phys_addr, size_t size)
+	{
+		return GfxUnitTest::TestMainMemory(phys_addr, size);
 	}
 
 	// The DMA path of an EXI device: the broadband adapter sends a frame out of main memory and

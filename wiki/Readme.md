@@ -12,6 +12,10 @@ The wiki does not contain any detailed descriptions of the GameCube architecture
   and the yield loop behind it), how the recompiler recognises the wait, how much of a run it is,
   and what skipping it is worth on Metroid Prime.
 
+* [GFX uniform cache](gfxuniformcache.md) — the shader pipeline uploads the whole register state of
+  a draw to its two static programs, and `src/gfxuniformcache.cpp` drops the uploads whose value has
+  not changed: what a cached value belongs to, when it is dropped, and what the tests pin down.
+
 But here are some diagrams, just as a memo.
 
 GameCube:

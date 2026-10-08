@@ -42,6 +42,7 @@
     <ClCompile Include="..\..\testing\gfx_su_features_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_bump_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_texture_test.cpp" />
+    <ClCompile Include="..\..\testing\gfx_uniform_cache_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_report_texture_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_report_pipeline_test.cpp" />
     <ClCompile Include="..\..\testing\gfx_report_raster_test.cpp" />
@@ -232,6 +233,9 @@
     <ClCompile Include="..\..\src\gfx.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\src\gfxuniformcache.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\src\gfxdump.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -283,6 +287,7 @@
     <ClInclude Include="..\..\src\hwprof.h" />
     <ClInclude Include="..\..\src\mcp.h" />
     <ClInclude Include="..\..\src\gfx.h" />
+    <ClInclude Include="..\..\src\gfxuniformcache.h" />
     <ClInclude Include="..\..\src\gfxdump.h" />
     <ClInclude Include="..\..\src\cont.h" />
     <ClInclude Include="..\..\src\cp.h" />

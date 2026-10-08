@@ -177,6 +177,10 @@ inline uint32_t MergeBpWriteMask(uint32_t oldValue, uint32_t value, uint32_t mas
 #include "bump.h"
 #include "tx.h"
 
+// The uniform upload cache of the shader pipeline (`GLProgram::serial` is the identity it keys its
+// values on, `GFXCore::uniformCache` is the cache the blocks upload through).
+#include "gfxuniformcache.h"
+
 // 1: Use SDL_Window as a render target; the appropriate SDL API calls are invoked to service it
 // Every windowed build is the SDL one (issue #421) and its project passes GFX_USE_SDL_WINDOW=1. The
 // Windows headless build that still draws (GFX_OFFSCREEN) is the one that keeps creating a hidden
@@ -223,6 +227,14 @@ namespace GFX
 
 	public:
 		GLuint prog = 0;
+
+		//! The identity of the uniform storage this object names, handed out by the uniform cache
+		//! module (gfxuniformcache.h). It is renewed whenever the storage is replaced - the object
+		//! links a program of its own, or the program it carried is deleted - because the cache
+		//! keys the values it holds on it: neither the GLProgram object nor its GL name can tell
+		//! one uniform storage from another (GL reuses the names of deleted programs, and a fresh
+		//! program has no uniform set at all).
+		uint64_t serial = NextProgramSerial();
 
 		~GLProgram();
 
@@ -466,6 +478,14 @@ namespace GFX
 		void InitGeometryBuffers();
 		void DisposeGeometryBuffers();
 
+		//! The uniform upload cache of the shader pipeline (gfxuniformcache.h): the value every
+		//! uniform of the TEV program was last uploaded with, so that a draw whose register state
+		//! did not change does not repeat the ~60 glUniform* calls the state is made of. The blocks
+		//! of the pipeline hold a reference to this instance (`gfx`) and upload through it; it is
+		//! dropped when the pipeline is switched (see SetPipeline) and when the GL context goes
+		//! away, because it is a copy of what that context holds rather than emulated state.
+		UniformCache uniformCache;
+
 		// You probably don't need to reset the internal state of GFX because GXInit from Dolphin SDK is working hard on it
 
 		// Gfx Common
@@ -486,6 +506,14 @@ namespace GFX
 		//! Switch the pipeline and store the choice in the configuration (the console picks it up
 		//! again on the next start). Returns false for an unknown value.
 		bool SetPipeline(int value);
+
+		//! Switch the uniform upload cache of the shader pipeline (the GFX_UNIFORM_CACHE setting,
+		//! the settings window and the `gxuniformcache` command) and store the choice in the
+		//! configuration. A switched-off cache lets every upload of a draw reach the GL context.
+		void SetUniformCache(bool value);
+
+		//! Whether an upload whose value has not changed is dropped (see gfxuniformcache.h).
+		bool UniformCacheEnabled() const { return uniformCache.Enabled(); }
 
 		TransformUnit* xf = nullptr;
 		SetupUnit* su = nullptr;

@@ -43,6 +43,7 @@
 		"VI_LOG": false,
 		"VI_XFB": true,
 		"GFX_PIPELINE": 0,
+		"GFX_UNIFORM_CACHE": 1,
 		"PI_LOG": false,
 		"DI_LOG": false,
 		"SI_LOG": false,

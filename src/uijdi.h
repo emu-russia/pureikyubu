@@ -87,6 +87,12 @@ namespace UI
 		//! taken in. Answers 0 while no machine is running.
 		int GetGfxPipeline();
 
+		//! Whether the shader pipeline drops the uniform uploads whose value has not changed
+		//! (`gxuniformcache`, the GFX_UNIFORM_CACHE setting). It is asked of the emulator, because
+		//! the settings window shows the state of the machine that is running. Answers true while no
+		//! machine is running, which is the shipped default.
+		bool GetGfxUniformCache();
+
 		// Misc
 
 		bool JitcEnabled();

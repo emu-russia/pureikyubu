@@ -544,12 +544,35 @@ static void settings_page_hw()
 		}
 		PropertyRowEnd();
 
+		// The uniform upload cache of the shader pipeline (gfxuniformcache.cpp). Like the backend,
+		// the choice is kept in the configuration and applied to the machine that is running at
+		// once, through the command the whole debug interface uses.
+		PropertyRow("Uniform cache");
+		{
+			bool cache = emu.loaded
+				? UI::Jdi->GetGfxUniformCache()
+				: UI::Jdi->GetConfigInt(USER_GFX_UNIFORM_CACHE, USER_HW) != 0;
+
+			if (ImGui::Checkbox("##v", &cache))
+			{
+				UI::Jdi->SetConfigInt(USER_GFX_UNIFORM_CACHE, cache ? 1 : 0, USER_HW);
+
+				if (emu.loaded)
+				{
+					UI::Jdi->ExecuteCommand(cache ? "gxuniformcache on" : "gxuniformcache off");
+				}
+			}
+		}
+		PropertyRowEnd();
+
 		PropertyGridEnd();
 	}
 
 	ImGui::TextDisabled("The shader backend draws the picture with OpenGL, the software one on the host\n"
 		"CPU and without a GL context (it is young: a few demos still have picture defects).\n"
-		"The choice takes effect at once and is kept for the next start.");
+		"The choice takes effect at once and is kept for the next start.\n"
+		"The uniform cache uploads the register state of a draw to the shader only where it moved;\n"
+		"a picture that a stale uniform is suspected of is compared against a run with it off.");
 
 	ImGui::Separator();
 
