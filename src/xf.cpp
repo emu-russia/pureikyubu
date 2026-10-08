@@ -500,9 +500,9 @@ void main()
 	{
 		// --- matrices ---
 
-		glUniform1fv(p.Uniform("matrixMem"), (GLsizei)XF_MATRIX_MEMORY_SIZE, xf.mvTexMtx);
-		glUniform1fv(p.Uniform("nrmMatrixMem"), (GLsizei)XF_NORMAL_MATRIX_MEMORY_SIZE, xf.nrmMtx);
-		glUniform1fv(p.Uniform("dualTexMatrixMem"), (GLsizei)XF_DUALTEX_MATRIX_MEMORY_SIZE, xf.dualTexMtx);
+		gfx->uniformCache.Set1fv(p, "matrixMem", (GLsizei)XF_MATRIX_MEMORY_SIZE, xf.mvTexMtx);
+		gfx->uniformCache.Set1fv(p, "nrmMatrixMem", (GLsizei)XF_NORMAL_MATRIX_MEMORY_SIZE, xf.nrmMtx);
+		gfx->uniformCache.Set1fv(p, "dualTexMatrixMem", (GLsizei)XF_DUALTEX_MATRIX_MEMORY_SIZE, xf.dualTexMtx);
 
 		// --- lights ---
 
@@ -540,11 +540,11 @@ void main()
 				k[i][0] = 0.00001f;
 		}
 
-		glUniform4fv(p.Uniform("lightRgba[0]"), 8, (float*)rgba);
-		glUniform4fv(p.Uniform("lightA[0]"), 8, (float*)a);
-		glUniform4fv(p.Uniform("lightK[0]"), 8, (float*)k);
-		glUniform4fv(p.Uniform("lightLpx[0]"), 8, (float*)lpx);
-		glUniform4fv(p.Uniform("lightDhx[0]"), 8, (float*)dhx);
+		gfx->uniformCache.Set4fv(p, "lightRgba[0]", 8, (float*)rgba);
+		gfx->uniformCache.Set4fv(p, "lightA[0]", 8, (float*)a);
+		gfx->uniformCache.Set4fv(p, "lightK[0]", 8, (float*)k);
+		gfx->uniformCache.Set4fv(p, "lightLpx[0]", 8, (float*)lpx);
+		gfx->uniformCache.Set4fv(p, "lightDhx[0]", 8, (float*)dhx);
 
 		// --- colours and channel controls ---
 
@@ -559,7 +559,7 @@ void main()
 			clr[idx][3] = (float)xf.ambient[i].A / 255.0f;
 			idx++;
 		}
-		glUniform4fv(p.Uniform("xfAmbient[0]"), 2, (float*)clr);
+		gfx->uniformCache.Set4fv(p, "xfAmbient[0]", 2, (float*)clr);
 
 		idx = 0;
 		for (int i = 0; i < 2; i++)
@@ -570,7 +570,7 @@ void main()
 			clr[idx][3] = (float)xf.material[i].A / 255.0f;
 			idx++;
 		}
-		glUniform4fv(p.Uniform("xfMaterial[0]"), 2, (float*)clr);
+		gfx->uniformCache.Set4fv(p, "xfMaterial[0]", 2, (float*)clr);
 
 		float cctl[2][4], catten[2][4], actl[2][4], aatten[2][4];
 		int cmask[2], amask[2];
@@ -605,20 +605,20 @@ void main()
 				(ac->Light4 ? 0x10 : 0) | (ac->Light5 ? 0x20 : 0) | (ac->Light6 ? 0x40 : 0) | (ac->Light7 ? 0x80 : 0);
 		}
 
-		glUniform4fv(p.Uniform("colorCtl[0]"), 2, (float*)cctl);
-		glUniform4fv(p.Uniform("colorAtten[0]"), 2, (float*)catten);
-		glUniform1iv(p.Uniform("colorLightMask[0]"), 2, cmask);
-		glUniform4fv(p.Uniform("alphaCtl[0]"), 2, (float*)actl);
-		glUniform4fv(p.Uniform("alphaAtten[0]"), 2, (float*)aatten);
-		glUniform1iv(p.Uniform("alphaLightMask[0]"), 2, amask);
+		gfx->uniformCache.Set4fv(p, "colorCtl[0]", 2, (float*)cctl);
+		gfx->uniformCache.Set4fv(p, "colorAtten[0]", 2, (float*)catten);
+		gfx->uniformCache.Set1iv(p, "colorLightMask[0]", 2, cmask);
+		gfx->uniformCache.Set4fv(p, "alphaCtl[0]", 2, (float*)actl);
+		gfx->uniformCache.Set4fv(p, "alphaAtten[0]", 2, (float*)aatten);
+		gfx->uniformCache.Set1iv(p, "alphaLightMask[0]", 2, amask);
 
 		// --- scalars ---
 
-		glUniform1i(p.Uniform("xfNumColors"), (GLint)(xf.numColors > 2 ? 2 : xf.numColors));
-		glUniform1i(p.Uniform("xfNumTex"), (GLint)(xf.numTex > 8 ? 8 : xf.numTex));
-		glUniform1fv(p.Uniform("xfProjParam"), 6, xf.projectionParam);
-		glUniform1i(p.Uniform("xfProjOrtho"), xf.projectOrtho ? 1 : 0);
-		glUniform1i(p.Uniform("xfDualTexTran"), xf.dualTexTran ? 1 : 0);
+		gfx->uniformCache.Set1i(p, "xfNumColors", (GLint)(xf.numColors > 2 ? 2 : xf.numColors));
+		gfx->uniformCache.Set1i(p, "xfNumTex", (GLint)(xf.numTex > 8 ? 8 : xf.numTex));
+		gfx->uniformCache.Set1fv(p, "xfProjParam", 6, xf.projectionParam);
+		gfx->uniformCache.Set1i(p, "xfProjOrtho", xf.projectOrtho ? 1 : 0);
+		gfx->uniformCache.Set1i(p, "xfDualTexTran", xf.dualTexTran ? 1 : 0);
 
 		uint32_t texgen[8][4];
 		uint32_t dualgen[8];
@@ -630,8 +630,8 @@ void main()
 			dualgen[i] = xf.dualTex[i].bits;
 		}
 
-		glUniform4uiv(p.Uniform("xfTexGen[0]"), 8, (GLuint*)texgen);
-		glUniform1uiv(p.Uniform("xfDualGen[0]"), 8, (GLuint*)dualgen);
+		gfx->uniformCache.Set4uiv(p, "xfTexGen[0]", 8, (GLuint*)texgen);
+		gfx->uniformCache.Set1uiv(p, "xfDualGen[0]", 8, (GLuint*)dualgen);
 	}
 
 	void TransformUnit::GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)

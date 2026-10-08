@@ -805,7 +805,7 @@ void main()
 		for (int i = 0; i < 8; i++)
 		{
 			sprintf(name, "texMap%d", i);
-			glUniform1i(program->Uniform(name), i);
+			gfx->uniformCache.Set1i(*program, name, i);
 		}
 
 		Report(Channel::GP, "TEV fragment shader compiled\n");
@@ -862,8 +862,8 @@ void main()
 			alphaEnv[i][1] = alphaEnv[i][2] = alphaEnv[i][3] = 0;
 		}
 
-		glUniform4uiv(p.Uniform("tevColorEnv[0]"), 16, (GLuint*)colorEnv);
-		glUniform4uiv(p.Uniform("tevAlphaEnv[0]"), 16, (GLuint*)alphaEnv);
+		gfx->uniformCache.Set4uiv(p, "tevColorEnv[0]", 16, (GLuint*)colorEnv);
+		gfx->uniformCache.Set4uiv(p, "tevAlphaEnv[0]", 16, (GLuint*)alphaEnv);
 
 		uint32_t tref[8][4];
 		uint32_t ksel[8][2];
@@ -878,8 +878,8 @@ void main()
 			ksel[i][1] = (k.kcsel1 & 31) | ((k.kasel1 & 31) << 5);
 		}
 
-		glUniform4uiv(p.Uniform("tevTref[0]"), 8, (GLuint*)tref);
-		glUniform2uiv(p.Uniform("tevKsel[0]"), 8, (GLuint*)ksel);
+		gfx->uniformCache.Set4uiv(p, "tevTref[0]", 8, (GLuint*)tref);
+		gfx->uniformCache.Set2uiv(p, "tevKsel[0]", 8, (GLuint*)ksel);
 
 		// The four swap tables: register 2k carries red and green of table k, 2k+1 blue and alpha
 		// (GDTev.h, GDSetTevSwapModeTable).
@@ -893,10 +893,10 @@ void main()
 			swap[i][1] = (ba.xrb & 3) | ((ba.xga & 3) << 2);
 		}
 
-		glUniform2uiv(p.Uniform("tevSwap[0]"), 4, (GLuint*)swap);
+		gfx->uniformCache.Set2uiv(p, "tevSwap[0]", 4, (GLuint*)swap);
 
 		int stages = (gfx->genmode.ntev & 0xF) + 1;
-		glUniform1i(p.Uniform("tevStages"), stages > 16 ? 16 : stages);
+		gfx->uniformCache.Set1i(p, "tevStages", stages > 16 ? 16 : stages);
 
 		// Colour registers (11-bit signed, in 1/255 units) and K constants (Rev B, unsigned bytes).
 		// Both live in the same registers on real hardware; the write path decides which form is meant
@@ -924,11 +924,11 @@ void main()
 			kreg[i][3] = (float)tev.kregl[i].a;
 		}
 
-		glUniform4fv(p.Uniform("tevReg[0]"), 4, (float*)reg);
-		glUniform4fv(p.Uniform("tevKReg[0]"), 4, (float*)kreg);
+		gfx->uniformCache.Set4fv(p, "tevReg[0]", 4, (float*)reg);
+		gfx->uniformCache.Set4fv(p, "tevKReg[0]", 4, (float*)kreg);
 
 		// The fog colour is used inside the combine datapath, so it is in the same 1/255 units
-		glUniform4f(p.Uniform("tevFogColor"),
+		gfx->uniformCache.Set4f(p, "tevFogColor",
 			(float)tev.fog_color.r,
 			(float)tev.fog_color.g,
 			(float)tev.fog_color.b, 255.0f);
@@ -940,17 +940,17 @@ void main()
 			return sign ? -v : v;
 		};
 
-		glUniform1f(p.Uniform("tevFogA"),
+		gfx->uniformCache.Set1f(p, "tevFogA",
 			s11e8(tev.fog_param0.a_sign, tev.fog_param0.a_expn, tev.fog_param0.a_mant));
-		glUniform1f(p.Uniform("tevFogC"),
+		gfx->uniformCache.Set1f(p, "tevFogC",
 			s11e8(tev.fog_param3.c_sign, tev.fog_param3.c_expn, tev.fog_param3.c_mant));
-		glUniform1f(p.Uniform("tevFogBMag"), (float)tev.fog_param1.b_mag);
-		glUniform1f(p.Uniform("tevFogBShf"), (float)tev.fog_param2.b_shft);
-		glUniform1i(p.Uniform("tevFogProj"), (GLint)tev.fog_param3.proj);
-		glUniform1i(p.Uniform("tevFogFsel"), (GLint)tev.fog_param3.fsel);
+		gfx->uniformCache.Set1f(p, "tevFogBMag", (float)tev.fog_param1.b_mag);
+		gfx->uniformCache.Set1f(p, "tevFogBShf", (float)tev.fog_param2.b_shft);
+		gfx->uniformCache.Set1i(p, "tevFogProj", (GLint)tev.fog_param3.proj);
+		gfx->uniformCache.Set1i(p, "tevFogFsel", (GLint)tev.fog_param3.fsel);
 
-		glUniform1i(p.Uniform("tevRangeAdjEnb"), (GLint)tev.rangeadj_control.enb);
-		glUniform1f(p.Uniform("tevRangeAdjCenter"), (float)tev.rangeadj_control.center);
+		gfx->uniformCache.Set1i(p, "tevRangeAdjEnb", (GLint)tev.rangeadj_control.enb);
+		gfx->uniformCache.Set1f(p, "tevRangeAdjCenter", (float)tev.rangeadj_control.center);
 
 		float coef[10];
 		for (int i = 0; i < 5; i++)
@@ -958,19 +958,19 @@ void main()
 			coef[i * 2 + 0] = (float)tev.range_adj[i].r0 / 256.0f;
 			coef[i * 2 + 1] = (float)tev.range_adj[i].r1 / 256.0f;
 		}
-		glUniform1fv(p.Uniform("tevRangeAdjCoef[0]"), 10, coef);
+		gfx->uniformCache.Set1fv(p, "tevRangeAdjCoef[0]", 10, coef);
 
 		// Alpha function
-		glUniform1f(p.Uniform("tevAlphaRef0"), (float)tev.alpha_func.a0);
-		glUniform1f(p.Uniform("tevAlphaRef1"), (float)tev.alpha_func.a1);
-		glUniform1i(p.Uniform("tevAlphaOp0"), (GLint)tev.alpha_func.op0);
-		glUniform1i(p.Uniform("tevAlphaOp1"), (GLint)tev.alpha_func.op1);
-		glUniform1i(p.Uniform("tevAlphaLogic"), (GLint)tev.alpha_func.logic);
+		gfx->uniformCache.Set1f(p, "tevAlphaRef0", (float)tev.alpha_func.a0);
+		gfx->uniformCache.Set1f(p, "tevAlphaRef1", (float)tev.alpha_func.a1);
+		gfx->uniformCache.Set1i(p, "tevAlphaOp0", (GLint)tev.alpha_func.op0);
+		gfx->uniformCache.Set1i(p, "tevAlphaOp1", (GLint)tev.alpha_func.op1);
+		gfx->uniformCache.Set1i(p, "tevAlphaLogic", (GLint)tev.alpha_func.logic);
 
 		// Z-texture environment
-		glUniform1i(p.Uniform("tevZEnvOp"), (GLint)tev.zenv1.op);
-		glUniform1i(p.Uniform("tevZEnvType"), (GLint)tev.zenv1.type);
-		glUniform1f(p.Uniform("tevZEnvOffset"), (float)tev.zenv0.zoff);
+		gfx->uniformCache.Set1i(p, "tevZEnvOp", (GLint)tev.zenv1.op);
+		gfx->uniformCache.Set1i(p, "tevZEnvType", (GLint)tev.zenv1.type);
+		gfx->uniformCache.Set1f(p, "tevZEnvOffset", (float)tev.zenv0.zoff);
 
 		// Bump / indirect state
 		{
@@ -981,7 +981,7 @@ void main()
 			{
 				cmd[i >> 2][i & 3] = bump.cmd[i].bits & 0x1FFFFF;
 			}
-			glUniform4uiv(p.Uniform("bumpCmd[0]"), 4, (GLuint*)cmd);
+			gfx->uniformCache.Set4uiv(p, "bumpCmd[0]", 4, (GLuint*)cmd);
 
 			float mtxA[3][4], mtxB[3][4], mtxC[3][4];
 			for (int i = 0; i < 3; i++)
@@ -1002,9 +1002,9 @@ void main()
 				mtxC[i][3] = 0.0f;
 			}
 
-			glUniform4fv(p.Uniform("bumpMtxA[0]"), 3, (float*)mtxA);
-			glUniform4fv(p.Uniform("bumpMtxB[0]"), 3, (float*)mtxB);
-			glUniform4fv(p.Uniform("bumpMtxC[0]"), 3, (float*)mtxC);
+			gfx->uniformCache.Set4fv(p, "bumpMtxA[0]", 3, (float*)mtxA);
+			gfx->uniformCache.Set4fv(p, "bumpMtxB[0]", 3, (float*)mtxB);
+			gfx->uniformCache.Set4fv(p, "bumpMtxC[0]", 3, (float*)mtxC);
 		}
 
 		// Per-map texture coordinate scales
@@ -1020,7 +1020,7 @@ void main()
 				indScale[i][1] = gfx->ras->IndirectScale(i, true);
 			}
 
-			glUniform2fv(p.Uniform("indScale[0]"), 4, (float*)indScale);
+			gfx->uniformCache.Set2fv(p, "indScale[0]", 4, (float*)indScale);
 		}
 	}
 

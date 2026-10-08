@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   The emulator (issue #421: it is the SDL build, the Win32 front end and its DirectSound/GDI/Win32
   back ends are gone, so "Debug" and "Release" are the only configurations there are, for both
@@ -76,6 +76,7 @@
     <ClInclude Include="..\..\src\hwosd.h" />
     <ClInclude Include="..\..\src\gba\gba_debug.h" />
     <ClInclude Include="..\..\src\gfx.h" />
+    <ClInclude Include="..\..\src\gfxuniformcache.h" />
     <ClInclude Include="..\..\src\gfxdump.h" />
     <ClInclude Include="..\..\src\jdi.h" />
     <ClInclude Include="..\..\src\jdiserver.h" />
@@ -170,6 +171,7 @@
     </ClCompile>
     <ClCompile Include="..\..\src\gfxosd.cpp" />
     <ClCompile Include="..\..\src\gfx.cpp" />
+    <ClCompile Include="..\..\src\gfxuniformcache.cpp" />
     <ClCompile Include="..\..\src\gfxdump.cpp" />
     <ClCompile Include="..\..\src\jdi.cpp" />
     <ClCompile Include="..\..\src\jdiserver.cpp" />

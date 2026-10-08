@@ -94,6 +94,7 @@ set (PUREIKYUBU_CORE
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
 	src/gfx.cpp
+	src/gfxuniformcache.cpp
 	src/gfxdump.cpp
 	src/gfxosd.cpp
 	src/hwdebug.cpp

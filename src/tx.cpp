@@ -1039,9 +1039,9 @@ namespace GFX
 			gfx->su->CoordScale(i, &coordScale[i][0], &coordScale[i][1]);
 		}
 
-		glUniform2fv(program.Uniform("texScale[0]"), 8, (float*)scale);
-		glUniform2fv(program.Uniform("texSize[0]"), 8, (float*)size);
-		glUniform2fv(program.Uniform("suScale[0]"), 8, (float*)coordScale);
+		gfx->uniformCache.Set2fv(program, "texScale[0]", 8, (float*)scale);
+		gfx->uniformCache.Set2fv(program, "texSize[0]", 8, (float*)size);
+		gfx->uniformCache.Set2fv(program, "suScale[0]", 8, (float*)coordScale);
 	}
 
 	TextureEngine::TextureEngine(HWConfig* config, GFXCore* parent_gfx)

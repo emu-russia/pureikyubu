@@ -485,6 +485,7 @@ void EMUGetHwConfig(HWConfig * config)
 	config->vi_xfb = GetConfigBool(USER_VI_XFB, USER_HW);
 
 	config->gfxPipeline = GetConfigInt(USER_GFX_PIPELINE, USER_HW);
+	config->gfxUniformCache = GetConfigInt(USER_GFX_UNIFORM_CACHE, USER_HW) != 0;
 
 	config->videoEncoderFuse = 0;
 
@@ -1006,6 +1007,7 @@ static Json::Value* CmdGetConfig(std::vector<std::string>& args)
 	Report(Channel::Norm, "%s = %i\n", USER_OS_REPORT, GetConfigBool(USER_OS_REPORT, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_VI_XFB, GetConfigBool(USER_VI_XFB, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_GFX_PIPELINE, GetConfigInt(USER_GFX_PIPELINE, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_GFX_UNIFORM_CACHE, GetConfigInt(USER_GFX_UNIFORM_CACHE, USER_HW));
 
 	Report(Channel::Norm, "%s = %s\n", USER_BOOTROM, Util::WstringToString(GetConfigString(USER_BOOTROM, USER_HW)).c_str());
 	Report(Channel::Norm, "%s = %s\n", USER_DSP_DROM, Util::WstringToString(GetConfigString(USER_DSP_DROM, USER_HW)).c_str());

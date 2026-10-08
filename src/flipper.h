@@ -52,6 +52,10 @@ struct HWConfig
 
 	// GFX
 	int         gfxPipeline;            // 0: shader (OpenGL) pipeline, 1: software pipeline
+	// 1: the shader pipeline drops the uniform uploads whose value has not changed
+	// (src/gfxuniformcache.cpp). Both fillers of this struct - EMUGetHwConfig and the GFX test
+	// machine - set it from the GFX_UNIFORM_CACHE setting (1 in the shipped defaults).
+	bool        gfxUniformCache;
 
 	// PI
 	uint32_t    consoleVer;

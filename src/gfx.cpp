@@ -45,6 +45,7 @@ namespace GFX
 	static Json::Value* CmdGxPixel(std::vector<std::string>& args);
 	static Json::Value* CmdGxReset(std::vector<std::string>& args);
 	static Json::Value* CmdGxPipeline(std::vector<std::string>& args);
+	static Json::Value* CmdGxUniformCache(std::vector<std::string>& args);
 	static Json::Value* CmdGxTexDump(std::vector<std::string>& args);
 
 	static void gfx_init_handlers()
@@ -58,6 +59,7 @@ namespace GFX
 		JDI::Hub.AddCmd("gxpixel", CmdGxPixel);
 		JDI::Hub.AddCmd("gxreset", CmdGxReset);
 		JDI::Hub.AddCmd("gxpipeline", CmdGxPipeline);
+		JDI::Hub.AddCmd("gxuniformcache", CmdGxUniformCache);
 		JDI::Hub.AddCmd("gxtexdump", CmdGxTexDump);
 
 		// The GFX command dump (gfxdump.cpp) is the other half of the same node: it records what the
@@ -790,6 +792,38 @@ namespace GFX
 	}
 
 	// -------------------------------------------------------------------------------------------
+	// gxuniformcache - read or switch the uniform upload cache of the shader pipeline
+	// -------------------------------------------------------------------------------------------
+
+	static Json::Value* CmdGxUniformCache(std::vector<std::string>& args)
+	{
+		GFXCore* gfx = Gfx();
+		if (gfx == nullptr)
+		{
+			return GLErrorValue(L"the GFX subsystem is not running");
+		}
+
+		if (args.size() > 1)
+		{
+			bool value;
+
+			if (args[1] == "on" || args[1] == "1")
+				value = true;
+			else if (args[1] == "off" || args[1] == "0")
+				value = false;
+			else
+				return GLErrorValue(L"gxuniformcache: the cache is on (1) or off (0)");
+
+			gfx->SetUniformCache(value);
+		}
+
+		Json::Value* output = MakeObject();
+		output->AddInt("cache", gfx->UniformCacheEnabled() ? 1 : 0);
+		output->AddUtf8String("name", gfx->UniformCacheEnabled() ? "on" : "off");
+		return output;
+	}
+
+	// -------------------------------------------------------------------------------------------
 	// GL object helpers
 
 	GLuint CompileShaderStage(GLenum type, const char* source, const char* label)
@@ -827,6 +861,12 @@ namespace GFX
 			return false;
 
 		prog = glCreateProgram();
+
+		// A program the object links is a uniform storage of its own, and the values the uniform
+		// cache holds for the names of this object belong to the storage it carried before (see
+		// GLProgram::serial).
+		serial = NextProgramSerial();
+
 		glAttachShader(prog, vertShader);
 		glAttachShader(prog, fragShader);
 		glLinkProgram(prog);
@@ -856,6 +896,10 @@ namespace GFX
 			prog = 0;
 		}
 		locations.clear();
+
+		// The uniform storage is gone with the program, so the object (which may be given another
+		// one by a later Link) is not the storage the cached values belong to any more.
+		serial = NextProgramSerial();
 	}
 
 	GLint GLProgram::Uniform(const char* name)
@@ -936,6 +980,11 @@ namespace GFX
 		// can switch it at run time (SetPipeline).
 		pipeline = (config->gfxPipeline == GFX_PIPELINE_SOFT) ? GFX_PIPELINE_SOFT : GFX_PIPELINE_SHADER;
 
+		// The uniform upload cache of the shader pipeline (GFX_UNIFORM_CACHE). Unlike the pipeline
+		// it is not part of the emulated state - it is a copy of what the GL context holds - so it
+		// travels in the configuration only and is switched through SetUniformCache at run time.
+		uniformCache.SetEnabled(config->gfxUniformCache);
+
 		xf = new TransformUnit(config, this);
 		su = new SetupUnit(config, this);
 		ras = new Rasterizer(config, this);
@@ -950,6 +999,7 @@ namespace GFX
 
 		Report(Channel::GP, "GFX pipeline: %s\n",
 			SoftPipeline() ? "software (CPU, issue #384)" : "shader (OpenGL)");
+		Report(Channel::GP, "GFX uniform cache: %s\n", uniformCache.Enabled() ? "on" : "off");
 
 		// The GX debug commands (issue #87). The node is registered from here so that the commands
 		// exist exactly as long as the GFX subsystem does.
@@ -993,6 +1043,13 @@ namespace GFX
 
 		pipeline = value;
 
+		// The uniform cache mirrors what the GL context of the shader pipeline holds, and the
+		// software pipeline never uploads anything: the values left over from the pipeline that is
+		// being left must not be taken for the values the next shader draw reads. The switch closes
+		// the backend (and this drops the cache with it), but the cache is dropped here as well, so
+		// that the rule holds wherever the pipeline is chosen from.
+		uniformCache.Invalidate();
+
 		// The choice is a configuration variable (issue #384: "keep the current pipeline as a
 		// configuration variable"), so the console picks it up again on the next start.
 		SetConfigInt(USER_GFX_PIPELINE, pipeline, USER_HW);
@@ -1021,6 +1078,17 @@ namespace GFX
 		Report(Channel::GP, "GFX pipeline switched to %s\n",
 			SoftPipeline() ? "software (CPU, issue #384)" : "shader (OpenGL)");
 		return true;
+	}
+
+	void GFXCore::SetUniformCache(bool value)
+	{
+		uniformCache.SetEnabled(value);
+
+		// Like the pipeline, the choice is a configuration variable (GFX_UNIFORM_CACHE), so the
+		// console picks it up again on the next start.
+		SetConfigInt(USER_GFX_UNIFORM_CACHE, value ? 1 : 0, USER_HW);
+
+		Report(Channel::GP, "GFX uniform cache %s\n", value ? "on" : "off");
 	}
 
 	bool GFXCore::GL_LazyOpenSubsystem()
@@ -1458,6 +1526,10 @@ namespace GFX
 		DisposeGeometryBuffers();
 		DestroyXfbTarget();
 		DestroyEfbTarget();
+
+		// The values the cache holds are a copy of what the context held, and the programs they
+		// were uploaded to are gone with it (the TEV program above).
+		uniformCache.Invalidate();
 
 		// The overlay owns GL objects of its own; they belong to the context that is going away.
 		OsdDispose();

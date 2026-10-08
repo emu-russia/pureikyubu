@@ -17,6 +17,8 @@ The graphics backend no longer uses the fixed-function OpenGL pipeline. The two 
 
 Both shaders are **static**: the whole register state of the corresponding block is passed as uniforms, so nothing has to be recompiled when the game reconfigures the GFX registers. The TEV shader walks up to 16 combine stages in a loop that is bounded by a `tevStages` uniform. The one program variant that exists is the flat-shaded one: `GEN_MODE.flat_en` requires the `flat` qualifier on the rasterized colour varyings on *both* sides of the link, so a second vertex stage and a second fragment source are built when the bit is set (`TransformUnit::VertexShaderSource(bool)`, `TextureEnvironmentUnit::FragmentShaderSource(bool)`, and the `GetTevProgram` cache that relinks when the bit flips).
 
+Because the state travels in uniforms, a draw re-uploads all ~60 of them, and a run of primitives with the same state repeats the same values: the uniform upload cache (`gfxuniformcache.cpp`, see [gfxuniformcache.md](gfxuniformcache.md)) keeps the value every uniform was last given and drops the uploads that would write what the program already holds.
+
 ### Command path
 
 The CP produces the command stream and owns the vertex fetch; the XF is the entry point of the pipeline, so
@@ -285,6 +287,7 @@ state is reachable from the debugger and from the JDI server (issue #87):
 | `gxpixel <x> <y>` | Read one EFB pixel: colour and depth |
 | `gxreset` | Reset the GFX register state (the software equivalent of a GX reset) |
 | `gxpipeline [shader\|soft]` | Report or switch the rendering pipeline (`GFX_PIPELINE`) |
+| `gxuniformcache [on\|off]` | Report or switch the uniform upload cache of the shader pipeline (`GFX_UNIFORM_CACHE`, see [gfxuniformcache.md](gfxuniformcache.md)) |
 | `gfxdump [...]` | The GFX command dump: record what the CP pushes into the XF and look at the last frames of it (see below) |
 
 The commands that read the EFB (`gxshot`, `gxpixel`, `gxtexdump`) need a current OpenGL context, so

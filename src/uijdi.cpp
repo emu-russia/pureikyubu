@@ -406,6 +406,31 @@ namespace UI
 		return pipeline;
 	}
 
+	bool JdiClient::GetGfxUniformCache()
+	{
+		// A machine that is not running has no cache to report; the answer is the shipped default.
+		bool cache = true;
+
+		Json::Value* value = CallJdi("gxuniformcache");
+
+		if (value != nullptr)
+		{
+			if (value->type == Json::ValueType::Object)
+			{
+				Json::Value* item = value->ByName("cache");
+
+				if (item != nullptr && item->type == Json::ValueType::Int)
+				{
+					cache = item->value.AsInt != 0;
+				}
+			}
+
+			delete value;
+		}
+
+		return cache;
+	}
+
 	bool JdiClient::JitcEnabled()
 	{
 		return false;
