@@ -1003,6 +1003,25 @@ namespace Debug
 		return nullptr;
 	}
 
+	// Re-read the idle wait skipping settings (the `core` section of the configuration) into the
+	// running machine and report what they came out as. The settings window calls it after it
+	// stores a change, the way the hardware page applies the GFX pipeline with `gxpipeline`.
+	static Json::Value* CmdIdleSkip(std::vector<std::string>& args)
+	{
+		Core->ConfigureIdleSkip();
+
+		int64_t oneSecond = Core->OneSecond();
+
+		Report(Channel::Norm, "Idle skip: %lld ms budget, %i polls, %lld us period, strict %i, stop on cause %i\n",
+			(long long)(Core->idleSkipMax * 1000 / oneSecond),
+			(int)Core->idlePollThreshold,
+			(long long)(Core->idlePollPeriodMax * 1000000 / oneSecond),
+			Core->idleRequireSameValue ? 1 : 0,
+			Core->idleStopOnCause ? 1 : 0);
+
+		return nullptr;
+	}
+
 	// Parse Gekko instruction
 	static Json::Value* CmdGekkoAnalyze(std::vector<std::string>& args)
 	{
@@ -1344,6 +1363,8 @@ namespace Debug
 		JDI::Hub.AddCmd("ResetOpcodeStats", CmdResetOpcodeStats);
 		JDI::Hub.AddCmd("RunOpcodeStats", CmdRunOpcodeStats);
 		JDI::Hub.AddCmd("StopOpcodeStats", CmdStopOpcodeStats);
+
+		JDI::Hub.AddCmd("idleskip", CmdIdleSkip);
 
 		JDI::Hub.AddCmd("GekkoAnalyze", CmdGekkoAnalyze);
 		JDI::Hub.AddCmd("GekkoInstrToString", CmdGekkoInstrToString);

@@ -73,8 +73,20 @@ namespace Bench
 		uint64_t lastCompiles = 0;
 		uint64_t lastInval = 0;
 
+		// Comparing two builds by "how far the guest gets in N seconds of wall time" mixes two
+		// effects: the faster one reaches a later, usually heavier, part of the title, which
+		// lowers the ratio it is judged by. `BENCH_UNTIL_EMULATED=<seconds>` stops the run when
+		// the guest's own clock has covered that much time instead, so both runs execute exactly
+		// the same guest work and the wall clock is the only difference between them.
+		const char* untilEnv = getenv("BENCH_UNTIL_EMULATED");
+		int64_t untilTicks = untilEnv ? (int64_t)(atof(untilEnv) * (double)Core->OneSecond()) : 0;
+
 		while (durationMs == 0 || NowMs() - start < durationMs)
 		{
+			if (untilTicks > 0 && Core->regs.tb.sval >= untilTicks)
+			{
+				break;
+			}
 			// Give the front end a chance to keep its window responsive (and to end the run on
 			// `SDL_QUIT`); a headless front end passes no pump at all.
 			if (pump != nullptr && !pump())
@@ -161,12 +173,27 @@ namespace Bench
 			Core->PrintOpcodeStats(25);
 		}
 
+		// Which compiled blocks the run kept coming back to. `BENCH_HOTBLOCKS=1` turns it on;
+		// it is a diagnostic for the emulator's own tuning rather than part of the report.
+		if (getenv("BENCH_HOTBLOCKS") != nullptr && Core->jit != nullptr)
+		{
+			Core->jit->ReportHotBlocks(30);
+		}
+
 		Debug::Report(Debug::Channel::Norm, "dsp instructions   : %llu\n",
 			(unsigned long long)st.dspInstrs);
 		Debug::Report(Debug::Channel::Norm, "ai dma             : %llu feeds, %llu ints\n",
 			(unsigned long long)st.aiFeeds, (unsigned long long)st.aiInts);
 		Debug::Report(Debug::Channel::Norm, "vi interrupts      : %lld\n", (long long)bench_counter(Debug::PerfCounter::VIs));
 		Debug::Report(Debug::Channel::Norm, "pe finishes        : %lld\n", (long long)bench_counter(Debug::PerfCounter::PEs));
+		Debug::Report(Debug::Channel::Norm, "idle skips         : %llu (%.3f s of the emulated time, %.1f%% of it), %llu polls\n",
+			(unsigned long long)Core->idleSkips,
+			(double)Core->idleSkippedTicks / (double)Core->OneSecond(),
+			Core->regs.tb.sval > 0 ? (double)Core->idleSkippedTicks * 100.0 / (double)Core->regs.tb.sval : 0.0,
+			(unsigned long long)Core->idlePolls);
+		Debug::Report(Debug::Channel::Norm, "idle wait (whole run) : %.3f s of the emulated time (%.1f%%)\n",
+			(double)Core->idleWaitTicks / (double)Core->OneSecond(),
+			Core->regs.tb.sval > 0 ? (double)Core->idleWaitTicks * 100.0 / (double)Core->regs.tb.sval : 0.0);
 
 		if (!profiled)
 		{

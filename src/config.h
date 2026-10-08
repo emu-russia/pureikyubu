@@ -27,6 +27,18 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 // Loader section variables
 #define USER_MAKEMAP "MAKEMAP"			// 1: make map file, if missing (find symbols)
 
+// Core section variables
+// 1: run the Gekko on the basic block recompiler, 0: on the interpreter (the same switch the
+// debugger's `jit` command and the settings window drive).
+#define USER_JIT "JIT"
+// Idle wait skipping (see GekkoCore::ConfigureIdleSkip and wiki/idleskip.md). `IDLE_SKIP`
+// is the budget of emulated milliseconds one skip may cover; 0 turns the feature off.
+#define USER_IDLE_SKIP "IDLE_SKIP"
+#define USER_IDLE_SKIP_POLLS "IDLE_SKIP_POLLS"					// polls in a row before the wait is skipped
+#define USER_IDLE_SKIP_PERIOD_US "IDLE_SKIP_PERIOD_US"			// the longest gap between two polls of one wait
+#define USER_IDLE_SKIP_STRICT "IDLE_SKIP_STRICT"				// 1: a polled value that moves starts the streak over
+#define USER_IDLE_SKIP_STOP_ON_CAUSE "IDLE_SKIP_STOP_ON_CAUSE"	// 1: also stop at an interrupt the guest has not enabled
+
 // Hardware section variables
 #define USER_ANSI		"ANSI"			// bootrom ANSI font
 #define USER_SJIS		"SJIS"          // bootrom SJIS font

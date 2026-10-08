@@ -171,6 +171,7 @@ enum class SettingsTab
 	Interface = 0,
 	General,
 	Hardware,
+	Core,
 	Controllers,
 	MemoryCards,
 	Network,
@@ -790,6 +791,98 @@ static void settings_bindings(int index, PeripheralDevice* device)
 	}
 
 	ImGui::EndTable();
+}
+
+// ---------------------------------------------------------------------------
+// "Core" - the CPU: the recompiler and the idle wait skipping
+//
+// Both are read by the machine when it is built, so a change here is stored in the configuration
+// and then applied to the machine that is running right now through the debug interface (`jit`,
+// `idleskip`), exactly the way the hardware page applies the GFX pipeline.
+//
+// The idle skip is described in wiki/idleskip.md: a title spends a large part of every frame
+// waiting (the SDK's VIWaitForRetrace parks the thread and the frame loop yields until a counter
+// moves), and the emulator covers that wait by advancing the clock instead of executing it. The
+// budget is how much emulated time one skip may cover; 0 turns the feature off.
+
+static void settings_page_core()
+{
+	bool jit = UI::Jdi->GetConfigBool(USER_JIT, USER_CORE);
+	int skipMs = UI::Jdi->GetConfigInt(USER_IDLE_SKIP, USER_CORE);
+	int polls = UI::Jdi->GetConfigInt(USER_IDLE_SKIP_POLLS, USER_CORE);
+	int periodUs = UI::Jdi->GetConfigInt(USER_IDLE_SKIP_PERIOD_US, USER_CORE);
+
+	bool jitChanged = false;
+	bool skipChanged = false;
+
+	if (PropertyGrid("settings_core"))
+	{
+		PropertyRow("JIT compiler");
+		if (ImGui::Checkbox("##v", &jit))
+		{
+			jitChanged = true;
+		}
+		PropertyRowEnd();
+
+		PropertyRow("Skip idle waits");
+		{
+			bool skip = (skipMs > 0);
+
+			if (ImGui::Checkbox("##v", &skip))
+			{
+				// A budget that is switched back on comes back as the default one frame.
+				skipMs = skip ? 33 : 0;
+				skipChanged = true;
+			}
+		}
+		PropertyRowEnd();
+
+		PropertyRow("Idle skip budget, ms");
+		ImGui::SetNextItemWidth(120);
+		if (ImGui::InputInt("##v", &skipMs) && skipMs >= 0)
+		{
+			skipChanged = true;
+		}
+		ImGui::SameLine();
+		ImGui::TextDisabled("0 = off");
+		PropertyRowEnd();
+
+		PropertyRow("Wait polls in a row");
+		ImGui::SetNextItemWidth(120);
+		if (ImGui::InputInt("##v", &polls) && polls >= 2)
+		{
+			skipChanged = true;
+		}
+		PropertyRowEnd();
+
+		PropertyRow("Poll period, us");
+		ImGui::SetNextItemWidth(120);
+		if (ImGui::InputInt("##v", &periodUs) && periodUs > 0)
+		{
+			skipChanged = true;
+		}
+		PropertyRowEnd();
+
+		PropertyGridEnd();
+	}
+
+	ImGui::TextDisabled("The recompiler is the fast path; the interpreter is what the debugger steps.");
+	ImGui::TextDisabled("Skip idle waits needs the recompiler: with the JIT off it does nothing.");
+	ImGui::TextDisabled("A wait longer than the budget is not covered. See wiki/idleskip.md.");
+
+	if (jitChanged)
+	{
+		UI::Jdi->SetConfigBool(USER_JIT, jit, USER_CORE);
+		UI::Jdi->ExecuteCommand(jit ? "jit 1" : "jit 0");
+	}
+
+	if (skipChanged)
+	{
+		UI::Jdi->SetConfigInt(USER_IDLE_SKIP, skipMs, USER_CORE);
+		UI::Jdi->SetConfigInt(USER_IDLE_SKIP_POLLS, polls, USER_CORE);
+		UI::Jdi->SetConfigInt(USER_IDLE_SKIP_PERIOD_US, periodUs, USER_CORE);
+		UI::Jdi->ExecuteCommand("idleskip");
+	}
 }
 
 /* The port a page's device wants when the user has not picked one (see DefaultModelOfPort). */
@@ -1436,7 +1529,7 @@ void UiSettingsFrame()
 	{
 		static const char* tabs[(int)SettingsTab::Max] =
 		{
-			"Interface", "General", "GCN Hardware", "Controllers", "Memory Cards", "Network", "High-Speed Port"
+			"Interface", "General", "GCN Hardware", "Core", "Controllers", "Memory Cards", "Network", "High-Speed Port"
 		};
 
 		const float footer = ImGui::GetFrameHeightWithSpacing();
@@ -1464,6 +1557,7 @@ void UiSettingsFrame()
 			case SettingsTab::Interface:    settings_page_interface(); break;
 			case SettingsTab::General:      settings_page_general(); break;
 			case SettingsTab::Hardware:     settings_page_hw(); break;
+			case SettingsTab::Core:         settings_page_core(); break;
 			case SettingsTab::Controllers:  settings_page_devices(PERIPH_PAGE_CONTROLLERS); break;
 			case SettingsTab::MemoryCards:  settings_page_devices(PERIPH_PAGE_MEMORY_CARDS); break;
 			case SettingsTab::Network:      settings_page_devices(PERIPH_PAGE_NETWORK); break;

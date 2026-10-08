@@ -21,6 +21,16 @@
 		"MAKEMAP": true
 	},
 
+	"core":
+	{
+		"JIT": true,
+		"IDLE_SKIP": 33,
+		"IDLE_SKIP_POLLS": 16,
+		"IDLE_SKIP_PERIOD_US": 500,
+		"IDLE_SKIP_STRICT": true,
+		"IDLE_SKIP_STOP_ON_CAUSE": false
+	},
+
 	"hardware":
 	{
 		"ANSI": "Data/AnsiFont.szp",

@@ -8,6 +8,10 @@ The wiki does not contain any detailed descriptions of the GameCube architecture
   state carries and what it deliberately does not, the keys, the menu and the `savestate`/
   `loadstate`/`states` commands.
 
+* [Idle wait skipping](idleskip.md) — what a title does at the end of a frame (`VIWaitForRetrace`
+  and the yield loop behind it), how the recompiler recognises the wait, how much of a run it is,
+  and what skipping it is worth on Metroid Prime.
+
 But here are some diagrams, just as a memo.
 
 GameCube:
