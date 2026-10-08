@@ -45,6 +45,21 @@ emulator, and the recompilers follow the host - `gekkojit_x64.cpp` + `gekkojit_p
 is the oldest Windows SDL2 2.28 and the emulator itself run on - no API newer than Windows 7 is
 used anywhere in the emulator sources.
 
+### macOS (Apple Silicon)
+
+The native arm64 build uses the Gekko and DSP interpreters; the existing recompilers target
+x86/x64. Install Xcode command-line tools and CMake. CMake builds the bundled SDL2 and GLEW,
+so Homebrew SDL2/GLEW packages are not required.
+
+From the repository root:
+
+```sh
+cmake -S . -B build/macos-arm64 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_BUILD_TYPE=Release
+cmake --build build/macos-arm64 --parallel 10
+cd build
+EMU_LOG=macos-launch.log ./macos-arm64/pureikyubu pong.dol
+```
+
 ### Headless
 
 `scripts/VS2026/pureikyubu_headless.vcxproj` is the emulator without a window: no SDL/ImGui front

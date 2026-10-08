@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.10)
 project (pureikyubu)
 
 # The headless build (issue #382): the emulator without a window, a game selector or an OpenGL
@@ -17,13 +17,27 @@ else ()
   set(X64 OFF)
 endif ()
 
-find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
-if (NOT HEADLESS)
-  find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
-endif ()
-find_package (Threads)
+find_package (Threads REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+
+if (APPLE)
+  # Build the bundled dependencies for the selected host architecture.
+  set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+  set(SDL_STATIC ON CACHE BOOL "" FORCE)
+  set(SDL_TEST OFF CACHE BOOL "" FORCE)
+  add_subdirectory(thirdparty/SDL2 EXCLUDE_FROM_ALL)
+
+  add_library(pureikyubu_glew STATIC thirdparty/glew-2.2.0/src/glew.c)
+  target_include_directories(pureikyubu_glew PUBLIC thirdparty/glew-2.2.0/include)
+  target_compile_definitions(pureikyubu_glew PUBLIC GLEW_STATIC)
+  target_link_libraries(pureikyubu_glew PUBLIC OpenGL::GL)
+else ()
+  find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+  if (NOT HEADLESS)
+    find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+  endif ()
+  find_package(GLEW REQUIRED)
+endif ()
 
 add_definitions (-D_LINUX)
 #add_definitions (-DCMAKE_BUILD_TYPE=Debug)
@@ -34,7 +48,6 @@ endif ()
 
 # ../GekkoCore/Gekko.h:196:66: warning: `fastcall` attribute ignored [-Wattributes]
 add_compile_options(-Wno-attributes)
-add_compile_options(-lstdc++fs)
 
 # The sources are UTF-8 (issue #372). GCC and Clang read them as UTF-8 by themselves; MSVC has to
 # be told, or it falls back to the ANSI code page of whoever builds the project and misreads the
@@ -73,10 +86,10 @@ set (PUREIKYUBU_CORE
 	src/flipperdebug.cpp
 	src/gekko.cpp
 	src/gekkoc.cpp
-		src/gekkojit_x64.cpp
-		src/gekkojit_ps_x64.cpp
-		src/gekkojit_x86.cpp
-		src/gekkojit_ps_x86.cpp
+	src/gekkojit_x64.cpp
+	src/gekkojit_ps_x64.cpp
+	src/gekkojit_x86.cpp
+	src/gekkojit_ps_x86.cpp
 	src/gekkodebug.cpp
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
@@ -215,12 +228,24 @@ target_compile_features(pureikyubu PRIVATE cxx_std_17)
 # `src` is on the include path because the debug interface of the portable machines
 # (`src/gba/gba_debug.cpp`) includes the emulator's precompiled header the way the MSVC project
 # declares it, and because the sources of the portable module include their own headers by name.
-include_directories( src thirdparty/imgui thirdparty/stb thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
+target_include_directories( src thirdparty/imgui thirdparty/stb thirdparty/zstd ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} $(GLEW_INCLUDE_DIRS) )
+
+if (APPLE)
+  # Shared headers still use _LINUX to select their POSIX implementation.
+  target_link_libraries(pureikyubu PRIVATE pureikyubu_glew)
+  if (HEADLESS)
+    target_include_directories(pureikyubu PRIVATE thirdparty/SDL2/include)
+  endif ()
+endif ()
 
 if (HEADLESS)
   # The headless build has no GL context and no window, so it neither needs nor wants the SDL,
   # OpenGL and GLEW libraries; only their headers are still read by the shared sources.
-  target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries (pureikyubu PRIVATE Threads::Threads)
 else ()
-  target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} SDL2 GLEW)
+  if (APPLE)
+    target_link_libraries(pureikyubu PRIVATE Threads::Threads OpenGL::GL SDL2::SDL2-static)
+  else ()
+    target_link_libraries(pureikyubu PRIVATE Threads::Threads ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} SDL2 GLEW)
+  endif ()
 endif ()

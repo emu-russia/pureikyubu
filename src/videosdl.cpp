@@ -26,13 +26,17 @@ bool VideoOutOpen(HWConfig* config, int width, int height, RGB** gfxbuf)
 	video_buffer = new RGB[width * height];
 	memset(video_buffer, 0, sizeof(RGB) * width * height);
 
+#ifdef __APPLE__
+	// SDL's default Metal surface renderer removes SDL_WINDOW_OPENGL. Its OpenGL renderer
+	// can show XFB-only titles and still lets the GFX backend create its core context later.
+	SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "opengl");
+#endif
 	surface = SDL_GetWindowSurface(render_target);
-
-	if (surface == NULL) {
+	if (surface == nullptr)
+	{
 		Report(Channel::VI, "SDL_GetWindowSurface failed: %s\n", SDL_GetError());
 		return false;
 	}
-
 	SDL_UpdateWindowSurface(render_target);
 
 	*gfxbuf = video_buffer;

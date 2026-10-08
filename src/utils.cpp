@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <cstdlib>
 
 #ifdef _WINDOWS
 
@@ -157,33 +158,69 @@ void Thread::Sleep(size_t milliseconds)
 
 #ifdef _LINUX
 
-// Thanks for the example implementation.
-// https://stackoverflow.com/questions/9397068/how-to-pause-a-pthread-any-time-i-want
+namespace
+{
+	size_t CpuCallbackBatchSize(const std::string& name)
+	{
+		if (name != "GekkoCore") return 1;
+		const char* option = std::getenv("EMU_CPU_CALLBACK_BATCH");
+		if (!option || !*option) return 1;
+		// Strict decimal parsing also rejects signs, whitespace and partially valid values.
+		size_t value = 0;
+		for (const char* digit = option; *digit; ++digit)
+		{
+			if (*digit < '0' || *digit > '9') return 1;
+			value = value * 10 + static_cast<size_t>(*digit - '0');
+			if (value > 64) return 1;
+		}
+		return value >= 1 ? value : 1;
+	}
 
-// Whoever removed suspend / resume from pthread is not a good person.
+	bool CallbackBudgetExpired(const timespec& started)
+	{
+		timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		const int64_t elapsedNs = static_cast<int64_t>(now.tv_sec - started.tv_sec) * 1000000000LL
+			+ now.tv_nsec - started.tv_nsec;
+		return elapsedNs >= 1000000LL;
+	}
+}
 
 void* Thread::RingleaderThreadProc(void* args)
 {
 	Thread* thread = (Thread*)args;
 
-	while (!thread->terminated)
+	while (!thread->terminated.load(std::memory_order_relaxed))
 	{
 		pthread_mutex_lock(&thread->mutex);
-
-		switch (thread->command)
+		while (thread->command.load(std::memory_order_relaxed) == 0
+			&& !thread->terminated.load(std::memory_order_relaxed))
 		{
-			// command to pause thread..
-			case 0:
-				pthread_cond_wait(&thread->cond_var, &thread->mutex);
-				break;
+			pthread_cond_wait(&thread->cond_var, &thread->mutex);
+		}
 
-			// command to run..
-			case 1:
-				if (thread->ctx.proc)
+		if (!thread->terminated.load(std::memory_order_relaxed) && thread->ctx.proc)
+		{
+			if (thread->callbackBatchSize == 1)
+			{
+				thread->ctx.proc(thread->ctx.context);
+			}
+			else
+			{
+				timespec started;
+				clock_gettime(CLOCK_MONOTONIC, &started);
+				for (size_t completed = 1; completed <= thread->callbackBatchSize; ++completed)
 				{
 					thread->ctx.proc(thread->ctx.context);
+					// A pause or self-suspend ends the batch after the current complete callback.
+					// The callback still drives every instruction/block and synchronous device update.
+					if (thread->command.load(std::memory_order_relaxed) == 0
+						|| thread->terminated.load(std::memory_order_relaxed)) break;
+					// Amortize host-clock work: this is a soft 1 ms budget, checked every eight
+					// callbacks. A slow callback is still non-preemptible, as in the unbatched path.
+					if ((completed & 7) == 0 && CallbackBudgetExpired(started)) break;
 				}
-				break;
+			}
 		}
 
 		pthread_mutex_unlock(&thread->mutex);
@@ -196,15 +233,14 @@ void* Thread::RingleaderThreadProc(void* args)
 		// (see above) never yielded either.
 	}
 
-	thread->terminated = false;
-
-	pthread_exit(nullptr);
+	return nullptr;
 }
 
 Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char* name)
 {
 	running = !suspended;
 	threadName = name;
+	callbackBatchSize = CpuCallbackBatchSize(threadName);
 
 	ctx.context = context;
 	ctx.proc = threadProc;
@@ -213,7 +249,7 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 	pthread_cond_init(&cond_var, nullptr);
 
 	// create thread in suspended state..
-	command = running ? 1 : 0;
+	command.store(running ? 1 : 0, std::memory_order_relaxed);
 
 	int status = pthread_create(&threadId, nullptr, Thread::RingleaderThreadProc, this);
 	assert(status == 0);
@@ -221,20 +257,13 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 
 Thread::~Thread()
 {
-	terminated = true;
-
-	// Run if suspended
-	if (!running)
-	{
-		Resume();
-	}
-
-	// Wait terminated
-	while (terminated)
-	{
-		Thread::Sleep(1);
-	}
-
+	// Publish before waiting on the callback barrier, so an active batch cannot starve teardown.
+	terminated.store(true, std::memory_order_relaxed);
+	command.store(0, std::memory_order_relaxed);
+	running.store(false, std::memory_order_relaxed);
+	pthread_mutex_lock(&mutex);
+	pthread_cond_signal(&cond_var);
+	pthread_mutex_unlock(&mutex);
 	pthread_join(threadId, nullptr);
 
 	pthread_cond_destroy(&cond_var);
@@ -247,40 +276,37 @@ void Thread::Resume()
 	if (!running)
 	{
 		pthread_mutex_lock(&mutex);
-		command = 1;
-		pthread_cond_signal(&cond_var);
+		if (!terminated.load(std::memory_order_relaxed))
+		{
+			// Publish under the callback mutex, before waking the worker. A callback that
+			// immediately suspends itself must not have its state overwritten after it returns.
+			running.store(true, std::memory_order_relaxed);
+			command.store(1, std::memory_order_relaxed);
+			pthread_cond_signal(&cond_var);
+			resumeCounter++;
+		}
 		pthread_mutex_unlock(&mutex);
-
-		running = true;
-		resumeCounter++;
 	}
 	resumeLock.Unlock();
 }
 
 void Thread::Suspend()
 {
-	if (running)
+	if (running.exchange(false, std::memory_order_relaxed))
 	{
-		running = false;
 		suspendCounter++;
-
-		// The worker procedure runs with the thread's own mutex held (RingleaderThreadProc), so a
-		// thread that suspends *itself* would deadlock on the second lock: a pthread mutex is not
-		// recursive. Both the AI thread (which parks itself while no DMA is armed) and the DSP one
-		// (which parks itself on a breakpoint) do exactly that. Writing the command without the
-		// lock is enough: the ringleader parks on the condition variable at the top of its next
-		// iteration, and Resume is what signals it.
-		if (pthread_equal(pthread_self(), threadId))
-		{
-			command = 0;
-			return;
-		}
-
-		pthread_mutex_lock(&mutex);
-		command = 0;
-		// in pause command we dont need to signal cond_var because we not in wait state now..
-		pthread_mutex_unlock(&mutex);
 	}
+	// Request before acquiring the callback mutex. An unfair mutex must not let another batch
+	// start indefinitely while the observer waits. A self-suspend already owns that mutex.
+	command.store(0, std::memory_order_relaxed);
+	if (pthread_equal(pthread_self(), threadId)) return;
+
+	// Even if another Suspend already published running=false, its callback may still be active.
+	// Every external observer must pass the complete callback barrier before returning.
+	pthread_mutex_lock(&mutex);
+	command.store(0, std::memory_order_relaxed);
+	running.store(false, std::memory_order_relaxed);
+	pthread_mutex_unlock(&mutex);
 }
 
 void Thread::Sleep(size_t milliseconds)

@@ -102,12 +102,13 @@ class Thread
 
 	WrappedContext ctx = { 0 };
 
-	bool running = false;
+	std::atomic<bool> running{ false };
 	SpinLock resumeLock;
-	int resumeCounter = 0;
-	int suspendCounter = 0;
+	std::atomic<int> resumeCounter{ 0 };
+	std::atomic<int> suspendCounter{ 0 };
 
 	std::string threadName;
+	size_t callbackBatchSize = 1;
 
 	// Take care about this place. If it will differ between your projects you get wrecked!
 
@@ -123,8 +124,8 @@ class Thread
 	static void* RingleaderThreadProc(void* args);
 	pthread_mutex_t mutex;
 	pthread_cond_t cond_var;
-	int command;
-	bool terminated = false;
+	std::atomic<int> command{ 0 };
+	std::atomic<bool> terminated{ false };
 #endif
 
 public:
@@ -136,8 +137,14 @@ public:
 	~Thread();
 
 	void Resume();
+	// External callers wait for a complete callback. Keep competing Resume calls serialized
+	// across any protected state read; IsRunning describes the requested state, not an ack.
 	void Suspend();
-	bool IsRunning() { return running; }
+	bool IsRunning() { return running.load(std::memory_order_relaxed); }
+
+	// POSIX GekkoCore alone can opt in to a bounded callback batch. Other workers and Windows
+	// keep one callback per iteration. Each callback still forms the complete pause boundary.
+	size_t GetCallbackBatchSize() const { return callbackBatchSize; }
 
 	const char* GetName() { return threadName.c_str(); }
 
@@ -239,11 +246,10 @@ namespace Util
 
 #if defined(_LINUX)
 
-#include <byteswap.h>
-
-#define _BYTESWAP_UINT16 __bswap_16
-#define _BYTESWAP_UINT32 __bswap_32
-#define _BYTESWAP_UINT64 __bswap_64
+// GCC and Clang provide these on every target; byteswap.h is a Linux header.
+#define _BYTESWAP_UINT16 __builtin_bswap16
+#define _BYTESWAP_UINT32 __builtin_bswap32
+#define _BYTESWAP_UINT64 __builtin_bswap64
 
 #endif
 
