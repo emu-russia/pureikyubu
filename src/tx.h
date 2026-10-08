@@ -283,7 +283,6 @@ namespace GFX
 		int keyFmt = -1, keyWidth = 0, keyHeight = 0;
 		uint32_t keyTlut = 0xFFFFFFFF;
 		uint32_t keyTlutGen = 0;		//!< TLUT generation the image was decoded with
-		uint64_t keyHash = 0;			//!< Content hash of the texture bytes the image was decoded from
 
 		uint32_t appliedMode0 = 0xFFFFFFFF;	//!< TexMode0 value the sampler parameters were set from
 		uint32_t appliedMode1 = 0xFFFFFFFF;	//!< TexMode1 value the LOD limits were set from
@@ -300,6 +299,8 @@ namespace GFX
 		#define GFX_MAX_TEXTURES 8
 
 		TexMap texMap[GFX_MAX_TEXTURES];
+		//! Raw bytes behind each decoded GL image. Host cache only, rebuilt after reset/state load.
+		std::vector<uint8_t> decodedSource[GFX_MAX_TEXTURES];
 		Color rgbabuf[1024 * 1024];
 		uint8_t tlut[1024 * 1024];  // TLUT buffer
 
@@ -324,17 +325,17 @@ namespace GFX
 		static const int SoftTmemBankCount = 32;
 		std::vector<uint16_t> tmem;
 
-		//! One tag per line slot of the tag cache: the main-memory line the slot holds and a hash of
-		//! the bytes it was filled with. The hash is what tells a line that was rewritten in place
+		//! One tag per line slot of the tag cache: the main-memory line the slot holds and a copy of
+		//! the bytes it was filled with. An exact comparison tells a line that was rewritten in place
 		//! from the line the slot already has, and the line is what tells one image's data from
 		//! another's - the hardware's tag cache is **one** cache that every hardware-managed image
 		//! shares (gfx-tc.md 3.5), so a slot filled for one map is not the line another map's tag
-		//! promised. The hash is a pure cache of main memory and is not part of the save state: a
-		//! state that comes back hashes the lines again on the first fetch.
+		//! promised. The source copy is a host cache, not part of the save state: a restored state
+		//! refills the lines on the first fetch.
 		struct SoftCacheTag
 		{
 			uint32_t line = 0xFFFFFFFF;
-			uint64_t hash = 0;
+			uint8_t source[32];
 			bool valid = false;
 		};
 
