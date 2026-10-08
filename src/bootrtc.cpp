@@ -788,6 +788,11 @@ void BootROM(HWConfig* config, bool dvd, bool rtc)
 	{
 		Core->WriteWord(0x80000034, Core->regs.gpr[1] - 0x10000);
 
+		// Standalone demos can read the controller buffers without initializing SI themselves.
+		// Give the simulated bootstrap one poll per frame; a guest can still disable it with Y=0.
+		Core->WriteWord(0xCC006430, 0x000701F0);
+		Flipper::HW->si->SIPoll(0);
+
 		ReadFST(); // load FST, for demos
 	}
 }

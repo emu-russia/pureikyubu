@@ -300,10 +300,11 @@ public:
 	{
 		buf[0] = (uint8_t)(pad->button >> 8);   // A, B, X, Y, Start and the EEPROM state
 		buf[1] = (uint8_t)pad->button;          // the D-pad and L / R / Z
-		buf[2] = (uint8_t)pad->stickX;
-		buf[3] = (uint8_t)pad->stickY;
-		buf[4] = (uint8_t)pad->substickX;
-		buf[5] = (uint8_t)pad->substickY;
+		// PADState keeps signed deflections; Joybus reports axes around the 0x80 origin.
+		buf[2] = (uint8_t)(pad->stickX + 0x80);
+		buf[3] = (uint8_t)(pad->stickY + 0x80);
+		buf[4] = (uint8_t)(pad->substickX + 0x80);
+		buf[5] = (uint8_t)(pad->substickY + 0x80);
 		buf[6] = pad->triggerLeft;
 		buf[7] = pad->triggerRight;
 	}
