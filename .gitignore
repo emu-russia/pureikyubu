@@ -1,12 +1,12 @@
+*.dSYM/
+.DS_Store
+**/.DS_Store
 Output
 Debug
 Release
 *.exe
 *.ilk
-Dolwin.opensdf
 Data/*.mci
-Dolwin.sdf
-Dolwin.v12.suo
 *.dll
 *.exp
 *.lib

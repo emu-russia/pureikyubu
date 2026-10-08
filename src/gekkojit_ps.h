@@ -35,14 +35,17 @@ again for the next instruction.
 
 ## What decides the translation
 
-MSR[FP] is checked when the block is compiled rather than at run time: mtmsr and
-rfi end the block that contains them and an exception invalidates every block,
-so MSR cannot change inside one. When it is clear the instruction is left to the
-interpreter, which raises the FP-unavailable exception exactly as before.
+MSR[FP] is checked when the block is compiled. The x64 block cache therefore
+includes its FP-enable value, and mtmsr, mtspr and rfi are dispatched outside
+compiled blocks. An exception does not invalidate every cached block: reusing
+the same guest PC after a context switch must select the matching FP variant.
+When FP is clear the instruction is left to the interpreter, which raises the
+FP-unavailable exception. This policy was tested on x64; the 32-bit x86 backend
+still requires a separate state-transition audit.
 
-The recording forms (ps_add_d and friends) only add COMPUTE_CR1(), which is
-translated inline; the comparison forms (ps_cmpu*) and the quantised loads and
-stores (psq_*) are not translated yet and stay on the fallback.
+The recording forms (ps_add_d and friends) add COMPUTE_CR1(), translated inline.
+Quantized loads and stores (psq_*) use shared helpers; unsupported forms stay on
+the interpreter fallback.
 
 ## Floating point
 

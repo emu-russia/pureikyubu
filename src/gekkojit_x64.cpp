@@ -125,6 +125,7 @@ Jit::Jit(GekkoCore* _core) : core(_core)
 			blocks[s][w].pa = 0;
 			blocks[s][w].instrCount = 0;
 			blocks[s][w].codeOffset = 0;
+			blocks[s][w].fpEnabled = 0;
 		}
 	}
 
@@ -192,7 +193,8 @@ Jit::Block* Jit::FindBlock(uint32_t pc, uint32_t pa)
 
 	for (size_t w = 0; w < BlockCacheWays; w++)
 	{
-		if (set[w].gen == generation && set[w].pc == pc && set[w].pa == pa)
+		if (set[w].gen == generation && set[w].pc == pc && set[w].pa == pa &&
+			set[w].fpEnabled == (core->regs.msr & MSR_FP))
 		{
 			return &set[w];
 		}
@@ -212,6 +214,7 @@ Jit::Block* Jit::AllocBlock(uint32_t pc, uint32_t pa)
 	block->pa = pa;
 	block->instrCount = 0;
 	block->codeOffset = 0;
+	block->fpEnabled = core->regs.msr & MSR_FP;
 
 	return block;
 }
@@ -524,15 +527,16 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 
 		// Instructions that the block cannot contain:
 		// - rfi / sc change pc in ways that are not worth modelling,
-		// - mftb / mfspr / mtspr of the time base and the decrementer would observe
-		//   the deferred tick update of this block, so they are executed by the
-		//   interpreter with the tick already applied.
+		// - mtmsr / mtspr can change execution assumptions (FP enable, HID2,
+		//   caches or translation), so no instruction compiled under the old
+		//   state may follow them. Execute them through the dispatcher after
+		//   applying all preceding ticks.
+		// - mftb / mfspr of the time base and decrementer must observe those ticks.
 		if (di.instr == Instruction::rfi || di.instr == Instruction::sc ||
+			di.instr == Instruction::mtmsr || di.instr == Instruction::mtspr ||
 			di.instr == Instruction::mftb ||
 			(di.instr == Instruction::mfspr &&
-				(di.paramBits[1] == SPR::TBL || di.paramBits[1] == SPR::TBU || di.paramBits[1] == SPR::DEC)) ||
-			(di.instr == Instruction::mtspr &&
-				(di.paramBits[0] == SPR::TBL || di.paramBits[0] == SPR::TBU || di.paramBits[0] == SPR::DEC)))
+				(di.paramBits[1] == SPR::TBL || di.paramBits[1] == SPR::TBU || di.paramBits[1] == SPR::DEC)))
 		{
 			break;
 		}

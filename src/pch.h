@@ -31,6 +31,9 @@
 #ifdef _LINUX
 #include <memory.h>
 #include <string.h>
+#include <strings.h>
+#include <wchar.h>
+#include <time.h>
 #include <unistd.h>		// usleep
 #include <pthread.h>
 #include <signal.h>
@@ -44,11 +47,18 @@
 #define _countof(a) (sizeof(a)/sizeof(*(a)))
 #endif
 
+#ifndef GLEW_STATIC
 #define GLEW_STATIC
+#endif
 #include <GL/glew.h>
 
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 
 // The headless build redirects the OpenGL entry points to the null backend. It has to happen after
 // the GL headers, because it redefines the GLEW macros (see gfxnull.h).
@@ -61,7 +71,7 @@
 #endif
 
 #define SDL_MAIN_HANDLED
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
 #include "SDL.h"
 #else
 #include <SDL2/SDL.h>

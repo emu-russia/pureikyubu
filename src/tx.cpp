@@ -13,29 +13,13 @@ namespace GFX
 		return p;
 	}
 
-	// FNV-1a over the raw texture bytes. GXLoadTexObj programs the map of a draw on every draw, so
-	// the draw path asks for a decode all the time; the hash is what lets it tell "the same image
-	// again" from "a title edited the texels in place" without a byte-by-byte comparison of a
-	// working copy it would have to keep.
-	static uint64_t HashTextureData(const uint8_t* data, size_t size)
-	{
-		uint64_t hash = 14695981039346656037ull;
-
-		for (size_t i = 0; i < size; i++)
-		{
-			hash ^= data[i];
-			hash *= 1099511628211ull;
-		}
-
-		return hash;
-	}
-
 	void TextureEngine::TexInit()
 	{
 		memset(texMap, 0, sizeof(texMap));
 
 		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
+			decodedSource[i].clear();
 			glGenTextures(1, &texMap[i].glTexture);
 			texMap[i].dirty = false;
 			texMap[i].paramsDirty = true;
@@ -155,36 +139,47 @@ namespace GFX
 		}
 	}
 
-	// The number of bytes the decoder reads for the image of a map. The tile geometry packs the
-	// texels of a format into 32-byte units, but the total is the nominal size of the image.
+	// Images occupy complete format tiles, including dimensions smaller than one tile and edge
+	// tiles of a nonmultiple size (gfx-tc.md 5.3). Cache validation must cover every byte the
+	// decoder can read, not just width*height nominal texels.
 	size_t TextureEngine::TextureDataSize(int id)
 	{
-		size_t texels = (size_t)(tx.teximg0[id].width + 1) * (tx.teximg0[id].height + 1);
+		size_t width = tx.teximg0[id].width + 1;
+		size_t height = tx.teximg0[id].height + 1;
+		size_t tileWidth, tileHeight, tileBytes = 32;
 
 		switch (tx.teximg0[id].fmt)
 		{
 			case TF_I4:
 			case TF_C4:
 			case TF_CMPR:
-				return texels / 2;		// 4 bits per texel
+				tileWidth = 8; tileHeight = 8;
+				break;
 
 			case TF_I8:
 			case TF_IA4:
 			case TF_C8:
-				return texels;			// 8 bits per texel
+				tileWidth = 8; tileHeight = 4;
+				break;
 
 			case TF_IA8:
 			case TF_RGB565:
 			case TF_RGB5A3:
 			case TF_C14:
-				return texels * 2;		// 16 bits per texel
+				tileWidth = tileHeight = 4;
+				break;
 
 			case TF_RGBA8:
-				return texels * 4;		// 32 bits per texel
+				tileWidth = tileHeight = 4;
+				tileBytes = 64;		// One AR line and one GB line per tile
+				break;
 
 			default:
 				return 0;
 		}
+
+		return ((width + tileWidth - 1) / tileWidth) *
+			((height + tileHeight - 1) / tileHeight) * tileBytes;
 	}
 
 	// Decode a texture map on demand. The conversion is skipped while the GL image already holds
@@ -201,25 +196,32 @@ namespace GFX
 		int oldh = tx.teximg0[id].height + 1;
 		uint32_t addr = tx.teximg3[id].base << 5;
 		size_t size = TextureDataSize(id);
+		bool paletted = fmt == TF_C4 || fmt == TF_C8 || fmt == TF_C14;
+		// A palette binding includes its interpretation as well as its TMEM offset. Other formats
+		// do not read the TLUT, so palette loads or bindings cannot change their decoded image.
+		uint32_t paletteKey = paletted ?
+			((uint32_t)tx.settlut[id].tmem | ((uint32_t)tx.settlut[id].fmt << 10)) : 0;
+		uint32_t paletteGeneration = paletted ? tlutGeneration : 0;
 
 		if (oldw == 0 || oldh == 0 || size == 0)
 			return DecodeResult::Failed;
 
-		// Do not hash an image that could not be decoded in the first place
+		// Do not compare an image that could not be decoded in the first place.
 		if ((size_t)NextPowerOfTwo(oldw) * NextPowerOfTwo(oldh) > _countof(rgbabuf))
+			return DecodeResult::Failed;
+		if (!Verify::MainMemoryRange(addr, size, Flipper::HW->mem->MIGetMemorySize()))
 			return DecodeResult::Failed;
 
 		const uint8_t* rawData = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
 		if (rawData == nullptr)
 			return DecodeResult::Failed;
 
-		uint64_t hash = HashTextureData(rawData, size);
-
 		if (m->valid &&
 			m->keyAddr == addr && m->keyFmt == fmt &&
 			m->keyWidth == oldw && m->keyHeight == oldh &&
-			m->keyTlut == tx.settlut[id].tmem && m->keyTlutGen == tlutGeneration &&
-			m->keyHash == hash)
+			m->keyTlut == paletteKey && m->keyTlutGen == paletteGeneration &&
+			decodedSource[id].size() == size &&
+			memcmp(decodedSource[id].data(), rawData, size) == 0)
 		{
 			return DecodeResult::Unchanged;
 		}
@@ -232,9 +234,12 @@ namespace GFX
 		m->keyFmt = fmt;
 		m->keyWidth = oldw;
 		m->keyHeight = oldh;
-		m->keyTlut = tx.settlut[id].tmem;
-		m->keyTlutGen = tlutGeneration;
-		m->keyHash = hash;
+		m->keyTlut = paletteKey;
+		m->keyTlutGen = paletteGeneration;
+		// GXLoadTexObj reprograms the same image on many draws. Comparing an exact source copy
+		// avoids serial byte-at-a-time hashing and also catches every in-place edit, including
+		// data that would collide under a content hash. The guest's invalidation behavior is kept.
+		decodedSource[id].assign(rawData, rawData + size);
 		m->valid = true;
 
 		return DecodeResult::Decoded;
@@ -257,6 +262,10 @@ namespace GFX
 		int height = NextPowerOfTwo(oldh);
 
 		if ((size_t)width * height > _countof(rgbabuf))
+			return false;
+		size_t sourceSize = TextureDataSize(id);
+		if (sourceSize == 0 ||
+			!Verify::MainMemoryRange(addr, sourceSize, Flipper::HW->mem->MIGetMemorySize()))
 			return false;
 
 		uint8_t* rawData = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
@@ -869,14 +878,16 @@ namespace GFX
 
 		static const GLint wrap[4] = { GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT, GL_REPEAT };
 		static const GLint magfilt[2] = { GL_NEAREST, GL_LINEAR };
+		// TX_SETMODE0 uses the hardware encodings, not the sequential GX API filter enum
+		// (gfx-tc.md 4.4). Values 3 and 7 are unassigned; keep a planar linear fallback.
 		static const GLint minfilt[8] = {
 			GL_NEAREST,
-			GL_LINEAR,
 			GL_NEAREST_MIPMAP_NEAREST,
 			GL_NEAREST_MIPMAP_LINEAR,
+			GL_LINEAR,
+			GL_LINEAR,
 			GL_LINEAR_MIPMAP_NEAREST,
 			GL_LINEAR_MIPMAP_LINEAR,
-			GL_LINEAR,
 			GL_LINEAR
 		};
 
@@ -886,7 +897,8 @@ namespace GFX
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilt[mode.min_filter & 7]);
 
 		// The Flipper can sample mip levels; the emulator only has level 0, so the chain is built here
-		if ((mode.min_filter & 7) >= 2)
+		unsigned minFilter = mode.min_filter & 7;
+		if (minFilter == 1 || minFilter == 2 || minFilter == 5 || minFilter == 6)
 			glGenerateMipmap(GL_TEXTURE_2D);
 
 		//
@@ -1285,7 +1297,7 @@ namespace GFX
 			m->keyWidth = m->keyHeight = 0;
 			m->keyTlut = 0xFFFFFFFF;
 			m->keyTlutGen = 0;
-			m->keyHash = 0;
+			decodedSource[i].clear();
 			m->appliedMode0 = 0xFFFFFFFF;
 			m->appliedMode1 = 0xFFFFFFFF;
 		}
@@ -1400,6 +1412,9 @@ namespace GFX
 		for (size_t s = 0; s < _countof(softCacheTags); s++)
 		{
 			reader.Fields(softCacheTags[s].line, softCacheTags[s].valid);
+			// The raw source snapshot is deliberately not serialized. Its old host contents
+			// cannot validate the restored TMEM; re-fetch the line when it is first requested.
+			softCacheTags[s].valid = false;
 		}
 
 		// A decoded map is a cache of the registers, the palette generation and the texture bytes
@@ -1412,6 +1427,7 @@ namespace GFX
 		{
 			texMap[i].valid = false;
 			texMap[i].dirty = true;
+			decodedSource[i].clear();
 		}
 	}
 
@@ -1673,7 +1689,11 @@ namespace GFX
 		uint32_t slot = (memLine ^ (uint32_t)(level * 0x9E3779B1u)) % SoftCacheLines;
 		SoftCacheTag* tag = &softCacheTags[slot];
 
-		const uint8_t* src = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(byteAddr);
+		// The length-aware MI accessor masks addresses, while this path has always rejected
+		// out-of-range physical addresses. Do not let a tile beyond 64 MB alias low RAM.
+		if (byteAddr > Verify::MainMemoryMask)
+			return false;
+		const uint8_t* src = (const uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(byteAddr, 32);
 		if (src == nullptr)
 			return false;
 
@@ -1682,16 +1702,15 @@ namespace GFX
 		// hears about that through the invalidate command (TX_INVTAGS), and the software model -
 		// which reads main memory directly and has no bus to snoop - compares the bytes as well, so
 		// that a line rewritten under a tag is fetched again rather than served a frame late. The
-		// GL path's decode cache makes the same check with the same hash.
-		uint64_t hash = HashTextureData(src, 32);
-
-		if (!tag->valid || tag->line != memLine || tag->hash != hash)
+		// GL path's decode cache also compares its exact source bytes. A fixed 32-byte comparison
+		// has no serial hash dependency and does not mistake a hash collision for an unchanged line.
+		if (!tag->valid || tag->line != memLine || memcmp(tag->source, src, 32) != 0)
 		{
 			SoftWriteLine(SoftCacheBase + slot, src);
 
 			tag->valid = true;
 			tag->line = memLine;
-			tag->hash = hash;
+			memcpy(tag->source, src, 32);
 		}
 
 		*line = SoftCacheBase + slot;

@@ -188,9 +188,9 @@ namespace Flipper
 	{
 		uint32_t res;
 
-		// return swapped joypad values
-		res = (uint8_t)si.pad[chan].stickY;
-		res |= (uint8_t)si.pad[chan].stickX << 8;
+		// The wire channels are unsigned, centered on the controller's 0x80 origin.
+		res = (uint8_t)(si.pad[chan].stickY + 0x80);
+		res |= (uint8_t)(si.pad[chan].stickX + 0x80) << 8;
 
 		*reg = res;
 	}
@@ -199,9 +199,8 @@ namespace Flipper
 	{
 		uint32_t res;
 
-		// return swapped joypad values
-		res = (uint8_t)si.pad[chan].substickY;
-		res |= (uint8_t)si.pad[chan].substickX << 8;
+		res = (uint8_t)(si.pad[chan].substickY + 0x80);
+		res |= (uint8_t)(si.pad[chan].substickX + 0x80) << 8;
 
 		*reg = res;
 	}
