@@ -76,6 +76,12 @@ namespace Gekko
 		RESERVE = false;
 		ops = 0;
 
+		ConfigureIdleSkip();
+
+		// The recompiler is a setting of its own (`core` section): a build that has one still lets
+		// it be turned off, which is what the settings window and the debugger's `jit` command do.
+		JitEnabled = GetConfigBool(USER_JIT, USER_CORE);
+
 		// BAT registers are scattered across the SPR address space. This is not very convenient, we will make it convenient.
 
 		dbatu[0] = &regs.spr[SPR::DBAT0U];
@@ -195,6 +201,171 @@ namespace Gekko
 		{
 			Flipper::HW->Update(regs.tb.sval);
 		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// Idle wait skipping.
+	//
+	// What the guest does at the end of a frame is wait: `VIWaitForRetrace` disables interrupts,
+	// parks the calling thread on a queue and returns when the VI interrupt has woken it, and a
+	// title that waits on a counter of its own calls `OSYieldThread` in a loop until the counter
+	// changes. Every one of those iterations runs the OS scheduler - save context, pick the next
+	// thread, load context, restore - and on the host each of them costs as much as an
+	// instruction of real work. Measured on Metroid Prime, more than half of the instructions the
+	// machine retires come from that loop.
+	//
+	// None of it can change anything the guest is waiting for: the value the loop branches on is
+	// written by a device or by an interrupt handler, and neither can run while the CPU is
+	// spinning through the scheduler. So when the recompiler sees the poll block come back with
+	// the same value again and again, the wait is covered by advancing the emulated clock: the
+	// Flipper-side devices are stepped one deadline at a time exactly as they would have been,
+	// and the skip ends the moment an interrupt is pending, which is the event the guest is
+	// waiting for in the first place.
+	// ---------------------------------------------------------------------------
+
+	// The tuning lives in the emulator's own settings (`core` section: DefaultSettings.json
+	// overridden by Settings.json), so it can be changed the way every other option is. The
+	// environment variables of the same names stay as an override on top of them, which is how
+	// the benchmark scripts sweep the numbers without rewriting the settings of the machine they
+	// run on.
+	void GekkoCore::ConfigureIdleSkip()
+	{
+		const char* envMaxMs = getenv("IDLE_SKIP_MAX_MS");
+		const char* envPolls = getenv("IDLE_POLL_COUNT");
+		const char* envPeriod = getenv("IDLE_POLL_PERIOD_TICKS");
+		const char* envStrict = getenv("IDLE_REQUIRE_SAME_VALUE");
+		const char* envCause = getenv("IDLE_STOP_ON_CAUSE");
+
+		int64_t ms = envMaxMs ? atoll(envMaxMs) : GetConfigInt(USER_IDLE_SKIP, USER_CORE);
+		int64_t polls = envPolls ? atoll(envPolls) : GetConfigInt(USER_IDLE_SKIP_POLLS, USER_CORE);
+		int64_t periodUs = envPeriod ? atoll(envPeriod) : GetConfigInt(USER_IDLE_SKIP_PERIOD_US, USER_CORE);
+
+		idleRequireSameValue = envStrict ? (atoll(envStrict) != 0)
+			: GetConfigBool(USER_IDLE_SKIP_STRICT, USER_CORE);
+		idleStopOnCause = envCause ? (atoll(envCause) != 0)
+			: GetConfigBool(USER_IDLE_SKIP_STOP_ON_CAUSE, USER_CORE);
+
+		idleSkipMax = (ms > 0) ? (ms * one_second / 1000) : 0;
+		idlePollThreshold = (polls >= 2) ? (int32_t)polls : 2;
+		idlePollPeriodMax = (periodUs > 0) ? (periodUs * one_second / 1000000) : (one_second / 2000);
+
+		if (idlePollThreshold < 2)
+		{
+			idlePollThreshold = 2;
+		}
+
+		for (size_t i = 0; i < IdleWaitSlots; i++)
+		{
+			idleWaits[i] = IdleWait();
+		}
+
+		idleSkips = 0;
+		idleSkippedTicks = 0;
+		idlePolls = 0;
+		idleWaitTicks = 0;
+	}
+
+	void GekkoCore::PollCheck(uint32_t pc, uint32_t reg)
+	{
+		uint32_t value = regs.gpr[reg];
+		int64_t now = regs.tb.sval;
+
+		idlePolls++;
+
+		IdleWait& wait = idleWaits[(pc >> 2) & (IdleWaitSlots - 1)];
+
+		// The same poll, with the same value, close enough to the previous one to belong to the
+		// same wait. Anything else starts the streak over: a different value is progress the
+		// guest wanted, and a poll that took a long time to come round again had other work in
+		// between - which is exactly the time the machine is *not* idle.
+		if (wait.pc == pc && wait.reg == reg &&
+			(!idleRequireSameValue || wait.value == value) &&
+			wait.tick != 0 && (now - wait.tick) <= idlePollPeriodMax)
+		{
+			// The gap to the previous poll of this same wait: the machine retired that much
+			// time looking at a value that did not move. That is the wait's own cost, and the
+			// diagnostic the benchmark reports.
+			idleWaitTicks += now - wait.tick;
+
+			wait.hits++;
+
+			if (wait.hits >= idlePollThreshold)
+			{
+				wait.hits = 0;
+				SkipIdleWait();
+			}
+		}
+		else
+		{
+			wait.pc = pc;
+			wait.reg = reg;
+			wait.value = value;
+			wait.hits = 1;
+		}
+
+		wait.tick = regs.tb.sval;
+	}
+
+	bool GekkoCore::SkipIdleWait()
+	{
+		if (idleSkipMax <= 0)
+		{
+			return false;
+		}
+
+		// With MSR[EE] clear no interrupt can reach the guest, so the loop it is in could not be
+		// left by one either: skipping would only throw the time away.
+		if ((regs.msr & MSR_EE) == 0)
+		{
+			return false;
+		}
+
+		// An interrupt is already pending. The guest takes it on its very next branch, and that
+		// may be exactly what it is waiting for, so the wait ends now rather than later.
+		if (intFlag || decreq)
+		{
+			return false;
+		}
+
+		int64_t start = regs.tb.sval;
+		int64_t limit = start + idleSkipMax;
+
+		while (regs.tb.sval < limit)
+		{
+			// One Flipper deadline at a time. The devices are then stepped exactly as they would
+			// have been while the guest spun - the VI's scan-out, the audio DMA, the serial poll,
+			// the DSP - so nothing they do depends on how the wait was covered.
+			int64_t step = flipperDeadline - regs.tb.sval;
+
+			if (step <= 0)
+			{
+				step = Flipper::FlipperTickStep;
+			}
+			if (step > limit - regs.tb.sval)
+			{
+				step = limit - regs.tb.sval;
+			}
+
+			TickN((uint32_t)step);
+
+			if ((intFlag || decreq) && (regs.msr & MSR_EE))
+			{
+				break;
+			}
+
+			// A device raised an interrupt the guest has not enabled: the CPU cannot take it, but
+			// the event itself is what the machine runs on, so the skip stops here and lets the
+			// guest get on with its work (see `idleStopOnCause`).
+			if (idleStopOnCause && Flipper::HW != nullptr && Flipper::HW->pi->PIGetIntsr() != 0)
+			{
+				break;
+			}
+		}
+
+		idleSkips++;
+		idleSkippedTicks += regs.tb.sval - start;
+
+		return true;
 	}
 
 	void GekkoCore::AssertInterrupt()

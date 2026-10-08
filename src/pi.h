@@ -167,6 +167,11 @@ namespace Flipper
 		void PIAssertInt(uint32_t mask);  // set interrupt(s)
 		void PIClearInt(uint32_t mask);   // clear interrupt(s)
 
+		//! The interrupt status register as the controller holds it: every latched cause,
+		//! whether or not INTMR enables it. The idle skip stops at one of these even when the
+		//! guest cannot take it yet, so that a device event is never skipped over.
+		uint32_t PIGetIntsr() const { return pi.intsr; }
+
 		/// <summary>
 		/// Set the breakpoint (Halt) to trigger once per interrupt.
 		/// Used by debug commands for step-by-step debugging of system runtime.

@@ -1011,6 +1011,69 @@ namespace Gekko
 		int64_t flipperDeadline = 0;
 		void SyncFlipper();
 
+		// -- Idle wait skipping ------------------------------------------------------------
+		//
+		// The guest spends a large part of every frame waiting: `VIWaitForRetrace` parks the
+		// calling thread until the VI interrupt wakes it, and a title waiting on its own
+		// counter yields the CPU in a loop until the value it watches changes. The
+		// recompiler marks the block that performs such a poll (gekkojit.h, Block::pollReg)
+		// and `PollCheck` counts the repeats while the polled register keeps its value; when
+		// the streak is long enough the CPU is waiting for something outside itself and the
+		// wait is covered by advancing the emulated clock instead of executing it, one
+		// Flipper deadline at a time, until an interrupt is pending (see SkipIdleWait).
+
+		// The streak of every wait loop the machine is running, one slot per poll block. A
+		// machine has several waits in flight at once (the frame's retrace, the audio driver's
+		// buffer, the drive's read) and a single streak would be reset by whichever of them came
+		// round last, so each poll block keeps its own. Direct mapped on the block's pc.
+		struct IdleWait
+		{
+			uint32_t pc = 0;			//!< The poll block this slot belongs to
+			uint32_t reg = 0;			//!< The register it reads
+			uint32_t value = 0;			//!< The value that register held last time
+			int32_t  hits = 0;			//!< Unchanged polls seen in a row
+			int64_t  tick = 0;			//!< When the last one was
+		};
+
+		static const size_t IdleWaitSlots = 64;
+		IdleWait idleWaits[IdleWaitSlots];
+		//! Ticks of emulated time one skip may cover; 0 turns idle skipping off.
+		int64_t idleSkipMax = 0;
+		//! How many unchanged polls in a row make the wait a skip.
+		int32_t idlePollThreshold = 16;
+		//! The longest gap between two polls that still belongs to the same wait, in ticks.
+		int64_t idlePollPeriodMax = 0;
+		//! True (the default): a poll whose value changed starts the streak over, because the
+		//! change is the progress the guest asked for. False keeps the streak as long as the
+		//! loop keeps coming round: a value that moves while the loop still spins means the
+		//! guest is waiting for something else (the counter's own decrement, say), and the
+		//! wait is a wait all the same.
+		bool idleRequireSameValue = true;
+		//! True: the skip also stops at an interrupt cause the guest has not enabled yet
+		//! (`PI_INTSR`), so that a device event is never covered over even when the guest
+		//! cannot take it. False (the default) stops only at an interrupt the CPU can take.
+		bool idleStopOnCause = false;
+
+		//! How many waits were skipped, and how much emulated time they covered.
+		uint64_t idleSkips = 0;
+		int64_t idleSkippedTicks = 0;
+		//! How many polls the recompiler reported, for the diagnostic in the benchmark report.
+		uint64_t idlePolls = 0;
+		//! Emulated ticks the recognised waits cover, for the diagnostic in the benchmark report.
+		int64_t idleWaitTicks = 0;
+
+		//! Called by the recompiler after a block it marked as an idle poll (Block::pollReg).
+		void PollCheck(uint32_t pc, uint32_t reg);
+
+		//! Cover the wait the guest is in by advancing the clock. Returns false when there is
+		//! nothing to skip (the feature is off, interrupts are masked, or one is already
+		//! pending - the guest's own branch would take it).
+		bool SkipIdleWait();
+
+		//! Read the idle skip tuning from the environment (`IDLE_SKIP_MAX_MS`, `IDLE_POLL_COUNT`,
+		//! `IDLE_POLL_PERIOD_TICKS`). Called from Reset, so a machine always starts with it.
+		void ConfigureIdleSkip();
+
 #pragma region "Memory interface"
 
 		// Centralized hub for access to the data bus (memory) from CPU side.

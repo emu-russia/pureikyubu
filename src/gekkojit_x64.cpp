@@ -19,6 +19,8 @@ readable place.
 #include "pch.h"
 #include "gekkojit.h"
 
+#include <algorithm>
+
 #if GEKKO_JIT_X64
 
 #include "jit_x64.h"
@@ -126,6 +128,7 @@ Jit::Jit(GekkoCore* _core) : core(_core)
 			blocks[s][w].instrCount = 0;
 			blocks[s][w].codeOffset = 0;
 			blocks[s][w].fpEnabled = 0;
+			blocks[s][w].pollReg = -1;
 		}
 	}
 
@@ -215,8 +218,127 @@ Jit::Block* Jit::AllocBlock(uint32_t pc, uint32_t pa)
 	block->instrCount = 0;
 	block->codeOffset = 0;
 	block->fpEnabled = core->regs.msr & MSR_FP;
+	block->execCount = 0;
+	block->tickCount = 0;
+	block->pollReg = -1;
 
 	return block;
+}
+
+// The blocks that retired the most instructions, most first. See gekkojit.h for why it exists.
+void Jit::ReportHotBlocks(size_t topN) const
+{
+	struct Entry
+	{
+		uint32_t pc;
+		uint32_t pa;
+		uint32_t instrCount;
+		uint64_t execCount;
+		uint64_t tickCount;
+	};
+
+	std::vector<Entry> entries;
+
+	for (size_t s = 0; s < BlockCacheSets; s++)
+	{
+		for (size_t w = 0; w < BlockCacheWays; w++)
+		{
+			const Block* block = &blocks[s][w];
+
+			if (block->gen != generation || block->tickCount == 0)
+			{
+				continue;
+			}
+
+			entries.push_back({ block->pc, block->pa, block->instrCount, block->execCount, block->tickCount });
+		}
+	}
+
+	std::sort(entries.begin(), entries.end(),
+		[](const Entry& a, const Entry& b) { return a.tickCount > b.tickCount; });
+
+	// Where the retired instructions came from, in 64K pages: the recompiler's own view of
+	// which part of the image the run spent its time in.
+	{
+		std::vector<std::pair<uint64_t, uint32_t>> pages;
+
+		for (size_t s = 0; s < BlockCacheSets; s++)
+		{
+			for (size_t w = 0; w < BlockCacheWays; w++)
+			{
+				const Block* block = &blocks[s][w];
+
+				if (block->gen != generation || block->tickCount == 0)
+				{
+					continue;
+				}
+
+				uint32_t page = block->pc & 0xFFFF0000;
+				bool found = false;
+
+				for (auto& p : pages)
+				{
+					if (p.second == page)
+					{
+						p.first += block->tickCount;
+						found = true;
+						break;
+					}
+				}
+
+				if (!found)
+				{
+					pages.push_back({ block->tickCount, page });
+				}
+			}
+		}
+
+		std::sort(pages.begin(), pages.end(),
+			[](const std::pair<uint64_t, uint32_t>& a, const std::pair<uint64_t, uint32_t>& b) { return a.first > b.first; });
+
+		uint64_t total = 0;
+		for (auto& p : pages) total += p.first;
+
+		Debug::Report(Debug::Channel::Norm, "retired instructions by 64K page:\n");
+
+		for (size_t i = 0; i < pages.size() && i < 12; i++)
+		{
+			Debug::Report(Debug::Channel::Norm, "  page %08X  %14llu retired  (%.1f%%)\n",
+				pages[i].second, (unsigned long long)pages[i].first,
+				total ? (double)pages[i].first * 100.0 / (double)total : 0.0);
+		}
+	}
+
+	Debug::Report(Debug::Channel::Norm, "hot blocks (pc, instructions, entries, instructions retired):\n");
+
+	for (size_t i = 0; i < entries.size() && i < topN; i++)
+	{
+		Debug::Report(Debug::Channel::Norm, "  %08X  %2u instr  %12llu entries  %14llu retired\n",
+			entries[i].pc, entries[i].instrCount, (unsigned long long)entries[i].execCount,
+			(unsigned long long)entries[i].tickCount);
+
+		// The instructions themselves, read back through the physical address the block was
+		// compiled for. A diagnostic only: the CPU thread is still running while this is called.
+		for (uint32_t n = 0; n < entries[i].instrCount; n++)
+		{
+			uint32_t pa = entries[i].pa + n * 4;
+			uint8_t* ptr = Flipper::HW->pi->PITranslatePhysicalAddress(pa, sizeof(uint32_t));
+
+			if (ptr == nullptr)
+			{
+				break;
+			}
+
+			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
+			DecoderInfo info = { 0 };
+			Decoder::Decode(entries[i].pc + n * 4, instr, &info);
+
+			Debug::Report(Debug::Channel::Norm, "      %08X  %s\n",
+				entries[i].pc + n * 4, GekkoDisasm::Disasm(entries[i].pc + n * 4, &info, false, false).c_str());
+		}
+
+		Debug::Report(Debug::Channel::Norm, "\n");
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -247,6 +369,10 @@ bool Jit::FetchInstr(uint32_t pc, uint32_t& instr, uint32_t& pa)
 	return true;
 }
 
+// The longest block the idle poll detector is offered (see Block::pollReg). A wait loop is a
+// compare and a branch around one load; anything longer is doing work and is left alone.
+static const uint32_t MaxPollBlockInstrs = 8;
+
 static bool IsBranchInstr(Instruction instr)
 {
 	switch (instr)
@@ -254,6 +380,62 @@ static bool IsBranchInstr(Instruction instr)
 	case Instruction::b: case Instruction::ba: case Instruction::bl: case Instruction::bla:
 	case Instruction::bc: case Instruction::bca: case Instruction::bcl: case Instruction::bcla:
 	case Instruction::bclr: case Instruction::bclrl: case Instruction::bcctr: case Instruction::bcctrl:
+		return true;
+	default:
+		return false;
+	}
+}
+
+// Instructions that write memory. The list has to be complete: a block is only offered to the
+// idle poll detector (see Block::pollReg) when it cannot have written anything, and a store the
+// list forgot would let a block that *changes* memory be treated as one that only waits for it.
+static bool IsStoreInstr(Instruction instr)
+{
+	switch (instr)
+	{
+	case Instruction::stb: case Instruction::stbx: case Instruction::stbu: case Instruction::stbux:
+	case Instruction::sth: case Instruction::sthx: case Instruction::sthu: case Instruction::sthux:
+	case Instruction::stw: case Instruction::stwx: case Instruction::stwu: case Instruction::stwux:
+	case Instruction::sthbrx: case Instruction::stwbrx:
+	case Instruction::stmw: case Instruction::stswi: case Instruction::stswx:
+	case Instruction::stfs: case Instruction::stfsx: case Instruction::stfsu: case Instruction::stfsux:
+	case Instruction::stfd: case Instruction::stfdx: case Instruction::stfdu: case Instruction::stfdux:
+	case Instruction::stfiwx:
+	case Instruction::psq_st: case Instruction::psq_stx: case Instruction::psq_stu: case Instruction::psq_stux:
+	case Instruction::stwcx_d:
+	case Instruction::dcbt: case Instruction::dcbtst:
+	case Instruction::dcbz: case Instruction::dcbz_l: case Instruction::dcbst: case Instruction::dcbf:
+	case Instruction::icbi: case Instruction::dcbi:
+	case Instruction::ecowx:
+		return true;
+	default:
+		return false;
+	}
+}
+
+// The registers a load writes and the register a compare reads, for the poll-block shape.
+static bool IsLoadInstr(Instruction instr)
+{
+	switch (instr)
+	{
+	case Instruction::lbz: case Instruction::lbzx: case Instruction::lbzu: case Instruction::lbzux:
+	case Instruction::lhz: case Instruction::lhzx: case Instruction::lhzu: case Instruction::lhzux:
+	case Instruction::lha: case Instruction::lhax: case Instruction::lhau: case Instruction::lhaux:
+	case Instruction::lwz: case Instruction::lwzx: case Instruction::lwzu: case Instruction::lwzux:
+	case Instruction::lhbrx: case Instruction::lwbrx:
+	case Instruction::lmw:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static bool IsCompareInstr(Instruction instr)
+{
+	switch (instr)
+	{
+	case Instruction::cmpi: case Instruction::cmp:
+	case Instruction::cmpli: case Instruction::cmpl:
 		return true;
 	default:
 		return false;
@@ -513,6 +695,13 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	uint32_t count = 0;
 	bool endBlock = false;
 
+	// Idle poll detection (see Block::pollReg). `pollLoadRd` is the register the most recent
+	// load wrote, and the block is offered to the detector only when a compare reads that very
+	// register and nothing in the block wrote memory.
+	bool hasStore = false;
+	int32_t pollLoadRd = -1;
+	int32_t pollReg = -1;
+
 	while (count < MaxBlockInstrs && !endBlock)
 	{
 		uint32_t instr = 0, instrPa = 0;
@@ -549,6 +738,25 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 		uint32_t rb = (uint32_t)di.paramBits[2];
 		bool handled = true;
 		bool pcAdvanced = false;			// the fallback handler already advanced regs.pc
+
+		// The idle poll shape: a load, then a compare of what it loaded.
+		if (IsStoreInstr(di.instr))
+		{
+			hasStore = true;
+		}
+		else if (IsLoadInstr(di.instr))
+		{
+			pollLoadRd = (int32_t)rd;
+		}
+		else if (IsCompareInstr(di.instr) && (int32_t)ra == pollLoadRd && pollLoadRd >= 0)
+		{
+			pollReg = pollLoadRd;
+		}
+		else if (!IsBranchInstr(di.instr) && (int32_t)rd == pollLoadRd)
+		{
+			// Something else wrote the register the compare is supposed to read.
+			pollLoadRd = -1;
+		}
 
 		switch (di.instr)
 		{
@@ -1385,6 +1593,10 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	block->instrCount = count;
 	block->codeOffset = offset;
 
+	// A block that writes memory is never an idle poll, and neither is a long one: the shape
+	// the detector is after is a handful of instructions around one compare (see Block::pollReg).
+	block->pollReg = (hasStore || count > MaxPollBlockInstrs) ? -1 : pollReg;
+
 	stats.jitCompiles++;
 	stats.compileCycles += compileStart ? (ReadCycleCounter() - compileStart) : 0;
 
@@ -1479,6 +1691,16 @@ void Jit::RunInner()
 
 	stats.jitBlocks++;
 	stats.jitInstrs += n;
+	block->execCount++;
+	block->tickCount += n + (uint32_t)exit.ticks;
+
+	// An idle poll (see Block::pollReg): the guest keeps reading one value and branching on it
+	// without changing anything else, which is what waiting for a device or for another thread
+	// looks like from here. `PollCheck` counts the streak and skips the wait when it holds.
+	if (block->pollReg >= 0)
+	{
+		core->PollCheck(block->pc, (uint32_t)block->pollReg);
+	}
 
 	// `exit.ticks` is the number of taken back edges the block retired on top of its
 	// instructions. The interpreter ticks every taken branch twice (once in BranchCheck and

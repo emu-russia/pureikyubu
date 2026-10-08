@@ -168,6 +168,24 @@ namespace Gekko
 			// PS translation specializes on MSR[FP]. A context switch can change
 			// it without changing guest PC, physical address or cache generation.
 			uint32_t fpEnabled;
+			// How many times the block has been entered, and how many instructions it has
+			// retired in total (a block that loops on its own back edge retires many
+			// instructions per entry), for the hot block report (`ReportHotBlocks`, enabled
+			// with BENCH_HOTBLOCKS). These are the only counters here, because they cost one
+			// increment per block entry.
+			uint64_t execCount;
+			uint64_t tickCount;
+
+			// The register of an *idle poll* this block performs, or -1 when the block is
+			// not one. A wait loop - the SDK's `VIWaitForRetrace` parked on a thread queue,
+			// a title yielding until its own counter changes, a driver polling a register -
+			// reads a value and branches on it again and again without changing anything
+			// else, and the value is what it is waiting for. A block is marked when it
+			// contains no store at all, is short, and compares a register that a load in
+			// the same block wrote: exactly the shape of `lwz rX, 0(rN); cmpwi rX, 0; b`.
+			// `GekkoCore::PollCheck` counts the repeats while the register keeps the same
+			// value and skips the wait when the streak is long enough (see gekko.h).
+			int32_t pollReg;
 		};
 
 	private:
@@ -245,5 +263,11 @@ namespace Gekko
 		// Run one basic block, or one interpreter instruction when the pc cannot be
 		// compiled (or when the recompiler is not available).
 		void Run();
+
+		// Report the most-entered compiled blocks, most entered first. A diagnostic for
+		// the emulator's own tuning (the benchmark calls it when BENCH_HOTBLOCKS is set):
+		// a small block with an enormous entry count is a guest loop the recompiler keeps
+		// coming back to, which is what an idle wait looks like from here.
+		void ReportHotBlocks(size_t topN) const;
 	};
 }
