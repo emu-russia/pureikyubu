@@ -122,6 +122,10 @@
 #include "dvd.h"
 #include "dvddebug.h"
 
+// The picture of a disc (the banner of a DVD image), decoded to pixels: the game selector draws it
+// and the settings window chooses what its transparency becomes (see banner.h).
+#include "banner.h"
+
 #include "gfx.h"
 #include "gfxdump.h"
 #include "cp.h"

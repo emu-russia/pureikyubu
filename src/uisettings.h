@@ -40,18 +40,29 @@ bool UiSettingsCaptureActive();
 // edits the settings of that view, so that this module does not have to know how the selector
 // draws itself.
 
+//! What the selector does with the transparency of a DVD banner (issue #112). The banners carry an
+//! alpha channel, which the front end has always blended with the row behind it; a user who wants
+//! the picture of a disc to be opaque paints the see-through texels over with one colour instead.
+enum class SELECTOR_BANNER_BG
+{
+	Preserve = 0,   //!< keep the alpha channel: the banner is blended with what is behind it
+	Fill,           //!< paint the see-through texels over with the colour below
+};
+
 struct SelectorSettings
 {
 	bool                      active;       //!< whether the selector is shown when no game runs
 	bool                      smallIcons;   //!< half size banners in the list
 	SELECTOR_SORT             sortBy;       //!< the sort rule (see SELECTOR_SORT in ui.h)
+	SELECTOR_BANNER_BG        bannerBg;     //!< what the banner background is (issue #112)
+	ImU32                     bannerBgColor; //!< ... the colour of it, as ImGui packs a colour
 	std::vector<std::wstring> paths;        //!< the directories that are scanned
 };
 
 //! The current state of the selector view.
 SelectorSettings SelectorGetSettings();
 
-//! Write the state back: the enabled flag, the icons and the sort rule.
+//! Write the state back: the enabled flag, the icons, the sort rule and the banner background.
 void SelectorSetSettings(const SelectorSettings& settings);
 
 //! Take a directory into the list of the scanned ones.

@@ -45,6 +45,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\testing\dsp_jit_test.cpp">
+    <ClCompile Include="..\..\testing\banner_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\dsp.cpp">
@@ -78,6 +81,9 @@
       <Filter>Emulator Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\jdispecs.cpp">
+      <Filter>Emulator Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\banner.cpp">
       <Filter>Emulator Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\json.cpp">

@@ -331,6 +331,62 @@ static void settings_page_general()
 		}
 		PropertyRowEnd();
 
+		// The background of the DVD banners (issue #112). A banner is an RGB5A3 texture, so it
+		// carries an alpha channel: a user who does not want the row to show through the picture of
+		// a disc paints the see-through texels over with one colour instead. The colour is edited in
+		// a popup of its own, so that the row stays the height of the combo box it starts with.
+		PropertyRow("Banner background");
+		{
+			static const char* bannerBgNames[] = { "Preserve alpha", "Fill with color" };
+
+			const int current = (int)selector.bannerBg;
+
+			ImGui::SetNextItemWidth(200.0f);
+
+			if (ImGui::BeginCombo("##v", bannerBgNames[current]))
+			{
+				for (int i = 0; i < (int)_countof(bannerBgNames); i++)
+				{
+					if (ImGui::Selectable(bannerBgNames[i], current == i))
+					{
+						selector.bannerBg = (SELECTOR_BANNER_BG)i;
+						changed = true;
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::SameLine();
+			ImGui::BeginDisabled(selector.bannerBg != SELECTOR_BANNER_BG::Fill);
+			ImGui::ColorButton("##banner_bg_color", UiThemeVec4(selector.bannerBgColor),
+				ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoDragDrop);
+
+			if (ImGui::IsItemClicked())
+			{
+				ImGui::OpenPopup("##banner_bg_edit");
+			}
+
+			if (ImGui::BeginPopup("##banner_bg_edit"))
+			{
+				ImVec4 color = UiThemeVec4(selector.bannerBgColor);
+
+				// The alpha is edited too: the colour is what the see-through texels are painted
+				// over with, so a translucent one leaves them translucent.
+				if (ImGui::ColorPicker4("##pick", (float*)&color,
+					ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf))
+				{
+					selector.bannerBgColor = ImGui::ColorConvertFloat4ToU32(color);
+					changed = true;
+				}
+
+				ImGui::EndPopup();
+			}
+
+			ImGui::EndDisabled();
+		}
+		PropertyRowEnd();
+
 		PropertyRow("File filter");
 		{
 			settings_filter_item("*.dol", 0xff000000);
