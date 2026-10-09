@@ -188,11 +188,14 @@ namespace Flipper
 			DSP->core->Update();
 		}
 
-		// ... and the DVD-audio sample clock, whose streaming shares the drive read pointer with
-		// the DI transfer.
+		// ... and the drive: its audio sample clock, whose streaming shares the read pointer of
+		// the drive with the DI transfer, and the transfer itself, whose own bus delivers a byte
+		// per `dduTicksPerByte` ticks. A transfer that ran to completion inside the guest
+		// instruction that programmed it took no emulated time at all - see DduCore::TransferTick.
 		if (DVD::DDU != nullptr)
 		{
 			DVD::DDU->AudioTick(ticks);
+			DVD::DDU->TransferTick(ticks);
 		}
 	}
 

@@ -250,6 +250,12 @@ namespace JdiSpecs
         "Syntax: StartProfiler <json> [ms]",
         "Specify the Json file name where the collected information will be saved, after calling the StopProfiler command.",
         "The interval is specified in emulated Gekko milliseconds. Possible values are 2-50. The default is 5.",
+        "WARNING: the sampler reads the live PC of a running machine. With the recompiler on (the\n",
+        "default) that register only moves at a compiled block's boundary, so the profile reports\n",
+        "block entries instead of instructions, and a loop the translator kept inside one block\n",
+        "appears as its first instruction alone. Run `jit 0` (or clear the Core section's JIT\n",
+        "setting) before this command when the addresses have to mean what they say.\n",
+        "See also: guestprof, which has the same rule for its basic-block histogram.\n",
         "Example: StartProfiler Data/sampleData.json 10"
       ]
     },

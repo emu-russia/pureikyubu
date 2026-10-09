@@ -216,6 +216,15 @@ namespace Debug
 		{
 			profiler->savedGekkoTbr = ticks;
 
+			// WARNING: this reads the live PC from another thread while the machine runs, so what a
+			// sample means depends on the engine behind it. With the recompiler on (the default) the
+			// emulated PC only moves at a compiled block's boundary (Jit::RunInner), so every sample
+			// is the *entry* of the block that happened to be running, not the instruction: a loop
+			// the translator kept inside one block is reported at its first instruction, and an
+			// address taken from such a profile cannot be disassembled back into the loop's body.
+			// Run the machine on the interpreter (`jit 0`, or `CORE.JIT` in the settings) before
+			// StartProfiler when the sampled addresses have to be exact; see src/debug.h and
+			// src/guestprof.h.
 			profiler->sampleData->AddUInt64(nullptr, ticks);
 			profiler->sampleData->AddUInt32(nullptr, Core->regs.pc);
 		}
@@ -506,6 +515,12 @@ namespace Debug
 		profiler = new SamplingProfiler(args[1].c_str(), period);
 
 		Report(Channel::Norm, "Profiler started.\n");
+
+		// WARNING: the profile this command starts samples the live PC, and with the recompiler on
+		// (the default) that only moves at a compiled block's boundary, so the addresses it records
+		// are block entries and not instructions. Turn the recompiler off first (`jit 0`, or the
+		// Core section's JIT setting) when they have to be exact; see SamplingProfiler::ThreadProc
+		// and src/guestprof.h.
 
 		return nullptr;
 	}

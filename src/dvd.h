@@ -30,7 +30,9 @@ This means that the DDU does what is called "Babble."
 
 Therefore, set the timings so that the transaction speed of DduCore fits into 2 MByte/sec in accordance with the Gekko TBR timer.
 
-Since the processor and DDU threads work in parallel to avoid babbling when reading the image (fread), the ExecuteCommand method receives a hint from the command packet with the transaction size, so that it can pre-cache DVD data from the image.
+The bus delivers one byte per `dduTicksPerByte` ticks and `DduCore::TransferTick` walks it from the Flipper's periodic work, so a transfer takes the emulated time a console takes over it and the guest can watch the drive's progress while it waits (issue #469). The transfer must not be run to completion inside the access that programmed it: it then takes no emulated time at all, and every timing a title has around the drive - its loader's state machine, its streaming buffers, its `DVDLowRead` timeouts - is written against the rate.
+
+`ExecuteCommand` receives a hint from the command packet with the transaction size, so that it can pre-cache DVD data from the image (fread) once per 512 KByte window instead of once per byte.
 
 ## DVD Microcontroller(s)
 
@@ -408,12 +410,11 @@ namespace DVD
 
 #pragma region "DDU commands Data bus processing"
 
-		//! One step of the DDU transfer state machine. `StartTransfer` runs it to completion on
-		//! the thread that programmed the transfer, so the DMA and the transfer-complete
-		//! interrupt are a function of the guest instruction stream rather than of a device
+		//! One step of the DDU transfer state machine. `TransferTick` walks it from the Flipper's
+		//! periodic work, one byte per `dduTicksPerByte` ticks, so the DMA and the
+		//! transfer-complete interrupt are a function of the time base rather than of a device
 		//! thread's scheduling.
 		void PumpOnce();
-		bool pumping = false;
 		void ExecuteCommand();
 		bool ddBusBusy = false;		// Command-in/Data-out transfer in progress
 		static const int transferRate = 2000000;	// Bytes / second
@@ -533,6 +534,13 @@ namespace DVD
 		//! from `Flipper::Update`, on the same thread as the DI transfer it shares the drive state
 		//! with.
 		void AudioTick(int64_t ticks);
+
+		//! The DDU's own bus, stepped from `Flipper::Update` too: one byte of the transfer in
+		//! progress per `dduTicksPerByte` ticks, which is the 2 MByte/s the drive is specified at
+		//! (see the DDU transaction rate in the header of dvd.cpp). A transfer therefore takes the
+		//! emulated time a console takes over it, and the guest reads the drive's progress the way
+		//! it does on the console.
+		void TransferTick(int64_t ticks);
 		void SetDvdAudioSampleRate(DvdAudioSampleRate rate);
 		void SetStreamCallback(DduStreamCallback callback, void *ctx)
 		{
