@@ -78,8 +78,8 @@ struct CmdLineOptions
 
 	// The integrated GBA emulator (issue #388). `--gba [file]` runs the GBA machine with the SDL2
 	// backend instead of the GameCube one; a file whose extension is a Game Boy one (.gba, .agb,
-	// .gb, .gbc) selects the same mode by itself. With no file at all the GBA boots its own boot
-	// ROM and its link driver takes over, which is the GBA Link mode.
+	// .gb, .gbc, .dmg, .cgb) selects the same mode by itself. With no file at all the GBA boots its
+	// own boot ROM and its link driver takes over, which is the GBA Link mode.
 	bool    gba = false;
 	bool    gbaLink = false;        // `--gba-link`: initialize the link port even with a cartridge
 
@@ -89,9 +89,9 @@ struct CmdLineOptions
 	bool    gbaNoBootrom = false;
 
 	// The Game Boy (DMG/CGB) is the other machine of the same module and runs in the same
-	// frontend: a `.gb`/`.gbc`/`.sgb` cartridge selects it by itself, `--gb` forces it for a file
-	// whose extension is ambiguous, and `--gb-dmg` asks for the monochrome console instead of a
-	// CGB.
+	// frontend: a `.gb`/`.gbc`/`.sgb`/`.dmg`/`.cgb` cartridge selects it by itself, `--gb` forces
+	// it for a file whose extension is ambiguous, and `--gb-dmg` asks for the monochrome console
+	// instead of a CGB.
 	bool    gb = false;
 	bool    gbDmg = false;
 };
@@ -104,8 +104,9 @@ extern  CmdLineOptions cmdline;
 void EMUPrintUsage();
 
 /// <summary>
-/// Run the integrated GBA emulator (the SDL2 frontend) with the settings from
-/// build/Data/GBASettings.json merged with the command line. Returns the process exit code.
+/// Run the integrated GBA emulator (the SDL2 frontend) with the stand-alone settings
+/// (build/Data/DefaultGBASettings.json overridden by build/Data/GBASettings.json) merged with the
+/// command line. Returns the process exit code.
 /// </summary>
 int EMURunGba();
 

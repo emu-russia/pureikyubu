@@ -1,4 +1,10 @@
-// The GBA emulator's settings, stored in build/Data/GBASettings.json.
+// The GBA emulator's settings: the pair of documents the rest of the emulator keeps its own
+// settings in. build/Data/DefaultGBASettings.json is the shipped one (it is what
+// GbaSettings::DefaultJson() writes, and the built-in defaults of Defaults() stand in for it when
+// it is not there), and build/Data/GBASettings.json is the user's, merged over the defaults member
+// by member - a member the user's file does not name keeps the default. This module is the reader
+// and the writer of one document; the pair belongs to the frontend (GBA::LoadSettings in
+// gba_sdl.h), and the two files are the same format.
 //
 // The file is the same shape as the rest of the emulator's settings (a flat object per section).
 // The document is read with the emulator's shared Json engine (src/json.cpp), which is self
@@ -6,9 +12,6 @@
 // tested without the GameCube side of the emulator - it links the engine rather than carrying a
 // parser of its own. The writer below is the module's own, because the GBA settings file keeps the
 // project's tab/blank-line layout.
-//
-// The shipped defaults live in build/Data/GBASettings.json. A missing file is not an error: the
-// defaults from Defaults() are used and the file is written back on the first change.
 
 #pragma once
 
@@ -30,7 +33,17 @@ namespace GBA
 	{
 		// -- boot --------------------------------------------------------------------------
 
-		std::string biosPath;			// a real 16 KByte BIOS image; empty = the built-in one
+		/// <summary>A real 16 KByte Game Boy Advance BIOS image; empty = the built-in boot ROM.</summary>
+		std::string biosPath;
+
+		/// <summary>A real 256 byte DMG boot ROM (the Game Boy's "BIOS"); empty = the built-in
+		/// one. It is used when the monochrome machine runs the cartridge.</summary>
+		std::string dmgBiosPath;
+
+		/// <summary>A real 2304 byte CGB boot ROM (the Game Boy Color's "BIOS"); empty = the
+		/// built-in one. It is used when a colour machine runs the cartridge.</summary>
+		std::string cgbBiosPath;
+
 		bool useCustomBootRom = true;	// run the pureikyubu boot animation
 		bool skipBootAnimation = false;	// jump straight to the cartridge after the logo pass
 		bool hleBios = true;			// handle the BIOS calls in the host
@@ -79,11 +92,19 @@ namespace GBA
 		std::string saveDirectory;		// empty = the directory of the ROM
 		int logLevel = 1;				// 0 = errors, 1 = warnings, 2 = info, 3 = debug
 
-		/// <summary>The built-in defaults (the same values build/Data/GBASettings.json has).</summary>
+		/// <summary>The built-in defaults (the same values build/Data/DefaultGBASettings.json has).</summary>
 		static GbaSettings Defaults();
 
 		/// <summary>Load a settings file; a missing file leaves `out` at the defaults.</summary>
 		static bool Load(const std::string& path, GbaSettings& out, std::string* error);
+
+		/// <summary>
+		/// Read a settings document and apply the members it names over `out`; a member the
+		/// document does not name keeps the value `out` already has. This is how the user's file
+		/// is merged over the shipped defaults. A missing file is not an error and leaves `out`
+		/// untouched; a document that is refused leaves `out` untouched as well.
+		/// </summary>
+		static bool Merge(const std::string& path, GbaSettings& out, std::string* error);
 
 		/// <summary>Write the settings back.</summary>
 		bool Save(const std::string& path, std::string* error) const;
@@ -95,7 +116,7 @@ namespace GBA
 		/// settings files do).</summary>
 		std::string ToJson() const;
 
-		/// <summary>The document as it is shipped in build/Data/GBASettings.json.</summary>
+		/// <summary>The document as it is shipped in build/Data/DefaultGBASettings.json.</summary>
 		static std::string DefaultJson();
 
 		/// <summary>The host key name bound to an action ("" when it is not bound).</summary>

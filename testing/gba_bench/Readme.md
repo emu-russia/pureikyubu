@@ -61,7 +61,7 @@ official IPL.
 | `BootRom` | The ARM emitter against the ARM Architecture Reference Manual, the boot ROM image, the animation and the cartridge handover |
 | `Demo` | A whole cartridge assembled at run time and run on the whole machine |
 | `Bios` | The official IPL, when the user has one (skipped otherwise) |
-| `Settings` | `build/Data/GBASettings.json`: the defaults, the round trip, the shipped file matching the code, the malformed documents |
+| `Settings` | `build/Data/DefaultGBASettings.json` and `build/Data/GBASettings.json`: the defaults, the round trip, the shipped defaults matching the code, the merge of a user's file over them, the malformed documents |
 | `SaveState` | The Game Boy Advance save states (`src/gba/gba_savestate.*`): the image's magic, version, length and checksum; the refusal of a corrupt, truncated or foreign state; the machine that comes back from a state taken at a frame boundary *and* from one taken in the middle of a frame (the picture, the memory, the clock and the banked registers are compared against the run that continued); the completeness property that saving, running on, loading and saving again gives the same image byte for byte; and the slot files |
 | `GameBoyState` | The Game Boy and Game Boy Color save states (`src/gba/gb_savestate.cpp`): a CGB program built with the module's own emitter that switches to double speed, writes VRAM bank 1, loads a colour palette and runs an HBlank HDMA, resumed exactly in the middle of a frame with the HDMA part way through; the CGB-only state (speed, `VBK`, both palette banks, the HDMA's remaining blocks); the refusal of the other machine's state and of the other console's; and the slot files |
 | `HleBios` | The high level BIOS calls against the official BIOS image, when the user has one: the SWI numbers, `HuffUnComp`, `BitUnPack`, `LZ77` (both write variants), `RL` and the two delta filters byte for byte on crafted and on randomly generated streams, `MidiKey2Freq` against the BIOS's own fixed point, and the sound driver's identifier, frequency table, FIFO DMA setup, mixer and VSync/VSyncOff (the image is not shipped, so those tests skip themselves without it) |
@@ -165,7 +165,7 @@ that they are not mistaken for verified behaviour. Where a test depends on one, 
 
 ## The test suite
 
-Every test passes: **380 of 380**. (The two that compare `build/Data/GBASettings.json` with
+Every test passes: **380 of 380**. (The two that compare `build/Data/DefaultGBASettings.json` with
 `DefaultJson()` byte for byte need that file to have LF endings; a Windows checkout with
 `core.autocrlf` turns it into CRLF and they then report the `\r`s as a difference, which says
 nothing about the emulator.) The suite was not green

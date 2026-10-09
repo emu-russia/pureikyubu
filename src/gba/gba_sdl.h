@@ -7,7 +7,7 @@
 // port - which is what a GBA Link peer or a Game Boy Player replacement needs.
 //
 // Two machines share the frontend because they differ only in the frame size and in the key
-// mapping: the GBA (240x160, eleven buttons, the bindings from GBASettings.json) and the Game Boy
+// mapping: the GBA (240x160, eleven buttons, the bindings from the settings files) and the Game Boy
 // (160x144, eight buttons, the fixed bindings documented in wiki/gba.md). Everything else - the
 // window, the texture, the sound buffer, the frame pacing and the hotkeys - is the same code.
 //
@@ -25,20 +25,36 @@ namespace GBA
 	/// <summary>True when the file name has a Game Boy / Game Boy Advance cartridge extension.</summary>
 	bool IsGameBoyImage(const std::string& path);
 
-	/// <summary>True when the cartridge is a Game Boy one (.gb/.gbc/.sgb), not a GBA one.</summary>
+	/// <summary>True when the cartridge is a Game Boy one (.gb/.gbc/.sgb/.dmg/.cgb), not a GBA one.</summary>
 	bool IsDmgImage(const std::string& path);
 
 	/// <summary>
-	/// The settings file the frontend reads. `Data/GBASettings.json` relative to the working
-	/// directory is what the shipped build uses; a missing file means "the built-in defaults".
+	/// The two documents the settings of the portable machines come from: the shipped defaults and
+	/// the user's own values, which are merged over the defaults member by member. The two are a
+	/// pair of one directory (the user's file sits next to the defaults), and the settings window
+	/// writes `user` when Save is asked for.
 	/// </summary>
-	const char* DefaultSettingsPath();
+	struct GbaSettingsFiles
+	{
+		std::string defaults;	//!< the shipped defaults (Data/DefaultGBASettings.json)
+		std::string user;		//!< the user's own values (Data/GBASettings.json)
+	};
 
 	/// <summary>
-	/// Load the GBA settings, trying the shipped locations in turn (the application runs with
-	/// `Data/` in its working directory; a developer build often runs from the repository root).
+	/// Where the two files are: `Data/` of the working directory (the shipped build runs there) or
+	/// the `build/Data/` of a run from the repository root. With no shipped file anywhere the
+	/// working directory's names are answered, so that a save still has a place to write to.
 	/// </summary>
-	bool LoadSettings(const std::string& path, GbaSettings& settings, std::string& usedPath, std::string* error);
+	GbaSettingsFiles FindSettingsFiles();
+
+	/// <summary>
+	/// Load the settings of the portable machines: the shipped defaults, then the members the
+	/// user's file names over them. A file that is not there is not an error - the built-in
+	/// defaults stand in for a shipped one, and a machine that has never saved a user's file runs
+	/// them - so the caller is left with a configuration it can run in every case. The answer is
+	/// false only for a file that exists and could not be read.
+	/// </summary>
+	bool LoadSettings(const GbaSettingsFiles& files, GbaSettings& settings, std::string* error);
 
 	/// <summary>
 	/// Run the GBA emulator with the SDL2 backend until the user closes the window.

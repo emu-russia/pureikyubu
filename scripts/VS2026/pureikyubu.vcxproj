@@ -96,6 +96,7 @@
     <ClInclude Include="..\..\src\ras.h" />
     <ClInclude Include="..\..\src\res\resource.h" />
     <ClInclude Include="..\..\src\res\pureikyubu_icon.h" />
+    <ClInclude Include="..\..\src\res\portable_banners.h" />
     <ClInclude Include="..\..\src\rvz.h" />
     <ClInclude Include="..\..\src\savestate.h" />
     <ClInclude Include="..\..\src\si.h" />

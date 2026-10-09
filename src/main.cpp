@@ -229,8 +229,9 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 }
 
 /// <summary>
-/// Run the integrated GBA emulator (issue #388) with the SDL2 frontend. The settings come from
-/// build/Data/GBASettings.json, overridden by the command line.
+/// Run the integrated GBA emulator (issue #388) with the SDL2 frontend. The settings are the
+/// stand-alone pair - build/Data/DefaultGBASettings.json with build/Data/GBASettings.json merged
+/// over it - and the command line overrides both.
 /// </summary>
 int EMURunGba()
 {
@@ -241,12 +242,12 @@ int EMURunGba()
 	return -1;
 #else
 	GBA::GbaSettings settings;
-	std::string usedPath;
+	GBA::GbaSettingsFiles files = GBA::FindSettingsFiles();
 	std::string error;
 
-	if (!GBA::LoadSettings("", settings, usedPath, &error))
+	if (!GBA::LoadSettings(files, settings, &error))
 	{
-		Report(Channel::Norm, "GBA: %s: %s (using the defaults)\n", usedPath.c_str(), error.c_str());
+		Report(Channel::Norm, "GBA: %s (using the defaults)\n", error.c_str());
 	}
 
 	if (!cmdline.gbaBios.empty())
@@ -265,7 +266,7 @@ int EMURunGba()
 		settings.linkEnabled = true;
 	}
 
-	Report(Channel::Norm, "GBA: settings from %s\n", usedPath.c_str());
+	Report(Channel::Norm, "GBA: settings from %s, overridden by %s\n", files.defaults.c_str(), files.user.c_str());
 
 	std::string rom = Util::WstringToString(cmdline.image);
 
@@ -321,14 +322,16 @@ void EMUPrintUsage()
 		"  --gba [file]          Run the integrated GBA emulator instead of the GameCube one. With a\n"
 		"                        cartridge the boot ROM animation runs and the cartridge is started;\n"
 		"                        with no file the link driver is started (GBA Link mode). A file\n"
-		"                        whose name ends in .gba/.agb/.gb/.gbc selects this mode by itself.\n"
+		"                        whose name ends in .gba/.agb/.gb/.gbc/.dmg/.cgb selects this mode by\n"
+		"                        itself.\n"
 		"  --gba-link            Initialize the link port even when a cartridge is loaded.\n"
 		"  --gba-bios <file>     Use a real 16 KByte GBA BIOS image instead of the built-in boot ROM.\n"
 		"  --no-gba-bootrom      Skip the boot ROM and the BIOS: start the cartridge directly.\n"
 		"\n"
 		"Game Boy (DMG/CGB) emulator (the same module and frontend):\n"
 		"\n"
-		"  --gb [file]           Run the Game Boy machine; a .gb/.gbc/.sgb file selects it too.\n"
+		"  --gb [file]           Run the Game Boy machine; a .gb/.gbc/.sgb/.dmg/.cgb file selects it\n"
+		"                        too.\n"
 		"  --gb-dmg              Emulate the monochrome console instead of a CGB.\n"
 		"\n"
 #ifdef GFX_NULL

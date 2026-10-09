@@ -323,7 +323,7 @@ for the deviations that are pinned down instead of fixed).
 | `test_io.cpp` | The timers (prescaler, cascade, the reload formula), the four DMA channels and their start timings, the serial port in normal/multiplayer mode between two attached machines, the keypad conditions and the interrupt controller |
 | `test_cart.cpp` | The ROM header, the save-type detection, SRAM, the Flash command set, the EEPROM bit protocol, the GPIO/RTC port and the `.sav` round trip |
 | `test_bootrom.cpp` | The ARM emitter's encodings against the ARM Architecture Reference Manual, and the boot ROM: the vector table, the logo animation actually drawing frames, the cartridge handover and the link driver |
-| `test_settings.cpp` | `build/Data/GBASettings.json`: the defaults, the round trip, the shipped file matching the code, the key bindings, and the malformed documents a hostile file may contain |
+| `test_settings.cpp` | `build/Data/DefaultGBASettings.json` and `build/Data/GBASettings.json`: the defaults, the round trip, the shipped defaults matching the code, the merge of a user's file over them, the key bindings, and the malformed documents a hostile file may contain |
 | `test_demo.cpp` | A whole cartridge assembled at run time and run on the whole machine (the program's markers, its paint, the mode-3 display and the animation) |
 | `test_bios.cpp` | The official IPL, when the user has one (skipped otherwise); it also proves that a real BIOS boots the cartridge |
 | `test_gb_cpu.cpp`, `test_gb_ppu.cpp`, `test_gb_cart.cpp`, `test_gb_bootrom.cpp` | The Game Boy (DMG/CGB) machine: the LR35902 and its flags, the LCD with the CGB palettes and banks, the MBC1/2/3/5 mappers and the `.sav` round trip, and the free 256-byte boot ROM with its sliding wordmark |

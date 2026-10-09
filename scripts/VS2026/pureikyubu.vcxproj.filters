@@ -49,6 +49,9 @@
     <ClInclude Include="..\..\src\res\pureikyubu_icon.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\res\portable_banners.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ai.h">
       <Filter>Header Files</Filter>
     </ClInclude>

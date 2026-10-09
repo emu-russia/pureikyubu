@@ -4,17 +4,19 @@
 
 The emulator can run as a Game Boy Advance instead of a GameCube (`--gba`, or a file with a Game Boy
 extension on the command line). That machine is a separate one inside the same executable, and it
-keeps its settings in a file of its own - `Data/GBASettings.json` - which the GBA front end reads
-when it starts. This window is where those settings are edited from the console's own user
-interface, so the file no longer has to be hand written:
+keeps its settings in the pair of documents the rest of the emulator keeps its own in:
+`Data/DefaultGBASettings.json` is the shipped one and `Data/GBASettings.json` is the user's, merged
+over the defaults member by member. This window is where those settings are edited from the
+console's own user interface, so neither file has to be hand written:
 
   * the members are the sections of `GBA::GbaSettings` (`src/gba/gba_settings.h`): boot, video,
     audio, input, link and emulation, one collapsing section per heading;
-  * the file is read when the window is opened for the first time and written back when "Save" is
-    asked for, through the GBA module's own reader and writer (`GBA::LoadSettings` and
-    `GbaSettings::Save`), so the file it writes is byte for byte the file that front end reads;
+  * the pair is read when the window is opened for the first time - through the GBA module's own
+    reader (`GBA::LoadSettings`), the same call the front end makes - and the user's file is
+    written back when "Save" is asked for (`GbaSettings::Save`), so what it writes is byte for byte
+    the document that front end merges over the defaults;
   * the key bindings are edited here too, and "Default keys" is the module's own default layout
-    (`GbaSettings::Defaults`), which is the one the shipped file carries: the **A** of a Game Boy
+    (`GbaSettings::Defaults`), which is the one the shipped defaults carry: the **A** of a Game Boy
     Advance is the *right-hand* button of the two, so its key (`X`) sits to the right of B's (`Z`).
     The window says so, because a layout that has them the other way round is the one mistake a
     per-key editor invites.
@@ -36,9 +38,9 @@ knows nothing about what is inside it.
 
 static bool                 gba_open = false;
 static bool                 gba_loaded = false;
-static GBA::GbaSettings     gba_settings;       // the working copy the window edits
-static std::string          gba_path;           // the file it was read from, and is written back to
-static std::string          gba_status;         // the last load or save result, shown in the window
+static GBA::GbaSettings       gba_settings;      // the working copy the window edits
+static GBA::GbaSettingsFiles  gba_files;         // the shipped defaults it reads and the user's file it writes
+static std::string            gba_status;        // the last load or save result, shown in the window
 
 //! The binding a capture was armed for (an index into `gba_settings.keys`), or -1.
 static int                  gba_capture_binding = -1;
@@ -46,6 +48,17 @@ static bool                 gba_capture_active = false;
 
 static ImGui::FileBrowser   gba_bios_dialog(ImGuiFileBrowserFlags_CloseOnEsc);
 static bool                 gba_dialogs_ready = false;
+
+//! The machine the BIOS browser that is open (or about to be opened) is picking an image for. The
+//! three portable machines have a boot image each, so the row that opened the browser says which.
+enum class GbaBiosTarget
+{
+	Gba = 0,
+	Dmg,
+	Cgb,
+};
+
+static GbaBiosTarget        gba_bios_target = GbaBiosTarget::Gba;
 
 // ---------------------------------------------------------------------------
 // The property grid (the same shape the console's settings window uses)
@@ -97,19 +110,17 @@ static void GbaReload()
 	std::string error;
 
 	gba_settings = GBA::GbaSettings::Defaults();
-	gba_path.clear();
+	gba_files = GBA::FindSettingsFiles();
 
-	if (GBA::LoadSettings("", gba_settings, gba_path, &error))
+	if (GBA::LoadSettings(gba_files, gba_settings, &error))
 	{
-		gba_status = "loaded " + gba_path;
+		// The pair is what was read: the user's file is merged over the defaults, and a file that
+		// is not there yet is not an error (the defaults of the shipped one are in use).
+		gba_status = "loaded " + gba_files.defaults + ", overridden by " + gba_files.user;
 	}
 	else
 	{
-		// A missing file is not an error: the defaults are the configuration and the first save
-		// writes the file. Anything else is worth saying out loud.
-		gba_status = gba_path.empty()
-			? "no settings file found, the defaults are in use"
-			: (gba_path + ": " + error);
+		gba_status = error;
 	}
 
 	gba_loaded = true;
@@ -117,37 +128,60 @@ static void GbaReload()
 
 static void GbaSave()
 {
-	if (gba_path.empty())
+	if (gba_files.user.empty())
 	{
-		gba_path = GBA::DefaultSettingsPath();
+		gba_files = GBA::FindSettingsFiles();
 	}
 
 	std::string error;
 
-	if (gba_settings.Save(gba_path, &error))
+	if (gba_settings.Save(gba_files.user, &error))
 	{
-		gba_status = "saved " + gba_path;
+		gba_status = "saved " + gba_files.user;
 	}
 	else
 	{
-		gba_status = "cannot write " + gba_path + ": " + error;
+		gba_status = "cannot write " + gba_files.user + ": " + error;
 	}
 }
 
 // ---------------------------------------------------------------------------
 // The pages
 
-static void GbaPageBoot()
+/* The boot image of one of the three portable machines, as the working copy holds it (issue #468:
+   each of them has one of its own, and the one BIOS field the window used to have did not say
+   which machine it belonged to). */
+static std::string& GbaBiosPath(GbaBiosTarget target)
 {
-	if (!GbaPropertyGrid("gba_boot"))
+	switch (target)
 	{
-		return;
+		case GbaBiosTarget::Dmg: return gba_settings.dmgBiosPath;
+		case GbaBiosTarget::Cgb: return gba_settings.cgbBiosPath;
+		default: return gba_settings.biosPath;
 	}
+}
 
-	GbaPropertyRow("BIOS image");
+/* What a machine's boot image is called, for the title of the browser and the status line. */
+static const char* GbaBiosName(GbaBiosTarget target)
+{
+	switch (target)
 	{
+		case GbaBiosTarget::Dmg: return "Game Boy (DMG) boot ROM";
+		case GbaBiosTarget::Cgb: return "Game Boy Color (CGB) boot ROM";
+		default: return "Game Boy Advance BIOS";
+	}
+}
+
+/* One boot image row: the path, the button that opens the browser and the button that puts the
+   built-in image back. */
+static void GbaBiosRow(const char* label, GbaBiosTarget target)
+{
+	GbaPropertyRow(label);
+	{
+		std::string& path = GbaBiosPath(target);
+
 		char buf[0x400];
-		snprintf(buf, sizeof(buf), "%s", gba_settings.biosPath.c_str());
+		snprintf(buf, sizeof(buf), "%s", path.c_str());
 
 		// The field is typed into *or* filled by the browser, and the two buttons of the row are given
 		// the width that is left of it: the editor of a property row takes the whole column by
@@ -165,12 +199,14 @@ static void GbaPageBoot()
 
 		ImGui::SetNextItemWidth(fieldWidth);
 		ImGui::InputText("##v", buf, sizeof(buf));
-		gba_settings.biosPath = buf;
+		path = buf;
 
 		ImGui::SameLine();
 
 		if (ImGui::Button("Choose...", ImVec2(buttonWidth, 0)))
 		{
+			gba_bios_target = target;
+			gba_bios_dialog.SetTitle(std::string("Select the ") + GbaBiosName(target));
 			gba_bios_dialog.Open();
 		}
 
@@ -178,10 +214,22 @@ static void GbaPageBoot()
 
 		if (ImGui::Button("Built-in", ImVec2(buttonWidth, 0)))
 		{
-			gba_settings.biosPath.clear();
+			path.clear();
 		}
 	}
 	GbaPropertyRowEnd();
+}
+
+static void GbaPageBoot()
+{
+	if (!GbaPropertyGrid("gba_boot"))
+	{
+		return;
+	}
+
+	GbaBiosRow("GBA BIOS", GbaBiosTarget::Gba);
+	GbaBiosRow("DMG boot ROM", GbaBiosTarget::Dmg);
+	GbaBiosRow("CGB boot ROM", GbaBiosTarget::Cgb);
 
 	GbaPropertyRow("Built-in boot animation");
 	ImGui::Checkbox("##v", &gba_settings.useCustomBootRom);
@@ -196,9 +244,11 @@ static void GbaPageBoot()
 	GbaPropertyRowEnd();
 
 	GbaPropertyGridEnd();
-	ImGui::TextWrapped("An empty BIOS image is the built-in one. A real 16 KByte image is run from "
-		"address 0 instead, which is what a Game Pak that expects the BIOS at the original vectors "
-		"needs.");
+	ImGui::TextWrapped("An empty field is the built-in boot ROM. The Game Boy Advance BIOS is a "
+		"16 KByte image and the machine runs it from address 0 instead, which is what a Game Pak "
+		"that expects the BIOS at the original vectors needs. The Game Boy's boot ROM is its BIOS: "
+		"256 bytes on the DMG and 2304 on the CGB, and the machine the cartridge is about to run on "
+		"picks its own image.");
 }
 
 static void GbaPageVideo()
@@ -541,7 +591,8 @@ void UiGbaSettingsFrame()
 {
 	if (!gba_dialogs_ready)
 	{
-		gba_bios_dialog.SetTitle("Select a Game Boy Advance BIOS");
+		// The title is set by the row that opens the browser: the three machines have a boot image
+		// each, and the row says which one the selection is for.
 		gba_bios_dialog.SetTypeFilters({ ".bin", ".rom", ".*" });
 		gba_dialogs_ready = true;
 	}
@@ -562,10 +613,12 @@ void UiGbaSettingsFrame()
 		}
 
 		ImGui::TextWrapped("The settings of the Game Boy Advance the emulator runs by itself "
-			"(the --gba mode). They are read from and written to the file below, which is the file "
-			"that front end loads - a saved change is in effect for the next such run.");
+			"(the --gba mode). The shipped defaults and the user's own file are the pair below, and "
+			"they are the pair that front end loads - a saved change is in effect for the next such "
+			"run.");
 
-		ImGui::Text("File: %s", gba_path.empty() ? "(the defaults)" : gba_path.c_str());
+		ImGui::Text("Defaults: %s", gba_files.defaults.c_str());
+		ImGui::Text("User file: %s", gba_files.user.c_str());
 
 		if (!gba_status.empty())
 		{
@@ -627,8 +680,19 @@ void UiGbaSettingsFrame()
 
 		if (ImGui::Button("Restore the defaults", ImVec2(180, 0)))
 		{
-			gba_settings = GBA::GbaSettings::Defaults();
-			gba_status = "the built-in defaults are in the window, Save writes them";
+			std::string error;
+
+			// The defaults are the shipped document, not the built-in values: the two are held
+			// equal by the module's own test, and a file a distributor changed is the one to
+			// restore.
+			if (GBA::GbaSettings::Load(gba_files.defaults, gba_settings, &error))
+			{
+				gba_status = "the shipped defaults are in the window, Save writes them to " + gba_files.user;
+			}
+			else
+			{
+				gba_status = error;
+			}
 		}
 
 		ImGui::SameLine();
@@ -649,9 +713,9 @@ void UiGbaSettingsFrame()
 
 	if (gba_bios_dialog.HasSelected())
 	{
-		gba_settings.biosPath = gba_bios_dialog.GetSelected().string();
+		GbaBiosPath(gba_bios_target) = gba_bios_dialog.GetSelected().string();
 		gba_bios_dialog.ClearSelected();
-		gba_status = "the BIOS image is chosen, Save writes it";
+		gba_status = std::string("the ") + GbaBiosName(gba_bios_target) + " is chosen, Save writes it";
 	}
 
 	if (!gba_open)

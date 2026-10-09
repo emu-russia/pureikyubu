@@ -38,6 +38,7 @@ void UIReflector();
 #define USER_BANNER_BG_COLOR "BANNER_BG_COLOR"		// ... the colour it is filled with, as 0xAABBGGRR
 
 #define USER_FILTER "FILTER"				// file filter
+#define USER_FILTER_PORTABLE "FILTER_PORTABLE"			// file filter of the portable cartridges (issue #468)
 #define USER_LASTFILE "LASTFILE"			// last loaded file
 #define USER_HW_OSD "HW_OSD"			// 1: draw the HW interface profiler overlay over the emulated picture (issue #394)
 #define USER_PATH "PATH"				// path string for selector
@@ -113,10 +114,17 @@ namespace UI
 
 
 
-/* File type */
+/* File type.
+   The last three are the cartridges of the portable machines: a Game Boy, a Game Boy Color and a
+   Game Boy Advance one (issue #468). They are not console images - the selector starts the
+   stand-alone portable emulator for them - but the list holds them next to the two console kinds
+   and draws a built-in picture of the console they belong to. */
 enum class SELECTOR_FILE
 {
 	Executable = 1,     /* any GC executable (*.dol, *.elf) */
+	Dmg,                /* a Game Boy cartridge (*.dmg, *.gb) */
+	Cgb,                /* a Game Boy Color cartridge (*.cgb, *.gbc) */
+	Gba,                /* a Game Boy Advance cartridge (*.gba, *.agb) */
 	Dvd                 /* any DVD image (*.gcm, *.iso, *.rvz) */
 };
 

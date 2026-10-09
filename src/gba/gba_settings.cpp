@@ -1,4 +1,8 @@
-// The GBA emulator's settings: the reader and the writer of build/Data/GBASettings.json.
+// The GBA emulator's settings: the reader and the writer of the documents below. The shipped
+// defaults live in build/Data/DefaultGBASettings.json and the user's own values in
+// build/Data/GBASettings.json, which the frontend merges over them (GBA::LoadSettings in
+// gba_sdl.cpp); both files are this format, and this module knows nothing about which of the two
+// it is reading or writing.
 //
 // The document is read with the emulator's shared Json engine (src/json.cpp), the same one the
 // GameCube side uses for its settings and for JDI. Json is self contained (the C++ standard
@@ -25,6 +29,8 @@
 //		"boot":
 //		{
 //			"biosPath": "",
+//			"dmgBiosPath": "",
+//			"cgbBiosPath": "",
 //			"useCustomBootRom": true,
 //			"skipBootAnimation": false,
 //			"hleBios": true
@@ -61,8 +67,10 @@
 //   * a number outside the range of its member is clamped (a scale of 0 becomes 1, a volume of
 //     250 becomes 100), never rejected and never wrapped;
 //   * a rejected document is never half applied: Parse() leaves the caller's settings at the
-//     defaults, and Load() reports the reason. A missing file is not an error at all (the defaults
-//     are used and the first Save writes the file).
+//     defaults, Load() reports the reason and Merge() (the user's file over the defaults) leaves
+//     the settings it is merging into exactly as they were. A missing file is not an error at all:
+//     for the defaults file it means the built-in defaults are used, and for the user's file it
+//     means there is nothing to merge yet.
 //
 // The host key names
 // ------------------
@@ -131,7 +139,7 @@ namespace
 	// The shipped binding of every action: comfortable on a keyboard (X/Z for the two buttons,
 	// the arrows for the d-pad, Enter/Backspace for Start/Select, S/A for the shoulders and Space
 	// for fast forward). These are the defaults Defaults() builds, and the keys the shipped
-	// build/Data/GBASettings.json contains.
+	// build/Data/DefaultGBASettings.json contains.
 	const char* const DefaultKeys[] =
 	{
 		"X", "Z", "Backspace", "Return", "Right", "Left", "Up", "Down", "S", "A", "Space"
@@ -397,6 +405,10 @@ namespace
 			std::string name = member->name;
 			if (name == "biosPath")
 				AssignText(out.biosPath, member, "boot.biosPath");
+			else if (name == "dmgBiosPath")
+				AssignText(out.dmgBiosPath, member, "boot.dmgBiosPath");
+			else if (name == "cgbBiosPath")
+				AssignText(out.cgbBiosPath, member, "boot.cgbBiosPath");
 			else if (name == "useCustomBootRom")
 				AssignBool(out.useCustomBootRom, member, "boot.useCustomBootRom");
 			else if (name == "skipBootAnimation")
@@ -564,6 +576,114 @@ namespace
 		}
 	}
 
+	/// <summary>
+	/// Parse a settings document and apply the members it names over `out`: a member the document
+	/// does not name keeps the value `out` already has. A document that is refused leaves `out`
+	/// untouched and reports the reason, which names the line.
+	/// </summary>
+	bool ParseInto(const std::string& text, GbaSettings& out, std::string* error)
+	{
+		if (error != nullptr)
+			error->clear();
+
+		// The document comes from the user's directory, so the size is checked before the parser
+		// sees it: a file that is not a settings file at all is refused here.
+		if (text.size() > MaxDocumentBytes)
+		{
+			Report(error, "1: the document is larger than 2097152 bytes");
+			return false;
+		}
+
+		Json json;
+
+		try
+		{
+			json.Deserialize((void*)text.data(), text.size());
+		}
+		catch (const char* message)
+		{
+			int line = json.GetErrorLine();
+			if (line <= 0)
+				line = 1;
+			Report(error, std::to_string(line) + ": " + message);
+			return false;
+		}
+		catch (...)
+		{
+			// Anything the engine throws that is not one of its messages (an allocation failure,
+			// a broken invariant): the document is refused.
+			Report(error, "1: the document is not a valid Json document");
+			return false;
+		}
+
+		// The document is a set of sections, so its root has to be an object. The engine accepts
+		// any value at the top level (the emulator's other documents do too), so the shape is
+		// checked here.
+		if (json.root.children.empty() || json.root.children.back()->type != Json::ValueType::Object)
+		{
+			Report(error, "1: the document must be an object");
+			return false;
+		}
+
+		// The members go into a copy: a document that is refused (or that throws while it is
+		// applied) must not leave half of itself in the caller's configuration.
+		GbaSettings parsed = out;
+		ReadDocument(json.root.children.back(), parsed);
+		out = parsed;
+		return true;
+	}
+
+	/// <summary>
+	/// Read a settings document from a file. Answers true when the file was read into `text`;
+	/// false when it could not be, with `missing` telling a file that is not there (which is not
+	/// an error by itself) from a file that is.
+	/// </summary>
+	bool ReadSettingsText(const std::string& path, std::string& text, bool& missing, std::string* error)
+	{
+		missing = false;
+		text.clear();
+
+		errno = 0;
+		std::ifstream file(path, std::ios::binary);
+		if (!file.is_open())
+		{
+			if (errno == ENOENT || errno == ENOTDIR)
+			{
+				missing = true;
+				return false;
+			}
+			Report(error, path + ": cannot open the settings file");
+			return false;
+		}
+
+		// The document is read with the reader's own limit, so a file that is not a settings file at
+		// all is refused while it is read instead of being held in memory first.
+		char buffer[4096];
+		while (true)
+		{
+			file.read(buffer, sizeof(buffer));
+			std::streamsize got = file.gcount();
+			if (got > 0)
+				text.append(buffer, (size_t)got);
+			if (text.size() > MaxDocumentBytes)
+			{
+				Report(error, path + ": the settings file is larger than 2097152 bytes");
+				return false;
+			}
+			if (got < (std::streamsize)sizeof(buffer))
+				break;
+		}
+		if (file.bad() || (file.fail() && !file.eof()))
+		{
+			// A directory is what usually lands here: Linux lets it be opened but not read. It is
+			// reported as a broken settings file, never mistaken for an empty one.
+			Report(error, path + ": cannot read the settings file");
+			return false;
+		}
+
+		return true;
+	}
+
 }
 
 namespace GBA
@@ -648,6 +768,8 @@ namespace GBA
 
 		text += Section("boot",
 			Member("biosPath", Escape(biosPath), false) +
+			Member("dmgBiosPath", Escape(dmgBiosPath), false) +
+			Member("cgbBiosPath", Escape(cgbBiosPath), false) +
 			Member("useCustomBootRom", Boolean(useCustomBootRom), false) +
 			Member("skipBootAnimation", Boolean(skipBootAnimation), false) +
 			Member("hleBios", Boolean(hleBios), true), false);
@@ -699,55 +821,17 @@ namespace GBA
 
 	bool GbaSettings::Parse(const std::string& text, GbaSettings& out, std::string* error)
 	{
-		if (error != nullptr)
-			error->clear();
+		// A document is read on its own: a member it does not name is a default, not whatever the
+		// caller happened to hold (reading a file over what is already there is Merge()).
+		GbaSettings parsed = Defaults();
 
-		// The document comes from the user's directory, so the size is checked before the parser
-		// sees it: a file that is not a settings file at all is refused here.
-		if (text.size() > MaxDocumentBytes)
-		{
-			out = Defaults();
-			Report(error, "1: the document is larger than 2097152 bytes");
-			return false;
-		}
-
-		Json json;
-
-		try
-		{
-			json.Deserialize((void*)text.data(), text.size());
-		}
-		catch (const char* message)
+		if (!ParseInto(text, parsed, error))
 		{
 			// A rejected document is never half applied: the caller gets the defaults.
 			out = Defaults();
-			int line = json.GetErrorLine();
-			if (line <= 0)
-				line = 1;
-			Report(error, std::to_string(line) + ": " + message);
-			return false;
-		}
-		catch (...)
-		{
-			// Anything the engine throws that is not one of its messages (an allocation failure,
-			// a broken invariant): the document is refused, the caller keeps the defaults.
-			out = Defaults();
-			Report(error, "1: the document is not a valid Json document");
 			return false;
 		}
 
-		// The document is a set of sections, so its root has to be an object. The engine accepts
-		// any value at the top level (the emulator's other documents do too), so the shape is
-		// checked here.
-		if (json.root.children.empty() || json.root.children.back()->type != Json::ValueType::Object)
-		{
-			out = Defaults();
-			Report(error, "1: the document must be an object");
-			return false;
-		}
-
-		GbaSettings parsed = Defaults();
-		ReadDocument(json.root.children.back(), parsed);
 		out = parsed;
 		return true;
 	}
@@ -760,53 +844,62 @@ namespace GBA
 		// Whatever happens below, the caller is left with a configuration it can run.
 		out = Defaults();
 
-		errno = 0;
-		std::ifstream file(path, std::ios::binary);
-		if (!file.is_open())
+		std::string text;
+		bool missing = false;
+		std::string reason;
+
+		if (!ReadSettingsText(path, text, missing, &reason))
 		{
-			// A file that does not exist yet is the normal first run, not an error: the defaults are
-			// used and Save writes the file back on the first change. Every other reason (a
-			// permission, a path that is not a file) has to be reported, because silently defaulting
-			// would look exactly like a first run.
-			if (errno == ENOENT || errno == ENOTDIR)
+			if (missing)
 			{
+				// A file that does not exist yet is the normal first run, not an error: the defaults
+				// are used and Save writes the file back on the first change. Every other reason (a
+				// permission, a path that is not a file) has to be reported, because silently
+				// defaulting would look exactly like a first run.
 				Log(LogLevel::Info, "gba settings: no settings file at %s, the defaults are used", path.c_str());
 				return true;
 			}
-			Report(error, path + ": cannot open the settings file");
+			Report(error, reason);
 			return false;
 		}
 
-		// The document is read with the reader's own limit, so a file that is not a settings file at
-		// all is refused while it is read instead of being held in memory first.
+		if (!ParseInto(text, out, &reason))
+		{
+			// The document is refused: the caller keeps the defaults Load promises.
+			out = Defaults();
+			Report(error, path + ": " + reason);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool GbaSettings::Merge(const std::string& path, GbaSettings& out, std::string* error)
+	{
+		if (error != nullptr)
+			error->clear();
+
 		std::string text;
-		char buffer[4096];
-		while (true)
+		bool missing = false;
+		std::string reason;
+
+		if (!ReadSettingsText(path, text, missing, &reason))
 		{
-			file.read(buffer, sizeof(buffer));
-			std::streamsize got = file.gcount();
-			if (got > 0)
-				text.append(buffer, (size_t)got);
-			if (text.size() > MaxDocumentBytes)
+			if (missing)
 			{
-				Report(error, path + ": the settings file is larger than 2097152 bytes");
-				return false;
+				// The user's file is written by the first Save: a machine that has never saved one
+				// runs the shipped defaults, untouched.
+				Log(LogLevel::Info, "gba settings: no user settings file at %s, the defaults are kept", path.c_str());
+				return true;
 			}
-			if (got < (std::streamsize)sizeof(buffer))
-				break;
-		}
-		if (file.bad() || (file.fail() && !file.eof()))
-		{
-			// A directory is what usually lands here: Linux lets it be opened but not read. It is
-			// reported as a broken settings file, never mistaken for an empty one.
-			Report(error, path + ": cannot read the settings file");
+			Report(error, reason);
 			return false;
 		}
 
-		std::string reason;
-		if (!Parse(text, out, &reason))
+		// ParseInto leaves `out` as it was when the document is refused, which is what a broken
+		// user's file has to do: the configuration the caller already has stays the one it runs.
+		if (!ParseInto(text, out, &reason))
 		{
-			// Parse already put the defaults in place; the message says which line of which file.
 			Report(error, path + ": " + reason);
 			return false;
 		}

@@ -47,7 +47,7 @@ written down in `testing/gba_bench/Readme.md`; the one open finding is recorded 
 | `gba_hlebios.h/.cpp` | The BIOS service calls implemented in the host |
 | `gba_armasm.h/.cpp` | A small ARM/Thumb emitter: the boot ROM and the test ROMs are built with it |
 | `gba_bootrom.h/.cpp` | The pureikyubu boot ROM (logo animation) and its SIO link driver |
-| `gba_settings.h/.cpp` | `build/Data/GBASettings.json` |
+| `gba_settings.h/.cpp` | `build/Data/DefaultGBASettings.json` and the user's `build/Data/GBASettings.json` (the reader and the writer of one document; the frontend merges the user's over it) |
 | `gba_savestate.h/.cpp` | Save states: the image format (a header, a checksum and one section per subsystem), the two cursors (`StateWriter`/`StateReader`) every device writes and reads through, and the `GbaSystem` half of it - `SaveState`/`LoadState`, the `.st<slot>` files and the machine section that names the cartridge a state belongs to. The Game Boy's half is `gb_savestate.cpp`, which shares the format |
 | `gba.h/.cpp` | `GbaSystem`: what a frontend talks to |
 | `gba_debug.h/.cpp` | The debug interface of both machines for the new debugger (debugui2) and the JDI command line. This is the one file of the module that is compiled with the host rather than into the portable library: JDI, Markdown and the debugger live on the GameCube side, and their headers need the third-party paths the module deliberately does not have (see the header comment) |

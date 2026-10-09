@@ -69,20 +69,92 @@ namespace GBA
 
 	bool IsGameBoyImage(const std::string& path)
 	{
-		// .gba/.agb = Game Boy Advance, .gb/.gbc/.sgb = the Game Boy family. A ROM with an
-		// ambiguous extension (.bin, .rom) is run with the explicit `--gba <file>` form.
+		// .gba/.agb = Game Boy Advance, .gb/.gbc/.sgb and the .dmg/.cgb the selector offers as
+		// well = the Game Boy family. A ROM with an ambiguous extension (.bin, .rom) is run with
+		// the explicit `--gba <file>` form.
 		return HasExtension(path, ".gba") || HasExtension(path, ".agb")
-			|| HasExtension(path, ".gb") || HasExtension(path, ".gbc") || HasExtension(path, ".sgb");
+			|| HasExtension(path, ".gb") || HasExtension(path, ".gbc") || HasExtension(path, ".sgb")
+			|| HasExtension(path, ".dmg") || HasExtension(path, ".cgb");
 	}
 
 	bool IsDmgImage(const std::string& path)
 	{
-		return HasExtension(path, ".gb") || HasExtension(path, ".gbc") || HasExtension(path, ".sgb");
+		return HasExtension(path, ".gb") || HasExtension(path, ".gbc") || HasExtension(path, ".sgb")
+			|| HasExtension(path, ".dmg") || HasExtension(path, ".cgb");
 	}
 
-	const char* DefaultSettingsPath()
+	const char* const DefaultsFileName = "DefaultGBASettings.json";
+	const char* const UserFileName = "GBASettings.json";
+
+	GbaSettingsFiles FindSettingsFiles()
 	{
-		return "Data/GBASettings.json";
+		// The shipped defaults decide the directory: the user's file is the one next to them, and
+		// the two are always a pair of the same directory, so that the settings window writes the
+		// user's file where it read the defaults from. The places are the working directory (the
+		// shipped build runs with Data/ in it) and the build directory of a run from the repository
+		// root, which is how a developer build and the tests find them.
+		static const char* const dirs[] = { "Data/", "../build/Data/", "build/Data/" };
+
+		for (const char* dir : dirs)
+		{
+			std::string defaults = std::string(dir) + DefaultsFileName;
+			FILE* probe = fopen(defaults.c_str(), "rb");
+
+			if (probe == nullptr)
+			{
+				continue;
+			}
+
+			fclose(probe);
+
+			GbaSettingsFiles files;
+			files.defaults = defaults;
+			files.user = std::string(dir) + UserFileName;
+			return files;
+		}
+
+		// No shipped file anywhere: the built-in defaults are the configuration and a save writes
+		// the user's file where the shipped build reads it from by default.
+		GbaSettingsFiles files;
+		files.defaults = std::string(dirs[0]) + DefaultsFileName;
+		files.user = std::string(dirs[0]) + UserFileName;
+		return files;
+	}
+
+	bool LoadSettings(const GbaSettingsFiles& files, GbaSettings& settings, std::string* error)
+	{
+		if (error != nullptr)
+		{
+			error->clear();
+		}
+
+		std::string defaultsError;
+		std::string userError;
+
+		// The shipped defaults first - the built-in ones stand in for a file that is not there -
+		// and then the members the user's file names over them.
+		bool defaultsOk = GbaSettings::Load(files.defaults, settings, &defaultsError);
+		bool userOk = GbaSettings::Merge(files.user, settings, &userError);
+
+		if (error != nullptr)
+		{
+			if (!defaultsError.empty() && !userError.empty())
+			{
+				*error = defaultsError + "; " + userError;
+			}
+			else if (!defaultsError.empty())
+			{
+				*error = defaultsError;
+			}
+			else
+			{
+				*error = userError;
+			}
+		}
+
+		// Either file being unreadable is reported to the caller; the settings themselves are
+		// runnable in every case (the defaults are what the reader leaves behind).
+		return defaultsOk && userOk;
 	}
 
 	// The log sink: the cores report through GBA::Log, which the frontend routes to the console.
@@ -99,48 +171,6 @@ namespace GBA
 		fflush(stdout);
 	}
 
-	bool LoadSettings(const std::string& path, GbaSettings& settings, std::string& usedPath, std::string* error)
-	{
-		std::vector<std::string> candidates;
-
-		if (!path.empty())
-		{
-			candidates.push_back(path);
-		}
-		else
-		{
-			candidates.push_back(DefaultSettingsPath());
-			candidates.push_back("../build/Data/GBASettings.json");
-			candidates.push_back("build/Data/GBASettings.json");
-		}
-
-		settings = GbaSettings::Defaults();
-		usedPath = candidates.front();
-
-		for (const std::string& candidate : candidates)
-		{
-			FILE* probe = fopen(candidate.c_str(), "rb");
-
-			if (probe == nullptr)
-			{
-				continue;
-			}
-
-			fclose(probe);
-
-			usedPath = candidate;
-			return GbaSettings::Load(candidate, settings, error);
-		}
-
-		// No file anywhere: the built-in defaults are used and the caller may write them back.
-		if (error != nullptr)
-		{
-			error->clear();
-		}
-
-		return true;
-	}
-
 	// ---------------------------------------------------------------------------------------
 	// The SDL2 host: the window, the streaming texture and the sound device
 	// ---------------------------------------------------------------------------------------
@@ -149,6 +179,7 @@ namespace GBA
 	{
 	public:
 		SDL_Window* window = nullptr;
+		Uint32 windowID = 0;				// the id of `window`, to tell its events from the console's
 		SDL_Renderer* renderer = nullptr;
 		SDL_Texture* texture = nullptr;
 		SDL_AudioDeviceID audio = 0;
@@ -212,6 +243,8 @@ namespace GBA
 				printf("emu: cannot create the window: %s\n", SDL_GetError());
 				return false;
 			}
+
+			windowID = SDL_GetWindowID(window);
 
 			Uint32 rendererFlags = SDL_RENDERER_ACCELERATED;
 
@@ -432,6 +465,18 @@ namespace GBA
 			{
 				SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 			}
+		}
+
+		/// <summary>
+		/// True when the event is the close of the window this frontend owns. SDL posts SDL_QUIT
+		/// only when the *last* window of the process is closed, and the console's game selector
+		/// keeps a window of its own open behind this one when the machine was started from the
+		/// selector (issue #468), so the close of this window has to be seen here as well.
+		/// </summary>
+		bool CloseRequested(const SDL_Event& event) const
+		{
+			return event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
+				event.window.windowID == windowID;
 		}
 
 		void UpdateFps()
@@ -837,7 +882,7 @@ namespace GBA
 			{
 				host.HandleHotkey(event, pressed);
 
-				if (!input.Handle(event))
+				if (!input.Handle(event) || host.CloseRequested(event))
 				{
 					running = false;
 				}
@@ -992,6 +1037,12 @@ namespace GBA
 			gbSettings.cgb = true;
 		}
 
+		// The two Game Boy consoles have a boot ROM each - 256 bytes for the DMG and 2304 for the
+		// CGB - and the settings name them separately, so the machine that is about to run the
+		// cartridge picks its own. The console kind does not change afterwards: a DMG cartridge on
+		// a CGB stays a CGB, in compatibility mode, and keeps the CGB's boot ROM.
+		gbSettings.bootRomPath = forceDmg ? settings.dmgBiosPath : settings.cgbBiosPath;
+
 		system.ApplySettings(gbSettings);
 
 		std::string error;
@@ -1055,7 +1106,7 @@ namespace GBA
 			{
 				host.HandleHotkey(event, pressed);
 
-				if (!input.Handle(event))
+				if (!input.Handle(event) || host.CloseRequested(event))
 				{
 					running = false;
 				}

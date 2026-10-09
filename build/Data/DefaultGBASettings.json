@@ -7,6 +7,8 @@
 	"boot":
 	{
 		"biosPath": "",
+		"dmgBiosPath": "",
+		"cgbBiosPath": "",
 		"useCustomBootRom": true,
 		"skipBootAnimation": false,
 		"hleBios": true

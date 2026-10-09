@@ -11,9 +11,11 @@
 #include <memory>
 #include <chrono>
 #include "res/pureikyubu_icon.h"
+#include "res/portable_banners.h"
 #include "bench.h"
 #include "uisettings.h"
 #include "uisettingsgba.h"
+#include "gba/gba_sdl.h"
 #include "uitheme.h"
 
 static bool ui_active = false;
@@ -51,7 +53,9 @@ enum class FileReaction
 };
 static FileReaction file_reaction = FileReaction::None;
 
-/* The type filters of the file browser, per dialog. */
+/* The type filters of the file browser, per dialog. The portable cartridges of issue #468 are not
+   here: File -> Open loads a file into the console, and a cartridge of a portable machine is not a
+   console image (the game selector is where those are started from). */
 static const std::vector<std::string> selector_file_filters = { ".dol", ".elf", ".gcm", ".iso", ".rvz", ".map", ".json", ".bin" };
 static const std::vector<std::string> dvd_image_filters = { ".gcm", ".iso", ".rvz", ".*" };
 
@@ -321,6 +325,14 @@ extended with the directory of every loaded file.
 // Set by OnMainWindowOpened / OnMainWindowClosed
 static bool emu_running = false;
 
+/* The portable cartridge the selector is about to start (issue #468). The stand-alone front end of
+   the portable machines owns the loop of the interface while it runs, so the launch happens at the
+   end of the frame and not inside it: the selector draws itself locked first, and the veil with its
+   reason is what the user sees in the console's window behind the portable one. */
+static bool ui_portable_pending = false;
+static std::wstring ui_portable_file;
+static SELECTOR_FILE ui_portable_type = SELECTOR_FILE::Executable;
+
 /* The banner of a disc, as the selector draws it.
    The picture of a disc is an RGB5A3 texture, and the transparency its alpha channel carries used to
    be all there was of a background: the row and its selection highlight showed through the banner.
@@ -339,13 +351,14 @@ struct SelectorBanner
 /* File entry */
 struct SelectorFile
 {
-	SELECTOR_FILE   type;               // Executable or Dvd
+	SELECTOR_FILE   type;               // One of the SELECTOR_FILE kinds
 	size_t          size;               // File size
 	std::wstring    id;                 // GameID = DiskID
 	std::wstring    name;               // File path and name
 	std::wstring    title;              // Alternate file name (from the banner)
 	std::wstring    comment;            // Some notes (from the banner)
-	SelectorBanner  banner;             // The banner texture and the picture it was made of (Dvd only)
+	SelectorBanner  banner;             // The banner texture and the picture it was made of (a disc, or
+	                                    // a built-in picture of a portable machine)
 };
 
 /* All important data is placed here */
@@ -440,12 +453,11 @@ static void selector_banner_apply_bg(BannerRgba& image, SELECTOR_BANNER_BG bg, I
 		(uint8_t)((bgColor >> IM_COL32_A_SHIFT) & 0xff));
 }
 
-/* Make the picture and the texture of an entry, from the banner the disc carries. */
-static void selector_banner_build(SelectorBanner& entry, const uint8_t* image,
-	SELECTOR_BANNER_BG bg, ImU32 bgColor)
+/* Make the texture of an entry out of the picture the entry decoded to, with the background setting
+   applied to it. The disc path (selector_banner_build) decodes the banner of the disc first; a
+   portable cartridge (selector_banner_build_rgba) brings a picture that is decoded already. */
+static void selector_banner_finish(SelectorBanner& entry, SELECTOR_BANNER_BG bg, ImU32 bgColor)
 {
-	entry.decoded = BannerToRgba(image);
-
 	// The decoded picture is what the background setting is applied to again and again, so what is
 	// composited is always a copy of it and never the result of a previous compositing.
 	entry.pixels = entry.decoded;
@@ -457,6 +469,44 @@ static void selector_banner_build(SelectorBanner& entry, const uint8_t* image,
 	}
 
 	entry.texture = selector_banner_upload(entry.pixels);
+}
+
+/* Make the picture and the texture of an entry, from the banner the disc carries. */
+static void selector_banner_build(SelectorBanner& entry, const uint8_t* image,
+	SELECTOR_BANNER_BG bg, ImU32 bgColor)
+{
+	entry.decoded = BannerToRgba(image);
+	selector_banner_finish(entry, bg, bgColor);
+}
+
+/* The same, for a picture that is already RGBA (`bytes` of it, four bytes to a texel): the banner
+   of a portable machine is built in (see res/portable_banners.h), because a ROM is not a disc and
+   carries no picture of its own. */
+static void selector_banner_build_rgba(SelectorBanner& entry, const uint8_t* rgba, size_t bytes,
+	SELECTOR_BANNER_BG bg, ImU32 bgColor)
+{
+	entry.decoded.pixels.assign(rgba, rgba + bytes);
+	selector_banner_finish(entry, bg, bgColor);
+}
+
+/* True when the type is one of the portable machines: the file selector does not load those into
+   the console, it starts the stand-alone portable emulator with them (issue #468). */
+static bool selector_type_portable(SELECTOR_FILE type)
+{
+	return type == SELECTOR_FILE::Dmg || type == SELECTOR_FILE::Cgb || type == SELECTOR_FILE::Gba;
+}
+
+/* The built-in picture of a portable machine, or nullptr for the types that have none: a disc has
+   the banner the disc carries, an executable has no picture at all. */
+static const uint8_t* selector_portable_banner(SELECTOR_FILE type)
+{
+	switch (type)
+	{
+		case SELECTOR_FILE::Dmg: return PortableBannerDmg;
+		case SELECTOR_FILE::Cgb: return PortableBannerCgb;
+		case SELECTOR_FILE::Gba: return PortableBannerGba;
+		default: return nullptr;
+	}
 }
 
 /* Make the texture of an entry again, for the case when only the background setting changed: the
@@ -785,10 +835,20 @@ static void add_file(const std::wstring& file, size_t fsize, SELECTOR_FILE type)
 
 		selector_banner_build(item->banner, bnr->image, usel.bannerBg, usel.bannerBgColor);
 	}
-	else if (type == SELECTOR_FILE::Executable)
+	else if (type == SELECTOR_FILE::Executable || selector_type_portable(type))
 	{
+		// A file that is not a disc brings no banner of its own: the title is the name of the file,
+		// and a portable cartridge draws the built-in picture of the console it belongs to.
 		item->id = L"-";
 		item->title = std::filesystem::path(file).stem().wstring();
+
+		const uint8_t* portable = selector_portable_banner(type);
+
+		if (portable != nullptr)
+		{
+			selector_banner_build_rgba(item->banner, portable,
+				(size_t)PortableBannerWidth * PortableBannerHeight * 4, usel.bannerBg, usel.bannerBgColor);
+		}
 	}
 	else
 	{
@@ -945,21 +1005,35 @@ static void update_selector()
 
 	usel.paths = dirs;
 
-	// file filter: every 8 bits masking an extension
-	uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
+	// File filter: every 8 bits masking an extension. The console's files and the cartridges of the
+	// portable machines have a filter variable each (issue #468): the four bytes of FILTER are all
+	// taken by the console ones.
+	const uint32_t filters[] =
+	{
+		(uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI),
+		(uint32_t)UI::Jdi->GetConfigInt(USER_FILTER_PORTABLE, USER_UI),
+	};
 
 	static const struct
 	{
 		const wchar_t* ext;
 		SELECTOR_FILE  type;
+		bool           portable;    // which of the two filter variables enables the extension
 		uint32_t       mask;
 	} file_ext[] =
 	{
-		{ L".dol", SELECTOR_FILE::Executable, 0xff000000 },
-		{ L".elf", SELECTOR_FILE::Executable, 0x00ff0000 },
-		{ L".gcm", SELECTOR_FILE::Dvd,        0x0000ff00 },
-		{ L".rvz", SELECTOR_FILE::Dvd,        0x0000ff00 },
-		{ L".iso", SELECTOR_FILE::Dvd,        0x000000ff },
+		{ L".dol", SELECTOR_FILE::Executable, false, 0xff000000 },
+		{ L".elf", SELECTOR_FILE::Executable, false, 0x00ff0000 },
+		{ L".gcm", SELECTOR_FILE::Dvd,        false, 0x0000ff00 },
+		{ L".rvz", SELECTOR_FILE::Dvd,        false, 0x0000ff00 },
+		{ L".iso", SELECTOR_FILE::Dvd,        false, 0x000000ff },
+
+		{ L".dmg", SELECTOR_FILE::Dmg,        true,  0xff0000 },
+		{ L".gb",  SELECTOR_FILE::Dmg,        true,  0xff0000 },
+		{ L".cgb", SELECTOR_FILE::Cgb,        true,  0x00ff00 },
+		{ L".gbc", SELECTOR_FILE::Cgb,        true,  0x00ff00 },
+		{ L".gba", SELECTOR_FILE::Gba,        true,  0x0000ff },
+		{ L".agb", SELECTOR_FILE::Gba,        true,  0x0000ff },
 	};
 
 	for (auto& dir : usel.paths)
@@ -986,7 +1060,7 @@ static void update_selector()
 
 			for (auto& mask : file_ext)
 			{
-				if ((filter & mask.mask) && ext == mask.ext)
+				if ((filters[mask.portable ? 1 : 0] & mask.mask) && ext == mask.ext)
 				{
 					add_file(file.path().wstring(), (size_t)file.file_size(ec), mask.type);
 				}
@@ -1776,8 +1850,8 @@ static void ui_main_menu()
 			}
 
 			// The machine the emulator is *not* running is configured in a window of its own:
-			// its settings live in GBASettings.json and have nothing to do with the console's
-			// (see the "stand-alone GBA settings" module).
+			// its settings live in DefaultGBASettings.json and the user's GBASettings.json and
+			// have nothing to do with the console's (see the "stand-alone GBA settings" module).
 			if (ImGui::MenuItem("Stand-alone GBA...", NULL)) {
 				UiGbaSettingsOpen();
 			}
@@ -1793,6 +1867,53 @@ static void ui_main_menu()
 		}
 
 		ImGui::EndMenuBar();
+	}
+}
+
+/*
+# The stand-alone portable machines
+
+A cartridge of the portable machines is not an image of the console: the file selector cannot hand
+it to the GameCube core, so the extension starts the emulator inside the emulator instead - the
+Game Boy Advance or the Game Boy front end of issue #388, the same machine the `--gba` option of the
+command line runs, with the stand-alone settings (`DefaultGBASettings.json` and the user's
+`GBASettings.json` merged over it) the Options menu edits.
+
+The front end opens a window of its own and runs its own loop, and this call does not return until
+that window is closed. The loop of the console's interface is inside it for all that time, so the
+list of the selector is neither drawn nor read while a portable cartridge runs: that is what the
+issue asks for, and it is also what keeps a second cartridge from being started over the running
+one (issue #468).
+*/
+
+/* Run one portable cartridge in the stand-alone emulator. The type the entry was listed under
+   says which machine runs it: the GBA kind is the Game Boy Advance, the DMG kind is the monochrome
+   Game Boy and the CGB kind is the colour one (a `.gb` cartridge under the DMG kind runs as a DMG
+   even when its header knows about colour, which is what the group it is listed in asks for). */
+static void run_portable_file(const std::wstring& filename, SELECTOR_FILE type)
+{
+	GBA::GbaSettings settings;
+	GBA::GbaSettingsFiles files = GBA::FindSettingsFiles();
+	std::string error;
+
+	// The settings are the stand-alone ones, never the console's own: the window of
+	// "Options -> Stand-alone GBA..." edits exactly this pair of files. A file that cannot be read
+	// is not fatal - the machine runs on the built-in defaults, the way the command line's `--gba`
+	// does - and the message waits for the interface to be drawn again, after the window is closed.
+	if (!GBA::LoadSettings(files, settings, &error))
+	{
+		ui_report_error(error + " (the defaults are used)");
+	}
+
+	std::string rom = Util::WstringToString(filename);
+
+	int result = (type == SELECTOR_FILE::Gba)
+		? GBA::RunSdlFrontend(rom, false, settings)
+		: GBA::RunSdlFrontendGb(rom, settings, type == SELECTOR_FILE::Dmg);
+
+	if (result != 0)
+	{
+		ui_report_error("The portable emulator could not start (see the log for the reason)");
 	}
 }
 
@@ -1818,7 +1939,22 @@ static void run_selected_file()
 		return;
 	}
 
-	load_file(usel.files[usel.selected]->name);
+	SelectorFile* file = usel.files[usel.selected].get();
+
+	// A cartridge of the portable machines is not a console image: it starts the stand-alone
+	// emulator of its own instead (issue #468). The launch itself waits for the end of the frame
+	// (see the main loop), so that the selector is drawn locked first and the user sees the veil
+	// with its reason while the portable window is up. The list is not read while the emulation
+	// runs, so this cannot be reached with an image already loaded.
+	if (selector_type_portable(file->type))
+	{
+		ui_portable_file = file->name;
+		ui_portable_type = file->type;
+		ui_portable_pending = true;
+		return;
+	}
+
+	load_file(file->name);
 }
 
 /* Run the image that was loaded last (File -> Reopen, F3), without going through the selector.
@@ -1880,31 +2016,44 @@ static void ui_bench()
 	OnMainWindowClosed();
 }
 
-/* The capsule that says what a file is: the extension of its name, in the colour of the kind of file
-   it is (a disk image is the second accent, an executable the first). Its text is drawn by the draw
+/* The capsule that says what a file is: the kind of machine it is for, in the colour of the kind
+   of file it is (a disk image is the second accent, the rest the first). A console image is marked
+   with its extension; a cartridge of the portable machines is marked with the machine the entry
+   runs it on (issue #468), because the extension a ROM happens to carry says less than that -
+   a `.gb` cartridge is a DMG one here, and the badge has to say so. Its text is drawn by the draw
    list and the layout only reserves its room, so that the capsule cannot move the row it is in. */
 static void ui_selector_type_badge(const std::wstring& name, SELECTOR_FILE type)
 {
-	const wchar_t* dot = wcsrchr(name.c_str(), L'.');
-
-	if (dot == nullptr || dot[1] == 0)
-	{
-		return;
-	}
-
-	// Only the extensions the selector lists reach this point, but a file of any name can be dropped
-	// into a directory that is scanned.
 	std::string label;
 
-	for (const wchar_t* p = dot + 1; *p != 0; p++)
+	switch (type)
 	{
-		if (*p > 0x7f)
+		case SELECTOR_FILE::Dmg: label = "DMG"; break;
+		case SELECTOR_FILE::Cgb: label = "CGB"; break;
+		case SELECTOR_FILE::Gba: label = "GBA"; break;
+		default:
 		{
-			return;
-		}
+			const wchar_t* dot = wcsrchr(name.c_str(), L'.');
 
-		char ch = (char)*p;
-		label += (ch >= 'a' && ch <= 'z') ? (char)(ch - 'a' + 'A') : ch;
+			if (dot == nullptr || dot[1] == 0)
+			{
+				return;
+			}
+
+			// Only the extensions the selector lists reach this point, but a file of any name can
+			// be dropped into a directory that is scanned.
+			for (const wchar_t* p = dot + 1; *p != 0; p++)
+			{
+				if (*p > 0x7f)
+				{
+					return;
+				}
+
+				char ch = (char)*p;
+				label += (ch >= 'a' && ch <= 'z') ? (char)(ch - 'a' + 'A') : ch;
+			}
+			break;
+		}
 	}
 
 	const UiPalette& pal = UiThemePalette();
@@ -1980,7 +2129,11 @@ static void ui_selector()
 	// to click: a stray key or click would load another image over the running one, and the picture
 	// the user is watching is in the video output window anyway. The list is drawn disabled behind
 	// a veil that says why, and the keyboard handling below is skipped with it (issue #458).
-	const bool locked = emu_running;
+	//
+	// A portable cartridge that is about to start (the end of this frame launches it, see the main
+	// loop) is locked in the same way: the veil is what the console's window shows behind the
+	// window of the portable machine for as long as that machine runs.
+	const bool locked = emu_running || ui_portable_pending;
 
 	if (locked)
 	{
@@ -2083,35 +2236,6 @@ static void ui_selector()
 			ImGui::EndTable();
 		}
 
-		// The veil of the disabled list: the whole child is covered with the colour of the window
-		// and the reason, so that the dimmed rows read as "not now" rather than as a broken list.
-		if (locked)
-		{
-			const UiPalette& pal = UiThemePalette();
-
-			ImDrawList* dl = ImGui::GetWindowDrawList();
-			const ImVec2 min = ImGui::GetWindowPos();
-			const ImVec2 size = ImGui::GetWindowSize();
-			const ImVec2 max = ImVec2(min.x + size.x, min.y + size.y);
-
-			dl->AddRectFilled(min, max, UiThemeAlpha(pal.window, 0.72f));
-
-			const char* lines[] = { "The emulation is running", "File -> Close stops it" };
-			const int lineCount = (int)_countof(lines);
-
-			float y = min.y + size.y * 0.5f - (ImGui::GetTextLineHeightWithSpacing() * lineCount) * 0.5f;
-
-			for (int i = 0; i < lineCount; i++)
-			{
-				const ImVec2 textSize = ImGui::CalcTextSize(lines[i]);
-
-				dl->AddText(ImVec2(min.x + (size.x - textSize.x) * 0.5f, y),
-					(i == 0) ? pal.text : pal.muted, lines[i]);
-
-				y += ImGui::GetTextLineHeightWithSpacing();
-			}
-		}
-
 		// The table does not handle the keyboard, so the cursor is moved by the usual
 		// cursor keys.
 		if (!locked && ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_RootWindow))
@@ -2138,6 +2262,47 @@ static void ui_selector()
 				}
 			}
 		}
+
+		// The veil of the disabled list: the whole child is covered with the colour of the window
+		// and the reason, so that the dimmed rows read as "not now" rather than as a broken list.
+		//
+		// The state is read again here and not taken from `locked`: a double click on a portable
+		// cartridge and the Enter key both ask for it above, and the frame that saw the request
+		// must already be drawn with the veil - the machine starts at the end of it, and the
+		// console's window stays as it is for as long as the window of the portable machine is up.
+		// The veil is drawn after the keyboard, so that both ways of asking are covered.
+		if (emu_running || ui_portable_pending)
+		{
+			const UiPalette& pal = UiThemePalette();
+
+			ImDrawList* dl = ImGui::GetWindowDrawList();
+			const ImVec2 min = ImGui::GetWindowPos();
+			const ImVec2 size = ImGui::GetWindowSize();
+			const ImVec2 max = ImVec2(min.x + size.x, min.y + size.y);
+
+			dl->AddRectFilled(min, max, UiThemeAlpha(pal.window, 0.72f));
+
+			// The reason the list is not clickable: the machine that runs, and how to stop it. A
+			// portable cartridge runs in a window of its own and the console's File menu cannot
+			// close it, so the two cases say different things.
+			const char* portableLines[] = { "The portable emulation is running", "Close its window to stop it" };
+			const char* consoleLines[] = { "The emulation is running", "File -> Close stops it" };
+			const char* const* lines = ui_portable_pending ? portableLines : consoleLines;
+			const int lineCount = 2;
+
+			float y = min.y + size.y * 0.5f - (ImGui::GetTextLineHeightWithSpacing() * lineCount) * 0.5f;
+
+			for (int i = 0; i < lineCount; i++)
+			{
+				const ImVec2 textSize = ImGui::CalcTextSize(lines[i]);
+
+				dl->AddText(ImVec2(min.x + (size.x - textSize.x) * 0.5f, y),
+					(i == 0) ? pal.text : pal.muted, lines[i]);
+
+				y += ImGui::GetTextLineHeightWithSpacing();
+			}
+		}
+
 	}
 	ImGui::EndChild();
 
@@ -2718,6 +2883,23 @@ static int ui_main()
 		if (Debug2::CloseRequested())
 		{
 			Debug2::StopDebugger();
+		}
+
+		// The cartridge of a portable machine the selector asked for runs the stand-alone front end
+		// of its own, and this call does not return until its window is closed (issue #468). It is
+		// started here, after the frame that drew the selector locked and veiled has been presented,
+		// so the console's window says why the list is not clickable for as long as the portable
+		// machine is up. The call is on the thread that owns the console's SDL objects, so it is a
+		// frame of this loop and not a second front end running beside this one.
+		if (ui_portable_pending)
+		{
+			std::wstring file = ui_portable_file;
+			SELECTOR_FILE type = ui_portable_type;
+
+			ui_portable_pending = false;
+			ui_portable_file.clear();
+
+			run_portable_file(file, type);
 		}
 
 		SDL_Delay(10);
