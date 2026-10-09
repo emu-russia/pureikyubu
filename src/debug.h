@@ -112,6 +112,14 @@ namespace Debug
 
 // Sampling Profiler.
 // Description in Docs\EMU\SamplingProfiler.md
+//
+// WARNING (read this before you trust a profile): the sampler reads `Core->regs.pc` from its own
+// thread every N emulated milliseconds. With the recompiler on (`CORE.JIT`, the default) that
+// register only moves at a compiled block's boundary, so a sample names the *entry of the block*
+// that was running and never the instruction inside it; a loop the translator kept in one block
+// therefore collapses onto its first instruction. Take the profile with the interpreter (`jit 0`)
+// when the sampled addresses have to mean what they say - the same rule guestprof.h and
+// wiki/guestprof.md state for the basic-block histogram.
 
 namespace Debug
 {
