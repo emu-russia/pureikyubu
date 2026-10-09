@@ -7,9 +7,10 @@
 // port - which is what a GBA Link peer or a Game Boy Player replacement needs.
 //
 // Two machines share the frontend because they differ only in the frame size and in the key
-// mapping: the GBA (240x160, eleven buttons, the bindings from the settings files) and the Game Boy
-// (160x144, eight buttons, the fixed bindings documented in wiki/gba.md). Everything else - the
-// window, the texture, the sound buffer, the frame pacing and the hotkeys - is the same code.
+// mapping: the GBA (240x160, eleven buttons) and the Game Boy (160x144, eight buttons), both bound
+// from the `input` section of the settings files - the Game Boy takes the eight bindings it shares
+// with the Game Boy Advance (see GbInput in gba_sdl.cpp). Everything else - the window, the
+// texture, the sound buffer, the frame pacing and the hotkeys - is the same code.
 //
 // The GameCube side of the emulator is not involved at all (the two machines share the executable
 // and nothing else).
@@ -67,8 +68,9 @@ namespace GBA
 
 	/// <summary>
 	/// Run the Game Boy (DMG/CGB) emulator with the SDL2 backend. The GBA settings supply the
-	/// window and audio options; the console kind follows the cartridge's CGB flag and
-	/// `forceCgb`.
+	/// window and audio options and the keys: the Game Boy takes the eight bindings it shares with
+	/// the Game Boy Advance from the `input` section. The console kind follows the cartridge's CGB
+	/// flag and `forceDmg`.
 	/// </summary>
 	int RunSdlFrontendGb(const std::string& romPath, const GbaSettings& settings, bool forceDmg);
 }

@@ -347,7 +347,10 @@ static void GbaPageAudio()
 static void GbaPageInput()
 {
 	ImGui::TextWrapped("A Game Boy Advance has the A button to the right of B: the default layout "
-		"keeps that on the keyboard too (A is X, B is Z), and so does any layout built here.");
+		"keeps that on the keyboard too (A is X, B is Z), and so does any layout built here. The "
+		"Game Boy (DMG/CGB) takes the eight bindings it shares with the Advance from this same list "
+		"- A, B, SELECT, START, RIGHT, LEFT, UP and DOWN - so the two machines answer the same key "
+		"with the same button; a key bound to the Advance's R, L or SPEED does nothing on it.");
 
 	if (ImGui::Button("Default keys"))
 	{

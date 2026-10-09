@@ -249,9 +249,12 @@ pureikyubu game.gbc
 pureikyubu --gb --gb-dmg game.gb      # force the monochrome console
 ```
 
-The window and audio options come from the same pair of settings files; the Game Boy has eight
-buttons and no bindings of its own, so its layout is fixed: the arrow keys, `Z` = A, `X` = B,
-`Return` = Start, `Backspace` = Select (plus a game controller's A/B/Start/Back/d-pad).
+The window and audio options come from the same pair of settings files, and so do the keys: the
+Game Boy has eight buttons and no bindings section of its own, so it takes the eight it shares with
+the Game Boy Advance from `input` (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`); a key
+bound to `R`, `L` or `SPEED` does nothing on it. The two machines therefore answer the same key with
+the same button - the default layout is `A` = `X`, `B` = `Z`, the arrow keys, `Return` = Start and
+`Backspace` = Select (plus a game controller's A/B/Start/Back/d-pad).
 
 ## Tests
 

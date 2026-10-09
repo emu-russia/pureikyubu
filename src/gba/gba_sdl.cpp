@@ -659,16 +659,22 @@ namespace GBA
 
 	/// <summary>
 	/// The key state of the Game Boy. The Game Boy has eight buttons and no bindings section of its
-	/// own, so the layout is fixed (and documented in wiki/gba.md): the arrow keys, Z = A,
-	/// X = B, Return = Start, Backspace = Select, and the controller's A/B/Start/Back/d-pad.
+	/// own, so it takes the eight it shares with the Game Boy Advance from the settings: a binding
+	/// of A, B, SELECT, START, RIGHT, LEFT, UP or DOWN drives the Game Boy too, and the two
+	/// shoulder keys and the fast forward - which the Game Boy does not have - are ignored. The two
+	/// machines therefore answer the same key with the same button, which is what a player moving
+	/// between them expects (the default layout is A on X and B on Z, the way the two consoles have
+	/// the buttons side by side). The controller layout stays the fixed one of the Game Boy
+	/// Advance: its buttons are named on the pad itself, so there is nothing to map.
 	/// </summary>
 	class GbInput
 	{
+		const GbaSettings& settings;
 		uint8_t pressed = 0;
 		SDL_GameController* controller = nullptr;
 
 	public:
-		GbInput()
+		explicit GbInput(const GbaSettings& settings) : settings(settings)
 		{
 			if (SDL_NumJoysticks() > 0 && SDL_IsGameController(0))
 			{
@@ -705,7 +711,7 @@ namespace GBA
 						return false;
 					}
 
-					uint8_t bit = KeyBit(event.key.keysym.sym);
+					uint8_t bit = GbBit(settings.KeyBitFor(SDL_GetKeyName(event.key.keysym.sym)));
 
 					if (bit != 0)
 					{
@@ -735,18 +741,20 @@ namespace GBA
 		}
 
 	private:
-		static uint8_t KeyBit(SDL_Keycode key)
+		/// <summary>The Game Boy button a Game Boy Advance keypad bit stands for, or 0 for the
+		/// three actions the Game Boy has no button for (the two shoulders and the fast forward).</summary>
+		static uint8_t GbBit(uint16_t gbaBit)
 		{
-			switch (key)
+			switch (gbaBit)
 			{
-				case SDLK_z: return GbButtonA;
-				case SDLK_x: return GbButtonB;
-				case SDLK_RETURN: return GbButtonStart;
-				case SDLK_BACKSPACE: return GbButtonSelect;
-				case SDLK_RIGHT: return GbButtonRight;
-				case SDLK_LEFT: return GbButtonLeft;
-				case SDLK_UP: return GbButtonUp;
-				case SDLK_DOWN: return GbButtonDown;
+				case KEY_A: return GbButtonA;
+				case KEY_B: return GbButtonB;
+				case KEY_SELECT: return GbButtonSelect;
+				case KEY_START: return GbButtonStart;
+				case KEY_RIGHT: return GbButtonRight;
+				case KEY_LEFT: return GbButtonLeft;
+				case KEY_UP: return GbButtonUp;
+				case KEY_DOWN: return GbButtonDown;
 				default: return 0;
 			}
 		}
@@ -1082,7 +1090,9 @@ namespace GBA
 		SetDebugMachine(&system);
 		DebugStart(settings.debugger);
 
-		GbInput input;
+		// The eight bindings the Game Boy shares with the Game Boy Advance come from the same
+		// settings the machine is running with (see GbInput).
+		GbInput input(settings);
 
 		std::vector<int16_t> samples;
 		Hotkeys keys;
