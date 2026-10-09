@@ -435,11 +435,19 @@ namespace GBA
 
 		// DMAxCNT_H. The channel setup (latching SAD/DAD/CNT_L) happens on the 0 -> 1 edge of
 		// the enable bit, so the old value is examined before the new one is stored.
+		//
+		// The new control is built in a local and the enable bit is tested on *it*, never on the
+		// member read back right after the store: the x86 code generator of VS2026 (14.51) turns
+		// that read-back into a branch on the flags the shift that computed the old enable bit
+		// left behind, so the test always answered "the channel is not enabled". No x86 build
+		// ever started a DMA transfer - Castlevania hung a few seconds in and started over, and
+		// every test of the DMA engine failed - while x64 and the debug x86 build work. A local
+		// has no such history for the flags to be reused from.
+		uint16_t newControl = (uint16_t)(value & ~0x001F);	// bits 0-4 do not exist
 		bool wasEnabled = (channel.control & DmaEnable) != 0;
-		channel.control = (uint16_t)(value & ~0x001F);	// bits 0-4 do not exist
-		bool nowEnabled = (channel.control & DmaEnable) != 0;
+		channel.control = newControl;
 
-		if (!nowEnabled)
+		if ((newControl & DmaEnable) == 0)
 		{
 			// Software stopped the channel (only possible for a blanking/FIFO transfer: for all
 			// others the CPU is held until the transfer finishes by itself).
