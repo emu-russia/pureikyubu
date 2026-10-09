@@ -198,6 +198,7 @@
     <ClInclude Include="..\..\src\ai.h" />
     <ClInclude Include="..\..\src\audionull.h" />
     <ClInclude Include="..\..\src\audiosdl.h" />
+    <ClInclude Include="..\..\src\banner.h" />
     <ClInclude Include="..\..\src\bootrtc.h" />
     <ClInclude Include="..\..\src\bump.h" />
     <ClInclude Include="..\..\src\config.h" />
@@ -280,6 +281,7 @@
     </ClCompile>
     <ClCompile Include="..\..\src\ai.cpp" />
     <ClCompile Include="..\..\src\audionull.cpp" />
+    <ClCompile Include="..\..\src\banner.cpp" />
     <ClCompile Include="..\..\src\bootrtc.cpp" />
     <ClCompile Include="..\..\src\bump.cpp" />
     <ClCompile Include="..\..\src\config.cpp" />

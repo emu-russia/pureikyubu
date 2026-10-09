@@ -60,6 +60,7 @@
     <ClCompile Include="..\..\testing\security_test.cpp" />
     <ClCompile Include="..\..\testing\jdi_utf8_test.cpp" />
       <ClCompile Include="..\..\testing\peripherals_test.cpp" />
+    <ClCompile Include="..\..\testing\banner_test.cpp" />
     <ClCompile Include="..\..\testing\mcp_test.cpp" />
     <!--
       Emulator sources are linked (NOT copied) from the main project.
@@ -205,6 +206,9 @@
     <!-- The MCP server: its protocol half is a pure function over the JDI, so the test DLL drives
          it directly (testing/mcp_test.cpp). -->
     <ClCompile Include="..\..\src\mcp.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\banner.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\json.cpp">

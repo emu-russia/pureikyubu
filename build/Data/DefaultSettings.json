@@ -6,6 +6,8 @@
 
 	"ui":
 	{
+		"BANNER_BG": 1,
+		"BANNER_BG_COLOR": 4278190080,
 		"FILTER": 4294967295,
 		"HW_OSD": false,
 		"LASTFILE": "",

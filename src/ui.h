@@ -30,6 +30,13 @@ void UIReflector();
 // UI configuration variables
 
 // UI section variables
+// What the selector does with the transparency of a DVD banner (issue #112; the values are
+// SELECTOR_BANNER_BG in uisettings.h): the alpha channel of the banner is kept, or the pixels it
+// makes transparent are painted over with one colour. The colour is an ImU32 (ImGui's packed
+// RGBA), the same way the themes keep theirs.
+#define USER_BANNER_BG "BANNER_BG"			// selector DVD banner background (0: keep the alpha, 1: fill)
+#define USER_BANNER_BG_COLOR "BANNER_BG_COLOR"		// ... the colour it is filled with, as 0xAABBGGRR
+
 #define USER_FILTER "FILTER"				// file filter
 #define USER_LASTFILE "LASTFILE"			// last loaded file
 #define USER_HW_OSD "HW_OSD"			// 1: draw the HW interface profiler overlay over the emulated picture (issue #394)

@@ -321,6 +321,21 @@ extended with the directory of every loaded file.
 // Set by OnMainWindowOpened / OnMainWindowClosed
 static bool emu_running = false;
 
+/* The banner of a disc, as the selector draws it.
+   The picture of a disc is an RGB5A3 texture, and the transparency its alpha channel carries used to
+   be all there was of a background: the row and its selection highlight showed through the banner.
+   A user who does not want that (issue #112) paints the texels the alpha makes see-through over with
+   a colour instead; `bannerBg` says whether anything is painted, and `bannerBgColor` what.
+
+   The picture the disc carries is decoded once and kept (`decoded`): only the compositing is redone
+   when the setting changes, because the disc itself never changes. */
+struct SelectorBanner
+{
+	SDL_Texture* texture = nullptr;     // the texture the selector draws, made from `pixels`
+	BannerRgba   decoded;               // the picture as the disc carries it, alpha channel and all
+	BannerRgba   pixels;                // ... and the same picture with the background painted under it
+};
+
 /* File entry */
 struct SelectorFile
 {
@@ -330,7 +345,7 @@ struct SelectorFile
 	std::wstring    name;               // File path and name
 	std::wstring    title;              // Alternate file name (from the banner)
 	std::wstring    comment;            // Some notes (from the banner)
-	SDL_Texture* banner = nullptr;      // Banner texture (Dvd only)
+	SelectorBanner  banner;             // The banner texture and the picture it was made of (Dvd only)
 };
 
 /* All important data is placed here */
@@ -341,6 +356,12 @@ public:
 	bool            active = false;                     // 1, if enabled
 	bool            smallIcons = false;                 // show small icons
 	SELECTOR_SORT   sortBy = SELECTOR_SORT::Default;    // sort rule (one of SELECTOR_SORT_*)
+
+	// What the transparency of the DVD banners becomes (issue #112; SELECTOR_BANNER_BG in
+	// uisettings.h). The picture of a disc is decoded with its alpha channel kept, and the texels
+	// it makes see-through are painted over with this colour (which may be translucent itself).
+	SELECTOR_BANNER_BG bannerBg = SELECTOR_BANNER_BG::Preserve;
+	ImU32           bannerBgColor = IM_COL32(0, 0, 0, 255);
 
 	std::vector<std::wstring> paths;                    // path list, where to search files
 	std::vector<std::unique_ptr<SelectorFile>> files;   // list of found files
@@ -358,9 +379,9 @@ public:
 	{
 		for (auto& file : files)
 		{
-			if (file->banner)
+			if (file->banner.texture)
 			{
-				SDL_DestroyTexture(file->banner);
+				SDL_DestroyTexture(file->banner.texture);
 			}
 		}
 
@@ -370,6 +391,97 @@ public:
 };
 
 static UserSelector usel;
+
+static SDL_Texture* selector_banner_upload(const BannerRgba& image)
+{
+	// The banner image is decoded to R, G, B, A texels; the renderer wants them in one word each,
+	// the way it has always uploaded them.
+	std::vector<uint32_t> pixels(DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT, 0);
+
+	for (size_t i = 0; i < pixels.size(); i++)
+	{
+		const uint8_t* texel = &image.pixels[i * 4];
+
+		pixels[i] = ((uint32_t)texel[3] << 24) | ((uint32_t)texel[0] << 16) |
+			((uint32_t)texel[1] << 8) | texel[2];
+	}
+
+	SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STATIC, DVD_BANNER_WIDTH, DVD_BANNER_HEIGHT);
+	if (texture == nullptr)
+	{
+		return nullptr;
+	}
+
+	SDL_UpdateTexture(texture, nullptr, pixels.data(), DVD_BANNER_WIDTH * sizeof(uint32_t));
+
+	// The picture is premultiplied (see BannerCompositeBackground), so it is blended the way SDL
+	// blends one: every texel takes the surface of the row behind it for what it does not cover.
+	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+	SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);      // small icons are scaled down
+
+	return texture;
+}
+
+/* The background of a banner, as the setting says it. The colour is an ImU32 (ImGui's packed RGBA,
+   the form the colour picker of the settings window edits), so it is unpacked into the four bytes
+   the compositor wants. */
+static void selector_banner_apply_bg(BannerRgba& image, SELECTOR_BANNER_BG bg, ImU32 bgColor)
+{
+	if (bg != SELECTOR_BANNER_BG::Fill)
+	{
+		return;     // the alpha channel of the picture is kept as it is
+	}
+
+	BannerCompositeBackground(image,
+		(uint8_t)((bgColor >> IM_COL32_R_SHIFT) & 0xff),
+		(uint8_t)((bgColor >> IM_COL32_G_SHIFT) & 0xff),
+		(uint8_t)((bgColor >> IM_COL32_B_SHIFT) & 0xff),
+		(uint8_t)((bgColor >> IM_COL32_A_SHIFT) & 0xff));
+}
+
+/* Make the picture and the texture of an entry, from the banner the disc carries. */
+static void selector_banner_build(SelectorBanner& entry, const uint8_t* image,
+	SELECTOR_BANNER_BG bg, ImU32 bgColor)
+{
+	entry.decoded = BannerToRgba(image);
+
+	// The decoded picture is what the background setting is applied to again and again, so what is
+	// composited is always a copy of it and never the result of a previous compositing.
+	entry.pixels = entry.decoded;
+	selector_banner_apply_bg(entry.pixels, bg, bgColor);
+
+	if (entry.texture)
+	{
+		SDL_DestroyTexture(entry.texture);
+	}
+
+	entry.texture = selector_banner_upload(entry.pixels);
+}
+
+/* Make the texture of an entry again, for the case when only the background setting changed: the
+   disc is not read a second time, the picture that its banner decoded to is. */
+static void selector_banner_update(SelectorBanner& entry, SELECTOR_BANNER_BG bg, ImU32 bgColor)
+{
+	BannerRgba image = entry.decoded;
+
+	selector_banner_apply_bg(image, bg, bgColor);
+
+	SDL_Texture* texture = selector_banner_upload(image);
+
+	if (texture == nullptr)
+	{
+		return;     // the texture that is up is still the one the entry is drawn with
+	}
+
+	if (entry.texture)
+	{
+		SDL_DestroyTexture(entry.texture);
+	}
+
+	entry.pixels = std::move(image);
+	entry.texture = texture;
+}
 
 /* Make sure path have ending directory separator */
 static void fix_path(std::wstring& path)
@@ -573,72 +685,6 @@ static std::string SmartSize(size_t size)
 	return std::string(tempBuf);
 }
 
-/* Convert the DVD banner (RGB5A3 texture) into an RGBA texture.
-   The banner image is stored as 4x4 tiles (the same layout as in the GX texture), so the pixels of
-   a tile are scattered over the whole image.
-   The alpha channel is kept, so that ImGui blends the banner with the row background (including the
-   selection highlight) by itself. */
-static SDL_Texture* make_banner_texture(const uint8_t* image)
-{
-	const int tiles = (DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT) / 16;
-	std::vector<uint32_t> pixels(DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT);
-
-	const uint16_t* tile = (const uint16_t*)image;
-	int row = 0, col = 0;
-
-	for (int i = 0; i < tiles; i++, tile += 16)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			for (int k = 0; k < 4; k++)
-			{
-				uint16_t p = tile[j * 4 + k];
-				p = (p << 8) | (p >> 8);        // banner is always big-endian
-
-				uint8_t r, g, b, a;
-
-				if (p & 0x8000)                 // RGB555
-				{
-					r = (uint8_t)(((p >> 10) & 0x1f) * 255 / 31);
-					g = (uint8_t)(((p >> 5) & 0x1f) * 255 / 31);
-					b = (uint8_t)((p & 0x1f) * 255 / 31);
-					a = 255;
-				}
-				else                            // RGB4A3
-				{
-					r = (uint8_t)(((p >> 8) & 0x0f) * 17);
-					g = (uint8_t)(((p >> 4) & 0x0f) * 17);
-					b = (uint8_t)((p & 0x0f) * 17);
-					a = (uint8_t)(((p >> 12) & 0x07) * 255 / 7);
-				}
-
-				pixels[(row + j) * DVD_BANNER_WIDTH + (col + k)] =
-					((uint32_t)a << 24) | ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
-			}
-		}
-
-		col += 4;
-		if (col == DVD_BANNER_WIDTH)
-		{
-			col = 0;
-			row += 4;
-		}
-	}
-
-	SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STATIC, DVD_BANNER_WIDTH, DVD_BANNER_HEIGHT);
-	if (texture == nullptr)
-	{
-		return nullptr;
-	}
-
-	SDL_UpdateTexture(texture, nullptr, pixels.data(), DVD_BANNER_WIDTH * sizeof(uint32_t));
-	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-	SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);      // small icons are scaled down
-
-	return texture;
-}
-
 /* Insert new file into filelist */
 static void add_file(const std::wstring& file, size_t fsize, SELECTOR_FILE type)
 {
@@ -737,7 +783,7 @@ static void add_file(const std::wstring& file, size_t fsize, SELECTOR_FILE type)
 		fix_string(item->title);
 		fix_string(item->comment);
 
-		item->banner = make_banner_texture(bnr->image);
+		selector_banner_build(item->banner, bnr->image, usel.bannerBg, usel.bannerBgColor);
 	}
 	else if (type == SELECTOR_FILE::Executable)
 	{
@@ -968,6 +1014,8 @@ SelectorSettings SelectorGetSettings()
 	settings.active = usel.active;
 	settings.smallIcons = usel.smallIcons;
 	settings.sortBy = usel.sortBy;
+	settings.bannerBg = usel.bannerBg;
+	settings.bannerBgColor = usel.bannerBgColor;
 	settings.paths = usel.paths;
 
 	return settings;
@@ -984,6 +1032,26 @@ void SelectorSetSettings(const SelectorSettings& settings)
 	if (usel.sortBy != settings.sortBy)
 	{
 		sort_selector(settings.sortBy);
+	}
+
+	// The background of the banners (issue #112) is neither a file nor a column: the entries and
+	// their order do not change with it, so the pictures the selector holds are redrawn instead of a
+	// rescan that would mount every disc again.
+	if (usel.bannerBg != settings.bannerBg || usel.bannerBgColor != settings.bannerBgColor)
+	{
+		usel.bannerBg = settings.bannerBg;
+		usel.bannerBgColor = settings.bannerBgColor;
+
+		UI::Jdi->SetConfigInt(USER_BANNER_BG, (int)usel.bannerBg, USER_UI);
+		UI::Jdi->SetConfigInt(USER_BANNER_BG_COLOR, (int)usel.bannerBgColor, USER_UI);
+
+		for (auto& file : usel.files)
+		{
+			if (file->banner.texture)
+			{
+				selector_banner_update(file->banner, usel.bannerBg, usel.bannerBgColor);
+			}
+		}
 	}
 
 	usel.needUpdate = true;
@@ -1972,9 +2040,13 @@ static void ui_selector()
 				ImGui::PopID();
 
 				// The banner is drawn over the selected item, because the item itself is a Selectable
-				if (file->banner)
+				if (file->banner.texture)
 				{
-					ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)file->banner,
+					// ImGui draws the interface through the same renderer as the banners and sets
+					// a blend mode of its own there, so the texture asks for its own again here.
+					SDL_SetTextureBlendMode(file->banner.texture, SDL_BLENDMODE_BLEND);
+
+					ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)file->banner.texture,
 						ImVec2(iconPos.x + 2, iconPos.y),
 						ImVec2(iconPos.x + 2 + iconWidth, iconPos.y + iconHeight));
 				}
@@ -2285,6 +2357,8 @@ static int ui_main()
 	usel.active = UI::Jdi->GetConfigBool(USER_SELECTOR, USER_UI);
 	usel.smallIcons = UI::Jdi->GetConfigBool(USER_SMALLICONS, USER_UI);
 	usel.sortBy = (SELECTOR_SORT)UI::Jdi->GetConfigInt(USER_SORTVIEW, USER_UI);
+	usel.bannerBg = (SELECTOR_BANNER_BG)UI::Jdi->GetConfigInt(USER_BANNER_BG, USER_UI);
+	usel.bannerBgColor = (ImU32)UI::Jdi->GetConfigInt(USER_BANNER_BG_COLOR, USER_UI);
 
 	CreateStatusBar();
 

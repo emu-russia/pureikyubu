@@ -52,6 +52,9 @@
     <ClInclude Include="..\..\src\ai.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\banner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\bench.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -283,6 +286,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\ai.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\banner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\bench.cpp">

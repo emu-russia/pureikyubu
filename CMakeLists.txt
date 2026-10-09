@@ -62,6 +62,7 @@ endif ()
 
 set (PUREIKYUBU_CORE
 	src/ai.cpp
+	src/banner.cpp
 	src/bootrtc.cpp
 	src/bump.cpp
 	src/config.cpp
