@@ -111,9 +111,11 @@
 
       <p class="sub" style="max-width:none">
         The window, the sound and the input come from SDL2. The keyboard and game controller
-        bindings, the scale, the sample rate and the link options live in
-        <code>build/Data/GBASettings.json</code>; a malformed file is rejected with a message and
-        the built-in defaults are used.
+        bindings, the scale, the sample rate and the link options live in the shipped
+        <code>build/Data/DefaultGBASettings.json</code> and the user's own
+        <code>build/Data/GBASettings.json</code>, which is merged over it; a malformed file is
+        rejected with a message and the built-in defaults are used. The GBA BIOS and the Game Boy
+        boot ROMs are picked there too, one per machine.
       </p>
     </section>
 

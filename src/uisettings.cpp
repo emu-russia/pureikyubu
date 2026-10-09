@@ -272,16 +272,18 @@ static void settings_page_interface()
 // scanned, what is listed and how the list is shown. All of them used to live in the
 // "Options -> Selector" menu; the menu item that is left there is "File -> Refresh View".
 
-/* One file filter checkbox. The four extensions are the four bits of the FILTER user variable. */
-static void settings_filter_item(const char* label, uint32_t mask)
+/* One file filter checkbox. The extensions of one kind are a byte of one of the filter user
+   variables: FILTER holds the console's files and FILTER_PORTABLE the cartridges of the portable
+   machines, because the four bytes of FILTER are all taken (issue #468). */
+static void settings_filter_item(const char* var, const char* label, uint32_t mask)
 {
-	uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
+	uint32_t filter = (uint32_t)UI::Jdi->GetConfigInt(var, USER_UI);
 	bool enabled = (filter & mask) != 0;
 
 	if (ImGui::Checkbox(label, &enabled))
 	{
 		filter = enabled ? (filter | mask) : (filter & ~mask);
-		UI::Jdi->SetConfigInt(USER_FILTER, (int)filter, USER_UI);
+		UI::Jdi->SetConfigInt(var, (int)filter, USER_UI);
 		SelectorRescan();
 	}
 }
@@ -389,13 +391,23 @@ static void settings_page_general()
 
 		PropertyRow("File filter");
 		{
-			settings_filter_item("*.dol", 0xff000000);
+			settings_filter_item(USER_FILTER, "*.dol", 0xff000000);
 			ImGui::SameLine();
-			settings_filter_item("*.elf", 0x00ff0000);
+			settings_filter_item(USER_FILTER, "*.elf", 0x00ff0000);
 			ImGui::SameLine();
-			settings_filter_item("*.gcm, *.rvz", 0x0000ff00);
+			settings_filter_item(USER_FILTER, "*.gcm, *.rvz", 0x0000ff00);
 			ImGui::SameLine();
-			settings_filter_item("*.iso", 0x000000ff);
+			settings_filter_item(USER_FILTER, "*.iso", 0x000000ff);
+
+			// The cartridges of the portable machines (issue #468): the file selector lists them
+			// next to the console's files and starts the stand-alone emulator with them.
+			ImGui::NewLine();
+
+			settings_filter_item(USER_FILTER_PORTABLE, "*.dmg, *.gb", 0xff0000);
+			ImGui::SameLine();
+			settings_filter_item(USER_FILTER_PORTABLE, "*.cgb, *.gbc", 0x00ff00);
+			ImGui::SameLine();
+			settings_filter_item(USER_FILTER_PORTABLE, "*.gba, *.agb", 0x0000ff);
 		}
 		PropertyRowEnd();
 

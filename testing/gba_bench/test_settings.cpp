@@ -1,4 +1,6 @@
-// The GBA settings file: build/Data/GBASettings.json.
+// The GBA settings files: build/Data/DefaultGBASettings.json (the shipped defaults) and the
+// build/Data/GBASettings.json the user's own values are written to, which the frontend merges over
+// the defaults (GBA::LoadSettings).
 //
 // The tests here are the only place where the shipped document, the reader and the writer are
 // compared with each other, so the file can never drift from the code and a malformed document is
@@ -24,8 +26,10 @@ using namespace GBA;
 
 namespace
 {
-	// The shipped document, at its place in the repository.
-	const char* const ShippedPath = "/mnt/c/Work/pureikyubu/build/Data/GBASettings.json";
+	// The shipped document, at its place in the repository. The user's own file
+	// (build/Data/GBASettings.json) is the one merged over it and is written by the tests into
+	// the scratch directory instead.
+	const char* const ShippedPath = "/mnt/c/Work/pureikyubu/build/Data/DefaultGBASettings.json";
 
 	// Where the tests that have to write a settings file write it.
 	const char* const ScratchPath = "/tmp/gba_settings_test.json";
@@ -89,6 +93,8 @@ namespace
 	void CheckSame(const GbaSettings& actual, const GbaSettings& expected, const std::string& what)
 	{
 		GBA_CHECK_MSG(actual.biosPath == expected.biosPath, what + ": biosPath");
+		GBA_CHECK_MSG(actual.dmgBiosPath == expected.dmgBiosPath, what + ": dmgBiosPath");
+		GBA_CHECK_MSG(actual.cgbBiosPath == expected.cgbBiosPath, what + ": cgbBiosPath");
 		GBA_CHECK_MSG(actual.useCustomBootRom == expected.useCustomBootRom, what + ": useCustomBootRom");
 		GBA_CHECK_MSG(actual.skipBootAnimation == expected.skipBootAnimation, what + ": skipBootAnimation");
 		GBA_CHECK_MSG(actual.hleBios == expected.hleBios, what + ": hleBios");
@@ -139,6 +145,8 @@ GBA_TEST(Settings, Defaults)
 	GbaSettings settings = GbaSettings::Defaults();
 
 	GBA_CHECK(settings.biosPath.empty());
+	GBA_CHECK(settings.dmgBiosPath.empty());
+	GBA_CHECK(settings.cgbBiosPath.empty());
 	GBA_CHECK(settings.useCustomBootRom);
 	GBA_CHECK(!settings.skipBootAnimation);
 	GBA_CHECK(settings.hleBios);
@@ -206,10 +214,10 @@ GBA_TEST(Settings, DefaultJsonIsTheDefaultsItDescribes)
 
 GBA_TEST(Settings, TheFileInTheRepositoryRoundTrips)
 {
-	// The file `build/Data/GBASettings.json` is what ships *and* what the stand-alone machine's
-	// settings window writes: a user who saves a change makes it their configuration, and that is
-	// not an error. What has to hold for any file it may be is that it loads without complaint and
-	// comes back out of the writer byte for byte - a save must never rewrite what it did not change.
+	// The file `build/Data/DefaultGBASettings.json` is the shipped document, and the same reader
+	// and writer serve the user's own file, which the settings window saves. What has to hold for
+	// any file either of them may be is that it loads without complaint and comes back out of the
+	// writer byte for byte - a save must never rewrite what it did not change.
 	GbaSettings settings;
 	std::string error;
 	GBA_CHECK_MSG(GbaSettings::Load(ShippedPath, settings, &error), "the file must load: " + error);
@@ -239,6 +247,8 @@ GBA_TEST(Settings, SaveAndLoad)
 	// reader has to unescape it again), saved and loaded back.
 	GbaSettings settings = GbaSettings::Defaults();
 	settings.biosPath = "C:\\bios\\gba.bin";
+	settings.dmgBiosPath = "C:\\bios\\dmg.bin";
+	settings.cgbBiosPath = "C:\\bios\\cgb.bin";
 	settings.useCustomBootRom = false;
 	settings.skipBootAnimation = true;
 	settings.hleBios = false;
@@ -790,4 +800,54 @@ GBA_TEST(Settings, LoadDirectory)
 	GBA_CHECK_MSG(!error.empty(), "loading a directory is reported");
 	GBA_CHECK_MSG(error.find("/tmp") == 0, "the message names the path: " + error);
 	CheckSame(settings, GbaSettings::Defaults(), "a failed load leaves the defaults");
+}
+
+GBA_TEST(Settings, MergeUserFile)
+{
+	// The user's file holds only the members it changes: Merge() applies them over the settings the
+	// caller already has (the shipped defaults, in the frontend's call) and leaves every other
+	// member alone. This is what makes the pair of files behave like the console's own pair.
+	{
+		std::ofstream file(ScratchPath, std::ios::binary | std::ios::trunc);
+		file << "{\n"
+			"\t\"boot\":\n\t{\n\t\t\"dmgBiosPath\": \"C:\\\\bios\\\\dmg.bin\"\n\t},\n"
+			"\t\"video\":\n\t{\n\t\t\"videoScale\": 5\n\t}\n"
+			"}\n";
+	}
+
+	GbaSettings settings = GbaSettings::Defaults();
+	settings.volume = 3;
+	std::string error = "stale";
+
+	GBA_CHECK_MSG(GbaSettings::Merge(ScratchPath, settings, &error), "the user's file must merge: " + error);
+	GBA_CHECK_MSG(error.empty(), "merging is not an error: " + error);
+	GBA_CHECK_STR(settings.dmgBiosPath, "C:\\bios\\dmg.bin");
+	GBA_CHECK_EQ(settings.videoScale, 5);
+	GBA_CHECK_EQ(settings.volume, 3);						// a member the file does not name is untouched
+	GBA_CHECK(settings.biosPath.empty());					// ... and so is the member next to the one it names
+	GBA_CHECK_STR(settings.cgbBiosPath, "");
+	GBA_CHECK_EQ(settings.sampleRate, GbaSettings::Defaults().sampleRate);
+
+	// A document that is refused leaves the configuration exactly as it was: a broken user's file
+	// must not take the settings the machine is running with down with it.
+	{
+		std::ofstream file(ScratchPath, std::ios::binary | std::ios::trunc);
+		file << "{\n\t\"video\":\n\t{\n\t\t\"videoScale\": 7\n";
+	}
+
+	settings = GbaSettings::Defaults();
+	settings.volume = 3;
+	std::string before = settings.ToJson();
+
+	GBA_CHECK_MSG(!GbaSettings::Merge(ScratchPath, settings, &error), "a truncated user's file must be refused");
+	GBA_CHECK_MSG(error.find(ScratchPath) == 0, "the message names the file: " + error);
+	GBA_CHECK_MSG(settings.ToJson() == before, "a refused merge leaves the configuration untouched");
+
+	std::remove(ScratchPath);
+
+	// A user's file that is not there yet is not an error and changes nothing.
+	settings.volume = 3;
+	GBA_CHECK_MSG(GbaSettings::Merge(MissingPath, settings, &error), "a missing user's file must merge");
+	GBA_CHECK_MSG(error.empty(), "a missing user's file is not an error: " + error);
+	GBA_CHECK_EQ(settings.volume, 3);
 }

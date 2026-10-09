@@ -20,7 +20,19 @@ pureikyubu --gba --no-gba-bootrom    # skip the BIOS entirely and start the cart
 
 `--gba-link` initializes the link port even when a cartridge is loaded. The window and the sound
 come from SDL2 (the same library the rest of the emulator uses); the input mapping, the scale, the
-sample rate and the link options live in `build/Data/GBASettings.json`.
+sample rate and the link options live in `build/Data/DefaultGBASettings.json` and the user's
+`build/Data/GBASettings.json` (see [Settings](#settings)).
+
+The **game selector** of the console starts the same front end (issue
+[#468](https://github.com/emu-russia/pureikyubu/issues/468)): the portable cartridges it lists -
+`.dmg`/`.gb` as the DMG, `.cgb`/`.gbc` as the CGB and `.gba`/`.agb` as the GBA - are drawn with a
+built-in picture of the console they belong to, and a click on one runs it in the stand-alone
+machine with the same pair of settings files. The DMG group runs the monochrome console, the CGB
+group a Game Boy Color and the GBA group the Game Boy Advance. The loop of the selector is inside
+the portable window for all that time, so a second cartridge cannot be started over the running
+one; the window of the selector is drawn again, with the veil that says why it was locked gone, as
+soon as the portable one is closed. The extensions the list is filled with are chosen in
+**Options -> Settings, General -> File filter**.
 
 ## The boot ROM
 
@@ -43,9 +55,12 @@ The image can be dumped for review, with its assembly listing:
 testing/gba_bench/check.sh --dump-bootrom /tmp/gba_bootrom.bin
 ```
 
-A real BIOS image can be used instead of the boot ROM (`--gba-bios`); the emulator then executes
-the actual BIOS code, and the BIOS service calls (`SWI`) are executed by it rather than by the
-host. The host-side implementations (`src/gba/gba_hlebios.cpp`) cover the calls a game can make
+A real BIOS image can be used instead of the boot ROM (`--gba-bios`, or `boot.biosPath` in the
+settings); the emulator then executes the actual BIOS code, and the BIOS service calls (`SWI`) are
+executed by it rather than by the host. The Game Boy's boot ROM is its BIOS too and has a path of
+its own per console - `boot.dmgBiosPath` for the 256 byte DMG image and `boot.cgbBiosPath` for the
+2304 byte CGB one - which the machine that is about to run the cartridge picks. The host-side
+implementations (`src/gba/gba_hlebios.cpp`) cover the calls a game can make
 without a BIOS image: `SoftReset`, `RegisterRamReset`, `Halt`, `Stop`, `IntrWait`,
 `VBlankIntrWait`, `Div`, `DivArm`, `Sqrt`, `ArcTan`, `ArcTan2`, `CpuSet`, `CpuFastSet`,
 `BgAffineSet`, `ObjAffineSet`, `BitUnPack`, the LZ77/run-length decompressors, the two difference
@@ -136,12 +151,15 @@ exactly there.
 
 ## Settings
 
-`build/Data/GBASettings.json`:
+The portable machines keep their settings the way the console keeps its own: a shipped
+`build/Data/DefaultGBASettings.json` and the user's `build/Data/GBASettings.json`, merged over the
+defaults member by member, so a member the user's file does not name keeps its default (and a
+machine that has never saved one runs the shipped document). Both files have this shape:
 
 | Section | Members |
 |---|---|
 | `info` | a description of the file |
-| `boot` | `biosPath`, `useCustomBootRom`, `skipBootAnimation`, `hleBios` |
+| `boot` | `biosPath` (the GBA's 16 KByte BIOS), `dmgBiosPath` (the DMG's 256 byte boot ROM), `cgbBiosPath` (the CGB's 2304 byte boot ROM), `useCustomBootRom`, `skipBootAnimation`, `hleBios` |
 | `video` | `videoScale`, `fullscreen`, `vsync`, `integerScale`, `showFps`, `lcdEffect`, `frameSkip` |
 | `audio` | `audioEnabled`, `sampleRate`, `volume`, `highPassFilter` |
 | `input` | the eleven bindings (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`, `R`, `L`, `SPEED`) |
@@ -152,19 +170,22 @@ order. The harness pins it (`Settings.KeyBindingNames`).
 | `link` | `linkEnabled`, `linkServer`, `linkAddress`, `linkPlayers` |
 | `emulation` | `rtcEnabled`, `bootWithNoCartridge`, `debugger`, `saveDirectory`, `logLevel` |
 
-The file is edited in the console's own user interface, under **Options -> Stand-alone GBA...**: a
-window of its own (`uisettingsgba.cpp`), because the machine it configures is a different one from
-the console the rest of the menu belongs to. It reads the file the first time it is opened, writes
-it back when "Save" is asked for, and edits the keys as well ("Default keys" is the module's own
-layout, `GbaSettings::Defaults`). A saved change is in effect for the next `--gba` run, which is
-when the front end reads the file.
+The settings are edited in the console's own user interface, under **Options -> Stand-alone GBA...**:
+a window of its own (`uisettingsgba.cpp`), because the machine it configures is a different one from
+the console the rest of the menu belongs to. It reads the pair the first time it is opened, writes
+the user's file when "Save" is asked for, and edits the keys as well ("Default keys" is the module's
+own layout, `GbaSettings::Defaults`). A saved change is in effect for the next `--gba` run, which is
+when the front end reads the pair (and for a cartridge the game selector starts, which reads the
+same pair).
 
-The file is read with the emulator's shared Json engine (`src/json.cpp`), the same one the GameCube
-side uses. The engine is self-contained (the C++ standard library and `verify.h` only), so the GBA
-core still builds without the GameCube side of the emulator and links the engine instead of
-carrying a parser of its own. A malformed file is rejected with a message that names the line and
-the built-in defaults are used; the shipped file, `GbaSettings::DefaultJson()` and a round trip of
-the defaults are byte-identical, and the test suite asserts that.
+The files are read with the emulator's shared Json engine (`src/json.cpp`), the same one the
+GameCube side uses. The engine is self-contained (the C++ standard library and `verify.h` only), so
+the GBA core still builds without the GameCube side of the emulator and links the engine instead of
+carrying a parser of its own. A malformed file is rejected with a message that names the line: the
+built-in defaults stand in for a defaults file that is refused, and a user's file that is refused
+leaves the configuration it was to be merged into exactly as it was. The shipped defaults,
+`GbaSettings::DefaultJson()` and a round trip of the defaults are byte-identical, and the test suite
+asserts that.
 
 `emulation.debugger` (false by default) opens the debugger window together with the machine. The
 portable debug interface - the JDI node and the MCP transport - comes up either way, and `F2` opens
@@ -217,19 +238,23 @@ that machine is part of this module too (`gb_*.cpp`, `GB::GbSystem` in `src/gba/
   `.sav` next to the ROM;
 * a **free 256-byte boot ROM** built from source by the LR35902 emitter in `gb_asm.cpp`, in which
   the "pureikyubu" wordmark slides into the middle of the screen before the cartridge starts (a
-  real boot ROM can be supplied instead, and the cartridge can also be started directly).
+  real boot ROM can be supplied instead through `boot.dmgBiosPath`/`boot.cgbBiosPath`, one image
+  per console kind, and the cartridge can also be started directly).
 
 The console kind follows the cartridge's CGB flag; a DMG cartridge runs on a CGB in compatibility
-mode. In the frontend a `.gb`, `.gbc` or `.sgb` file selects this machine:
+mode. In the frontend a `.gb`, `.gbc`, `.sgb` or `.dmg`/`.cgb` file selects this machine:
 
 ```
 pureikyubu game.gbc
 pureikyubu --gb --gb-dmg game.gb      # force the monochrome console
 ```
 
-The window and audio options come from the same `GBASettings.json`; the Game Boy has eight
-buttons and no bindings of its own, so its layout is fixed: the arrow keys, `Z` = A, `X` = B,
-`Return` = Start, `Backspace` = Select (plus a game controller's A/B/Start/Back/d-pad).
+The window and audio options come from the same pair of settings files, and so do the keys: the
+Game Boy has eight buttons and no bindings section of its own, so it takes the eight it shares with
+the Game Boy Advance from `input` (`A`, `B`, `SELECT`, `START`, `RIGHT`, `LEFT`, `UP`, `DOWN`); a key
+bound to `R`, `L` or `SPEED` does nothing on it. The two machines therefore answer the same key with
+the same button - the default layout is `A` = `X`, `B` = `Z`, the arrow keys, `Return` = Start and
+`Backspace` = Select (plus a game controller's A/B/Start/Back/d-pad).
 
 ## Tests
 
