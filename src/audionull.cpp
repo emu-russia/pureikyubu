@@ -48,6 +48,8 @@ namespace Flipper
 
 	void AudioMixer::PushBytes(AxChannel channel, uint8_t* sampleData, size_t sampleDataSize)
 	{
-
+		// Even the null back end is profiled, so a headless run still shows what the guest spends
+		// on its audio output.
+		Debug::GuestProf::Scope audioOutScope(Debug::GuestProf::Unit::AudioOutput);
 	}
 }

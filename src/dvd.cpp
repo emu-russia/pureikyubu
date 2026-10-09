@@ -1530,6 +1530,11 @@ void GCMSeek(int position)
 
 bool GCMRead(uint8_t*buf, size_t length)
 {
+	// The disc offset this read starts at, for the guest profiler's movie-frame marking: the
+	// read position is advanced below, so it is captured before anything else runs.
+	uint64_t profDiscOffset = (uint64_t)((dvd.seekval < 0) ? 0 : dvd.seekval);
+	Debug::GuestProf::Scope dvdScope(Debug::GuestProf::Unit::DvdDrive);
+
 	// No image is mounted, so there is no disc in the drive. This has to fail: handing back a
 	// block of zeros reads as a successful transfer of a disc whose contents are empty, and
 	// nothing above can tell "no disc" from "an empty disc". The failure turns into a DI drive
@@ -1564,6 +1569,11 @@ bool GCMRead(uint8_t*buf, size_t length)
 	{
 		memset(buf, 0, length);     // fill by zeroes
 		dvd.seekval += (int)length;
+
+		// The drive answers a read past the end of the image with zeroes: the transfer still
+		// succeeded and moved the whole requested length.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::DvdBytes, length);
+		Debug::GuestProf::NoteDiscRead(profDiscOffset, length);
 		return true;
 	}
 
@@ -1594,6 +1604,11 @@ bool GCMRead(uint8_t*buf, size_t length)
 			}
 
 			dvd.seekval += (int)length;
+
+			// `length` is what the clamp above left of the caller's request, and the RVZ reader
+			// delivered all of it.
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::DvdBytes, length);
+			Debug::GuestProf::NoteDiscRead(profDiscOffset, length);
 			return true;
 		}
 
@@ -1610,6 +1625,11 @@ bool GCMRead(uint8_t*buf, size_t length)
 		size_t bytesRead = fread(buf, 1, length, gcm_file);
 		fclose(gcm_file);
 		dvd.seekval += (int)length;
+
+		// Count what the image actually handed over: a damaged image can deliver less than the
+		// clamped `length`, and the caller is told the read failed in that case.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::DvdBytes, bytesRead);
+		Debug::GuestProf::NoteDiscRead(profDiscOffset, bytesRead);
 		return (bytesRead == length);
 	}
 
@@ -1756,6 +1776,9 @@ namespace DVD
 
 	void DduCore::ExecuteCommand()
 	{
+		Debug::GuestProf::Scope dduScope(Debug::GuestProf::Unit::DvdDrive);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::DvdCommands, 1);
+
 		// Execute command
 
 		// A new command deasserts the DIERR line, but the sense information stays latched until
@@ -2093,6 +2116,11 @@ namespace DVD
 			return;
 		}
 
+		// Inside the gate: the scope covers the sample loop only while the stream clock is armed,
+		// and is charged once per call rather than once per sample.
+		Debug::GuestProf::Scope dvdAudioScope(Debug::GuestProf::Unit::DvdAudio);
+		uint64_t decodedSamples = 0;
+
 		uint16_t sample[2] = { 0, 0 };
 
 		while (ticks >= nextGekkoTicksToSample)
@@ -2152,6 +2180,10 @@ namespace DVD
 				sample[0] = *(uint16_t *)rawPtr;
 				sample[1] = *(uint16_t *)(rawPtr + 2);
 				pcmPlaybackCounter += 4;
+
+				// One stereo pair came out of the decoder's PCM buffer. The zero samples the
+				// stream clock forces out with streaming disabled are not decoder output.
+				decodedSamples++;
 			}
 			else
 			{
@@ -2182,6 +2214,8 @@ namespace DVD
 			}
 
 		}
+
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::DvdAudioSamples, decodedSamples);
 	}
 
 	// Calculates how many Gekko ticks takes 1 sample, at the selected sample rate.
@@ -2283,6 +2317,10 @@ namespace DVD
 
 	void DduCore::StartTransfer(DduBusDirection direction)
 	{
+		// The whole transfer to or from the guest completes here, synchronously: the pump loop
+		// below runs on the calling thread until the bus is released.
+		Debug::GuestProf::Scope dduScope(Debug::GuestProf::Unit::DvdDrive);
+
 		if (logTransfers)
 		{
 			Report(Channel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");

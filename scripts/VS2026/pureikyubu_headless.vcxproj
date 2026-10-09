@@ -235,6 +235,7 @@
     <ClInclude Include="..\..\src\gekkodisasm.h" />
     <ClInclude Include="..\..\src\hwdebug.h" />
     <ClInclude Include="..\..\src\hwprof.h" />
+    <ClInclude Include="..\..\src\guestprof.h" />
     <ClInclude Include="..\..\src\hwosd.h" />
     <ClInclude Include="..\..\src\gfx.h" />
     <ClInclude Include="..\..\src\gfxuniformcache.h" />
@@ -323,6 +324,7 @@
     <ClCompile Include="..\..\src\gbalink.cpp" />
     <ClCompile Include="..\..\src\gbplayer.cpp" />
     <ClCompile Include="..\..\src\hwprof.cpp" />
+    <ClCompile Include="..\..\src\guestprof.cpp" />
     <ClCompile Include="..\..\src\hwosd.cpp" />
     <ClCompile Include="..\..\src\gfxosd.cpp" />
     <ClCompile Include="..\..\src\gfx.cpp" />

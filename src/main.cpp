@@ -111,6 +111,70 @@ static void ParseCmdLineArgs(const std::vector<std::string>& args)
 			cmdline.gb = true;
 			cmdline.gbDmg = true;
 		}
+		else if (arg == "--guestprof")
+		{
+			if (i + 1 < args.size())
+			{
+				cmdline.guestProf = true;
+				cmdline.guestProfFile = Util::StringToWstring(args[++i]);
+
+				// The capture document may follow as the next token. A file name can start with a
+				// digit, so the token is only taken when it does not look like an option.
+				if (i + 1 < args.size() && args[i + 1].size() > 1 && args[i + 1][0] != '-')
+				{
+					cmdline.guestProfOut = Util::StringToWstring(args[++i]);
+				}
+			}
+			else
+			{
+				Report(Channel::Norm, "--guestprof needs an image file (and an optional output file)\n");
+			}
+		}
+		else if (arg == "--movie")
+		{
+			// `<offset>:<length>`, both accepted in hexadecimal (0x...) or in decimal.
+			if (i + 1 < args.size())
+			{
+				const std::string& range = args[++i];
+				size_t colon = range.find(':');
+
+				if (colon == std::string::npos)
+				{
+					Report(Channel::Norm, "--movie needs <offset>:<length>\n");
+				}
+				else
+				{
+					cmdline.movieOffset = strtoull(range.substr(0, colon).c_str(), nullptr, 0);
+					cmdline.movieLength = strtoull(range.substr(colon + 1).c_str(), nullptr, 0);
+				}
+			}
+			else
+			{
+				Report(Channel::Norm, "--movie needs <offset>:<length>\n");
+			}
+		}
+		else if (arg == "--movieframes")
+		{
+			if (i + 1 < args.size())
+			{
+				cmdline.movieFrames = (uint32_t)strtoul(args[++i].c_str(), nullptr, 0);
+			}
+			else
+			{
+				Report(Channel::Norm, "--movieframes needs a count\n");
+			}
+		}
+		else if (arg == "--guestframes")
+		{
+			if (i + 1 < args.size())
+			{
+				cmdline.guestFrames = (uint32_t)strtoul(args[++i].c_str(), nullptr, 0);
+			}
+			else
+			{
+				Report(Channel::Norm, "--guestframes needs a count\n");
+			}
+		}
 		else if (arg == "--bench")
 		{
 			if (i + 1 < args.size())
@@ -235,6 +299,15 @@ void EMUPrintUsage()
 		"                        The default is the interpreter; see src/dspjit.h.\n"
 		"  --bench <file> [sec]  Run the file unattended for the given number of seconds (30 by\n"
 		"                        default) and print the throughput and the performance counters.\n"
+		"  --guestprof <file> [capture.json]\n"
+		"                        Run the file and profile the guest one record per emulated console\n"
+		"                        frame (host cycles per hardware block, the traffic of every channel,\n"
+		"                        the hot guest basic blocks), then write the capture as JSON and stop.\n"
+		"                        See src/guestprof.h and wiki/guestprof.md.\n"
+		"  --movie <off>:<len>   The disc range of a movie (THP) stream. The frames that read it are\n"
+		"                        marked as movie frames. Both numbers take 0x... or decimal.\n"
+		"  --movieframes <n>     How many movie frames to record before stopping (60 by default).\n"
+		"  --guestframes <n>     The hard cap on the whole capture (6000 by default).\n"
 		"  --selftest            Run the startup sequence (settings, debug interface specifications,\n"
 		"                        emulated hardware, ROM and memory card files) without a window and\n"
 		"                        exit with the number of failed steps as the status code.\n"

@@ -227,6 +227,8 @@ namespace GFX
 
 	void PixelEngine::loadPEReg(size_t index, uint32_t value, uint32_t mask)
 	{
+		Debug::GuestProf::Scope peScope(Debug::GuestProf::Unit::PixelEngine);
+
 		switch (index)
 		{
 			// Pixel Engine block
@@ -625,6 +627,8 @@ namespace GFX
 	// not necessarily contiguous (gfx-pe.md 5.7).
 	void PixelEngine::TextureCopy()
 	{
+		Debug::GuestProf::Scope peScope(Debug::GuestProf::Unit::PixelEngine);
+
 		int w = (int)pe.copy_src_size.x + 1;
 		int h = (int)pe.copy_src_size.y + 1;
 		int srcX = (int)pe.copy_src_addr.x;
@@ -715,6 +719,9 @@ namespace GFX
 		uint8_t* dstPtr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForPI(dst);
 		if (dstPtr == nullptr)
 			return;
+
+		// Every abort above is behind us: the copy really moves the clamped `w` x `h` rectangle.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::PeCopyPixels, (uint64_t)w * (uint64_t)h);
 
 		// The stride is the distance between the first texel of a tile and the first texel of the
 		// tile below it, in cache lines.
@@ -1196,6 +1203,8 @@ namespace GFX
 
 	void PixelEngine::SoftBeginFrame()
 	{
+		Debug::GuestProf::Scope peScope(Debug::GuestProf::Unit::PixelEngine);
+
 		SoftAlloc();
 
 		// The EFB starts empty, cleared with the PE clear values, exactly like the shader backend's
@@ -1238,6 +1247,10 @@ namespace GFX
 
 	bool PixelEngine::SoftWritePixel(int x, int y, const float rgba[4], float depth, uint32_t coverage)
 	{
+		// Counted before the bounds test: this is a fragment the rasterizer asked the PE to write,
+		// including the ones that fall outside the EFB and are dropped below.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::PePixels, 1);
+
 		SoftAlloc();
 
 		if (x < 0 || y < 0 || x >= soft_w || y >= soft_h)
@@ -1438,6 +1451,8 @@ namespace GFX
 
 	void PixelEngine::SoftDisplayCopy()
 	{
+		Debug::GuestProf::Scope peScope(Debug::GuestProf::Unit::PixelEngine);
+
 		SoftAlloc();
 
 		int w = (int)pe.copy_src_size.x + 1;
@@ -1481,6 +1496,11 @@ namespace GFX
 		int fieldPhase = -1;
 		if (pe.copy_cmd.interlaced == 2) fieldPhase = 0;		// even
 		else if (pe.copy_cmd.interlaced == 3) fieldPhase = 1;	// odd
+
+		// One pixel per source column of every output line, and an interlaced copy writes only the
+		// lines of its field.
+		int copyLines = (fieldPhase >= 0) ? ((outLines + 1 - fieldPhase) / 2) : outLines;
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::PeCopyPixels, (uint64_t)w * (uint64_t)copyLines);
 
 		std::vector<int> rgb((size_t)w * 3);
 		std::vector<uint8_t> yuv((size_t)w * 2);

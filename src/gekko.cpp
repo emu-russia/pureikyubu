@@ -330,6 +330,11 @@ namespace Gekko
 		int64_t start = regs.tb.sval;
 		int64_t limit = start + idleSkipMax;
 
+		// The skip does not emulate a single guest instruction, so what it costs the host is its
+		// own loop management: the time of the device work it drives is charged to the devices
+		// (each of them has a scope of its own, and the scopes are exclusive).
+		Debug::GuestProf::Scope idleScope(Debug::GuestProf::Unit::GekkoIdle);
+
 		while (regs.tb.sval < limit)
 		{
 			// One Flipper deadline at a time. The devices are then stepped exactly as they would
@@ -1342,6 +1347,7 @@ namespace Gekko
 
 	void Cache::CastIn(uint32_t pa)
 	{
+		Debug::GuestProf::Scope cacheScope(Debug::GuestProf::Unit::GekkoCache);
 		assert(pa < cacheSize);
 
 		if (frozen)
@@ -1354,6 +1360,8 @@ namespace Gekko
 		else
 			stats.dcacheFills++;
 
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::CacheFills, 1);
+
 		if (log >= CacheLogLevel::MemOps)
 		{
 			Report(Channel::CPU, "Cache::CastIn: 0x%08X\n", pa & ~0x1f);
@@ -1364,10 +1372,16 @@ namespace Gekko
 
 	void Cache::CastOut(uint32_t pa)
 	{
+		Debug::GuestProf::Scope cacheScope(Debug::GuestProf::Unit::GekkoCache);
 		assert(pa < cacheSize);
 
+		// A frozen cache writes nothing back, so neither the scope nor the counter has a line to
+		// report (the scope itself is already open, which costs a few cycles and is not worth
+		// another branch).
 		if (frozen)
 			return;
+
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::CacheWritebacks, 1);
 
 		if (log >= CacheLogLevel::MemOps)
 		{
@@ -1961,6 +1975,12 @@ namespace Gekko
 
 	uint32_t GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG)
 	{
+		// The slow half of the translation: the translation cache missed, so the BAT registers and
+		// the segment table have to be walked. The scope is here and not in EffectiveToPhysical
+		// itself because that one is called once per compiled block, and a scope there would cost
+		// more than the lookup it measures.
+		Debug::GuestProf::Scope mmuScope(Debug::GuestProf::Unit::GekkoTranslate);
+
 		uint32_t pa;
 
 		WIMG = 0;

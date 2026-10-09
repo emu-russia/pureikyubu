@@ -850,6 +850,8 @@ void main()
 
 	void TextureEnvironmentUnit::UploadUniforms(GLProgram& p)
 	{
+		Debug::GuestProf::Scope shaderScope(Debug::GuestProf::Unit::GfxShader);
+
 		// Stage environments and texture bindings, in the raw register layout
 		uint32_t colorEnv[16][4];
 		uint32_t alphaEnv[16][4];
@@ -1104,6 +1106,11 @@ void main()
 
 	void TextureEnvironmentUnit::loadTEVReg(size_t index, uint32_t value, uint32_t mask)
 	{
+		// One BP word, and the last hop of the register chain (see the note in src/cp.cpp): the
+		// same cadence as the SU and PE register loads, so the TEV's share of the chain is charged
+		// like the rest of it.
+		Debug::GuestProf::Scope tevScope(Debug::GuestProf::Unit::TextureEnv);
+
 		switch (index)
 		{
 			case TEV_COLOR_ENV_0_ID: tev.color_env[0].bits = MergeBpWriteMask(tev.color_env[0].bits, value, mask); break;
@@ -1607,6 +1614,9 @@ void main()
 
 	bool TextureEnvironmentUnit::SoftShade(const SoftFragment& fragment, float rgba[4], float* depth)
 	{
+		// Per-pixel: counted, never scoped (a scope here would cost more than the shade).
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::TevPixels, 1);
+
 		float reg[4][4], kreg[4][4];
 		SoftLoadRegisters(reg, kreg);
 

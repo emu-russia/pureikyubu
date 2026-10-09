@@ -161,8 +161,13 @@ namespace Flipper
 		// The device on the Hi-Speed Port (the Game Boy Player) runs the machine of its own that
 		// the console is not the one emulating. It is stepped from the same time base as everything
 		// else, and only when there is a device on the port.
+		//
+		// The profile scope belongs here rather than inside `HiSpeedPort::Tick`: the port is
+		// stepped on every Flipper tick, so a scope on the no-device path would be the most
+		// expensive thing the guest frame profiler did (see src/guestprof.h).
 		if (hsp != nullptr && hsp->Attached())
 		{
+			Debug::GuestProf::Scope hspScope(Debug::GuestProf::Unit::HiSpeedPort);
 			hsp->Tick(ticks);
 		}
 

@@ -110,6 +110,8 @@ namespace GFX
 
 	void TextureEngine::LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
 	{
+		Debug::GuestProf::Scope txScope(Debug::GuestProf::Unit::TextureUnit);
+
 		assert(tmem < sizeof(tlut));
 		uint8_t* ptr = (uint8_t*)Flipper::HW->mem->MIGetMemoryPointerForTX(addr);
 		memcpy(&tlut[tmem], ptr, cnt * 16 * 2);
@@ -842,11 +844,17 @@ namespace GFX
 				return false;
 		}
 
+		// Only a map that got this far was really decoded: the cache-hit test is the caller's.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::TexDecodes, 1);
+
 		return true;
 	}
 
 	void TextureEngine::UploadTexture(int id)
 	{
+		Debug::GuestProf::Scope uploadScope(Debug::GuestProf::Unit::GfxShader);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::TexUploads, 1);
+
 		TexMap* m = &texMap[id];
 
 		glBindTexture(GL_TEXTURE_2D, m->glTexture);
@@ -964,6 +972,8 @@ namespace GFX
 
 	void TextureEngine::UpdateAndBindTextures()
 	{
+		Debug::GuestProf::Scope txScope(Debug::GuestProf::Unit::TextureUnit);
+
 		for (int i = 0; i < GFX_MAX_TEXTURES; i++)
 		{
 			TexMap* m = &texMap[i];

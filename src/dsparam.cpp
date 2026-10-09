@@ -170,6 +170,9 @@ namespace DSP
 {
 	uint16_t Dsp16::DecodeAdpcm(uint16_t in)
 	{
+		// Per sample, so a counter only: a scope here would cost more than the decode.
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::DspAdpcmDecodes, 1);
+
 		int64_t yn = 0;
 		int outputMode = (Accel.Fmt >> 4) & 3;
 		int opMode = (Accel.Fmt >> 2) & 3;
@@ -345,6 +348,8 @@ void DSPUpdateInt()
 	// that way right after its intro movie, while the audio kept streaming.
 	static void ARAMDmaRun()
 	{
+		Debug::GuestProf::Scope aramScope(Debug::GuestProf::Unit::AramController);
+
 		int type = aram.cnt >> 31;
 		uint32_t cnt = aram.cnt & 0x03FF'FFE0;
 

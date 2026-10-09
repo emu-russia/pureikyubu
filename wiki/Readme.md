@@ -16,6 +16,12 @@ The wiki does not contain any detailed descriptions of the GameCube architecture
   a draw to its two static programs, and `src/gfxuniformcache.cpp` drops the uploads whose value has
   not changed: what a cached value belongs to, when it is dropped, and what the tests pin down.
 
+* [Guest frame profiler](guestprof.md) — the per-frame profiler: the units it charges
+  host cycles to (every Gekko path, every Flipper block, the drive, the DSP, the interfaces and the
+  host back ends), how the exclusive accounting works, and how a frame of an FMV is told apart from
+  a frame the title drew from textures. See also [HW interface profiler](hwprof.md), whose channel
+  table a frame record carries.
+
 But here are some diagrams, just as a memo.
 
 GameCube:

@@ -259,6 +259,12 @@ namespace Debug
 
 Gekko::GekkoCore* Core = nullptr;
 
+// The guest frame profiler's debug command (`guestprof`, src/guestprof.cpp) reads the emulator
+// state the application keeps: the file that was loaded and the frame cap of a capture. The test
+// DLL does not link main.cpp, so the two objects are supplied here, empty.
+Emulator emu;
+CmdLineOptions cmdline;
+
 namespace Gekko
 {
 	// The DSP sources bump the DSP counters in `stats` (see Gekko::CpuStats); the test DLL does not

@@ -199,6 +199,7 @@ static const uint32_t PsqUpdate = 14;
 // register file is left alone, including the update form's RA.
 void Jit::PsqLoad(GekkoCore* core, uint32_t ea, uint32_t packed)
 {
+	Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 	uint32_t d = (packed >> JitPs::PsqD) & 31;
 	uint32_t gqr = (packed >> JitPs::PsqGqr) & 7;
 	bool w = ((packed >> JitPs::PsqW) & 1) != 0;
@@ -231,6 +232,7 @@ void Jit::PsqLoad(GekkoCore* core, uint32_t ea, uint32_t packed)
 // psq_st, psq_stx, psq_stu, psq_stux.
 void Jit::PsqStore(GekkoCore* core, uint32_t ea, uint32_t packed)
 {
+	Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 	uint32_t d = (packed >> JitPs::PsqD) & 31;
 	uint32_t gqr = (packed >> JitPs::PsqGqr) & 7;
 	bool w = ((packed >> JitPs::PsqW) & 1) != 0;

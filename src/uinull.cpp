@@ -159,6 +159,58 @@ static void RunImage(const std::wstring& file, uint32_t seconds)
 	UI::Jdi->Unload();
 }
 
+//! Load `file`, profile the guest frame by frame and write the capture (src/guestprof.h).
+//!
+//! The run stops on its own: the profiler knows when it has what it was asked for (the movie has
+//! been running for `--movieframes` frames, or the whole capture hit `--guestframes`). Ctrl+C
+//! stops it early, and whatever has been captured up to that point is still written.
+static void RunGuestProfile(const std::wstring& file)
+{
+	Debug::GuestProf::CaptureOptions options;
+	options.outputFile = Util::WstringToString(cmdline.guestProfOut);
+	options.image = Util::WstringToString(file);
+	options.movieOffset = cmdline.movieOffset;
+	options.movieLength = cmdline.movieLength;
+	options.movieFrames = cmdline.movieFrames;
+	options.maxFrames = cmdline.guestFrames;
+
+	Say("Loading %s...\n", Util::WstringToString(file).c_str());
+
+	// The machine has to be built before the capture is armed: the profiler calibrates its host
+	// cycle counter, and the frame boundary it watches is the video interface's scan-out.
+	UI::Jdi->LoadFile(Util::WstringToString(file));
+
+	Debug::GuestProf::StartCapture(options);
+
+	if (options.movieLength != 0)
+	{
+		Say("Guest frame profiling: capturing until the movie stream (0x%llX + %llu bytes) has run for %u frames.\n",
+			(unsigned long long)options.movieOffset, (unsigned long long)options.movieLength,
+			cmdline.movieFrames);
+	}
+	else
+	{
+		Say("Guest frame profiling: capturing %u frames (no movie range was given).\n",
+			cmdline.guestFrames);
+	}
+
+	UI::Jdi->Run();
+
+	while (!Debug::GuestProf::CaptureComplete() && !interrupted)
+	{
+		Thread::Sleep(20);
+	}
+
+	UI::Jdi->Stop();
+
+	// The capture is written while the machine is still up, so that a report asked for from the
+	// debug interface and the document on disk describe the same frames.
+	Debug::GuestProf::StopCapture();
+
+	Thread::Sleep(200);
+	UI::Jdi->Unload();
+}
+
 static int HeadlessMain()
 {
 	if (cmdline.help)
@@ -185,12 +237,12 @@ static int HeadlessMain()
 	ConsoleEcho = !cmdline.mcp;
 
 	// An MCP session needs no image of its own: the client loads what it wants with a tool call.
-	if (!cmdline.bench && cmdline.image.empty() && !cmdline.ipl && !cmdline.mcp)
+	if (!cmdline.bench && !cmdline.guestProf && cmdline.image.empty() && !cmdline.ipl && !cmdline.mcp)
 	{
 		// There is no selector to show, so say what is missing instead of waiting for input that
 		// can never arrive.
 		Say("headless: nothing to run.\n");
-		Say("Pass an image, or use --image <file>, --ipl, --bench <file> [sec] or --mcp. `--help` lists the options.\n");
+		Say("Pass an image, or use --image <file>, --ipl, --bench <file> [sec], --guestprof <file> or --mcp. `--help` lists the options.\n");
 		return -1;
 	}
 
@@ -214,6 +266,10 @@ static int HeadlessMain()
 		{
 			Say("Benchmark run: %u second(s).\n", cmdline.benchSeconds);
 			RunImage(cmdline.benchFile, cmdline.benchSeconds);
+		}
+		else if (cmdline.guestProf)
+		{
+			RunGuestProfile(cmdline.guestProfFile);
 		}
 		else if (cmdline.mcp)
 		{

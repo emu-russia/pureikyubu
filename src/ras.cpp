@@ -138,6 +138,9 @@ namespace GFX
 
 	void Rasterizer::DrawPrimitive()
 	{
+		Debug::GuestProf::Scope shaderScope(Debug::GuestProf::Unit::GfxShader);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::GfxDrawCalls, 1);
+
 		glBindVertexArray(gfx->vao);
 		glBindBuffer(GL_ARRAY_BUFFER, gfx->vbo);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, (GLsizeiptr)(vertex_count * sizeof(Vertex)), gfx->vertex_data);
@@ -235,6 +238,8 @@ namespace GFX
 
 	void Rasterizer::RAS_End()
 	{
+		Debug::GuestProf::Scope rasScope(Debug::GuestProf::Unit::Rasterizer);
+
 		if (vertex_count == 0)
 			return;
 
@@ -424,6 +429,8 @@ namespace GFX
 
 	void Rasterizer::SoftDrawTriangle(const SoftTriangle& tri)
 	{
+		Debug::GuestProf::Scope softScope(Debug::GuestProf::Unit::GfxSoftware);
+
 		if (gfx->pe == nullptr)
 			return;
 

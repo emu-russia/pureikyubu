@@ -59,30 +59,77 @@ namespace HwProfile
 
 	//! The channels (one counter each) the profiler watches. The name says which side of the
 	//! transfer the bytes are counted on.
+	//!
+	//! The table covers the whole guest: the two cores, every block of the Flipper (the bus, the
+	//! memory interface, the video interface, the command processor, the graphics pipeline, the
+	//! audio interface, the drive, the serial and the expansion interfaces, the DSP and the
+	//! ARAM), and the host back ends that present the frame and play the sound. A channel that a
+	//! given run never touches stays at zero - that is a reading of the profile, not a gap in it.
 	enum class Counter
 	{
+		// The 60x bus and main memory
 		Bus60xRead = 0,		//!< Bytes the CPU read over the 60x bus (registers, main memory, the EFB)
 		Bus60xWrite,		//!< ... and wrote
 		SplashRead,			//!< Bytes the Flipper read out of main memory (1T-SRAM, "Splash")
 		SplashWrite,		//!< ... and wrote
-
-		PiInterrupts,		//!< PI interrupt assertions (all sources)
+		CacheFills,			//!< Gekko cache lines filled from main memory (data and instruction)
+		CacheWritebacks,	//!< ... and dirty lines written back
 		WriteGather,		//!< Bytes the CPU pushed into the Write Gather Buffer
-		CpFifo,				//!< Bytes pushed into the PI -> CP command FIFO
-		AudioMixer,			//!< Bytes fed into the audio mixer
+		MmioReads,			//!< Single-beat CPU accesses that hit the register space
+		MmioWrites,
 
+		// Interrupts
+		PiInterrupts,		//!< PI interrupt assertions (all sources)
+
+		// The video interface
+		ViFrames,			//!< Frames scanned out by the video interface
+
+		// The command processor and the graphics pipeline
+		CpFifo,				//!< Bytes pushed into the PI -> CP command FIFO
+		CpCommands,			//!< Commands the CP decoded out of the FIFO
+		BpRegWrites,		//!< BP register writes (each one walks the whole block chain)
+		GfxPrimitives,		//!< Primitives (triangles, lines, points) submitted to the GFX pipeline
+		GfxVertices,		//!< Vertices they were built from
+		GfxDrawCalls,		//!< Draw calls handed to the GFX back end
+		GfxPresents,		//!< Frames the GFX back end presented
+		TexDecodes,			//!< Textures re-decoded because their main-memory copy changed
+		TexUploads,			//!< Textures uploaded to the GFX back end
+		TevPixels,			//!< Fragments the TEV shaded (the software pipeline)
+		PePixels,			//!< Pixels the PE wrote (the software pipeline)
+		PeCopyPixels,		//!< Pixels the copy engine moved between the EFB and main memory
+
+		// The audio
+		AudioMixer,			//!< Bytes fed into the audio mixer
+		AudioSamples,		//!< Stereo sample pairs delivered to the mixer
+		AudioUnderruns,		//!< Times the output back end had to fill a buffer with silence
+
+		// The DMA engines
 		DmaExi,				//!< Bytes moved by the EXI DMA
 		DmaDi,				//!< ... the DI DMA
 		DmaDsp,				//!< ... the DSP memory DMA
 		DmaAi,				//!< ... the AI DMA
 		DmaAram,			//!< ... the ARAM DMA
 
-		GfxPrimitives,		//!< Primitives (triangles, lines, points) submitted to the GFX pipeline
-		GfxVertices,		//!< Vertices they were built from
+		// The drive
+		DvdCommands,		//!< Commands the DDU executed
+		DvdBytes,			//!< Bytes the drive read off the disc image
+		DvdAudioSamples,	//!< Samples the DVD-audio stream decoder produced
 
-		ViFrames,			//!< Frames scanned out by the video interface
-		GekkoInstructions,	//!< Gekko instructions retired
+		// The serial interface and the expansion port
+		SiPolls,			//!< Controller polls (the per-frame poll schedule's ticks)
+		SiTransfers,		//!< SI commands exchanged with a device
+		ExiTransfers,		//!< EXI transfers (DMA and immediate together)
+		HspTransfers,		//!< ARAM expansion port transfers
+
+		// The DSP
 		DspInstructions,	//!< DSP instructions retired (a paired instruction counts once)
+		DspAdpcmDecodes,	//!< Samples the ARAM accelerator's ADPCM decoder produced
+
+		// The Gekko
+		GekkoInstructions,	//!< Gekko instructions retired
+		GekkoBlocks,		//!< Basic blocks the recompiler ran
+		GekkoCompiles,		//!< Basic blocks the recompiler translated
+		GekkoInvalidations,	//!< Times the whole block cache was dropped
 
 		Max,
 	};

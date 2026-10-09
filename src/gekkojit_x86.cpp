@@ -56,36 +56,42 @@ namespace
 {
 	void JitReadByte(GekkoCore* core, uint32_t addr, uint32_t* reg)
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 		stats.memHelperCalls++;
 		CycleScope cycles(&stats.memHelperCycles);
 		core->ReadByte(addr, reg);
 	}
 	void JitReadHalf(GekkoCore* core, uint32_t addr, uint32_t* reg)
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 		stats.memHelperCalls++;
 		CycleScope cycles(&stats.memHelperCycles);
 		core->ReadHalf(addr, reg);
 	}
 	void JitReadWord(GekkoCore* core, uint32_t addr, uint32_t* reg)
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 		stats.memHelperCalls++;
 		CycleScope cycles(&stats.memHelperCycles);
 		core->ReadWord(addr, reg);
 	}
 	void JitWriteByte(GekkoCore* core, uint32_t addr, uint32_t data)
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 		stats.memHelperCalls++;
 		CycleScope cycles(&stats.memHelperCycles);
 		core->WriteByte(addr, data);
 	}
 	void JitWriteHalf(GekkoCore* core, uint32_t addr, uint32_t data)
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 		stats.memHelperCalls++;
 		CycleScope cycles(&stats.memHelperCycles);
 		core->WriteHalf(addr, data);
 	}
 	void JitWriteWord(GekkoCore* core, uint32_t addr, uint32_t data)
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::GekkoMemory);
 		stats.memHelperCalls++;
 		CycleScope cycles(&stats.memHelperCycles);
 		core->WriteWord(addr, data);
@@ -104,7 +110,7 @@ void Jit::Fallback(GekkoCore* core, uint32_t instr, uint32_t pc)
 {
 	stats.jitFallbacks++;
 	CycleScope cycles(&stats.fallbackCycles);
-	core->interp->ExecuteDecoded(pc, instr);
+	core->interp->ExecuteDecoded(pc, instr);   // the interpreter charges the guest profile itself
 }
 
 bool Jit::BcTest(GekkoCore* core, uint32_t bo, uint32_t bi)
@@ -184,6 +190,7 @@ void Jit::InvalidateAll()
 	// O(1): every entry with an older generation is simply ignored. The arena is
 	// reused from the beginning only when it is exhausted.
 	stats.jitInvalidations++;
+	Debug::HwProfile::Count(Debug::HwProfile::Counter::GekkoInvalidations, 1);
 	generation++;
 	if (generation == 0)
 	{
@@ -400,6 +407,8 @@ static bool IsCompareInstr(Instruction instr)
 
 uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 {
+	Debug::GuestProf::Scope compileScope(Debug::GuestProf::Unit::GekkoCompile);
+
 	// Where the next Flipper-side deadline sits inside GekkoCore (see flipper.h).
 	const int32_t FlipperDeadlineOff = (int32_t)offsetof(GekkoCore, flipperDeadline);
 	static_assert(FlipperDeadlineOff > 0 && FlipperDeadlineOff < 0x7fff'0000, "the deadline has to fit a disp32");
@@ -1567,6 +1576,7 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 	block->pollReg = (hasStore || count > MaxPollBlockInstrs) ? -1 : pollReg;
 
 	stats.jitCompiles++;
+	Debug::HwProfile::Count(Debug::HwProfile::Counter::GekkoCompiles, 1);
 	stats.compileCycles += compileStart ? (ReadCycleCounter() - compileStart) : 0;
 
 	return offset;
@@ -1574,6 +1584,9 @@ uint32_t Jit::CompileBlock(uint32_t pc, uint32_t pa, uint32_t& instrCount)
 
 // Every path of Run() that hands the instruction back to the interpreter goes through here, so
 // that the CPU statistics can tell translated code and interpreted code apart.
+//
+// The guest profile is charged by the interpreter entry the instruction reaches
+// (`Interpreter::ExecuteDecoded`); see the x64 twin, src/gekkojit_x64.cpp.
 void Jit::RunOneInterpreted()
 {
 	stats.interpInstrs++;
@@ -1583,6 +1596,7 @@ void Jit::RunOneInterpreted()
 
 void Jit::Run()
 {
+	Debug::GuestProf::Scope jitScope(Debug::GuestProf::Unit::GekkoJit);
 	CycleScope cycles(&stats.jitRunCycles);
 	RunInner();
 }
@@ -1659,6 +1673,8 @@ void Jit::RunInner()
 
 	stats.jitBlocks++;
 	stats.jitInstrs += n;
+	Debug::HwProfile::Count(Debug::HwProfile::Counter::GekkoBlocks, 1);
+	Debug::GuestProf::NoteBlock(pc, n);
 	block->execCount++;
 	block->tickCount += n + (uint32_t)exit.ticks;
 

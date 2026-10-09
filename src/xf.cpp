@@ -498,6 +498,8 @@ void main()
 
 	void TransformUnit::UploadUniforms(GLProgram& p)
 	{
+		Debug::GuestProf::Scope shaderScope(Debug::GuestProf::Unit::GfxShader);
+
 		// --- matrices ---
 
 		gfx->uniformCache.Set1fv(p, "matrixMem", (GLsizei)XF_MATRIX_MEMORY_SIZE, xf.mvTexMtx);
@@ -1721,6 +1723,8 @@ void main()
 
 	void TransformUnit::CPDrawBegin(RAS_Primitive prim, size_t vtx_num)
 	{
+		Debug::GuestProf::Scope xfScope(Debug::GuestProf::Unit::GeometryEngine);
+
 		if (gfx_dump != nullptr)
 			gfx_dump->DrawBegin(prim, vtx_num);
 
@@ -1753,6 +1757,8 @@ void main()
 
 	void TransformUnit::CPDrawEnd()
 	{
+		Debug::GuestProf::Scope xfScope(Debug::GuestProf::Unit::GeometryEngine);
+
 		if (gfx_dump != nullptr)
 			gfx_dump->DrawEnd();
 
