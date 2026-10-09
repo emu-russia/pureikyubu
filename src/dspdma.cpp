@@ -8,6 +8,8 @@ namespace DSP
 	// Instant DMA
 	void Dsp16::DoDma()
 	{
+		Debug::GuestProf::Scope dspDmaScope(Debug::GuestProf::Unit::DspDma);
+
 		uint8_t* ptr = nullptr;
 
 		if (logDspDma)

@@ -224,6 +224,11 @@ namespace Flipper
 			di->di.dduToHostByteCounter++;
 			if (di->di.dduToHostByteCounter >= 32)
 			{
+				// The DDU pumps this callback once per byte (see DduCore::PumpOnce), so the scope
+				// belongs on the 32-byte block that does the DMA and the transfer-complete, not
+				// at the entry: a scope per byte would cost more than the transfer it measures.
+				Debug::GuestProf::Scope diScope(Debug::GuestProf::Unit::DiskInterface);
+
 				di->di.dduToHostByteCounter = 0;
 
 				if (di->DISR & DI_SR_BRK)
@@ -318,6 +323,8 @@ namespace Flipper
 	// control register
 	void DiskInterface::write_cr(uint16_t data)
 	{
+		Debug::GuestProf::Scope diScope(Debug::GuestProf::Unit::DiskInterface);
+
 		DICR = data;
 
 		// start command

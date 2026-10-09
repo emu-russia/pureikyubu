@@ -215,7 +215,8 @@ namespace HwProfUnitTest
 			std::vector<std::string> lines;
 			HwProfile::ReportToLines(lines);
 
-			Assert::AreEqual((size_t)1 + 18, lines.size(), L"a header and one line per channel");
+			Assert::AreEqual((size_t)1 + (size_t)HwProfile::Counter::Max, lines.size(),
+				L"a header and one line per channel");
 
 			std::string all;
 			for (size_t i = 0; i < lines.size(); i++)
@@ -229,10 +230,18 @@ namespace HwProfUnitTest
 			{
 				"60x bus read", "60x bus write",
 				"Flipper/Splash read", "Flipper/Splash write",
-				"PI interrupts", "Write gather buffer", "PI/CP FIFO", "Audio mixer input",
+				"Gekko cache fills", "Gekko writebacks", "Write gather buffer",
+				"MMIO reads", "MMIO writes",
+				"PI interrupts", "VI frames",
+				"PI/CP FIFO", "CP commands", "BP register writes",
+				"GFX primitives", "GFX vertices", "GFX draw calls", "GFX presents",
+				"Texture decodes", "Texture uploads", "TEV fragments", "PE pixels", "PE copy pixels",
+				"Audio mixer input", "Audio sample pairs", "Audio underruns",
 				"DMA EXI", "DMA DI", "DMA DSP", "DMA AI", "DMA ARAM",
-				"GFX primitives", "GFX vertices", "VI frames",
-				"Gekko instructions", "DSP instructions",
+				"DDU commands", "DDU bytes read", "DVD-audio samples",
+				"SI polls", "SI transfers", "EXI transfers", "HSP transfers",
+				"DSP instructions", "ARAM ADPCM samples",
+				"Gekko instructions", "Gekko blocks", "Gekko translated", "Gekko invalidations",
 			};
 
 			for (size_t i = 0; i < _countof(expected); i++)

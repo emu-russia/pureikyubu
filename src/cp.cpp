@@ -721,6 +721,8 @@ namespace Flipper
 	// out of its own value (GDTev.h SS_MASK, MergeBpWriteMask).
 	void CommandProcessor::BpRegWrite(size_t index, uint32_t value)
 	{
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::BpRegWrites, 1);
+
 		// The mask register itself is not part of the register file
 		if (index == 0xFE)
 		{
@@ -2250,6 +2252,8 @@ namespace Flipper
 
 	void CommandProcessor::DrawPrimitive(uint8_t command, FifoProcessor* gxfifo, GFX::RAS_Primitive prim)
 	{
+		Debug::GuestProf::Scope fetchScope(Debug::GuestProf::Unit::CpVertexFetch);
+
 		unsigned vatnum = command & 7;
 		unsigned vtxnum = gxfifo->Read16();
 
@@ -2340,6 +2344,8 @@ namespace Flipper
 
 	void CommandProcessor::GxCommand(FifoProcessor* gxfifo)
 	{
+		Debug::GuestProf::Scope cpScope(Debug::GuestProf::Unit::CommandProcessor);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::CpCommands, 1);
 
 		HW->gfx->GPFrameBegin();
 

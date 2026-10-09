@@ -106,6 +106,7 @@ set (PUREIKYUBU_CORE
 	src/gbplayer.cpp
 	src/gbalink.cpp
 	src/hwprof.cpp
+	src/guestprof.cpp
 	src/jdi.cpp
 	src/jdiserver.cpp
 	src/jdispecs.cpp

@@ -334,6 +334,26 @@ namespace JdiSpecs
         "Example of use: hwsod 1\n"
       ],
       "output": "Bool"
+    },
+
+    "guestprof": {
+      "help": "Profile the guest frame by frame: where the host time and the guest traffic went",
+      "hints": "[start|stop] [file] [range] [frames]",
+      "args": 0,
+      "usage": [
+        "Syntax: guestprof [start <capture.json> [off:len] [frames] | stop]\n",
+        "With no argument the Markdown report of the capture so far is returned.\n",
+        "The profiler records one record per emulated console frame: the host cycles of every\n",
+        "hardware block (the Gekko paths, the Flipper pipeline, the drive, the DSP and the audio,\n",
+        "and the GFX and audio back ends), the traffic of every channel the HW interface profiler\n",
+        "counts, the instructions the two cores retired, and the guest's hot basic blocks.\n",
+        "`off:len` is the disc range of a movie (THP) stream: the frames that read it are marked as\n",
+        "movie frames, which is how the frames of an FMV are told apart from the frames the title\n",
+        "draws from textures. `frames` is how many movie frames the capture should hold (60 by\n",
+        "default); the capture stops by itself once it has them.\n",
+        "Example of use: guestprof start fmv.json 0x2DD25600:7459244 60\n"
+      ],
+      "output": "{ markdown: String }, Bool for `start`, or nothing for `stop`"
     }
 
   }

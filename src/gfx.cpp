@@ -1645,6 +1645,8 @@ namespace GFX
 	// init rendering (call before drawing FIFO primitives)
 	void GFXCore::ClearFrameBuffer()
 	{
+		Debug::GuestProf::Scope shaderScope(Debug::GuestProf::Unit::GfxShader);
+
 		// The clear covers the whole EFB: the scissor rectangle the title programmed clips its
 		// primitives, not the clear the frame begins on, and a clear that ran later in the frame
 		// (see GPFrameDrawn) would otherwise leave everything the scissor excludes untouched.
@@ -1737,6 +1739,8 @@ namespace GFX
 	// done rendering (call when frame is ready)
 	void GFXCore::GL_EndFrame()
 	{
+		Debug::GuestProf::Scope presentScope(Debug::GuestProf::Unit::GfxPresent);
+
 		if (!frameReady) return;
 
 		glFlush();
@@ -1776,6 +1780,7 @@ namespace GFX
 		// both ways of showing a frame are counted - the copy engine's full-frame EFB -> XFB copy is
 		// simply the one that happens to present through the first of them.
 		presented_frames++;
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::GfxPresents, 1);
 
 		frameReady = false;
 		pe->frames++;
@@ -1879,6 +1884,8 @@ namespace GFX
 	{
 		if (SoftPipeline())
 		{
+			Debug::GuestProf::Scope presentScope(Debug::GuestProf::Unit::GfxPresent);
+
 			// Nothing to present: the display copy has already written the XFB and the video
 			// interface scans it out (the console's picture does not depend on this call). The
 			// frame counters are the same ones the shader backend keeps, so the debugger and the
@@ -2007,6 +2014,8 @@ namespace GFX
 	//! was given (VI_TFBL), so the line is the distance between the two in strides.
 	void GFXCore::GL_DisplayCopy(int srcX, int srcY, int w, int h, uint32_t dstAddr, int stride)
 	{
+		Debug::GuestProf::Scope shaderScope(Debug::GuestProf::Unit::GfxShader);
+
 		if (SoftPipeline() || !backend_started || xfbFbo == 0)
 			return;
 
@@ -2123,6 +2132,8 @@ namespace GFX
 	//! there.
 	void GFXCore::PresentFrame()
 	{
+		Debug::GuestProf::Scope presentScope(Debug::GuestProf::Unit::GfxPresent);
+
 		GLuint source = (xfb_pending && xfbFbo != 0) ? xfbFbo : DrawFbo();
 
 		if (source == 0)

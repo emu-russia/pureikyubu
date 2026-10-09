@@ -53,6 +53,8 @@ namespace Flipper
 	// AI control register
 	void AudioInterface::AIControl()
 	{
+		Debug::GuestProf::Scope aiScope(Debug::GuestProf::Unit::AudioInterface);
+
 		// clear stream interrupt
 		if (ai.cr & AICR_AIINT)
 		{
@@ -187,6 +189,9 @@ namespace Flipper
 	// Called from DDU Core when DVD Audio decodes the next sample
 	void AudioInterface::AIStreamCallback(uint16_t l, uint16_t r, void *ctx)
 	{
+		Debug::GuestProf::Scope aiScope(Debug::GuestProf::Unit::AudioInterface);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::AudioSamples, 1);
+
 		AudioInterface* ai = (AudioInterface*)ctx;
 
 		// Check FIFO overflow

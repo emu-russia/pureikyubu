@@ -4754,6 +4754,21 @@ namespace Gekko
 	// interpreter.
 	void Interpreter::ExecuteDecoded(uint32_t pc, uint32_t instr)
 	{
+		// One interpreted guest instruction, wherever it came from: the interpreter proper (the
+		// recompiler is off), a block the recompiler refused (`Jit::RunOneInterpreted`), or an
+		// instruction inside a compiled block that the translator could not handle
+		// (`Jit::Fallback`). This is therefore the one place the guest frame profiler can charge
+		// the interpreter and record the instruction's *own* address.
+		//
+		// The address matters: inside a compiled block the emulated `regs.pc` only moves at the
+		// block's boundaries, so a histogram fed from the compiled path places the whole block -
+		// including any loop the translator kept inside it - at the block's entry address, and a PC
+		// sampled from another thread sees the same thing. A capture taken with the recompiler off
+		// puts every instruction at its own address, which is what makes the hot region in such a
+		// capture exact.
+		Debug::GuestProf::Scope interpScope(Debug::GuestProf::Unit::GekkoInterp);
+		Debug::GuestProf::NoteBlock(pc, 1);
+
 		DecodeEntry* entry = &decodeCache[(pc >> 2) & DecodeCacheMask];
 
 		if (entry->pc == pc && entry->instrBits == instr)

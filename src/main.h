@@ -62,6 +62,20 @@ struct CmdLineOptions
 	std::wstring benchFile;
 	uint32_t    benchSeconds = 30;
 
+	// `--guestprof <file> [capture.json]`: profile the *guest* while it runs, one record per
+	// emulated console frame, and stop when the capture has what it was asked for
+	// (src/guestprof.h). `--movie <offset>:<length>` names the disc range of a movie stream, so
+	// that the frames which read it are marked as movie frames and can be told apart from the
+	// frames the title draws; `--movieframes <n>` and `--guestframes <n>` say how many movie
+	// frames (and how many frames in total) the capture should hold.
+	bool    guestProf = false;
+	std::wstring guestProfFile;
+	std::wstring guestProfOut = L"guestprof.json";
+	uint64_t    movieOffset = 0;
+	uint64_t    movieLength = 0;
+	uint32_t    movieFrames = 60;
+	uint32_t    guestFrames = 6000;
+
 	// The integrated GBA emulator (issue #388). `--gba [file]` runs the GBA machine with the SDL2
 	// backend instead of the GameCube one; a file whose extension is a Game Boy one (.gba, .agb,
 	// .gb, .gbc) selects the same mode by itself. With no file at all the GBA boots its own boot

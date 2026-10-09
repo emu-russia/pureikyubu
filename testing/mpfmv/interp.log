@@ -1,0 +1,1131 @@
+[CPU] Cache::Reset
+[CPU] Cache::Reset
+[CPU] Cache::Reset
+[CPU] Cache::Reset
+[DSP] DspCore::HardReset
+[DSP] Hard Reset pc = 0x8000
+[SI] Peripheral devices
+[CPU] Cache::Reset
+[CPU] Cache::Reset
+[Info] -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Hardware Initialization.
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+[PI] Processor interface
+[MI] Flipper memory interface
+[VI] Video-out hardware interface
+[CP] Command processor (for GFX)
+[AI] Audio interface (DSP AI/DVD Audio mixer)
+[AI] DSP AI DMA
+[AR] Aux. memory (ARAM) driver
+[EXI] External devices interface bus
+[MI] Loaded and descrambled valid Bootrom
+[] (C) 1999-2003 Nintendo.  All rights reserved.(C) 1999 ArtX Inc.  All rights reserved.NTSC Revision 1.2  
+[DI] DVD interface hardware
+[SI] Serial interface driver
+[DSP] DspCore::HardReset
+[DSP] Hard Reset pc = 0x8000
+[DSP] Loaded DSP IROM: Data/dsp_irom.bin
+[DSP] Loaded DSP DROM: Data/dsp_drom.bin
+[] 
+[CP] Pixel Engine (for GFX)
+[GP] GFX pipeline: shader (OpenGL)
+[GP] GFX uniform cache: on
+[] Loading script: autoexec.cmd
+[] Executing script...
+[] 1: jit 0[] 
+Done execute script.
+[HLE] booting apploader..
+[HLE] apploader interface : init : 81200278 main : 81200298 close : 812002B8
+[HLE] apploader read : offs : 00000420 size : 00000020 addr : 812017E0
+[HLE] apploader read : offs : 00000440 size : 00000020 addr : 81201920
+[HLE] apploader read : offs : 00000440 size : 00002000 addr : 817FCB60
+[HLE] apploader read : offs : 00020440 size : 000014A0 addr : 817FEB60
+[HLE] apploader read : offs : 08607660 size : 00000100 addr : 81201800
+[HLE] apploader read : offs : 08607760 size : 000004A0 addr : 80003100
+[HLE] apploader read : offs : 08607C00 size : 003C8C40 addr : 80003640
+[HLE] apploader read : offs : 089D0840 size : 00000040 addr : 800035A0
+[HLE] apploader read : offs : 089D0880 size : 00000060 addr : 800035E0
+[HLE] apploader read : offs : 089D08E0 size : 000001C0 addr : 803CC280
+[HLE] apploader read : offs : 089D0AA0 size : 00000020 addr : 803CC440
+[HLE] apploader read : offs : 089D0AC0 size : 0000D9C0 addr : 803CC460
+[HLE] apploader read : offs : 089DE480 size : 0001E7A0 addr : 803D9E20
+[HLE] apploader read : offs : 089FCC20 size : 00002080 addr : 805A7C40
+[HLE] apploader read : offs : 089FECA0 size : 00005760 addr : 805AADE0
+[HLE] apploader read : offs : 089FECA0 size : 00005760 addr : 805AADE0
+[] 
+[HLE] RAW format map loaded: ./Data/GM8E.map
+
+[Info] -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Highlevel Initialization.
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+[Info] GuestProf: capture armed (TSC 1.90 GHz, movie range 0x2DD25600 + 7459244 bytes)
+[CPU] Instruction Cache Flash Invalidate
+[EXI] BootROM Decryption Disabled
+[Info] << Dolphin SDK - EXI	release build: Nov 11 2002 05:21:45 (0x2301) >>
+[Info] << Dolphin SDK - SI	release build: Sep  5 2002 05:33:08 (0x2301) >>
+[CPU] DBAT0U <- 00000000 (IR:0 DR:0 pc:00383A48)
+[CPU] DBAT0L <- 00000002 (IR:0 DR:0 pc:00383A4C)
+[CPU] DBAT0U <- 800001FF (IR:0 DR:0 pc:00383A50)
+[CPU] IBAT0U <- 00000000 (IR:0 DR:0 pc:00383A58)
+[CPU] IBAT0L <- 00000002 (IR:0 DR:0 pc:00383A5C)
+[CPU] IBAT0U <- 800001FF (IR:0 DR:0 pc:00383A60)
+[CPU] DBAT2U <- 00000000 (IR:0 DR:0 pc:00383A68)
+[CPU] DBAT2L <- 01000002 (IR:0 DR:0 pc:00383A6C)
+[CPU] DBAT2U <- 810000FF (IR:0 DR:0 pc:00383A70)
+[CPU] IBAT2U <- 00000000 (IR:0 DR:0 pc:00383A78)
+[CPU] IBAT2L <- 01000002 (IR:0 DR:0 pc:00383A7C)
+[CPU] IBAT2U <- 810000FF (IR:0 DR:0 pc:00383A80)
+[MI] MARR Control (MARR0-3 read/write enabled): 1/1, 1/1, 1/1, 1/1
+[Info] 
+[Info] Dolphin OS $Revision: 60 $.
+[Info] Kernel built : Nov  5 2002 12:52:29
+[Info] Console Type : Development HW3 (10000006)
+[Info] Memory 24 MB
+[Info] Arena : 0x805c11c0 - 0x817feb60
+[Info] << Dolphin SDK - OS	release build: Nov  5 2002 12:52:29 (0x2301) >>
+[Info] << Dolphin SDK - DVD	release build: Oct 29 2002 09:56:49 (0x2301) >>
+[DVD] DVD Inquiry.
+[Info] << Dolphin SDK - VI	release build: Sep  5 2002 05:33:13 (0x2301) >>
+[CPU] DBAT3L <- E0000002 (IR:1 DR:1 pc:8037FA54)
+[CPU] DBAT3U <- E00001FE (IR:1 DR:1 pc:8037FA5C)
+[CPU] Locked cache is assigned to physical address: 0xE0000000
+[CPU] Locked cache is assigned to physical address: 0xE0000020
+[CPU] Locked cache is assigned to physical address: 0xE0000040
+[CPU] Locked cache is assigned to physical address: 0xE0000060
+[CPU] Locked cache is assigned to physical address: 0xE0000080
+[CPU] Locked cache is assigned to physical address: 0xE00000A0
+[CPU] Locked cache is assigned to physical address: 0xE00000C0
+[CPU] Locked cache is assigned to physical address: 0xE00000E0
+[CPU] Locked cache is assigned to physical address: 0xE0000100
+[CPU] Locked cache is assigned to physical address: 0xE0000120
+[CPU] Locked cache is assigned to physical address: 0xE0000140
+[CPU] Locked cache is assigned to physical address: 0xE0000160
+[CPU] Locked cache is assigned to physical address: 0xE0000180
+[CPU] Locked cache is assigned to physical address: 0xE00001A0
+[CPU] Locked cache is assigned to physical address: 0xE00001C0
+[CPU] Locked cache is assigned to physical address: 0xE00001E0
+[CPU] Locked cache is assigned to physical address: 0xE0000200
+[CPU] Locked cache is assigned to physical address: 0xE0000220
+[CPU] Locked cache is assigned to physical address: 0xE0000240
+[CPU] Locked cache is assigned to physical address: 0xE0000260
+[CPU] Locked cache is assigned to physical address: 0xE0000280
+[CPU] Locked cache is assigned to physical address: 0xE00002A0
+[CPU] Locked cache is assigned to physical address: 0xE00002C0
+[CPU] Locked cache is assigned to physical address: 0xE00002E0
+[CPU] Locked cache is assigned to physical address: 0xE0000300
+[CPU] Locked cache is assigned to physical address: 0xE0000320
+[CPU] Locked cache is assigned to physical address: 0xE0000340
+[CPU] Locked cache is assigned to physical address: 0xE0000360
+[CPU] Locked cache is assigned to physical address: 0xE0000380
+[CPU] Locked cache is assigned to physical address: 0xE00003A0
+[CPU] Locked cache is assigned to physical address: 0xE00003C0
+[CPU] Locked cache is assigned to physical address: 0xE00003E0
+[CPU] Locked cache is assigned to physical address: 0xE0000400
+[CPU] Locked cache is assigned to physical address: 0xE0000420
+[CPU] Locked cache is assigned to physical address: 0xE0000440
+[CPU] Locked cache is assigned to physical address: 0xE0000460
+[CPU] Locked cache is assigned to physical address: 0xE0000480
+[CPU] Locked cache is assigned to physical address: 0xE00004A0
+[CPU] Locked cache is assigned to physical address: 0xE00004C0
+[CPU] Locked cache is assigned to physical address: 0xE00004E0
+[CPU] Locked cache is assigned to physical address: 0xE0000500
+[CPU] Locked cache is assigned to physical address: 0xE0000520
+[CPU] Locked cache is assigned to physical address: 0xE0000540
+[CPU] Locked cache is assigned to physical address: 0xE0000560
+[CPU] Locked cache is assigned to physical address: 0xE0000580
+[CPU] Locked cache is assigned to physical address: 0xE00005A0
+[CPU] Locked cache is assigned to physical address: 0xE00005C0
+[CPU] Locked cache is assigned to physical address: 0xE00005E0
+[CPU] Locked cache is assigned to physical address: 0xE0000600
+[CPU] Locked cache is assigned to physical address: 0xE0000620
+[CPU] Locked cache is assigned to physical address: 0xE0000640
+[CPU] Locked cache is assigned to physical address: 0xE0000660
+[CPU] Locked cache is assigned to physical address: 0xE0000680
+[CPU] Locked cache is assigned to physical address: 0xE00006A0
+[CPU] Locked cache is assigned to physical address: 0xE00006C0
+[CPU] Locked cache is assigned to physical address: 0xE00006E0
+[CPU] Locked cache is assigned to physical address: 0xE0000700
+[CPU] Locked cache is assigned to physical address: 0xE0000720
+[CPU] Locked cache is assigned to physical address: 0xE0000740
+[CPU] Locked cache is assigned to physical address: 0xE0000760
+[CPU] Locked cache is assigned to physical address: 0xE0000780
+[CPU] Locked cache is assigned to physical address: 0xE00007A0
+[CPU] Locked cache is assigned to physical address: 0xE00007C0
+[CPU] Locked cache is assigned to physical address: 0xE00007E0
+[CPU] Locked cache is assigned to physical address: 0xE0000800
+[CPU] Locked cache is assigned to physical address: 0xE0000820
+[CPU] Locked cache is assigned to physical address: 0xE0000840
+[CPU] Locked cache is assigned to physical address: 0xE0000860
+[CPU] Locked cache is assigned to physical address: 0xE0000880
+[CPU] Locked cache is assigned to physical address: 0xE00008A0
+[CPU] Locked cache is assigned to physical address: 0xE00008C0
+[CPU] Locked cache is assigned to physical address: 0xE00008E0
+[CPU] Locked cache is assigned to physical address: 0xE0000900
+[CPU] Locked cache is assigned to physical address: 0xE0000920
+[CPU] Locked cache is assigned to physical address: 0xE0000940
+[CPU] Locked cache is assigned to physical address: 0xE0000960
+[CPU] Locked cache is assigned to physical address: 0xE0000980
+[CPU] Locked cache is assigned to physical address: 0xE00009A0
+[CPU] Locked cache is assigned to physical address: 0xE00009C0
+[CPU] Locked cache is assigned to physical address: 0xE00009E0
+[CPU] Locked cache is assigned to physical address: 0xE0000A00
+[CPU] Locked cache is assigned to physical address: 0xE0000A20
+[CPU] Locked cache is assigned to physical address: 0xE0000A40
+[CPU] Locked cache is assigned to physical address: 0xE0000A60
+[CPU] Locked cache is assigned to physical address: 0xE0000A80
+[CPU] Locked cache is assigned to physical address: 0xE0000AA0
+[CPU] Locked cache is assigned to physical address: 0xE0000AC0
+[CPU] Locked cache is assigned to physical address: 0xE0000AE0
+[CPU] Locked cache is assigned to physical address: 0xE0000B00
+[CPU] Locked cache is assigned to physical address: 0xE0000B20
+[CPU] Locked cache is assigned to physical address: 0xE0000B40
+[CPU] Locked cache is assigned to physical address: 0xE0000B60
+[CPU] Locked cache is assigned to physical address: 0xE0000B80
+[CPU] Locked cache is assigned to physical address: 0xE0000BA0
+[CPU] Locked cache is assigned to physical address: 0xE0000BC0
+[CPU] Locked cache is assigned to physical address: 0xE0000BE0
+[CPU] Locked cache is assigned to physical address: 0xE0000C00
+[CPU] Locked cache is assigned to physical address: 0xE0000C20
+[CPU] Locked cache is assigned to physical address: 0xE0000C40
+[CPU] Locked cache is assigned to physical address: 0xE0000C60
+[CPU] Locked cache is assigned to physical address: 0xE0000C80
+[CPU] Locked cache is assigned to physical address: 0xE0000CA0
+[CPU] Locked cache is assigned to physical address: 0xE0000CC0
+[CPU] Locked cache is assigned to physical address: 0xE0000CE0
+[CPU] Locked cache is assigned to physical address: 0xE0000D00
+[CPU] Locked cache is assigned to physical address: 0xE0000D20
+[CPU] Locked cache is assigned to physical address: 0xE0000D40
+[CPU] Locked cache is assigned to physical address: 0xE0000D60
+[CPU] Locked cache is assigned to physical address: 0xE0000D80
+[CPU] Locked cache is assigned to physical address: 0xE0000DA0
+[CPU] Locked cache is assigned to physical address: 0xE0000DC0
+[CPU] Locked cache is assigned to physical address: 0xE0000DE0
+[CPU] Locked cache is assigned to physical address: 0xE0000E00
+[CPU] Locked cache is assigned to physical address: 0xE0000E20
+[CPU] Locked cache is assigned to physical address: 0xE0000E40
+[CPU] Locked cache is assigned to physical address: 0xE0000E60
+[CPU] Locked cache is assigned to physical address: 0xE0000E80
+[CPU] Locked cache is assigned to physical address: 0xE0000EA0
+[CPU] Locked cache is assigned to physical address: 0xE0000EC0
+[CPU] Locked cache is assigned to physical address: 0xE0000EE0
+[CPU] Locked cache is assigned to physical address: 0xE0000F00
+[CPU] Locked cache is assigned to physical address: 0xE0000F20
+[CPU] Locked cache is assigned to physical address: 0xE0000F40
+[CPU] Locked cache is assigned to physical address: 0xE0000F60
+[CPU] Locked cache is assigned to physical address: 0xE0000F80
+[CPU] Locked cache is assigned to physical address: 0xE0000FA0
+[CPU] Locked cache is assigned to physical address: 0xE0000FC0
+[CPU] Locked cache is assigned to physical address: 0xE0000FE0
+[CPU] Locked cache is assigned to physical address: 0xE0001000
+[CPU] Locked cache is assigned to physical address: 0xE0001020
+[CPU] Locked cache is assigned to physical address: 0xE0001040
+[CPU] Locked cache is assigned to physical address: 0xE0001060
+[CPU] Locked cache is assigned to physical address: 0xE0001080
+[CPU] Locked cache is assigned to physical address: 0xE00010A0
+[CPU] Locked cache is assigned to physical address: 0xE00010C0
+[CPU] Locked cache is assigned to physical address: 0xE00010E0
+[CPU] Locked cache is assigned to physical address: 0xE0001100
+[CPU] Locked cache is assigned to physical address: 0xE0001120
+[CPU] Locked cache is assigned to physical address: 0xE0001140
+[CPU] Locked cache is assigned to physical address: 0xE0001160
+[CPU] Locked cache is assigned to physical address: 0xE0001180
+[CPU] Locked cache is assigned to physical address: 0xE00011A0
+[CPU] Locked cache is assigned to physical address: 0xE00011C0
+[CPU] Locked cache is assigned to physical address: 0xE00011E0
+[CPU] Locked cache is assigned to physical address: 0xE0001200
+[CPU] Locked cache is assigned to physical address: 0xE0001220
+[CPU] Locked cache is assigned to physical address: 0xE0001240
+[CPU] Locked cache is assigned to physical address: 0xE0001260
+[CPU] Locked cache is assigned to physical address: 0xE0001280
+[CPU] Locked cache is assigned to physical address: 0xE00012A0
+[CPU] Locked cache is assigned to physical address: 0xE00012C0
+[CPU] Locked cache is assigned to physical address: 0xE00012E0
+[CPU] Locked cache is assigned to physical address: 0xE0001300
+[CPU] Locked cache is assigned to physical address: 0xE0001320
+[CPU] Locked cache is assigned to physical address: 0xE0001340
+[CPU] Locked cache is assigned to physical address: 0xE0001360
+[CPU] Locked cache is assigned to physical address: 0xE0001380
+[CPU] Locked cache is assigned to physical address: 0xE00013A0
+[CPU] Locked cache is assigned to physical address: 0xE00013C0
+[CPU] Locked cache is assigned to physical address: 0xE00013E0
+[CPU] Locked cache is assigned to physical address: 0xE0001400
+[CPU] Locked cache is assigned to physical address: 0xE0001420
+[CPU] Locked cache is assigned to physical address: 0xE0001440
+[CPU] Locked cache is assigned to physical address: 0xE0001460
+[CPU] Locked cache is assigned to physical address: 0xE0001480
+[CPU] Locked cache is assigned to physical address: 0xE00014A0
+[CPU] Locked cache is assigned to physical address: 0xE00014C0
+[CPU] Locked cache is assigned to physical address: 0xE00014E0
+[CPU] Locked cache is assigned to physical address: 0xE0001500
+[CPU] Locked cache is assigned to physical address: 0xE0001520
+[CPU] Locked cache is assigned to physical address: 0xE0001540
+[CPU] Locked cache is assigned to physical address: 0xE0001560
+[CPU] Locked cache is assigned to physical address: 0xE0001580
+[CPU] Locked cache is assigned to physical address: 0xE00015A0
+[CPU] Locked cache is assigned to physical address: 0xE00015C0
+[CPU] Locked cache is assigned to physical address: 0xE00015E0
+[CPU] Locked cache is assigned to physical address: 0xE0001600
+[CPU] Locked cache is assigned to physical address: 0xE0001620
+[CPU] Locked cache is assigned to physical address: 0xE0001640
+[CPU] Locked cache is assigned to physical address: 0xE0001660
+[CPU] Locked cache is assigned to physical address: 0xE0001680
+[CPU] Locked cache is assigned to physical address: 0xE00016A0
+[CPU] Locked cache is assigned to physical address: 0xE00016C0
+[CPU] Locked cache is assigned to physical address: 0xE00016E0
+[CPU] Locked cache is assigned to physical address: 0xE0001700
+[CPU] Locked cache is assigned to physical address: 0xE0001720
+[CPU] Locked cache is assigned to physical address: 0xE0001740
+[CPU] Locked cache is assigned to physical address: 0xE0001760
+[CPU] Locked cache is assigned to physical address: 0xE0001780
+[CPU] Locked cache is assigned to physical address: 0xE00017A0
+[CPU] Locked cache is assigned to physical address: 0xE00017C0
+[CPU] Locked cache is assigned to physical address: 0xE00017E0
+[CPU] Locked cache is assigned to physical address: 0xE0001800
+[CPU] Locked cache is assigned to physical address: 0xE0001820
+[CPU] Locked cache is assigned to physical address: 0xE0001840
+[CPU] Locked cache is assigned to physical address: 0xE0001860
+[CPU] Locked cache is assigned to physical address: 0xE0001880
+[CPU] Locked cache is assigned to physical address: 0xE00018A0
+[CPU] Locked cache is assigned to physical address: 0xE00018C0
+[CPU] Locked cache is assigned to physical address: 0xE00018E0
+[CPU] Locked cache is assigned to physical address: 0xE0001900
+[CPU] Locked cache is assigned to physical address: 0xE0001920
+[CPU] Locked cache is assigned to physical address: 0xE0001940
+[CPU] Locked cache is assigned to physical address: 0xE0001960
+[CPU] Locked cache is assigned to physical address: 0xE0001980
+[CPU] Locked cache is assigned to physical address: 0xE00019A0
+[CPU] Locked cache is assigned to physical address: 0xE00019C0
+[CPU] Locked cache is assigned to physical address: 0xE00019E0
+[CPU] Locked cache is assigned to physical address: 0xE0001A00
+[CPU] Locked cache is assigned to physical address: 0xE0001A20
+[CPU] Locked cache is assigned to physical address: 0xE0001A40
+[CPU] Locked cache is assigned to physical address: 0xE0001A60
+[CPU] Locked cache is assigned to physical address: 0xE0001A80
+[CPU] Locked cache is assigned to physical address: 0xE0001AA0
+[CPU] Locked cache is assigned to physical address: 0xE0001AC0
+[CPU] Locked cache is assigned to physical address: 0xE0001AE0
+[CPU] Locked cache is assigned to physical address: 0xE0001B00
+[CPU] Locked cache is assigned to physical address: 0xE0001B20
+[CPU] Locked cache is assigned to physical address: 0xE0001B40
+[CPU] Locked cache is assigned to physical address: 0xE0001B60
+[CPU] Locked cache is assigned to physical address: 0xE0001B80
+[CPU] Locked cache is assigned to physical address: 0xE0001BA0
+[CPU] Locked cache is assigned to physical address: 0xE0001BC0
+[CPU] Locked cache is assigned to physical address: 0xE0001BE0
+[CPU] Locked cache is assigned to physical address: 0xE0001C00
+[CPU] Locked cache is assigned to physical address: 0xE0001C20
+[CPU] Locked cache is assigned to physical address: 0xE0001C40
+[CPU] Locked cache is assigned to physical address: 0xE0001C60
+[CPU] Locked cache is assigned to physical address: 0xE0001C80
+[CPU] Locked cache is assigned to physical address: 0xE0001CA0
+[CPU] Locked cache is assigned to physical address: 0xE0001CC0
+[CPU] Locked cache is assigned to physical address: 0xE0001CE0
+[CPU] Locked cache is assigned to physical address: 0xE0001D00
+[CPU] Locked cache is assigned to physical address: 0xE0001D20
+[CPU] Locked cache is assigned to physical address: 0xE0001D40
+[CPU] Locked cache is assigned to physical address: 0xE0001D60
+[CPU] Locked cache is assigned to physical address: 0xE0001D80
+[CPU] Locked cache is assigned to physical address: 0xE0001DA0
+[CPU] Locked cache is assigned to physical address: 0xE0001DC0
+[CPU] Locked cache is assigned to physical address: 0xE0001DE0
+[CPU] Locked cache is assigned to physical address: 0xE0001E00
+[CPU] Locked cache is assigned to physical address: 0xE0001E20
+[CPU] Locked cache is assigned to physical address: 0xE0001E40
+[CPU] Locked cache is assigned to physical address: 0xE0001E60
+[CPU] Locked cache is assigned to physical address: 0xE0001E80
+[CPU] Locked cache is assigned to physical address: 0xE0001EA0
+[CPU] Locked cache is assigned to physical address: 0xE0001EC0
+[CPU] Locked cache is assigned to physical address: 0xE0001EE0
+[CPU] Locked cache is assigned to physical address: 0xE0001F00
+[CPU] Locked cache is assigned to physical address: 0xE0001F20
+[CPU] Locked cache is assigned to physical address: 0xE0001F40
+[CPU] Locked cache is assigned to physical address: 0xE0001F60
+[CPU] Locked cache is assigned to physical address: 0xE0001F80
+[CPU] Locked cache is assigned to physical address: 0xE0001FA0
+[CPU] Locked cache is assigned to physical address: 0xE0001FC0
+[CPU] Locked cache is assigned to physical address: 0xE0001FE0
+[CPU] Locked cache is assigned to physical address: 0xE0002000
+[CPU] Locked cache is assigned to physical address: 0xE0002020
+[CPU] Locked cache is assigned to physical address: 0xE0002040
+[CPU] Locked cache is assigned to physical address: 0xE0002060
+[CPU] Locked cache is assigned to physical address: 0xE0002080
+[CPU] Locked cache is assigned to physical address: 0xE00020A0
+[CPU] Locked cache is assigned to physical address: 0xE00020C0
+[CPU] Locked cache is assigned to physical address: 0xE00020E0
+[CPU] Locked cache is assigned to physical address: 0xE0002100
+[CPU] Locked cache is assigned to physical address: 0xE0002120
+[CPU] Locked cache is assigned to physical address: 0xE0002140
+[CPU] Locked cache is assigned to physical address: 0xE0002160
+[CPU] Locked cache is assigned to physical address: 0xE0002180
+[CPU] Locked cache is assigned to physical address: 0xE00021A0
+[CPU] Locked cache is assigned to physical address: 0xE00021C0
+[CPU] Locked cache is assigned to physical address: 0xE00021E0
+[CPU] Locked cache is assigned to physical address: 0xE0002200
+[CPU] Locked cache is assigned to physical address: 0xE0002220
+[CPU] Locked cache is assigned to physical address: 0xE0002240
+[CPU] Locked cache is assigned to physical address: 0xE0002260
+[CPU] Locked cache is assigned to physical address: 0xE0002280
+[CPU] Locked cache is assigned to physical address: 0xE00022A0
+[CPU] Locked cache is assigned to physical address: 0xE00022C0
+[CPU] Locked cache is assigned to physical address: 0xE00022E0
+[CPU] Locked cache is assigned to physical address: 0xE0002300
+[CPU] Locked cache is assigned to physical address: 0xE0002320
+[CPU] Locked cache is assigned to physical address: 0xE0002340
+[CPU] Locked cache is assigned to physical address: 0xE0002360
+[CPU] Locked cache is assigned to physical address: 0xE0002380
+[CPU] Locked cache is assigned to physical address: 0xE00023A0
+[CPU] Locked cache is assigned to physical address: 0xE00023C0
+[CPU] Locked cache is assigned to physical address: 0xE00023E0
+[CPU] Locked cache is assigned to physical address: 0xE0002400
+[CPU] Locked cache is assigned to physical address: 0xE0002420
+[CPU] Locked cache is assigned to physical address: 0xE0002440
+[CPU] Locked cache is assigned to physical address: 0xE0002460
+[CPU] Locked cache is assigned to physical address: 0xE0002480
+[CPU] Locked cache is assigned to physical address: 0xE00024A0
+[CPU] Locked cache is assigned to physical address: 0xE00024C0
+[CPU] Locked cache is assigned to physical address: 0xE00024E0
+[CPU] Locked cache is assigned to physical address: 0xE0002500
+[CPU] Locked cache is assigned to physical address: 0xE0002520
+[CPU] Locked cache is assigned to physical address: 0xE0002540
+[CPU] Locked cache is assigned to physical address: 0xE0002560
+[CPU] Locked cache is assigned to physical address: 0xE0002580
+[CPU] Locked cache is assigned to physical address: 0xE00025A0
+[CPU] Locked cache is assigned to physical address: 0xE00025C0
+[CPU] Locked cache is assigned to physical address: 0xE00025E0
+[CPU] Locked cache is assigned to physical address: 0xE0002600
+[CPU] Locked cache is assigned to physical address: 0xE0002620
+[CPU] Locked cache is assigned to physical address: 0xE0002640
+[CPU] Locked cache is assigned to physical address: 0xE0002660
+[CPU] Locked cache is assigned to physical address: 0xE0002680
+[CPU] Locked cache is assigned to physical address: 0xE00026A0
+[CPU] Locked cache is assigned to physical address: 0xE00026C0
+[CPU] Locked cache is assigned to physical address: 0xE00026E0
+[CPU] Locked cache is assigned to physical address: 0xE0002700
+[CPU] Locked cache is assigned to physical address: 0xE0002720
+[CPU] Locked cache is assigned to physical address: 0xE0002740
+[CPU] Locked cache is assigned to physical address: 0xE0002760
+[CPU] Locked cache is assigned to physical address: 0xE0002780
+[CPU] Locked cache is assigned to physical address: 0xE00027A0
+[CPU] Locked cache is assigned to physical address: 0xE00027C0
+[CPU] Locked cache is assigned to physical address: 0xE00027E0
+[CPU] Locked cache is assigned to physical address: 0xE0002800
+[CPU] Locked cache is assigned to physical address: 0xE0002820
+[CPU] Locked cache is assigned to physical address: 0xE0002840
+[CPU] Locked cache is assigned to physical address: 0xE0002860
+[CPU] Locked cache is assigned to physical address: 0xE0002880
+[CPU] Locked cache is assigned to physical address: 0xE00028A0
+[CPU] Locked cache is assigned to physical address: 0xE00028C0
+[CPU] Locked cache is assigned to physical address: 0xE00028E0
+[CPU] Locked cache is assigned to physical address: 0xE0002900
+[CPU] Locked cache is assigned to physical address: 0xE0002920
+[CPU] Locked cache is assigned to physical address: 0xE0002940
+[CPU] Locked cache is assigned to physical address: 0xE0002960
+[CPU] Locked cache is assigned to physical address: 0xE0002980
+[CPU] Locked cache is assigned to physical address: 0xE00029A0
+[CPU] Locked cache is assigned to physical address: 0xE00029C0
+[CPU] Locked cache is assigned to physical address: 0xE00029E0
+[CPU] Locked cache is assigned to physical address: 0xE0002A00
+[CPU] Locked cache is assigned to physical address: 0xE0002A20
+[CPU] Locked cache is assigned to physical address: 0xE0002A40
+[CPU] Locked cache is assigned to physical address: 0xE0002A60
+[CPU] Locked cache is assigned to physical address: 0xE0002A80
+[CPU] Locked cache is assigned to physical address: 0xE0002AA0
+[CPU] Locked cache is assigned to physical address: 0xE0002AC0
+[CPU] Locked cache is assigned to physical address: 0xE0002AE0
+[CPU] Locked cache is assigned to physical address: 0xE0002B00
+[CPU] Locked cache is assigned to physical address: 0xE0002B20
+[CPU] Locked cache is assigned to physical address: 0xE0002B40
+[CPU] Locked cache is assigned to physical address: 0xE0002B60
+[CPU] Locked cache is assigned to physical address: 0xE0002B80
+[CPU] Locked cache is assigned to physical address: 0xE0002BA0
+[CPU] Locked cache is assigned to physical address: 0xE0002BC0
+[CPU] Locked cache is assigned to physical address: 0xE0002BE0
+[CPU] Locked cache is assigned to physical address: 0xE0002C00
+[CPU] Locked cache is assigned to physical address: 0xE0002C20
+[CPU] Locked cache is assigned to physical address: 0xE0002C40
+[CPU] Locked cache is assigned to physical address: 0xE0002C60
+[CPU] Locked cache is assigned to physical address: 0xE0002C80
+[CPU] Locked cache is assigned to physical address: 0xE0002CA0
+[CPU] Locked cache is assigned to physical address: 0xE0002CC0
+[CPU] Locked cache is assigned to physical address: 0xE0002CE0
+[CPU] Locked cache is assigned to physical address: 0xE0002D00
+[CPU] Locked cache is assigned to physical address: 0xE0002D20
+[CPU] Locked cache is assigned to physical address: 0xE0002D40
+[CPU] Locked cache is assigned to physical address: 0xE0002D60
+[CPU] Locked cache is assigned to physical address: 0xE0002D80
+[CPU] Locked cache is assigned to physical address: 0xE0002DA0
+[CPU] Locked cache is assigned to physical address: 0xE0002DC0
+[CPU] Locked cache is assigned to physical address: 0xE0002DE0
+[CPU] Locked cache is assigned to physical address: 0xE0002E00
+[CPU] Locked cache is assigned to physical address: 0xE0002E20
+[CPU] Locked cache is assigned to physical address: 0xE0002E40
+[CPU] Locked cache is assigned to physical address: 0xE0002E60
+[CPU] Locked cache is assigned to physical address: 0xE0002E80
+[CPU] Locked cache is assigned to physical address: 0xE0002EA0
+[CPU] Locked cache is assigned to physical address: 0xE0002EC0
+[CPU] Locked cache is assigned to physical address: 0xE0002EE0
+[CPU] Locked cache is assigned to physical address: 0xE0002F00
+[CPU] Locked cache is assigned to physical address: 0xE0002F20
+[CPU] Locked cache is assigned to physical address: 0xE0002F40
+[CPU] Locked cache is assigned to physical address: 0xE0002F60
+[CPU] Locked cache is assigned to physical address: 0xE0002F80
+[CPU] Locked cache is assigned to physical address: 0xE0002FA0
+[CPU] Locked cache is assigned to physical address: 0xE0002FC0
+[CPU] Locked cache is assigned to physical address: 0xE0002FE0
+[CPU] Locked cache is assigned to physical address: 0xE0003000
+[CPU] Locked cache is assigned to physical address: 0xE0003020
+[CPU] Locked cache is assigned to physical address: 0xE0003040
+[CPU] Locked cache is assigned to physical address: 0xE0003060
+[CPU] Locked cache is assigned to physical address: 0xE0003080
+[CPU] Locked cache is assigned to physical address: 0xE00030A0
+[CPU] Locked cache is assigned to physical address: 0xE00030C0
+[CPU] Locked cache is assigned to physical address: 0xE00030E0
+[CPU] Locked cache is assigned to physical address: 0xE0003100
+[CPU] Locked cache is assigned to physical address: 0xE0003120
+[CPU] Locked cache is assigned to physical address: 0xE0003140
+[CPU] Locked cache is assigned to physical address: 0xE0003160
+[CPU] Locked cache is assigned to physical address: 0xE0003180
+[CPU] Locked cache is assigned to physical address: 0xE00031A0
+[CPU] Locked cache is assigned to physical address: 0xE00031C0
+[CPU] Locked cache is assigned to physical address: 0xE00031E0
+[CPU] Locked cache is assigned to physical address: 0xE0003200
+[CPU] Locked cache is assigned to physical address: 0xE0003220
+[CPU] Locked cache is assigned to physical address: 0xE0003240
+[CPU] Locked cache is assigned to physical address: 0xE0003260
+[CPU] Locked cache is assigned to physical address: 0xE0003280
+[CPU] Locked cache is assigned to physical address: 0xE00032A0
+[CPU] Locked cache is assigned to physical address: 0xE00032C0
+[CPU] Locked cache is assigned to physical address: 0xE00032E0
+[CPU] Locked cache is assigned to physical address: 0xE0003300
+[CPU] Locked cache is assigned to physical address: 0xE0003320
+[CPU] Locked cache is assigned to physical address: 0xE0003340
+[CPU] Locked cache is assigned to physical address: 0xE0003360
+[CPU] Locked cache is assigned to physical address: 0xE0003380
+[CPU] Locked cache is assigned to physical address: 0xE00033A0
+[CPU] Locked cache is assigned to physical address: 0xE00033C0
+[CPU] Locked cache is assigned to physical address: 0xE00033E0
+[CPU] Locked cache is assigned to physical address: 0xE0003400
+[CPU] Locked cache is assigned to physical address: 0xE0003420
+[CPU] Locked cache is assigned to physical address: 0xE0003440
+[CPU] Locked cache is assigned to physical address: 0xE0003460
+[CPU] Locked cache is assigned to physical address: 0xE0003480
+[CPU] Locked cache is assigned to physical address: 0xE00034A0
+[CPU] Locked cache is assigned to physical address: 0xE00034C0
+[CPU] Locked cache is assigned to physical address: 0xE00034E0
+[CPU] Locked cache is assigned to physical address: 0xE0003500
+[CPU] Locked cache is assigned to physical address: 0xE0003520
+[CPU] Locked cache is assigned to physical address: 0xE0003540
+[CPU] Locked cache is assigned to physical address: 0xE0003560
+[CPU] Locked cache is assigned to physical address: 0xE0003580
+[CPU] Locked cache is assigned to physical address: 0xE00035A0
+[CPU] Locked cache is assigned to physical address: 0xE00035C0
+[CPU] Locked cache is assigned to physical address: 0xE00035E0
+[CPU] Locked cache is assigned to physical address: 0xE0003600
+[CPU] Locked cache is assigned to physical address: 0xE0003620
+[CPU] Locked cache is assigned to physical address: 0xE0003640
+[CPU] Locked cache is assigned to physical address: 0xE0003660
+[CPU] Locked cache is assigned to physical address: 0xE0003680
+[CPU] Locked cache is assigned to physical address: 0xE00036A0
+[CPU] Locked cache is assigned to physical address: 0xE00036C0
+[CPU] Locked cache is assigned to physical address: 0xE00036E0
+[CPU] Locked cache is assigned to physical address: 0xE0003700
+[CPU] Locked cache is assigned to physical address: 0xE0003720
+[CPU] Locked cache is assigned to physical address: 0xE0003740
+[CPU] Locked cache is assigned to physical address: 0xE0003760
+[CPU] Locked cache is assigned to physical address: 0xE0003780
+[CPU] Locked cache is assigned to physical address: 0xE00037A0
+[CPU] Locked cache is assigned to physical address: 0xE00037C0
+[CPU] Locked cache is assigned to physical address: 0xE00037E0
+[CPU] Locked cache is assigned to physical address: 0xE0003800
+[CPU] Locked cache is assigned to physical address: 0xE0003820
+[CPU] Locked cache is assigned to physical address: 0xE0003840
+[CPU] Locked cache is assigned to physical address: 0xE0003860
+[CPU] Locked cache is assigned to physical address: 0xE0003880
+[CPU] Locked cache is assigned to physical address: 0xE00038A0
+[CPU] Locked cache is assigned to physical address: 0xE00038C0
+[CPU] Locked cache is assigned to physical address: 0xE00038E0
+[CPU] Locked cache is assigned to physical address: 0xE0003900
+[CPU] Locked cache is assigned to physical address: 0xE0003920
+[CPU] Locked cache is assigned to physical address: 0xE0003940
+[CPU] Locked cache is assigned to physical address: 0xE0003960
+[CPU] Locked cache is assigned to physical address: 0xE0003980
+[CPU] Locked cache is assigned to physical address: 0xE00039A0
+[CPU] Locked cache is assigned to physical address: 0xE00039C0
+[CPU] Locked cache is assigned to physical address: 0xE00039E0
+[CPU] Locked cache is assigned to physical address: 0xE0003A00
+[CPU] Locked cache is assigned to physical address: 0xE0003A20
+[CPU] Locked cache is assigned to physical address: 0xE0003A40
+[CPU] Locked cache is assigned to physical address: 0xE0003A60
+[CPU] Locked cache is assigned to physical address: 0xE0003A80
+[CPU] Locked cache is assigned to physical address: 0xE0003AA0
+[CPU] Locked cache is assigned to physical address: 0xE0003AC0
+[CPU] Locked cache is assigned to physical address: 0xE0003AE0
+[CPU] Locked cache is assigned to physical address: 0xE0003B00
+[CPU] Locked cache is assigned to physical address: 0xE0003B20
+[CPU] Locked cache is assigned to physical address: 0xE0003B40
+[CPU] Locked cache is assigned to physical address: 0xE0003B60
+[CPU] Locked cache is assigned to physical address: 0xE0003B80
+[CPU] Locked cache is assigned to physical address: 0xE0003BA0
+[CPU] Locked cache is assigned to physical address: 0xE0003BC0
+[CPU] Locked cache is assigned to physical address: 0xE0003BE0
+[CPU] Locked cache is assigned to physical address: 0xE0003C00
+[CPU] Locked cache is assigned to physical address: 0xE0003C20
+[CPU] Locked cache is assigned to physical address: 0xE0003C40
+[CPU] Locked cache is assigned to physical address: 0xE0003C60
+[CPU] Locked cache is assigned to physical address: 0xE0003C80
+[CPU] Locked cache is assigned to physical address: 0xE0003CA0
+[CPU] Locked cache is assigned to physical address: 0xE0003CC0
+[CPU] Locked cache is assigned to physical address: 0xE0003CE0
+[CPU] Locked cache is assigned to physical address: 0xE0003D00
+[CPU] Locked cache is assigned to physical address: 0xE0003D20
+[CPU] Locked cache is assigned to physical address: 0xE0003D40
+[CPU] Locked cache is assigned to physical address: 0xE0003D60
+[CPU] Locked cache is assigned to physical address: 0xE0003D80
+[CPU] Locked cache is assigned to physical address: 0xE0003DA0
+[CPU] Locked cache is assigned to physical address: 0xE0003DC0
+[CPU] Locked cache is assigned to physical address: 0xE0003DE0
+[CPU] Locked cache is assigned to physical address: 0xE0003E00
+[CPU] Locked cache is assigned to physical address: 0xE0003E20
+[CPU] Locked cache is assigned to physical address: 0xE0003E40
+[CPU] Locked cache is assigned to physical address: 0xE0003E60
+[CPU] Locked cache is assigned to physical address: 0xE0003E80
+[CPU] Locked cache is assigned to physical address: 0xE0003EA0
+[CPU] Locked cache is assigned to physical address: 0xE0003EC0
+[CPU] Locked cache is assigned to physical address: 0xE0003EE0
+[CPU] Locked cache is assigned to physical address: 0xE0003F00
+[CPU] Locked cache is assigned to physical address: 0xE0003F20
+[CPU] Locked cache is assigned to physical address: 0xE0003F40
+[CPU] Locked cache is assigned to physical address: 0xE0003F60
+[CPU] Locked cache is assigned to physical address: 0xE0003F80
+[CPU] Locked cache is assigned to physical address: 0xE0003FA0
+[CPU] Locked cache is assigned to physical address: 0xE0003FC0
+[CPU] Locked cache is assigned to physical address: 0xE0003FE0
+[Info] << Dolphin SDK - CARD	release build: Sep  5 2002 05:35:20 (0x2301) >>
+[Info] << Dolphin SDK - DSP	release build: Sep  5 2002 05:35:13 (0x2301) >>
+[Info] << Dolphin SDK - GX	release build: Feb  7 2003 04:01:13 (0x2301) >>
+[GP] OpenGL version: 4.6.0 Compatibility Profile Context 23.8.2.230810
+[GP] OpenGL renderer: AMD Radeon(TM) Graphics
+[GP] GLSL version: 4.60
+[GP] XF vertex shader compiled
+[GP] Unknown CP load, index: 0x20, data: 0x00000000
+[Info] << Dolphin SDK - AR	release build: Sep  5 2002 05:34:27 (0x2301) >>
+[Info] << Dolphin SDK - ARQ	release build: Sep  5 2002 05:34:29 (0x2301) >>
+[MI] MARR Control (MARR0-3 read/write enabled): 1/1, 1/1, 1/1, 0/0
+[Info] Protecting stack...  Stack: 0x805c11a8 down to 0x805b05a8
+[DVD] DVD Read: 0x2DD230E0, 9504 bytes
+[DVD] DVD Read: 0x2C623600, 65536 bytes
+[DVD] DVD Read: 0x2C633600, 6368 bytes
+[Info] << Dolphin SDK - PAD	release build: Sep  5 2002 05:34:02 (0x2301) >>
+[DVD] DVD Read: 0x2C6B9940, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2C6BB940, 5120 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x072F4200, 8192 bytes
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x2CC8F860, 65536 bytes
+[DVD] DVD Read: 0x2CC9F860, 65536 bytes
+[DVD] DVD Read: 0x2CCAF860, 65536 bytes
+[DVD] DVD Read: 0x2CCBF860, 65536 bytes
+[DVD] DVD Read: 0x2CCCF860, 65536 bytes
+[DVD] DVD Read: 0x2CCDF860, 65536 bytes
+[DVD] DVD Read: 0x2CCEF860, 65536 bytes
+[DVD] DVD Read: 0x2CCFF860, 65536 bytes
+[DVD] DVD Read: 0x2CD0F860, 65536 bytes
+[DVD] DVD Read: 0x2CD1F860, 65536 bytes
+[DVD] DVD Read: 0x2CD2F860, 65536 bytes
+[DVD] DVD Read: 0x2CD3F860, 65536 bytes
+[DVD] DVD Read: 0x2CD4F860, 65536 bytes
+[DVD] DVD Read: 0x2CD5F860, 65536 bytes
+[DVD] DVD Read: 0x2CD6F860, 65536 bytes
+[DVD] DVD Read: 0x2CD7F860, 65536 bytes
+[DVD] DVD Read: 0x2CD8F860, 61536 bytes
+[DVD] DVD Read: 0x2DB6E400, 65536 bytes
+[DVD] DVD Read: 0x2DB7E400, 65536 bytes
+[DVD] DVD Read: 0x2DB8E400, 65536 bytes
+[DVD] DVD Read: 0x2DB9E400, 65536 bytes
+[DVD] DVD Read: 0x2DBAE400, 65536 bytes
+[DVD] DVD Read: 0x2DBBE400, 65536 bytes
+[DVD] DVD Read: 0x2DBCE400, 65536 bytes
+[DVD] DVD Read: 0x2DBDE400, 65536 bytes
+[DVD] DVD Read: 0x2DBEE400, 65536 bytes
+[DVD] DVD Read: 0x2DBFE400, 65536 bytes
+[DVD] DVD Read: 0x2DC0E400, 65536 bytes
+[DVD] DVD Read: 0x2DC1E400, 65536 bytes
+[DVD] DVD Read: 0x2DC2E400, 65536 bytes
+[DVD] DVD Read: 0x2DC3E400, 65536 bytes
+[DVD] DVD Read: 0x2DC4E400, 65536 bytes
+[DVD] DVD Read: 0x2DC5E400, 65536 bytes
+[DVD] DVD Read: 0x2DC6E400, 65536 bytes
+[DVD] DVD Read: 0x2DC7E400, 65536 bytes
+[DVD] DVD Read: 0x2DC8E400, 65536 bytes
+[DVD] DVD Read: 0x2DC9E400, 65536 bytes
+[DVD] DVD Read: 0x2DCAE400, 65536 bytes
+[DVD] DVD Read: 0x2DCBE400, 65536 bytes
+[DVD] DVD Read: 0x2DCCE400, 65536 bytes
+[DVD] DVD Read: 0x2DCDE400, 65536 bytes
+[DVD] DVD Read: 0x2DCEE400, 65536 bytes
+[DVD] DVD Read: 0x2DCFE400, 65536 bytes
+[DVD] DVD Read: 0x2DD0E400, 65536 bytes
+[DVD] DVD Read: 0x2DD1E400, 19680 bytes
+[DVD] DVD Read: 0x2CBBE8C0, 65536 bytes
+[DVD] DVD Read: 0x2CBCE8C0, 65536 bytes
+[DVD] DVD Read: 0x2CBDE8C0, 65536 bytes
+[DVD] DVD Read: 0x2CBEE8C0, 65536 bytes
+[DVD] DVD Read: 0x2CBFE8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC0E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC1E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC2E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC3E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC4E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC5E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC6E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC7E8C0, 65536 bytes
+[DVD] DVD Read: 0x2CC8E8C0, 4000 bytes
+[DVD] DVD Read: 0x2C61F2C0, 17216 bytes
+[DVD] DVD Read: 0x08A04400, 65536 bytes
+[DVD] DVD Read: 0x08A14400, 65536 bytes
+[DVD] DVD Read: 0x08A24400, 65536 bytes
+[DVD] DVD Read: 0x08A34400, 65536 bytes
+[DVD] DVD Read: 0x08A44400, 65536 bytes
+[DVD] DVD Read: 0x08A54400, 35168 bytes
+[Info] Initializing renderer...
+[Info] << Dolphin SDK - AI	release build: Sep  5 2002 05:34:25 (0x2301) >>
+[DVD] DVD Read: 0x2CB19E80, 5280 bytes
+[DVD] DVD Read: 0x079449A0, 524288 bytes
+[DVD] DVD Read: 0x079C49A0, 160288 bytes
+[DVD] DVD Read: 0x08A5CD60, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x08A5ED60, 123584 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x0BFF1B60, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x0BFF3B60, 268160 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x151E1140, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x151E3140, 314944 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x1CEB8720, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x1CEBA720, 163296 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x21B22980, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x21B24980, 251712 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x276F0F60, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x276F2F60, 75232 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2A9045A0, 8192 bytes
+[GP] TEV fragment shader compiled
+[CP] BREAK
+[DVD] DVD Read: 0x2A9065A0, 30784 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2C026D20, 8192 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2CB9D880, 1600 bytes
+[DVD] DVD Read: 0x0BFDF7A0, 74688 bytes
+[DVD] DVD Read: 0x151B89C0, 165760 bytes
+[DVD] DVD Read: 0x1CE81BA0, 224128 bytes
+[DVD] DVD Read: 0x21B06560, 115744 bytes
+[DVD] DVD Read: 0x276C3500, 186976 bytes
+[DVD] DVD Read: 0x2A8F0860, 81216 bytes
+[DVD] DVD Read: 0x2C01DDC0, 36704 bytes
+[DVD] DVD Read: 0x2C61E900, 2496 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x0BFD0520, 1888 bytes
+[DVD] DVD Read: 0x15184120, 3744 bytes
+[DVD] DVD Read: 0x1CE57120, 3648 bytes
+[DVD] DVD Read: 0x21AEDE80, 1952 bytes
+[DVD] DVD Read: 0x276A5600, 3104 bytes
+[DVD] DVD Read: 0x2A8DA020, 1152 bytes
+[DVD] DVD Read: 0x2C015920, 320 bytes
+[DVD] DVD Read: 0x2C61DA00, 64 bytes
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x0BFD0460, 192 bytes
+[DVD] DVD Read: 0x15184080, 160 bytes
+[DVD] DVD Read: 0x1CE57060, 192 bytes
+[DVD] DVD Read: 0x21AEDDC0, 192 bytes
+[DVD] DVD Read: 0x276A5560, 160 bytes
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x2A8D9F60, 192 bytes
+[DVD] DVD Read: 0x2C015860, 192 bytes
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x2CB1BE20, 1920 bytes
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x2CB18B20, 2944 bytes
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x077B5B80, 524288 bytes
+[DVD] DVD Read: 0x07835B80, 159104 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x0855DC00, 377600 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x07C147C0, 524288 bytes
+[DVD] DVD Read: 0x07C947C0, 418208 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x081A80C0, 2144 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x085F8780, 10400 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2CB196A0, 2016 bytes
+[DVD] DVD Read: 0x2CB1B8A0, 1408 bytes
+[DVD] DVD Read: 0x2CB1B320, 1408 bytes
+[DVD] DVD Read: 0x2CB20CA0, 864 bytes
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x2CB21000, 160 bytes
+[DVD] DVD Read: 0x2CB210A0, 160 bytes
+[DVD] DVD Read: 0x2CB21140, 160 bytes
+[DVD] DVD Read: 0x2CB211E0, 160 bytes
+[DVD] DVD Read: 0x2CB21280, 160 bytes
+[DVD] DVD Read: 0x2CB21320, 160 bytes
+[DVD] DVD Read: 0x2CB213C0, 160 bytes
+[DVD] DVD Read: 0x2CB21460, 320 bytes
+[DVD] DVD Read: 0x2CB215A0, 448 bytes
+[DVD] DVD Read: 0x2CB21760, 320 bytes
+[DVD] DVD Read: 0x2CB218A0, 320 bytes
+[DVD] DVD Read: 0x2CB219E0, 352 bytes
+[DVD] DVD Read: 0x2CB21B40, 320 bytes
+[DVD] DVD Read: 0x2CB21C80, 320 bytes
+[DVD] DVD Read: 0x2CB21DC0, 352 bytes
+[DVD] DVD Read: 0x2CB21F20, 160 bytes
+[DVD] DVD Read: 0x2CB21FC0, 160 bytes
+[DVD] DVD Read: 0x2CB22E40, 12544 bytes
+[DVD] DVD Read: 0x2CB2CC40, 160 bytes
+[DVD] DVD Read: 0x2CB2CCE0, 3424 bytes
+[DVD] DVD Read: 0x2CB2DA40, 160 bytes
+[DVD] DVD Read: 0x2CB2DAE0, 3232 bytes
+[DVD] DVD Read: 0x2CB2E780, 160 bytes
+[DVD] DVD Read: 0x2CB2E820, 1088 bytes
+[DVD] DVD Read: 0x2CB2EC60, 192 bytes
+[DVD] DVD Read: 0x2CB2ED20, 896 bytes
+[DVD] DVD Read: 0x2CB2F0A0, 160 bytes
+[DVD] DVD Read: 0x2CB2F140, 160 bytes
+[DVD] DVD Read: 0x2CB2F1E0, 160 bytes
+[DVD] DVD Read: 0x2CB2F280, 736 bytes
+[DVD] DVD Read: 0x2CB2F560, 160 bytes
+[DVD] DVD Read: 0x2CB2F600, 160 bytes
+[DVD] DVD Read: 0x2CB2F6A0, 1216 bytes
+[DVD] DVD Read: 0x2CB2FB60, 160 bytes
+[DVD] DVD Read: 0x2CB2FC00, 1760 bytes
+[DVD] DVD Read: 0x2CB302E0, 512 bytes
+[DVD] DVD Read: 0x2CB304E0, 320 bytes
+[DVD] DVD Read: 0x2CB30620, 448 bytes
+[DVD] DVD Read: 0x2CB307E0, 320 bytes
+[DVD] DVD Read: 0x2CB30920, 320 bytes
+[DVD] DVD Read: 0x2CB30A60, 352 bytes
+[DVD] DVD Read: 0x2CB30BC0, 320 bytes
+[DVD] DVD Read: 0x2CB30D00, 320 bytes
+[DVD] DVD Read: 0x2CB30E40, 352 bytes
+[DVD] DVD Read: 0x2CB30FA0, 4864 bytes
+[DVD] DVD Read: 0x2CBAAD00, 576 bytes
+[DVD] DVD Read: 0x2CBABA60, 544 bytes
+[DVD] DVD Read: 0x2CBABC80, 576 bytes
+[DVD] DVD Read: 0x2CBABEC0, 992 bytes
+[DVD] DVD Read: 0x2CBAC920, 1056 bytes
+[DVD] DVD Read: 0x2CBACD40, 1056 bytes
+[DVD] DVD Read: 0x2CBAD160, 1120 bytes
+[DVD] DVD Read: 0x2CBAD5C0, 1088 bytes
+[DVD] DVD Read: 0x2CBADA00, 1056 bytes
+[DVD] DVD Read: 0x2CBAE080, 480 bytes
+[DVD] DVD Read: 0x2CBAE260, 1120 bytes
+[DVD] DVD Read: 0x2CBAEB60, 1248 bytes
+[DVD] DVD Read: 0x2CBAF040, 1120 bytes
+[DVD] DVD Read: 0x2CBAF940, 1248 bytes
+[DVD] DVD Read: 0x2CBB0300, 32480 bytes
+[DVD] DVD Read: 0x2CB322A0, 160 bytes
+[DVD] DVD Read: 0x2CB32340, 4416 bytes
+[DVD] DVD Read: 0x2CB33480, 160 bytes
+[DVD] DVD Read: 0x2CB33520, 160 bytes
+[DVD] DVD Read: 0x2CB335C0, 160 bytes
+[DVD] DVD Read: 0x2CB336A0, 192 bytes
+[DVD] DVD Read: 0x2CB33760, 192 bytes
+[DVD] DVD Read: 0x2CB33820, 9440 bytes
+[DVD] DVD Read: 0x2CB1C5A0, 832 bytes
+[DVD] DVD Read: 0x2CB3D500, 4128 bytes
+[DVD] DVD Read: 0x074DCD60, 524288 bytes
+[DVD] DVD Read: 0x0755CD60, 524288 bytes
+[DVD] DVD Read: 0x075DCD60, 524288 bytes
+[DVD] DVD Read: 0x0765CD60, 385760 bytes
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[CP] BREAK
+[DVD] DVD Read: 0x085FB020, 50752 bytes
+[DVD] DVD Read: 0x4D41EE00, 131072 bytes
+[DVD] DVD Read: 0x4D43EE00, 131072 bytes
+[DVD] DVD Read: 0x4D45EE00, 131072 bytes
+[DVD] DVD Read: 0x4D47EE00, 131072 bytes
+[DVD] DVD Read: 0x4D49EE00, 131072 bytes
+[DVD] DVD Read: 0x4D4BEE00, 131072 bytes
+[DVD] DVD Read: 0x4D4DEE00, 131072 bytes
+[DVD] DVD Read: 0x4D4FEE00, 131072 bytes
+[DVD] DVD Read: 0x4D51EE00, 131072 bytes
+[DVD] DVD Read: 0x4D53EE00, 131072 bytes
+[DVD] DVD Read: 0x4D55EE00, 131072 bytes
+[DVD] DVD Read: 0x4D57EE00, 131072 bytes
+[DVD] DVD Read: 0x4D59EE00, 131072 bytes
+[DVD] DVD Read: 0x4D5BEE00, 131072 bytes
+[DVD] DVD Read: 0x4D5DEE00, 131072 bytes
+[DVD] DVD Read: 0x4D5FEE00, 7616 bytes
+[DVD] DVD Read: 0x4D600BC0, 131072 bytes
+[DVD] DVD Read: 0x4D620BC0, 131072 bytes
+[DVD] DVD Read: 0x4D640BC0, 131072 bytes
+[DVD] DVD Read: 0x4D660BC0, 131072 bytes
+[DVD] DVD Read: 0x4D680BC0, 131072 bytes
+[DVD] DVD Read: 0x4D6A0BC0, 131072 bytes
+[DVD] DVD Read: 0x4D6C0BC0, 131072 bytes
+[DVD] DVD Read: 0x4D6E0BC0, 131072 bytes
+[DVD] DVD Read: 0x4D700BC0, 131072 bytes
+[DVD] DVD Read: 0x4D720BC0, 131072 bytes
+[DVD] DVD Read: 0x4D740BC0, 131072 bytes
+[DVD] DVD Read: 0x4D760BC0, 131072 bytes
+[DVD] DVD Read: 0x4D780BC0, 64128 bytes
+[Info] << Dolphin SDK - THP	release build: Aug 27 2002 20:42:01 >>
+[DVD] DVD Read: 0x2DD25600, 64 bytes
+[DVD] DVD Read: 0x2DD25630, 32 bytes
+[DVD] DVD Read: 0x2DD25644, 32 bytes
+[DVD] DVD Read: 0x2DD2564C, 5408 bytes
+[DVD] DVD Read: 0x2E4427C0, 64 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2E4427F0, 32 bytes
+[DVD] DVD Read: 0x2E442804, 32 bytes
+[DVD] DVD Read: 0x2E44280C, 46752 bytes
+[DVD] DVD Read: 0x2F432840, 64 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2F432870, 32 bytes
+[DVD] DVD Read: 0x2F432884, 32 bytes
+[DVD] DVD Read: 0x2F43288C, 32288 bytes
+[DVD] DVD Read: 0x2FB9BD00, 64 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2FB9BD30, 32 bytes
+[DVD] DVD Read: 0x2FB9BD44, 32 bytes
+[DVD] DVD Read: 0x2FB9BD4C, 49152 bytes
+[DVD] DVD Read: 0x30CC5D80, 64 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x30CC5DB0, 32 bytes
+[DVD] DVD Read: 0x30CC5DC4, 32 bytes
+[DVD] DVD Read: 0x30CC5DCC, 30880 bytes
+[DVD] DVD Read: 0x3163FF80, 64 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x3163FFB0, 32 bytes
+[DVD] DVD Read: 0x3163FFC4, 32 bytes
+[DVD] DVD Read: 0x3163FFCC, 18144 bytes
+[DVD] DVD Read: 0x31B72C40, 64 bytes
+[DVD] DVD Read: 0x31B72C70, 32 bytes
+[DVD] DVD Read: 0x31B72C84, 32 bytes
+[DVD] DVD Read: 0x31B72C8C, 46624 bytes
+[DVD] DVD Read: 0x31E39BA0, 64 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x31E39BD0, 32 bytes
+[DVD] DVD Read: 0x31E39BE4, 32 bytes
+[DVD] DVD Read: 0x31E39BEC, 49120 bytes
+[DVD] DVD Read: 0x31E39BA0, 64 bytes
+[DVD] DVD Read: 0x31E39BD0, 32 bytes
+[DVD] DVD Read: 0x31E39BE4, 32 bytes
+[DVD] DVD Read: 0x31E39BEC, 49120 bytes
+[DVD] DVD Read: 0x2DD26B6C, 5440 bytes
+[CP] BREAK
+[DVD] DVD Read: 0x2DD280AC, 5568 bytes
+[Info] GuestProf: capture stopped after 393 frames (60 of them movie frames)
+[Info] GuestProf: wrote C:\Work\pureikyubu\testing\mpfmv\capture_interp.json (393 frames)
+[CPU] Cache::Reset
+[CPU] Cache::Reset

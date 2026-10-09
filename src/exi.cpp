@@ -437,6 +437,8 @@ namespace Flipper
 
 	void ExternalInterface::exi_write_cr(int chan, uint32_t data)
 	{
+		Debug::GuestProf::Scope exiScope(Debug::GuestProf::Unit::ExternalInterface);
+
 		EXIRegs* regs = &exi.regs[chan];
 		regs->cr = data;
 
@@ -454,6 +456,10 @@ namespace Flipper
 			// left with nothing to talk to.
 			if (exi.sel != -1)
 			{
+				// A real transfer: the device's own callback runs the sequence. Counted here, so
+				// that a CR write that does not start one (or starts one with nothing selected)
+				// does not read as EXI traffic.
+				Debug::HwProfile::Count(Debug::HwProfile::Counter::ExiTransfers, 1);
 				exi_cb[exi.chan][exi.sel](this);
 			}
 			else

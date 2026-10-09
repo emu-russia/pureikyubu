@@ -65,6 +65,9 @@ namespace Flipper
 
 	bool HiSpeedPort::Write(uint32_t aramAddr, const uint8_t* src, uint32_t len)
 	{
+		Debug::GuestProf::Scope hspScope(Debug::GuestProf::Unit::HiSpeedPort);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::HspTransfers, 1);
+
 		if (device == nullptr || !InWindow(aramAddr))
 		{
 			return false;
@@ -89,6 +92,9 @@ namespace Flipper
 
 	bool HiSpeedPort::Read(uint32_t aramAddr, uint8_t* dst, uint32_t len)
 	{
+		Debug::GuestProf::Scope hspScope(Debug::GuestProf::Unit::HiSpeedPort);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::HspTransfers, 1);
+
 		if (device == nullptr || !InWindow(aramAddr))
 		{
 			return false;

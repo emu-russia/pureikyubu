@@ -157,6 +157,7 @@ namespace Flipper
 
 #include "debug.h"
 #include "hwprof.h"
+#include "guestprof.h"
 #include "hwosd.h"
 #include "debugui2.h"
 

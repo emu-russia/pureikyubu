@@ -119,6 +119,8 @@ namespace GFX
 	// reg size = 24 bit (value is already masked)
 	void SetupUnit::loadSUReg(size_t index, uint32_t value, uint32_t mask)
 	{
+		Debug::GuestProf::Scope suScope(Debug::GuestProf::Unit::SetupUnit);
+
 		switch (index)
 		{
 			//
@@ -441,6 +443,8 @@ namespace GFX
 
 	void SetupUnit::SoftSetupTriangle(const SoftVertex& v0, const SoftVertex& v1, const SoftVertex& v2)
 	{
+		Debug::GuestProf::Scope suScope(Debug::GuestProf::Unit::SetupUnit);
+
 		const SoftVertex* v[3] = { &v0, &v1, &v2 };
 
 		float x[3], y[3], z[3], w[3];

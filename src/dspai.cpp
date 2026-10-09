@@ -168,6 +168,8 @@ namespace DSP
 	// Simulate AI FIFO
 	static void AIFeedMixer()
 	{
+		Debug::GuestProf::Scope aiScope(Debug::GuestProf::Unit::AudioInterface);
+
 		Gekko::stats.aiFeeds++;
 
 		int bytes = 32;
@@ -189,6 +191,10 @@ namespace DSP
 		// ... and either way the block is what goes into the mixer.
 		HwProfile::Count(HwProfile::Counter::DmaAi, bytes);
 		HwProfile::Count(HwProfile::Counter::AudioMixer, bytes);
+
+		// A 32-byte block is 8 stereo sample pairs (4 bytes per pair, 16-bit left + 16-bit right,
+		// the same `bytes / 4` AIGetTime uses above).
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::AudioSamples, 8);
 
 		dsp_ai.dmaTime = Core->GetTicks() + AIGetTime(bytes, dsp_ai.dmaRate);
 	}

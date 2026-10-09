@@ -637,6 +637,10 @@ namespace Debug
 		// The HW interface profiler (issue #394): `hwprofile` is the report, `hwsod` is the
 		// overlay it draws over the emulated picture.
 		HwOsd::Reflector();
+
+		// The guest frame profiler: `guestprof` reports and drives a per-frame
+		// capture of where the host time and the guest traffic went.
+		GuestProf::Reflector();
 	}
 }
 

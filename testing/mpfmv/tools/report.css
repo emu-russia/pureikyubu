@@ -1,0 +1,84 @@
+/* The guest frame profile report. One self-contained page: no network, no fonts, no scripts
+   from anywhere else. The palette follows the emulator's site theme (docs/assets/style.css). */
+
+:root {
+  --bg: #14161c;
+  --panel: #1c1f27;
+  --panel2: #232733;
+  --ink: #e8eaf0;
+  --dim: #9aa1b4;
+  --line: #333949;
+  --accent: #7fd1ff;
+
+  --gekko: #7fd1ff;
+  --flipper: #9be37f;
+  --audio: #ffce6a;
+  --dvd: #ff9a7a;
+  --gfx: #c79bff;
+  --host: #7d8496;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.55 "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 22px 90px; }
+
+header.top { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 26px; }
+header.top h1 { margin: 0 0 6px; font-size: 26px; font-weight: 650; letter-spacing: .2px; }
+header.top .sub { color: var(--dim); font-size: 13px; }
+header.top .sub code { color: var(--accent); }
+
+h2 { font-size: 19px; margin: 40px 0 8px; padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 15px; margin: 26px 0 8px; color: var(--ink); font-weight: 620; }
+
+p { margin: 9px 0; }
+p.note { color: var(--dim); font-size: 13px; }
+
+code, .mono { font-family: "Cascadia Mono", Consolas, "Courier New", monospace; font-size: 12.5px; }
+code { background: #0e1015; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; color: var(--accent); }
+
+pre {
+  background: #0e1015; border: 1px solid var(--line); border-radius: 6px;
+  padding: 12px 14px; overflow-x: auto; margin: 12px 0;
+}
+pre code { background: none; border: none; padding: 0; color: #cfe6ff; }
+
+.cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 4px; }
+.card {
+  flex: 1 1 168px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px 14px;
+}
+.card .k { color: var(--dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; }
+.card .v { font-size: 21px; font-weight: 640; margin-top: 3px; }
+.card .u { font-size: 12px; color: var(--dim); margin-left: 3px; font-weight: 400; }
+
+.chart {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 14px 16px 10px; margin: 16px 0;
+}
+.chart h3 { margin: 0 0 2px; font-size: 14.5px; }
+.chart .cap { color: var(--dim); font-size: 12.5px; margin: 0 0 10px; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 12px; color: var(--dim); }
+.chart .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13px; }
+caption { text-align: left; color: var(--dim); font-size: 12.5px; padding-bottom: 6px; }
+th, td { text-align: left; padding: 5px 9px; border-bottom: 1px solid var(--line); }
+th { color: var(--dim); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+td.n, th.n { text-align: right; font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; }
+tbody tr:hover { background: var(--panel2); }
+tr.total td { border-top: 2px solid var(--line); font-weight: 620; }
+td .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 7px; vertical-align: 0; }
+td .sub { color: var(--dim); font-size: 11.5px; }
+
+.badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--line); color: var(--dim); }
+.badge.movie { color: #ffd9a0; border-color: #6a5330; background: #2a2317; }
+
+footer { margin-top: 46px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12.5px; }

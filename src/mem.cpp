@@ -452,6 +452,7 @@ namespace Flipper
 
 	void MemoryInterface::MIReadBurst(uint32_t mem_addr, uint8_t burstData[32])
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::MemoryInterface);
 		memcpy(burstData, &mi.ram[mem_addr], 32);
 		mi.pi_read_counter.cnt++;
 
@@ -462,6 +463,7 @@ namespace Flipper
 
 	void MemoryInterface::MIWriteBurst(uint32_t mem_addr, uint8_t burstData[32])
 	{
+		Debug::GuestProf::Scope memScope(Debug::GuestProf::Unit::MemoryInterface);
 		memcpy(&mi.ram[mem_addr], burstData, 32);
 		mi.pi_write_counter.cnt++;
 

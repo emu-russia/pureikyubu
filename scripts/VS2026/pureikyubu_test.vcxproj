@@ -56,6 +56,7 @@
     <ClCompile Include="..\..\testing\dsp_golden_alu_test.cpp" />
     <ClCompile Include="..\..\testing\dsp_jit_test.cpp" />
     <ClCompile Include="..\..\testing\hwprof_test.cpp" />
+    <ClCompile Include="..\..\testing\guestprof_test.cpp" />
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <ClCompile Include="..\..\testing\security_test.cpp" />
     <ClCompile Include="..\..\testing\jdi_utf8_test.cpp" />
@@ -231,6 +232,9 @@
     <ClCompile Include="..\..\src\hwprof.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\src\guestprof.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\src\gfxosd.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -289,6 +293,7 @@
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\hwprof.h" />
+    <ClInclude Include="..\..\src\guestprof.h" />
     <ClInclude Include="..\..\src\mcp.h" />
     <ClInclude Include="..\..\src\gfx.h" />
     <ClInclude Include="..\..\src\gfxuniformcache.h" />

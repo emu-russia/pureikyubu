@@ -213,6 +213,9 @@ namespace Flipper
 		{
 			vi.vtime = Core->GetTicks();
 
+			// A scan line is due: this is the block that does the VI's work.
+			Debug::GuestProf::Scope viScope(Debug::GuestProf::Unit::VideoInterface);
+
 			// generate VIINT ?
 			vi.pos.vcount++;
 			if (vi.pos.vcount == vi.int0.vcount)
@@ -245,6 +248,9 @@ namespace Flipper
 					YUVBlit(vi.xfbbuf, vi.gfxbuf);
 					vi.frames++;
 				}
+
+				// The scan-out wrapped: the one console frame boundary the guest frame profiler uses.
+				Debug::GuestProf::FrameBoundary(Core->GetTicks());
 			}
 		}
 	}

@@ -14,6 +14,7 @@ the security review in `wiki/security.md`:
 |---|---|
 | `security_test.cpp` | The rules of `src/verify.h` (main-memory windows, image sections, disc reads, FST entries, memory card transfers, the console script reader) and the hardening of `Json::Deserialize`: the malformed settings documents that used to overflow, spin or exhaust the stack must be rejected, the well-formed ones must still parse, and the shipped JDI specification texts must all be accepted. Two of the cases are property tests (200 000 random ranges checked against carry-based arithmetic, and 3000 random binary scripts read with canaries around the line buffer). |
 | `hwprof_test.cpp` | The HW interface profiler (issue #394): the rate table (the baseline reading, the window in *emulated* seconds, a zero-length window, a counter that goes backwards when the machine is rebuilt), the units the report prints, and the two report forms. The profiler is a pure function of a reading, so the sampling is driven with exact numbers instead of a running emulator. The paired-instruction rule of the DSP counter is pinned down by `Packed_CountsAsOneInstruction` in `dsp_parallel_test.cpp`. |
+| `guestprof_test.cpp` | The guest frame profiler: the unit and channel tables the report is built from (every entry has a name, a group and a description, and none is listed twice), the frame boundary (the first one is only the baseline, one boundary is one record, the capture stops by itself when it holds the movie frames it was asked for), the movie marking (a read that overlaps the stream's disc range marks its frame, and every later frame stays marked), the 4 KB basic-block histogram and its top list, and the **exclusive** host cycle accounting (a nested scope's cycles are subtracted from its parent's, so one cycle is never charged to two units). The capture needs no machine: `CaptureOptions::ticksPerSecond` lets the test drive it with synthetic boundaries. |
 | `mcp_test.cpp` | The MCP server (issue #383): the handshake (the protocol revision the client asked for, the newest one the server speaks), the errors JSON-RPC assigns to an invalid message (a parse error, an invalid request, an unknown method, an unknown tool), the tool table built from a specification of the test's own (the hints as parameters, `[a\|b\|c]` as an enumeration, the fallback `args`, `"mcp": false`), the two argument forms of a tool call, the tool errors a failing command produces, the single-line framing of an answer - and the tool table over **every specification the emulator ships**, which is what keeps the whole debug interface reachable from a client. |
 | `banner_test.cpp` | The DVD banner image (`src/banner.cpp`), which is the picture of a disc in the game selector (issue #112). The module decodes the RGB5A3 texture a banner carries and puts a colour under the texels its alpha makes see-through, and both steps are pure functions of the banner bytes, so the tests build banners of their own: the two texel formats, which bit picks one, the big-endian words, the 4x4 tiling, a fill that an opaque texel keeps out, a fill that is itself translucent, and a fill applied twice. |
 | `startup_cases.sh` | The startup-crash checks: `pureikyubu --selftest` run against a settings file truncated after `{`, a settings file with a missing colon, an over-long string, a corrupt default settings file, and random files renamed to `.dol` and `.rvz`. Each case must be reported by the self test (non-zero status) and must not crash or hang the process. It needs a built emulator in `build/`. |
@@ -224,6 +225,14 @@ run for exactly as many instructions as the recompiler actually retired.
 `testing/dsp_bench` is the standalone (non-CppUnitTest) counterpart: the same differential
 check without Visual Studio, plus a wall-clock benchmark of both engines. See its
 `Readme.md`.
+
+# The FMV profile
+
+`testing/mpfmv/` is a *research* directory rather than a test: it holds the capture of the
+Metroid Prime intro FMV, the scripts that produced it and the generated report. It is the worked
+example of the guest frame profiler - how a title is driven to the state worth measuring, how the
+disc range of a THP stream is resolved out of the image's own file system table, and how the
+capture becomes a report. See its `Readme.md`.
 
 # The UTF-8 suite (issue #372)
 

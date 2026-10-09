@@ -52,6 +52,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadByte(uint32_t pa, uint32_t* reg)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIRead(1);
 		uint8_t* ptr;
 
@@ -85,6 +86,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteByte(uint32_t pa, uint32_t data)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIWrite(1);
 		uint8_t* ptr;
 
@@ -108,6 +110,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadHalf(uint32_t pa, uint32_t* reg)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIRead(2);
 		uint8_t* ptr;
 
@@ -129,6 +132,7 @@ namespace Flipper
 		if (pa >= HW_BASE)
 		{
 			Gekko::stats.mmioReads++;
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::MmioReads, 1);
 			pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffe];
 			trap->read(pa, reg, trap->context);
 			return;
@@ -150,6 +154,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteHalf(uint32_t pa, uint32_t data)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIWrite(2);
 		uint8_t* ptr;
 
@@ -162,6 +167,7 @@ namespace Flipper
 		if (pa >= HW_BASE)
 		{
 			Gekko::stats.mmioWrites++;
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::MmioWrites, 1);
 			pi_reg_trap* trap = &hw_reg_traps[pa & 0xfffe];
 			trap->write(pa, data, trap->context);
 			return;
@@ -182,6 +188,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadWord(uint32_t pa, uint32_t* reg)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIRead(4);
 		uint8_t* ptr;
 
@@ -212,6 +219,7 @@ namespace Flipper
 		if (pa >= HW_BASE)
 		{
 			Gekko::stats.mmioReads++;
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::MmioReads, 1);
 			pi_reg_trap* trap;
 			uint32_t temp_hi, temp_lo;
 			trap = &hw_reg_traps[pa & 0xffff];
@@ -235,6 +243,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteWord(uint32_t pa, uint32_t data)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIWrite(4);
 		uint8_t* ptr;
 
@@ -247,6 +256,7 @@ namespace Flipper
 		if (pa >= HW_BASE)
 		{
 			Gekko::stats.mmioWrites++;
+			Debug::HwProfile::Count(Debug::HwProfile::Counter::MmioWrites, 1);
 			pi_reg_trap* trap = &hw_reg_traps[pa & 0xffff];
 			trap->write(pa, data >> 16, trap->context);
 			trap = &hw_reg_traps[(pa + 2) & 0xffff];
@@ -280,6 +290,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadDouble(uint32_t pa, uint64_t* reg)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIRead(8);
 		if (pa >= PI_MEMSPACE_BOOTROM)
 		{
@@ -304,6 +315,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteDouble(uint32_t pa, uint64_t* data)
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIWrite(8);
 		if (pa >= PI_MEMSPACE_BOOTROM)
 		{
@@ -327,6 +339,8 @@ namespace Flipper
 
 	void ProcessorInterface::PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
+
 		// A burst is a whole 32-byte cache line and the address comes from guest registers (a
 		// locked-cache DMA address or a cache line), so the *whole* window has to be inside main
 		// memory: the old test only asked whether the first byte was mapped, and a burst in the
@@ -347,6 +361,7 @@ namespace Flipper
 
 	void ProcessorInterface::PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 	{
+		Debug::GuestProf::Scope piScope(Debug::GuestProf::Unit::ProcessorInterface);
 		CountPIWrite(32);
 
 		// You can actually write anywhere on the page

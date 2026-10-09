@@ -870,6 +870,9 @@ namespace DSP
 
 	uint32_t DspCore::RunJitBlock()
 	{
+		// One DSP instruction block: the JIT's recompiled block, or one interpreted word.
+		Debug::GuestProf::Scope dspScope(Debug::GuestProf::Unit::DspCore);
+
 		uint32_t retired = 1;
 
 		// The interpreter calls CheckInterrupts before every instruction (DspCore::Step); this
@@ -898,6 +901,10 @@ namespace DSP
 		}
 
 		TraceStep(entryPc, retired);
+
+		// The guest's hot DSP blocks, keyed by the pc the block ran from (`entryPc`, the same
+		// value TraceStep records: CheckInterrupts above may already have vectored the core).
+		Debug::GuestProf::NoteDspBlock(entryPc, retired);
 
 		return retired;
 	}

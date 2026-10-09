@@ -74,6 +74,7 @@
     <ClInclude Include="..\..\src\gekkodisasm.h" />
     <ClInclude Include="..\..\src\hwdebug.h" />
     <ClInclude Include="..\..\src\hwprof.h" />
+    <ClInclude Include="..\..\src\guestprof.h" />
     <ClInclude Include="..\..\src\hwosd.h" />
     <ClInclude Include="..\..\src\gba\gba_debug.h" />
     <ClInclude Include="..\..\src\gfx.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="..\..\src\gbalink.cpp" />
     <ClCompile Include="..\..\src\gbplayer.cpp" />
     <ClCompile Include="..\..\src\hwprof.cpp" />
+    <ClCompile Include="..\..\src\guestprof.cpp" />
     <ClCompile Include="..\..\src\hwosd.cpp" />
     <!--
       The debug interface of the portable machines lives in src/gba, and the precompiled header it

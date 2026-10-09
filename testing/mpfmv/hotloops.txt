@@ -1,0 +1,208 @@
+# The hot code of the Metroid Prime intro FMV, disassembled by the emulator's own GekkoDisasm.
+#
+# The addresses come from a capture taken with the recompiler OFF (jit 0): with it on, the
+# emulated program counter only moves at the boundaries of a compiled block, so a PC sampled
+# from another thread reports the block entry rather than the instruction that is running.
+#
+# Reproduce with:
+#   python tools/jdi.py <image> disasm 0x8036C4D0 190
+#
+# The leaf the guest spins in, sampled 35% of the time, is the six instructions at the end:
+#
+#   0x8036C7C8  lha    r0, 0(r4)        ; the next signed halfword of the array
+#   0x8036C7CC  addi   r4, r4, 2
+#   0x8036C7D0  cmpw   r3, r0           ; against the needle in r3
+#   0x8036C7D4  blt+   0x8036C7E0       ; past it, stop
+#   0x8036C7D8  addi   r6, r6, 1        ; else count it
+#   0x8036C7DC  bdnz+  0x8036C7C8       ; and go round
+
+0x8036C4D0  mtlr       r0
+0x8036C4D4  addi       r1, r1, 48
+0x8036C4D8  blr        
+0x8036C4DC  srawi      r0, r5, 2
+0x8036C4E0  add        r0, r4, r0
+0x8036C4E4  extsh.     r0, r0
+0x8036C4E8  bge+       0x8036C504
+0x8036C4EC  neg        r4, r3
+0x8036C4F0  li         r0, -0x8000
+0x8036C4F4  or         r3, r4, r3
+0x8036C4F8  srawi      r3, r3, 31
+0x8036C4FC  and        r3, r0, r3
+0x8036C500  blr        
+0x8036C504  rlwinm     r4, r0, 0, 25, 31
+0x8036C508  rlwinm     r0, r0, 25, 28, 31
+0x8036C50C  addi       r4, r4, 128
+0x8036C510  cmpwi      r3, 0
+0x8036C514  extsh      r3, r4
+0x8036C518  extsh      r0, r0
+0x8036C51C  rlwinm     r3, r3, 7, 0, 24
+0x8036C520  subfic     r0, r0, 14
+0x8036C524  sraw       r0, r3, r0
+0x8036C528  extsh      r3, r0
+0x8036C52C  beqlr-     
+0x8036C530  addi       r3, r3, -0x8000
+0x8036C534  blr        
+0x8036C538  lha        r5, 10 (r3)
+0x8036C53C  cmpwi      r5, 256
+0x8036C540  blt+       0x8036C54C
+0x8036C544  lha        r3, 4 (r3)
+0x8036C548  blr        
+0x8036C54C  lwz        r4, 0 (r3)
+0x8036C550  lha        r0, 4 (r3)
+0x8036C554  srawi      r3, r4, 6
+0x8036C558  subf.      r0, r3, r0
+0x8036C55C  srawi      r4, r5, 2
+0x8036C560  ble+       0x8036C574
+0x8036C564  mullw      r0, r0, r4
+0x8036C568  srawi      r0, r0, 6
+0x8036C56C  add        r3, r3, r0
+0x8036C570  blr        
+0x8036C574  bgelr-     
+0x8036C578  mullw      r4, r0, r4
+0x8036C57C  addi       r0, r4, 63
+0x8036C580  srawi      r0, r0, 6
+0x8036C584  add        r3, r3, r0
+0x8036C588  blr        
+0x8036C58C  stwu       r1, -16 (r1)
+0x8036C590  mflr       r0
+0x8036C594  stw        r0, 20 (r1)
+0x8036C598  stw        r31, 12 (r1)
+0x8036C59C  stw        r30, 8 (r1)
+0x8036C5A0  mr         r30, r3
+0x8036C5A4  lha        r0, 12 (r3)
+0x8036C5A8  lha        r4, 44 (r3)
+0x8036C5AC  srawi      r3, r0, 2
+0x8036C5B0  bl         0x8036C6D8
+0x8036C5B4  lha        r0, 14 (r30)
+0x8036C5B8  mr         r31, r3
+0x8036C5BC  lha        r4, 46 (r30)
+0x8036C5C0  srawi      r3, r0, 2
+0x8036C5C4  bl         0x8036C6D8
+0x8036C5C8  lwz        r0, 20 (r1)
+0x8036C5CC  add        r3, r3, r31
+0x8036C5D0  lwz        r31, 12 (r1)
+0x8036C5D4  lwz        r30, 8 (r1)
+0x8036C5D8  mtlr       r0
+0x8036C5DC  addi       r1, r1, 16
+0x8036C5E0  blr        
+0x8036C5E4  stwu       r1, -32 (r1)
+0x8036C5E8  mflr       r0
+0x8036C5EC  stw        r0, 36 (r1)
+0x8036C5F0  stw        r31, 28 (r1)
+0x8036C5F4  stw        r30, 24 (r1)
+0x8036C5F8  stw        r29, 20 (r1)
+0x8036C5FC  mr         r29, r3
+0x8036C600  lha        r0, 16 (r3)
+0x8036C604  lha        r4, 32 (r3)
+0x8036C608  srawi      r3, r0, 2
+0x8036C60C  bl         0x8036C6D8
+0x8036C610  addi       r31, r29, 2
+0x8036C614  mr         r29, r3
+0x8036C618  li         r30, 1
+0x8036C61C  lha        r0, 16 (r31)
+0x8036C620  lha        r4, 32 (r31)
+0x8036C624  srawi      r3, r0, 2
+0x8036C628  bl         0x8036C6D8
+0x8036C62C  addi       r30, r30, 1
+0x8036C630  add        r29, r29, r3
+0x8036C634  cmpwi      r30, 6
+0x8036C638  addi       r31, r31, 2
+0x8036C63C  blt+       0x8036C61C
+0x8036C640  lwz        r0, 36 (r1)
+0x8036C644  mr         r3, r29
+0x8036C648  lwz        r31, 28 (r1)
+0x8036C64C  lwz        r30, 24 (r1)
+0x8036C650  lwz        r29, 20 (r1)
+0x8036C654  mtlr       r0
+0x8036C658  addi       r1, r1, 32
+0x8036C65C  blr        
+0x8036C660  lis        r4, 1
+0x8036C664  li         r5, 0x0220
+0x8036C668  addi       r0, r4, -0x7800
+0x8036C66C  li         r4, 0
+0x8036C670  stw        r0, 0 (r3)
+0x8036C674  li         r0, 32
+0x8036C678  sth        r5, 4 (r3)
+0x8036C67C  sth        r4, 6 (r3)
+0x8036C680  sth        r4, 8 (r3)
+0x8036C684  sth        r4, 10 (r3)
+0x8036C688  sth        r4, 12 (r3)
+0x8036C68C  sth        r4, 28 (r3)
+0x8036C690  sth        r0, 44 (r3)
+0x8036C694  sth        r4, 14 (r3)
+0x8036C698  sth        r4, 30 (r3)
+0x8036C69C  sth        r0, 46 (r3)
+0x8036C6A0  sth        r4, 16 (r3)
+0x8036C6A4  sth        r0, 32 (r3)
+0x8036C6A8  sth        r4, 18 (r3)
+0x8036C6AC  sth        r0, 34 (r3)
+0x8036C6B0  sth        r4, 20 (r3)
+0x8036C6B4  sth        r0, 36 (r3)
+0x8036C6B8  sth        r4, 22 (r3)
+0x8036C6BC  sth        r0, 38 (r3)
+0x8036C6C0  sth        r4, 24 (r3)
+0x8036C6C4  sth        r0, 40 (r3)
+0x8036C6C8  sth        r4, 26 (r3)
+0x8036C6CC  sth        r0, 42 (r3)
+0x8036C6D0  stb        r4, 48 (r3)
+0x8036C6D4  blr        
+0x8036C6D8  stwu       r1, -32 (r1)
+0x8036C6DC  mflr       r0
+0x8036C6E0  stw        r0, 36 (r1)
+0x8036C6E4  stw        r31, 28 (r1)
+0x8036C6E8  mr         r31, r4
+0x8036C6EC  stw        r30, 24 (r1)
+0x8036C6F0  mr.        r30, r3
+0x8036C6F4  stw        r29, 20 (r1)
+0x8036C6F8  neg        r0, r30
+0x8036C6FC  rlwinm     r0, r0, 0, 19, 31
+0x8036C700  ble+       0x8036C708
+0x8036C704  mr         r0, r30
+0x8036C708  lis        r3, -0x7FC1
+0x8036C70C  extsh      r29, r0
+0x8036C710  addi       r4, r3, 0x0858
+0x8036C714  li         r5, 15
+0x8036C718  mr         r3, r29
+0x8036C71C  bl         0x8036C7B8
+0x8036C720  extsh.     r0, r29
+0x8036C724  addi       r0, r3, -6
+0x8036C728  extsh      r5, r0
+0x8036C72C  bne+       0x8036C738
+0x8036C730  li         r0, 32
+0x8036C734  b          0x8036C74C
+0x8036C738  extsh.     r0, r5
+0x8036C73C  neg        r0, r5
+0x8036C740  slw        r0, r29, r0
+0x8036C744  blt+       0x8036C74C
+0x8036C748  sraw       r0, r29, r5
+0x8036C74C  extsh      r3, r0
+0x8036C750  rlwinm     r0, r31, 0, 26, 31
+0x8036C754  mullw      r3, r0, r3
+0x8036C758  rlwinm     r4, r31, 26, 28, 31
+0x8036C75C  addi       r0, r4, -13
+0x8036C760  add        r0, r5, r0
+0x8036C764  extsh.     r4, r0
+0x8036C768  addi       r0, r3, 48
+0x8036C76C  srawi      r0, r0, 4
+0x8036C770  extsh      r5, r0
+0x8036C774  neg        r0, r4
+0x8036C778  sraw       r3, r5, r0
+0x8036C77C  blt+       0x8036C788
+0x8036C780  slw        r0, r5, r4
+0x8036C784  rlwinm     r3, r0, 0, 17, 31
+0x8036C788  xor.       r0, r30, r31
+0x8036C78C  extsh      r0, r3
+0x8036C790  mr         r3, r0
+0x8036C794  bge+       0x8036C79C
+0x8036C798  neg        r3, r0
+0x8036C79C  lwz        r0, 36 (r1)
+0x8036C7A0  lwz        r31, 28 (r1)
+0x8036C7A4  lwz        r30, 24 (r1)
+0x8036C7A8  lwz        r29, 20 (r1)
+0x8036C7AC  mtlr       r0
+0x8036C7B0  addi       r1, r1, 32
+0x8036C7B4  blr        
+0x8036C7B8  li         r6, 0
+0x8036C7BC  mtctr      r5
+0x8036C7C0  cmpwi      r5, 0
+0x8036C7C4  ble+       0x8036C7E0

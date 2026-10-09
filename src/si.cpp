@@ -41,6 +41,9 @@ namespace Flipper
 
 	void SerialInterface::SICommand(int chan, int outlen, int inlen, uint8_t* ptr)
 	{
+		Debug::GuestProf::Scope siScope(Debug::GuestProf::Unit::SerialInterface);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::SiTransfers, 1);
+
 		// COMERR is re-evaluated on each COM completion (serial-interface.md 7.4).
 		SI_COMCSR_REG &= ~SI_COMCSR_COMERR;
 
@@ -482,6 +485,11 @@ namespace Flipper
 		si.pollLineDue = false;
 		si.pollLineBase = line;
 		si.pollsThisFrame++;
+
+		// The gate above is where the rate-limited schedule lets a poll through; this is the poll
+		// of the channels itself, not the per-line call into this function.
+		Debug::GuestProf::Scope siScope(Debug::GuestProf::Unit::SerialInterface);
+		Debug::HwProfile::Count(Debug::HwProfile::Counter::SiPolls, 1);
 
 		// Every enabled channel is polled. The device that is plugged into it refreshes the state of
 		// its controls, and a channel whose device answers raises its read-status flag.

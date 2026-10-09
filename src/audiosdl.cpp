@@ -85,6 +85,7 @@ namespace Flipper
             if (available == 0)
             {
                 // Underflow - fill remaining with silence
+                Debug::HwProfile::Count(Debug::HwProfile::Counter::AudioUnderruns, 1);
                 memset(writePtr, 0, remaining);
                 ring->frameCounter++;
                 break;
@@ -285,6 +286,10 @@ namespace Flipper
 
     void AudioMixer::PushBytes(AxChannel channel, uint8_t* sampleData, size_t sampleDataSize)
     {
+        // The producing side of the output ring: the emulation thread, and the side the guest's
+        // audio clock waits for (the SDL thread's consumer side is not profiled).
+        Debug::GuestProf::Scope audioOutScope(Debug::GuestProf::Unit::AudioOutput);
+
         if (channel < AxChannel::Max && sampleData && sampleDataSize > 0) {
             Sources[(int)channel]->PushBytes(sampleData, sampleDataSize);
         }
