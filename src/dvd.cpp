@@ -2251,6 +2251,14 @@ namespace DVD
 		ResetStats();
 		gekkoOneSecond = Core->OneSecond();
 		dduTicksPerByte = gekkoOneSecond / transferRate;
+
+		// The bus delivers a byte per `dduTicksPerByte` ticks and `TransferTick` walks the
+		// deadline forward by exactly that, so a rate that rounds down to nothing would stop the
+		// drive for good. One tick per byte is the fastest bus this machine can have.
+		if (dduTicksPerByte < 1)
+		{
+			dduTicksPerByte = 1;
+		}
 		SetDvdAudioSampleRate(DvdAudioSampleRate::Rate_48000);
 		streamEnabledByDduCommand = false;
 	}
@@ -2317,10 +2325,6 @@ namespace DVD
 
 	void DduCore::StartTransfer(DduBusDirection direction)
 	{
-		// The whole transfer to or from the guest completes here, synchronously: the pump loop
-		// below runs on the calling thread until the bus is released.
-		Debug::GuestProf::Scope dduScope(Debug::GuestProf::Unit::DvdDrive);
-
 		if (logTransfers)
 		{
 			Report(Channel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
@@ -2330,29 +2334,52 @@ namespace DVD
 		busDir = direction;
 
 		savedGekkoTicks = Core->GetTicks() + dduTicksPerByte;
+	}
 
-		// The command phase switches the bus to the data phase from its own callback: that is a
-		// re-arm of the running transfer, not a new one. The pump already on the stack continues
-		// with the new direction.
-		if (pumping)
+	// The DDU's own bus, stepped from the Flipper's periodic work (see Flipper::Update) the way the
+	// rest of the machine is: the transfer delivers one byte per `dduTicksPerByte` ticks, which is
+	// the 2 MByte/s the drive is specified at, and the bytes are delivered in lock step with the
+	// time base rather than whenever a host thread happened to be scheduled.
+	//
+	// What must *not* happen is what this used to do: run the whole transfer inside the DI
+	// control-register write that programmed it. A transfer then took no emulated time at all - an
+	// 879 KByte file arrived in the same guest instruction that asked for it, where a console
+	// spends some 430 microseconds on it - and everything the guest times against the drive went
+	// with it. Luigi's Mansion is one such guest: the guest state at the end of the load differed
+	// enough for its allocator to hand the loader a block with a live object in it, the
+	// decompressor wrote the file over that object's vtable, and the game hung in the SDK's error
+	// console the moment it called a method of it (issue #469). The rate is part of the drive, not
+	// a detail of it: the guest's loaders, its streaming buffers and its `DVDLowRead` timeouts are
+	// all written against it.
+	void DduCore::TransferTick(int64_t ticks)
+	{
+		if (!ddBusBusy)
 		{
 			return;
 		}
 
-		// Run the whole transfer here, on the thread that programmed it (the CPU thread, from the
-		// DI control-register write). The DDU used to hand the transfer to a device thread, which
-		// made the transfer-complete interrupt - and the DMA into main memory - land at whatever
-		// instruction the guest had reached when that thread was scheduled. The movie player
-		// decodes in a loop that the interrupt can split anywhere, so the frame came out different
-		// from run to run. Running the transfer to completion before the guest executes its next
-		// instruction makes both a function of the guest stream, the way the SI, EXI and ARAM
-		// engines already work.
-		pumping = true;
-		while (ddBusBusy)
+		Debug::GuestProf::Scope dduScope(Debug::GuestProf::Unit::DvdDrive);
+
+		// `transferRateNoLimit` is a debug switch: with it the whole transfer is run here, which
+		// is the behaviour the emulator had by accident.
+		if (transferRateNoLimit)
 		{
+			while (ddBusBusy)
+			{
+				PumpOnce();
+			}
+			return;
+		}
+
+		// Deliver every byte whose time has come. A step of the Flipper's work covers several
+		// bytes of the bus, and an idle skip can cover a whole read, so this is a loop and not a
+		// single step; `dduTicksPerByte` is at least one tick (see Reset), so each turn of the
+		// loop moves the deadline forward and the loop ends.
+		while (ddBusBusy && ticks >= savedGekkoTicks)
+		{
+			savedGekkoTicks += dduTicksPerByte;
 			PumpOnce();
 		}
-		pumping = false;
 	}
 
 	void DduCore::TransferComplete()
@@ -2398,15 +2425,16 @@ namespace DVD
 	// What the drive carries into a state is the transaction it is in the middle of: the cover and
 	// the error it latched, the step of its own state machine, the command it received (and how
 	// much of it), the immediate buffer it is answering with, the read position and the size of
-	// the transfer still to make, and the streaming (DVD audio) bookkeeping that the sample clock
-	// walks. A state taken with the console in a game's load screen resumes with the drive on the
-	// command the DI had just given it.
+	// the transfer still to make, the transfer that is on its bus at that moment, and the
+	// streaming (DVD audio) bookkeeping that the sample clock walks. A state taken with the
+	// console in a game's load screen resumes with the drive on the command the DI had just given
+	// it, and the bytes still to deliver arrive at the rate the drive delivers them.
 	//
 	// The order is fixed and both directions use it:
 	//
 	//   coverStatus 1, errorState 1, errorCode 4
 	//   state 1, commandBuffer 12, commandPtr 4, immediateBuffer 4, immediateBufferPtr 4
-	//   seekVal 4, transactionSize 4
+	//   seekVal 4, transactionSize 4, ddBusBusy 1, busDir 1, savedGekkoTicks 8
 	//   sampleRate 1, streamClockEnabled 1, streamEnabledByDduCommand 1, streamSeekVal 4,
 	//   streamCount 4, pcmPlaybackBuffer (56 x 2), pcmPlaybackCounter 4, nextGekkoTicksToSample 8
 	//
@@ -2441,6 +2469,16 @@ namespace DVD
 		writer.Fields(seekVal);
 		writer.U32((uint32_t)transactionSize);
 
+		// The transfer that is on the bus right now, if any: whether the bus is held at all,
+		// which way it runs, and when its next byte is due. `TransferTick` walks it from the
+		// Flipper's periodic work, and it holds the bus for as long as the drive's own rate says
+		// the transfer takes - a room archive takes a third of a second - so a state really can
+		// be taken in the middle of one. A load that resumed with the bus released would leave
+		// the DI waiting for a transfer-complete interrupt that no transfer is left to raise.
+		writer.Fields(ddBusBusy);
+		writer.U8((uint8_t)busDir);
+		writer.U64((uint64_t)savedGekkoTicks);
+
 		// The streaming (DVD audio) side. `streamClockEnabled` is the AISCLK signal, the rest is
 		// the stream command the drive is playing: where the raw ADPCM data is on the disc, how
 		// many samples are left, the decoded PCM buffer the sample clock is walking and the tick
@@ -2462,20 +2500,8 @@ namespace DVD
 		// `streamingCache` / `streamingCachePtr` are the same thing for the ADPCM stream: raw
 		// bytes of the disc, re-read from `streamSeekVal` when the cache is marked empty.
 		//
-		// `ddBusBusy` and `pumping` are provably clear at a save point: StartTransfer sets them
-		// and then runs the transfer to completion on the thread that programmed it - the loop
-		// `while (ddBusBusy) PumpOnce()` ends when the host's callback has taken every byte and
-		// called TransferComplete - so by the time the guest executes its next instruction (and a
-		// fortiori by the time a state is taken, which stops the core first) both are false. The
-		// next transfer is armed by the DI's own DI_CR write, which supplies the direction.
-		//
-		// `savedGekkoTicks` is when the next byte of a transfer is due, and `dduTicksPerByte` and
-		// `gekkoOneSecond` are the transfer rate: all three are re-derived by StartTransfer and
+		// `dduTicksPerByte` and `gekkoOneSecond` are the transfer rate: both are re-derived by
 		// Reset from the machine's clock, which is itself part of the state.
-		//
-		// `busDir` is the direction of the transfer in progress; besides being meaningless while
-		// no transfer is, it is not initialized until the first StartTransfer, so it is not a
-		// value a state can honestly carry.
 		//
 		// `hostToDduCallback`, `dduToHostCallback`, `transferContext`, `streamCallback`,
 		// `streamContext`, the cover and error callbacks and their contexts are function pointers
@@ -2504,6 +2530,11 @@ namespace DVD
 
 		uint32_t seekValValue = reader.U32();
 		uint32_t transactionSizeValue = reader.U32();
+
+		bool ddBusBusyValue = false;
+		reader.Fields(ddBusBusyValue);
+		uint8_t busDirValue = reader.U8();
+		int64_t savedGekkoTicksValue = (int64_t)reader.U64();
 
 		uint8_t sampleRateValue = reader.U8();
 		bool streamClockEnabledValue = false;
@@ -2535,6 +2566,13 @@ namespace DVD
 		if (stateValue > (uint8_t)DduThreadState::GetErrorCode)
 		{
 			reader.Fail("the drive is at a transaction step this machine does not have");
+			return;
+		}
+
+		// The bus has two directions, and one of them has to be named whenever the bus is held.
+		if (busDirValue > (uint8_t)DduBusDirection::HostToDdu)
+		{
+			reader.Fail("the drive bus is running in a direction this machine does not have");
 			return;
 		}
 
@@ -2573,6 +2611,9 @@ namespace DVD
 		immediateBufferPtr = immediateBufferPtrValue;
 		seekVal = seekValValue;
 		transactionSize = (size_t)transactionSizeValue;
+		ddBusBusy = ddBusBusyValue;
+		busDir = (DduBusDirection)busDirValue;
+		savedGekkoTicks = savedGekkoTicksValue;
 		sampleRate = (DvdAudioSampleRate)sampleRateValue;
 		streamClockEnabled = streamClockEnabledValue;
 		streamEnabledByDduCommand = streamEnabledValue;
