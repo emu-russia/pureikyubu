@@ -179,7 +179,7 @@ namespace Flipper
 		static void UnknownTransfer(void* ctx);
 		static void ADTransfer(void* ctx);
 
-		//! The transfer of a memory card, dispatched to the device in the slot (see peripherals.h).
+		//! The transfer of a memory card, dispatched to the device in the slot (see io.h).
 		static void CardTransferA(void* ctx);
 		static void CardTransferB(void* ctx);
 

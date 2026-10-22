@@ -23,7 +23,7 @@ Persia and Soul Calibur II get their pictures.
 ## Highlights
 
 - **An integrated Game Boy Advance and Game Boy.** `src/gba` is a second machine written from the
-  public hardware specifications (the ARM Architecture Reference Manual for the ARM7TDMI, GBATEK for the GBA peripherals, the
+  public hardware specifications (the ARM Architecture Reference Manual for the ARM7TDMI, GBATEK for the GBA I/O, the
   Pan Docs for the Game Boy). It has its own free boot ROM whose animation draws the pureikyubu
   logo, its own SDL2 front end and its own test harness; `pureikyubu --gba game.gba` runs a
   cartridge and `pureikyubu game.gbc` runs the Game Boy machine inside it. It exists to be a
@@ -393,8 +393,8 @@ Persia and Soul Calibur II get their pictures.
 
 ## Up next
 
-Release 2.0 will be the next major version, the **peripheral release**: it is aimed at the emulation
-of the console's peripheral devices — the EXI bus and the devices on it (memory cards, the Broadband
+Release 2.0 will be the next major version, the **I/O release**: it is aimed at the emulation
+of the console's I/O devices — the EXI bus and the devices on it (memory cards, the Broadband
 Adapter, the RTC), the serial interface and the pads, the disk interface and the drive, and the link
 port the GBA side already has — and it should **close out many of the emulator's features**, so that
 the list of "not implemented yet" above shrinks to what genuinely does not matter.

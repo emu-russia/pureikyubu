@@ -388,7 +388,7 @@ aging-cartridge checks (the waitstate model and the real prefetch buffer), and t
 port is the test that proves them.
 
 1.9.1 is a maintenance release inside the 1.9 line. Release **2.0** remains the next major version,
-the **peripheral release**: the EXI bus and the devices on it (memory cards, the Broadband Adapter,
+the **I/O release**: the EXI bus and the devices on it (memory cards, the Broadband Adapter,
 the RTC), the serial interface and the pads, the disk interface and the drive, and the link port the
 GBA side already has. After that the project moves into its steady state of planned, methodical
 improvement.

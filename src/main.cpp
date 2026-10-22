@@ -582,7 +582,7 @@ void EMUGetHwConfig(HWConfig * config)
 	config->cp_log = GetConfigBool(USER_CP_LOG, USER_HW);
 
 	// The memory cards are not part of the machine configuration any more: a card is a device of
-	// the peripheral pool and the pool reads its own settings (see peripherals.h).
+	// the I/O pool and the pool reads its own settings (see io.h).
 
 	wcscpy (config->BootromFilename, GetConfigString(USER_BOOTROM, USER_HW));
 	wcscpy (config->DspDromFilename, GetConfigString(USER_DSP_DROM, USER_HW));
@@ -708,14 +708,14 @@ void EMUCtor()
 	HLEInit();
 	Debug::g_PerfCounters = new Debug::PerfCounters();
 
-	// The peripherals of the console are not part of the machine: the pool of devices (and the
+	// The I/O devices of the console are not part of the machine: the pool of devices (and the
 	// configuration of every one of them) is what the settings window edits, and the window is
 	// usable with no game loaded. It is opened here, with the emulator, and a machine that is built
 	// later is what the devices are plugged into (see Flipper::Flipper).
-	Peripherals::Instance().Open();
+	Io::Instance().Open();
 
 	// The Broadband Adapter's network, if the configuration names one (see bbaudp.cpp). It is host
-	// state like the peripheral pool: it is opened with the emulator and does not belong to a
+	// state like the I/O pool: it is opened with the emulator and does not belong to a
 	// machine.
 	BbaSetBackend(BbaNetworkCreate());
 
@@ -739,9 +739,9 @@ void EMUDtor()
 	BbaSetBackend(nullptr);
 	delete backend;
 
-	// The pool of peripheral devices goes last: it is what the settings window edits, and it
+	// The pool of I/O devices goes last: it is what the settings window edits, and it
 	// outlives every machine (see EMUCtor).
-	Peripherals::Instance().Close();
+	Io::Instance().Close();
 
 	JDI::Hub.RemoveNode(L"MCP_JDI_JSON");
 	JDI::Hub.RemoveNode(L"EMU_JDI_JSON");

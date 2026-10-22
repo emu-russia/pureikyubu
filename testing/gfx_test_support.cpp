@@ -253,30 +253,30 @@ namespace GfxUnitTest
 
 		// The Hi-Speed Port is part of the machine, not of the devices: a device on it is told
 		// about the port when the pool is told that the machine is up, so the tests need one to
-		// plug a Game Boy Player into (see Peripherals::MachineOpened).
+		// plug a Game Boy Player into (see Io::MachineOpened).
 		flipper->hsp = new Flipper::HiSpeedPort();
 
 		// The external interface is part of the machine as well: it owns the EXI channel register
 		// file, the socket select the devices of a channel are told apart by, and the SRAM the
 		// MX chip backs. A test that drives a card or a network adapter the way the guest does -
 		// through the register window, so that the channel's own command-sequence rule applies -
-		// needs it (see the BBA test in peripherals_test.cpp). The machine loads no boot ROM and no
+		// needs it (see the BBA test in io_test.cpp). The machine loads no boot ROM and no
 		// fonts, so the block comes up without either; it only reports that they are missing.
 		flipper->exi = new Flipper::ExternalInterface(flipper, &config);
 
-		// The peripherals of the machine. In the emulator the pool is opened once, with the emulator
+		// The I/O devices of the machine. In the emulator the pool is opened once, with the emulator
 		// itself (see EMUCtor), and its devices are the ones the configuration lists; a test machine
 		// has no settings file, so it opens the pool here and adds a pad per socket, which is what
-		// the PAD plug-in double used to answer with (see the peripheral subsystem doubles below).
-		Peripherals::Instance().Open();
+		// the PAD plug-in double used to answer with (see the I/O subsystem doubles below).
+		Io::Instance().Open();
 
 		for (int chan = 0; chan < 4; chan++)
 		{
-			int pad = Peripherals::Instance().AddDevice(PERIPH_DEVICE_STANDARD_PAD);
-			Peripherals::Instance().Attach(pad, PERIPH_PORT_SI(chan));
+			int pad = Io::Instance().AddDevice(IO_DEVICE_STANDARD_PAD);
+			Io::Instance().Attach(pad, IO_PORT_SI(chan));
 		}
 
-		Peripherals::Instance().MachineOpened();
+		Io::Instance().MachineOpened();
 
 		serialInterface = new Flipper::SerialInterface(flipper, &config);
 		flipper->si = serialInterface;
@@ -312,7 +312,7 @@ namespace GfxUnitTest
 		// The devices of the pool are unplugged while the bus they are plugged into still exists: a
 		// memory card detaches from its EXI channel here. The pool itself is the emulator's and is
 		// left open for the next machine.
-		Peripherals::Instance().MachineClosed();
+		Io::Instance().MachineClosed();
 
 		delete serialInterface;
 		serialInterface = nullptr;
@@ -970,10 +970,10 @@ void MXTransfer(void* ctx)
 }
 
 // -------------------------------------------------------------------------------------------
-// The peripheral subsystem of the machine under test.
+// The I/O subsystem of the machine under test.
 //
 // The SI reads the state of a controller from the device that is plugged into the channel (see
-// peripherals.h), so the machine plugs a standard controller into every socket. Nothing drives
+// io.h), so the machine plugs a standard controller into every socket. Nothing drives
 // their actuators - a unit test has no host input - so a test sees the neutral pad the plug-in
 // double used to answer with (no buttons, the sticks centred, the triggers released), and it can
 // tell "the channel was polled" from "the channel was skipped" by the read-status bits alone.
@@ -1055,7 +1055,7 @@ namespace
 			keyboard = 0;
 			gamepad = 0;
 
-			if (deviceType != PERIPH_DEVICE_STANDARD_PAD || actuator == nullptr)
+			if (deviceType != IO_DEVICE_STANDARD_PAD || actuator == nullptr)
 			{
 				return;
 			}
@@ -1063,11 +1063,11 @@ namespace
 			if (strcmp(actuator, "A") == 0)
 			{
 				keyboard = TestDefaultKey;
-				gamepad = PERIPH_HOST_MAKE_BUTTON(0);
+				gamepad = IO_HOST_MAKE_BUTTON(0);
 			}
 			else if (strcmp(actuator, "XRIGHT100") == 0)
 			{
-				gamepad = PERIPH_HOST_MAKE_AXIS(0, true);
+				gamepad = IO_HOST_MAKE_AXIS(0, true);
 			}
 		}
 	};
@@ -1209,8 +1209,8 @@ void SetConfigString(const char* var, const wchar_t* newVal, const char* path)
 	gfxTestConfigStrings[TestConfigKey(var)] = newVal != nullptr ? newVal : L"";
 }
 
-// Whether the variable is there at all. A device of the peripheral pool asks this before it falls
-// back to the name a configuration that predates the pool used (see peripherals.cpp).
+// Whether the variable is there at all. A device of the I/O pool asks this before it falls
+// back to the name a configuration that predates the pool used (see io.cpp).
 bool ConfigValueExists(const char* var, const char* path)
 {
 	std::string key = TestConfigKey(var);
@@ -1221,7 +1221,7 @@ bool ConfigValueExists(const char* var, const char* path)
 }
 
 // -------------------------------------------------------------------------------------------
-// The lists of objects of the settings double (the peripheral pool is one, see config.h). An entry
+// The lists of objects of the settings double (the I/O pool is one, see config.h). An entry
 // is a small object of its own and what a caller does with it is to pass it back, so a test that
 // adds a device and a test that takes one out see the list the way the emulator does.
 // -------------------------------------------------------------------------------------------
@@ -1352,7 +1352,7 @@ void SetConfigEntryString(ConfigEntry* entry, const char* member, const wchar_t*
 
 void ConfigSectionKeepOnly(const char* path, const char* keep)
 {
-	// The settings of a unit test are what the test itself puts there, and the peripheral pool of the
+	// The settings of a unit test are what the test itself puts there, and the I/O pool of the
 	// machine under test is the list the machine adds its pads to: there is nothing to clean up.
 }
 

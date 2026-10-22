@@ -88,7 +88,7 @@
     <ul>
       <li><strong>An integrated Game Boy Advance and Game Boy.</strong> <code>src/gba</code> is a
         second machine written from the public hardware specifications (the ARM Architecture Reference Manual for the ARM7TDMI,
-        GBATEK for the GBA peripherals, the Pan Docs for the Game Boy). It has its own free boot ROM
+        GBATEK for the GBA I/O, the Pan Docs for the Game Boy). It has its own free boot ROM
         whose animation draws the pureikyubu logo, its own SDL2 front end and its own test harness;
         <code>pureikyubu --gba game.gba</code> runs a cartridge and <code>pureikyubu game.gbc</code>
         runs the Game Boy machine inside it. It exists to be a <strong>GBA Link</strong> peer and a
@@ -545,8 +545,8 @@
 
     <h2 id="next">Up next</h2>
     <p>
-      Release 2.0 will be the next major version, the <strong>peripheral release</strong>: it is aimed at the emulation of
-      the console's peripheral devices — the EXI bus and the devices on it (memory cards, the
+      Release 2.0 will be the next major version, the <strong>I/O release</strong>: it is aimed at the emulation of
+      the console's I/O devices — the EXI bus and the devices on it (memory cards, the
       Broadband Adapter, the RTC), the serial interface and the pads, the disk interface and the
       drive, and the link port the GBA side already has — and it should <strong>close out many of the
       emulator's features</strong>, so that the list of "not implemented yet" above shrinks to what

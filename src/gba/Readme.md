@@ -15,7 +15,7 @@ exactly that).
 * **ARM7TDMI**: ARM Architecture Reference Manual (ARM DDI 0100E), chapters 3 (ARM) and 4 (Thumb),
   plus the ARM7TDMI data sheet for the S/N/I cycle counts, the HALT state and the exception
   vectors.
-* **GBA peripherals**: GBATEK (problemkaputt.de/gbatek.htm): the memory map, the LCD controller,
+* **GBA I/O**: GBATEK (problemkaputt.de/gbatek.htm): the memory map, the LCD controller,
   the sound controller, DMA, the timers, the interrupt controller, the serial I/O port, the
   cartridge save memory, the GPIO/RTC port and the BIOS service functions.
 * **Game Boy (DMG/CGB)**: the Pan Docs (gbdev.io/pandocs) for the machine, its cartridge mappers

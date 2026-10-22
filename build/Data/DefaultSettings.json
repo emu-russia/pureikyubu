@@ -64,7 +64,7 @@
 		"HLEMTX": false
 	},
 
-	"peripherals":
+	"io":
 	{
 		"Devices":
 		[

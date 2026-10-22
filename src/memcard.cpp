@@ -961,7 +961,7 @@ bool MCDisconnect(int cardnum) {
 }
 
 // ---------------------------------------------------------------------------
-// The memory card as a device of the peripheral pool
+// The memory card as a device of the I/O pool
 //
 // The card is an EXI device of a card slot. It has no actuators - it is storage, not an input
 // device - and what the settings dialog edits about it is the file that holds the card image and
@@ -980,33 +980,33 @@ namespace
 		MC_PROP_MAX
 	};
 
-	const PeriphProperty card_properties[MC_PROP_MAX] =
+	const IoProperty card_properties[MC_PROP_MAX] =
 	{
-		{ "Card file",     PERIPH_PROP_FILE, MC_PROP_FILE },
-		{ "Save policy",   PERIPH_PROP_BOOL, MC_PROP_SYNC_SAVE },
-		{ "Card",          PERIPH_PROP_INFO, MC_PROP_SIZE },
+		{ "Card file",     IO_PROP_FILE, MC_PROP_FILE },
+		{ "Save policy",   IO_PROP_BOOL, MC_PROP_SYNC_SAVE },
+		{ "Card",          IO_PROP_INFO, MC_PROP_SIZE },
 	};
 }
 
-class MemoryCardDevice : public PeripheralDevice
+class MemoryCardDevice : public IoDevice
 {
-	int             port = -1;          //!< PERIPH_PORT_SLOTA / SLOTB, -1: the card is out of its slot
+	int             port = -1;          //!< IO_PORT_SLOTA / SLOTB, -1: the card is out of its slot
 	std::wstring    file;
 	bool            syncSave = false;
 
 	//! The slot the card is in (see MEMCARD_SLOTA / MEMCARD_SLOTB).
-	int Slot() const { return port >= PERIPH_PORT_SLOTA ? port - PERIPH_PORT_SLOTA : -1; }
+	int Slot() const { return port >= IO_PORT_SLOTA ? port - IO_PORT_SLOTA : -1; }
 
 public:
 	MemoryCardDevice() {}
 
-	uint32_t Type() override { return PERIPH_DEVICE_MEMCARD; }
+	uint32_t Type() override { return IO_DEVICE_MEMCARD; }
 
 	// -----------------------------------------------------------------------
 
 	int PropertyCount() override { return MC_PROP_MAX; }
 
-	const PeriphProperty* Property(int index) override
+	const IoProperty* Property(int index) override
 	{
 		return (index >= 0 && index < MC_PROP_MAX) ? &card_properties[index] : nullptr;
 	}
@@ -1096,14 +1096,14 @@ public:
 
 		if (file.empty() || !Util::FileExists(file))
 		{
-			Report(Channel::MC, "No card file for %s\n", Peripherals::Instance().PortName(port));
+			Report(Channel::MC, "No card file for %s\n", Io::Instance().PortName(port));
 			return;
 		}
 
 		memcard[Slot()].syncSave = syncSave;
 
 		// The card is pointed at its file here, and it goes into the slot when there is a console to
-		// put it in: the pool of devices is built before the machine is (see Peripherals::Open and
+		// put it in: the pool of devices is built before the machine is (see Io::Open and
 		// MachineOpened), so the machine it is plugged into may not exist yet.
 		MCUseFile(Slot(), file.c_str(), Flipper::HW != nullptr && Flipper::HW->exi != nullptr);
 	}
@@ -1133,20 +1133,20 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateMemoryCard()
+	IoDevice* CreateMemoryCard()
 	{
 		return new MemoryCardDevice();
 	}
 
-	//! The card registers its own factory with the peripheral subsystem, so that the pool can create
+	//! The card registers its own factory with the I/O subsystem, so that the pool can create
 	//! it. A build that does not compile this file (the unit test harness) has no memory cards.
 	struct MemcardRegistrar
 	{
 		MemcardRegistrar()
 		{
-			Peripherals::RegisterFactory(PERIPH_DEVICE_MEMCARD, "Memory Card",
+			Io::RegisterFactory(IO_DEVICE_MEMCARD, "Memory Card",
 				"DOL-008 / DOL-014 / DOL-020, an EXI device of a card slot",
-				PERIPH_BUS_EXI, PERIPH_PAGE_MEMORY_CARDS, CreateMemoryCard);
+				IO_BUS_EXI, IO_PAGE_MEMORY_CARDS, CreateMemoryCard);
 		}
 	};
 

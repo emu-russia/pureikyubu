@@ -118,7 +118,7 @@ set (PUREIKYUBU_CORE
 	src/os.cpp
 	src/osdebug.cpp
 	src/pe.cpp
-	src/peripherals.cpp
+	src/io.cpp
 	src/pi.cpp
 	src/ras.cpp
 	src/rvz.cpp
@@ -182,7 +182,7 @@ endif ()
 
 # The integrated GBA/Game Boy emulator (issue #388). The core is self contained (see
 # src/gba/Readme.md) and needs no SDL, so both builds link it: the headless one has no `--gba` mode,
-# but the Game Boy Player device of the peripheral pool runs a Game Boy Advance of its own, and that
+# but the Game Boy Player device of the I/O pool runs a Game Boy Advance of its own, and that
 # machine is the same core.
 
 set (PUREIKYUBU_GBA

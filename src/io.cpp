@@ -1,8 +1,8 @@
 /*
 
-# Peripheral devices
+# I/O devices
 
-This is the implementation of the subsystem `peripherals.h` declares: the pool of devices (what is
+This is the implementation of the subsystem `io.h` declares: the pool of devices (what is
 in it, what is plugged where, what the settings window edits) and the dispatch of the emulation to
 the device that is plugged into a port. The devices themselves live in their own modules - the
 standard controller in cont.cpp, the memory card in memcard.cpp - and register the factory that
@@ -10,7 +10,7 @@ creates them.
 
 ## The pool and the configuration
 
-The pool is the list of the devices the user has, and it is the "Devices" list of the "peripherals"
+The pool is the list of the devices the user has, and it is the "Devices" list of the "io"
 section of the configuration: one entry per device, in the order the settings window shows them
 (see the list accessors in config.h). Every device owns the settings of its own entry - its model
 ("Type"), the name the user gave it ("Name"), the port it is plugged into ("Port") and whatever the
@@ -55,25 +55,25 @@ using namespace Debug;
 
 namespace
 {
-	struct PeriphModel
+	struct IoModel
 	{
 		uint32_t    type;
 		const char* name;
 		const char* info;
 		int         bus;
-		int         page;               //!< the settings page it is edited on (PERIPH_PAGE_*)
-		PeripheralDevice* (*factory)();
+		int         page;               //!< the settings page it is edited on (IO_PAGE_*)
+		IoDevice* (*factory)();
 	};
 
-	std::vector<PeriphModel>& Models()
+	std::vector<IoModel>& Models()
 	{
 		// A function local static: a device module that registers its factory from a static
 		// constructor of its own cannot construct this list, so the list is built on first use.
-		static std::vector<PeriphModel> models;
+		static std::vector<IoModel> models;
 		return models;
 	}
 
-	const PeriphModel* FindModel(uint32_t type)
+	const IoModel* FindModel(uint32_t type)
 	{
 		for (const auto& model : Models())
 		{
@@ -90,7 +90,7 @@ namespace
 	//! from it).
 	int ModelBus(uint32_t type)
 	{
-		const PeriphModel* model = FindModel(type);
+		const IoModel* model = FindModel(type);
 		return model != nullptr ? model->bus : -1;
 	}
 
@@ -98,14 +98,14 @@ namespace
 	//! from it).
 	int ModelBusOf(uint32_t type)
 	{
-		const PeriphModel* model = FindModel(type);
+		const IoModel* model = FindModel(type);
 		return model != nullptr ? model->bus : -1;
 	}
 
 	//! The settings page a model is edited on (the model of a device always exists).
 	int ModelPageOf(uint32_t type)
 	{
-		const PeriphModel* model = FindModel(type);
+		const IoModel* model = FindModel(type);
 		return model != nullptr ? model->page : -1;
 	}
 
@@ -113,9 +113,9 @@ namespace
 	{
 		switch (bus)
 		{
-			case PERIPH_BUS_SI:  return "Serial Interface";
-			case PERIPH_BUS_EXI: return "EXI";
-			case PERIPH_BUS_HSP: return "Hi-Speed Port";
+			case IO_BUS_SI:  return "Serial Interface";
+			case IO_BUS_EXI: return "EXI";
+			case IO_BUS_HSP: return "Hi-Speed Port";
 		}
 
 		return "?";
@@ -130,44 +130,44 @@ namespace
 
 namespace
 {
-	struct PeriphPortDesc
+	struct IoPortDesc
 	{
 		const char* name;
 		int         bus;
 		uint32_t    defaultModel;       //!< the model the port is meant for
 	};
 
-	const PeriphPortDesc port_desc[PERIPH_PORT_MAX] =
+	const IoPortDesc port_desc[IO_PORT_MAX] =
 	{
-		{ "Controller Port 1",  PERIPH_BUS_SI,  PERIPH_DEVICE_STANDARD_PAD },
-		{ "Controller Port 2",  PERIPH_BUS_SI,  PERIPH_DEVICE_STANDARD_PAD },
-		{ "Controller Port 3",  PERIPH_BUS_SI,  PERIPH_DEVICE_STANDARD_PAD },
-		{ "Controller Port 4",  PERIPH_BUS_SI,  PERIPH_DEVICE_STANDARD_PAD },
-		{ "Memory Card Slot A", PERIPH_BUS_EXI, PERIPH_DEVICE_MEMCARD },
-		{ "Memory Card Slot B", PERIPH_BUS_EXI, PERIPH_DEVICE_MEMCARD },
-		{ "Serial Port 1",      PERIPH_BUS_EXI, PERIPH_DEVICE_BBA },
-		{ "Hi-Speed Port",      PERIPH_BUS_HSP, PERIPH_DEVICE_GBPLAYER },
+		{ "Controller Port 1",  IO_BUS_SI,  IO_DEVICE_STANDARD_PAD },
+		{ "Controller Port 2",  IO_BUS_SI,  IO_DEVICE_STANDARD_PAD },
+		{ "Controller Port 3",  IO_BUS_SI,  IO_DEVICE_STANDARD_PAD },
+		{ "Controller Port 4",  IO_BUS_SI,  IO_DEVICE_STANDARD_PAD },
+		{ "Memory Card Slot A", IO_BUS_EXI, IO_DEVICE_MEMCARD },
+		{ "Memory Card Slot B", IO_BUS_EXI, IO_DEVICE_MEMCARD },
+		{ "Serial Port 1",      IO_BUS_EXI, IO_DEVICE_BBA },
+		{ "Hi-Speed Port",      IO_BUS_HSP, IO_DEVICE_GBPLAYER },
 	};
 
 	//! The value of one host control bound to an actuator. A button (the keyboard is one too) gives
 	//! the actuator its full value, an axis gives its deflection scaled into the actuator's range,
 	//! in the direction the binding was captured with.
-	int BindingValue(HostInput* host, int pad, const PeriphActuator* actuator, int binding)
+	int BindingValue(HostInput* host, int pad, const IoActuator* actuator, int binding)
 	{
 		if (binding == 0)
 		{
 			return 0;
 		}
 
-		if (PERIPH_HOST_IS_BUTTON(binding))
+		if (IO_HOST_IS_BUTTON(binding))
 		{
-			return host->GamepadButton(pad, PERIPH_HOST_BUTTON(binding)) ? actuator->max : 0;
+			return host->GamepadButton(pad, IO_HOST_BUTTON(binding)) ? actuator->max : 0;
 		}
 
-		if (PERIPH_HOST_IS_AXIS(binding))
+		if (IO_HOST_IS_AXIS(binding))
 		{
-			int axis = host->GamepadAxis(pad, PERIPH_HOST_AXIS(binding));
-			bool positive = PERIPH_HOST_AXIS_POS(binding);
+			int axis = host->GamepadAxis(pad, IO_HOST_AXIS(binding));
+			bool positive = IO_HOST_AXIS_POS(binding);
 
 			if ((positive && axis <= 0) || (!positive && axis >= 0))
 			{
@@ -185,28 +185,28 @@ namespace
 }
 
 // ---------------------------------------------------------------------------
-// The peripheral subsystem
+// The I/O subsystem
 
 //! The host game controller a pad in a port is driven by: the host game controller the host reports
 //! under the number of its socket, which is what the SDL backend has always done.
 int HostPadOfPort(int port)
 {
-	if (port >= PERIPH_PORT_SI0 && port <= PERIPH_PORT_SI3)
+	if (port >= IO_PORT_SI0 && port <= IO_PORT_SI3)
 	{
-		return port - PERIPH_PORT_SI0;
+		return port - IO_PORT_SI0;
 	}
 
 	return 0;
 }
 
-Peripherals& Peripherals::Instance()
+Io& Io::Instance()
 {
-	static Peripherals instance;
+	static Io instance;
 	return instance;
 }
 
-void Peripherals::RegisterFactory(uint32_t type, const char* name, const char* info, int bus, int page,
-	PeripheralDevice* (*factory)())
+void Io::RegisterFactory(uint32_t type, const char* name, const char* info, int bus, int page,
+	IoDevice* (*factory)())
 {
 	for (auto& model : Models())
 	{
@@ -221,55 +221,55 @@ void Peripherals::RegisterFactory(uint32_t type, const char* name, const char* i
 		}
 	}
 
-	Models().push_back(PeriphModel{ type, name, info, bus, page, factory });
+	Models().push_back(IoModel{ type, name, info, bus, page, factory });
 }
 
-const char* Peripherals::ModelName(uint32_t type)
+const char* Io::ModelName(uint32_t type)
 {
-	const PeriphModel* model = FindModel(type);
+	const IoModel* model = FindModel(type);
 	return model != nullptr ? model->name : nullptr;
 }
 
-int Peripherals::ModelBus(uint32_t type)
+int Io::ModelBus(uint32_t type)
 {
 	return ModelBusOf(type);
 }
 
-int Peripherals::ModelPage(uint32_t type)
+int Io::ModelPage(uint32_t type)
 {
 	return ModelPageOf(type);
 }
 
-int Peripherals::ModelCount()
+int Io::ModelCount()
 {
 	return (int)Models().size();
 }
 
-uint32_t Peripherals::ModelAt(int index)
+uint32_t Io::ModelAt(int index)
 {
-	const std::vector<PeriphModel>& models = Models();
+	const std::vector<IoModel>& models = Models();
 
 	if (index < 0 || index >= (int)models.size())
 	{
-		return PERIPH_DEVICE_NONE;
+		return IO_DEVICE_NONE;
 	}
 
 	return models[index].type;
 }
 
-uint32_t Peripherals::DefaultModelOfPort(int port)
+uint32_t Io::DefaultModelOfPort(int port)
 {
-	if (port < 0 || port >= PERIPH_PORT_MAX)
+	if (port < 0 || port >= IO_PORT_MAX)
 	{
-		return PERIPH_DEVICE_NONE;
+		return IO_DEVICE_NONE;
 	}
 
 	return port_desc[port].defaultModel;
 }
 
-const char* Peripherals::PortName(int port)
+const char* Io::PortName(int port)
 {
-	if (port < 0 || port >= PERIPH_PORT_MAX)
+	if (port < 0 || port >= IO_PORT_MAX)
 	{
 		return "?";
 	}
@@ -277,9 +277,9 @@ const char* Peripherals::PortName(int port)
 	return port_desc[port].name;
 }
 
-int Peripherals::PortBus(int port)
+int Io::PortBus(int port)
 {
-	if (port < 0 || port >= PERIPH_PORT_MAX)
+	if (port < 0 || port >= IO_PORT_MAX)
 	{
 		return -1;
 	}
@@ -287,7 +287,7 @@ int Peripherals::PortBus(int port)
 	return port_desc[port].bus;
 }
 
-HostInput* Peripherals::Host()
+HostInput* Io::Host()
 {
 	return host;
 }
@@ -295,14 +295,14 @@ HostInput* Peripherals::Host()
 // ---------------------------------------------------------------------------
 // The pool
 
-void Peripherals::Open()
+void Io::Open()
 {
 	if (opened)
 	{
 		return;
 	}
 
-	Report(Channel::SI, "Peripheral devices\n");
+	Report(Channel::SI, "I/O devices\n");
 
 	host = HostInputCreate();
 	opened = true;
@@ -310,30 +310,30 @@ void Peripherals::Open()
 	// The pool is what the list holds, and nothing else: a configuration that was written before the
 	// devices were one list kept them in variables of the section ("Device3_Name",
 	// "Device3_VKEY_FOR_A"), and those are dropped here so that they do not travel along.
-	ConfigSectionKeepOnly(USER_PERIPH, PERIPH_DEVICES);
+	ConfigSectionKeepOnly(USER_IO, IO_DEVICES);
 
 	// The pool is the list of the configuration: every entry of it is one device (see the module
 	// comment), and a fresh console finds the four sockets and the two card slots there because that
 	// is what the shipped defaults say.
-	int count = ConfigListSize(PERIPH_DEVICES, USER_PERIPH);
+	int count = ConfigListSize(IO_DEVICES, USER_IO);
 
-	for (int at = 0; at < count && at < PERIPH_MAX_DEVICES; at++)
+	for (int at = 0; at < count && at < IO_MAX_DEVICES; at++)
 	{
-		ConfigEntry* entry = ConfigListAt(PERIPH_DEVICES, USER_PERIPH, at);
+		ConfigEntry* entry = ConfigListAt(IO_DEVICES, USER_IO, at);
 
 		if (entry == nullptr)
 		{
 			continue;
 		}
 
-		uint32_t type = (uint32_t)GetConfigEntryInt(entry, "Type", PERIPH_DEVICE_NONE);
+		uint32_t type = (uint32_t)GetConfigEntryInt(entry, "Type", IO_DEVICE_NONE);
 
-		if (type == PERIPH_DEVICE_NONE)
+		if (type == IO_DEVICE_NONE)
 		{
 			continue;       // an entry of the list that names no model is not a device
 		}
 
-		PeripheralDevice* device = CreateDevice(type, entry);
+		IoDevice* device = CreateDevice(type, entry);
 
 		if (device == nullptr)
 		{
@@ -361,7 +361,7 @@ void Peripherals::Open()
 			}
 		}
 
-		if (port >= 0 && port < PERIPH_PORT_MAX)
+		if (port >= 0 && port < IO_PORT_MAX)
 		{
 			// A port holds one device, and an entry that names a port the configuration has already
 			// given away takes it: the device that was there is unplugged, and its own entry is told
@@ -385,7 +385,7 @@ void Peripherals::Open()
 	}
 }
 
-int Peripherals::FreePortFor(PeripheralDevice* device)
+int Io::FreePortFor(IoDevice* device)
 {
 	if (device == nullptr)
 	{
@@ -394,7 +394,7 @@ int Peripherals::FreePortFor(PeripheralDevice* device)
 
 	int bus = ModelBusOf(device->Type());
 
-	for (int port = 0; port < PERIPH_PORT_MAX; port++)
+	for (int port = 0; port < IO_PORT_MAX; port++)
 	{
 		if (port_desc[port].bus != bus)
 		{
@@ -410,7 +410,7 @@ int Peripherals::FreePortFor(PeripheralDevice* device)
 	return -1;
 }
 
-void Peripherals::Close()
+void Io::Close()
 {
 	if (!opened)
 	{
@@ -435,9 +435,9 @@ void Peripherals::Close()
 	opened = false;
 }
 
-void Peripherals::MachineOpened()
+void Io::MachineOpened()
 {
-	std::vector<std::pair<PeripheralDevice*, int>> attached;
+	std::vector<std::pair<IoDevice*, int>> attached;
 	AttachedDevices(attached);
 
 	// The console exists now, so a device that talks to it goes into its socket: a memory card is an
@@ -448,9 +448,9 @@ void Peripherals::MachineOpened()
 	}
 }
 
-void Peripherals::MachineClosed()
+void Io::MachineClosed()
 {
-	std::vector<std::pair<PeripheralDevice*, int>> attached;
+	std::vector<std::pair<IoDevice*, int>> attached;
 	AttachedDevices(attached);
 
 	// The console is being taken apart: the devices are unplugged from it (a card flushes the file it
@@ -461,7 +461,7 @@ void Peripherals::MachineClosed()
 	}
 }
 
-void Peripherals::AttachedDevices(std::vector<std::pair<PeripheralDevice*, int>>& attached)
+void Io::AttachedDevices(std::vector<std::pair<IoDevice*, int>>& attached)
 {
 	attached.clear();
 
@@ -478,7 +478,7 @@ void Peripherals::AttachedDevices(std::vector<std::pair<PeripheralDevice*, int>>
 	lock.Unlock();
 }
 
-int Peripherals::Count()
+int Io::Count()
 {
 	lock.Lock();
 	int count = (int)devices.size();
@@ -487,17 +487,17 @@ int Peripherals::Count()
 	return count;
 }
 
-PeripheralDevice* Peripherals::CreateDevice(uint32_t type, ConfigEntry* entry)
+IoDevice* Io::CreateDevice(uint32_t type, ConfigEntry* entry)
 {
-	const PeriphModel* model = FindModel(type);
+	const IoModel* model = FindModel(type);
 
 	if (model == nullptr || model->factory == nullptr)
 	{
-		Report(Channel::SI, "Peripheral device %08X is not supported by this build\n", type);
+		Report(Channel::SI, "I/O device %08X is not supported by this build\n", type);
 		return nullptr;
 	}
 
-	PeripheralDevice* device = model->factory();
+	IoDevice* device = model->factory();
 
 	if (device == nullptr)
 	{
@@ -526,7 +526,7 @@ PeripheralDevice* Peripherals::CreateDevice(uint32_t type, ConfigEntry* entry)
 	return device;
 }
 
-int Peripherals::DeviceIndexOf(PeripheralDevice* device)
+int Io::DeviceIndexOf(IoDevice* device)
 {
 	lock.Lock();
 
@@ -546,28 +546,28 @@ int Peripherals::DeviceIndexOf(PeripheralDevice* device)
 	return found;
 }
 
-PeripheralDevice* Peripherals::Device(int index)
+IoDevice* Io::Device(int index)
 {
 	lock.Lock();
 
-	PeripheralDevice* device = (index >= 0 && index < (int)devices.size()) ? devices[index] : nullptr;
+	IoDevice* device = (index >= 0 && index < (int)devices.size()) ? devices[index] : nullptr;
 
 	lock.Unlock();
 
 	return device;
 }
 
-int Peripherals::AddDevice(uint32_t type)
+int Io::AddDevice(uint32_t type)
 {
-	if (Count() >= PERIPH_MAX_DEVICES)
+	if (Count() >= IO_MAX_DEVICES)
 	{
-		Report(Channel::SI, "The peripheral pool is full\n");
+		Report(Channel::SI, "The I/O pool is full\n");
 		return -1;
 	}
 
 	// The device is written to the configuration as it is added, so that the next run finds it: the
 	// entry first (a device is the settings of its entry), then the settings the model starts with.
-	ConfigEntry* entry = ConfigListAppend(PERIPH_DEVICES, USER_PERIPH);
+	ConfigEntry* entry = ConfigListAppend(IO_DEVICES, USER_IO);
 
 	if (entry == nullptr)
 	{
@@ -576,11 +576,11 @@ int Peripherals::AddDevice(uint32_t type)
 
 	SetConfigEntryInt(entry, "Type", (int)type);
 
-	PeripheralDevice* device = CreateDevice(type, entry);
+	IoDevice* device = CreateDevice(type, entry);
 
 	if (device == nullptr)
 	{
-		ConfigListRemove(PERIPH_DEVICES, USER_PERIPH, entry);
+		ConfigListRemove(IO_DEVICES, USER_IO, entry);
 		return -1;
 	}
 
@@ -592,9 +592,9 @@ int Peripherals::AddDevice(uint32_t type)
 	return DeviceIndexOf(device);
 }
 
-void Peripherals::RemoveDevice(int index)
+void Io::RemoveDevice(int index)
 {
-	PeripheralDevice* device = Device(index);
+	IoDevice* device = Device(index);
 
 	if (device == nullptr)
 	{
@@ -611,7 +611,7 @@ void Peripherals::RemoveDevice(int index)
 
 	// The entry of the device leaves the list with it: a device is its own settings, and the ones
 	// that follow it are not disturbed (they are entries of their own, not positions).
-	ConfigListRemove(PERIPH_DEVICES, USER_PERIPH, device->Config());
+	ConfigListRemove(IO_DEVICES, USER_IO, device->Config());
 	device->SetConfig(nullptr);
 
 	// The object outlives its entry for as long as the emulator runs: a thread may have just taken
@@ -619,7 +619,7 @@ void Peripherals::RemoveDevice(int index)
 	retired.push_back(device);
 }
 
-std::string Peripherals::Name(int index)
+std::string Io::Name(int index)
 {
 	lock.Lock();
 	std::string name = (index >= 0 && index < (int)names.size()) ? names[index] : "";
@@ -628,9 +628,9 @@ std::string Peripherals::Name(int index)
 	return name;
 }
 
-void Peripherals::SetName(int index, const std::string& name)
+void Io::SetName(int index, const std::string& name)
 {
-	PeripheralDevice* device = Device(index);
+	IoDevice* device = Device(index);
 
 	if (device == nullptr || device->Config() == nullptr)
 	{
@@ -644,7 +644,7 @@ void Peripherals::SetName(int index, const std::string& name)
 	SetConfigEntryString(device->Config(), "Name", Util::StringToWstring(name).c_str());
 }
 
-void Peripherals::ApplyDefaultBindings(PeripheralDevice* device, bool keyboard)
+void Io::ApplyDefaultBindings(IoDevice* device, bool keyboard)
 {
 	if (device == nullptr || host == nullptr)
 	{
@@ -653,8 +653,8 @@ void Peripherals::ApplyDefaultBindings(PeripheralDevice* device, bool keyboard)
 
 	for (int i = 0; i < device->ActuatorCount(); i++)
 	{
-		const PeriphActuator* actuator = device->Actuator(i);
-		PeriphBindings* bindings = device->ActuatorBindings(i);
+		const IoActuator* actuator = device->Actuator(i);
+		IoBindings* bindings = device->ActuatorBindings(i);
 
 		if (actuator == nullptr || bindings == nullptr)
 		{
@@ -673,7 +673,7 @@ void Peripherals::ApplyDefaultBindings(PeripheralDevice* device, bool keyboard)
 	}
 }
 
-void Peripherals::DefaultBindings(PeripheralDevice* device, bool keyboard)
+void Io::DefaultBindings(IoDevice* device, bool keyboard)
 {
 	ApplyDefaultBindings(device, keyboard);
 
@@ -683,14 +683,14 @@ void Peripherals::DefaultBindings(PeripheralDevice* device, bool keyboard)
 	}
 }
 
-void Peripherals::SetBinding(PeripheralDevice* device, int actuator, bool gamepad, int binding)
+void Io::SetBinding(IoDevice* device, int actuator, bool gamepad, int binding)
 {
 	if (device == nullptr)
 	{
 		return;
 	}
 
-	PeriphBindings* bindings = device->ActuatorBindings(actuator);
+	IoBindings* bindings = device->ActuatorBindings(actuator);
 
 	if (bindings == nullptr)
 	{
@@ -709,7 +709,7 @@ void Peripherals::SetBinding(PeripheralDevice* device, int actuator, bool gamepa
 	device->SaveConfig();
 }
 
-void Peripherals::ClearBindings(PeripheralDevice* device)
+void Io::ClearBindings(IoDevice* device)
 {
 	if (device == nullptr)
 	{
@@ -718,7 +718,7 @@ void Peripherals::ClearBindings(PeripheralDevice* device)
 
 	for (int i = 0; i < device->ActuatorCount(); i++)
 	{
-		PeriphBindings* bindings = device->ActuatorBindings(i);
+		IoBindings* bindings = device->ActuatorBindings(i);
 
 		if (bindings != nullptr)
 		{
@@ -730,7 +730,7 @@ void Peripherals::ClearBindings(PeripheralDevice* device)
 	device->SaveConfig();
 }
 
-bool Peripherals::FirstOfModel(PeripheralDevice* device)
+bool Io::FirstOfModel(IoDevice* device)
 {
 	if (device == nullptr)
 	{
@@ -763,9 +763,9 @@ bool Peripherals::FirstOfModel(PeripheralDevice* device)
 // ---------------------------------------------------------------------------
 // The ports
 
-int Peripherals::DeviceIndexOnPort(int port)
+int Io::DeviceIndexOnPort(int port)
 {
-	if (port < 0 || port >= PERIPH_PORT_MAX)
+	if (port < 0 || port >= IO_PORT_MAX)
 	{
 		return -1;
 	}
@@ -788,7 +788,7 @@ int Peripherals::DeviceIndexOnPort(int port)
 	return found;
 }
 
-void Peripherals::Plug(int index, int port)
+void Io::Plug(int index, int port)
 {
 	lock.Lock();
 
@@ -799,7 +799,7 @@ void Peripherals::Plug(int index, int port)
 
 	lock.Unlock();
 
-	PeripheralDevice* device = Device(index);
+	IoDevice* device = Device(index);
 
 	if (device != nullptr)
 	{
@@ -807,22 +807,22 @@ void Peripherals::Plug(int index, int port)
 	}
 }
 
-PeripheralDevice* Peripherals::DeviceOnPort(int port)
+IoDevice* Io::DeviceOnPort(int port)
 {
 	return Device(DeviceIndexOnPort(port));
 }
 
-bool Peripherals::Attach(int index, int port)
+bool Io::Attach(int index, int port)
 {
-	PeripheralDevice* device = Device(index);
+	IoDevice* device = Device(index);
 
-	if (device == nullptr || port < 0 || port >= PERIPH_PORT_MAX)
+	if (device == nullptr || port < 0 || port >= IO_PORT_MAX)
 	{
 		return false;
 	}
 
 	// A device belongs to a bus: a pad cannot be plugged into a card slot.
-	PeripheralDevice* existing = DeviceOnPort(port);
+	IoDevice* existing = DeviceOnPort(port);
 
 	if (existing != nullptr && existing != device)
 	{
@@ -844,9 +844,9 @@ bool Peripherals::Attach(int index, int port)
 	return true;
 }
 
-void Peripherals::Detach(int index)
+void Io::Detach(int index)
 {
-	PeripheralDevice* device = Device(index);
+	IoDevice* device = Device(index);
 
 	if (device == nullptr)
 	{
@@ -874,7 +874,7 @@ void Peripherals::Detach(int index)
 	device->Detach();
 }
 
-int Peripherals::PortOf(int index)
+int Io::PortOf(int index)
 {
 	lock.Lock();
 	int port = (index >= 0 && index < (int)ports.size()) ? ports[index] : -1;
@@ -886,9 +886,9 @@ int Peripherals::PortOf(int index)
 // ---------------------------------------------------------------------------
 // The emulation
 
-bool Peripherals::PollSI(int chan, PADState* state)
+bool Io::PollSI(int chan, PADState* state)
 {
-	PeripheralDevice* device = DeviceOnPort(PERIPH_PORT_SI(chan));
+	IoDevice* device = DeviceOnPort(IO_PORT_SI(chan));
 
 	if (device == nullptr)
 	{
@@ -897,12 +897,12 @@ bool Peripherals::PollSI(int chan, PADState* state)
 
 	// The bindings are resolved here, on the emulation thread: the device is handed the value of
 	// every actuator and turns them into its protocol by itself.
-	int pad = HostPadOfPort(PERIPH_PORT_SI(chan));
+	int pad = HostPadOfPort(IO_PORT_SI(chan));
 
 	for (int i = 0; i < device->ActuatorCount(); i++)
 	{
-		const PeriphActuator* actuator = device->Actuator(i);
-		PeriphBindings* bindings = device->ActuatorBindings(i);
+		const IoActuator* actuator = device->Actuator(i);
+		IoBindings* bindings = device->ActuatorBindings(i);
 
 		if (actuator == nullptr || bindings == nullptr)
 		{
@@ -928,9 +928,9 @@ bool Peripherals::PollSI(int chan, PADState* state)
 	return device->Poll(state);
 }
 
-bool Peripherals::TransferSI(int chan, int outlen, int inlen, uint8_t* buf)
+bool Io::TransferSI(int chan, int outlen, int inlen, uint8_t* buf)
 {
-	PeripheralDevice* device = DeviceOnPort(PERIPH_PORT_SI(chan));
+	IoDevice* device = DeviceOnPort(IO_PORT_SI(chan));
 
 	// Nothing is plugged into the channel: the transfer is not answered at all, which is how the
 	// guest finds out that there is no controller (SISR[NOREP], latched by the caller).
@@ -944,11 +944,11 @@ bool Peripherals::TransferSI(int chan, int outlen, int inlen, uint8_t* buf)
 	return true;
 }
 
-void Peripherals::TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi)
+void Io::TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi)
 {
 	// The devices of a channel are told apart by the chip select the transfer selects (see
 	// exi.cpp). The two on-chip devices the console owns - the boot ROM / RTC / SRAM chip on
-	// channel 0 CS1B and the AD16 debugger of channel 2 - are not peripherals and are served by the
+	// channel 0 CS1B and the AD16 debugger of channel 2 - are not devices of the pool and are served by the
 	// channel itself; every other combination is a socket of the pool:
 	//
 	//   EXI0 CS0B  Slot A          (a memory card)
@@ -956,16 +956,16 @@ void Peripherals::TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi
 	//   EXI0 CS2B  serial port 1   (the broadband adapter and the modem adapter)
 	int port = -1;
 
-	if (sel == 0 && chan == 0) port = PERIPH_PORT_SLOTA;
-	else if (sel == 0 && chan == 1) port = PERIPH_PORT_SLOTB;
-	else if (sel == 2 && chan == 0) port = PERIPH_PORT_SERIAL1;
+	if (sel == 0 && chan == 0) port = IO_PORT_SLOTA;
+	else if (sel == 0 && chan == 1) port = IO_PORT_SLOTB;
+	else if (sel == 2 && chan == 0) port = IO_PORT_SERIAL1;
 
 	if (port < 0)
 	{
 		return;
 	}
 
-	PeripheralDevice* device = DeviceOnPort(port);
+	IoDevice* device = DeviceOnPort(port);
 
 	if (device == nullptr)
 	{
@@ -982,9 +982,9 @@ void Peripherals::TransferEXI(int chan, int sel, Flipper::ExternalInterface* exi
 	device->ExiTransfer(exi, first);
 }
 
-bool Peripherals::SetMotorSI(int chan, int cmd)
+bool Io::SetMotorSI(int chan, int cmd)
 {
-	PeripheralDevice* device = DeviceOnPort(PERIPH_PORT_SI(chan));
+	IoDevice* device = DeviceOnPort(IO_PORT_SI(chan));
 
 	if (device == nullptr)
 	{

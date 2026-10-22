@@ -67,7 +67,7 @@ struct Memcard {
 	bool readValid;
 
 	/*
-	 * The unlock (see wiki/peripherals.md). The library hides a challenge in the address bytes of
+	 * The unlock (see wiki/io.md). The library hides a challenge in the address bytes of
 	 * a read, clocks it out over more than one immediate transfer, and then reads the card's code
 	 * back; the controller is expected to evaluate the challenge and mix the result into what it
 	 * returns. `unlockMask` is that mixed value, `unlockArmed` says the card has been challenged
@@ -129,7 +129,7 @@ bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id);
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  *
- * The card itself is a device of the peripheral pool (see MemoryCardDevice in memcard.cpp), which
+ * The card itself is a device of the I/O pool (see MemoryCardDevice in memcard.cpp), which
  * is what decides when a slot holds a card and what file it holds; these calls are the protocol
  * side of it.
  */

@@ -138,7 +138,7 @@
 #include "config.h"
 #include "exi.h"
 #include "memcard.h"
-#include "peripherals.h"
+#include "io.h"
 #include "bba.h"
 #include "mdm.h"
 #include "si.h"

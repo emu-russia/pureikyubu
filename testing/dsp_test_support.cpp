@@ -292,7 +292,7 @@ namespace Debug
 }
 
 // ----------------------------------------------------------------------
-// Flipper peripherals that the DSP subsystem talks to
+// Flipper I/O blocks that the DSP subsystem talks to
 // ----------------------------------------------------------------------
 
 namespace Flipper

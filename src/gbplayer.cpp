@@ -56,7 +56,7 @@ using namespace Debug;
 //! The actuators of the Game Boy Player. A Game Pak of the Player is driven exactly like a
 //! handheld: eight directions, four buttons and the two shoulder buttons, and every one of them is
 //! a plain button (the analog sticks of a GameCube pad are not part of the device).
-static const PeriphActuator gbp_actuators[GBP_ACT_MAX] =
+static const IoActuator gbp_actuators[GBP_ACT_MAX] =
 {
 	{ "Buttons", "A",      "A",      1 },
 	{ "Buttons", "B",      "B",      1 },
@@ -85,12 +85,12 @@ namespace
 		GBP_PROP_MAX
 	};
 
-	const PeriphProperty gbp_properties[GBP_PROP_MAX] =
+	const IoProperty gbp_properties[GBP_PROP_MAX] =
 	{
-		{ "Game Pak",      PERIPH_PROP_ROM,  GBP_PROP_GAMEPAK },
-		{ "BIOS",          PERIPH_PROP_ROM,  GBP_PROP_BIOS },
-		{ "Run Game Pak",  PERIPH_PROP_BOOL, GBP_PROP_RUN },
-		{ "Player",        PERIPH_PROP_INFO, GBP_PROP_STATE },
+		{ "Game Pak",      IO_PROP_ROM,  GBP_PROP_GAMEPAK },
+		{ "BIOS",          IO_PROP_ROM,  GBP_PROP_BIOS },
+		{ "Run Game Pak",  IO_PROP_BOOL, GBP_PROP_RUN },
+		{ "Player",        IO_PROP_INFO, GBP_PROP_STATE },
 	};
 }
 
@@ -105,11 +105,11 @@ namespace
 // ---------------------------------------------------------------------------
 // The device
 
-class GameBoyPlayerDevice : public PeripheralDevice, public Flipper::HSPDevice
+class GameBoyPlayerDevice : public IoDevice, public Flipper::HSPDevice
 {
 	int             port = -1;
 	int             state[GBP_ACT_MAX] = { 0 };
-	PeriphBindings  bindings[GBP_ACT_MAX];
+	IoBindings      bindings[GBP_ACT_MAX];
 
 	//! The cartridge image and the BIOS the user picked (empty: the bay is empty / the built-in
 	//! boot ROM).
@@ -267,19 +267,19 @@ public:
 		}
 	}
 
-	uint32_t Type() override { return PERIPH_DEVICE_GBPLAYER; }
+	uint32_t Type() override { return IO_DEVICE_GBPLAYER; }
 
 	// -----------------------------------------------------------------------
 	// Actuators
 
 	int ActuatorCount() override { return GBP_ACT_MAX; }
 
-	const PeriphActuator* Actuator(int index) override
+	const IoActuator* Actuator(int index) override
 	{
 		return (index >= 0 && index < GBP_ACT_MAX) ? &gbp_actuators[index] : nullptr;
 	}
 
-	PeriphBindings* ActuatorBindings(int index) override
+	IoBindings* ActuatorBindings(int index) override
 	{
 		return (index >= 0 && index < GBP_ACT_MAX) ? &bindings[index] : nullptr;
 	}
@@ -323,7 +323,7 @@ public:
 
 	int PropertyCount() override { return GBP_PROP_MAX; }
 
-	const PeriphProperty* Property(int index) override
+	const IoProperty* Property(int index) override
 	{
 		return (index >= 0 && index < GBP_PROP_MAX) ? &gbp_properties[index] : nullptr;
 	}
@@ -724,20 +724,20 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateGameBoyPlayer()
+	IoDevice* CreateGameBoyPlayer()
 	{
 		return new GameBoyPlayerDevice();
 	}
 
-	//! The Player registers its own factory with the peripheral subsystem. A build that does not
+	//! The Player registers its own factory with the I/O subsystem. A build that does not
 	//! compile this file (or the GBA core it drives) has no Game Boy Player.
 	struct GameBoyPlayerRegistrar
 	{
 		GameBoyPlayerRegistrar()
 		{
-			Peripherals::RegisterFactory(PERIPH_DEVICE_GBPLAYER, "Game Boy Player",
-				"DOL-017, the add-on on the Hi-Speed Port", PERIPH_BUS_HSP,
-				PERIPH_PAGE_HSP, CreateGameBoyPlayer);
+			Io::RegisterFactory(IO_DEVICE_GBPLAYER, "Game Boy Player",
+				"DOL-017, the add-on on the Hi-Speed Port", IO_BUS_HSP,
+				IO_PAGE_HSP, CreateGameBoyPlayer);
 		}
 	};
 
@@ -751,13 +751,13 @@ namespace
 	//! devices whose picture a GameCube session cannot otherwise see.
 	//! \param match a word to look for in the device's name. An empty one takes the first device
 	//!        that carries a running machine, which is the Player when the pool has both.
-	PeripheralDevice* PooledGba(const std::string& match, std::string* name)
+	IoDevice* PooledGba(const std::string& match, std::string* name)
 	{
-		Peripherals& pool = Peripherals::Instance();
+		Io& pool = Io::Instance();
 
 		for (int i = 0; i < pool.Count(); i++)
 		{
-			PeripheralDevice* device = pool.Device(i);
+			IoDevice* device = pool.Device(i);
 
 			if (device == nullptr || device->Gba() == nullptr || !device->Gba()->RomLoaded())
 			{
@@ -789,7 +789,7 @@ namespace
 	 * has both a Player and a Game Boy Advance on a link cable chooses between them (`gbpshot
 	 * gba.png GBA`).
 	 *
-	 * The frame is the 240x160 LCD of the portable machine a peripheral of the pool is running - the
+	 * The frame is the 240x160 LCD of the portable machine that an I/O device of the pool is running - the
 	 * Game Pak in the Game Boy Player's bay, or the Game Boy Advance on a link cable - which is the
 	 * picture that device puts on the console's video output on real hardware. A run with neither
 	 * device in the pool is told so rather than being given a black picture.
@@ -804,7 +804,7 @@ namespace
 
 		std::string match = args.size() > 2 ? args[2] : "";
 		std::string deviceName;
-		PeripheralDevice* device = PooledGba(match, &deviceName);
+		IoDevice* device = PooledGba(match, &deviceName);
 
 		if (device == nullptr)
 		{

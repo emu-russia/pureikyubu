@@ -2746,7 +2746,7 @@ static int ui_main()
 				ui_active = false;
 		}
 
-		// Keep the host game controllers open, and their cached state fresh, for the peripheral
+		// Keep the host game controllers open, and their cached state fresh, for the I/O
 		// devices that are driven by them (see padsdl.cpp). The events pumped above have the device
 		// list up to date.
 		HostInputUpdate();

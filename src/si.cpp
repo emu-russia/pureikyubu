@@ -1,7 +1,7 @@
 // SI - serial interface.
 //
 // The SI is the block that frames the four controller sockets. What is plugged into a socket is a
-// device of the peripheral pool (see peripherals.h): the automatic poll asks the device for the
+// device of the I/O pool (see io.h): the automatic poll asks the device for the
 // state of its controls, and a communication transfer hands the device the command bytes of the
 // channel and takes its answer back.
 #include "pch.h"
@@ -20,7 +20,7 @@
 	| OUT |
 	|-----| <
 	| INH |  |     ----------       --------------------
-	|-----|  |----| PADState |<----| peripheral device  |
+	|-----|  |----| PADState |<----| I/O device  |
 	| INL |  |     ----------       --------------------
 	 -----  <
 /*/
@@ -47,7 +47,7 @@ namespace Flipper
 		// COMERR is re-evaluated on each COM completion (serial-interface.md 7.4).
 		SI_COMCSR_REG &= ~SI_COMCSR_COMERR;
 
-		if (!Peripherals::Instance().TransferSI(chan, outlen, inlen, ptr))
+		if (!Io::Instance().TransferSI(chan, outlen, inlen, ptr))
 		{
 			// Nothing is plugged into the channel, so nothing answers the transfer: the channel
 			// latches its no-response error and the transfer is the last one that failed
@@ -112,9 +112,9 @@ namespace Flipper
 		SI_SR_REG |= mask;
 
 		// control motor
-		if (si.out[chan] == 0x00400000) Peripherals::Instance().SetMotorSI(chan, PAD_MOTOR_STOP);
-		else if (si.out[chan] == 0x00400001) Peripherals::Instance().SetMotorSI(chan, PAD_MOTOR_RUMBLE);
-		else if (si.out[chan] == 0x00400002) Peripherals::Instance().SetMotorSI(chan, PAD_MOTOR_STOP_HARD);
+		if (si.out[chan] == 0x00400000) Io::Instance().SetMotorSI(chan, PAD_MOTOR_STOP);
+		else if (si.out[chan] == 0x00400001) Io::Instance().SetMotorSI(chan, PAD_MOTOR_RUMBLE);
+		else if (si.out[chan] == 0x00400002) Io::Instance().SetMotorSI(chan, PAD_MOTOR_STOP_HARD);
 	}
 
 	/* ******* CHAN 0 ******* */
@@ -506,7 +506,7 @@ namespace Flipper
 			// for it. That is how an absent controller is detected on the automatic path
 			// (serial-interface.md 5.1, 7.1): the response bytes alone cannot say it, since with
 			// nothing driving the line the SI only hears itself.
-			bool answered = Peripherals::Instance().PollSI(chan, &si.pad[chan]);
+			bool answered = Io::Instance().PollSI(chan, &si.pad[chan]);
 
 			si.padErr[chan] = !answered;
 
@@ -562,7 +562,7 @@ namespace Flipper
 		// NOT part of the state:
 		//
 		// `pad[4]` is what the last poll got out of the device pool (SIPoll asks
-		// Peripherals::PollSI for every enabled channel), and the pool re-fills it on every poll.
+		// Io::PollSI for every enabled channel), and the pool re-fills it on every poll.
 		// It is the state of the *controllers* - the player's hands - not of the machine, and it
 		// changes on its own while the emulator runs. Leaving it out is what makes a load do the
 		// right thing with it: the buffer the guest reads before the next poll still holds the
@@ -653,7 +653,7 @@ namespace Flipper
 
 		// set rumble flags
 		for (int i = 0; i < 4; i++) {
-			si.rumble[i] = Peripherals::Instance().SetMotorSI(i, PAD_MOTOR_STOP);
+			si.rumble[i] = Io::Instance().SetMotorSI(i, PAD_MOTOR_STOP);
 		}
 
 		// joypads in/out command buffer

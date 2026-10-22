@@ -3,7 +3,7 @@
 **Release date:** October 2026
 **Previous release:** 1.9.1 (September 2026)
 
-Version 2.0 is the **peripheral release** the 1.9.1 notes promised. The console's peripherals are one
+Version 2.0 is the **I/O release** the 1.9.1 notes promised. The console's I/O devices are one
 subsystem now: every device — a controller, a memory card, a network adapter, a Game Boy Player, a
 Game Boy Advance on a link cable — is a model of its own, with its own settings, its own place in the
 configuration and one window that edits them all. The Broadband Adapter and the Modem Adapter are
@@ -25,11 +25,11 @@ started this line of work, boots.
 
 ## Highlights
 
-- **One pool of peripheral devices.** The emulation of a peripheral used to be wherever its consumer
+- **One pool of I/O devices.** The emulation of an I/O device used to be wherever its consumer
   happened to be: `si.cpp` knew the controller's answer bytes, `padsdl.cpp` knew both the SDL side and
   the way a pad is polled, `memcard.cpp` mixed the card format with the EXI lifecycle, and a device's
-  settings were kept by whoever used the device. A peripheral is a **device of its own** now
-  (`src/peripherals.cpp`): a *model* registered by its module (`cont.cpp`, `memcard.cpp`,
+  settings were kept by whoever used the device. Each I/O device is a **model of its own** now
+  (`src/io.cpp`): a *model* registered by its module (`cont.cpp`, `memcard.cpp`,
   `gbplayer.cpp`, `gbalink.cpp`, `bba.cpp`, `mdm.cpp`), a *port* of the console's SI, EXI or
   Hi-Speed bus, a *pool* that is the `Devices` list of the configuration, and a *property grid* the
   settings window draws from what the device publishes. A build that does not compile a module simply
@@ -96,19 +96,19 @@ started this line of work, boots.
 
 ## Added
 
-### The peripheral pool
+### The I/O pool
 
 - **What a device is, in one number.** `DeviceID` names a model: `0x00010001` is the standard
   controller (DOL-003), `0x00020001` a memory card, `0x00030001` the Game Boy Player. A module
-  registers its models (`Peripherals::RegisterFactory`), so the subsystem itself does not know what a
+  registers its models (`Io::RegisterFactory`), so the subsystem itself does not know what a
   pad or a card is, and a **port** belongs to a bus (SI, EXI or HSP) — a device can only be plugged
   into a socket of its own bus. The ports are the four SI channels, the two card slots, serial port 1
   (the two network adapters) and the Hi-Speed Port (the Game Boy Player).
 - **A device publishes its controls and its properties.** An *actuator* is one control
   (`PAD_ACT_*` for a pad, `GBP_ACT_*` for a Game Pak), a *binding* is what drives it (a keyboard key
   and a host controller button or axis), and *properties* are everything else a device shows about
-  itself: a checkbox, a read-only line, a file the device owns (a card image, `PERIPH_PROP_FILE`) or
-  one it only reads (a Game Pak or a BIOS, `PERIPH_PROP_ROM`). The kind picks the editor and the
+  itself: a checkbox, a read-only line, a file the device owns (a card image, `IO_PROP_FILE`) or
+  one it only reads (a Game Pak or a BIOS, `IO_PROP_ROM`). The kind picks the editor and the
   browser, so a device does not know how the dialog draws it.
 - **The host side is a back end, not a part of a device.** `HostInput` is implemented by the front
   end (`padsdl.cpp` over SDL2, `padnull.cpp` for the headless build) and by the unit tests; the
@@ -120,7 +120,7 @@ started this line of work, boots.
   is no fallback in the code for "a slot the configuration does not mention".
 
   ```json
-  "peripherals":
+  "io":
   {
       "Devices":
       [
@@ -138,7 +138,7 @@ started this line of work, boots.
   `MachineOpened` puts the cards into their slots and `MachineClosed` takes them out and flushes the
   files they were writing. A device is never destroyed while the emulator runs: one that is removed is
   detached, taken out of the list, and kept alive until the pool itself is closed in one piece.
-- `testing/peripherals_test.cpp` drives a pad the way a user does (bind a control, say the host
+- `testing/io_test.cpp` drives a pad the way a user does (bind a control, say the host
   reports it, poll the channel, read the SI registers) and covers the pool, the buses, the motor, the
   origins, and that a device added with its name and bindings is still there after a restart.
 
@@ -157,7 +157,7 @@ started this line of work, boots.
 
   The shim's register is six bits and the controller's address sixteen; the register file is page 0
   and the packet memory is the pages above it. The device is told which transfer begins a sequence
-  (`Peripherals::TransferEXI` passes the channel's `firstImm` flag), because a two-byte write can be
+  (`Io::TransferEXI` passes the channel's `firstImm` flag), because a two-byte write can be
   either a command or a byte of data.
 - **The Broadband Adapter (DOL-015).** The controller's register file, its identification, its MAC
   address and its receive/transmit ring are emulated; the network behind it is a `BbaBackend` the
@@ -504,7 +504,7 @@ started this line of work, boots.
 
 ## Up next
 
-The peripherals are not finished, and the next release is where they are finished. The two **network
+The I/O support is not finished, and the next release is where it is finished. The two **network
 adapters** need the top half of the stack (a title that speaks IP, or a host-side bridge), the **Game
 Boy Player** needs the Player's own firmware — the command set, the video and audio format of the
 frame stream — and the **link cable** needs the multi-boot transfer. The Game Boy Advance a Player or

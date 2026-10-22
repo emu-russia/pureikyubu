@@ -130,7 +130,7 @@
     <ClInclude Include="..\..\src\pch.h">
       <Filter>Emulator Sources</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\peripherals.h">
+    <ClInclude Include="..\..\src\io.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\utils.h">

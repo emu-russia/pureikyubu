@@ -59,7 +59,7 @@
     <section>
       <h2>What is new</h2>
       <p class="sub">
-        Release 2.0 is the peripheral release: the console's peripherals become one pool of devices —
+        Release 2.0 is the I/O release: the console's I/O becomes one pool of devices —
         controllers, memory cards, the Broadband and Modem Adapters, the Game Boy Player and a Game Boy
         Advance on a link cable — with one window that configures them. Save states arrive for the
         GameCube side, the software GFX pipeline leaves its experimental status, and the interface gets
@@ -68,9 +68,9 @@
       </p>
       <div class="grid">
         <div class="card">
-          <span class="badge">Peripherals</span>
+          <span class="badge">I/O</span>
           <h3>One pool of devices</h3>
-          <p>Every peripheral is a model of its own in <code>src/peripherals.cpp</code>: a controller,
+          <p>Every I/O device is a model of its own in <code>src/io.cpp</code>: a controller,
              a card, an adapter or a Game Boy Player plugged into a socket of the SI, EXI or Hi-Speed
              bus, with its own settings and one property grid that draws them.</p>
         </div>
@@ -209,7 +209,7 @@ cd build &amp;&amp; cmake .. &amp;&amp; make
     <section id="next">
       <h2>Up next</h2>
       <p class="sub" style="max-width:none">
-        The peripherals are not finished, and the next release is where they are finished: the top half
+        The I/O support is not finished, and the next release is where it is finished: the top half
         of the network stack behind the Broadband Adapter, the <strong>Game Boy Player's own
         firmware</strong> and the frame stream it feeds, the multi-boot transfer the link cable still
         needs, and the Game Boy Advance of a Player or a link device travelling in a GameCube save

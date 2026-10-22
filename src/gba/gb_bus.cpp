@@ -1,4 +1,4 @@
-// The Game Boy address decoder and its on-chip peripherals. See gb_bus.h for the specification
+// The Game Boy address decoder and its on-chip I/O. See gb_bus.h for the specification
 // pages this is written from.
 
 #include "gb_bus.h"

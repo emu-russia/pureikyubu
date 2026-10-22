@@ -91,7 +91,7 @@ namespace
 // ---------------------------------------------------------------------------
 // The device
 
-class ModemDevice : public PeripheralDevice
+class ModemDevice : public IoDevice
 {
 	//! The register file, as the driver leaves it.
 	uint8_t     regs[MDM_REGS] = { 0 };
@@ -320,19 +320,19 @@ public:
 		Reset();
 	}
 
-	uint32_t Type() override { return PERIPH_DEVICE_MODEM; }
+	uint32_t Type() override { return IO_DEVICE_MODEM; }
 
 	// -----------------------------------------------------------------------
 	// Properties
 
 	int PropertyCount() override { return 2; }
 
-	const PeriphProperty* Property(int index) override
+	const IoProperty* Property(int index) override
 	{
-		static const PeriphProperty props[] =
+		static const IoProperty props[] =
 		{
-			{ "Carrier", PERIPH_PROP_INFO, 0 },
-			{ "Line",    PERIPH_PROP_INFO, 1 },
+			{ "Carrier", IO_PROP_INFO, 0 },
+			{ "Line",    IO_PROP_INFO, 1 },
 		};
 
 		return (index >= 0 && index < 2) ? &props[index] : nullptr;
@@ -361,7 +361,7 @@ public:
 
 	void Attach(int port) override
 	{
-		Report(Channel::EXI, "Modem: attached to %s\n", Peripherals::Instance().PortName(port));
+		Report(Channel::EXI, "Modem: attached to %s\n", Io::Instance().PortName(port));
 	}
 
 	// -----------------------------------------------------------------------
@@ -426,7 +426,7 @@ public:
 		if (address == 0 && bytes == 4)
 		{
 			address += 4;
-			return PERIPH_DEVICE_MODEM_ID;
+			return IO_DEVICE_MODEM_ID;
 		}
 
 		uint32_t value = 0;
@@ -451,20 +451,20 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateModemAdapter()
+	IoDevice* CreateModemAdapter()
 	{
 		return new ModemDevice();
 	}
 
-	//! The modem registers its own factory with the peripheral subsystem. The port it is meant for
+	//! The modem registers its own factory with the I/O subsystem. The port it is meant for
 	//! is serial port 1 (EXI0 chip select 2), which it shares with the broadband adapter.
 	struct ModemRegistrar
 	{
 		ModemRegistrar()
 		{
-			Peripherals::RegisterFactory(PERIPH_DEVICE_MODEM, "Modem Adapter",
-				"DOL-012, 56 kbit/s dial-up on serial port 1", PERIPH_BUS_EXI,
-				PERIPH_PAGE_NETWORK, CreateModemAdapter);
+			Io::RegisterFactory(IO_DEVICE_MODEM, "Modem Adapter",
+				"DOL-012, 56 kbit/s dial-up on serial port 1", IO_BUS_EXI,
+				IO_PAGE_NETWORK, CreateModemAdapter);
 		}
 	};
 

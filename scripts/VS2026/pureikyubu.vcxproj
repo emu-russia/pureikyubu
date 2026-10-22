@@ -106,7 +106,7 @@
     <ClInclude Include="..\..\src\tx.h" />
     <ClInclude Include="..\..\src\ui.h" />
     <ClInclude Include="..\..\src\uijdi.h" />
-    <ClInclude Include="..\..\src\peripherals.h" />
+    <ClInclude Include="..\..\src\io.h" />
     <ClInclude Include="..\..\src\uisettings.h" />
     <ClInclude Include="..\..\src\uisettingsgba.h" />
     <ClInclude Include="..\..\src\uitheme.h" />
@@ -195,7 +195,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\pe.cpp" />
-    <ClCompile Include="..\..\src\peripherals.cpp" />
+    <ClCompile Include="..\..\src\io.cpp" />
     <ClCompile Include="..\..\src\pi.cpp" />
     <ClCompile Include="..\..\src\ras.cpp" />
     <ClCompile Include="..\..\src\si.cpp" />

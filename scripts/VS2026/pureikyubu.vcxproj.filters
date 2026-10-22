@@ -193,7 +193,7 @@
     <ClInclude Include="..\..\src\memcard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\peripherals.h">
+    <ClInclude Include="..\..\src\io.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\uisettings.h">
@@ -459,7 +459,7 @@
     <ClCompile Include="..\..\src\pe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\peripherals.cpp">
+    <ClCompile Include="..\..\src\io.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\pi.cpp">

@@ -16,7 +16,7 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 #define USER_CORE		"core"
 #define USER_HW			"hardware"
 #define USER_HLE		"hle"
-#define USER_PERIPH		"peripherals"   // the device pool (see peripherals.h)
+#define USER_IO		"io"   // the device pool (see io.h)
 
 // The sections the pads and the memory cards had their settings in before the device pool. Nothing
 // reads them any more; they are named here because the settings that are read drop them from the
@@ -83,7 +83,7 @@ void SetConfigBool(const char* var, bool newVal, const char* path);
 // Whether the variable is there at all. The getters above cannot say: they answer a variable that
 // is not there with its default and create it with that value, which is what makes them usable
 // everywhere in the emulator, but a caller that has to tell a configuration written before a
-// setting existed from one that holds its default needs this (see peripherals.cpp).
+// setting existed from one that holds its default needs this (see io.cpp).
 bool ConfigValueExists(const char* var, const char* path);
 
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ bool ConfigValueExists(const char* var, const char* path);
 //
 // A section can hold a list of objects, one object per entry:
 //
-//   "peripherals":
+//   "io":
 //   {
 //       "Devices":
 //       [
@@ -100,7 +100,7 @@ bool ConfigValueExists(const char* var, const char* path);
 //       ]
 //   }
 //
-// This is how the pool of peripheral devices is stored (see peripherals.h). What a module keeps is
+// This is how the pool of I/O devices is stored (see io.h). What a module keeps is
 // the *entry* - a handle of its own object - and not its position in the list, so an entry can be
 // added or taken out without disturbing the others: the list is a list, not a table with holes.
 
@@ -128,5 +128,5 @@ void SetConfigEntryString(ConfigEntry* entry, const char* member, const wchar_t*
 
 //! Drop every variable of a section except `keep`. A module whose settings used to be kept in
 //! variables of their own calls it once, so that a configuration written by a build before it does
-//! not carry them along (see peripherals.cpp).
+//! not carry them along (see io.cpp).
 void ConfigSectionKeepOnly(const char* path, const char* keep);
