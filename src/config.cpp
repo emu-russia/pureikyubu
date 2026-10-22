@@ -156,8 +156,8 @@ static void LoadSettings()
 		}
 	}
 
-	// The sections of the builds before the peripheral device pool: the pads and the memory cards had
-	// their settings in them, and this one keeps them in the pool (see peripherals.h). They are not
+	// The sections of the builds before the I/O device pool: the pads and the memory cards had
+	// their settings in them, and this one keeps them in the pool (see io.h). They are not
 	// read any more and they are dropped from the document here, so that the file this build writes
 	// does not carry them along.
 	Json::Value* root = GetSettingsRoot();

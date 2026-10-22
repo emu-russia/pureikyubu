@@ -60,7 +60,7 @@
     <ClCompile Include="..\..\testing\gqr_test.cpp" />
     <ClCompile Include="..\..\testing\security_test.cpp" />
     <ClCompile Include="..\..\testing\jdi_utf8_test.cpp" />
-      <ClCompile Include="..\..\testing\peripherals_test.cpp" />
+      <ClCompile Include="..\..\testing\io_test.cpp" />
     <ClCompile Include="..\..\testing\banner_test.cpp" />
     <ClCompile Include="..\..\testing\mcp_test.cpp" />
     <!--
@@ -87,7 +87,7 @@
     <ClCompile Include="..\..\src\dspdma.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\peripherals.cpp" />
+    <ClCompile Include="..\..\src\io.cpp" />
     <ClCompile Include="..\..\src\hsp.cpp" />
     <ClCompile Include="..\..\src\bba.cpp" />
     <ClCompile Include="..\..\src\mdm.cpp" />
@@ -289,7 +289,7 @@
     <ClInclude Include="..\..\src\dspdisasm.h" />
     <ClInclude Include="..\..\src\dspdma.h" />
     <ClInclude Include="..\..\src\pch.h" />
-    <ClInclude Include="..\..\src\peripherals.h" />
+    <ClInclude Include="..\..\src\io.h" />
     <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\verify.h" />
     <ClInclude Include="..\..\src\hwprof.h" />

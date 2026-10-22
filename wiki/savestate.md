@@ -131,7 +131,7 @@ belongs to:
 * **the disc image, the executables, the boot ROM** and the DSP ROMs. They belong to the front end
   and the settings and outlive any state; a state names the image it was taken from instead (see the
   refusals below).
-* **the memory cards and the other devices of the peripheral pool.** A card's contents live in its
+* **the memory cards and the other devices of the I/O pool.** A card's contents live in its
   own file and are written through to it as the guest writes them; the controllers are the user's
   hands, re-read before every poll. The pool is opened with the emulator and outlives every machine.
   The one part of it that is *machine* state rather than settings or the user's hands is the Game
@@ -219,7 +219,7 @@ driven through the MCP transport (`pureikyubu --mcp --image pong.dol` and `--ima
   stepped on 20,000 instructions and a second state was written (`B`); then `A` was loaded again and
   the machine was stepped the same 20,000 instructions, giving a third state (`C`). `B` and `C` are
   identical byte for byte - on `pong.dol` and on the boot ROM, whose run has the display, the audio
-  and the peripherals all busy. This is what says a state carries everything the *next* instruction
+  and the I/O devices all busy. This is what says a state carries everything the *next* instruction
   reads and not merely everything the next save would write. The first run of this test failed in two
   sections, and the reason was a real one: the tick at which the Flipper-side periodic work (the
   scan-out, the serial poll, the device steps) is next due had been treated as a value derived from

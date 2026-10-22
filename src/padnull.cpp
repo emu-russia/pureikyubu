@@ -3,7 +3,7 @@
 Null host input (the headless build).
 
 Assume the GameCube was launched with no controllers attached and no keyboard: every device of the
-peripheral pool is emulated as it is, but nothing drives its actuators. This is the backend of
+I/O pool is emulated as it is, but nothing drives its actuators. This is the backend of
 `pureikyubu_headless.vcxproj` and of the CMake `HEADLESS` build, and it is what the unit tests link
 (the tests drive the devices through the subsystem instead).
 

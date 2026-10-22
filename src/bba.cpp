@@ -170,7 +170,7 @@ namespace
 // ---------------------------------------------------------------------------
 // The device
 
-class BbaDevice : public PeripheralDevice
+class BbaDevice : public IoDevice
 {
 	// -- the shim ---------------------------------------------------------------------------
 
@@ -607,7 +607,7 @@ class BbaDevice : public PeripheralDevice
 			if (address == SHIM_ID)
 			{
 				address += 4;
-				return PERIPH_DEVICE_BBA_ID;
+				return IO_DEVICE_BBA_ID;
 			}
 
 			if (address == SHIM_CHALLENGE)
@@ -713,20 +713,20 @@ public:
 		ApplyIdentification();
 	}
 
-	uint32_t Type() override { return PERIPH_DEVICE_BBA; }
+	uint32_t Type() override { return IO_DEVICE_BBA; }
 
 	// -----------------------------------------------------------------------
 	// Properties
 
 	int PropertyCount() override { return 3; }
 
-	const PeriphProperty* Property(int index) override
+	const IoProperty* Property(int index) override
 	{
-		static const PeriphProperty props[] =
+		static const IoProperty props[] =
 		{
-			{ "MAC address", PERIPH_PROP_TEXT, 0 },
-			{ "Link",        PERIPH_PROP_BOOL, 1 },
-			{ "Network",     PERIPH_PROP_INFO, 2 },
+			{ "MAC address", IO_PROP_TEXT, 0 },
+			{ "Link",        IO_PROP_BOOL, 1 },
+			{ "Network",     IO_PROP_INFO, 2 },
 		};
 
 		return (index >= 0 && index < 3) ? &props[index] : nullptr;
@@ -878,20 +878,20 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateBroadbandAdapter()
+	IoDevice* CreateBroadbandAdapter()
 	{
 		return new BbaDevice();
 	}
 
-	//! The adapter registers its own factory with the peripheral subsystem. The port it is meant for
+	//! The adapter registers its own factory with the I/O subsystem. The port it is meant for
 	//! is serial port 1 (EXI0 chip select 2), which it shares with the modem adapter.
 	struct BbaRegistrar
 	{
 		BbaRegistrar()
 		{
-			Peripherals::RegisterFactory(PERIPH_DEVICE_BBA, "Broadband Adapter",
-				"DOL-015, 10BASE-T Ethernet on serial port 1", PERIPH_BUS_EXI,
-				PERIPH_PAGE_NETWORK, CreateBroadbandAdapter);
+			Io::RegisterFactory(IO_DEVICE_BBA, "Broadband Adapter",
+				"DOL-015, 10BASE-T Ethernet on serial port 1", IO_BUS_EXI,
+				IO_PAGE_NETWORK, CreateBroadbandAdapter);
 		}
 	};
 

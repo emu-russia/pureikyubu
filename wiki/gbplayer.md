@@ -278,8 +278,8 @@ one change is worth about 4x on a run of the Start-up Disc.
 
 The Player has the cartridge slot, so in the emulator the Game Pak is a property of the **Player
 device**, exactly as the image file of a memory card is a property of the card: the file name is
-kept in the device's own entry of the peripheral pool ("GamePak"), and the settings window draws a
-"Game Pak" row with a file browser on it (`PERIPH_PROP_ROM` in peripherals.h - a file the device
+kept in the device's own entry of the I/O pool ("GamePak"), and the settings window draws a
+"Game Pak" row with a file browser on it (`IO_PROP_ROM` in io.h - a file the device
 only reads, which is why the browser opens on the cartridge extensions and not on the card images).
 Inserting one loads it into the Game Boy Advance the Player runs; the empty value ejects it. The
 property belongs to the device and not to the port, so the Game Pak travels with the Player when it

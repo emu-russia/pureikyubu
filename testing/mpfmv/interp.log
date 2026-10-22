@@ -4,7 +4,7 @@
 [CPU] Cache::Reset
 [DSP] DspCore::HardReset
 [DSP] Hard Reset pc = 0x8000
-[SI] Peripheral devices
+[SI] I/O devices
 [CPU] Cache::Reset
 [CPU] Cache::Reset
 [Info] -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

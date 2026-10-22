@@ -77,7 +77,7 @@ namespace Flipper
 		// after this constructor returns), because a device reaches the machine through it while this
 		// one is still running.
 		HW = this;
-		Peripherals::Instance().MachineOpened();
+		Io::Instance().MachineOpened();
 
 		JDI::Hub.AddNode(L"HW_JDI_JSON", JdiSpecs::HwJdi, hw_init_handlers);
 	}
@@ -91,7 +91,7 @@ namespace Flipper
 		// The devices are unplugged from this machine (a memory card is flushed) while the
 		// interfaces they were talking to still exist: a card detaches from the EXI channel that
 		// holds it. The pool keeps them, and the next machine plugs them in again.
-		Peripherals::Instance().MachineClosed();
+		Io::Instance().MachineClosed();
 
 		if (cp) {
 			delete cp;

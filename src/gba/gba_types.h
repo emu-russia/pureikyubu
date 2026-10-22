@@ -1,7 +1,7 @@
 // Game Boy Advance (and Game Boy) emulator: common types and constants.
 //
 // The whole module is written from the public hardware specifications (the ARM Architecture Reference Manual for the
-// ARM7TDMI, GBATEK for the GBA peripherals, the Pan Docs for the DMG/CGB) and from the
+// ARM7TDMI, GBATEK for the GBA I/O, the Pan Docs for the DMG/CGB) and from the
 // instruction encodings in those documents. It is deliberately self contained: it includes
 // nothing from the GameCube side of the emulator, so the core can be compiled and unit tested
 // without SDL, OpenGL or ImGui. See testing/gba_bench.

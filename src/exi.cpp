@@ -63,10 +63,10 @@ namespace Flipper
 {
 	// EXI transfer bindings
 	//
-	// The device of a channel is the one that is plugged into the matching port of the peripheral
-	// pool: a memory card in a card slot, a network adapter on the serial port (see peripherals.h).
+	// The device of a channel is the one that is plugged into the matching port of the I/O
+	// pool: a memory card in a card slot, a network adapter on the serial port (see io.h).
 	// The devices that are part of the console itself - the boot ROM / RTC / SRAM chip on CS1B and
-	// the AD16 debugger of channel 2 - are not peripherals and stay here.
+	// the AD16 debugger of channel 2 - are not devices of the pool and stay here.
 	//
 	// The network adapters are **channel 0, chip select 2**: that is the "MDM" line of the block
 	// (expansion-interface.md 3.1), and it is what the console's own driver selects - `EXIGetID(0,
@@ -157,12 +157,12 @@ namespace Flipper
 	// side of the protocol (see MemoryCardDevice in memcard.cpp).
 	void ExternalInterface::CardTransferA(void* ctx)
 	{
-		Peripherals::Instance().TransferEXI(0, 0, (ExternalInterface*)ctx);
+		Io::Instance().TransferEXI(0, 0, (ExternalInterface*)ctx);
 	}
 
 	void ExternalInterface::CardTransferB(void* ctx)
 	{
-		Peripherals::Instance().TransferEXI(1, 0, (ExternalInterface*)ctx);
+		Io::Instance().TransferEXI(1, 0, (ExternalInterface*)ctx);
 	}
 
 	// Serial port 1: the socket the broadband adapter and the modem adapter share (EXI0 chip
@@ -170,7 +170,7 @@ namespace Flipper
 	// the transfer completes with nothing on the line, exactly like a card slot without a card.
 	void ExternalInterface::SerialTransfer(void* ctx)
 	{
-		Peripherals::Instance().TransferEXI(0, 2, (ExternalInterface*)ctx);
+		Io::Instance().TransferEXI(0, 2, (ExternalInterface*)ctx);
 	}
 
 	// AD16 device transfer (EXI device 2:0)
@@ -601,7 +601,7 @@ namespace Flipper
 		//
 		// The memory cards are not here either: their contents live in the device's own file and
 		// are written through immediately, and the card's protocol state belongs to the device in
-		// the peripheral pool (see MemoryCardDevice in memcard.cpp), not to the EXI block. The
+		// the I/O pool (see MemoryCardDevice in memcard.cpp), not to the EXI block. The
 		// same goes for the channel configuration - what is plugged into a slot is a setting, and
 		// a state says nothing about it.
 		//

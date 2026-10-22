@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Release Notes 2.0 — pureikyubu</title>
-<meta name="description" content="Release notes for pureikyubu 2.0: the peripheral release. One pool of peripheral devices, the emulated Broadband and Modem Adapters, the memory card that mounts, the Game Boy Player and the link cable, save states for the GameCube and the portable machines, and a software GFX pipeline that is no longer experimental.">
+<meta name="description" content="Release notes for pureikyubu 2.0: the I/O release. One pool of I/O devices, the emulated Broadband and Modem Adapters, the memory card that mounts, the Game Boy Player and the link cable, save states for the GameCube and the portable machines, and a software GFX pipeline that is no longer experimental.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="imgstore/favicon-32.png">
 <link rel="apple-touch-icon" href="imgstore/apple-touch-icon.png">
@@ -47,8 +47,8 @@
     </div>
 
     <p>
-      Version 2.0 is the <strong>peripheral release</strong> the 1.9.1 notes promised. The console's
-      peripherals are one subsystem now: every device — a controller, a memory card, a network adapter,
+      Version 2.0 is the <strong>I/O release</strong> the 1.9.1 notes promised. The console's
+      I/O devices are one subsystem now: every device — a controller, a memory card, a network adapter,
       a Game Boy Player, a Game Boy Advance on a link cable — is a model of its own, with its own
       settings, its own place in the configuration and one window that edits them all. The Broadband
       Adapter and the Modem Adapter are emulated end to end from the console's side, the Game Boy
@@ -91,12 +91,12 @@
 
     <h2 id="highlights">Highlights</h2>
     <ul>
-      <li><strong>One pool of peripheral devices.</strong> The emulation of a peripheral used to be
+      <li><strong>One pool of I/O devices.</strong> The emulation of an I/O device used to be
         wherever its consumer happened to be: <code>si.cpp</code> knew the controller's answer bytes,
         <code>padsdl.cpp</code> knew both the SDL side and the way a pad is polled,
         <code>memcard.cpp</code> mixed the card format with the EXI lifecycle, and a device's settings
-        were kept by whoever used the device. A peripheral is a <strong>device of its own</strong> now
-        (<code>src/peripherals.cpp</code>): a model registered by its module (<code>cont.cpp</code>,
+        were kept by whoever used the device. Each I/O device is a <strong>model of its own</strong> now
+        (<code>src/io.cpp</code>): a model registered by its module (<code>cont.cpp</code>,
         <code>memcard.cpp</code>, <code>gbplayer.cpp</code>, <code>gbalink.cpp</code>,
         <code>bba.cpp</code>, <code>mdm.cpp</code>), a port of the console's SI, EXI or Hi-Speed bus,
         a pool that is the <code>Devices</code> list of the configuration, and a property grid the
@@ -167,12 +167,12 @@
 
     <h2 id="added">Added</h2>
 
-    <h3>The peripheral pool</h3>
+    <h3>The I/O pool</h3>
     <ul>
       <li><strong>What a device is, in one number.</strong> <code>DeviceID</code> names a model:
         <code>0x00010001</code> is the standard controller (DOL-003), <code>0x00020001</code> a memory
         card, <code>0x00030001</code> the Game Boy Player. A module registers its models
-        (<code>Peripherals::RegisterFactory</code>), so the subsystem itself does not know what a pad
+        (<code>Io::RegisterFactory</code>), so the subsystem itself does not know what a pad
         or a card is; a <strong>port</strong> belongs to a bus (SI, EXI or HSP), and a device can only
         be plugged into a socket of its own bus. The ports are the four SI channels, the two card
         slots, serial port 1 and the Hi-Speed Port.</li>
@@ -180,8 +180,8 @@
         one control (<code>PAD_ACT_*</code> for a pad, <code>GBP_ACT_*</code> for a Game Pak), a
         <em>binding</em> is what drives it (a keyboard key and a host controller button or axis), and
         <em>properties</em> are everything else a device shows about itself: a checkbox, a read-only
-        line, a file it owns (<code>PERIPH_PROP_FILE</code>) or one it only reads
-        (<code>PERIPH_PROP_ROM</code>). The kind picks the editor and the browser.</li>
+        line, a file it owns (<code>IO_PROP_FILE</code>) or one it only reads
+        (<code>IO_PROP_ROM</code>). The kind picks the editor and the browser.</li>
       <li><strong>The host side is a back end, not a part of a device.</strong> <code>HostInput</code>
         is implemented by the front end (<code>padsdl.cpp</code>, <code>padnull.cpp</code>) and by the
         unit tests; the rumble motor reaches the host controller through it. A device never makes an
@@ -193,7 +193,7 @@
         (<code>controllers</code>, <code>memcards</code> and the <code>Device3_Name</code> variables)
         are dropped from the document when the settings are read.
 
-        <pre><code>"peripherals":
+        <pre><code>"io":
 {
     "Devices":
     [
@@ -208,7 +208,7 @@
         <code>MachineClosed</code> takes them out and flushes the files they were writing. A device is
         never destroyed while the emulator runs: one that is removed is detached, taken out of the
         list, and kept alive until the pool is closed in one piece.</li>
-      <li><code>testing/peripherals_test.cpp</code> drives a pad the way a user does and covers the
+      <li><code>testing/io_test.cpp</code> drives a pad the way a user does and covers the
         pool, the buses, the motor, the origins, and that an added device is still there after a
         restart.</li>
     </ul>
@@ -628,7 +628,7 @@
 
     <h2 id="next">Up next</h2>
     <p>
-      The peripherals are not finished, and the next release is where they are finished. The two
+      The I/O support is not finished, and the next release is where it is finished. The two
       <strong>network adapters</strong> need the top half of the stack (a title that speaks IP, or a
       host-side bridge), the <strong>Game Boy Player</strong> needs the Player's own firmware — the
       command set, the video and audio format of the frame stream — and the <strong>link cable</strong>

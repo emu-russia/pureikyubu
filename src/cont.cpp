@@ -16,7 +16,7 @@ using namespace Debug;
 //! The actuators of the pad (see PAD_ACT_* in cont.h). `max` is the value a fully pressed or
 //! deflected control has: a button says 0 or 1, a direction of a stick carries the size of its
 //! deflection, and the two triggers have the range of the analog channel of the pad.
-static const PeriphActuator pad_actuators[PAD_ACT_MAX] =
+static const IoActuator pad_actuators[PAD_ACT_MAX] =
 {
 	{ "Buttons",       "Up",          "UP",         1 },
 	{ "Buttons",       "Down",        "DOWN",       1 },
@@ -90,11 +90,11 @@ namespace
 // ---------------------------------------------------------------------------
 // The device
 
-class ContPad : public PeripheralDevice
+class ContPad : public IoDevice
 {
 	int             port = -1;
 	int             state[PAD_ACT_MAX] = { 0 };     //!< the value of every actuator
-	PeriphBindings  bindings[PAD_ACT_MAX];
+	IoBindings      bindings[PAD_ACT_MAX];
 	int             motor = PAD_MOTOR_STOP;
 
 	//! The value of a control, as the host drives it.
@@ -126,14 +126,14 @@ public:
 		}
 	}
 
-	uint32_t Type() override { return PERIPH_DEVICE_STANDARD_PAD; }
+	uint32_t Type() override { return IO_DEVICE_STANDARD_PAD; }
 
 	int ActuatorCount() override { return PAD_ACT_MAX; }
-	const PeriphActuator* Actuator(int index) override
+	const IoActuator* Actuator(int index) override
 	{
 		return (index >= 0 && index < PAD_ACT_MAX) ? &pad_actuators[index] : nullptr;
 	}
-	PeriphBindings* ActuatorBindings(int index) override
+	IoBindings* ActuatorBindings(int index) override
 	{
 		return (index >= 0 && index < PAD_ACT_MAX) ? &bindings[index] : nullptr;
 	}
@@ -173,7 +173,7 @@ public:
 		// layout is what this run uses, and building the pool must not change the configuration.
 		if (!configured)
 		{
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 			pool.ApplyDefaultBindings(this, pool.FirstOfModel(this));
 		}
 	}
@@ -195,7 +195,7 @@ public:
 	void Detach() override
 	{
 		// A motor that is still running must be stopped on the host when the pad goes away.
-		HostInput* host = Peripherals::Instance().Host();
+		HostInput* host = Io::Instance().Host();
 
 		if (motor != PAD_MOTOR_STOP && host != nullptr)
 		{
@@ -265,7 +265,7 @@ public:
 			{
 				motor = PAD_MOTOR_STOP;
 
-				HostInput* host = Peripherals::Instance().Host();
+				HostInput* host = Io::Instance().Host();
 
 				if (host != nullptr)
 				{
@@ -285,7 +285,7 @@ public:
 			{
 				Report(Channel::SI,
 					"Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
-					port >= PERIPH_PORT_SI0 ? port - PERIPH_PORT_SI0 : 0, cmd, outlen, inlen);
+					port >= IO_PORT_SI0 ? port - IO_PORT_SI0 : 0, cmd, outlen, inlen);
 
 				buf[0] = 9;
 				break;
@@ -358,7 +358,7 @@ public:
 
 	bool SetMotor(int cmd) override
 	{
-		HostInput* host = Peripherals::Instance().Host();
+		HostInput* host = Io::Instance().Host();
 
 		if (host == nullptr)
 		{
@@ -376,20 +376,20 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateStandardPad()
+	IoDevice* CreateStandardPad()
 	{
 		return new ContPad();
 	}
 
-	//! The pad registers its own factory with the peripheral subsystem, so that the pool can create
+	//! The pad registers its own factory with the I/O subsystem, so that the pool can create
 	//! one. A build that does not compile this file has no standard controllers.
 	struct ContRegistrar
 	{
 		ContRegistrar()
 		{
-			Peripherals::RegisterFactory(PERIPH_DEVICE_STANDARD_PAD, "Standard Controller",
-				"DOL-003, the pad on one of the four SI sockets", PERIPH_BUS_SI,
-				PERIPH_PAGE_CONTROLLERS, CreateStandardPad);
+			Io::RegisterFactory(IO_DEVICE_STANDARD_PAD, "Standard Controller",
+				"DOL-003, the pad on one of the four SI sockets", IO_BUS_SI,
+				IO_PAGE_CONTROLLERS, CreateStandardPad);
 		}
 	};
 

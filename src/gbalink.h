@@ -12,11 +12,11 @@ upload a program into it and exchange 32-bit words with it (see gba-link-cable.m
 The Game Boy Advance is a machine of its own - the emulator runs it as a portable console - and this
 module is what happens when it is put *behind the console*:
 
-  * as a **separate device** the GBA is in the peripheral pool with no port: it runs its Game Pak
+  * as a **separate device** the GBA is in the I/O pool with no port: it runs its Game Pak
     the way the portable front end runs it, and the console knows nothing about it. That is what an
     unplugged "GBA + Link Cable" entry in the settings *is* - the device keeps its cartridge, its
     BIOS and its running state, and plugging it into a socket is what makes the console talk to it;
-  * as a **peripheral** it is plugged into a controller socket, and from that moment the console's
+  * as an **I/O device** it is plugged into a controller socket, and from that moment the console's
     SI channel drives it with the Joybus command set below. The device answers out of the Game Boy
     Advance's own JOY registers (see gba_sio.cpp), so a Game Pak that has selected JOY bus mode
     behaves exactly as it would on real hardware.

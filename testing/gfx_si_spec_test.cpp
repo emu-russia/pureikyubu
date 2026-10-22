@@ -456,14 +456,14 @@ namespace pureikyubutest
 		//! Unplug whatever the harness plugged into a channel, to leave that socket empty.
 		static void EmptySocket(int channel)
 		{
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
 			for (int i = 0; i < pool.Count(); i++)
 			{
-				if (pool.PortOf(i) == PERIPH_PORT_SI(channel))
+				if (pool.PortOf(i) == IO_PORT_SI(channel))
 				{
 					pool.Detach(i);
-					Unplugged().push_back(std::make_pair(i, PERIPH_PORT_SI(channel)));
+					Unplugged().push_back(std::make_pair(i, IO_PORT_SI(channel)));
 				}
 			}
 		}
@@ -472,7 +472,7 @@ namespace pureikyubutest
 		{
 			for (size_t i = 0; i < Unplugged().size(); i++)
 			{
-				Peripherals::Instance().Attach(Unplugged()[i].first, Unplugged()[i].second);
+				Io::Instance().Attach(Unplugged()[i].first, Unplugged()[i].second);
 			}
 			Unplugged().clear();
 		}

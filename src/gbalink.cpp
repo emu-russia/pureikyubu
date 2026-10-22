@@ -37,7 +37,7 @@ using namespace Debug;
 
 //! The actuators of the Game Boy Advance. A Game Pak is driven the same way wherever it is played:
 //! eight directions, four buttons and the two shoulder buttons, all of them plain buttons.
-static const PeriphActuator gbl_actuators[GBL_ACT_MAX] =
+static const IoActuator gbl_actuators[GBL_ACT_MAX] =
 {
 	{ "Buttons", "A",      "A",      1 },
 	{ "Buttons", "B",      "B",      1 },
@@ -66,24 +66,24 @@ namespace
 		GBL_PROP_MAX
 	};
 
-	const PeriphProperty gbl_properties[GBL_PROP_MAX] =
+	const IoProperty gbl_properties[GBL_PROP_MAX] =
 	{
-		{ "Game Pak",     PERIPH_PROP_ROM,  GBL_PROP_GAMEPAK },
-		{ "BIOS",         PERIPH_PROP_ROM,  GBL_PROP_BIOS },
-		{ "Run Game Pak", PERIPH_PROP_BOOL, GBL_PROP_RUN },
-		{ "GBA",          PERIPH_PROP_INFO, GBL_PROP_STATE },
+		{ "Game Pak",     IO_PROP_ROM,  GBL_PROP_GAMEPAK },
+		{ "BIOS",         IO_PROP_ROM,  GBL_PROP_BIOS },
+		{ "Run Game Pak", IO_PROP_BOOL, GBL_PROP_RUN },
+		{ "GBA",          IO_PROP_INFO, GBL_PROP_STATE },
 	};
 }
 
 // ---------------------------------------------------------------------------
 // The device
 
-class GbaLinkDevice : public PeripheralDevice
+class GbaLinkDevice : public IoDevice
 {
 
 	int             port = -1;
 	int             state[GBL_ACT_MAX] = { 0 };
-	PeriphBindings  bindings[GBL_ACT_MAX];
+	IoBindings      bindings[GBL_ACT_MAX];
 
 	std::wstring    gamePak;
 	std::wstring    bios;
@@ -209,19 +209,19 @@ public:
 		gba = std::make_unique<GBA::GbaSystem>();
 	}
 
-	uint32_t Type() override { return PERIPH_DEVICE_GBA_LINK; }
+	uint32_t Type() override { return IO_DEVICE_GBA_LINK; }
 
 	// -----------------------------------------------------------------------
 	// Actuators
 
 	int ActuatorCount() override { return GBL_ACT_MAX; }
 
-	const PeriphActuator* Actuator(int index) override
+	const IoActuator* Actuator(int index) override
 	{
 		return (index >= 0 && index < GBL_ACT_MAX) ? &gbl_actuators[index] : nullptr;
 	}
 
-	PeriphBindings* ActuatorBindings(int index) override
+	IoBindings* ActuatorBindings(int index) override
 	{
 		return (index >= 0 && index < GBL_ACT_MAX) ? &bindings[index] : nullptr;
 	}
@@ -244,7 +244,7 @@ public:
 
 	int PropertyCount() override { return GBL_PROP_MAX; }
 
-	const PeriphProperty* Property(int index) override
+	const IoProperty* Property(int index) override
 	{
 		return (index >= 0 && index < GBL_PROP_MAX) ? &gbl_properties[index] : nullptr;
 	}
@@ -420,7 +420,7 @@ public:
 		}
 
 		Report(Channel::SI, "GBA Link: attached to %s\n",
-			Peripherals::Instance().PortName(port));
+			Io::Instance().PortName(port));
 	}
 
 	void Detach() override
@@ -562,20 +562,20 @@ public:
 
 namespace
 {
-	PeripheralDevice* CreateGbaLink()
+	IoDevice* CreateGbaLink()
 	{
 		return new GbaLinkDevice();
 	}
 
-	//! The device registers its own factory with the peripheral subsystem. A build that does not
+	//! The device registers its own factory with the I/O subsystem. A build that does not
 	//! compile this file (or the GBA core it drives) has no GBA link cable.
 	struct GbaLinkRegistrar
 	{
 		GbaLinkRegistrar()
 		{
-			Peripherals::RegisterFactory(PERIPH_DEVICE_GBA_LINK, "GBA + Link Cable",
-				"DOL-011, a Game Boy Advance on a controller socket", PERIPH_BUS_SI,
-				PERIPH_PAGE_CONTROLLERS, CreateGbaLink);
+			Io::RegisterFactory(IO_DEVICE_GBA_LINK, "GBA + Link Cable",
+				"DOL-011, a Game Boy Advance on a controller socket", IO_BUS_SI,
+				IO_PAGE_CONTROLLERS, CreateGbaLink);
 		}
 	};
 

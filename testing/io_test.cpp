@@ -1,7 +1,7 @@
 // The emulated time base of the tests (dsp_test_support.cpp): a device that runs a machine of its
 // own asks the clock how much time has passed since it last did, and a test drives that clock.
 
-// The peripheral subsystem: the device pool, the bindings and the standard controller.
+// The I/O subsystem: the device pool, the bindings and the standard controller.
 //
 // The SI tests (gfx_si_spec_test.cpp) cover the interface block itself: the register window, the
 // poll schedule and the read-status interrupt. These tests cover what is plugged into it. The
@@ -27,7 +27,7 @@ using namespace GfxUnitTest;
 
 namespace pureikyubutest
 {
-	TEST_CLASS(PeripheralsTest)
+	TEST_CLASS(IoTest)
 	{
 		//! The SI channel registers, from the software point of view (see gfx_si_spec_test.cpp).
 		static const uint32_t ChanInH = 0x04;
@@ -107,11 +107,11 @@ namespace pureikyubutest
 		}
 
 		//! The actuator of a device that has the given id ("A", "XUP100", ...).
-		static int ActuatorOf(PeripheralDevice* device, const char* id)
+		static int ActuatorOf(IoDevice* device, const char* id)
 		{
 			for (int i = 0; i < device->ActuatorCount(); i++)
 			{
-				const PeriphActuator* actuator = device->Actuator(i);
+				const IoActuator* actuator = device->Actuator(i);
 
 				if (actuator != nullptr && strcmp(actuator->id, id) == 0)
 				{
@@ -123,11 +123,11 @@ namespace pureikyubutest
 		}
 
 		//! The pool index of a device.
-		static int IndexOf(PeripheralDevice* device)
+		static int IndexOf(IoDevice* device)
 		{
-			for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+			for (int i = 0; i < IO_MAX_DEVICES; i++)
 			{
-				if (Peripherals::Instance().Device(i) == device)
+				if (Io::Instance().Device(i) == device)
 				{
 					return i;
 				}
@@ -137,7 +137,7 @@ namespace pureikyubutest
 		}
 
 		//! Bind a control to a host keyboard key and press the key.
-		static void PressKey(PeripheralDevice* device, const char* actuator, int scancode)
+		static void PressKey(IoDevice* device, const char* actuator, int scancode)
 		{
 			int index = ActuatorOf(device, actuator);
 			Assert::IsTrue(index >= 0, Widen(std::string("the pad has no control ") + actuator).c_str());
@@ -153,47 +153,47 @@ namespace pureikyubutest
 		// The pool of the test machine is a standard controller in each of the four sockets. (The
 		// harness does not compile the memory card - a card registers itself with the pool from
 		// memcard.cpp, which is not part of it - so the two card slots are not checked here.)
-		TEST_METHOD(Peripherals_EveryControllerPortHoldsAPad)
+		TEST_METHOD(Io_EveryControllerPortHoldsAPad)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
 			for (int chan = 0; chan < 4; chan++)
 			{
-				int port = PERIPH_PORT_SI(chan);
-				PeripheralDevice* device = pool.DeviceOnPort(port);
+				int port = IO_PORT_SI(chan);
+				IoDevice* device = pool.DeviceOnPort(port);
 
 				Assert::IsNotNull(device, Widen("the pool has a pad for " + std::string(pool.PortName(port))).c_str());
-				Assert::AreEqual<uint32_t>(PERIPH_DEVICE_STANDARD_PAD, device->Type(),
+				Assert::AreEqual<uint32_t>(IO_DEVICE_STANDARD_PAD, device->Type(),
 					Widen(std::string("the model of the device in ") + pool.PortName(port)).c_str());
 			}
 		}
 
 		// A device belongs to a bus, and a port holds one device at a time: a pad is refused by a
 		// card slot and by a socket that is already taken, and nothing is disturbed by the attempt.
-		TEST_METHOD(Peripherals_ADeviceIsOnlyPluggedIntoItsOwnBus)
+		TEST_METHOD(Io_ADeviceIsOnlyPluggedIntoItsOwnBus)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			PeripheralDevice* first = pool.DeviceOnPort(PERIPH_PORT_SI(0));
-			PeripheralDevice* second = pool.DeviceOnPort(PERIPH_PORT_SI(1));
+			IoDevice* first = pool.DeviceOnPort(IO_PORT_SI(0));
+			IoDevice* second = pool.DeviceOnPort(IO_PORT_SI(1));
 
 			Assert::IsNotNull(first, L"the first socket holds a pad");
 			Assert::IsNotNull(second, L"the second socket holds a pad");
 
-			Assert::IsFalse(pool.Attach(IndexOf(first), PERIPH_PORT_SLOTA), L"a pad cannot go into a card slot");
-			Assert::IsFalse(pool.Attach(IndexOf(first), PERIPH_PORT_SI(1)), L"a socket holds one device at a time");
+			Assert::IsFalse(pool.Attach(IndexOf(first), IO_PORT_SLOTA), L"a pad cannot go into a card slot");
+			Assert::IsFalse(pool.Attach(IndexOf(first), IO_PORT_SI(1)), L"a socket holds one device at a time");
 
-			Assert::IsTrue(first == pool.DeviceOnPort(PERIPH_PORT_SI(0)), L"the first pad is still in its socket");
-			Assert::IsTrue(second == pool.DeviceOnPort(PERIPH_PORT_SI(1)), L"the second one is still in its socket");
+			Assert::IsTrue(first == pool.DeviceOnPort(IO_PORT_SI(0)), L"the first pad is still in its socket");
+			Assert::IsTrue(second == pool.DeviceOnPort(IO_PORT_SI(1)), L"the second one is still in its socket");
 		}
 
 		// The settings window edits the devices on pages, and a page is the model's own rather than
 		// the bus it hangs from: the two network adapters share the EXI bus with the cards and the
 		// Game Boy Advance on a link cable sits in a controller socket. A page that took its devices
 		// from the bus put the adapters under "Memory Cards", which is what this pins down.
-		TEST_METHOD(Peripherals_EveryModelNamesThePageItIsEditedOn)
+		TEST_METHOD(Io_EveryModelNamesThePageItIsEditedOn)
 		{
 			M();
 
@@ -206,17 +206,17 @@ namespace pureikyubutest
 
 			const Expected expected[] =
 			{
-				{ PERIPH_DEVICE_STANDARD_PAD, PERIPH_PAGE_CONTROLLERS,  L"the pad" },
-				{ PERIPH_DEVICE_GBA_LINK,     PERIPH_PAGE_CONTROLLERS,  L"the Game Boy Advance on a link cable" },
-				{ PERIPH_DEVICE_MEMCARD,      PERIPH_PAGE_MEMORY_CARDS, L"the memory card" },
-				{ PERIPH_DEVICE_BBA,          PERIPH_PAGE_NETWORK,      L"the broadband adapter" },
-				{ PERIPH_DEVICE_MODEM,        PERIPH_PAGE_NETWORK,      L"the modem adapter" },
-				{ PERIPH_DEVICE_GBPLAYER,     PERIPH_PAGE_HSP,          L"the Game Boy Player" },
+				{ IO_DEVICE_STANDARD_PAD, IO_PAGE_CONTROLLERS,  L"the pad" },
+				{ IO_DEVICE_GBA_LINK,     IO_PAGE_CONTROLLERS,  L"the Game Boy Advance on a link cable" },
+				{ IO_DEVICE_MEMCARD,      IO_PAGE_MEMORY_CARDS, L"the memory card" },
+				{ IO_DEVICE_BBA,          IO_PAGE_NETWORK,      L"the broadband adapter" },
+				{ IO_DEVICE_MODEM,        IO_PAGE_NETWORK,      L"the modem adapter" },
+				{ IO_DEVICE_GBPLAYER,     IO_PAGE_HSP,          L"the Game Boy Player" },
 			};
 
 			for (const Expected& e : expected)
 			{
-				int page = Peripherals::ModelPage(e.type);
+				int page = Io::ModelPage(e.type);
 
 				if (page < 0)
 				{
@@ -232,50 +232,50 @@ namespace pureikyubutest
 			// The adapters are on the network page, which is the bug this pins down: they share the
 			// EXI bus with the cards, so a page that took its devices from the bus put them under
 			// "Memory Cards".
-			Assert::AreEqual(PERIPH_PAGE_NETWORK, Peripherals::ModelPage(PERIPH_DEVICE_BBA),
+			Assert::AreEqual(IO_PAGE_NETWORK, Io::ModelPage(IO_DEVICE_BBA),
 				L"the broadband adapter is a network device");
-			Assert::AreEqual(PERIPH_PAGE_NETWORK, Peripherals::ModelPage(PERIPH_DEVICE_MODEM),
+			Assert::AreEqual(IO_PAGE_NETWORK, Io::ModelPage(IO_DEVICE_MODEM),
 				L"and so is the modem");
 
 			// Every model this build has names a page that exists, so a registrar that passed the
 			// wrong word is caught here rather than by an empty tab.
-			for (int i = 0; i < Peripherals::ModelCount(); i++)
+			for (int i = 0; i < Io::ModelCount(); i++)
 			{
-				int page = Peripherals::ModelPage(Peripherals::ModelAt(i));
+				int page = Io::ModelPage(Io::ModelAt(i));
 
-				Assert::IsTrue(page >= 0 && page < PERIPH_PAGE_MAX,
+				Assert::IsTrue(page >= 0 && page < IO_PAGE_MAX,
 					L"a model that names no settings page this build has");
 			}
 		}
 
 		// Unplugging a device keeps it in the pool (with its settings) and plugging it back in puts
 		// it where it was asked to be.
-		TEST_METHOD(Peripherals_UnpluggingAndPluggingBackIn)
+		TEST_METHOD(Io_UnpluggingAndPluggingBackIn)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			PeripheralDevice* pad = pool.DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = pool.DeviceOnPort(IO_PORT_SI(0));
 			int index = IndexOf(pad);
 
 			Assert::IsTrue(index >= 0, L"the pad is in the pool");
 
 			pool.Detach(index);
-			Assert::IsNull(pool.DeviceOnPort(PERIPH_PORT_SI(0)), L"the socket is empty");
+			Assert::IsNull(pool.DeviceOnPort(IO_PORT_SI(0)), L"the socket is empty");
 			Assert::IsTrue(pad == pool.Device(index), L"the pad is still in the pool");
 
-			Assert::IsTrue(pool.Attach(index, PERIPH_PORT_SI(0)), L"the pad goes back");
-			Assert::IsTrue(pad == pool.DeviceOnPort(PERIPH_PORT_SI(0)), L"and it is the same pad");
+			Assert::IsTrue(pool.Attach(index, IO_PORT_SI(0)), L"the pad goes back");
+			Assert::IsTrue(pad == pool.DeviceOnPort(IO_PORT_SI(0)), L"and it is the same pad");
 		}
 
 		// A device that is added to the pool is not plugged into anything (it is up to the user),
 		// and a device that is removed leaves the pool.
-		TEST_METHOD(Peripherals_AddingAndRemovingADevice)
+		TEST_METHOD(Io_AddingAndRemovingADevice)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
+			int index = pool.AddDevice(IO_DEVICE_STANDARD_PAD);
 
 			Assert::IsTrue(index >= 0, L"the pool takes another pad");
 			Assert::IsNotNull(pool.Device(index), L"the new pad is in the pool");
@@ -288,19 +288,19 @@ namespace pureikyubutest
 
 		// The default bindings of a model come from the host back end, and the keys of a pad belong
 		// to the first pad of the pool only: one set of keys cannot drive four sockets at once.
-		TEST_METHOD(Peripherals_DefaultBindingsAndTheFirstPadRule)
+		TEST_METHOD(Io_DefaultBindingsAndTheFirstPadRule)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
-			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
-			PeripheralDevice* pad = pool.Device(index);
+			Io& pool = Io::Instance();
+			int index = pool.AddDevice(IO_DEVICE_STANDARD_PAD);
+			IoDevice* pad = pool.Device(index);
 
 			int a = ActuatorOf(pad, "A");
 			Assert::IsTrue(a >= 0, L"the pad has the A control");
 
 			// The pad that was added is not the first of its model, so it got the game controller
 			// control of A but no key (see StandardPad::LoadConfig).
-			Assert::AreEqual(PERIPH_HOST_MAKE_BUTTON(0), pad->ActuatorBindings(a)->gamepad, L"the game controller of A");
+			Assert::AreEqual(IO_HOST_MAKE_BUTTON(0), pad->ActuatorBindings(a)->gamepad, L"the game controller of A");
 			Assert::AreEqual(0, pad->ActuatorBindings(a)->keyboard, L"the next pad has no key of its own");
 
 			// As the first pad of its model it gets the key too.
@@ -317,17 +317,17 @@ namespace pureikyubutest
 		// The pool is what the settings window edits, and it is the configuration: a device that is
 		// added, the name it is given and its bindings are all there after the emulator was closed
 		// and started again (which is what the settings window of a later run reads).
-		TEST_METHOD(Peripherals_ThePoolSurvivesARestart)
+		TEST_METHOD(Io_ThePoolSurvivesARestart)
 		{
 			GfxTestMachine& m = M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
+			int index = pool.AddDevice(IO_DEVICE_STANDARD_PAD);
 			Assert::IsTrue(index >= 0, L"the pool takes another pad");
 
 			pool.SetName(index, "Test Pad");
 
-			PeripheralDevice* pad = pool.Device(index);
+			IoDevice* pad = pool.Device(index);
 			int a = ActuatorOf(pad, "A");
 			pool.SetBinding(pad, a, false, 0x1234);       // as the capture of the settings window does it
 			Assert::IsTrue(ActuatorOf(pad, "A") == PAD_ACT_A, L"the actuators are in the order of cont.h");
@@ -336,7 +336,7 @@ namespace pureikyubutest
 			pool.Close();
 			pool.Open();
 
-			PeripheralDevice* again = pool.Device(index);
+			IoDevice* again = pool.Device(index);
 			Assert::IsNotNull(again, L"the added pad is in the pool again");
 			Assert::IsTrue(pool.Name(index) == "Test Pad", L"with the name it was given");
 			Assert::AreEqual(0x1234, again->ActuatorBindings(ActuatorOf(again, "A"))->keyboard,
@@ -347,19 +347,19 @@ namespace pureikyubutest
 
 		// "Defaults" of the settings window means "this device": both the keys and the game controller,
 		// even for a pad that is not the first one of the pool.
-		TEST_METHOD(Peripherals_TheDefaultsButtonFillsEveryControl)
+		TEST_METHOD(Io_TheDefaultsButtonFillsEveryControl)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			int index = pool.AddDevice(PERIPH_DEVICE_STANDARD_PAD);
-			PeripheralDevice* pad = pool.Device(index);
+			int index = pool.AddDevice(IO_DEVICE_STANDARD_PAD);
+			IoDevice* pad = pool.Device(index);
 
 			pool.ClearBindings(pad);
 			pool.DefaultBindings(pad, true);
 
 			int a = ActuatorOf(pad, "A");
-			Assert::AreEqual(PERIPH_HOST_MAKE_BUTTON(0), pad->ActuatorBindings(a)->gamepad, L"the game controller of A");
+			Assert::AreEqual(IO_HOST_MAKE_BUTTON(0), pad->ActuatorBindings(a)->gamepad, L"the game controller of A");
 			Assert::AreEqual(TestDefaultKey, pad->ActuatorBindings(a)->keyboard, L"and its key");
 
 			// The device's own settings were written back with it.
@@ -382,7 +382,7 @@ namespace pureikyubutest
 		TEST_METHOD(Settings_ANegativeValueSurvivesTheFile)
 		{
 			Json written;
-			Json::Value* root = written.root.AddObject("peripherals");
+			Json::Value* root = written.root.AddObject("io");
 			Assert::IsNotNull(root, L"the document has a section");
 			root->AddInt("port", -1);
 			root->AddInt("port2", 5);
@@ -413,14 +413,14 @@ namespace pureikyubutest
 		// attached while the pool went on dispatching the socket to the device that was placed first:
 		// a device that never answers, with nothing outside to show which of the two is in the socket.
 		// The entry that names the port is the one that gets it.
-		TEST_METHOD(Peripherals_AnEntryThatNamesAPortTakesItFromThePlacedDevice)
+		TEST_METHOD(Io_AnEntryThatNamesAPortTakesItFromThePlacedDevice)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
 			// A device whose entry names no port, which is how the shipped defaults leave the models
 			// that have a socket of their own: the pool places it.
-			int placed = pool.AddDevice(PERIPH_DEVICE_MODEM);
+			int placed = pool.AddDevice(IO_DEVICE_MODEM);
 			Assert::IsTrue(placed >= 0, L"the pool takes a modem adapter");
 
 			pool.Close();
@@ -432,7 +432,7 @@ namespace pureikyubutest
 
 			// A second device names that socket in its own entry, as the settings window writes it when
 			// the user puts a model into a socket the first device is already in.
-			int named = pool.AddDevice(PERIPH_DEVICE_BBA);
+			int named = pool.AddDevice(IO_DEVICE_BBA);
 			Assert::IsTrue(named >= 0, L"the pool takes a broadband adapter");
 			SetConfigEntryInt(pool.Device(named)->Config(), "Port", port);
 
@@ -448,21 +448,21 @@ namespace pureikyubutest
 			pool.RemoveDevice(placed);
 		}
 
-		// The settings of the devices the peripheral work added are properties like any other (see
-		// peripherals.h), so the settings window edits them, the configuration keeps them and a
+		// The settings of the devices the I/O work added are properties like any other (see
+		// io.h), so the settings window edits them, the configuration keeps them and a
 		// restart brings them back: what the window shows after a restart has to be what was set
 		// before it. The two network adapters share a socket, so the test also pins that they do
 		// not overwrite each other's entries.
-		TEST_METHOD(Peripherals_TheNetworkAndPlayerSettingsSurviveARestart)
+		TEST_METHOD(Io_TheNetworkAndPlayerSettingsSurviveARestart)
 		{
 			M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			int adapter = pool.AddDevice(PERIPH_DEVICE_BBA);
-			Assert::IsTrue(adapter >= 0 && pool.Attach(adapter, PERIPH_PORT_SERIAL1),
+			int adapter = pool.AddDevice(IO_DEVICE_BBA);
+			Assert::IsTrue(adapter >= 0 && pool.Attach(adapter, IO_PORT_SERIAL1),
 				L"a broadband adapter is in the socket");
-			int player = pool.AddDevice(PERIPH_DEVICE_GBPLAYER);
-			Assert::IsTrue(player >= 0 && pool.Attach(player, PERIPH_PORT_HSP),
+			int player = pool.AddDevice(IO_DEVICE_GBPLAYER);
+			Assert::IsTrue(player >= 0 && pool.Attach(player, IO_PORT_HSP),
 				L"and a Game Boy Player is on the high-speed port");
 
 			// The MAC address is the adapter's text property; the link and the "run the Game Pak"
@@ -474,8 +474,8 @@ namespace pureikyubutest
 			pool.Close();
 			pool.Open();
 
-			PeripheralDevice* adapterAgain = pool.Device(adapter);
-			PeripheralDevice* playerAgain = pool.Device(player);
+			IoDevice* adapterAgain = pool.Device(adapter);
+			IoDevice* playerAgain = pool.Device(player);
 
 			Assert::IsNotNull(adapterAgain, L"the adapter is in the pool again");
 			Assert::IsNotNull(playerAgain, L"and the Player");
@@ -515,7 +515,7 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_AKeyPressReachesTheSiInputBuffer)
 		{
 			GfxTestMachine& m = M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			PressKey(pad, "A", 0x1000);
 			PressKey(pad, "START", 0x1001);
@@ -535,7 +535,7 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_TheDigitalTriggersFollowTheAnalogOnes)
 		{
 			GfxTestMachine& m = M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			PressKey(pad, "TRIGGERL", 0x2000);
 			Poll(m);
@@ -549,14 +549,14 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_AGameControllerAxisDrivesTheStick)
 		{
 			GfxTestMachine& m = M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			// The pad of Port 1 is driven by the first host game controller (see HostPadOf).
 			TestHostGamepad(0, true);
 
 			int index = ActuatorOf(pad, "XRIGHT100");
 			Assert::IsTrue(index >= 0, L"the pad has the right direction of the main stick");
-			pad->ActuatorBindings(index)->gamepad = PERIPH_HOST_MAKE_AXIS(0, true);
+			pad->ActuatorBindings(index)->gamepad = IO_HOST_MAKE_AXIS(0, true);
 
 			TestHostGamepadAxis(0, 0, 32767);
 			Poll(m);
@@ -575,7 +575,7 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_TheHalfAndTheFullControlOfADirectionDoNotAddUp)
 		{
 			GfxTestMachine& m = M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			PressKey(pad, "XUP50", 0x3000);
 			Poll(m);
@@ -594,7 +594,7 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_TheMotorIsProgrammedAndReportedBack)
 		{
 			M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			uint8_t buf[8] = { 0 };
 			buf[0] = 0x00;
@@ -622,7 +622,7 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_TheResetCommandIsAnsweredAndStopsTheMotor)
 		{
 			M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			Assert::IsTrue(pad->SetMotor(PAD_MOTOR_RUMBLE), L"the motor is running");
 			Assert::AreEqual<int>(PAD_MOTOR_RUMBLE, TestHostRumble(0), L"the host game controller rumbles");
@@ -640,7 +640,7 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_TheOriginsAreAnswered)
 		{
 			M();
-			PeripheralDevice* pad = Peripherals::Instance().DeviceOnPort(PERIPH_PORT_SI(0));
+			IoDevice* pad = Io::Instance().DeviceOnPort(IO_PORT_SI(0));
 
 			uint8_t buf[8] = { 0 };
 			buf[0] = 0x41;
@@ -656,9 +656,9 @@ namespace pureikyubutest
 
 		//! The pool index of a device after it is added, and the socket it is put in. The socket is
 		//! freed first: the test machine plugs a pad into every one of them.
-		static PeripheralDevice* PlugDevice(int& index, uint32_t type, int port)
+		static IoDevice* PlugDevice(int& index, uint32_t type, int port)
 		{
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
 			int existing = IndexOf(pool.DeviceOnPort(port));
 
@@ -685,20 +685,20 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
 			// The pool of the test machine has a pad in every socket, so one is taken out for the
 			// cable. Everything the test looks at is collected first and the pool is put back before
 			// the assertions, so that a failing assertion cannot leave a socket empty for the tests
 			// that follow.
-			int socket = PERIPH_PORT_SI(3);
-			PeripheralDevice* pad = pool.DeviceOnPort(socket);
+			int socket = IO_PORT_SI(3);
+			IoDevice* pad = pool.DeviceOnPort(socket);
 			int padIndex = IndexOf(pad);
 			pool.Detach(padIndex);
 
-			int index = pool.AddDevice(PERIPH_DEVICE_GBA_LINK);
+			int index = pool.AddDevice(IO_DEVICE_GBA_LINK);
 			bool attached = index >= 0 && pool.Attach(index, socket);
-			PeripheralDevice* link = pool.Device(index);
+			IoDevice* link = pool.Device(index);
 
 			uint32_t type = link != nullptr ? link->Type() : 0;
 
@@ -753,7 +753,7 @@ namespace pureikyubutest
 			pool.Attach(padIndex, socket);
 
 			Assert::IsTrue(attached, L"the cable goes into the freed socket");
-			Assert::AreEqual<uint32_t>(PERIPH_DEVICE_GBA_LINK, type, L"and it is the cable");
+			Assert::AreEqual<uint32_t>(IO_DEVICE_GBA_LINK, type, L"and it is the cable");
 			Assert::AreEqual<uint8_t>(0, idle, L"an idle port has no status flags");
 			Assert::AreEqual<uint8_t>(0x02, received, L"the port received a word");
 			Assert::AreEqual<uint8_t>(0, sending, L"nothing is being sent");
@@ -818,16 +818,16 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			int socket = PERIPH_PORT_SI(3);
-			PeripheralDevice* pad = pool.DeviceOnPort(socket);
+			int socket = IO_PORT_SI(3);
+			IoDevice* pad = pool.DeviceOnPort(socket);
 			int padIndex = IndexOf(pad);
 			pool.Detach(padIndex);
 
-			int index = pool.AddDevice(PERIPH_DEVICE_GBA_LINK);
+			int index = pool.AddDevice(IO_DEVICE_GBA_LINK);
 			bool attached = index >= 0 && pool.Attach(index, socket);
-			PeripheralDevice* link = pool.Device(index);
+			IoDevice* link = pool.Device(index);
 
 			std::string idle = attached ? link->GetProperty(3) : std::string();
 
@@ -887,11 +887,11 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
-			int index = pool.AddDevice(PERIPH_DEVICE_GBPLAYER);
+			Io& pool = Io::Instance();
+			int index = pool.AddDevice(IO_DEVICE_GBPLAYER);
 
 			Assert::IsTrue(index >= 0, L"the pool takes a Game Boy Player");
-			Assert::IsTrue(pool.Attach(index, PERIPH_PORT_HSP), L"it goes onto the Hi-Speed Port");
+			Assert::IsTrue(pool.Attach(index, IO_PORT_HSP), L"it goes onto the Hi-Speed Port");
 
 			Flipper::HiSpeedPort* hsp = Flipper::HW->hsp;
 			Assert::IsNotNull(hsp, L"the machine has the port");
@@ -982,7 +982,7 @@ namespace pureikyubutest
 		// =========================================================================================
 
 		//! One transfer of the command-then-data protocol the console's own driver speaks (see
-		//! peripherals.h). The first transfer of a selection is the command word and the transfers
+		//! io.h). The first transfer of a selection is the command word and the transfers
 		//! after it carry the data; `word` is the value of the bytes on the wire, and they go into
 		//! the top of the data register the way `EXIImm` puts them there (the first byte sent is
 		//! bits 31:24).
@@ -993,7 +993,7 @@ namespace pureikyubutest
 			exi->exi.regs[0].cr = (uint16_t)(((bytes - 1) << 4) | (rw << 2) | 1);
 			exi->exi.regs[0].data = word << (8 * (4 - bytes));
 
-			Peripherals::Instance().TransferEXI(0, 2, exi);
+			Io::Instance().TransferEXI(0, 2, exi);
 		}
 
 		//! A command word: two bytes naming a shim register (`0x4000 | reg << 8` when it is a
@@ -1042,11 +1042,11 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
-			int index = pool.AddDevice(PERIPH_DEVICE_BBA);
+			Io& pool = Io::Instance();
+			int index = pool.AddDevice(IO_DEVICE_BBA);
 
 			Assert::IsTrue(index >= 0, L"the pool takes a broadband adapter");
-			Assert::IsTrue(pool.Attach(index, PERIPH_PORT_SERIAL1), L"serial port 1 takes it");
+			Assert::IsTrue(pool.Attach(index, IO_PORT_SERIAL1), L"serial port 1 takes it");
 
 			// The device's own state is all the transfer needs: the EXI register file is the only
 			// thing the adapter looks at.
@@ -1185,11 +1185,11 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
-			int index = pool.AddDevice(PERIPH_DEVICE_BBA);
+			Io& pool = Io::Instance();
+			int index = pool.AddDevice(IO_DEVICE_BBA);
 
 			Assert::IsTrue(index >= 0, L"the pool takes a broadband adapter");
-			Assert::IsTrue(pool.Attach(index, PERIPH_PORT_SERIAL1), L"serial port 1 takes it");
+			Assert::IsTrue(pool.Attach(index, IO_PORT_SERIAL1), L"serial port 1 takes it");
 
 			// The first command sequence of the driver's bring-up: the device ID out of shim
 			// register 0, right after the socket is selected.
@@ -1314,11 +1314,11 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
-			int index = pool.AddDevice(PERIPH_DEVICE_MODEM);
+			Io& pool = Io::Instance();
+			int index = pool.AddDevice(IO_DEVICE_MODEM);
 
 			Assert::IsTrue(index >= 0, L"the pool takes a modem adapter");
-			Assert::IsTrue(pool.Attach(index, PERIPH_PORT_SERIAL1), L"serial port 1 takes it");
+			Assert::IsTrue(pool.Attach(index, IO_PORT_SERIAL1), L"serial port 1 takes it");
 
 			static uint8_t exiStorage[sizeof(Flipper::ExternalInterface)] = { 0 };
 			Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)exiStorage;
@@ -1400,9 +1400,9 @@ namespace pureikyubutest
 		{
 			M();
 
-			Peripherals& pool = Peripherals::Instance();
-			int index = pool.AddDevice(PERIPH_DEVICE_BBA);
-			Assert::IsTrue(pool.Attach(index, PERIPH_PORT_SERIAL1), L"serial port 1 takes it");
+			Io& pool = Io::Instance();
+			int index = pool.AddDevice(IO_DEVICE_BBA);
+			Assert::IsTrue(pool.Attach(index, IO_PORT_SERIAL1), L"serial port 1 takes it");
 
 			static uint8_t exiStorage[sizeof(Flipper::ExternalInterface)] = { 0 };
 			Flipper::ExternalInterface* exi = (Flipper::ExternalInterface*)exiStorage;
@@ -1470,9 +1470,9 @@ namespace pureikyubutest
 		TEST_METHOD(Pad_AnEmptySocketIsNotAnswered)
 		{
 			GfxTestMachine& m = M();
-			Peripherals& pool = Peripherals::Instance();
+			Io& pool = Io::Instance();
 
-			PeripheralDevice* pad = pool.DeviceOnPort(PERIPH_PORT_SI(3));
+			IoDevice* pad = pool.DeviceOnPort(IO_PORT_SI(3));
 			int index = IndexOf(pad);
 
 			pool.Detach(index);
@@ -1483,7 +1483,7 @@ namespace pureikyubutest
 
 			// Put the pad back before the assertions, so that a failure here does not leave the
 			// pool one controller short for the tests that follow.
-			pool.Attach(index, PERIPH_PORT_SI(3));
+			pool.Attach(index, IO_PORT_SI(3));
 
 			Assert::AreEqual<uint32_t>(SI_SR_RDST3, sr & SI_SR_RDST3,
 				L"the poll of an empty socket still completes");

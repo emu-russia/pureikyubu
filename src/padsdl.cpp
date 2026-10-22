@@ -1,9 +1,9 @@
 /*
 
-SDL2 host input (the front end side of the peripheral subsystem).
+SDL2 host input (the front end side of the I/O subsystem).
 
 This is the only file of the emulator that talks to SDL about input. It implements `HostInput` (see
-peripherals.h), so the emulated devices - the standard controller of peripherals.cpp - never make an
+io.h), so the emulated devices - the standard controller of io.cpp - never make an
 SDL call: the subsystem resolves their bindings against this backend and hands them the values of
 their actuators.
 
@@ -14,9 +14,9 @@ while the emulation is reading it, and it is also why the rumble motor is a requ
 `Update` applies rather than a direct SDL call.
 
 The bindings are SDL scancodes for the keyboard and an SDL game controller button or axis for a
-game controller, both stored as one integer (see PERIPH_HOST_* in peripherals.h). The Nth connected
+game controller, both stored as one integer (see IO_HOST_* in io.h). The Nth connected
 game controller drives the pad in Port N, and that mapping is the subsystem's (see HostPadOf in
-peripherals.cpp); the backend only reports what is connected.
+io.cpp); the backend only reports what is connected.
 
 */
 
@@ -320,9 +320,9 @@ static const char* gamepad_axis_name[SDL_CONTROLLER_AXIS_MAX] =
 
 std::string SdlHostInput::BindingName(int binding)
 {
-	if (PERIPH_HOST_IS_BUTTON(binding))
+	if (IO_HOST_IS_BUTTON(binding))
 	{
-		int button = PERIPH_HOST_BUTTON(binding);
+		int button = IO_HOST_BUTTON(binding);
 
 		if (button < 0 || button >= SDL_CONTROLLER_BUTTON_MAX)
 		{
@@ -332,16 +332,16 @@ std::string SdlHostInput::BindingName(int binding)
 		return gamepad_button_name[button];
 	}
 
-	if (PERIPH_HOST_IS_AXIS(binding))
+	if (IO_HOST_IS_AXIS(binding))
 	{
-		int axis = PERIPH_HOST_AXIS(binding);
+		int axis = IO_HOST_AXIS(binding);
 
 		if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
 		{
 			return "?";
 		}
 
-		return std::string(gamepad_axis_name[axis]) + (PERIPH_HOST_AXIS_POS(binding) ? " +" : " -");
+		return std::string(gamepad_axis_name[axis]) + (IO_HOST_AXIS_POS(binding) ? " +" : " -");
 	}
 
 	if (binding <= 0 || binding >= SDL_NUM_SCANCODES)
@@ -362,37 +362,37 @@ std::string SdlHostInput::BindingName(int binding)
 
 struct PadDefault
 {
-	const char* id;         //!< the PeriphActuator::id of the control
+	const char* id;         //!< the IoActuator::id of the control
 	int         keyboard;   //!< an SDL scancode
-	int         gamepad;    //!< a PERIPH_HOST_* control
+	int         gamepad;    //!< an IO_HOST_* control
 };
 
 static const PadDefault pad_defaults[] =
 {
-	{ "UP",        SDL_SCANCODE_HOME,       PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP) },
-	{ "DOWN",      SDL_SCANCODE_END,        PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN) },
-	{ "LEFT",      SDL_SCANCODE_DELETE,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT) },
-	{ "RIGHT",     SDL_SCANCODE_PAGEDOWN,   PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) },
+	{ "UP",        SDL_SCANCODE_HOME,       IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP) },
+	{ "DOWN",      SDL_SCANCODE_END,        IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN) },
+	{ "LEFT",      SDL_SCANCODE_DELETE,     IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT) },
+	{ "RIGHT",     SDL_SCANCODE_PAGEDOWN,   IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) },
 	{ "XUP50",     0,                       0 },
-	{ "XUP100",    SDL_SCANCODE_UP,         PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, false) },
+	{ "XUP100",    SDL_SCANCODE_UP,         IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, false) },
 	{ "XDOWN50",   0,                       0 },
-	{ "XDOWN100",  SDL_SCANCODE_DOWN,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, true) },
+	{ "XDOWN100",  SDL_SCANCODE_DOWN,       IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTY, true) },
 	{ "XLEFT50",   0,                       0 },
-	{ "XLEFT100",  SDL_SCANCODE_LEFT,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, false) },
+	{ "XLEFT100",  SDL_SCANCODE_LEFT,       IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, false) },
 	{ "XRIGHT50",  0,                       0 },
-	{ "XRIGHT100", SDL_SCANCODE_RIGHT,      PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, true) },
-	{ "CXUP",      SDL_SCANCODE_KP_8,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, false) },
-	{ "CXDOWN",    SDL_SCANCODE_KP_2,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, true) },
-	{ "CXLEFT",    SDL_SCANCODE_KP_4,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, false) },
-	{ "CXRIGHT",   SDL_SCANCODE_KP_6,       PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, true) },
-	{ "TRIGGERL",  SDL_SCANCODE_Q,          PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERLEFT, true) },
-	{ "TRIGGERR",  SDL_SCANCODE_W,          PERIPH_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, true) },
-	{ "TRIGGERZ",  SDL_SCANCODE_E,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) },
-	{ "A",         SDL_SCANCODE_X,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A) },
-	{ "B",         SDL_SCANCODE_Z,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B) },
-	{ "X",         SDL_SCANCODE_S,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_X) },
-	{ "Y",         SDL_SCANCODE_A,          PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_Y) },
-	{ "START",     SDL_SCANCODE_RETURN,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
+	{ "XRIGHT100", SDL_SCANCODE_RIGHT,      IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_LEFTX, true) },
+	{ "CXUP",      SDL_SCANCODE_KP_8,       IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, false) },
+	{ "CXDOWN",    SDL_SCANCODE_KP_2,       IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTY, true) },
+	{ "CXLEFT",    SDL_SCANCODE_KP_4,       IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, false) },
+	{ "CXRIGHT",   SDL_SCANCODE_KP_6,       IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_RIGHTX, true) },
+	{ "TRIGGERL",  SDL_SCANCODE_Q,          IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERLEFT, true) },
+	{ "TRIGGERR",  SDL_SCANCODE_W,          IO_HOST_MAKE_AXIS(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, true) },
+	{ "TRIGGERZ",  SDL_SCANCODE_E,          IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) },
+	{ "A",         SDL_SCANCODE_X,          IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A) },
+	{ "B",         SDL_SCANCODE_Z,          IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B) },
+	{ "X",         SDL_SCANCODE_S,          IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_X) },
+	{ "Y",         SDL_SCANCODE_A,          IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_Y) },
+	{ "START",     SDL_SCANCODE_RETURN,     IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
 };
 
 // The controls of a Game Boy (Advance): the Game Pak of a Game Boy Player, and the handheld a GBA
@@ -401,16 +401,16 @@ static const PadDefault pad_defaults[] =
 // with the pad in the player's hands.
 static const PadDefault gb_defaults[] =
 {
-	{ "UP",     SDL_SCANCODE_UP,        PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP) },
-	{ "DOWN",   SDL_SCANCODE_DOWN,      PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN) },
-	{ "LEFT",   SDL_SCANCODE_LEFT,      PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT) },
-	{ "RIGHT",  SDL_SCANCODE_RIGHT,     PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) },
-	{ "A",      SDL_SCANCODE_X,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A) },
-	{ "B",      SDL_SCANCODE_Z,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B) },
-	{ "START",  SDL_SCANCODE_RETURN,    PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
-	{ "SELECT", SDL_SCANCODE_BACKSPACE, PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_BACK) },
-	{ "L",      SDL_SCANCODE_Q,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_LEFTSHOULDER) },
-	{ "R",      SDL_SCANCODE_W,         PERIPH_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) },
+	{ "UP",     SDL_SCANCODE_UP,        IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_UP) },
+	{ "DOWN",   SDL_SCANCODE_DOWN,      IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_DOWN) },
+	{ "LEFT",   SDL_SCANCODE_LEFT,      IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_LEFT) },
+	{ "RIGHT",  SDL_SCANCODE_RIGHT,     IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_DPAD_RIGHT) },
+	{ "A",      SDL_SCANCODE_X,         IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_A) },
+	{ "B",      SDL_SCANCODE_Z,         IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_B) },
+	{ "START",  SDL_SCANCODE_RETURN,    IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_START) },
+	{ "SELECT", SDL_SCANCODE_BACKSPACE, IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_BACK) },
+	{ "L",      SDL_SCANCODE_Q,         IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_LEFTSHOULDER) },
+	{ "R",      SDL_SCANCODE_W,         IO_HOST_MAKE_BUTTON(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) },
 };
 
 void SdlHostInput::DefaultBindings(uint32_t type, const char* actuator, int& keyboard, int& gamepad)
@@ -432,13 +432,13 @@ void SdlHostInput::DefaultBindings(uint32_t type, const char* actuator, int& key
 
 	switch (type)
 	{
-		case PERIPH_DEVICE_STANDARD_PAD:
+		case IO_DEVICE_STANDARD_PAD:
 			table = pad_defaults;
 			count = _countof(pad_defaults);
 			break;
 
-		case PERIPH_DEVICE_GBPLAYER:
-		case PERIPH_DEVICE_GBA_LINK:
+		case IO_DEVICE_GBPLAYER:
+		case IO_DEVICE_GBA_LINK:
 			table = gb_defaults;
 			count = _countof(gb_defaults);
 			break;

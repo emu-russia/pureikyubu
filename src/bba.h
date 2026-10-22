@@ -93,5 +93,5 @@ namespace Flipper
 	class ExternalInterface;
 }
 
-//! The device model's DeviceID (see peripherals.h).
-#define PERIPH_DEVICE_BBA_ID    0x04020200
+//! The device model's DeviceID (see io.h).
+#define IO_DEVICE_BBA_ID    0x04020200

@@ -1,23 +1,23 @@
-# Peripheral devices
+# I/O devices
 
-The GameCube reaches its peripherals through two different buses, and every peripheral is a device
+The GameCube reaches its I/O devices through two different buses, and each of them is a device
 of its own. The emulation of them used to be spread over the modules that happened to touch them:
 `si.cpp` knew the answer bytes of the controller, `padsdl.cpp` knew both the SDL side and the way a
 pad is polled, `memcard.cpp` mixed the card format with the EXI lifecycle, and the settings of a
-device were kept wherever its consumer was. The subsystem described here is the single place a
-peripheral lives, and `uisettings.cpp` is the single place its settings are edited.
+device were kept wherever its consumer was. The subsystem described here is the single place an I/O
+device lives, and `uisettings.cpp` is the single place its settings are edited.
 
 ## The pieces
 
 | Piece | What it is |
 |---|---|
-| **DeviceID** | What a device model is, in one number: `0x00010001` is the standard controller (DOL-003), `0x00020001` is a memory card, `0x00030001` is the Game Boy Player. A model is registered by the module that implements it (`Peripherals::RegisterFactory`), so the subsystem does not know what a pad or a card is, and a build that does not compile that module simply has no such devices |
+| **DeviceID** | What a device model is, in one number: `0x00010001` is the standard controller (DOL-003), `0x00020001` is a memory card, `0x00030001` is the Game Boy Player. A model is registered by the module that implements it (`Io::RegisterFactory`), so the subsystem does not know what a pad or a card is, and a build that does not compile that module simply has no such devices |
 | **Port** | A socket of the console: the four SI channels, the two memory card slots, serial port 1 (EXI0 CS2B, the two network adapters), and the Hi-Speed Port (the Game Boy Player). A port belongs to a bus (SI, EXI or HSP), and a device can only be plugged into a port of its own bus |
 | **Pool** | The devices the user has, which is the list the configuration holds. Every device owns the settings of its own entry: its model, its name, the port it is plugged into and whatever else the model keeps. An entry that does not name a port at all is a device that has never been placed - the shipped defaults are written that way - and it goes into the first free port of its bus when the pool is opened; an entry that names `-1` stays unplugged, because that is what the user asked for |
 | **Actuator** | One control of a device (`PAD_ACT_*` in cont.h for a pad, `GBP_ACT_*` in gbplayer.h for a Game Pak). A device publishes its actuators and the settings window draws one row per actuator |
 | **Binding** | What drives an actuator: a keyboard key and a host game controller button or axis |
 | **HostInput** | The host side of the bindings, and the host controls a device drives back (the rumble motor). Implemented by the front end (`padsdl.cpp` over SDL2, `padnull.cpp` for the headless build) and by the unit tests |
-| **Property** | Everything else a device shows about itself in the settings window: a checkbox, a read-only line, a file the device owns (a memory card's image, `PERIPH_PROP_FILE`), or a file it only reads (a Game Pak or a BIOS, `PERIPH_PROP_ROM`). The kind picks the editor and the browser, so a device does not have to know how the dialog draws it |
+| **Property** | Everything else a device shows about itself in the settings window: a checkbox, a read-only line, a file the device owns (a memory card's image, `IO_PROP_FILE`), or a file it only reads (a Game Pak or a BIOS, `IO_PROP_ROM`). The kind picks the editor and the browser, so a device does not have to know how the dialog draws it |
 
 The device implementations are modules of their own: the standard controller is `cont.cpp` (the
 Joybus command set, the analog channels, the rumble motor and the actuator table), the memory card
@@ -30,7 +30,7 @@ settings, and differ only in which bus the console reaches them by).
 
 A device model is registered by its module, so a build that compiles another one offers it in the
 settings window without a line of front end code: the "Add" row of a page lists the models of *that
-bus* (`Peripherals::ModelCount` / `ModelAt`), which is how a GBA link cable or a network adapter is
+bus* (`Io::ModelCount` / `ModelAt`), which is how a GBA link cable or a network adapter is
 put into the pool.
 
 ## The Game Boy Advance in a device
@@ -95,7 +95,7 @@ carry the data, most significant byte first, and the **address walks forward wit
 which is how the driver reads the six MAC bytes or a packet in one burst. The shim's register is
 six bits (bit 6 of the byte is the write flag) and the controller's address is sixteen: the register
 file is page 0 and the packet memory is the pages above it. The device is told which transfer begins
-the sequence (`Peripherals::TransferEXI` passes the channel's `firstImm` flag, exi.cpp), because a
+the sequence (`Io::TransferEXI` passes the channel's `firstImm` flag, exi.cpp), because a
 two-byte write can be either a command or a byte of data. The controller's register file, its
 identification, its MAC address and its receive/transmit ring are emulated; the **network behind it is not** - the device hands frames to a
 `BbaBackend` (see bba.h) and takes the ones it receives from the same place, and the front end is
@@ -291,14 +291,14 @@ the backend used to lack.
 
 ## The configuration
 
-The pool is the `Devices` list of the `peripherals` section: one entry per device, and the entry is
+The pool is the `Devices` list of the `io` section: one entry per device, and the entry is
 what holds the settings of that device. What a device keeps is its entry - a handle of its own
 object - and not its position in the list, so a device that is taken out of the pool takes its
 settings with it: the list is a list, not a table with holes, and nothing that is stored next to a
 device can end up belonging to another one (see the list accessors in `config.h`).
 
 ```json
-"peripherals":
+"io":
 {
     "Devices":
     [
@@ -325,7 +325,7 @@ configuration this build writes does not carry them along.
 
 The pool is opened with the **emulator**, not with the machine: the settings window edits the pool
 with no game loaded, and the devices are plugged into the sockets of the console, which exist
-whether or not a machine is running (`Peripherals::Open`, called by `EMUCtor`). It is closed by
+whether or not a machine is running (`Io::Open`, called by `EMUCtor`). It is closed by
 `EMUDtor`.
 
 The machine matters to a device that talks to it - a memory card is read through an EXI channel - so
@@ -348,7 +348,7 @@ and the Game Boy Advance on a link cable), "Memory Cards" (the two card slots), 
 broadband and modem adapters of serial port 1) and "High-Speed Port" (the Game Boy Player). The
 window is generic over the devices: it asks a device for its actuators and its properties and draws
 them, and a device says which page it is edited on when it registers its model
-(`PERIPH_PAGE_*`), so a new device model appears on the right page without a line of front end code.
+(`IO_PAGE_*`), so a new device model appears on the right page without a line of front end code.
 
 A page follows the *device*, not the bus it hangs from, and that is not a detail: the cards and the
 two network adapters are all EXI devices of the pool, so a page that took its devices from the bus
@@ -364,7 +364,7 @@ once), and the pool writes the device back itself (`SetBinding`, `DefaultBinding
 
 ## Tests
 
-`testing/peripherals_test.cpp` drives a pad the way a user does - it binds a control to a host
+`testing/io_test.cpp` drives a pad the way a user does - it binds a control to a host
 control of the test input double, says that the host reports it, polls the channel and reads the
 answer out of the SI registers - so the whole chain (binding, actuator, the device's state, the
 register file) is covered. It also covers the pool, the buses, the motor, the origins, and that a
@@ -373,8 +373,8 @@ and started again. The SI tests (`testing/gfx_si_spec_test.cpp`) cover the inter
 their machine plugs a pad into every socket for the same reason.
 
 The settings are covered where they can be got wrong: a device's properties survive a restart
-(`Peripherals_TheNetworkAndPlayerSettingsSurviveARestart`), an entry that names a port takes it
-from the device the pool placed there (`Peripherals_AnEntryThatNamesAPortTakesItFromThePlacedDevice`
+(`Io_TheNetworkAndPlayerSettingsSurviveARestart`), an entry that names a port takes it
+from the device the pool placed there (`Io_AnEntryThatNamesAPortTakesItFromThePlacedDevice`
 - the case the shipped defaults create, because they name no port for the pads), a negative value
 comes back out of the settings file as itself (`Settings_ANegativeValueSurvivesTheFile`), and an
 empty cartridge bay still runs a machine the console drives as a link

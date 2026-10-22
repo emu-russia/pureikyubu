@@ -693,7 +693,7 @@ namespace GBA
 	void GbaBus::Write32(uint32_t address, uint32_t value)
 	{
 		// A 32-bit write is two 16-bit writes, which is exactly what the 16-bit bus does; the
-		// order matters for the peripherals that auto-increment (the FIFOs), so the halves are
+		// order matters for the I/O registers that auto-increment (the FIFOs), so the halves are
 		// written low first, as the hardware does.
 		//
 		// The two halves have charged their own waitstates by then; what is left is the 32 bit

@@ -250,7 +250,7 @@
     <ClInclude Include="..\..\src\memcard.h" />
     <ClInclude Include="..\..\src\os.h" />
     <ClInclude Include="..\..\src\osdebug.h" />
-    <ClInclude Include="..\..\src\peripherals.h" />
+    <ClInclude Include="..\..\src\io.h" />
     <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\pe.h" />
     <ClInclude Include="..\..\src\pi.h" />
@@ -353,7 +353,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\pe.cpp" />
-    <ClCompile Include="..\..\src\peripherals.cpp" />
+    <ClCompile Include="..\..\src\io.cpp" />
     <ClCompile Include="..\..\src\pi.cpp" />
     <ClCompile Include="..\..\src\ras.cpp" />
     <ClCompile Include="..\..\src\si.cpp" />

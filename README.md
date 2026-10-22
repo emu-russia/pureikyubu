@@ -16,7 +16,7 @@ release is listed in the [2.0 release notes](docs/RELEASE_NOTES_2.0.md). Release
 second machine (an integrated Game Boy Advance and Game Boy, in `src/gba`), a software (CPU)
 rendering path next to the OpenGL one, a new debugger and a local MCP server; 1.9.1 made the
 portable machines sound and time the way the hardware does, fixed the host-side BIOS, and left the
-SDL2 front end as the only one; 2.0 is the peripheral release: one pool of peripheral devices
+SDL2 front end as the only one; 2.0 is the I/O release: one pool of I/O devices
 (controllers, memory cards, the network adapters, the Game Boy Player and the GBA link cable), save
 states for the GameCube side, and a software GFX pipeline that is no longer experimental. The
 screenshots below are captures from earlier builds; the status

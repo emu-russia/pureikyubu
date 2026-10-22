@@ -1,8 +1,8 @@
 /*
 
-# Peripheral devices
+# I/O devices
 
-The GameCube reaches its peripherals through two different buses, and every peripheral is a device
+The GameCube reaches its I/O devices through two different buses, and each of them is a device
 of its own: the standard controller is an intelligent Joybus device that answers a command set, the
 memory card is a flash card that speaks an EXI command protocol, and both of them are plugged into a
 socket of the console (one of the four SI channels for a pad, one of the two memory card slots for a
@@ -15,7 +15,7 @@ This module is the subsystem: the pool of devices, the ports they are plugged in
 that drive them and the dispatch of the emulation to the device of a port. What it does not contain
 is a device:
 
-  * a device is identified by its **DeviceID** (`PERIPH_DEVICE_*`), which fully defines its model
+  * a device is identified by its **DeviceID** (`IO_DEVICE_*`), which fully defines its model
     and its implementation;
   * the devices the user has are kept in a **pool**; each one carries its own name, its own settings
     and the port it is plugged into, and the settings window edits them one by one;
@@ -42,7 +42,7 @@ has no such devices:
 #pragma once
 
 // The portable machine two of the devices run (their picture is reachable through the device, which
-// is what `PeripheralDevice::Gba` is for). Only the name is needed here.
+// is what `IoDevice::Gba` is for). Only the name is needed here.
 namespace GBA
 {
 	class GbaSystem;
@@ -52,30 +52,30 @@ namespace GBA
 // Device models
 
 //! Nothing is plugged into the port.
-#define PERIPH_DEVICE_NONE              0x00000000
+#define IO_DEVICE_NONE              0x00000000
 
 //! DOL-003, the standard controller: a Joybus device on one of the four SI channels.
-#define PERIPH_DEVICE_STANDARD_PAD      0x00010001
+#define IO_DEVICE_STANDARD_PAD      0x00010001
 
 //! DOL-008 / DOL-014 / DOL-020, the memory card: an EXI device on the CS0B line of a card slot.
-#define PERIPH_DEVICE_MEMCARD           0x00020001
+#define IO_DEVICE_MEMCARD           0x00020001
 
 //! DOL-015, the broadband adapter: an EXI device on the CS2B line of EXI0 ("serial port 1").
-#define PERIPH_DEVICE_BBA                0x00020002
+#define IO_DEVICE_BBA                0x00020002
 
 //! DOL-012, the modem adapter: the other device on the same CS2B line, told apart by its ID.
-#define PERIPH_DEVICE_MODEM              0x00020003
+#define IO_DEVICE_MODEM              0x00020003
 
 //! DOL-011, the GBA link cable: the Game Boy Advance as a Joybus device on an SI channel.
-#define PERIPH_DEVICE_GBA_LINK           0x00010002
+#define IO_DEVICE_GBA_LINK           0x00010002
 
 //! DOL-017, the Game Boy Player: the device on the Hi-Speed Port (the ARAM expansion).
-#define PERIPH_DEVICE_GBPLAYER           0x00030001
+#define IO_DEVICE_GBPLAYER           0x00030001
 
 // The buses a device is plugged into. A device can only be attached to a port of its own bus.
-#define PERIPH_BUS_SI                   0
-#define PERIPH_BUS_EXI                  1
-#define PERIPH_BUS_HSP                  2
+#define IO_BUS_SI                   0
+#define IO_BUS_EXI                  1
+#define IO_BUS_HSP                  2
 
 // ---------------------------------------------------------------------------
 // The settings pages
@@ -86,11 +86,11 @@ namespace GBA
 // A model names its page when it registers (see RegisterFactory), so a build that compiles another
 // device module offers it on the right page without a line of front end code.
 
-#define PERIPH_PAGE_CONTROLLERS         0   //!< the pads, and the Game Boy Advance on a link cable
-#define PERIPH_PAGE_MEMORY_CARDS        1   //!< the memory cards
-#define PERIPH_PAGE_NETWORK             2   //!< the broadband and modem adapters
-#define PERIPH_PAGE_HSP                 3   //!< the devices of the Hi-Speed Port
-#define PERIPH_PAGE_MAX                 4
+#define IO_PAGE_CONTROLLERS         0   //!< the pads, and the Game Boy Advance on a link cable
+#define IO_PAGE_MEMORY_CARDS        1   //!< the memory cards
+#define IO_PAGE_NETWORK             2   //!< the broadband and modem adapters
+#define IO_PAGE_HSP                 3   //!< the devices of the Hi-Speed Port
+#define IO_PAGE_MAX                 4
 
 // ---------------------------------------------------------------------------
 // Ports
@@ -98,23 +98,23 @@ namespace GBA
 //! The sockets of the console. The order is the order the settings dialog shows them in.
 enum
 {
-	PERIPH_PORT_SI0 = 0,        //!< the four controller sockets (SI channels 0..3)
-	PERIPH_PORT_SI1,
-	PERIPH_PORT_SI2,
-	PERIPH_PORT_SI3,
-	PERIPH_PORT_SLOTA,          //!< the two memory card slots (EXI0 CS0B / EXI1 CS0B)
-	PERIPH_PORT_SLOTB,
-	PERIPH_PORT_SERIAL1,        //!< serial port 1: EXI0 CS2B, the two network adapters
-	PERIPH_PORT_HSP,            //!< the Hi-Speed Port: the Game Boy Player (not EXI)
+	IO_PORT_SI0 = 0,        //!< the four controller sockets (SI channels 0..3)
+	IO_PORT_SI1,
+	IO_PORT_SI2,
+	IO_PORT_SI3,
+	IO_PORT_SLOTA,          //!< the two memory card slots (EXI0 CS0B / EXI1 CS0B)
+	IO_PORT_SLOTB,
+	IO_PORT_SERIAL1,        //!< serial port 1: EXI0 CS2B, the two network adapters
+	IO_PORT_HSP,            //!< the Hi-Speed Port: the Game Boy Player (not EXI)
 
-	PERIPH_PORT_MAX
+	IO_PORT_MAX
 };
 
 //! The port of an SI channel (0..3).
-inline int PERIPH_PORT_SI(int chan) { return PERIPH_PORT_SI0 + chan; }
+inline int IO_PORT_SI(int chan) { return IO_PORT_SI0 + chan; }
 
 //! The port of a memory card slot (see MEMCARD_SLOTA / MEMCARD_SLOTB).
-inline int PERIPH_PORT_SLOT(int slot) { return PERIPH_PORT_SLOTA + slot; }
+inline int IO_PORT_SLOT(int slot) { return IO_PORT_SLOTA + slot; }
 
 // ---------------------------------------------------------------------------
 // Actuators
@@ -129,7 +129,7 @@ inline int PERIPH_PORT_SLOT(int slot) { return PERIPH_PORT_SLOTA + slot; }
 // driven by an analog host control alone needs no such pair - it publishes one actuator per axis
 // and the binding scales the host axis to the actuator's range.
 
-struct PeriphActuator
+struct IoActuator
 {
 	const char* group;      //!< the group the settings dialog shows the control under
 	const char* name;       //!< the name of the control
@@ -145,25 +145,25 @@ struct PeriphActuator
 // control. The host backend turns a binding into a name and into a value; the emulator only
 // carries the integer around.
 
-#define PERIPH_HOST_BUTTON_BASE     0x00010000
-#define PERIPH_HOST_AXIS_BASE       0x00020000
+#define IO_HOST_BUTTON_BASE     0x00010000
+#define IO_HOST_AXIS_BASE       0x00020000
 
-#define PERIPH_HOST_IS_BUTTON(v)    ((v) >= PERIPH_HOST_BUTTON_BASE && (v) < PERIPH_HOST_AXIS_BASE)
-#define PERIPH_HOST_IS_AXIS(v)      ((v) >= PERIPH_HOST_AXIS_BASE)
+#define IO_HOST_IS_BUTTON(v)    ((v) >= IO_HOST_BUTTON_BASE && (v) < IO_HOST_AXIS_BASE)
+#define IO_HOST_IS_AXIS(v)      ((v) >= IO_HOST_AXIS_BASE)
 
-#define PERIPH_HOST_BUTTON(v)       ((v) - PERIPH_HOST_BUTTON_BASE)
-#define PERIPH_HOST_AXIS(v)         (((v) - PERIPH_HOST_AXIS_BASE) >> 1)
-#define PERIPH_HOST_AXIS_POS(v)     (((v) & 1) != 0)        // 1: positive direction, 0: negative
+#define IO_HOST_BUTTON(v)       ((v) - IO_HOST_BUTTON_BASE)
+#define IO_HOST_AXIS(v)         (((v) - IO_HOST_AXIS_BASE) >> 1)
+#define IO_HOST_AXIS_POS(v)     (((v) & 1) != 0)        // 1: positive direction, 0: negative
 
-#define PERIPH_HOST_MAKE_BUTTON(b)      (PERIPH_HOST_BUTTON_BASE + (b))
-#define PERIPH_HOST_MAKE_AXIS(a, pos)   (PERIPH_HOST_AXIS_BASE + ((a) << 1) + ((pos) ? 1 : 0))
+#define IO_HOST_MAKE_BUTTON(b)      (IO_HOST_BUTTON_BASE + (b))
+#define IO_HOST_MAKE_AXIS(a, pos)   (IO_HOST_AXIS_BASE + ((a) << 1) + ((pos) ? 1 : 0))
 
-//! A keyboard binding is a host scancode and a game controller binding is one of the PERIPH_HOST_*
+//! A keyboard binding is a host scancode and a game controller binding is one of the IO_HOST_*
 //! values; 0 means "not assigned" in both cases.
-struct PeriphBindings
+struct IoBindings
 {
 	int keyboard;       //!< the host keyboard scancode, 0: not assigned
-	int gamepad;        //!< the host game controller control (PERIPH_HOST_*), 0: not assigned
+	int gamepad;        //!< the host game controller control (IO_HOST_*), 0: not assigned
 };
 
 // ---------------------------------------------------------------------------
@@ -210,28 +210,28 @@ struct PADState
 // value is a string; the editor is picked by the kind, so a device does not need to know how the
 // dialog draws it.
 
-#define PERIPH_PROP_BOOL        0       //!< a checkbox ("1" or "0")
-#define PERIPH_PROP_FILE        1       //!< a file name, picked with the host's file browser
-#define PERIPH_PROP_INFO        2       //!< read only text (a size, a state)
-#define PERIPH_PROP_ROM         3       //!< a cartridge image: a file the device only reads
-#define PERIPH_PROP_TEXT        4       //!< text the user types (an address the device answers to)
+#define IO_PROP_BOOL        0       //!< a checkbox ("1" or "0")
+#define IO_PROP_FILE        1       //!< a file name, picked with the host's file browser
+#define IO_PROP_INFO        2       //!< read only text (a size, a state)
+#define IO_PROP_ROM         3       //!< a cartridge image: a file the device only reads
+#define IO_PROP_TEXT        4       //!< text the user types (an address the device answers to)
 
-// The device properties of the file kinds. `PERIPH_PROP_FILE` is an image the device owns and
-// writes back (a memory card), so its row also offers "make a new one"; `PERIPH_PROP_ROM` is a
+// The device properties of the file kinds. `IO_PROP_FILE` is an image the device owns and
+// writes back (a memory card), so its row also offers "make a new one"; `IO_PROP_ROM` is a
 // cartridge the device only reads, and the settings window opens the browser with the extensions
 // of the portable machines for it.
 
-struct PeriphProperty
+struct IoProperty
 {
 	const char* name;       //!< the name of the property (the left column of the grid)
-	int         kind;       //!< PERIPH_PROP_*
+	int         kind;       //!< IO_PROP_*
 	int         id;         //!< the device's own identifier of the property
 };
 
 // ---------------------------------------------------------------------------
 // A device
 
-class PeripheralDevice
+class IoDevice
 {
 protected:
 	//! The entry of the pool list that holds the settings of this device (see config.h). The pool
@@ -241,7 +241,7 @@ protected:
 	ConfigEntry* config = nullptr;
 
 public:
-	virtual ~PeripheralDevice() {}
+	virtual ~IoDevice() {}
 
 	//! The DeviceID of the model.
 	virtual uint32_t Type() = 0;
@@ -263,12 +263,12 @@ public:
 	virtual int ActuatorCount() { return 0; }
 
 	//! The descriptor of an actuator.
-	virtual const PeriphActuator* Actuator(int index) { return nullptr; }
+	virtual const IoActuator* Actuator(int index) { return nullptr; }
 
 	//! The bindings of an actuator. The settings dialog edits them in place.
-	virtual PeriphBindings* ActuatorBindings(int index) { return nullptr; }
+	virtual IoBindings* ActuatorBindings(int index) { return nullptr; }
 
-	//! Set the value of an actuator (0...PeriphActuator::max). The subsystem resolves the bindings
+	//! Set the value of an actuator (0...IoActuator::max). The subsystem resolves the bindings
 	//! against the host input and calls this before every poll, so the device only ever has to turn
 	//! actuator values into its bus protocol.
 	virtual void SetState(int actuator, int value) {}
@@ -277,7 +277,7 @@ public:
 	// Properties (everything else the settings dialog shows)
 
 	virtual int PropertyCount() { return 0; }
-	virtual const PeriphProperty* Property(int index) { return nullptr; }
+	virtual const IoProperty* Property(int index) { return nullptr; }
 	virtual std::string GetProperty(int id) { return ""; }
 	virtual void SetProperty(int id, const std::string& value) {}
 
@@ -364,7 +364,7 @@ public:
 	//! The default binding of one actuator of a device model: the keyboard scancode and the host
 	//! game controller control of the usual layout of that device (the Xbox-style one for a pad).
 	//! Defined by the back end, because a binding names a host control and only the back end knows
-	//! how the host numbers them. `actuator` is the PeriphActuator::id of the control; 0 means
+	//! how the host numbers them. `actuator` is the IoActuator::id of the control; 0 means
 	//! "not assigned".
 	virtual void DefaultBindings(uint32_t deviceType, const char* actuator, int& keyboard, int& gamepad)
 	{
@@ -387,7 +387,7 @@ public:
 int HostPadOfPort(int port);
 
 //! The host input of this build. The back end is compiled into the front end (padsdl.cpp in the
-//! SDL one, padnull.cpp in the headless one), so the peripheral subsystem creates it when it is
+//! SDL one, padnull.cpp in the headless one), so the I/O subsystem creates it when it is
 //! opened and destroys it when it is closed.
 HostInput* HostInputCreate();
 void HostInputDestroy();
@@ -395,19 +395,19 @@ void HostInputDestroy();
 // ---------------------------------------------------------------------------
 // The subsystem
 
-//! The list of the devices of the pool, in the "peripherals" section of the configuration (see the
+//! The list of the devices of the pool, in the "io" section of the configuration (see the
 //! list accessors in config.h). One entry per device, in the order the pool has them - the order the
 //! settings window shows them in, and nothing else: a device is what its entry says, not where the
 //! entry happens to be.
-#define PERIPH_DEVICES  "Devices"
+#define IO_DEVICES  "Devices"
 
 //! How many devices the console may have in its pool.
-#define PERIPH_MAX_DEVICES      16
+#define IO_MAX_DEVICES      16
 
-class Peripherals
+class Io
 {
 	//! The devices of the pool, in the order of the list of the configuration.
-	std::vector<PeripheralDevice*> devices;
+	std::vector<IoDevice*> devices;
 
 	//! The port of every device (-1: not plugged in).
 	std::vector<int> ports;
@@ -417,7 +417,7 @@ class Peripherals
 
 	//! The devices that were removed from the pool while the emulator was running. Their object is
 	//! kept alive (a thread may have just taken it out of the pool) and destroyed with the pool.
-	std::vector<PeripheralDevice*> retired;
+	std::vector<IoDevice*> retired;
 
 	SpinLock lock;
 
@@ -426,18 +426,18 @@ class Peripherals
 	bool opened = false;
 
 	//! Create one device of a model and give it its entry of the pool list.
-	PeripheralDevice* CreateDevice(uint32_t type, ConfigEntry* entry);
+	IoDevice* CreateDevice(uint32_t type, ConfigEntry* entry);
 
 	//! The index of the device in a port (-1: the port is empty).
 	int DeviceIndexOnPort(int port);
 
 	//! The index of a device in the pool (-1 when it is not there).
-	int DeviceIndexOf(PeripheralDevice* device);
+	int DeviceIndexOf(IoDevice* device);
 
 	//! The port a device the configuration does not place goes into (see Open): the first free
 	//! port of the bus of its model, in the order the settings window shows them. -1 when every
 	//! port of that bus is taken.
-	int FreePortFor(PeripheralDevice* device);
+	int FreePortFor(IoDevice* device);
 
 	//! Plug a device in without writing the configuration (used while the pool is built from it).
 	void Plug(int index, int port);
@@ -445,10 +445,10 @@ class Peripherals
 	//! The devices that are plugged in, as (device, port) pairs, without the lock being held while
 	//! the caller uses them (the device may do file I/O, and the emulation thread takes the lock for
 	//! a lookup only).
-	void AttachedDevices(std::vector<std::pair<PeripheralDevice*, int>>& attached);
+	void AttachedDevices(std::vector<std::pair<IoDevice*, int>>& attached);
 
 public:
-	static Peripherals& Instance();
+	static Io& Instance();
 
 	//! Build the pool from the configuration and plug the devices into the ports the configuration
 	//! gives them. The emulator calls it once, when it starts (not when a machine is created: the
@@ -475,7 +475,7 @@ public:
 
 	//! The device of a pool index, or nullptr. The index is a position in the list the settings
 	//! window shows; the device itself is its own entry of the configuration.
-	PeripheralDevice* Device(int index);
+	IoDevice* Device(int index);
 
 	//! Add a device of the given model. Returns its pool index, or -1 when the pool is full or the
 	//! model is unknown to this build. The device, its name and its settings are written to the
@@ -496,22 +496,22 @@ public:
 	//! The application does not write the device back: this is the layout a device that has never
 	//! been configured gets while the pool is built, and building the pool must not change the
 	//! configuration.
-	void ApplyDefaultBindings(PeripheralDevice* device, bool keyboard);
+	void ApplyDefaultBindings(IoDevice* device, bool keyboard);
 
 	//! The same, written back to the configuration (the "Defaults" button of the settings window).
 	//! A caller that means "this device, whatever it takes" passes true for `keyboard`.
-	void DefaultBindings(PeripheralDevice* device, bool keyboard);
+	void DefaultBindings(IoDevice* device, bool keyboard);
 
 	//! Bind one actuator of a device to a host control and write it back (what the capture of the
 	//! settings window does when the input arrives).
-	void SetBinding(PeripheralDevice* device, int actuator, bool gamepad, int binding);
+	void SetBinding(IoDevice* device, int actuator, bool gamepad, int binding);
 
 	//! Drop every binding of a device and write it back.
-	void ClearBindings(PeripheralDevice* device);
+	void ClearBindings(IoDevice* device);
 
 	//! Whether a device is the first one of its model in the pool. The keyboard defaults belong to
 	//! it: one set of keys cannot drive the pads of four sockets at once.
-	bool FirstOfModel(PeripheralDevice* device);
+	bool FirstOfModel(IoDevice* device);
 
 	// -----------------------------------------------------------------------
 	// The ports
@@ -520,7 +520,7 @@ public:
 	int PortOf(int index);
 
 	//! The device plugged into a port. Returns nullptr when the port is empty.
-	PeripheralDevice* DeviceOnPort(int port);
+	IoDevice* DeviceOnPort(int port);
 
 	//! Plug a device into a port (it is first unplugged from wherever it was). The port has to
 	//! match the bus of the device.
@@ -530,21 +530,21 @@ public:
 	void Detach(int index);
 
 	//! How many ports the console has.
-	int PortCount() { return PERIPH_PORT_MAX; }
+	int PortCount() { return IO_PORT_MAX; }
 
 	//! The name of a port ("Controller Port 1", "Memory Card Slot A").
 	const char* PortName(int port);
 
-	//! The bus of a port (PERIPH_BUS_*).
+	//! The bus of a port (IO_BUS_*).
 	int PortBus(int port);
 
 	// -----------------------------------------------------------------------
 	// The models
 
 	//! Register a device model. Called by the module that implements the device. `page` is the
-	//! settings page the model is edited on (PERIPH_PAGE_*).
+	//! settings page the model is edited on (IO_PAGE_*).
 	static void RegisterFactory(uint32_t type, const char* name, const char* info, int bus, int page,
-		PeripheralDevice* (*factory)());
+		IoDevice* (*factory)());
 
 	//! The name of a model ("Standard Controller"), or nullptr when this build has no such device.
 	static const char* ModelName(uint32_t type);
@@ -555,10 +555,10 @@ public:
 	static int ModelCount();
 	static uint32_t ModelAt(int index);
 
-	//! The bus a model is plugged into (PERIPH_BUS_*), or -1 when this build has no such device.
+	//! The bus a model is plugged into (IO_BUS_*), or -1 when this build has no such device.
 	static int ModelBus(uint32_t type);
 
-	//! The settings page a model is edited on (PERIPH_PAGE_*), or -1 when this build has no such
+	//! The settings page a model is edited on (IO_PAGE_*), or -1 when this build has no such
 	//! device.
 	static int ModelPage(uint32_t type);
 

@@ -42,8 +42,8 @@ where it puts them and read back as it wrote them.
 
 #pragma once
 
-//! The device model's DeviceID (see peripherals.h).
-#define PERIPH_DEVICE_MODEM_ID  0x02020000
+//! The device model's DeviceID (see io.h).
+#define IO_DEVICE_MODEM_ID  0x02020000
 
 // ---------------------------------------------------------------------------
 // The telephone line

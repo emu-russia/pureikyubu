@@ -18,7 +18,7 @@ what gives a key-driven stick its magnitude. A game controller drives the same c
 buttons and its axes, and the deflection of an axis is scaled into the range of the control it is
 bound to. The device turns the values of all of them into the state the SI register file exposes.
 
-The module registers its model with the peripheral subsystem from a constructor of its own (see the
+The module registers its model with the I/O subsystem from a constructor of its own (see the
 end of cont.cpp): a build that does not compile this file simply has no controllers, and the pool
 says so when a configuration asks for one.
 

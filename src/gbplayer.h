@@ -16,16 +16,16 @@ the settings window edits. The port itself is `hsp.cpp`.
 ## The cartridge bay
 
 A Game Pak is a **property of the device**, exactly like the image file of a memory card is a
-property of the card: the file name lives in the device's own entry of the peripheral pool
-(peripherals.h) under "GamePak", and the settings window draws a "Game Pak" row with a file browser
-on it (see `PERIPH_PROP_ROM`). Inserting one loads it into the machine the Player runs; ejecting
+property of the card: the file name lives in the device's own entry of the I/O pool
+(io.h) under "GamePak", and the settings window draws a "Game Pak" row with a file browser
+on it (see `IO_PROP_ROM`). Inserting one loads it into the machine the Player runs; ejecting
 (the empty value) takes it out. Because the property belongs to the device and not to the port, the
 Game Pak survives unplugging the Player, and a Player that is moved to another console takes its
 cartridge with it.
 
 The Player also has a **BIOS** row: the machine inside the Player boots like a Game Boy Advance, and
 a real 16 KB BIOS image can be installed for it (empty = the built-in boot ROM). Both files are
-`PERIPH_PROP_ROM`: the device only ever reads them.
+`IO_PROP_ROM`: the device only ever reads them.
 
 ## What answers on the wire
 

@@ -19,13 +19,13 @@ The tabs are:
     cards but are devices of their own;
   * "High-Speed Port" - the Game Boy Player.
 
-A device says which page it is edited on when it registers its model (PERIPH_PAGE_*), so a page is
+A device says which page it is edited on when it registers its model (IO_PAGE_*), so a page is
 what the user understands rather than the bus a device hangs from, and a build that compiles another
 device module offers it on the right page without a line of front end code.
 
 A property grid is a table of two columns: the name of a property on the left and its editor on the
-right (see PropertyGrid / PropertyRow). The devices are edited through the peripheral subsystem
-itself (peripherals.h): the pool owns them, a device publishes its actuators and its properties, and
+right (see PropertyGrid / PropertyRow). The devices are edited through the I/O subsystem
+itself (io.h): the pool owns them, a device publishes its actuators and its properties, and
 this window is generic over both - it asks the device what to draw instead of knowing what a pad or
 a card is made of.
 
@@ -122,7 +122,7 @@ static const std::vector<std::string> settings_any_filter = { ".*" };
 static const std::vector<std::string> settings_memcard_filter = { ".mci", ".*" };
 
 /* The cartridge images of the portable machines (see the "Game Boy Player" page of the settings and
-   PERIPH_PROP_ROM in peripherals.h): a Game Pak of any of the three families. */
+   IO_PROP_ROM in io.h): a Game Pak of any of the three families. */
 static const std::vector<std::string> settings_rom_filter =
 	{ ".gba", ".agb", ".gb", ".gbc", ".sgb", ".*" };
 
@@ -685,7 +685,7 @@ static void settings_page_hw()
 }
 
 // ---------------------------------------------------------------------------
-// The device pages - the devices of the peripheral pool
+// The device pages - the devices of the I/O pool
 //
 // The pages are the same: the pool, filtered to the page's devices. A
 // device is edited where it is: the page shows the devices in a list, and the one that is selected
@@ -694,7 +694,7 @@ static void settings_page_hw()
 // binding) and its properties.
 
 /* The device a page shows the properties of. */
-static int periph_selected = 0;
+static int io_selected = 0;
 
 /* The binding capture: armed by a binding button, and fed by the SDL event loop (see
    UiSettingsSdlEvent). */
@@ -738,7 +738,7 @@ static void pad_capture_abort()
 }
 
 /* The id of the property that holds the file of a device (a memory card is an image on the host) */
-static int DeviceFileProperty(PeripheralDevice* device)
+static int DeviceFileProperty(IoDevice* device)
 {
 	if (device == nullptr)
 	{
@@ -747,9 +747,9 @@ static int DeviceFileProperty(PeripheralDevice* device)
 
 	for (int i = 0; i < device->PropertyCount(); i++)
 	{
-		const PeriphProperty* prop = device->Property(i);
+		const IoProperty* prop = device->Property(i);
 
-		if (prop != nullptr && prop->kind == PERIPH_PROP_FILE)
+		if (prop != nullptr && prop->kind == IO_PROP_FILE)
 		{
 			return prop->id;
 		}
@@ -777,7 +777,7 @@ static void PropertyFileRow(const char* path, int index, int prop, int kind)
 		settings_file_device = index;
 		settings_file_prop = prop;
 
-		if (kind == PERIPH_PROP_ROM)
+		if (kind == IO_PROP_ROM)
 		{
 			settings_pick_file(SettingsFile::RomFile, "Insert Game Pak", settings_rom_filter);
 		}
@@ -792,14 +792,14 @@ static void PropertyFileRow(const char* path, int index, int prop, int kind)
    the next key press or game controller event the new binding. */
 static void settings_binding_button(int index, int actuator, bool gamepad)
 {
-	PeripheralDevice* device = Peripherals::Instance().Device(index);
+	IoDevice* device = Io::Instance().Device(index);
 
 	if (device == nullptr)
 	{
 		return;
 	}
 
-	PeriphBindings* bindings = device->ActuatorBindings(actuator);
+	IoBindings* bindings = device->ActuatorBindings(actuator);
 
 	if (bindings == nullptr)
 	{
@@ -816,9 +816,9 @@ static void settings_binding_button(int index, int actuator, bool gamepad)
 	{
 		name = "?";
 	}
-	else if (Peripherals::Instance().Host() != nullptr)
+	else if (Io::Instance().Host() != nullptr)
 	{
-		name = Peripherals::Instance().Host()->BindingName(gamepad ? bindings->gamepad : bindings->keyboard);
+		name = Io::Instance().Host()->BindingName(gamepad ? bindings->gamepad : bindings->keyboard);
 	}
 
 	if (ImGui::Button(name.c_str(), ImVec2(110, 0)))
@@ -834,7 +834,7 @@ static void settings_binding_button(int index, int actuator, bool gamepad)
 }
 
 /* The bindings of every actuator of a device, grouped the way the device groups its controls. */
-static void settings_bindings(int index, PeripheralDevice* device)
+static void settings_bindings(int index, IoDevice* device)
 {
 	if (!ImGui::BeginTable("bindings", 3, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg |
 		ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoHostExtendX))
@@ -851,7 +851,7 @@ static void settings_bindings(int index, PeripheralDevice* device)
 
 	for (int i = 0; i < device->ActuatorCount(); i++)
 	{
-		const PeriphActuator* actuator = device->Actuator(i);
+		const IoActuator* actuator = device->Actuator(i);
 
 		if (actuator == nullptr)
 		{
@@ -981,41 +981,41 @@ static int page_default_port(int page)
 {
 	switch (page)
 	{
-		case PERIPH_PAGE_CONTROLLERS:  return PERIPH_PORT_SI0;
-		case PERIPH_PAGE_MEMORY_CARDS: return PERIPH_PORT_SLOTA;
-		case PERIPH_PAGE_NETWORK:      return PERIPH_PORT_SERIAL1;
-		case PERIPH_PAGE_HSP:          return PERIPH_PORT_HSP;
+		case IO_PAGE_CONTROLLERS:  return IO_PORT_SI0;
+		case IO_PAGE_MEMORY_CARDS: return IO_PORT_SLOTA;
+		case IO_PAGE_NETWORK:      return IO_PORT_SERIAL1;
+		case IO_PAGE_HSP:          return IO_PORT_HSP;
 	}
 
-	return PERIPH_PORT_SI0;
+	return IO_PORT_SI0;
 }
 
 /* A settings page: the devices of the pool that are edited on it. The page of a device is its
-   model's own (see PERIPH_PAGE_*), not the bus it is plugged into - the two network adapters share
+   model's own (see IO_PAGE_*), not the bus it is plugged into - the two network adapters share
    the EXI bus with the cards, and the Game Boy Advance on a link cable sits in a controller
    socket. */
 static void settings_page_devices(int page)
 {
-	Peripherals& pool = Peripherals::Instance();
+	Io& pool = Io::Instance();
 
 	// The models of this page, which is what the user picks from when a device is added. The list
 	// comes from the subsystem (every device module registers its own model), so a build that
 	// compiles another one offers it here without a line of front end code.
-	static uint32_t addModel[PERIPH_PAGE_MAX];      // one remembered choice per page
-	static bool addModelValid[PERIPH_PAGE_MAX] = { false };
+	static uint32_t addModel[IO_PAGE_MAX];      // one remembered choice per page
+	static bool addModelValid[IO_PAGE_MAX] = { false };
 
-	if (page < 0 || page >= PERIPH_PAGE_MAX)
+	if (page < 0 || page >= IO_PAGE_MAX)
 	{
 		return;
 	}
 
 	std::vector<uint32_t> models;
 
-	for (int i = 0; i < Peripherals::ModelCount(); i++)
+	for (int i = 0; i < Io::ModelCount(); i++)
 	{
-		uint32_t type = Peripherals::ModelAt(i);
+		uint32_t type = Io::ModelAt(i);
 
-		if (Peripherals::ModelPage(type) == page)
+		if (Io::ModelPage(type) == page)
 		{
 			models.push_back(type);
 		}
@@ -1029,7 +1029,7 @@ static void settings_page_devices(int page)
 	if (!addModelValid[page])
 	{
 		// The device the ports of the page are meant for is the one a fresh configuration wants.
-		addModel[page] = Peripherals::DefaultModelOfPort(page_default_port(page));
+		addModel[page] = Io::DefaultModelOfPort(page_default_port(page));
 
 		bool known = false;
 
@@ -1050,28 +1050,28 @@ static void settings_page_devices(int page)
 	}
 
 	// The selection has to be a device of this page (the other page selects its own).
-	PeripheralDevice* selected = pool.Device(periph_selected);
+	IoDevice* selected = pool.Device(io_selected);
 
-	if (selected == nullptr || Peripherals::ModelPage(selected->Type()) != page)
+	if (selected == nullptr || Io::ModelPage(selected->Type()) != page)
 	{
-		periph_selected = -1;
+		io_selected = -1;
 
-		for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+		for (int i = 0; i < IO_MAX_DEVICES; i++)
 		{
-			PeripheralDevice* device = pool.Device(i);
+			IoDevice* device = pool.Device(i);
 
-			if (device != nullptr && Peripherals::ModelPage(device->Type()) == page)
+			if (device != nullptr && Io::ModelPage(device->Type()) == page)
 			{
-				periph_selected = i;
+				io_selected = i;
 				selected = device;
 				break;
 			}
 		}
 	}
 
-	ImGui::BeginChild("periph_list", ImVec2(0, 116), true);
+	ImGui::BeginChild("io_list", ImVec2(0, 116), true);
 
-	if (ImGui::BeginTable("periph_table", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV |
+	if (ImGui::BeginTable("io_table", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV |
 		ImGuiTableFlags_SizingFixedFit))
 	{
 		ImGui::TableSetupColumn("Device", ImGuiTableColumnFlags_WidthStretch);
@@ -1079,11 +1079,11 @@ static void settings_page_devices(int page)
 		ImGui::TableSetupColumn("Plugged into", ImGuiTableColumnFlags_WidthFixed, 150);
 		ImGui::TableHeadersRow();
 
-		for (int i = 0; i < PERIPH_MAX_DEVICES; i++)
+		for (int i = 0; i < IO_MAX_DEVICES; i++)
 		{
-			PeripheralDevice* device = pool.Device(i);
+			IoDevice* device = pool.Device(i);
 
-			if (device == nullptr || Peripherals::ModelPage(device->Type()) != page)
+			if (device == nullptr || Io::ModelPage(device->Type()) != page)
 			{
 				continue;
 			}
@@ -1092,15 +1092,15 @@ static void settings_page_devices(int page)
 
 			ImGui::TableSetColumnIndex(0);
 			ImGui::PushID(i);
-			if (ImGui::Selectable(pool.Name(i).c_str(), periph_selected == i, ImGuiSelectableFlags_SpanAllColumns))
+			if (ImGui::Selectable(pool.Name(i).c_str(), io_selected == i, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				periph_selected = i;
+				io_selected = i;
 				selected = device;
 			}
 			ImGui::PopID();
 
 			ImGui::TableSetColumnIndex(1);
-			ImGui::TextUnformatted(Peripherals::ModelName(device->Type()));
+			ImGui::TextUnformatted(Io::ModelName(device->Type()));
 
 			ImGui::TableSetColumnIndex(2);
 			int port = pool.PortOf(i);
@@ -1116,7 +1116,7 @@ static void settings_page_devices(int page)
 	// only has the devices *this build* can make, so a build without a Game Boy Player simply does
 	// not offer one.
 	{
-		const char* preview = Peripherals::ModelName(addModel[page]);
+		const char* preview = Io::ModelName(addModel[page]);
 		ImGui::SetNextItemWidth(260);
 
 		if (ImGui::BeginCombo("##add_model", preview != nullptr ? preview : "?"))
@@ -1125,7 +1125,7 @@ static void settings_page_devices(int page)
 			{
 				bool selected = type == addModel[page];
 
-				if (ImGui::Selectable(Peripherals::ModelName(type), selected))
+				if (ImGui::Selectable(Io::ModelName(type), selected))
 				{
 					addModel[page] = type;
 				}
@@ -1149,9 +1149,9 @@ static void settings_page_devices(int page)
 		if (index >= 0)
 		{
 			// The device, its name and its settings are in the pool and in the configuration now
-			// (see Peripherals::AddDevice); its bindings are the standard layout of its model and
+			// (see Io::AddDevice); its bindings are the standard layout of its model and
 			// saved with it.
-			periph_selected = index;
+			io_selected = index;
 			selected = pool.Device(index);
 		}
 	}
@@ -1160,7 +1160,7 @@ static void settings_page_devices(int page)
 
 	if (ImGui::Button("Remove", ImVec2(80, 0)) && selected != nullptr)
 	{
-		pool.RemoveDevice(periph_selected);
+		pool.RemoveDevice(io_selected);
 		selected = nullptr;
 	}
 
@@ -1172,24 +1172,24 @@ static void settings_page_devices(int page)
 
 	ImGui::Separator();
 
-	int port = pool.PortOf(periph_selected);
+	int port = pool.PortOf(io_selected);
 	int fileProp = DeviceFileProperty(selected);
 
-	ImGui::PushID(periph_selected);
+	ImGui::PushID(io_selected);
 
-	if (PropertyGrid("periph_props"))
+	if (PropertyGrid("io_props"))
 	{
 		PropertyRow("Model");
-		ImGui::TextUnformatted(Peripherals::ModelName(selected->Type()));
+		ImGui::TextUnformatted(Io::ModelName(selected->Type()));
 		PropertyRowEnd();
 
 		PropertyRow("Name");
 		{
-			std::string name = pool.Name(periph_selected);
+			std::string name = pool.Name(io_selected);
 
 			if (PropertyText(name))
 			{
-				pool.SetName(periph_selected, name);
+				pool.SetName(io_selected, name);
 			}
 		}
 		PropertyRowEnd();
@@ -1202,21 +1202,21 @@ static void settings_page_devices(int page)
 			{
 				if (ImGui::Selectable("nothing", port < 0))
 				{
-					pool.Detach(periph_selected);
+					pool.Detach(io_selected);
 				}
 
 				// A device goes into a port of its own bus, which is the model's and not the page's:
 				// the network adapters and the cards are on the same bus but not on the same ports.
 				for (int p = 0; p < pool.PortCount(); p++)
 				{
-					if (pool.PortBus(p) != Peripherals::ModelBus(selected->Type()))
+					if (pool.PortBus(p) != Io::ModelBus(selected->Type()))
 					{
 						continue;
 					}
 
 					if (ImGui::Selectable(pool.PortName(p), port == p))
 					{
-						pool.Attach(periph_selected, p);
+						pool.Attach(io_selected, p);
 					}
 				}
 
@@ -1228,7 +1228,7 @@ static void settings_page_devices(int page)
 		// What the device itself wants to show about the way it is set up.
 		for (int i = 0; i < selected->PropertyCount(); i++)
 		{
-			const PeriphProperty* prop = selected->Property(i);
+			const IoProperty* prop = selected->Property(i);
 
 			if (prop == nullptr)
 			{
@@ -1239,7 +1239,7 @@ static void settings_page_devices(int page)
 
 			switch (prop->kind)
 			{
-				case PERIPH_PROP_BOOL:
+				case IO_PROP_BOOL:
 				{
 					bool value = selected->GetProperty(prop->id) != "0";
 
@@ -1250,17 +1250,17 @@ static void settings_page_devices(int page)
 					break;
 				}
 
-				case PERIPH_PROP_FILE:
-				case PERIPH_PROP_ROM:
-					PropertyFileRow(selected->GetProperty(prop->id).c_str(), periph_selected,
+				case IO_PROP_FILE:
+				case IO_PROP_ROM:
+					PropertyFileRow(selected->GetProperty(prop->id).c_str(), io_selected,
 						prop->id, prop->kind);
 					break;
 
-				case PERIPH_PROP_INFO:
+				case IO_PROP_INFO:
 					ImGui::TextUnformatted(selected->GetProperty(prop->id).c_str());
 					break;
 
-				case PERIPH_PROP_TEXT:
+				case IO_PROP_TEXT:
 				{
 					std::string value = selected->GetProperty(prop->id);
 
@@ -1281,7 +1281,7 @@ static void settings_page_devices(int page)
 	// A memory card is an image on the host, and one of them may have to be made first.
 	if (fileProp >= 0 && ImGui::Button("Create new memory card...", ImVec2(220, 0)))
 	{
-		settings_file_device = periph_selected;
+		settings_file_device = io_selected;
 		settings_file_prop = fileProp;
 		settings_pick_new_file("Create Memcard File", settings_memcard_filter);
 	}
@@ -1292,7 +1292,7 @@ static void settings_page_devices(int page)
 		ImGui::TextUnformatted("Bindings:");
 
 		// The host game controller of a pad is the one the host reports under the number of the
-		// socket it is in (see HostPadOf in peripherals.cpp), so the names below are what tells the
+		// socket it is in (see HostPadOf in io.cpp), so the names below are what tells the
 		// user which controller drives which port.
 		HostInput* host = pool.Host();
 
@@ -1308,7 +1308,7 @@ static void settings_page_devices(int page)
 			}
 		}
 
-		settings_bindings(periph_selected, selected);
+		settings_bindings(io_selected, selected);
 
 		if (ImGui::Button("Defaults", ImVec2(80, 0)))
 		{
@@ -1399,7 +1399,7 @@ static void card_size_popup_window()
 		}
 		else
 		{
-			PeripheralDevice* device = Peripherals::Instance().Device(settings_file_device);
+			IoDevice* device = Io::Instance().Device(settings_file_device);
 
 			if (device != nullptr && settings_file_prop >= 0)
 			{
@@ -1474,7 +1474,7 @@ static void settings_poll_files()
 			case SettingsFile::CardFile:
 			case SettingsFile::RomFile:
 			{
-				PeripheralDevice* device = Peripherals::Instance().Device(settings_file_device);
+				IoDevice* device = Io::Instance().Device(settings_file_device);
 
 				if (device != nullptr && settings_file_prop >= 0)
 				{
@@ -1566,7 +1566,7 @@ bool UiSettingsSdlEvent(const SDL_Event& event, uint32_t mainWindowID)
 	{
 		if (event.cbutton.button >= 0 && event.cbutton.button < SDL_CONTROLLER_BUTTON_MAX)
 		{
-			pad_captured_binding = PERIPH_HOST_MAKE_BUTTON(event.cbutton.button);
+			pad_captured_binding = IO_HOST_MAKE_BUTTON(event.cbutton.button);
 			pad_capture_done = true;
 			pad_capture_active = false;
 		}
@@ -1579,7 +1579,7 @@ bool UiSettingsSdlEvent(const SDL_Event& event, uint32_t mainWindowID)
 		if (event.caxis.axis >= 0 && event.caxis.axis < SDL_CONTROLLER_AXIS_MAX &&
 			(event.caxis.value >= PAD_CAPTURE_AXIS_THRESHOLD || event.caxis.value <= -PAD_CAPTURE_AXIS_THRESHOLD))
 		{
-			pad_captured_binding = PERIPH_HOST_MAKE_AXIS(event.caxis.axis, event.caxis.value > 0);
+			pad_captured_binding = IO_HOST_MAKE_AXIS(event.caxis.axis, event.caxis.value > 0);
 			pad_capture_done = true;
 			pad_capture_active = false;
 		}
@@ -1606,7 +1606,7 @@ void UiSettingsFrame()
 	// Apply the binding the event loop captured
 	if (pad_capture_done)
 	{
-		Peripherals::Instance().SetBinding(Peripherals::Instance().Device(pad_capture_device),
+		Io::Instance().SetBinding(Io::Instance().Device(pad_capture_device),
 			pad_capture_actuator, pad_capture_gamepad, pad_captured_binding);
 
 		pad_capture_abort();
@@ -1649,10 +1649,10 @@ void UiSettingsFrame()
 			case SettingsTab::General:      settings_page_general(); break;
 			case SettingsTab::Hardware:     settings_page_hw(); break;
 			case SettingsTab::Core:         settings_page_core(); break;
-			case SettingsTab::Controllers:  settings_page_devices(PERIPH_PAGE_CONTROLLERS); break;
-			case SettingsTab::MemoryCards:  settings_page_devices(PERIPH_PAGE_MEMORY_CARDS); break;
-			case SettingsTab::Network:      settings_page_devices(PERIPH_PAGE_NETWORK); break;
-			case SettingsTab::HiSpeedPort:  settings_page_devices(PERIPH_PAGE_HSP); break;
+			case SettingsTab::Controllers:  settings_page_devices(IO_PAGE_CONTROLLERS); break;
+			case SettingsTab::MemoryCards:  settings_page_devices(IO_PAGE_MEMORY_CARDS); break;
+			case SettingsTab::Network:      settings_page_devices(IO_PAGE_NETWORK); break;
+			case SettingsTab::HiSpeedPort:  settings_page_devices(IO_PAGE_HSP); break;
 		}
 
 		ImGui::EndChild();

@@ -12,7 +12,7 @@ The two directions of the interface are:
   * the front end draws the window (`UiSettingsFrame`), opens it (`UiSettingsOpen`) and hands it the
     SDL events of a binding capture (`UiSettingsSdlEvent`);
   * the window edits the settings of the emulator through the modules that own them - the
-    configuration, the peripheral pool (see peripherals.h) and the selector view below.
+    configuration, the I/O pool (see io.h) and the selector view below.
 
 */
 
